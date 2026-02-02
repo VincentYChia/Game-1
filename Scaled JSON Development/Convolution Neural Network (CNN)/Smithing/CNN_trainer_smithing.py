@@ -42,6 +42,23 @@ def load_recipe_data(data_path='recipe_dataset.npz'):
     print(f"  Input shape:   {X_train.shape[1:]}")
     print(f"  Data type:     {X_train.dtype}")
 
+    # Data diagnostics - help debug impossible metrics issues
+    print(f"\n=== DATA DIAGNOSTICS ===")
+    train_pos = np.sum(y_train == 1)
+    train_neg = np.sum(y_train == 0)
+    val_pos = np.sum(y_val == 1)
+    val_neg = np.sum(y_val == 0)
+    print(f"Train: {train_pos} positive ({train_pos/len(y_train)*100:.1f}%), {train_neg} negative ({train_neg/len(y_train)*100:.1f}%)")
+    print(f"Val:   {val_pos} positive ({val_pos/len(y_val)*100:.1f}%), {val_neg} negative ({val_neg/len(y_val)*100:.1f}%)")
+    print(f"Value range: [{X_train.min():.3f}, {X_train.max():.3f}]")
+
+    # Check for data issues
+    if abs(train_pos/len(y_train) - val_pos/len(y_val)) > 0.15:
+        print(f"[WARNING] Train/Val class balance differs by more than 15%!")
+    if X_train.max() > 1.0 or X_train.min() < 0.0:
+        print(f"[WARNING] Data not normalized to [0,1] range!")
+    print(f"========================")
+
     # Validate shape
     if len(X_train.shape) != 4:
         raise ValueError(
@@ -335,6 +352,12 @@ class HyperparameterSearch:
                     print(f"[SAVED] Model saved (test mode): {model_path}")
                 else:
                     print(f"[SAVED] Model saved: {model_path}")
+            else:
+                # Save as candidate - don't leave user with nothing
+                model_path = f"excellent_{name}_CANDIDATE.keras"
+                model.save(model_path)
+                print(f"[WARNING] Model did not meet criteria (acc={val_acc:.4f}, gap={overfitting_gap:.4f})")
+                print(f"[SAVED] Saving as candidate: {model_path}")
 
             print(f"{'='*60}")
 

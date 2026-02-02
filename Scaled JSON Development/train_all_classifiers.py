@@ -1058,17 +1058,31 @@ def find_best_model(discipline: str, config: Dict, work_dir: Path) -> Optional[T
         debug(f"    Subdirs present: {[d.name for d in work_dir.iterdir() if d.is_dir()]}")
         return None
 
-    # For now, return the most recently modified model
-    # In a real implementation, we'd parse results files to get actual scores
-    best_model = max(models, key=lambda p: p.stat().st_mtime)
+    # Separate candidate and non-candidate models
+    candidate_models = [m for m in models if 'CANDIDATE' in m.name.upper()]
+    good_models = [m for m in models if 'CANDIDATE' not in m.name.upper()]
 
-    debug(f"  Selected: {best_model} (most recent)")
+    debug(f"  Found {len(good_models)} good models, {len(candidate_models)} candidates")
+
+    # Prefer non-candidate models, fall back to candidates
+    if good_models:
+        best_model = max(good_models, key=lambda p: p.stat().st_mtime)
+        is_candidate = False
+    elif candidate_models:
+        best_model = max(candidate_models, key=lambda p: p.stat().st_mtime)
+        is_candidate = True
+        print(f"    WARNING: Only candidate models available, using best candidate")
+    else:
+        # Should not happen since we checked models is non-empty
+        return None
+
+    debug(f"  Selected: {best_model} (most recent {'candidate' if is_candidate else 'good'} model)")
     debug(f"    Modified: {datetime.fromtimestamp(best_model.stat().st_mtime)}")
 
-    # Estimate score (would need actual metrics from training)
-    estimated_score = 0.80  # Placeholder
+    # Estimate score based on whether it's a candidate
+    estimated_score = 0.70 if is_candidate else 0.85  # Placeholder scores
 
-    print(f"    Found best model: {best_model.name}")
+    print(f"    Found best model: {best_model.name}" + (" (CANDIDATE)" if is_candidate else ""))
     return (best_model, estimated_score)
 
 

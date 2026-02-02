@@ -24,7 +24,25 @@ class BestModelVariationTrainer:
         self.y_val = data['y_val']
 
         print(f"Training set: {self.X_train.shape[0]} examples")
-        print(f"Validation set: {self.X_val.shape[0]} examples\n")
+        print(f"Validation set: {self.X_val.shape[0]} examples")
+
+        # Data diagnostics - help debug impossible metrics issues
+        print(f"\n=== DATA DIAGNOSTICS ===")
+        train_pos = np.sum(self.y_train == 1)
+        train_neg = np.sum(self.y_train == 0)
+        val_pos = np.sum(self.y_val == 1)
+        val_neg = np.sum(self.y_val == 0)
+        print(f"Train: {train_pos} positive ({train_pos/len(self.y_train)*100:.1f}%), {train_neg} negative ({train_neg/len(self.y_train)*100:.1f}%)")
+        print(f"Val:   {val_pos} positive ({val_pos/len(self.y_val)*100:.1f}%), {val_neg} negative ({val_neg/len(self.y_val)*100:.1f}%)")
+        print(f"Image shape: {self.X_train.shape[1:]}")
+        print(f"Value range: [{self.X_train.min():.3f}, {self.X_train.max():.3f}]")
+
+        # Check for data issues
+        if abs(train_pos/len(self.y_train) - val_pos/len(self.y_val)) > 0.15:
+            print(f"[WARNING] Train/Val class balance differs by more than 15%!")
+        if self.X_train.max() > 1.0 or self.X_train.min() < 0.0:
+            print(f"[WARNING] Data not normalized to [0,1] range!")
+        print(f"========================\n")
 
         # Best model config (search_003)
         # Epochs reduced for augmented data (2-3x more data)
@@ -217,7 +235,7 @@ class BestModelVariationTrainer:
         import os
         test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
 
-        # Save if meets criteria (90% acc, <6% gap) or always save in test mode
+        # Always save model - use candidate suffix if criteria not met
         all_pass = meets_acc and meets_gap
         if all_pass or test_mode:
             model_path = self.model_save_dir / f"{model_name}_acc{val_acc:.4f}_model.keras"
@@ -226,8 +244,12 @@ class BestModelVariationTrainer:
                 print(f"[SAVED] Model saved (test mode): {model_path.name}")
             elif all_pass:
                 print(f"[SAVED] Model saved (meets criteria): {model_path.name}")
-            else:
-                print(f"[SAVED] Model saved: {model_path.name}")
+        else:
+            # Save as candidate - don't leave user with nothing
+            model_path = self.model_save_dir / f"{model_name}_acc{val_acc:.4f}_CANDIDATE.keras"
+            self.model.save(model_path)
+            print(f"[WARNING] Model did not meet criteria (acc={val_acc:.4f}, gap={acc_gap:.4f})")
+            print(f"[SAVED] Saving as candidate: {model_path.name}")
 
         # Save results
         results = {
