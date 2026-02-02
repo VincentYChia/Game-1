@@ -269,7 +269,9 @@ class HyperparameterSearch:
                 )
 
             # Train
-            start_time = time.time()
+            train_start = datetime.now()
+            print(f"\n  [START] Training at {train_start.strftime('%H:%M:%S')}")
+
             history = model.fit(
                 self.X_train, self.y_train,
                 validation_data=(self.X_val, self.y_val),
@@ -278,7 +280,11 @@ class HyperparameterSearch:
                 callbacks=callback_list,
                 verbose=0
             )
-            train_time = time.time() - start_time
+
+            train_end = datetime.now()
+            train_time = (train_end - train_start).total_seconds()
+            epochs_run = len(history.history['loss'])
+            print(f"  [STOP]  Training completed at {train_end.strftime('%H:%M:%S')} ({train_time:.1f}s, {epochs_run} epochs)")
 
             # Evaluate
             train_metrics = model.evaluate(self.X_train, self.y_train, verbose=0)
