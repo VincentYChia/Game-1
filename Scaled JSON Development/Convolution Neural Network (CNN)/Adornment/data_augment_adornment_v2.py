@@ -1,16 +1,26 @@
 """
 Adornment/Enchanting Recipe CNN Dataset Generator v2
 
+SELF-CONTAINED: All color augmentation logic is integrated directly.
+
+Key Design Principles:
+1. HUE stays CONSTANT - it encodes CATEGORY which is critical for classification
+2. VALUE (brightness) is varied - simulates materials at different tiers within category
+3. SATURATION is varied - simulates materials with different tag combinations
+
+Color Encoding Reference:
+- HUE = Category (metal=210°, wood=30°, stone=0°, monster_drop=300°)
+- VALUE = Tier (T1=0.50, T2=0.65, T3=0.80, T4=0.95)
+- SATURATION = Tags (stone=0.2, base=0.6, +0.2 legendary/mythical, +0.1 magical/ancient)
+
 Updates from v1:
-- Hue variation augmentation to combat material overfitting
+- Saturation/value variation augmentation to combat material overfitting
 - Support for Update-1 and Update-2 folders
-- Multiple hue passes per recipe for richer training data
+- Multiple augmentation passes per recipe for richer training data
 - Improved augmentation with both material substitution AND color variation
 
-The goal is to teach the CNN to recognize PATTERNS and STRUCTURAL relationships
-(vertex positions, shape connectivity), not memorize specific material colors.
-
 Created: 2026-02-02
+Updated: 2026-02-02 - Integrated color augmentation directly (no external imports)
 """
 
 import json
@@ -18,53 +28,244 @@ import numpy as np
 from colorsys import hsv_to_rgb
 from pathlib import Path
 import copy
-import sys
-import os
-from collections import defaultdict
+import random
+from typing import Dict, List, Optional, Tuple, Set
 
-# Add parent directory to path for color_augmentation module
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from color_augmentation import (
-    HueVariationAugmentor,
-    load_materials_from_multiple_sources,
-    load_placements_from_multiple_sources
-)
 
+# ============================================================================
+# INTEGRATED COLOR AUGMENTOR
+# ============================================================================
+
+class ColorAugmentor:
+    """
+    Applies controlled saturation/value variation to material colors during CNN training.
+
+    The variations are designed to:
+    - Simulate new materials within the same category
+    - Prevent CNN from memorizing exact color values
+    - Maintain category distinctiveness (HUE stays constant)
+
+    IMPORTANT: Hue is NOT varied because it encodes category, which must be preserved.
+    """
+
+    # Base category hues (same as MaterialColorEncoder) - NEVER VARIED
+    CATEGORY_HUES = {
+        'metal': 210,
+        'wood': 30,
+        'stone': 0,
+        'monster_drop': 300,
+        'gem': 280,
+        'herb': 120,
+        'fabric': 45,
+    }
+
+    # Elemental hues - NEVER VARIED
+    ELEMENT_HUES = {
+        'fire': 0, 'water': 210, 'earth': 120, 'air': 60,
+        'lightning': 270, 'ice': 180, 'light': 45,
+        'dark': 280, 'void': 290, 'chaos': 330,
+    }
+
+    # Tier to value mapping (base values)
+    TIER_VALUES = {1: 0.50, 2: 0.65, 3: 0.80, 4: 0.95}
+
+    # =========================================================================
+    # SATURATION AND VALUE VARIATION RANGES
+    # =========================================================================
+    # VALUE variation: Simulates different tiers (±0.10 allows ~1 tier shift)
+    VALUE_VARIATION = (-0.10, 0.10)
+
+    # SATURATION variation: Simulates different tag combinations
+    SATURATION_VARIATION = (-0.15, 0.15)
+
+    def __init__(self, materials_dict: Dict, augmentation_enabled: bool = True):
+        """
+        Args:
+            materials_dict: Dict of {material_id: material_data} from JSON
+            augmentation_enabled: If False, produces exact colors (for validation set)
+        """
+        self.materials_dict = materials_dict
+        self.augmentation_enabled = augmentation_enabled
+
+    def get_base_hsv(self, material_id: str) -> Tuple[float, float, float]:
+        """Get the base HSV values for a material (no augmentation)."""
+        if material_id is None or material_id not in self.materials_dict:
+            return (0, 0, 0)  # Black for missing
+
+        material = self.materials_dict[material_id]
+        category = material.get('category', 'unknown')
+        tier = material.get('tier', 1)
+        tags = material.get('metadata', {}).get('tags', [])
+
+        # Determine base hue from category (CONSTANT - never varied)
+        if category == 'elemental':
+            hue = 280  # Default elemental
+            for tag in tags:
+                if tag in self.ELEMENT_HUES:
+                    hue = self.ELEMENT_HUES[tag]
+                    break
+        else:
+            hue = self.CATEGORY_HUES.get(category, 0)
+
+        # Determine base value from tier
+        value = self.TIER_VALUES.get(tier, 0.5)
+
+        # Determine base saturation from tags
+        base_saturation = 0.6
+        if category == 'stone':
+            base_saturation = 0.2
+        if 'legendary' in tags or 'mythical' in tags:
+            base_saturation = min(1.0, base_saturation + 0.2)
+        elif 'magical' in tags or 'ancient' in tags:
+            base_saturation = min(1.0, base_saturation + 0.1)
+
+        return (hue, base_saturation, value)
+
+    def material_to_color(self, material_id: Optional[str]) -> np.ndarray:
+        """
+        Convert material to RGB color, WITH saturation/value variation if enabled.
+
+        Args:
+            material_id: Material ID string, or None for empty cell
+
+        Returns:
+            np.ndarray of shape (3,) with RGB values in [0, 1]
+        """
+        if material_id is None:
+            return np.array([0.0, 0.0, 0.0])
+
+        if material_id not in self.materials_dict:
+            return np.array([0.3, 0.3, 0.3])  # Unknown = gray
+
+        base_hue, base_sat, base_val = self.get_base_hsv(material_id)
+
+        if self.augmentation_enabled:
+            # HUE stays CONSTANT - category must be preserved
+            hue = base_hue
+
+            # Vary VALUE (tier/brightness) - simulate different tiers
+            val_offset = random.uniform(*self.VALUE_VARIATION)
+            value = max(0.30, min(0.95, base_val + val_offset))
+
+            # Vary SATURATION (tags) - simulate different tag combinations
+            sat_offset = random.uniform(*self.SATURATION_VARIATION)
+            saturation = max(0.10, min(1.0, base_sat + sat_offset))
+        else:
+            hue = base_hue
+            saturation = base_sat
+            value = base_val
+
+        # Convert HSV to RGB
+        rgb = hsv_to_rgb(hue / 360.0, saturation, value)
+        return np.array(rgb)
+
+    def material_to_color_exact(self, material_id: Optional[str]) -> np.ndarray:
+        """Get exact color without augmentation (for reference/validation)."""
+        orig_enabled = self.augmentation_enabled
+        self.augmentation_enabled = False
+        result = self.material_to_color(material_id)
+        self.augmentation_enabled = orig_enabled
+        return result
+
+
+# Backwards compatibility alias
+HueVariationAugmentor = ColorAugmentor
+
+
+# ============================================================================
+# DATA LOADING UTILITIES
+# ============================================================================
+
+def load_materials_from_multiple_sources(paths: list) -> Dict:
+    """
+    Load and merge materials from multiple JSON files.
+    Useful for including Update-1, Update-2, etc.
+
+    Args:
+        paths: List of paths to materials JSON files
+
+    Returns:
+        Merged dict of {material_id: material_data}
+    """
+    merged = {}
+    for path in paths:
+        try:
+            with open(path, 'r') as f:
+                data = json.load(f)
+            for mat in data.get('materials', []):
+                mat_id = mat.get('materialId')
+                if mat_id:
+                    merged[mat_id] = mat
+            print(f"  Loaded {len(data.get('materials', []))} materials from {path}")
+        except Exception as e:
+            print(f"  Warning: Could not load {path}: {e}")
+
+    return merged
+
+
+def load_placements_from_multiple_sources(paths: list) -> list:
+    """
+    Load and merge placements from multiple JSON files.
+    Useful for including Update-1, Update-2, etc.
+
+    Args:
+        paths: List of paths to placements JSON files
+
+    Returns:
+        Merged list of placements
+    """
+    merged = []
+    for path in paths:
+        try:
+            with open(path, 'r') as f:
+                data = json.load(f)
+            placements = data.get('placements', [])
+            merged.extend(placements)
+            print(f"  Loaded {len(placements)} placements from {path}")
+        except Exception as e:
+            print(f"  Warning: Could not load {path}: {e}")
+
+    return merged
+
+
+# ============================================================================
+# RECIPE DATA PROCESSOR
+# ============================================================================
 
 class RecipeDataProcessorV2:
     """
     Processes adornment recipes (vertex-based patterns) into CNN training data.
-    Version 2: With hue variation augmentation.
+    Version 2: With saturation/value augmentation (hue stays constant).
     """
 
-    def __init__(self, materials_dict: dict, placements: list, num_hue_passes: int = 3):
+    def __init__(self, materials_dict: dict, placements: list, num_augment_passes: int = 3):
         """
         Args:
             materials_dict: Dict of {material_id: material_data}
             placements: List of placement objects
-            num_hue_passes: Number of hue-varied versions per recipe (default 3)
+            num_augment_passes: Number of augmented versions per recipe (default 3)
         """
         self.materials_dict = materials_dict
         self.placements = placements
-        self.num_hue_passes = num_hue_passes
+        self.num_augment_passes = num_augment_passes
 
-        # Create augmentors
-        self.hue_augmentor = HueVariationAugmentor(materials_dict, augmentation_enabled=True)
-        self.exact_augmentor = HueVariationAugmentor(materials_dict, augmentation_enabled=False)
+        # Create augmentors (integrated, not imported)
+        self.augmentor = ColorAugmentor(materials_dict, augmentation_enabled=True)
+        self.exact_augmentor = ColorAugmentor(materials_dict, augmentation_enabled=False)
 
         print(f"Initialized with {len(materials_dict)} materials")
         print(f"Initialized with {len(placements)} placements")
-        print(f"Hue passes per recipe: {num_hue_passes}")
+        print(f"Augmentation passes per recipe: {num_augment_passes}")
 
     @classmethod
-    def from_paths(cls, materials_paths: list, placements_paths: list, num_hue_passes: int = 3):
+    def from_paths(cls, materials_paths: list, placements_paths: list, num_augment_passes: int = 3):
         """
         Create processor from file paths, merging multiple sources.
 
         Args:
             materials_paths: List of paths to materials JSON files
             placements_paths: List of paths to placements JSON files
-            num_hue_passes: Number of hue variations per recipe
+            num_augment_passes: Number of augmented versions per recipe
         """
         print("\n=== Loading Materials ===")
         materials_dict = load_materials_from_multiple_sources(materials_paths)
@@ -72,7 +273,7 @@ class RecipeDataProcessorV2:
         print("\n=== Loading Placements ===")
         placements = load_placements_from_multiple_sources(placements_paths)
 
-        return cls(materials_dict, placements, num_hue_passes)
+        return cls(materials_dict, placements, num_augment_passes)
 
     def parse_placement(self, placement: dict) -> tuple:
         """Extract vertices and shapes from placement data"""
@@ -288,13 +489,15 @@ class RecipeDataProcessorV2:
 
         return unique_variants
 
-    def augment_with_hue_variation(self, recipe_variants: list, img_size: int = 56) -> np.ndarray:
+    def augment_with_color_variation(self, recipe_variants: list, img_size: int = 56) -> np.ndarray:
         """
-        Convert recipe variants to images with hue variation.
+        Convert recipe variants to images with saturation/value variation.
 
         For each variant:
         - 1 image with exact colors
-        - N images with hue-varied colors
+        - N images with varied saturation/value colors
+
+        Note: HUE is NOT varied - it encodes category which must be preserved.
 
         Args:
             recipe_variants: List of (vertices, shapes) tuples
@@ -314,16 +517,21 @@ class RecipeDataProcessorV2:
             )
             all_images.append(img_exact)
 
-            # Hue-varied colors
-            for _ in range(self.num_hue_passes):
+            # Saturation/value-varied colors
+            for _ in range(self.num_augment_passes):
                 img_varied = self.render_to_image(
                     vertices, shapes,
-                    self.hue_augmentor.material_to_color,
+                    self.augmentor.material_to_color,
                     img_size
                 )
                 all_images.append(img_varied)
 
         return np.array(all_images, dtype=np.float32)
+
+    # Backwards compatibility alias
+    def augment_with_hue_variation(self, recipe_variants: list, img_size: int = 56) -> np.ndarray:
+        """Deprecated: Use augment_with_color_variation instead."""
+        return self.augment_with_color_variation(recipe_variants, img_size)
 
     def create_valid_dataset(self, img_size: int = 56) -> tuple:
         """
@@ -350,13 +558,13 @@ class RecipeDataProcessorV2:
         print(f"Base recipes: {len(self.placements)}")
         print(f"Material-augmented variants: {len(all_variants)}")
 
-        # Apply hue variation
-        print(f"\n=== Applying Hue Variation ===")
-        print(f"Hue passes per variant: {self.num_hue_passes}")
-        expected_images = len(all_variants) * (1 + self.num_hue_passes)
+        # Apply color variation (saturation/value)
+        print(f"\n=== Applying Color Variation (Sat/Val) ===")
+        print(f"Augmentation passes per variant: {self.num_augment_passes}")
+        expected_images = len(all_variants) * (1 + self.num_augment_passes)
         print(f"Expected total images: {expected_images}")
 
-        images = self.augment_with_hue_variation(all_variants, img_size)
+        images = self.augment_with_color_variation(all_variants, img_size)
 
         print(f"Generated images: {len(images)}")
 
@@ -390,6 +598,10 @@ class RecipeDataProcessorV2:
             print(f"  Max substitutes: {max(sub_counts)}")
 
 
+# ============================================================================
+# INVALID RECIPE GENERATOR
+# ============================================================================
+
 class InvalidRecipeGenerator:
     """Generates invalid recipe examples for training"""
 
@@ -411,8 +623,6 @@ class InvalidRecipeGenerator:
 
     def remove_vertices(self, vertices: dict, shapes: list) -> tuple:
         """Remove 20% or minimum 2 vertices"""
-        import random
-
         num_vertices = len(vertices)
         num_remove = max(2, int(num_vertices * 0.2))
         num_remove = min(num_remove, num_vertices - 1)
@@ -434,8 +644,6 @@ class InvalidRecipeGenerator:
 
     def swap_materials(self, vertices: dict) -> dict:
         """Randomly swap 5+ materials"""
-        import random
-
         new_vertices = copy.deepcopy(vertices)
 
         coords_with_materials = [
@@ -461,8 +669,6 @@ class InvalidRecipeGenerator:
 
     def generate_batch(self, count: int, valid_variants: list) -> list:
         """Generate batch of invalid recipes"""
-        import random
-
         invalid_variants = []
 
         # 50% remove vertices
@@ -483,7 +689,7 @@ class InvalidRecipeGenerator:
 
     def create_invalid_dataset(self, valid_variants: list, img_size: int = 56) -> tuple:
         """
-        Create invalid dataset with hue variation.
+        Create invalid dataset with color variation.
 
         Returns:
             (images_array, variants_list)
@@ -499,13 +705,17 @@ class InvalidRecipeGenerator:
         print(f"  - ~{count // 2} with removed vertices")
         print(f"  - ~{count // 2} with swapped materials")
 
-        # Apply hue variation
-        print(f"\n=== Applying Hue Variation to Invalid ===")
-        images = self.processor.augment_with_hue_variation(invalid_variants, img_size)
+        # Apply color variation (saturation/value)
+        print(f"\n=== Applying Color Variation to Invalid ===")
+        images = self.processor.augment_with_color_variation(invalid_variants, img_size)
         print(f"Generated: {len(images)} invalid images")
 
         return images, invalid_variants
 
+
+# ============================================================================
+# MAIN EXECUTION
+# ============================================================================
 
 def get_default_paths():
     """Get default paths for materials and placements including updates."""
@@ -539,15 +749,13 @@ def get_default_paths():
 
 
 def main():
-    """Main execution with hue augmentation"""
-    import random
-
+    """Main execution with color augmentation"""
     random.seed(42)
     np.random.seed(42)
 
     print("=" * 70)
     print("Adornment/Enchanting Recipe CNN Dataset Generator v2")
-    print("With Hue Variation Augmentation")
+    print("With Saturation/Value Augmentation (Hue constant = category)")
     print("=" * 70)
 
     # Get paths including updates
@@ -560,11 +768,11 @@ def main():
     for p in placements_paths:
         print(f"  - {p}")
 
-    # Create processor with hue augmentation
+    # Create processor with color augmentation
     processor = RecipeDataProcessorV2.from_paths(
         [str(p) for p in materials_paths],
         [str(p) for p in placements_paths],
-        num_hue_passes=3
+        num_augment_passes=3
     )
 
     # Analyze augmentation potential
@@ -616,8 +824,8 @@ def main():
         X_val=X_val,
         y_val=y_val
     )
-    print(f"\n✓ Saved complete dataset to: {output_path}")
-    print(f"  Ready for CNN training!")
+    print(f"\nSaved complete dataset to: {output_path}")
+    print(f"Ready for CNN training!")
 
     return X_train, y_train, X_val, y_val
 

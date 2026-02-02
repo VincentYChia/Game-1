@@ -1,6 +1,22 @@
 """
 Smithing Recipe CNN Dataset Generator v2
 
+SELF-CONTAINED: All color augmentation logic is integrated directly.
+
+Key Design Principles:
+1. HUE stays CONSTANT - it encodes CATEGORY which is critical for classification
+2. VALUE (brightness) is varied - simulates materials at different tiers within category
+3. SATURATION is varied - simulates materials with different tag combinations
+
+Color Encoding Reference:
+- HUE = Category (metal=210°, wood=30°, stone=0°, monster_drop=300°)
+- VALUE = Tier (T1=0.50, T2=0.65, T3=0.80, T4=0.95)
+- SATURATION = Tags (stone=0.2, base=0.6, +0.2 legendary/mythical, +0.1 magical/ancient)
+
+Shape Encoding:
+- Each category has a distinct shape pattern
+- Tier determines how much of the cell is filled
+
 Updates from v1:
 - Saturation/value variation augmentation to combat material overfitting
 - Support for Update-1 and Update-2 folders
@@ -8,20 +24,8 @@ Updates from v1:
 - Category-based shape indicators (metal=square, wood=lines, stone=X, etc.)
 - Tier-based fill size (T1=1x1, T2=2x2, T3=3x3, T4=4x4)
 
-The goal is to teach the CNN to recognize PATTERNS, CATEGORIES, and STRUCTURAL
-relationships, not memorize specific material colors.
-
-Color Encoding:
-- HUE = Category (CONSTANT)
-- VALUE = Tier (varied during augmentation to simulate new materials)
-- SATURATION = Tags (varied during augmentation)
-
-Shape Encoding:
-- Each category has a distinct shape pattern
-- Tier determines how much of the cell is filled
-
 Created: 2026-02-02
-Updated: 2026-02-02 - Fixed to vary saturation/value, added shapes + tier fill
+Updated: 2026-02-02 - Integrated color augmentation directly (no external imports)
 """
 
 import json
@@ -29,17 +33,205 @@ import numpy as np
 from colorsys import hsv_to_rgb
 from pathlib import Path
 import copy
-import sys
-import os
+import random
+from typing import Dict, List, Optional, Tuple, Set
 
-# Add parent directory to path for color_augmentation module
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from color_augmentation import (
-    ColorAugmentor,
-    load_materials_from_multiple_sources,
-    load_placements_from_multiple_sources
-)
 
+# ============================================================================
+# INTEGRATED COLOR AUGMENTOR
+# ============================================================================
+
+class ColorAugmentor:
+    """
+    Applies controlled saturation/value variation to material colors during CNN training.
+
+    The variations are designed to:
+    - Simulate new materials within the same category
+    - Prevent CNN from memorizing exact color values
+    - Maintain category distinctiveness (HUE stays constant)
+
+    IMPORTANT: Hue is NOT varied because it encodes category, which must be preserved.
+    """
+
+    # Base category hues (same as MaterialColorEncoder) - NEVER VARIED
+    CATEGORY_HUES = {
+        'metal': 210,
+        'wood': 30,
+        'stone': 0,
+        'monster_drop': 300,
+        'gem': 280,
+        'herb': 120,
+        'fabric': 45,
+    }
+
+    # Elemental hues - NEVER VARIED
+    ELEMENT_HUES = {
+        'fire': 0, 'water': 210, 'earth': 120, 'air': 60,
+        'lightning': 270, 'ice': 180, 'light': 45,
+        'dark': 280, 'void': 290, 'chaos': 330,
+    }
+
+    # Tier to value mapping (base values)
+    TIER_VALUES = {1: 0.50, 2: 0.65, 3: 0.80, 4: 0.95}
+
+    # =========================================================================
+    # SATURATION AND VALUE VARIATION RANGES
+    # =========================================================================
+    # VALUE variation: Simulates different tiers (±0.10 allows ~1 tier shift)
+    VALUE_VARIATION = (-0.10, 0.10)
+
+    # SATURATION variation: Simulates different tag combinations
+    SATURATION_VARIATION = (-0.15, 0.15)
+
+    def __init__(self, materials_dict: Dict, augmentation_enabled: bool = True):
+        """
+        Args:
+            materials_dict: Dict of {material_id: material_data} from JSON
+            augmentation_enabled: If False, produces exact colors (for validation set)
+        """
+        self.materials_dict = materials_dict
+        self.augmentation_enabled = augmentation_enabled
+
+    def get_base_hsv(self, material_id: str) -> Tuple[float, float, float]:
+        """Get the base HSV values for a material (no augmentation)."""
+        if material_id is None or material_id not in self.materials_dict:
+            return (0, 0, 0)  # Black for missing
+
+        material = self.materials_dict[material_id]
+        category = material.get('category', 'unknown')
+        tier = material.get('tier', 1)
+        tags = material.get('metadata', {}).get('tags', [])
+
+        # Determine base hue from category (CONSTANT - never varied)
+        if category == 'elemental':
+            hue = 280  # Default elemental
+            for tag in tags:
+                if tag in self.ELEMENT_HUES:
+                    hue = self.ELEMENT_HUES[tag]
+                    break
+        else:
+            hue = self.CATEGORY_HUES.get(category, 0)
+
+        # Determine base value from tier
+        value = self.TIER_VALUES.get(tier, 0.5)
+
+        # Determine base saturation from tags
+        base_saturation = 0.6
+        if category == 'stone':
+            base_saturation = 0.2
+        if 'legendary' in tags or 'mythical' in tags:
+            base_saturation = min(1.0, base_saturation + 0.2)
+        elif 'magical' in tags or 'ancient' in tags:
+            base_saturation = min(1.0, base_saturation + 0.1)
+
+        return (hue, base_saturation, value)
+
+    def material_to_color(self, material_id: Optional[str]) -> np.ndarray:
+        """
+        Convert material to RGB color, WITH saturation/value variation if enabled.
+
+        Args:
+            material_id: Material ID string, or None for empty cell
+
+        Returns:
+            np.ndarray of shape (3,) with RGB values in [0, 1]
+        """
+        if material_id is None:
+            return np.array([0.0, 0.0, 0.0])
+
+        if material_id not in self.materials_dict:
+            return np.array([0.3, 0.3, 0.3])  # Unknown = gray
+
+        base_hue, base_sat, base_val = self.get_base_hsv(material_id)
+
+        if self.augmentation_enabled:
+            # HUE stays CONSTANT - category must be preserved
+            hue = base_hue
+
+            # Vary VALUE (tier/brightness) - simulate different tiers
+            val_offset = random.uniform(*self.VALUE_VARIATION)
+            value = max(0.30, min(0.95, base_val + val_offset))
+
+            # Vary SATURATION (tags) - simulate different tag combinations
+            sat_offset = random.uniform(*self.SATURATION_VARIATION)
+            saturation = max(0.10, min(1.0, base_sat + sat_offset))
+        else:
+            hue = base_hue
+            saturation = base_sat
+            value = base_val
+
+        # Convert HSV to RGB
+        rgb = hsv_to_rgb(hue / 360.0, saturation, value)
+        return np.array(rgb)
+
+    def material_to_color_exact(self, material_id: Optional[str]) -> np.ndarray:
+        """Get exact color without augmentation (for reference/validation)."""
+        orig_enabled = self.augmentation_enabled
+        self.augmentation_enabled = False
+        result = self.material_to_color(material_id)
+        self.augmentation_enabled = orig_enabled
+        return result
+
+
+# ============================================================================
+# DATA LOADING UTILITIES
+# ============================================================================
+
+def load_materials_from_multiple_sources(paths: list) -> Dict:
+    """
+    Load and merge materials from multiple JSON files.
+    Useful for including Update-1, Update-2, etc.
+
+    Args:
+        paths: List of paths to materials JSON files
+
+    Returns:
+        Merged dict of {material_id: material_data}
+    """
+    merged = {}
+    for path in paths:
+        try:
+            with open(path, 'r') as f:
+                data = json.load(f)
+            for mat in data.get('materials', []):
+                mat_id = mat.get('materialId')
+                if mat_id:
+                    merged[mat_id] = mat
+            print(f"  Loaded {len(data.get('materials', []))} materials from {path}")
+        except Exception as e:
+            print(f"  Warning: Could not load {path}: {e}")
+
+    return merged
+
+
+def load_placements_from_multiple_sources(paths: list) -> list:
+    """
+    Load and merge placements from multiple JSON files.
+    Useful for including Update-1, Update-2, etc.
+
+    Args:
+        paths: List of paths to placements JSON files
+
+    Returns:
+        Merged list of placements
+    """
+    merged = []
+    for path in paths:
+        try:
+            with open(path, 'r') as f:
+                data = json.load(f)
+            placements = data.get('placements', [])
+            merged.extend(placements)
+            print(f"  Loaded {len(placements)} placements from {path}")
+        except Exception as e:
+            print(f"  Warning: Could not load {path}: {e}")
+
+    return merged
+
+
+# ============================================================================
+# RECIPE DATA PROCESSOR
+# ============================================================================
 
 class RecipeDataProcessorV2:
     """
@@ -101,7 +293,7 @@ class RecipeDataProcessorV2:
     DEFAULT_SHAPE = np.ones((4, 4), dtype=np.float32)
 
     # Tier fill sizes (centered in 4x4 cell)
-    # T1=1x1, T2=2x2, T3=3x3, T4=4x4 (full)
+    # T1=1x1, T2=2x2, T3=3x3, T4=full 4x4
     TIER_FILL_SIZES = {1: 1, 2: 2, 3: 3, 4: 4}
 
     def __init__(self, materials_dict: dict, placements: list, num_augment_passes: int = 3):
@@ -115,7 +307,7 @@ class RecipeDataProcessorV2:
         self.placements = placements
         self.num_augment_passes = num_augment_passes
 
-        # Create augmentors
+        # Create augmentors (integrated, not imported)
         self.augmentor = ColorAugmentor(materials_dict, augmentation_enabled=True)
         self.exact_augmentor = ColorAugmentor(materials_dict, augmentation_enabled=False)
 
@@ -491,6 +683,10 @@ class RecipeDataProcessorV2:
             print(f"  Max substitutes: {max(sub_counts)}")
 
 
+# ============================================================================
+# INVALID RECIPE GENERATOR
+# ============================================================================
+
 class InvalidRecipeGenerator:
     """Generates invalid recipe examples for training"""
 
@@ -510,8 +706,6 @@ class InvalidRecipeGenerator:
 
     def generate_random(self) -> list:
         """Generate completely random recipe (2-40 materials)"""
-        import random
-
         num_filled = random.randint(2, 40)
         grid = [[None] * 9 for _ in range(9)]
 
@@ -525,8 +719,6 @@ class InvalidRecipeGenerator:
 
     def corrupt_valid(self, valid_grid: list) -> list:
         """Corrupt a valid recipe by swapping 1-2 materials"""
-        import random
-
         corrupted = copy.deepcopy(valid_grid)
 
         # Find filled positions
@@ -554,8 +746,6 @@ class InvalidRecipeGenerator:
 
     def remove_materials(self, valid_grid: list) -> list:
         """Remove 1-3 materials from valid recipe"""
-        import random
-
         incomplete = copy.deepcopy(valid_grid)
 
         filled_positions = [
@@ -576,8 +766,6 @@ class InvalidRecipeGenerator:
 
     def generate_batch(self, count: int, valid_grids: list) -> list:
         """Generate batch of invalid recipes"""
-        import random
-
         invalid_grids = []
 
         # 25% random
@@ -631,6 +819,10 @@ class InvalidRecipeGenerator:
         return images, invalid_grids
 
 
+# ============================================================================
+# MAIN EXECUTION
+# ============================================================================
+
 def get_default_paths():
     """Get default paths for materials and placements including updates."""
     # Determine base path relative to this file
@@ -664,8 +856,6 @@ def get_default_paths():
 
 def main():
     """Main execution with color augmentation, shapes, and tier fill"""
-    import random
-
     random.seed(42)
     np.random.seed(42)
 
@@ -745,8 +935,8 @@ def main():
         X_val=X_val,
         y_val=y_val
     )
-    print(f"\n✓ Saved complete dataset to: {output_path}")
-    print(f"  Ready for CNN training!")
+    print(f"\nSaved complete dataset to: {output_path}")
+    print(f"Ready for CNN training!")
 
     return X_train, y_train, X_val, y_val
 

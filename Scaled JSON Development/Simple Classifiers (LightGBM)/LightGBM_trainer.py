@@ -1,6 +1,17 @@
 """
 LightGBM Recipe Classifier - Train and Test
+
+SELF-CONTAINED: Includes synthetic material generation for augmentation.
+
 Trains classifiers for crafting recipe validation across three disciplines.
+
+Key Features:
+- Synthetic material injection to combat overfitting
+- Maintains strict substitution rules (same category, same refined/basic status)
+- All synthetic variants replace ALL instances of a material (consistency)
+
+Created: 2026-02-02
+Updated: 2026-02-02 - Integrated synthetic material generation directly
 """
 
 import json
@@ -11,8 +22,255 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
     confusion_matrix
 from collections import Counter, defaultdict
 import pickle
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Optional, Set
 import os
+import random
+import copy
+import uuid
+
+
+# ============================================================================
+# SYNTHETIC MATERIAL GENERATOR (Integrated)
+# ============================================================================
+
+class SyntheticMaterialGenerator:
+    """
+    Generates synthetic materials that are valid substitutes for existing materials.
+
+    All generated materials follow the substitution rules:
+    - Same category
+    - Same refined/basic status
+    - Varied tier within ±1 of original
+    - Similar tags (keeping essential, varying optional)
+    """
+
+    # Essential tags that MUST be preserved for validity
+    ESSENTIAL_TAGS = {'refined', 'basic', 'raw'}
+
+    # Category-specific tags that should be preserved
+    CATEGORY_TAGS = {'metal', 'wood', 'stone', 'elemental', 'monster_drop', 'gem', 'herb', 'fabric'}
+
+    # Optional tags that can be varied
+    OPTIONAL_TAGS = {
+        'legendary', 'mythical', 'magical', 'ancient', 'common', 'rare',
+        'fire', 'water', 'earth', 'air', 'lightning', 'ice', 'light', 'dark', 'void', 'chaos',
+        'sharp', 'heavy', 'light', 'flexible', 'rigid', 'hard', 'soft',
+        'organic', 'mineral', 'crystalline', 'metallic'
+    }
+
+    def __init__(self, all_materials: Dict[str, Dict]):
+        """
+        Args:
+            all_materials: Dict of {material_id: material_data}
+        """
+        self.all_materials = all_materials
+        self._analyze_materials()
+
+    def _analyze_materials(self):
+        """Analyze materials to understand tag patterns."""
+        self.tags_by_category = {}
+        self.materials_by_category = {}
+
+        for mat_id, mat in self.all_materials.items():
+            category = mat.get('category', 'unknown')
+            tags = set(mat.get('metadata', {}).get('tags', []))
+
+            if category not in self.tags_by_category:
+                self.tags_by_category[category] = set()
+                self.materials_by_category[category] = []
+
+            self.tags_by_category[category].update(tags)
+            self.materials_by_category[category].append(mat_id)
+
+    def get_essential_tags(self, material: Dict) -> Set[str]:
+        """Get tags that must be preserved for a material to remain valid."""
+        tags = set(material.get('metadata', {}).get('tags', []))
+        essential = tags & self.ESSENTIAL_TAGS
+        return essential
+
+    def get_optional_tags(self, material: Dict) -> Set[str]:
+        """Get tags that can be safely varied."""
+        tags = set(material.get('metadata', {}).get('tags', []))
+        essential = self.get_essential_tags(material)
+        return tags - essential - self.CATEGORY_TAGS
+
+    def create_synthetic_variant(self, base_material_id: str) -> Optional[Dict]:
+        """
+        Create a synthetic material that is a valid substitute for the base material.
+
+        The synthetic material has:
+        - Same category
+        - Same refined/basic status
+        - Tier varied by ±1 (but not beyond 1-4)
+        - Similar tags (essential preserved, optional varied)
+
+        Args:
+            base_material_id: ID of material to create variant from
+
+        Returns:
+            Synthetic material dict, or None if cannot create valid variant
+        """
+        if base_material_id not in self.all_materials:
+            return None
+
+        base_mat = self.all_materials[base_material_id]
+        category = base_mat.get('category', 'unknown')
+        base_tier = base_mat.get('tier', 1)
+        base_tags = set(base_mat.get('metadata', {}).get('tags', []))
+
+        # Get essential tags that must be preserved
+        essential_tags = self.get_essential_tags(base_mat)
+
+        # Vary tier by ±1 (clamped to 1-4)
+        tier_change = random.choice([-1, 0, 0, 1])  # Bias toward same tier
+        new_tier = max(1, min(4, base_tier + tier_change))
+
+        # Create varied tags
+        optional_tags = self.get_optional_tags(base_mat)
+
+        # Sometimes add/remove optional tags
+        new_optional = set(optional_tags)
+        if random.random() < 0.3:  # 30% chance to add a tag
+            available_optional = self.tags_by_category.get(category, set()) & self.OPTIONAL_TAGS
+            available_optional -= new_optional
+            if available_optional:
+                new_optional.add(random.choice(list(available_optional)))
+
+        if random.random() < 0.3 and new_optional:  # 30% chance to remove a tag
+            new_optional.discard(random.choice(list(new_optional)))
+
+        # Combine tags
+        new_tags = list(essential_tags | new_optional)
+
+        # Create synthetic material
+        synthetic = {
+            'materialId': f'synthetic_{uuid.uuid4().hex[:8]}',
+            'name': f"Synthetic {base_mat.get('name', 'Material')}",
+            'category': category,
+            'tier': new_tier,
+            'rarity': base_mat.get('rarity', 'common'),
+            'metadata': {
+                'tags': new_tags,
+                'synthetic': True,
+                'base_material': base_material_id
+            }
+        }
+
+        return synthetic
+
+
+class RecipeAugmentorWithSynthetics:
+    """
+    Augments recipes by injecting synthetic materials.
+
+    This is the main interface for data augmentation with synthetics.
+    It ensures all substitutions follow the rules.
+    """
+
+    def __init__(self, all_materials: Dict[str, Dict], synthetic_ratio: float = 0.3):
+        """
+        Args:
+            all_materials: Dict of {material_id: material_data}
+            synthetic_ratio: Probability of using synthetic material (0.0-1.0)
+        """
+        self.all_materials = all_materials
+        self.synthetic_ratio = synthetic_ratio
+        self.generator = SyntheticMaterialGenerator(all_materials)
+
+        # Cache of synthetic materials we've created
+        self.synthetic_materials = {}
+
+    def get_or_create_synthetic(self, base_material_id: str) -> Optional[str]:
+        """Get or create a synthetic variant for a material."""
+        synthetic = self.generator.create_synthetic_variant(base_material_id)
+        if synthetic:
+            synthetic_id = synthetic['materialId']
+            self.synthetic_materials[synthetic_id] = synthetic
+            return synthetic_id
+        return None
+
+    def augment_recipe(self, recipe: Dict, recipe_type: str) -> Tuple[Dict, Dict]:
+        """
+        Augment a recipe by potentially injecting synthetic materials.
+
+        Args:
+            recipe: Recipe dict to augment
+            recipe_type: One of 'alchemy', 'refining', 'engineering'
+
+        Returns:
+            Tuple of (augmented_recipe, temporary_materials_dict)
+            The temporary_materials_dict contains any synthetics used
+        """
+        augmented = copy.deepcopy(recipe)
+        temp_materials = dict(self.all_materials)  # Start with all real materials
+        temp_materials.update(self.synthetic_materials)  # Add cached synthetics
+
+        # Find all material positions in recipe
+        material_positions = self._get_material_positions(augmented, recipe_type)
+
+        # Decide which materials to replace with synthetics
+        materials_to_replace = {}  # original_id -> synthetic_id
+
+        unique_materials = set(mp[0] for mp in material_positions)
+
+        for mat_id in unique_materials:
+            if random.random() < self.synthetic_ratio:
+                synthetic_id = self.get_or_create_synthetic(mat_id)
+                if synthetic_id:
+                    materials_to_replace[mat_id] = synthetic_id
+                    temp_materials[synthetic_id] = self.synthetic_materials[synthetic_id]
+
+        # Replace ALL instances of each material (consistency rule)
+        self._replace_materials(augmented, recipe_type, materials_to_replace)
+
+        return augmented, temp_materials
+
+    def _get_material_positions(self, recipe: Dict, recipe_type: str) -> List[Tuple[str, str, int]]:
+        """
+        Get all material positions in a recipe.
+
+        Returns list of (material_id, location_type, index)
+        """
+        positions = []
+
+        if recipe_type == 'refining':
+            for i, core in enumerate(recipe.get('coreInputs', [])):
+                positions.append((core['materialId'], 'core', i))
+            for i, spoke in enumerate(recipe.get('surroundingInputs', [])):
+                positions.append((spoke['materialId'], 'spoke', i))
+
+        elif recipe_type == 'alchemy':
+            for i, ing in enumerate(recipe.get('ingredients', [])):
+                positions.append((ing['materialId'], 'ingredient', i))
+
+        elif recipe_type == 'engineering':
+            for i, slot in enumerate(recipe.get('slots', [])):
+                positions.append((slot['materialId'], 'slot', i))
+
+        return positions
+
+    def _replace_materials(self, recipe: Dict, recipe_type: str, replacements: Dict[str, str]):
+        """Replace materials in recipe according to replacements dict."""
+        if not replacements:
+            return
+
+        if recipe_type == 'refining':
+            for core in recipe.get('coreInputs', []):
+                if core['materialId'] in replacements:
+                    core['materialId'] = replacements[core['materialId']]
+            for spoke in recipe.get('surroundingInputs', []):
+                if spoke['materialId'] in replacements:
+                    spoke['materialId'] = replacements[spoke['materialId']]
+
+        elif recipe_type == 'alchemy':
+            for ing in recipe.get('ingredients', []):
+                if ing['materialId'] in replacements:
+                    ing['materialId'] = replacements[ing['materialId']]
+
+        elif recipe_type == 'engineering':
+            for slot in recipe.get('slots', []):
+                if slot['materialId'] in replacements:
+                    slot['materialId'] = replacements[slot['materialId']]
 
 
 # ============================================================================
@@ -272,9 +530,55 @@ def load_dataset(filepath: str) -> Tuple[List[Dict], List[int], str]:
     return recipes, labels, discipline
 
 
+def augment_dataset_with_synthetics(recipes: List[Dict], labels: List[int],
+                                    all_materials: Dict, recipe_type: str,
+                                    augmentation_factor: int = 2,
+                                    synthetic_ratio: float = 0.3) -> Tuple[List[Dict], List[int], Dict]:
+    """
+    Augment an entire dataset with synthetic materials.
+
+    Args:
+        recipes: List of recipe dicts
+        labels: List of labels (1=valid, 0=invalid)
+        all_materials: Dict of {material_id: material_data}
+        recipe_type: One of 'alchemy', 'refining', 'engineering'
+        augmentation_factor: How many augmented versions per original recipe
+        synthetic_ratio: Probability of synthetic material injection
+
+    Returns:
+        Tuple of (augmented_recipes, augmented_labels, all_materials_including_synthetics)
+    """
+    augmentor = RecipeAugmentorWithSynthetics(all_materials, synthetic_ratio)
+
+    augmented_recipes = []
+    augmented_labels = []
+
+    # Add original recipes
+    augmented_recipes.extend(recipes)
+    augmented_labels.extend(labels)
+
+    # Add augmented versions
+    for recipe, label in zip(recipes, labels):
+        for _ in range(augmentation_factor - 1):  # -1 because we already added original
+            aug_recipe, _ = augmentor.augment_recipe(recipe, recipe_type)
+            augmented_recipes.append(aug_recipe)
+            augmented_labels.append(label)
+
+    # Combine all materials including synthetics
+    combined_materials = dict(all_materials)
+    combined_materials.update(augmentor.synthetic_materials)
+
+    print(f"Augmented dataset:")
+    print(f"  Original recipes: {len(recipes)}")
+    print(f"  Augmented recipes: {len(augmented_recipes)}")
+    print(f"  Synthetic materials created: {len(augmentor.synthetic_materials)}")
+
+    return augmented_recipes, augmented_labels, combined_materials
+
+
 def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
     """Train LightGBM classifier."""
-    print("\n🎓 Training LightGBM classifier...")
+    print("\nTraining LightGBM classifier...")
 
     # Create datasets
     train_data = lgb.Dataset(X_train, label=y_train)
@@ -305,27 +609,40 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
     return model
 
 
-def evaluate_model(model, X_test, y_test):
+def evaluate_model(model, X_test, y_test, X_train=None, y_train=None):
     """Evaluate model performance."""
-    print("\n📊 Evaluating model...")
+    print("\nEvaluating model...")
 
-    # Predictions
+    # Predictions on test
     y_pred_proba = model.predict(X_test, num_iteration=model.best_iteration)
     y_pred = (y_pred_proba > 0.5).astype(int)
 
-    # Metrics
-    accuracy = accuracy_score(y_test, y_pred)
+    # Test metrics
+    test_accuracy = accuracy_score(y_test, y_pred)
     precision = precision_score(y_test, y_pred)
     recall = recall_score(y_test, y_pred)
     f1 = f1_score(y_test, y_pred)
 
+    # Training accuracy if provided
+    train_accuracy = None
+    overfit_gap = None
+    if X_train is not None and y_train is not None:
+        y_train_pred = model.predict(X_train, num_iteration=model.best_iteration)
+        y_train_pred = (y_train_pred > 0.5).astype(int)
+        train_accuracy = accuracy_score(y_train, y_train_pred)
+        overfit_gap = train_accuracy - test_accuracy
+
     print(f"\n{'=' * 50}")
     print(f"PERFORMANCE METRICS")
     print(f"{'=' * 50}")
-    print(f"Accuracy:  {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall:    {recall:.4f}")
-    print(f"F1 Score:  {f1:.4f}")
+    if train_accuracy is not None:
+        print(f"Train Accuracy: {train_accuracy:.4f}")
+    print(f"Val Accuracy:   {test_accuracy:.4f}")
+    if overfit_gap is not None:
+        print(f"Overfit Gap:    {overfit_gap:.4f} ({overfit_gap*100:.1f}%)")
+    print(f"Precision:      {precision:.4f}")
+    print(f"Recall:         {recall:.4f}")
+    print(f"F1 Score:       {f1:.4f}")
     print(f"{'=' * 50}")
 
     # Confusion matrix
@@ -340,7 +657,14 @@ def evaluate_model(model, X_test, y_test):
     print(f"\nDetailed Classification Report:")
     print(classification_report(y_test, y_pred, target_names=['Invalid', 'Valid']))
 
-    return accuracy, precision, recall, f1
+    return {
+        'val_accuracy': test_accuracy,
+        'train_accuracy': train_accuracy,
+        'overfit_gap': overfit_gap,
+        'precision': precision,
+        'recall': recall,
+        'f1': f1
+    }
 
 
 def save_model(model, feature_extractor, discipline, output_dir):
@@ -357,8 +681,8 @@ def save_model(model, feature_extractor, discipline, output_dir):
     with open(extractor_path, 'wb') as f:
         pickle.dump(feature_extractor, f)
 
-    print(f"\n✅ Model saved to: {model_path}")
-    print(f"✅ Feature extractor saved to: {extractor_path}")
+    print(f"\nModel saved to: {model_path}")
+    print(f"Feature extractor saved to: {extractor_path}")
 
 
 def load_model(discipline, model_dir):
@@ -401,6 +725,7 @@ def test_single_recipe(recipe: Dict, model, feature_extractor, discipline: str):
 def main():
     print("=" * 70)
     print("LIGHTGBM RECIPE CLASSIFIER - TRAIN & TEST")
+    print("With Synthetic Material Augmentation")
     print("=" * 70)
 
     print("\nOptions:")
@@ -416,7 +741,7 @@ def main():
         model_output_dir = input("Enter directory to save model: ").strip()
 
         # Load data
-        print("\n📂 Loading data...")
+        print("\nLoading data...")
         recipes, labels, discipline = load_dataset(dataset_path)
 
         with open(materials_path, 'r') as f:
@@ -429,12 +754,20 @@ def main():
         print(f"   Invalid recipes: {len(labels) - sum(labels)}")
         print(f"   Materials: {len(all_materials)}")
 
+        # Augment with synthetics
+        print("\nAugmenting with synthetic materials...")
+        recipes, labels, all_materials = augment_dataset_with_synthetics(
+            recipes, labels, all_materials, discipline,
+            augmentation_factor=2,
+            synthetic_ratio=0.3
+        )
+
         # Create feature extractor
-        print("\n🔧 Building feature extractor...")
+        print("\nBuilding feature extractor...")
         feature_extractor = RecipeFeatureExtractor(all_materials)
 
         # Extract features
-        print(f"🔧 Extracting features for {discipline}...")
+        print(f"Extracting features for {discipline}...")
         X = []
         for recipe in recipes:
             if discipline == 'refining':
@@ -462,12 +795,12 @@ def main():
         model = train_lightgbm_classifier(X_train, y_train, X_test, y_test)
 
         # Evaluate
-        evaluate_model(model, X_test, y_test)
+        metrics = evaluate_model(model, X_test, y_test, X_train, y_train)
 
         # Save model
         save_model(model, feature_extractor, discipline, model_output_dir)
 
-        print("\n✨ Training complete!")
+        print("\nTraining complete!")
 
     elif choice == '2':
         # TESTING MODE
@@ -475,7 +808,7 @@ def main():
         print("You can test recipes by loading the model in your own code.")
 
     else:
-        print("❌ Invalid choice. Please enter 1 or 2.")
+        print("Invalid choice. Please enter 1 or 2.")
 
 
 if __name__ == "__main__":
