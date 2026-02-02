@@ -1,0 +1,23 @@
+{
+  "adornments": {
+    "materials": "a4e0c17de0768d1512793211baa45465",
+    "placements": "0f147eadcc65ca83b958499bc32f92ef"
+  },
+  "alchemy": {
+    "materials": "a4e0c17de0768d1512793211baa45465",
+    "placements": "739f77e90ad68e3a8464461a740537cc"
+  },
+  "refining": {
+    "materials": "a4e0c17de0768d1512793211baa45465",
+    "placements": "bfe7250c4a55ff9981cc79d7338bf7f5"
+  },
+  "engineering": {
+    "materials": "a4e0c17de0768d1512793211baa45465",
+    "placements": "053509a1553bc8548b2eb83f81fbd35f"
+  },
+  "smithing": {
+    "materials": "a4e0c17de0768d1512793211baa45465",
+    "placements": "381747ea5780541ffafc61133f995c05",
+    "recipes": "5ded7ac721a37bfd1d2acaee41bf306d"
+  }
+}

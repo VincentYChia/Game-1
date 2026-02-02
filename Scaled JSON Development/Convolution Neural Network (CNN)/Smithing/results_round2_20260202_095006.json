@@ -1,0 +1,28 @@
+[
+  {
+    "name": "minimal_batch_16",
+    "architecture": "config_4",
+    "learning_rate": 0.001,
+    "batch_size": 16,
+    "l2_reg": 0.0,
+    "dropout_rates": [
+      0.3,
+      0.4
+    ],
+    "use_lr_schedule": false,
+    "params": 167169,
+    "epochs_run": 1,
+    "train_time": 5.279934406280518,
+    "train_acc": 0.6523683071136475,
+    "train_prec": 0.6134076714515686,
+    "train_rec": 0.8374550938606262,
+    "train_f1": 0.7081322800704136,
+    "val_acc": 0.6321839094161987,
+    "val_prec": 0.5860782861709595,
+    "val_rec": 0.8264679908752441,
+    "val_f1": 0.6858181590282648,
+    "inference_ms": 84.73587989807129,
+    "overfitting_gap": 0.02018439769744873,
+    "meets_requirements": false
+  }
+]

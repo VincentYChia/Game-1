@@ -29,7 +29,7 @@ Usage:
     python train_all_classifiers.py --debug            # Verbose debug output
     python train_all_classifiers.py --test-paths       # Verify all paths exist
     python train_all_classifiers.py --test-mode        # Skeleton test (1 config, 1 epoch)
-
+python "Scaled JSON Development/train_all_classifiers.py" --force
 Directory Structure:
     models/
         smithing/       - Trained smithing CNN models
