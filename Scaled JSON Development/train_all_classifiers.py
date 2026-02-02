@@ -353,6 +353,8 @@ def run_data_generation(discipline: str, config: Dict, dry_run: bool = False) ->
             cwd=str(data_script.parent),
             capture_output=True,
             text=True,
+            encoding='utf-8',
+            errors='replace',  # Replace undecodable bytes instead of crashing
             timeout=600  # 10 min timeout
         )
 
@@ -427,6 +429,8 @@ def run_training(discipline: str, config: Dict, dry_run: bool = False) -> Option
             cwd=str(train_script.parent),
             capture_output=True,
             text=True,
+            encoding='utf-8',
+            errors='replace',  # Replace undecodable bytes instead of crashing
             timeout=7200  # 2 hour timeout for CNN training
         )
 
