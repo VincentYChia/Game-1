@@ -1,21 +1,27 @@
 """
 Color Augmentation Module for CNN Training
 
-Provides hue variation augmentation to combat material overfitting.
+Provides saturation/value variation augmentation to combat material overfitting.
 The goal is to teach the CNN to recognize material PATTERNS and CATEGORIES
 rather than memorizing exact RGB values.
 
 Key Design Principles:
-1. Hue variations stay WITHIN category boundaries (metals stay blue-ish, wood stays orange-ish)
-2. Tier brightness (Value) preserved - tier info is semantically important
-3. Category-specific variation ranges prevent cross-category confusion
-4. Elemental materials get element-specific variation ranges
+1. HUE stays CONSTANT - it encodes CATEGORY which is critical
+2. VALUE (brightness) is varied - simulates materials at different tiers within category
+3. SATURATION is varied - simulates materials with different tag combinations
+4. This simulates "new materials" that belong to the same category but have different properties
+
+Color Encoding Reference (from crafting_classifier.py):
+- HUE = Category (metal=210°, wood=30°, stone=0°, monster_drop=300°)
+- VALUE = Tier (T1=0.50, T2=0.65, T3=0.80, T4=0.95)
+- SATURATION = Tags (stone=0.2, base=0.6, +0.2 legendary/mythical, +0.1 magical/ancient)
 
 Usage:
-    augmentor = HueVariationAugmentor(materials_dict)
-    rgb_color = augmentor.material_to_color_augmented(material_id)
+    augmentor = ColorAugmentor(materials_dict)
+    rgb_color = augmentor.material_to_color(material_id)
 
 Created: 2026-02-02
+Updated: 2026-02-02 - Fixed to vary saturation/value instead of hue
 """
 
 import numpy as np
@@ -24,17 +30,19 @@ from typing import Dict, Optional, Tuple
 import random
 
 
-class HueVariationAugmentor:
+class ColorAugmentor:
     """
-    Applies controlled hue variation to material colors during CNN training.
+    Applies controlled saturation/value variation to material colors during CNN training.
 
     The variations are designed to:
-    - Simulate new materials that would be valid substitutes
+    - Simulate new materials within the same category
     - Prevent CNN from memorizing exact color values
-    - Maintain category distinctiveness (metals still look like metals)
+    - Maintain category distinctiveness (HUE stays constant)
+
+    IMPORTANT: Hue is NOT varied because it encodes category, which must be preserved.
     """
 
-    # Base category hues (same as MaterialColorEncoder)
+    # Base category hues (same as MaterialColorEncoder) - NEVER VARIED
     CATEGORY_HUES = {
         'metal': 210,
         'wood': 30,
@@ -45,67 +53,30 @@ class HueVariationAugmentor:
         'fabric': 45,
     }
 
-    # Elemental hues
+    # Elemental hues - NEVER VARIED
     ELEMENT_HUES = {
         'fire': 0, 'water': 210, 'earth': 120, 'air': 60,
         'lightning': 270, 'ice': 180, 'light': 45,
         'dark': 280, 'void': 290, 'chaos': 330,
     }
 
-    # Tier to value mapping
+    # Tier to value mapping (base values)
     TIER_VALUES = {1: 0.50, 2: 0.65, 3: 0.80, 4: 0.95}
 
     # =========================================================================
-    # CATEGORY-SPECIFIC HUE VARIATION RANGES
+    # SATURATION AND VALUE VARIATION RANGES
     # =========================================================================
-    # These ranges are carefully chosen to:
-    # 1. Allow significant variation within each category
-    # 2. NOT overlap with other categories
-    # 3. Create "virtual" materials that could plausibly exist
+    # These simulate materials with different tiers and tag combinations
+    # within the same category.
     #
-    # Format: (min_offset, max_offset) from base hue
-    # Positive = clockwise on color wheel, Negative = counter-clockwise
+    # VALUE variation: Simulates different tiers (±0.10 allows ~1 tier shift)
+    # SATURATION variation: Simulates different tag combinations
 
-    CATEGORY_HUE_RANGES = {
-        # Metal (base 210, cyan/blue) - range 180-240 (avoiding wood at 30 and stone at 0)
-        'metal': (-30, 30),
+    # Value (tier/brightness) variation - significant to simulate tier differences
+    VALUE_VARIATION = (-0.10, 0.10)  # Can shift by ~1 tier equivalent
 
-        # Wood (base 30, orange/brown) - range 10-60 (avoiding stone/red at 0)
-        'wood': (-20, 30),
-
-        # Stone (base 0, red/gray) - range 340-20 (wrapping, low sat makes it gray anyway)
-        'stone': (-20, 20),
-
-        # Monster drops (base 300, magenta/purple) - range 280-340
-        'monster_drop': (-20, 40),
-
-        # Gem (base 280) - range 260-300
-        'gem': (-20, 20),
-
-        # Herb (base 120, green) - range 100-140
-        'herb': (-20, 20),
-
-        # Fabric (base 45) - range 30-60
-        'fabric': (-15, 15),
-    }
-
-    # Elemental-specific hue ranges (narrower to maintain element identity)
-    ELEMENT_HUE_RANGES = {
-        'fire': (-15, 15),      # Stay warm red/orange
-        'water': (-20, 20),     # Stay blue
-        'earth': (-20, 20),     # Stay green/brown
-        'air': (-20, 20),       # Stay yellow/light
-        'lightning': (-20, 20), # Stay purple
-        'ice': (-20, 20),       # Stay cyan
-        'light': (-15, 15),     # Stay yellow-orange
-        'dark': (-15, 15),      # Stay dark purple
-        'void': (-15, 15),      # Stay void purple
-        'chaos': (-30, 30),     # Chaos gets more variation (fitting!)
-    }
-
-    # Saturation and value variation ranges (subtle)
-    SATURATION_RANGE = (-0.1, 0.15)  # Slight variation
-    VALUE_RANGE = (-0.05, 0.05)       # Very subtle - preserve tier info
+    # Saturation (tag) variation - moderate to simulate different tag combos
+    SATURATION_VARIATION = (-0.15, 0.15)
 
     def __init__(self, materials_dict: Dict, augmentation_enabled: bool = True):
         """
@@ -115,22 +86,6 @@ class HueVariationAugmentor:
         """
         self.materials_dict = materials_dict
         self.augmentation_enabled = augmentation_enabled
-
-    def get_hue_range_for_material(self, material: Dict) -> Tuple[float, float]:
-        """Get appropriate hue variation range for a material."""
-        category = material.get('category', 'unknown')
-        tags = material.get('metadata', {}).get('tags', [])
-
-        # Elementals use element-specific ranges
-        if category == 'elemental':
-            for tag in tags:
-                if tag in self.ELEMENT_HUE_RANGES:
-                    return self.ELEMENT_HUE_RANGES[tag]
-            # Default elemental range
-            return (-15, 15)
-
-        # Other categories use category ranges
-        return self.CATEGORY_HUE_RANGES.get(category, (-15, 15))
 
     def get_base_hsv(self, material_id: str) -> Tuple[float, float, float]:
         """Get the base HSV values for a material (no augmentation)."""
@@ -142,7 +97,7 @@ class HueVariationAugmentor:
         tier = material.get('tier', 1)
         tags = material.get('metadata', {}).get('tags', [])
 
-        # Determine base hue
+        # Determine base hue from category (CONSTANT - never varied)
         if category == 'elemental':
             hue = 280  # Default elemental
             for tag in tags:
@@ -155,7 +110,7 @@ class HueVariationAugmentor:
         # Determine base value from tier
         value = self.TIER_VALUES.get(tier, 0.5)
 
-        # Determine base saturation
+        # Determine base saturation from tags
         base_saturation = 0.6
         if category == 'stone':
             base_saturation = 0.2
@@ -168,7 +123,7 @@ class HueVariationAugmentor:
 
     def material_to_color(self, material_id: Optional[str]) -> np.ndarray:
         """
-        Convert material to RGB color, WITH hue variation if enabled.
+        Convert material to RGB color, WITH saturation/value variation if enabled.
 
         Args:
             material_id: Material ID string, or None for empty cell
@@ -182,22 +137,19 @@ class HueVariationAugmentor:
         if material_id not in self.materials_dict:
             return np.array([0.3, 0.3, 0.3])  # Unknown = gray
 
-        material = self.materials_dict[material_id]
         base_hue, base_sat, base_val = self.get_base_hsv(material_id)
 
         if self.augmentation_enabled:
-            # Apply hue variation
-            hue_min, hue_max = self.get_hue_range_for_material(material)
-            hue_offset = random.uniform(hue_min, hue_max)
-            hue = (base_hue + hue_offset) % 360
+            # HUE stays CONSTANT - category must be preserved
+            hue = base_hue
 
-            # Apply subtle saturation variation
-            sat_offset = random.uniform(*self.SATURATION_RANGE)
-            saturation = max(0.0, min(1.0, base_sat + sat_offset))
+            # Vary VALUE (tier/brightness) - simulate different tiers
+            val_offset = random.uniform(*self.VALUE_VARIATION)
+            value = max(0.30, min(0.95, base_val + val_offset))
 
-            # Apply very subtle value variation (preserve tier mostly)
-            val_offset = random.uniform(*self.VALUE_RANGE)
-            value = max(0.1, min(1.0, base_val + val_offset))
+            # Vary SATURATION (tags) - simulate different tag combinations
+            sat_offset = random.uniform(*self.SATURATION_VARIATION)
+            saturation = max(0.10, min(1.0, base_sat + sat_offset))
         else:
             hue = base_hue
             saturation = base_sat
@@ -216,33 +168,37 @@ class HueVariationAugmentor:
         return result
 
 
+# Backwards compatibility alias
+HueVariationAugmentor = ColorAugmentor
+
+
 class MultiPassAugmentor:
     """
-    Generates multiple augmented versions of the same recipe with different hue variations.
-    This creates a richer training set that teaches the CNN to generalize.
+    Generates multiple augmented versions of the same recipe with saturation/value variations.
+    This creates a richer training set that teaches the CNN to generalize to new materials.
     """
 
-    def __init__(self, materials_dict: Dict, num_hue_passes: int = 3):
+    def __init__(self, materials_dict: Dict, num_augment_passes: int = 3):
         """
         Args:
             materials_dict: Dict of {material_id: material_data}
-            num_hue_passes: Number of hue-varied versions to generate per recipe
+            num_augment_passes: Number of augmented versions to generate per recipe
         """
         self.materials_dict = materials_dict
-        self.num_hue_passes = num_hue_passes
-        self.augmentor = HueVariationAugmentor(materials_dict, augmentation_enabled=True)
-        self.exact_augmentor = HueVariationAugmentor(materials_dict, augmentation_enabled=False)
+        self.num_augment_passes = num_augment_passes
+        self.augmentor = ColorAugmentor(materials_dict, augmentation_enabled=True)
+        self.exact_augmentor = ColorAugmentor(materials_dict, augmentation_enabled=False)
 
-    def augment_grid_multi_hue(self, grid, grid_to_image_fn) -> list:
+    def augment_grid(self, grid, grid_to_image_fn) -> list:
         """
-        Generate multiple hue-varied images from a single grid.
+        Generate multiple augmented images from a single grid.
 
         Args:
             grid: 9x9 list of material IDs
             grid_to_image_fn: Function that takes (grid, color_fn) and returns image
 
         Returns:
-            List of augmented images
+            List of augmented images (1 exact + N augmented)
         """
         images = []
 
@@ -250,12 +206,17 @@ class MultiPassAugmentor:
         img_exact = grid_to_image_fn(grid, self.exact_augmentor.material_to_color)
         images.append(img_exact)
 
-        # Multiple hue-varied versions
-        for _ in range(self.num_hue_passes):
+        # Multiple augmented versions (varied saturation/value)
+        for _ in range(self.num_augment_passes):
             img_varied = grid_to_image_fn(grid, self.augmentor.material_to_color)
             images.append(img_varied)
 
         return images
+
+    # Backwards compatibility
+    def augment_grid_multi_hue(self, grid, grid_to_image_fn) -> list:
+        """Deprecated: Use augment_grid instead."""
+        return self.augment_grid(grid, grid_to_image_fn)
 
 
 def load_materials_from_multiple_sources(paths: list) -> Dict:
@@ -331,14 +292,14 @@ if __name__ == "__main__":
         exit(1)
 
     # Test augmentor
-    augmentor = HueVariationAugmentor(materials_dict, augmentation_enabled=True)
-    exact = HueVariationAugmentor(materials_dict, augmentation_enabled=False)
+    augmentor = ColorAugmentor(materials_dict, augmentation_enabled=True)
+    exact = ColorAugmentor(materials_dict, augmentation_enabled=False)
 
     # Show variations for sample materials
     test_materials = ['iron_ingot', 'oak_plank', 'obsidian', 'fire_crystal', 'wolf_pelt']
 
-    print("Hue Variation Test (5 samples each):\n")
-    print(f"{'Material':<20} {'Exact RGB':<25} {'Varied RGB samples...'}")
+    print("Saturation/Value Variation Test (3 samples each):\n")
+    print(f"{'Material':<20} {'Exact RGB':<25} {'Augmented RGB samples...'}")
     print("-" * 100)
 
     for mat_id in test_materials:
@@ -352,8 +313,12 @@ if __name__ == "__main__":
 
         print(f"{mat_id:<20} {exact_str:<25} {' | '.join(varied_strs)}")
 
-    print("\n\nCategory Hue Ranges:")
+    print("\n\nCategory Hues (CONSTANT - never varied):")
     print("-" * 50)
-    for cat, (min_off, max_off) in HueVariationAugmentor.CATEGORY_HUE_RANGES.items():
-        base = HueVariationAugmentor.CATEGORY_HUES.get(cat, 0)
-        print(f"  {cat:<15}: {base}° ± ({min_off}, {max_off}) = [{(base+min_off)%360}° - {(base+max_off)%360}°]")
+    for cat, hue in ColorAugmentor.CATEGORY_HUES.items():
+        print(f"  {cat:<15}: {hue}°")
+
+    print("\n\nAugmentation Ranges:")
+    print("-" * 50)
+    print(f"  VALUE (tier):       {ColorAugmentor.VALUE_VARIATION}")
+    print(f"  SATURATION (tags):  {ColorAugmentor.SATURATION_VARIATION}")

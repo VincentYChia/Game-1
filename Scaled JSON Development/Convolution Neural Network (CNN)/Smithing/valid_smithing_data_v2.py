@@ -2,15 +2,26 @@
 Smithing Recipe CNN Dataset Generator v2
 
 Updates from v1:
-- Hue variation augmentation to combat material overfitting
+- Saturation/value variation augmentation to combat material overfitting
 - Support for Update-1 and Update-2 folders
-- Multiple hue passes per recipe for richer training data
-- Improved augmentation with both material substitution AND color variation
+- Multiple augmentation passes per recipe for richer training data
+- Category-based shape indicators (metal=square, wood=lines, stone=X, etc.)
+- Tier-based fill size (T1=1x1, T2=2x2, T3=3x3, T4=4x4)
 
-The goal is to teach the CNN to recognize PATTERNS and STRUCTURAL relationships,
-not memorize specific material colors.
+The goal is to teach the CNN to recognize PATTERNS, CATEGORIES, and STRUCTURAL
+relationships, not memorize specific material colors.
+
+Color Encoding:
+- HUE = Category (CONSTANT)
+- VALUE = Tier (varied during augmentation to simulate new materials)
+- SATURATION = Tags (varied during augmentation)
+
+Shape Encoding:
+- Each category has a distinct shape pattern
+- Tier determines how much of the cell is filled
 
 Created: 2026-02-02
+Updated: 2026-02-02 - Fixed to vary saturation/value, added shapes + tier fill
 """
 
 import json
@@ -24,7 +35,7 @@ import os
 # Add parent directory to path for color_augmentation module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from color_augmentation import (
-    HueVariationAugmentor,
+    ColorAugmentor,
     load_materials_from_multiple_sources,
     load_placements_from_multiple_sources
 )
@@ -33,37 +44,94 @@ from color_augmentation import (
 class RecipeDataProcessorV2:
     """
     Processes smithing recipes and materials into CNN training data.
-    Version 2: With hue variation augmentation.
+    Version 2: With saturation/value augmentation + category shapes + tier fill.
     """
 
-    def __init__(self, materials_dict: dict, placements: list, num_hue_passes: int = 3):
+    # =========================================================================
+    # CATEGORY SHAPE MASKS (4x4 binary patterns)
+    # =========================================================================
+    # Each category has a distinct visual shape to help CNN learn category
+    # even if colors are slightly varied.
+    #
+    # 1 = filled pixel, 0 = background (black)
+
+    CATEGORY_SHAPES = {
+        # Metal: Full square (solid, industrial)
+        'metal': np.array([
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1]
+        ], dtype=np.float32),
+
+        # Wood: Horizontal lines (grain pattern)
+        'wood': np.array([
+            [1, 1, 1, 1],
+            [0, 0, 0, 0],
+            [1, 1, 1, 1],
+            [0, 0, 0, 0]
+        ], dtype=np.float32),
+
+        # Stone: X pattern (angular, rocky)
+        'stone': np.array([
+            [1, 0, 0, 1],
+            [0, 1, 1, 0],
+            [0, 1, 1, 0],
+            [1, 0, 0, 1]
+        ], dtype=np.float32),
+
+        # Monster drop: Diamond shape (organic)
+        'monster_drop': np.array([
+            [0, 1, 1, 0],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [0, 1, 1, 0]
+        ], dtype=np.float32),
+
+        # Elemental: Plus/cross pattern (radiating energy)
+        'elemental': np.array([
+            [0, 1, 1, 0],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [0, 1, 1, 0]
+        ], dtype=np.float32),
+    }
+
+    # Default shape for unknown categories
+    DEFAULT_SHAPE = np.ones((4, 4), dtype=np.float32)
+
+    # Tier fill sizes (centered in 4x4 cell)
+    # T1=1x1, T2=2x2, T3=3x3, T4=4x4 (full)
+    TIER_FILL_SIZES = {1: 1, 2: 2, 3: 3, 4: 4}
+
+    def __init__(self, materials_dict: dict, placements: list, num_augment_passes: int = 3):
         """
         Args:
             materials_dict: Dict of {material_id: material_data}
             placements: List of placement objects
-            num_hue_passes: Number of hue-varied versions per recipe (default 3)
+            num_augment_passes: Number of augmented versions per recipe (default 3)
         """
         self.materials_dict = materials_dict
         self.placements = placements
-        self.num_hue_passes = num_hue_passes
+        self.num_augment_passes = num_augment_passes
 
         # Create augmentors
-        self.hue_augmentor = HueVariationAugmentor(materials_dict, augmentation_enabled=True)
-        self.exact_augmentor = HueVariationAugmentor(materials_dict, augmentation_enabled=False)
+        self.augmentor = ColorAugmentor(materials_dict, augmentation_enabled=True)
+        self.exact_augmentor = ColorAugmentor(materials_dict, augmentation_enabled=False)
 
         print(f"Initialized with {len(materials_dict)} materials")
         print(f"Initialized with {len(placements)} placements")
-        print(f"Hue passes per recipe: {num_hue_passes}")
+        print(f"Augmentation passes per recipe: {num_augment_passes}")
 
     @classmethod
-    def from_paths(cls, materials_paths: list, placements_paths: list, num_hue_passes: int = 3):
+    def from_paths(cls, materials_paths: list, placements_paths: list, num_augment_passes: int = 3):
         """
         Create processor from file paths, merging multiple sources.
 
         Args:
             materials_paths: List of paths to materials JSON files
             placements_paths: List of paths to placements JSON files
-            num_hue_passes: Number of hue variations per recipe
+            num_augment_passes: Number of augmented versions per recipe
         """
         print("\n=== Loading Materials ===")
         materials_dict = load_materials_from_multiple_sources(materials_paths)
@@ -71,7 +139,32 @@ class RecipeDataProcessorV2:
         print("\n=== Loading Placements ===")
         placements = load_placements_from_multiple_sources(placements_paths)
 
-        return cls(materials_dict, placements, num_hue_passes)
+        return cls(materials_dict, placements, num_augment_passes)
+
+    def get_shape_mask(self, material_id: str) -> np.ndarray:
+        """Get the 4x4 shape mask for a material's category."""
+        if material_id is None or material_id not in self.materials_dict:
+            return self.DEFAULT_SHAPE
+
+        category = self.materials_dict[material_id].get('category', 'unknown')
+        return self.CATEGORY_SHAPES.get(category, self.DEFAULT_SHAPE)
+
+    def get_tier_fill_mask(self, material_id: str, cell_size: int = 4) -> np.ndarray:
+        """
+        Get a mask that limits fill based on tier.
+        T1=1x1 center, T2=2x2 center, T3=3x3 center, T4=full 4x4
+        """
+        if material_id is None or material_id not in self.materials_dict:
+            return np.zeros((cell_size, cell_size), dtype=np.float32)
+
+        tier = self.materials_dict[material_id].get('tier', 1)
+        fill_size = self.TIER_FILL_SIZES.get(tier, 4)
+
+        mask = np.zeros((cell_size, cell_size), dtype=np.float32)
+        offset = (cell_size - fill_size) // 2
+        mask[offset:offset+fill_size, offset:offset+fill_size] = 1.0
+
+        return mask
 
     def is_station(self, recipe_id: str) -> bool:
         """Check if recipe is a station/bench (ends with _t1, _t2, _t3, _t4)"""
@@ -119,7 +212,8 @@ class RecipeDataProcessorV2:
 
         return grid
 
-    def grid_to_image(self, grid: list, color_fn, cell_size: int = 4) -> np.ndarray:
+    def grid_to_image(self, grid: list, color_fn, cell_size: int = 4,
+                      use_shapes: bool = True, use_tier_fill: bool = True) -> np.ndarray:
         """
         Convert 9x9 grid to 36x36 RGB image using provided color function.
 
@@ -127,6 +221,8 @@ class RecipeDataProcessorV2:
             grid: 9x9 list of material IDs
             color_fn: Function that takes material_id and returns RGB array
             cell_size: Pixels per grid cell (default 4)
+            use_shapes: Apply category-based shape masks
+            use_tier_fill: Apply tier-based fill size
 
         Returns:
             36x36x3 RGB image array
@@ -136,9 +232,40 @@ class RecipeDataProcessorV2:
 
         for i in range(9):
             for j in range(9):
-                color = color_fn(grid[i][j])
+                material_id = grid[i][j]
+
+                if material_id is None:
+                    # Empty cell = black
+                    continue
+
+                # Get base color from color function (may be augmented)
+                color = color_fn(material_id)
+
+                # Start with full cell
+                cell = np.zeros((cell_size, cell_size, 3), dtype=np.float32)
+
+                # Apply shape mask based on category
+                if use_shapes:
+                    shape_mask = self.get_shape_mask(material_id)
+                else:
+                    shape_mask = np.ones((cell_size, cell_size), dtype=np.float32)
+
+                # Apply tier fill mask
+                if use_tier_fill:
+                    tier_mask = self.get_tier_fill_mask(material_id, cell_size)
+                else:
+                    tier_mask = np.ones((cell_size, cell_size), dtype=np.float32)
+
+                # Combined mask: shape AND tier
+                combined_mask = shape_mask * tier_mask
+
+                # Apply color through mask
+                for c in range(3):
+                    cell[:, :, c] = color[c] * combined_mask
+
+                # Place cell in image
                 img[i * cell_size:(i + 1) * cell_size,
-                    j * cell_size:(j + 1) * cell_size] = color
+                    j * cell_size:(j + 1) * cell_size] = cell
 
         return img
 
@@ -237,13 +364,16 @@ class RecipeDataProcessorV2:
 
         return unique_variants
 
-    def augment_with_hue_variation(self, grids: list, cell_size: int = 4) -> np.ndarray:
+    def augment_with_color_variation(self, grids: list, cell_size: int = 4) -> np.ndarray:
         """
-        Convert grids to images with hue variation augmentation.
+        Convert grids to images with saturation/value variation augmentation.
 
         For each grid:
-        - 1 image with exact colors
-        - N images with hue-varied colors
+        - 1 image with exact colors (with shapes and tier fill)
+        - N images with varied saturation/value (simulating new materials)
+
+        Note: HUE is NOT varied - it encodes category which must be preserved.
+        Only SATURATION (tags) and VALUE (tier) are varied.
 
         Args:
             grids: List of 9x9 grids
@@ -255,24 +385,33 @@ class RecipeDataProcessorV2:
         all_images = []
 
         for grid in grids:
-            # Exact colors (1 image)
+            # Exact colors (1 image) - with shapes and tier fill
             img_exact = self.grid_to_image(
                 grid,
                 self.exact_augmentor.material_to_color,
-                cell_size
+                cell_size,
+                use_shapes=True,
+                use_tier_fill=True
             )
             all_images.append(img_exact)
 
-            # Hue-varied colors (num_hue_passes images)
-            for _ in range(self.num_hue_passes):
+            # Augmented colors (num_augment_passes images)
+            for _ in range(self.num_augment_passes):
                 img_varied = self.grid_to_image(
                     grid,
-                    self.hue_augmentor.material_to_color,
-                    cell_size
+                    self.augmentor.material_to_color,
+                    cell_size,
+                    use_shapes=True,
+                    use_tier_fill=True
                 )
                 all_images.append(img_varied)
 
         return np.array(all_images, dtype=np.float32)
+
+    # Backwards compatibility alias
+    def augment_with_hue_variation(self, grids: list, cell_size: int = 4) -> np.ndarray:
+        """Deprecated: Use augment_with_color_variation instead."""
+        return self.augment_with_color_variation(grids, cell_size)
 
     def create_valid_dataset(self, cell_size: int = 4) -> tuple:
         """
@@ -311,13 +450,15 @@ class RecipeDataProcessorV2:
         print(f"Base recipes: {len(non_station_placements)}")
         print(f"Material-augmented grids: {len(all_grids)}")
 
-        # Now apply hue variation and convert to images
-        print(f"\n=== Applying Hue Variation ===")
-        print(f"Hue passes per grid: {self.num_hue_passes}")
-        expected_images = len(all_grids) * (1 + self.num_hue_passes)
+        # Now apply color variation (saturation/value) and convert to images
+        print(f"\n=== Applying Color Variation (Sat/Val) ===")
+        print(f"Augmentation passes per grid: {self.num_augment_passes}")
+        print(f"Using category shapes: True")
+        print(f"Using tier fill: True")
+        expected_images = len(all_grids) * (1 + self.num_augment_passes)
         print(f"Expected total images: {expected_images}")
 
-        images = self.augment_with_hue_variation(all_grids, cell_size)
+        images = self.augment_with_color_variation(all_grids, cell_size)
 
         print(f"Generated images: {len(images)}")
 
@@ -465,7 +606,7 @@ class InvalidRecipeGenerator:
 
     def create_invalid_dataset(self, valid_grids: list) -> tuple:
         """
-        Create invalid dataset with hue variation.
+        Create invalid dataset with color variation.
 
         Returns:
             (images_array, grids_list)
@@ -482,9 +623,9 @@ class InvalidRecipeGenerator:
         print(f"  - ~{count // 2} corrupted valid")
         print(f"  - ~{count // 4} incomplete")
 
-        # Apply hue variation
-        print(f"\n=== Applying Hue Variation to Invalid ===")
-        images = self.processor.augment_with_hue_variation(invalid_grids)
+        # Apply color variation (saturation/value) with shapes and tier fill
+        print(f"\n=== Applying Color Variation to Invalid ===")
+        images = self.processor.augment_with_color_variation(invalid_grids)
         print(f"Generated: {len(images)} invalid images")
 
         return images, invalid_grids
@@ -522,7 +663,7 @@ def get_default_paths():
 
 
 def main():
-    """Main execution with hue augmentation"""
+    """Main execution with color augmentation, shapes, and tier fill"""
     import random
 
     random.seed(42)
@@ -530,7 +671,7 @@ def main():
 
     print("=" * 70)
     print("Smithing Recipe CNN Dataset Generator v2")
-    print("With Hue Variation Augmentation")
+    print("With Saturation/Value Augmentation + Category Shapes + Tier Fill")
     print("=" * 70)
 
     # Get paths including updates
@@ -543,12 +684,12 @@ def main():
     for p in placements_paths:
         print(f"  - {p}")
 
-    # Create processor with hue augmentation
-    # num_hue_passes=3 means 4x images per grid (1 exact + 3 varied)
+    # Create processor with color augmentation (saturation/value variation)
+    # num_augment_passes=3 means 4x images per grid (1 exact + 3 varied)
     processor = RecipeDataProcessorV2.from_paths(
         [str(p) for p in materials_paths],
         [str(p) for p in placements_paths],
-        num_hue_passes=3
+        num_augment_passes=3
     )
 
     # Analyze augmentation potential
