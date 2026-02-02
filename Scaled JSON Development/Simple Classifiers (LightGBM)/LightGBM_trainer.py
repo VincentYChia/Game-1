@@ -578,7 +578,20 @@ def augment_dataset_with_synthetics(recipes: List[Dict], labels: List[int],
 
 def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
     """Train LightGBM classifier."""
-    print("\nTraining LightGBM classifier...")
+    import os
+
+    # Check for test mode from environment variable
+    test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
+
+    if test_mode:
+        print("\n*** TEST MODE: 5 boosting rounds only ***")
+        print("Training LightGBM classifier (test mode)...")
+        num_rounds = 5
+        early_stop_rounds = 2
+    else:
+        print("\nTraining LightGBM classifier...")
+        num_rounds = 200
+        early_stop_rounds = 20
 
     # Create datasets
     train_data = lgb.Dataset(X_train, label=y_train)
@@ -601,9 +614,9 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
     model = lgb.train(
         params,
         train_data,
-        num_boost_round=200,
+        num_boost_round=num_rounds,
         valid_sets=[test_data],
-        callbacks=[lgb.early_stopping(stopping_rounds=20), lgb.log_evaluation(period=0)]
+        callbacks=[lgb.early_stopping(stopping_rounds=early_stop_rounds), lgb.log_evaluation(period=0)]
     )
 
     return model

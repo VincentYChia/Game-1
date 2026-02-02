@@ -771,18 +771,31 @@ if __name__ == "__main__":
 # Example usage
 if __name__ == "__main__":
     import random
+    import os
 
     random.seed(42)
     np.random.seed(42)
     tf.random.set_seed(42)
 
+    # Check for test mode from environment variable
+    test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
+
+    if test_mode:
+        print("="*80)
+        print("*** TEST MODE: 1 config, 1 epoch ***")
+        print("="*80)
+
     trainer = AntiOverfitCNNTrainer("adornment_dataset.npz")
 
-    # Option 1: Train single config
-    # result = trainer.train(architecture='simple')
-
-    # Option 2: Train all configs and compare
-    results = trainer.train_multiple_configs()
+    if test_mode:
+        # Test mode: Run single config with 1 epoch
+        print("\n[TEST MODE] Using 1 config with 1 epoch")
+        test_config = trainer.get_anti_overfit_config('simple')
+        test_config['epochs'] = 1
+        result = trainer.train(config=test_config)
+    else:
+        # Option 2: Train all configs and compare
+        results = trainer.train_multiple_configs()
 
     print("\n✓ Anti-overfitting training complete!")
     print("Run comprehensive_model_evaluator.py to compare with previous models.")

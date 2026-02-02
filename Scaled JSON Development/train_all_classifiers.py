@@ -28,6 +28,22 @@ Usage:
     python train_all_classifiers.py --list             # List disciplines
     python train_all_classifiers.py --debug            # Verbose debug output
     python train_all_classifiers.py --test-paths       # Verify all paths exist
+    python train_all_classifiers.py --test-mode        # Skeleton test (1 config, 1 epoch)
+
+Directory Structure:
+    models/
+        smithing/       - Trained smithing CNN models
+        adornment/      - Trained adornment CNN models
+        alchemy/        - Trained alchemy LightGBM models
+        refining/       - Trained refining LightGBM models
+        engineering/    - Trained engineering LightGBM models
+        archived/       - Old models archived here
+    training_data/
+        smithing/       - Smithing training datasets
+        adornment/      - Adornment training datasets
+        alchemy/        - Alchemy training datasets
+        refining/       - Refining training datasets
+        engineering/    - Engineering training datasets
 
 Created: 2026-02-02
 """
@@ -53,15 +69,19 @@ SCRIPT_DIR = Path(__file__).parent
 CNN_DIR = SCRIPT_DIR / "Convolution Neural Network (CNN)"
 LIGHTGBM_DIR = SCRIPT_DIR / "Simple Classifiers (LightGBM)"
 GAME_MODULAR = SCRIPT_DIR.parent / "Game-1-modular"
-ARCHIVE_DIR = SCRIPT_DIR / "archived_classifiers"
 
-# Game expects models at these EXACT paths (from crafting_classifier.py:DEFAULT_CONFIGS)
+# New organized directories
+MODELS_DIR = SCRIPT_DIR / "models"
+TRAINING_DATA_DIR = SCRIPT_DIR / "training_data"
+ARCHIVE_DIR = MODELS_DIR / "archived"  # Archive lives inside models folder
+
+# Game expects models at these EXACT paths - updated to use organized structure
 GAME_MODEL_PATHS = {
-    'smithing': SCRIPT_DIR / "Convolution Neural Network (CNN)" / "Smithing" / "batch 4 (batch 3, no stations)" / "excellent_minimal_batch_20.keras",
-    'adornments': SCRIPT_DIR / "Convolution Neural Network (CNN)" / "Adornment" / "smart_search_results" / "best_original_20260124_185830_f10.9520_model.keras",
-    'alchemy': SCRIPT_DIR / "Simple Classifiers (LightGBM)" / "alchemy_lightGBM" / "alchemy_model.txt",
-    'refining': SCRIPT_DIR / "Simple Classifiers (LightGBM)" / "refining_lightGBM" / "refining_model.txt",
-    'engineering': SCRIPT_DIR / "Simple Classifiers (LightGBM)" / "engineering_lightGBM" / "engineering_model.txt",
+    'smithing': MODELS_DIR / "smithing" / "smithing_best.keras",
+    'adornments': MODELS_DIR / "adornment" / "adornment_best.keras",
+    'alchemy': MODELS_DIR / "alchemy" / "alchemy_model.txt",
+    'refining': MODELS_DIR / "refining" / "refining_model.txt",
+    'engineering': MODELS_DIR / "engineering" / "engineering_model.txt",
 }
 
 # ============================================================================
@@ -100,8 +120,10 @@ DISCIPLINES = {
         'type': 'cnn',
         'data_script': CNN_DIR / "Smithing" / "valid_smithing_data_v2.py",
         'train_script': CNN_DIR / "Smithing" / "CNN_trainer_smithing.py",
-        'work_dir': CNN_DIR / "Smithing",
-        'model_pattern': 'excellent_*.keras',  # New models start with excellent_
+        'work_dir': CNN_DIR / "Smithing",  # CNN scripts work in their own dir, we copy out
+        'model_output_dir': MODELS_DIR / "smithing",  # Where we copy best model
+        'data_output_dir': TRAINING_DATA_DIR / "smithing",  # Where training data goes
+        'model_pattern': '*.keras',  # Matches any keras model
         'extractor_pattern': None,
         'output_dataset': 'recipe_dataset_v2.npz',
         # CNN scripts don't need external args - they have their own paths
@@ -112,8 +134,10 @@ DISCIPLINES = {
         'type': 'cnn',
         'data_script': CNN_DIR / "Adornment" / "data_augment_adornment_v2.py",
         'train_script': CNN_DIR / "Adornment" / "CNN_trainer_adornment.py",
-        'work_dir': CNN_DIR / "Adornment",
-        'model_pattern': '*_model.keras',  # New models end with _model.keras
+        'work_dir': CNN_DIR / "Adornment",  # CNN scripts work in their own dir
+        'model_output_dir': MODELS_DIR / "adornment",  # Where we copy best model
+        'data_output_dir': TRAINING_DATA_DIR / "adornment",  # Where training data goes
+        'model_pattern': '*.keras',  # Matches any keras model
         'extractor_pattern': None,
         'output_dataset': 'adornment_dataset_v2.npz',
         # CNN scripts don't need external args
@@ -124,69 +148,108 @@ DISCIPLINES = {
         'type': 'lightgbm',
         'data_script': LIGHTGBM_DIR / "data_augment_GBM.py",
         'train_script': LIGHTGBM_DIR / "LightGBM_trainer.py",
-        'work_dir': LIGHTGBM_DIR,
-        'model_pattern': 'alchemy_lightGBM/*_model.txt',
-        'extractor_pattern': 'alchemy_lightGBM/*_extractor.pkl',
+        'work_dir': MODELS_DIR / "alchemy",
+        'model_pattern': '*_model.txt',
+        'extractor_pattern': '*_extractor.pkl',
         'output_dataset': 'alchemy_augmented_data.json',
         # LightGBM data script args: discipline materials placements output
         'data_args': lambda: ['alchemy', str(MATERIALS_JSON),
                               str(DATA_PATHS['alchemy']['placements']),
-                              str(LIGHTGBM_DIR / 'alchemy_augmented_data.json')],
+                              str(TRAINING_DATA_DIR / 'alchemy' / 'alchemy_augmented_data.json')],
         # LightGBM trainer args: train dataset materials output_dir
         'train_args': lambda: ['train',
-                               str(LIGHTGBM_DIR / 'alchemy_augmented_data.json'),
+                               str(TRAINING_DATA_DIR / 'alchemy' / 'alchemy_augmented_data.json'),
                                str(MATERIALS_JSON),
-                               str(LIGHTGBM_DIR / 'alchemy_lightGBM')],
+                               str(MODELS_DIR / 'alchemy')],
     },
     'refining': {
         'type': 'lightgbm',
         'data_script': LIGHTGBM_DIR / "data_augment_ref.py",
         'train_script': LIGHTGBM_DIR / "LightGBM_trainer.py",
-        'work_dir': LIGHTGBM_DIR,
-        'model_pattern': 'refining_lightGBM/*_model.txt',
-        'extractor_pattern': 'refining_lightGBM/*_extractor.pkl',
+        'work_dir': MODELS_DIR / "refining",
+        'model_pattern': '*_model.txt',
+        'extractor_pattern': '*_extractor.pkl',
         'output_dataset': 'refining_augmented_data.json',
         # Refining data script args: materials placements output
         'data_args': lambda: [str(MATERIALS_JSON),
                               str(DATA_PATHS['refining']['placements']),
-                              str(LIGHTGBM_DIR / 'refining_augmented_data.json')],
+                              str(TRAINING_DATA_DIR / 'refining' / 'refining_augmented_data.json')],
         # LightGBM trainer args
         'train_args': lambda: ['train',
-                               str(LIGHTGBM_DIR / 'refining_augmented_data.json'),
+                               str(TRAINING_DATA_DIR / 'refining' / 'refining_augmented_data.json'),
                                str(MATERIALS_JSON),
-                               str(LIGHTGBM_DIR / 'refining_lightGBM')],
+                               str(MODELS_DIR / 'refining')],
     },
     'engineering': {
         'type': 'lightgbm',
         'data_script': LIGHTGBM_DIR / "data_augment_GBM.py",
         'train_script': LIGHTGBM_DIR / "LightGBM_trainer.py",
-        'work_dir': LIGHTGBM_DIR,
-        'model_pattern': 'engineering_lightGBM/*_model.txt',
-        'extractor_pattern': 'engineering_lightGBM/*_extractor.pkl',
+        'work_dir': MODELS_DIR / "engineering",
+        'model_pattern': '*_model.txt',
+        'extractor_pattern': '*_extractor.pkl',
         'output_dataset': 'engineering_augmented_data.json',
         # LightGBM data script args
         'data_args': lambda: ['engineering', str(MATERIALS_JSON),
                               str(DATA_PATHS['engineering']['placements']),
-                              str(LIGHTGBM_DIR / 'engineering_augmented_data.json')],
+                              str(TRAINING_DATA_DIR / 'engineering' / 'engineering_augmented_data.json')],
         # LightGBM trainer args
         'train_args': lambda: ['train',
-                               str(LIGHTGBM_DIR / 'engineering_augmented_data.json'),
+                               str(TRAINING_DATA_DIR / 'engineering' / 'engineering_augmented_data.json'),
                                str(MATERIALS_JSON),
-                               str(LIGHTGBM_DIR / 'engineering_lightGBM')],
+                               str(MODELS_DIR / 'engineering')],
     },
 }
 
 # ============================================================================
-# DEBUG UTILITIES
+# DEBUG UTILITIES & MODES
 # ============================================================================
 
 DEBUG_MODE = False
+TEST_MODE = False  # Skeleton test: 1 config, 1 epoch for validation
 
 
 def debug(msg: str):
     """Print debug message if debug mode is enabled."""
     if DEBUG_MODE:
         print(f"[DEBUG] {msg}")
+
+
+def info(msg: str):
+    """Print info message (always visible)."""
+    print(f"[INFO] {msg}")
+
+
+def warn(msg: str):
+    """Print warning message (always visible)."""
+    print(f"[WARN] {msg}")
+
+
+def error(msg: str):
+    """Print error message (always visible)."""
+    print(f"[ERROR] {msg}")
+
+
+def ensure_directories():
+    """Create all required directories if they don't exist."""
+    directories = [
+        MODELS_DIR / "smithing",
+        MODELS_DIR / "adornment",
+        MODELS_DIR / "alchemy",
+        MODELS_DIR / "refining",
+        MODELS_DIR / "engineering",
+        MODELS_DIR / "archived",
+        TRAINING_DATA_DIR / "smithing",
+        TRAINING_DATA_DIR / "adornment",
+        TRAINING_DATA_DIR / "alchemy",
+        TRAINING_DATA_DIR / "refining",
+        TRAINING_DATA_DIR / "engineering",
+    ]
+
+    for dir_path in directories:
+        dir_path.mkdir(parents=True, exist_ok=True)
+        debug(f"Ensured directory: {dir_path}")
+
+    info(f"All directories ensured ({len(directories)} dirs)")
 
 
 # ============================================================================
@@ -371,6 +434,12 @@ def debug_paths():
 
     print(f"\nGame modular directory: {GAME_MODULAR}")
     print(f"  Exists: {GAME_MODULAR.exists()}")
+
+    print(f"\nModels directory: {MODELS_DIR}")
+    print(f"  Exists: {MODELS_DIR.exists()}")
+
+    print(f"\nTraining data directory: {TRAINING_DATA_DIR}")
+    print(f"  Exists: {TRAINING_DATA_DIR.exists()}")
 
     print(f"\nArchive directory: {ARCHIVE_DIR}")
     print(f"  Exists: {ARCHIVE_DIR.exists()}")
@@ -684,6 +753,12 @@ def run_training(discipline: str, config: Dict, dry_run: bool = False) -> Option
         cmd = [sys.executable, str(train_script)] + train_args
         debug(f"  Running: {' '.join(cmd)}")
 
+        # Set up environment with test mode flag
+        env = os.environ.copy()
+        if TEST_MODE:
+            env['CLASSIFIER_TEST_MODE'] = '1'
+            info(f"  TEST MODE: Will run 1 config, 1 epoch only")
+
         result = subprocess.run(
             cmd,
             cwd=str(train_script.parent),
@@ -691,7 +766,8 @@ def run_training(discipline: str, config: Dict, dry_run: bool = False) -> Option
             text=True,
             encoding='utf-8',
             errors='replace',  # Replace undecodable bytes instead of crashing
-            timeout=7200  # 2 hour timeout for CNN training
+            timeout=7200 if not TEST_MODE else 600,  # 2 hour for real, 10 min for test
+            env=env
         )
 
         debug(f"  Return code: {result.returncode}")
@@ -1162,9 +1238,16 @@ def train_all(disciplines: List[str], dry_run: bool = False,
     print(f"Force: {force}")
     print(f"Keep Best: {keep_best}")
     print(f"Debug Mode: {DEBUG_MODE}")
+    print(f"Test Mode: {TEST_MODE}")
+    print(f"Models Dir: {MODELS_DIR}")
+    print(f"Training Data Dir: {TRAINING_DATA_DIR}")
     print(f"Archive Dir: {ARCHIVE_DIR}")
     print(f"Scoring: score = val_accuracy - 2.0 * overfit_gap")
     print("="*70)
+
+    # Ensure all directories exist
+    if not dry_run:
+        ensure_directories()
 
     for discipline in disciplines:
         try:
@@ -1290,12 +1373,30 @@ Training Order:
         help='Skip model cleanup (keep all models)'
     )
 
+    parser.add_argument(
+        '--test-mode', '-t',
+        action='store_true',
+        help='Skeleton test mode: runs 1 config, 1 epoch to validate data generation works'
+    )
+
     args = parser.parse_args()
 
-    # Set debug mode
+    # Set global modes
+    global DEBUG_MODE, TEST_MODE
     DEBUG_MODE = args.debug
+    TEST_MODE = args.test_mode
+
     if DEBUG_MODE:
         print("[DEBUG MODE ENABLED]")
+
+    if TEST_MODE:
+        print("=" * 70)
+        print("TEST MODE ENABLED")
+        print("=" * 70)
+        print("  - Data generation: FULL (validates data pipeline)")
+        print("  - Training: 1 config, 1 epoch only")
+        print("  - Purpose: Validate data generation and basic model creation")
+        print("=" * 70)
 
     # Handle special modes
     if args.debug_paths:

@@ -529,8 +529,15 @@ def get_round2_configs():
 
 def main():
     """Main execution"""
+    import os
+
+    # Check for test mode from environment variable
+    test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
+
     print("="*80)
     print("Recipe Validator CNN - Round 2 Hyperparameter Search")
+    if test_mode:
+        print("*** TEST MODE: 1 config, 1 epoch ***")
     print("="*80)
 
     try:
@@ -542,6 +549,13 @@ def main():
 
         # Get configurations
         configs = get_round2_configs()
+
+        # In test mode, use only 1 config with 1 epoch
+        if test_mode:
+            print("\n[TEST MODE] Using 1 config with 1 epoch")
+            test_config = configs[0].copy()
+            test_config['epochs'] = 1
+            configs = [test_config]
 
         # Run search
         results = search.run_search(configs)
