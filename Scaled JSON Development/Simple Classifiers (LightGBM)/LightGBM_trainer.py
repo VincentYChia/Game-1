@@ -854,7 +854,7 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
         config_name = config.get('name', f'config_{i}')
 
         # Start training
-        print(f"\n{'─'*60}")
+        print(f"\n{'-'*60}")
         print(f"[{i+1}/{len(configs)}] CONFIG: {config_name}")
         print(f"{'─'*60}")
         print(f"  Params: leaves={config.get('num_leaves')}, lr={config.get('learning_rate')}, "
@@ -883,10 +883,10 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
             print(f"\n  RESULTS:")
             print(f"    Train Accuracy:  {train_acc*100:.2f}%")
             print(f"    Val Accuracy:    {val_acc*100:.2f}%")
-            print(f"    Overfitting Gap: {gap*100:.2f}% {'⚠️ HIGH' if gap > 0.06 else '✓ OK'}")
+            print(f"    Overfitting Gap: {gap*100:.2f}% {'[!] HIGH' if gap > 0.06 else 'OK'}")
 
             if is_suspicious:
-                print(f"    ⛔ REJECTED: {suspicious_reason}")
+                print(f"    [X] REJECTED: {suspicious_reason}")
                 print(f"    Robustness Score: REJECTED (memorization suspected)")
             else:
                 print(f"    Robustness Score: {score:.4f}")
@@ -907,7 +907,7 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
                 best_score = score
                 best_model = model
                 best_config_name = config_name
-                print(f"    >>> NEW BEST! <<<")
+                print(f"    *** NEW BEST! ***")
 
         except Exception as e:
             print(f"  [ERROR] Training failed: {e}")
@@ -933,7 +933,7 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
         print(f"Best config: {best_config_name}")
         print(f"Best robustness score: {best_score:.4f}")
     else:
-        print(f"⚠️ WARNING: No valid models found! All configs showed signs of memorization.")
+        print(f"[!] WARNING: No valid models found! All configs showed signs of memorization.")
 
     # Show top 3 valid configs
     valid_results.sort(key=lambda x: x['score'], reverse=True)

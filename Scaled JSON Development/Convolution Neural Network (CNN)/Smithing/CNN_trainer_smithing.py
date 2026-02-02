@@ -428,7 +428,7 @@ class HyperparameterSearch:
                 result['rejection_reason'] = suspicious_reason if is_suspicious else None
 
                 if is_suspicious:
-                    print(f"\n  ⛔ REJECTED: {suspicious_reason}")
+                    print(f"\n  [X] REJECTED: {suspicious_reason}")
                     print(f"  >> Robustness Score: REJECTED (memorization suspected)")
                 else:
                     print(f"\n  >> Robustness Score: {rob_score:.4f}")
@@ -511,7 +511,7 @@ class HyperparameterSearch:
             print(f"  Batch Size:           {best['batch_size']}")
             print(f"  Learning Rate:        {best['learning_rate']}")
         else:
-            print(f"\n⚠️ WARNING: No valid models found! All configs showed signs of memorization.")
+            print(f"\n[!] WARNING: No valid models found! All configs showed signs of memorization.")
 
         # Passing models
         passing = [r for r in valid_results if r['meets_requirements']]

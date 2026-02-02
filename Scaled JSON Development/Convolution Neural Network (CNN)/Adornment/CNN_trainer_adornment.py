@@ -138,9 +138,9 @@ class BestModelVariationTrainer:
     def train_config(self, config, variation_name):
         """Train a single configuration"""
 
-        print(f"\n{'─' * 70}")
+        print(f"\n{'-' * 70}")
         print(f"CONFIG: {variation_name}")
-        print(f"{'─' * 70}")
+        print(f"{'-' * 70}")
         print(f"  Architecture: filters={config['filters']}, kernels={config['kernel_sizes']}")
         print(f"  Dropout: conv={config['dropout_conv']}, dense={config['dropout_dense']}")
         print(f"  Regularization: L2={config['l2_regularization']}")
@@ -223,15 +223,15 @@ class BestModelVariationTrainer:
         print(f"\n  RESULTS:")
         print(f"    Train Accuracy:  {train_acc*100:.2f}%")
         print(f"    Val Accuracy:    {val_acc*100:.2f}%")
-        print(f"    Overfitting Gap: {acc_gap*100:.2f}% {'⚠️ HIGH' if acc_gap > 0.06 else '✓ OK'}")
+        print(f"    Overfitting Gap: {acc_gap*100:.2f}% {'[!] HIGH' if acc_gap > 0.06 else 'OK'}")
         print(f"    Val F1 Score:    {val_f1:.4f}")
 
         # Check requirements (90% accuracy, <6% overfit)
         meets_acc = val_acc >= 0.90
         meets_gap = acc_gap < 0.06
         print(f"\n  REQUIREMENTS:")
-        print(f"    Accuracy >=90%: {'PASS ✓' if meets_acc else 'FAIL ✗'}")
-        print(f"    Gap <6%:        {'PASS ✓' if meets_gap else 'FAIL ✗'}")
+        print(f"    Accuracy >=90%: {'PASS' if meets_acc else 'FAIL'}")
+        print(f"    Gap <6%:        {'PASS' if meets_gap else 'FAIL'}")
 
         # Check for test mode from environment
         import os
@@ -466,7 +466,7 @@ class BestModelVariationTrainer:
                 result['rejection_reason'] = suspicious_reason if is_suspicious else None
 
                 if is_suspicious:
-                    print(f"\n  ⛔ REJECTED: {suspicious_reason}")
+                    print(f"\n  [X] REJECTED: {suspicious_reason}")
                     print(f"  >> Robustness Score: REJECTED (memorization suspected)")
                 else:
                     print(f"\n  >> Robustness Score: {robustness_score:.4f} (acc={val_acc:.4f}, gap={acc_gap:.4f})")
@@ -541,7 +541,7 @@ class BestModelVariationTrainer:
             if best_result:
                 print(f"[OK] Best model: {best_result['variation_name']} (robustness={best_result.get('robustness_score', 0):.4f})")
         else:
-            print(f"\n⚠️ WARNING: No valid models found! All configs showed signs of memorization.")
+            print(f"\n[!] WARNING: No valid models found! All configs showed signs of memorization.")
 
         # Show rejected models
         if rejected_results:
