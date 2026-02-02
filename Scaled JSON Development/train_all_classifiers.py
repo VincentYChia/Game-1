@@ -65,6 +65,33 @@ GAME_MODEL_PATHS = {
 }
 
 # ============================================================================
+# DATA PATHS (materials, recipes, placements)
+# ============================================================================
+
+# Materials JSON - shared across disciplines
+MATERIALS_JSON = GAME_MODULAR / "items.JSON" / "items-materials-1.JSON"
+
+# Placements/Recipes for each discipline
+DATA_PATHS = {
+    'smithing': {
+        'placements': GAME_MODULAR / "placements.JSON" / "placements-smithing-1.json",
+        'recipes': GAME_MODULAR / "recipes.JSON" / "recipes-smithing-3.json",
+    },
+    'adornments': {
+        'placements': GAME_MODULAR / "recipes.JSON" / "recipes-adornments-1.json",
+    },
+    'alchemy': {
+        'placements': SCRIPT_DIR / "json_templates" / "alchemy_recipes.json",
+    },
+    'refining': {
+        'placements': SCRIPT_DIR / "json_templates" / "refining_recipes.json",
+    },
+    'engineering': {
+        'placements': SCRIPT_DIR / "json_templates" / "engineering_recipes.json",
+    },
+}
+
+# ============================================================================
 # DISCIPLINE CONFIGURATIONS
 # ============================================================================
 
@@ -74,18 +101,24 @@ DISCIPLINES = {
         'data_script': CNN_DIR / "Smithing" / "valid_smithing_data_v2.py",
         'train_script': CNN_DIR / "Smithing" / "CNN_trainer_smithing.py",
         'work_dir': CNN_DIR / "Smithing",
-        'model_pattern': '*.keras',
+        'model_pattern': 'excellent_*.keras',  # New models start with excellent_
         'extractor_pattern': None,
         'output_dataset': 'recipe_dataset_v2.npz',
+        # CNN scripts don't need external args - they have their own paths
+        'data_args': [],
+        'train_args': [],
     },
     'adornments': {
         'type': 'cnn',
         'data_script': CNN_DIR / "Adornment" / "data_augment_adornment_v2.py",
         'train_script': CNN_DIR / "Adornment" / "CNN_trainer_adornment.py",
         'work_dir': CNN_DIR / "Adornment",
-        'model_pattern': '*.keras',
+        'model_pattern': '*_model.keras',  # New models end with _model.keras
         'extractor_pattern': None,
         'output_dataset': 'adornment_dataset_v2.npz',
+        # CNN scripts don't need external args
+        'data_args': [],
+        'train_args': [],
     },
     'alchemy': {
         'type': 'lightgbm',
@@ -94,16 +127,34 @@ DISCIPLINES = {
         'work_dir': LIGHTGBM_DIR,
         'model_pattern': 'alchemy_lightGBM/*_model.txt',
         'extractor_pattern': 'alchemy_lightGBM/*_extractor.pkl',
-        'output_dataset': None,
+        'output_dataset': 'alchemy_augmented_data.json',
+        # LightGBM data script args: discipline materials placements output
+        'data_args': lambda: ['alchemy', str(MATERIALS_JSON),
+                              str(DATA_PATHS['alchemy']['placements']),
+                              str(LIGHTGBM_DIR / 'alchemy_augmented_data.json')],
+        # LightGBM trainer args: train dataset materials output_dir
+        'train_args': lambda: ['train',
+                               str(LIGHTGBM_DIR / 'alchemy_augmented_data.json'),
+                               str(MATERIALS_JSON),
+                               str(LIGHTGBM_DIR / 'alchemy_lightGBM')],
     },
     'refining': {
         'type': 'lightgbm',
         'data_script': LIGHTGBM_DIR / "data_augment_ref.py",
-        'train_script': LIGHTGBM_DIR / "LightGBM_trainer_ref.py",
+        'train_script': LIGHTGBM_DIR / "LightGBM_trainer.py",
         'work_dir': LIGHTGBM_DIR,
         'model_pattern': 'refining_lightGBM/*_model.txt',
         'extractor_pattern': 'refining_lightGBM/*_extractor.pkl',
-        'output_dataset': None,
+        'output_dataset': 'refining_augmented_data.json',
+        # Refining data script args: materials placements output
+        'data_args': lambda: [str(MATERIALS_JSON),
+                              str(DATA_PATHS['refining']['placements']),
+                              str(LIGHTGBM_DIR / 'refining_augmented_data.json')],
+        # LightGBM trainer args
+        'train_args': lambda: ['train',
+                               str(LIGHTGBM_DIR / 'refining_augmented_data.json'),
+                               str(MATERIALS_JSON),
+                               str(LIGHTGBM_DIR / 'refining_lightGBM')],
     },
     'engineering': {
         'type': 'lightgbm',
@@ -112,7 +163,16 @@ DISCIPLINES = {
         'work_dir': LIGHTGBM_DIR,
         'model_pattern': 'engineering_lightGBM/*_model.txt',
         'extractor_pattern': 'engineering_lightGBM/*_extractor.pkl',
-        'output_dataset': None,
+        'output_dataset': 'engineering_augmented_data.json',
+        # LightGBM data script args
+        'data_args': lambda: ['engineering', str(MATERIALS_JSON),
+                              str(DATA_PATHS['engineering']['placements']),
+                              str(LIGHTGBM_DIR / 'engineering_augmented_data.json')],
+        # LightGBM trainer args
+        'train_args': lambda: ['train',
+                               str(LIGHTGBM_DIR / 'engineering_augmented_data.json'),
+                               str(MATERIALS_JSON),
+                               str(LIGHTGBM_DIR / 'engineering_lightGBM')],
     },
 }
 
@@ -331,9 +391,17 @@ def run_data_generation(discipline: str, config: Dict, dry_run: bool = False) ->
     Returns True if successful.
     """
     data_script = config['data_script']
+    data_args_fn = config.get('data_args', [])
+
+    # Get command-line arguments (may be a lambda)
+    if callable(data_args_fn):
+        data_args = data_args_fn()
+    else:
+        data_args = data_args_fn
 
     debug(f"Data generation for {discipline}")
     debug(f"  Script: {data_script}")
+    debug(f"  Args: {data_args}")
     debug(f"  Parent dir: {data_script.parent}")
 
     if not data_script.exists():
@@ -341,15 +409,21 @@ def run_data_generation(discipline: str, config: Dict, dry_run: bool = False) ->
         return False
 
     print(f"    Script: {data_script.name}")
+    if data_args:
+        print(f"    Args: {' '.join(data_args[:2])}...")  # Show first 2 args
 
     if dry_run:
         print(f"    [DRY RUN] Would run data generation")
+        if data_args:
+            print(f"    [DRY RUN] Full command: python {data_script.name} {' '.join(data_args)}")
         return True
 
     try:
-        debug(f"  Running: {sys.executable} {data_script}")
+        cmd = [sys.executable, str(data_script)] + data_args
+        debug(f"  Running: {' '.join(cmd)}")
+
         result = subprocess.run(
-            [sys.executable, str(data_script)],
+            cmd,
             cwd=str(data_script.parent),
             capture_output=True,
             text=True,
@@ -380,10 +454,17 @@ def run_data_generation(discipline: str, config: Dict, dry_run: bool = False) ->
         # Check if output dataset was created (for CNN)
         output_dataset = config.get('output_dataset')
         if output_dataset:
-            output_path = data_script.parent / output_dataset
+            # For CNN: check in script parent dir
+            if config['type'] == 'cnn':
+                output_path = data_script.parent / output_dataset
+            else:
+                # For LightGBM: check in work_dir
+                output_path = config['work_dir'] / output_dataset
+
             debug(f"  Checking output dataset: {output_path}")
             if output_path.exists():
                 debug(f"    Output dataset exists, size: {output_path.stat().st_size} bytes")
+                print(f"    Output: {output_path.name} ({output_path.stat().st_size / 1024:.1f} KB)")
             else:
                 debug(f"    WARNING: Output dataset not found")
 
@@ -407,25 +488,39 @@ def run_training(discipline: str, config: Dict, dry_run: bool = False) -> Option
     Returns dict with training results, or None if failed.
     """
     train_script = config['train_script']
+    train_args_fn = config.get('train_args', [])
+
+    # Get command-line arguments (may be a lambda)
+    if callable(train_args_fn):
+        train_args = train_args_fn()
+    else:
+        train_args = train_args_fn
 
     debug(f"Training for {discipline}")
     debug(f"  Script: {train_script}")
+    debug(f"  Args: {train_args}")
 
     if not train_script.exists():
         print(f"    ERROR: Training script not found: {train_script}")
         return None
 
     print(f"    Script: {train_script.name}")
+    if train_args:
+        print(f"    Args: {train_args[0]}...")  # Show command
 
     if dry_run:
         print(f"    [DRY RUN] Would run training")
+        if train_args:
+            print(f"    [DRY RUN] Full command: python {train_script.name} {' '.join(train_args)}")
         # Return fake metrics for dry run
         return {'dry_run': True, 'val_accuracy': 0.85, 'train_accuracy': 0.90, 'overfit_gap': 0.05}
 
     try:
-        debug(f"  Running: {sys.executable} {train_script}")
+        cmd = [sys.executable, str(train_script)] + train_args
+        debug(f"  Running: {' '.join(cmd)}")
+
         result = subprocess.run(
-            [sys.executable, str(train_script)],
+            cmd,
             cwd=str(train_script.parent),
             capture_output=True,
             text=True,
@@ -436,6 +531,16 @@ def run_training(discipline: str, config: Dict, dry_run: bool = False) -> Option
 
         debug(f"  Return code: {result.returncode}")
         debug(f"  Stdout length: {len(result.stdout)} chars")
+
+        if result.returncode != 0:
+            print(f"    ERROR: Training failed (return code {result.returncode})")
+            if result.stderr:
+                print(f"    Errors:")
+                for line in result.stderr.split('\n')[-10:]:
+                    if line.strip():
+                        print(f"      {line}")
+            # Still try to parse output
+            debug(f"  Full stdout:\n{result.stdout}")
 
         # Parse output for metrics
         metrics = parse_training_output(result.stdout, config['type'])
@@ -467,7 +572,23 @@ def run_training(discipline: str, config: Dict, dry_run: bool = False) -> Option
 
 
 def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
-    """Parse training output to extract metrics."""
+    """
+    Parse training output to extract metrics.
+
+    Handles two output formats:
+
+    1. CNN trainer format (state-based):
+       Training Set:
+         Accuracy:  0.8208 (82.08%)
+       Validation Set:
+         Accuracy:  0.8208 (82.08%)
+       Overfitting:   5.00% gap
+
+    2. LightGBM trainer format (single-line):
+       Train Accuracy: 0.8500
+       Val Accuracy:   0.8200
+       Overfit Gap:    0.0300 (3.0%)
+    """
     metrics = {}
 
     debug(f"Parsing training output for {model_type}")
@@ -475,46 +596,97 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
     try:
         lines = output.split('\n')
 
+        # State for CNN parser (which section are we in?)
+        current_section = None  # 'training' or 'validation'
+
         for line in lines:
-            line_lower = line.lower()
+            line_lower = line.lower().strip()
 
-            # Look for validation accuracy
-            if 'val' in line_lower and ('acc' in line_lower or 'accuracy' in line_lower):
-                debug(f"  Found val line: {line}")
-                match = re.search(r'(\d+\.?\d*)\s*%', line)
-                if match:
-                    metrics['val_accuracy'] = float(match.group(1)) / 100
-                    debug(f"    Parsed val accuracy (percent): {metrics['val_accuracy']}")
-                else:
-                    match = re.search(r'val[_\s]*acc[^\d]*(\d+\.?\d+)', line, re.IGNORECASE)
-                    if match:
-                        val = float(match.group(1))
-                        metrics['val_accuracy'] = val if val <= 1 else val / 100
-                        debug(f"    Parsed val accuracy: {metrics['val_accuracy']}")
+            # Skip empty lines
+            if not line_lower:
+                continue
 
-            # Look for training accuracy
-            if 'train' in line_lower and ('acc' in line_lower or 'accuracy' in line_lower):
-                debug(f"  Found train line: {line}")
-                match = re.search(r'(\d+\.?\d*)\s*%', line)
-                if match:
-                    metrics['train_accuracy'] = float(match.group(1)) / 100
-                    debug(f"    Parsed train accuracy (percent): {metrics['train_accuracy']}")
+            # ===== CNN FORMAT: Section headers =====
+            if 'training set' in line_lower or 'training:' in line_lower:
+                current_section = 'training'
+                debug(f"  Entered training section")
+                continue
+
+            if 'validation set' in line_lower or 'validation:' in line_lower:
+                current_section = 'validation'
+                debug(f"  Entered validation section")
+                continue
+
+            # ===== CNN FORMAT: Accuracy in section =====
+            if current_section and 'accuracy' in line_lower and 'accuracy:' in line_lower:
+                # Parse "Accuracy:  0.8208 (82.08%)" or "Accuracy: 82.08%"
+                # Try percentage first
+                pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
+                if pct_match:
+                    acc = float(pct_match.group(1)) / 100
                 else:
-                    match = re.search(r'train[_\s]*acc[^\d]*(\d+\.?\d+)', line, re.IGNORECASE)
-                    if match:
-                        val = float(match.group(1))
+                    # Try decimal
+                    dec_match = re.search(r'accuracy[:\s]+(\d+\.?\d+)', line, re.IGNORECASE)
+                    if dec_match:
+                        acc = float(dec_match.group(1))
+                        if acc > 1:
+                            acc = acc / 100
+                    else:
+                        continue
+
+                if current_section == 'training':
+                    metrics['train_accuracy'] = acc
+                    debug(f"    Parsed train accuracy: {acc}")
+                elif current_section == 'validation':
+                    metrics['val_accuracy'] = acc
+                    debug(f"    Parsed val accuracy: {acc}")
+                continue
+
+            # ===== LIGHTGBM FORMAT: Single-line metrics =====
+            # "Train Accuracy: 0.8500" or "Train Accuracy: 85.00%"
+            if 'train' in line_lower and 'accuracy' in line_lower:
+                pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
+                if pct_match:
+                    metrics['train_accuracy'] = float(pct_match.group(1)) / 100
+                else:
+                    dec_match = re.search(r'accuracy[:\s]+(\d+\.?\d+)', line, re.IGNORECASE)
+                    if dec_match:
+                        val = float(dec_match.group(1))
                         metrics['train_accuracy'] = val if val <= 1 else val / 100
-                        debug(f"    Parsed train accuracy: {metrics['train_accuracy']}")
+                debug(f"  Found train line: {line} -> {metrics.get('train_accuracy')}")
+                continue
 
-            # Look for explicit overfitting/gap
-            if 'gap' in line_lower or 'overfit' in line_lower:
+            # "Val Accuracy: 0.8200" or "Val Accuracy: 82.00%"
+            if ('val' in line_lower or 'validation' in line_lower) and 'accuracy' in line_lower:
+                pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
+                if pct_match:
+                    metrics['val_accuracy'] = float(pct_match.group(1)) / 100
+                else:
+                    dec_match = re.search(r'accuracy[:\s]+(\d+\.?\d+)', line, re.IGNORECASE)
+                    if dec_match:
+                        val = float(dec_match.group(1))
+                        metrics['val_accuracy'] = val if val <= 1 else val / 100
+                debug(f"  Found val line: {line} -> {metrics.get('val_accuracy')}")
+                continue
+
+            # ===== OVERFIT GAP (both formats) =====
+            # "Overfitting:   5.00% gap" or "Overfit Gap: 0.0300 (3.0%)"
+            if 'overfit' in line_lower or 'gap' in line_lower:
                 debug(f"  Found gap line: {line}")
-                match = re.search(r'(\d+\.?\d*)\s*%', line)
-                if match:
-                    metrics['overfit_gap'] = float(match.group(1)) / 100
-                    debug(f"    Parsed overfit gap: {metrics['overfit_gap']}")
+                pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
+                if pct_match:
+                    metrics['overfit_gap'] = float(pct_match.group(1)) / 100
+                    debug(f"    Parsed overfit gap from %: {metrics['overfit_gap']}")
+                else:
+                    # Try decimal format "0.0300"
+                    dec_match = re.search(r'gap[:\s]+(\d+\.?\d+)', line, re.IGNORECASE)
+                    if dec_match:
+                        val = float(dec_match.group(1))
+                        metrics['overfit_gap'] = val if val <= 1 else val / 100
+                        debug(f"    Parsed overfit gap from decimal: {metrics['overfit_gap']}")
+                continue
 
-        # Calculate overfit gap if we have both accuracies
+        # Calculate overfit gap if we have both accuracies but no explicit gap
         if 'train_accuracy' in metrics and 'val_accuracy' in metrics and 'overfit_gap' not in metrics:
             metrics['overfit_gap'] = max(0, metrics['train_accuracy'] - metrics['val_accuracy'])
             debug(f"  Calculated overfit gap: {metrics['overfit_gap']}")

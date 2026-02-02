@@ -940,25 +940,38 @@ def load_json(filepath: str) -> Dict:
 
 def main():
     """Main orchestration function."""
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description='Crafting Recipe Data Augmentation System',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python data_augment_GBM.py alchemy materials.json placements.json output.json
+  python data_augment_GBM.py refining ../materials.json ../placements.json refining_data.json
+  python data_augment_GBM.py engineering items.json recipes.json engineering_data.json
+        """
+    )
+    parser.add_argument('discipline', choices=['refining', 'alchemy', 'engineering'],
+                        help='Crafting discipline to augment')
+    parser.add_argument('materials', help='Path to materials JSON file')
+    parser.add_argument('placements', help='Path to placements/recipes JSON file')
+    parser.add_argument('output', help='Output path for augmented dataset')
+
+    args = parser.parse_args()
+
+    discipline = args.discipline
+    materials_path = args.materials
+    placements_path = args.placements
+    output_path = args.output
+
     print("=" * 70)
     print("CRAFTING RECIPE DATA AUGMENTATION SYSTEM")
     print("=" * 70)
-
-    # Get user input
-    print("\nAvailable disciplines:")
-    print("  1. refining")
-    print("  2. alchemy")
-    print("  3. engineering")
-
-    discipline = input("\nEnter discipline name: ").strip().lower()
-
-    if discipline not in ['refining', 'alchemy', 'engineering']:
-        print("❌ Invalid discipline. Must be: refining, alchemy, or engineering")
-        return
-
-    materials_path = input("Enter path to materials JSON file: ").strip()
-    placements_path = input("Enter path to placements JSON file: ").strip()
-    output_path = input("Enter output path for augmented dataset: ").strip()
+    print(f"\nDiscipline: {discipline}")
+    print(f"Materials: {materials_path}")
+    print(f"Placements: {placements_path}")
+    print(f"Output: {output_path}")
 
     # Load data
     print("\n📂 Loading data...")

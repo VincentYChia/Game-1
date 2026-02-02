@@ -723,22 +723,54 @@ def test_single_recipe(recipe: Dict, model, feature_extractor, discipline: str):
 # ============================================================================
 
 def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description='LightGBM Recipe Classifier - Train & Test',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Train a new model
+  python LightGBM_trainer.py train data.json materials.json output_dir/
+
+  # With custom augmentation
+  python LightGBM_trainer.py train data.json materials.json output_dir/ --aug-factor 3 --synthetic-ratio 0.4
+        """
+    )
+    subparsers = parser.add_subparsers(dest='command', help='Command to run')
+
+    # Train subcommand
+    train_parser = subparsers.add_parser('train', help='Train a new model')
+    train_parser.add_argument('dataset', help='Path to augmented dataset JSON')
+    train_parser.add_argument('materials', help='Path to materials JSON')
+    train_parser.add_argument('output_dir', help='Directory to save model')
+    train_parser.add_argument('--aug-factor', type=int, default=2,
+                              help='Augmentation factor (default: 2)')
+    train_parser.add_argument('--synthetic-ratio', type=float, default=0.3,
+                              help='Synthetic material injection ratio (default: 0.3)')
+
+    args = parser.parse_args()
+
+    if args.command is None:
+        parser.print_help()
+        return
+
     print("=" * 70)
     print("LIGHTGBM RECIPE CLASSIFIER - TRAIN & TEST")
     print("With Synthetic Material Augmentation")
     print("=" * 70)
 
-    print("\nOptions:")
-    print("  1. Train new model")
-    print("  2. Test existing model")
+    if args.command == 'train':
+        dataset_path = args.dataset
+        materials_path = args.materials
+        model_output_dir = args.output_dir
+        aug_factor = args.aug_factor
+        synthetic_ratio = args.synthetic_ratio
 
-    choice = input("\nEnter choice (1 or 2): ").strip()
-
-    if choice == '1':
-        # TRAINING MODE
-        dataset_path = input("Enter path to augmented dataset JSON: ").strip()
-        materials_path = input("Enter path to materials JSON: ").strip()
-        model_output_dir = input("Enter directory to save model: ").strip()
+        print(f"\nDataset: {dataset_path}")
+        print(f"Materials: {materials_path}")
+        print(f"Output: {model_output_dir}")
+        print(f"Aug factor: {aug_factor}, Synthetic ratio: {synthetic_ratio}")
 
         # Load data
         print("\nLoading data...")
@@ -758,8 +790,8 @@ def main():
         print("\nAugmenting with synthetic materials...")
         recipes, labels, all_materials = augment_dataset_with_synthetics(
             recipes, labels, all_materials, discipline,
-            augmentation_factor=2,
-            synthetic_ratio=0.3
+            augmentation_factor=aug_factor,
+            synthetic_ratio=synthetic_ratio
         )
 
         # Create feature extractor
@@ -801,14 +833,6 @@ def main():
         save_model(model, feature_extractor, discipline, model_output_dir)
 
         print("\nTraining complete!")
-
-    elif choice == '2':
-        # TESTING MODE
-        print("\nTesting mode coming soon! For now, please train a model first.")
-        print("You can test recipes by loading the model in your own code.")
-
-    else:
-        print("Invalid choice. Please enter 1 or 2.")
 
 
 if __name__ == "__main__":

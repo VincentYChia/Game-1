@@ -140,14 +140,33 @@ def generate_negative_samples(valid_recipes: List[Dict], all_materials: Dict, nu
 
 
 def main():
-    print("="*70)
-    print("REFINING RECIPE DATA AUGMENTATION")
-    print("="*70)
+    import argparse
 
-    # Get inputs
-    materials_path = input("Enter path to materials JSON: ").strip()
-    placements_path = input("Enter path to placements JSON: ").strip()
-    output_path = input("Enter output path for augmented dataset: ").strip()
+    parser = argparse.ArgumentParser(
+        description='Refining Recipe Data Augmentation',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python data_augment_ref.py materials.json placements.json output.json
+  python data_augment_ref.py ../items.json ../recipes.json refining_data.json
+        """
+    )
+    parser.add_argument('materials', help='Path to materials JSON file')
+    parser.add_argument('placements', help='Path to placements/recipes JSON file')
+    parser.add_argument('output', help='Output path for augmented dataset')
+
+    args = parser.parse_args()
+
+    materials_path = args.materials
+    placements_path = args.placements
+    output_path = args.output
+
+    print("=" * 70)
+    print("REFINING RECIPE DATA AUGMENTATION")
+    print("=" * 70)
+    print(f"\nMaterials: {materials_path}")
+    print(f"Placements: {placements_path}")
+    print(f"Output: {output_path}")
 
     # Load data
     print("\n📂 Loading data...")
