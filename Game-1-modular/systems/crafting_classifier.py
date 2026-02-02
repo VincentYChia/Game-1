@@ -885,40 +885,41 @@ class CraftingClassifierManager:
     """
 
     # Default model paths (relative to project root)
+    # Models are stored in Scaled JSON Development/models/{discipline}/
     DEFAULT_CONFIGS = {
         'smithing': ClassifierConfig(
             discipline='smithing',
             classifier_type='cnn',
-            model_path='Scaled JSON Development/Convolution Neural Network (CNN)/Smithing/batch 4 (batch 3, no stations)/excellent_minimal_batch_20.keras',
+            model_path='Scaled JSON Development/models/smithing/smithing_best.keras',
             img_size=36,
             threshold=0.5
         ),
         'adornments': ClassifierConfig(
             discipline='adornments',
             classifier_type='cnn',
-            model_path='Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/smart_search_results/best_original_20260124_185830_f10.9520_model.keras',
+            model_path='Scaled JSON Development/models/adornment/adornment_best.keras',
             img_size=56,
             threshold=0.5
         ),
         'alchemy': ClassifierConfig(
             discipline='alchemy',
             classifier_type='lightgbm',
-            model_path='Scaled JSON Development/Simple Classifiers (LightGBM)/alchemy_lightGBM/alchemy_model.txt',
-            extractor_path='Scaled JSON Development/Simple Classifiers (LightGBM)/alchemy_lightGBM/alchemy_extractor.pkl',
+            model_path='Scaled JSON Development/models/alchemy/alchemy_model.txt',
+            extractor_path='Scaled JSON Development/models/alchemy/alchemy_extractor.pkl',
             threshold=0.5
         ),
         'refining': ClassifierConfig(
             discipline='refining',
             classifier_type='lightgbm',
-            model_path='Scaled JSON Development/Simple Classifiers (LightGBM)/refining_lightGBM/refining_model.txt',
-            extractor_path='Scaled JSON Development/Simple Classifiers (LightGBM)/refining_lightGBM/refining_extractor.pkl',
+            model_path='Scaled JSON Development/models/refining/refining_model.txt',
+            extractor_path='Scaled JSON Development/models/refining/refining_extractor.pkl',
             threshold=0.5
         ),
         'engineering': ClassifierConfig(
             discipline='engineering',
             classifier_type='lightgbm',
-            model_path='Scaled JSON Development/Simple Classifiers (LightGBM)/engineering_lightGBM/engineering_model.txt',
-            extractor_path='Scaled JSON Development/Simple Classifiers (LightGBM)/engineering_lightGBM/engineering_extractor.pkl',
+            model_path='Scaled JSON Development/models/engineering/engineering_model.txt',
+            extractor_path='Scaled JSON Development/models/engineering/engineering_extractor.pkl',
             threshold=0.5
         ),
     }

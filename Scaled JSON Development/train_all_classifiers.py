@@ -578,6 +578,8 @@ def archive_file(filepath: Path, discipline: str, dry_run: bool = False) -> Opti
 
     debug(f"Archiving: {filepath} -> {archive_path}")
     shutil.copy2(filepath, archive_path)
+    # Remove the original so old models don't get selected when new training doesn't save
+    filepath.unlink()
     print(f"    Archived: {filepath.name} -> {archived_name}")
     return archive_path
 
