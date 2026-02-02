@@ -4,6 +4,7 @@ Clean implementation with proper data handling and architectures
 """
 
 import numpy as np
+import os
 import tensorflow as tf
 import time
 import json

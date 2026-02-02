@@ -55,6 +55,7 @@ import shutil
 import sys
 import subprocess
 import re
+import time
 import traceback
 from datetime import datetime
 from pathlib import Path
@@ -838,9 +839,11 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
     metrics = {}
 
     debug(f"Parsing training output for {model_type}")
+    debug(f"  Output length: {len(output)} chars")
 
     try:
         lines = output.split('\n')
+        debug(f"  Total lines: {len(lines)}")
 
         # State for CNN parser (which section are we in?)
         current_section = None  # 'training' or 'validation'
@@ -869,40 +872,55 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
                 continue
 
             # ===== CNN SMITHING FORMAT: Section headers =====
-            if 'training set' in line_lower:
+            # Match "Training Set:" or "Training Set" (with or without colon)
+            if 'training set' in line_lower and 'validation' not in line_lower:
                 current_section = 'training'
-                debug(f"  Entered training section")
+                debug(f"  Entered training section: '{line_stripped}'")
                 continue
 
             if 'validation set' in line_lower:
                 current_section = 'validation'
-                debug(f"  Entered validation section")
+                debug(f"  Entered validation section: '{line_stripped}'")
                 continue
 
             # ===== CNN SMITHING FORMAT: Accuracy in section =====
-            if current_section and 'accuracy' in line_lower and ':' in line_lower:
-                # Parse "Accuracy:  0.8208 (82.08%)" or "Accuracy: 82.08%"
-                # Try percentage first
-                pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
-                if pct_match:
-                    acc = float(pct_match.group(1)) / 100
+            # Match lines like "  Accuracy:  0.8208 (82.08%)" within a section
+            if current_section and 'accuracy' in line_lower:
+                # Skip lines that contain "train" or "val" keywords (those are LightGBM format)
+                if 'train accuracy' in line_lower or 'val accuracy' in line_lower:
+                    pass  # Let the LightGBM handler below process this
                 else:
-                    # Try decimal
-                    dec_match = re.search(r'accuracy[:\s]+(\d+\.?\d+)', line, re.IGNORECASE)
-                    if dec_match:
-                        acc = float(dec_match.group(1))
-                        if acc > 1:
-                            acc = acc / 100
+                    debug(f"  Parsing accuracy in {current_section} section: '{line_stripped}'")
+                    # Try to extract the percentage value: "(82.08%)"
+                    pct_match = re.search(r'\((\d+\.?\d*)\s*%\)', line)
+                    if pct_match:
+                        acc = float(pct_match.group(1)) / 100
+                        debug(f"    Found pct in parens: {pct_match.group(1)}% -> {acc}")
                     else:
-                        continue
+                        # Try bare percentage: "82.08%"
+                        pct_match2 = re.search(r'(\d+\.?\d*)\s*%', line)
+                        if pct_match2:
+                            acc = float(pct_match2.group(1)) / 100
+                            debug(f"    Found bare pct: {pct_match2.group(1)}% -> {acc}")
+                        else:
+                            # Try decimal value after "Accuracy:" like "Accuracy:  0.8208"
+                            dec_match = re.search(r'accuracy[:\s]+(\d+\.?\d+)', line, re.IGNORECASE)
+                            if dec_match:
+                                acc = float(dec_match.group(1))
+                                if acc > 1:
+                                    acc = acc / 100
+                                debug(f"    Found decimal: {dec_match.group(1)} -> {acc}")
+                            else:
+                                debug(f"    Could not parse accuracy from: '{line_stripped}'")
+                                continue
 
-                if current_section == 'training':
-                    metrics['train_accuracy'] = acc
-                    debug(f"    Parsed train accuracy: {acc}")
-                elif current_section == 'validation':
-                    metrics['val_accuracy'] = acc
-                    debug(f"    Parsed val accuracy: {acc}")
-                continue
+                    if current_section == 'training':
+                        metrics['train_accuracy'] = acc
+                        debug(f"    Set train_accuracy: {acc}")
+                    elif current_section == 'validation':
+                        metrics['val_accuracy'] = acc
+                        debug(f"    Set val_accuracy: {acc}")
+                    continue
 
             # ===== LIGHTGBM FORMAT: Single-line metrics =====
             # "Train Accuracy: 0.8500" or "Train Accuracy: 85.00%"
@@ -915,11 +933,14 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
                     if dec_match:
                         val = float(dec_match.group(1))
                         metrics['train_accuracy'] = val if val <= 1 else val / 100
-                debug(f"  Found train line: {line} -> {metrics.get('train_accuracy')}")
+                debug(f"  Found LightGBM train line: '{line_stripped}' -> {metrics.get('train_accuracy')}")
                 continue
 
             # "Val Accuracy: 0.8200" or "Val Accuracy: 82.00%"
             if ('val' in line_lower or 'validation' in line_lower) and 'accuracy' in line_lower and ':' in line_lower:
+                # Skip if we're in a section (that's smithing format)
+                if current_section and 'set' not in line_lower:
+                    pass  # Already handled above
                 pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
                 if pct_match:
                     metrics['val_accuracy'] = float(pct_match.group(1)) / 100
@@ -928,13 +949,13 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
                     if dec_match:
                         val = float(dec_match.group(1))
                         metrics['val_accuracy'] = val if val <= 1 else val / 100
-                debug(f"  Found val line: {line} -> {metrics.get('val_accuracy')}")
+                debug(f"  Found LightGBM val line: '{line_stripped}' -> {metrics.get('val_accuracy')}")
                 continue
 
             # ===== OVERFIT GAP (all formats) =====
             # "Overfitting:   5.00% gap" or "Overfit Gap: 0.0300 (3.0%)" or "Overfitting Gap: 0.0213"
             if 'overfit' in line_lower:
-                debug(f"  Found gap line: {line}")
+                debug(f"  Found gap line: '{line_stripped}'")
                 pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
                 if pct_match:
                     metrics['overfit_gap'] = float(pct_match.group(1)) / 100
@@ -954,10 +975,22 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
             debug(f"  Calculated overfit gap: {metrics['overfit_gap']}")
 
         debug(f"  Final metrics: {metrics}")
+
+        # If we found no metrics at all but there's output, show a warning
+        if not metrics and len(output) > 100:
+            debug(f"  WARNING: Could not extract any metrics from output")
+            # Print last 20 lines for debugging
+            debug(f"  Last 20 lines of output:")
+            for line in lines[-20:]:
+                if line.strip():
+                    debug(f"    {line.strip()}")
+
         return metrics if metrics else None
 
     except Exception as e:
         debug(f"  Parse error: {e}")
+        import traceback
+        debug(f"  {traceback.format_exc()}")
         return None
 
 
@@ -1043,6 +1076,17 @@ def install_model(discipline: str, source_model: Path, dry_run: bool = False) ->
         print(f"    ERROR: No target path configured for {discipline}")
         return False
 
+    # Check if source and target are the same file (LightGBM case)
+    try:
+        if source_model.resolve() == target_path.resolve():
+            print(f"    Model already at target location: {target_path.name}")
+            # Still need to handle extractor for LightGBM
+            if discipline in ['alchemy', 'refining', 'engineering']:
+                _install_extractor(source_model, target_path)
+            return True
+    except Exception:
+        pass  # If resolve fails, proceed with normal copy
+
     # Ensure target directory exists
     target_path.parent.mkdir(parents=True, exist_ok=True)
     debug(f"  Target parent ensured: {target_path.parent}")
@@ -1052,40 +1096,75 @@ def install_model(discipline: str, source_model: Path, dry_run: bool = False) ->
         print(f"    [DRY RUN]    -> {target_path}")
         return True
 
-    try:
-        shutil.copy2(source_model, target_path)
-        print(f"    Installed: {source_model.name}")
-        print(f"           -> {target_path}")
-        debug(f"  Copy successful")
+    # Retry logic for Windows file locking
+    max_retries = 3
+    retry_delay = 1.0  # seconds
 
-        # For LightGBM, also copy the extractor .pkl if it exists
-        if discipline in ['alchemy', 'refining', 'engineering']:
-            # Try different naming conventions
-            extractor_patterns = [
-                source_model.with_suffix('.pkl').with_name(
-                    source_model.stem.replace('_model', '_extractor') + '.pkl'
-                ),
-                source_model.parent / (source_model.stem.replace('_model', '_extractor') + '.pkl'),
-            ]
+    for attempt in range(max_retries):
+        try:
+            shutil.copy2(source_model, target_path)
+            print(f"    Installed: {source_model.name}")
+            print(f"           -> {target_path}")
+            debug(f"  Copy successful")
 
-            for extractor_source in extractor_patterns:
-                debug(f"  Checking extractor: {extractor_source}")
-                if extractor_source.exists():
-                    extractor_target = target_path.with_suffix('.pkl').with_name(
-                        target_path.stem.replace('_model', '_extractor') + '.pkl'
-                    )
-                    debug(f"  Installing extractor to: {extractor_target}")
-                    shutil.copy2(extractor_source, extractor_target)
-                    print(f"    Installed extractor: {extractor_source.name}")
-                    break
+            # For LightGBM, also copy the extractor .pkl if it exists
+            if discipline in ['alchemy', 'refining', 'engineering']:
+                _install_extractor(source_model, target_path)
 
-        return True
+            return True
 
-    except Exception as e:
-        print(f"    ERROR installing model: {e}")
-        if DEBUG_MODE:
-            traceback.print_exc()
-        return False
+        except PermissionError as e:
+            if attempt < max_retries - 1:
+                debug(f"  File locked, retrying in {retry_delay}s (attempt {attempt + 1}/{max_retries})")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+            else:
+                print(f"    ERROR installing model: {e}")
+                if DEBUG_MODE:
+                    traceback.print_exc()
+                return False
+
+        except Exception as e:
+            print(f"    ERROR installing model: {e}")
+            if DEBUG_MODE:
+                traceback.print_exc()
+            return False
+
+    return False
+
+
+def _install_extractor(source_model: Path, target_path: Path) -> None:
+    """Install the feature extractor .pkl file for LightGBM models."""
+    # Try different naming conventions
+    extractor_patterns = [
+        source_model.with_suffix('.pkl').with_name(
+            source_model.stem.replace('_model', '_extractor') + '.pkl'
+        ),
+        source_model.parent / (source_model.stem.replace('_model', '_extractor') + '.pkl'),
+    ]
+
+    for extractor_source in extractor_patterns:
+        debug(f"  Checking extractor: {extractor_source}")
+        if extractor_source.exists():
+            extractor_target = target_path.with_suffix('.pkl').with_name(
+                target_path.stem.replace('_model', '_extractor') + '.pkl'
+            )
+
+            # Check if source and target are same
+            try:
+                if extractor_source.resolve() == extractor_target.resolve():
+                    debug(f"  Extractor already at target location")
+                    return
+            except Exception:
+                pass
+
+            debug(f"  Installing extractor to: {extractor_target}")
+            try:
+                shutil.copy2(extractor_source, extractor_target)
+                print(f"    Installed extractor: {extractor_source.name}")
+            except Exception as e:
+                debug(f"  Failed to install extractor: {e}")
+            break
 
 
 # ============================================================================
