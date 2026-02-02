@@ -576,37 +576,195 @@ def augment_dataset_with_synthetics(recipes: List[Dict], labels: List[int],
     return augmented_recipes, augmented_labels, combined_materials
 
 
-def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
-    """Train LightGBM classifier."""
-    import os
+def get_lightgbm_configs():
+    """
+    Generate LightGBM hyperparameter configurations.
 
-    # Check for test mode from environment variable
-    test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
+    Strategy: Range from conservative (more regularized) to moderate.
+    Avoid aggressive configs that tend to overfit on small datasets.
 
+    Key regularization levers:
+    - num_leaves: Lower = more regularization
+    - min_data_in_leaf: Higher = more regularization
+    - lambda_l1/l2: Higher = more regularization
+    - feature_fraction: Lower = more regularization (like dropout)
+    - learning_rate: Lower = better generalization
+    """
+    configs = [
+        # Config 1: Conservative baseline (strong regularization)
+        {
+            'name': 'conservative_baseline',
+            'num_leaves': 15,
+            'learning_rate': 0.03,
+            'min_data_in_leaf': 20,
+            'feature_fraction': 0.7,
+            'bagging_fraction': 0.7,
+            'lambda_l1': 0.1,
+            'lambda_l2': 0.1,
+        },
+        # Config 2: Conservative with higher learning rate
+        {
+            'name': 'conservative_fast',
+            'num_leaves': 15,
+            'learning_rate': 0.05,
+            'min_data_in_leaf': 15,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.8,
+            'lambda_l1': 0.05,
+            'lambda_l2': 0.1,
+        },
+        # Config 3: Moderate regularization
+        {
+            'name': 'moderate_reg',
+            'num_leaves': 20,
+            'learning_rate': 0.04,
+            'min_data_in_leaf': 15,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.8,
+            'lambda_l1': 0.05,
+            'lambda_l2': 0.05,
+        },
+        # Config 4: Moderate with more leaves
+        {
+            'name': 'moderate_capacity',
+            'num_leaves': 25,
+            'learning_rate': 0.03,
+            'min_data_in_leaf': 20,
+            'feature_fraction': 0.75,
+            'bagging_fraction': 0.75,
+            'lambda_l1': 0.1,
+            'lambda_l2': 0.1,
+        },
+        # Config 5: Balanced (original-ish but with regularization)
+        {
+            'name': 'balanced',
+            'num_leaves': 31,
+            'learning_rate': 0.05,
+            'min_data_in_leaf': 10,
+            'feature_fraction': 0.9,
+            'bagging_fraction': 0.8,
+            'lambda_l1': 0.01,
+            'lambda_l2': 0.01,
+        },
+        # Config 6: Low learning rate, more rounds
+        {
+            'name': 'slow_learner',
+            'num_leaves': 20,
+            'learning_rate': 0.02,
+            'min_data_in_leaf': 15,
+            'feature_fraction': 0.85,
+            'bagging_fraction': 0.85,
+            'lambda_l1': 0.02,
+            'lambda_l2': 0.02,
+        },
+        # Config 7: Heavy L2 regularization
+        {
+            'name': 'heavy_l2',
+            'num_leaves': 25,
+            'learning_rate': 0.04,
+            'min_data_in_leaf': 10,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.8,
+            'lambda_l1': 0.0,
+            'lambda_l2': 0.2,
+        },
+        # Config 8: Heavy L1 regularization (feature selection)
+        {
+            'name': 'heavy_l1',
+            'num_leaves': 25,
+            'learning_rate': 0.04,
+            'min_data_in_leaf': 10,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.8,
+            'lambda_l1': 0.2,
+            'lambda_l2': 0.0,
+        },
+        # Config 9: Very conservative (for small datasets)
+        {
+            'name': 'very_conservative',
+            'num_leaves': 10,
+            'learning_rate': 0.05,
+            'min_data_in_leaf': 25,
+            'feature_fraction': 0.6,
+            'bagging_fraction': 0.6,
+            'lambda_l1': 0.15,
+            'lambda_l2': 0.15,
+        },
+        # Config 10: Moderate with strong bagging
+        {
+            'name': 'strong_bagging',
+            'num_leaves': 20,
+            'learning_rate': 0.04,
+            'min_data_in_leaf': 15,
+            'feature_fraction': 0.7,
+            'bagging_fraction': 0.6,
+            'lambda_l1': 0.05,
+            'lambda_l2': 0.05,
+        },
+    ]
+    return configs
+
+
+def calculate_robustness_score(val_accuracy, overfit_gap):
+    """
+    Calculate robustness-aware score that penalizes overfitting.
+
+    Strategy: High accuracy is good, but overfitting is bad.
+    A model with 92% accuracy and 2% gap is BETTER than
+    a model with 95% accuracy and 8% gap.
+
+    Penalty schedule:
+    - gap < 3%: No penalty (excellent generalization)
+    - gap 3-6%: Small penalty (acceptable)
+    - gap 6-10%: Moderate penalty (concerning)
+    - gap > 10%: Heavy penalty (likely overfit)
+    """
+    if overfit_gap is None:
+        overfit_gap = 0.0
+
+    # Ensure gap is positive (train_acc - val_acc)
+    gap = abs(overfit_gap)
+
+    if gap < 0.03:
+        penalty = 1.0  # No penalty
+    elif gap < 0.06:
+        penalty = 0.97  # 3% penalty
+    elif gap < 0.10:
+        penalty = 0.90  # 10% penalty
+    elif gap < 0.15:
+        penalty = 0.80  # 20% penalty
+    else:
+        penalty = 0.65  # 35% penalty for severe overfitting
+
+    return val_accuracy * penalty
+
+
+def train_lightgbm_with_config(X_train, y_train, X_test, y_test, config, test_mode=False):
+    """Train LightGBM with a specific config."""
     if test_mode:
-        print("\n*** TEST MODE: 5 boosting rounds only ***")
-        print("Training LightGBM classifier (test mode)...")
         num_rounds = 5
         early_stop_rounds = 2
     else:
-        print("\nTraining LightGBM classifier...")
-        num_rounds = 200
-        early_stop_rounds = 20
+        num_rounds = 300  # More rounds, rely on early stopping
+        early_stop_rounds = 30
 
     # Create datasets
     train_data = lgb.Dataset(X_train, label=y_train)
     test_data = lgb.Dataset(X_test, label=y_test, reference=train_data)
 
-    # Parameters
+    # Build params from config
     params = {
         'objective': 'binary',
         'metric': 'binary_logloss',
         'boosting_type': 'gbdt',
-        'num_leaves': 31,
-        'learning_rate': 0.05,
-        'feature_fraction': 0.9,
-        'bagging_fraction': 0.8,
+        'num_leaves': config.get('num_leaves', 31),
+        'learning_rate': config.get('learning_rate', 0.05),
+        'min_data_in_leaf': config.get('min_data_in_leaf', 10),
+        'feature_fraction': config.get('feature_fraction', 0.9),
+        'bagging_fraction': config.get('bagging_fraction', 0.8),
         'bagging_freq': 5,
+        'lambda_l1': config.get('lambda_l1', 0.0),
+        'lambda_l2': config.get('lambda_l2', 0.0),
         'verbose': -1
     }
 
@@ -620,6 +778,85 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
     )
 
     return model
+
+
+def quick_evaluate(model, X_test, y_test, X_train, y_train):
+    """Quick evaluation returning just accuracy and gap."""
+    y_pred_test = (model.predict(X_test, num_iteration=model.best_iteration) > 0.5).astype(int)
+    y_pred_train = (model.predict(X_train, num_iteration=model.best_iteration) > 0.5).astype(int)
+
+    val_acc = accuracy_score(y_test, y_pred_test)
+    train_acc = accuracy_score(y_train, y_pred_train)
+    gap = train_acc - val_acc
+
+    return val_acc, train_acc, gap
+
+
+def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
+    """
+    Train LightGBM classifier with automatic hyperparameter search.
+
+    Tries multiple configs and selects the best based on robustness score
+    (accuracy penalized by overfitting gap).
+    """
+    import os
+
+    test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
+
+    if test_mode:
+        print("\n*** TEST MODE: Single config, 5 rounds ***")
+        configs = [get_lightgbm_configs()[4]]  # Just use balanced config
+    else:
+        print("\n=== LightGBM Hyperparameter Search ===")
+        configs = get_lightgbm_configs()
+
+    print(f"Testing {len(configs)} configurations...")
+
+    results = []
+    best_model = None
+    best_score = -1
+    best_config_name = None
+
+    for i, config in enumerate(configs):
+        config_name = config.get('name', f'config_{i}')
+        print(f"\n  [{i+1}/{len(configs)}] {config_name}...", end=" ", flush=True)
+
+        try:
+            model = train_lightgbm_with_config(X_train, y_train, X_test, y_test, config, test_mode)
+            val_acc, train_acc, gap = quick_evaluate(model, X_test, y_test, X_train, y_train)
+            score = calculate_robustness_score(val_acc, gap)
+
+            print(f"val={val_acc:.3f}, gap={gap:.3f}, score={score:.3f}")
+
+            results.append({
+                'name': config_name,
+                'val_acc': val_acc,
+                'train_acc': train_acc,
+                'gap': gap,
+                'score': score,
+                'model': model
+            })
+
+            if score > best_score:
+                best_score = score
+                best_model = model
+                best_config_name = config_name
+
+        except Exception as e:
+            print(f"FAILED: {e}")
+            continue
+
+    # Summary
+    print(f"\n=== Search Complete ===")
+    print(f"Best config: {best_config_name} (score={best_score:.3f})")
+
+    # Show top 3
+    results.sort(key=lambda x: x['score'], reverse=True)
+    print(f"\nTop 3 configs:")
+    for i, r in enumerate(results[:3]):
+        print(f"  {i+1}. {r['name']}: val={r['val_acc']:.3f}, gap={r['gap']:.3f}, score={r['score']:.3f}")
+
+    return best_model
 
 
 def evaluate_model(model, X_test, y_test, X_train=None, y_train=None):

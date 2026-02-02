@@ -289,60 +289,180 @@ class BestModelVariationTrainer:
 
     def generate_variations(self):
         """
-        Single best configuration - parameters already tuned.
+        Generate up to 7 configurations exploring regularization and learning rate.
 
-        With 2-3x augmented data, we need fewer epochs.
-        Early stopping handles convergence.
+        Strategy: All configs use the same proven architecture but vary:
+        - Dropout rates (primary regularization)
+        - L2 regularization strength
+        - Learning rate
+        - Epochs (more for adornments as requested)
+
+        Robustness is prioritized over raw accuracy.
         """
-
         import copy
 
         variations = []
 
-        # Single best config - already tuned
+        # Config 1: Baseline with more epochs (1.5x as requested)
         config1 = copy.deepcopy(self.best_config)
-        variations.append(('best_config', config1))
+        config1['epochs'] = 38  # 1.5x more than 25
+        config1['early_stopping_patience'] = 10
+        variations.append(('baseline_more_epochs', config1))
+
+        # Config 2: Higher dropout (more regularization)
+        config2 = copy.deepcopy(self.best_config)
+        config2['dropout_conv'] = 0.30
+        config2['dropout_dense'] = 0.70
+        config2['l2_regularization'] = 0.015
+        config2['epochs'] = 40
+        config2['early_stopping_patience'] = 12
+        variations.append(('high_dropout', config2))
+
+        # Config 3: Lower learning rate, more epochs
+        config3 = copy.deepcopy(self.best_config)
+        config3['learning_rate'] = 0.003
+        config3['epochs'] = 45
+        config3['early_stopping_patience'] = 15
+        variations.append(('slow_learner', config3))
+
+        # Config 4: Strong L2 regularization
+        config4 = copy.deepcopy(self.best_config)
+        config4['l2_regularization'] = 0.02
+        config4['dropout_conv'] = 0.25
+        config4['dropout_dense'] = 0.60
+        config4['epochs'] = 40
+        config4['early_stopping_patience'] = 12
+        variations.append(('strong_l2', config4))
+
+        # Config 5: Conservative (very high regularization)
+        config5 = copy.deepcopy(self.best_config)
+        config5['dropout_conv'] = 0.35
+        config5['dropout_dense'] = 0.75
+        config5['l2_regularization'] = 0.025
+        config5['learning_rate'] = 0.004
+        config5['epochs'] = 45
+        config5['early_stopping_patience'] = 15
+        variations.append(('conservative', config5))
+
+        # Config 6: Balanced with larger batch
+        config6 = copy.deepcopy(self.best_config)
+        config6['batch_size'] = 24
+        config6['learning_rate'] = 0.006
+        config6['epochs'] = 35
+        config6['early_stopping_patience'] = 10
+        variations.append(('larger_batch', config6))
+
+        # Config 7: Very slow learning (for stability)
+        config7 = copy.deepcopy(self.best_config)
+        config7['learning_rate'] = 0.002
+        config7['dropout_conv'] = 0.25
+        config7['dropout_dense'] = 0.65
+        config7['l2_regularization'] = 0.012
+        config7['epochs'] = 50
+        config7['early_stopping_patience'] = 18
+        variations.append(('very_slow', config7))
 
         return variations
 
-    def train_all_variations(self):
-        """Train all variations"""
+    def calculate_robustness_score(self, val_acc, acc_gap):
+        """
+        Calculate robustness-aware score that penalizes overfitting.
 
-        variations = self.generate_variations()
+        A model with 90% accuracy and 2% gap is BETTER than
+        a model with 94% accuracy and 10% gap.
+        """
+        gap = abs(acc_gap)
+
+        if gap < 0.03:
+            penalty = 1.0  # Excellent generalization
+        elif gap < 0.06:
+            penalty = 0.97  # Acceptable
+        elif gap < 0.10:
+            penalty = 0.90  # Concerning
+        elif gap < 0.15:
+            penalty = 0.80  # Overfitting
+        else:
+            penalty = 0.65  # Severe overfitting
+
+        return val_acc * penalty
+
+    def train_all_variations(self):
+        """
+        Train all variations and select best based on robustness score.
+
+        Robustness score = val_accuracy × penalty_factor
+        where penalty_factor decreases with larger overfitting gaps.
+        """
+        import os
+
+        test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
+
+        if test_mode:
+            # Test mode: just run first config with 1 epoch
+            variations = self.generate_variations()[:1]
+            print(f"\n*** TEST MODE: 1 config, reduced epochs ***")
+        else:
+            variations = self.generate_variations()
 
         print(f"\n{'=' * 80}")
-        print(f"TRAINING {len(variations)} VARIATIONS OF BEST MODEL")
+        print(f"CNN HYPERPARAMETER SEARCH - {len(variations)} CONFIGURATIONS")
         print(f"{'=' * 80}")
-        print(f"Base model: search_003 (Val F1: 0.9481)")
+        print(f"Selection criteria: Robustness Score (accuracy × overfit penalty)")
         print(f"{'=' * 80}\n")
 
         all_results = []
+        best_result = None
+        best_score = -1
 
         for i, (name, config) in enumerate(variations, 1):
             print(f"\n{'#' * 80}")
-            print(f"VARIATION {i}/{len(variations)}: {name}")
+            print(f"CONFIG {i}/{len(variations)}: {name}")
             print(f"{'#' * 80}")
 
             try:
                 result = self.train_config(config, name)
+
+                # Calculate robustness score
+                val_acc = result['val_metrics']['accuracy']
+                acc_gap = result['overfitting']['accuracy_gap']
+                robustness_score = self.calculate_robustness_score(val_acc, acc_gap)
+                result['robustness_score'] = robustness_score
+
+                print(f"\n  >> Robustness Score: {robustness_score:.4f} (acc={val_acc:.4f}, gap={acc_gap:.4f})")
+
                 all_results.append(result)
+
+                if robustness_score > best_score:
+                    best_score = robustness_score
+                    best_result = result
+                    print(f"  >> NEW BEST!")
+
             except Exception as e:
                 print(f"ERROR training {name}: {e}")
                 continue
 
-        # Save summary
-        self._save_summary(all_results)
+        # Save summary with robustness scores
+        self._save_summary(all_results, best_result)
 
         return all_results
 
-    def _save_summary(self, results):
-        """Save summary of all variations"""
+    def _save_summary(self, results, best_result=None):
+        """Save summary of all variations, sorted by robustness score"""
+
+        # Sort by robustness score (not raw accuracy)
+        sorted_results = sorted(
+            results,
+            key=lambda x: x.get('robustness_score', x['val_metrics']['accuracy']),
+            reverse=True
+        )
 
         summary = {
             'timestamp': datetime.now().isoformat(),
             'base_model': 'search_003',
             'total_variations': len(results),
-            'variations': sorted(results, key=lambda x: x['val_metrics']['f1'], reverse=True)
+            'best_variation': best_result['variation_name'] if best_result else None,
+            'best_robustness_score': best_result.get('robustness_score') if best_result else None,
+            'variations': sorted_results
         }
 
         summary_path = self.model_save_dir / f"variations_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -350,20 +470,23 @@ class BestModelVariationTrainer:
             json.dump(summary, f, indent=2)
 
         print(f"\n{'=' * 80}")
-        print("SUMMARY - TOP 10 VARIATIONS")
+        print("SUMMARY - RANKED BY ROBUSTNESS SCORE")
         print(f"{'=' * 80}")
-        print(f"{'Variation':<30} {'Val F1':>10} {'Val Acc':>10} {'Gap':>8}")
+        print(f"{'Variation':<25} {'Rob.Score':>10} {'Val Acc':>10} {'Gap':>8}")
         print(f"{'-' * 80}")
 
-        for result in summary['variations'][:10]:
-            name = result['variation_name'][:29]
-            val_f1 = result['val_metrics']['f1']
+        for result in sorted_results[:7]:
+            name = result['variation_name'][:24]
+            rob_score = result.get('robustness_score', 0)
             val_acc = result['val_metrics']['accuracy']
             gap = result['overfitting']['accuracy_gap']
 
-            print(f"{name:<30} {val_f1:>10.4f} {val_acc:>10.4f} {gap:>8.4f}")
+            marker = " <-- BEST" if best_result and result['variation_name'] == best_result['variation_name'] else ""
+            print(f"{name:<25} {rob_score:>10.4f} {val_acc:>10.4f} {gap:>8.4f}{marker}")
 
         print(f"{'=' * 80}")
+        if best_result:
+            print(f"[OK] Best model: {best_result['variation_name']} (robustness={best_result.get('robustness_score', 0):.4f})")
         print(f"[OK] Summary saved to: {summary_path}")
 
 
