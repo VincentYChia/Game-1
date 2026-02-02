@@ -406,7 +406,7 @@ class HyperparameterSearch:
         print(f"\n{'='*80}")
         print(f"CNN HYPERPARAMETER SEARCH - {len(configs)} CONFIGURATIONS")
         print(f"{'='*80}")
-        print(f"Selection criteria: Robustness Score (accuracy × overfit penalty)")
+        print(f"Selection criteria: Robustness Score (accuracy * overfit penalty)")
         print(f"Target: >=90% val accuracy, <200ms inference, <6% gap")
         print(f"{'='*80}")
 
