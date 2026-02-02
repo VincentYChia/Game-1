@@ -1,0 +1,49 @@
+{
+  "variation_name": "baseline_more_epochs",
+  "timestamp": "2026-02-02T17:41:08.288561",
+  "config": {
+    "architecture_type": "simple",
+    "filters": [
+      24,
+      48
+    ],
+    "kernel_sizes": [
+      5,
+      5
+    ],
+    "dropout_conv": 0.21,
+    "dropout_dense": 0.67,
+    "dense_units": [
+      64
+    ],
+    "l2_regularization": 0.01,
+    "batch_normalization": true,
+    "learning_rate": 0.005,
+    "optimizer": "adamw",
+    "batch_size": 16,
+    "activation": "relu",
+    "pooling": "max",
+    "use_global_pooling": false,
+    "epochs": 38,
+    "early_stopping_patience": 10
+  },
+  "train_metrics": {
+    "accuracy": 0.8879967331886292,
+    "f1": 0.8978595504099394,
+    "precision": 0.8322311043739319,
+    "recall": 0.9747248291969299
+  },
+  "val_metrics": {
+    "accuracy": 0.8444444537162781,
+    "f1": 0.855614961149093,
+    "precision": 0.7713498473167419,
+    "recall": 0.9605488777160645
+  },
+  "overfitting": {
+    "accuracy_gap": 0.043552279472351074,
+    "f1_gap": 0.0422445892608464
+  },
+  "train_time_seconds": 2424.213862,
+  "total_epochs": 38,
+  "model_params": 705817
+}
