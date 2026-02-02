@@ -720,7 +720,8 @@ def run_training(discipline: str, config: Dict, dry_run: bool = False) -> Option
     """
     Run training script for a discipline.
 
-    Returns dict with training results, or None if failed.
+    Returns dict with training results, or None if subprocess failed.
+    Empty dict {} means subprocess succeeded but metrics couldn't be parsed.
     """
     train_script = config['train_script']
     train_args_fn = config.get('train_args', [])
@@ -774,14 +775,16 @@ def run_training(discipline: str, config: Dict, dry_run: bool = False) -> Option
         debug(f"  Return code: {result.returncode}")
         debug(f"  Stdout length: {len(result.stdout)} chars")
 
-        if result.returncode != 0:
-            print(f"    ERROR: Training failed (return code {result.returncode})")
+        # Check if subprocess failed
+        subprocess_failed = result.returncode != 0
+
+        if subprocess_failed:
+            print(f"    ERROR: Training subprocess failed (return code {result.returncode})")
             if result.stderr:
                 print(f"    Errors:")
                 for line in result.stderr.split('\n')[-10:]:
                     if line.strip():
                         print(f"      {line}")
-            # Still try to parse output
             debug(f"  Full stdout:\n{result.stdout}")
 
         # Parse output for metrics
@@ -795,11 +798,22 @@ def run_training(discipline: str, config: Dict, dry_run: bool = False) -> Option
             score = calculate_score(metrics.get('val_accuracy', 0), metrics.get('overfit_gap', 0))
             print(f"    Score: {score:.3f}")
             metrics['score'] = score
+            metrics['subprocess_success'] = not subprocess_failed
         else:
             print(f"    WARNING: Could not parse training metrics")
+            # Show last 15 lines of output for debugging
+            print(f"    Last lines of output:")
+            for line in result.stdout.split('\n')[-15:]:
+                if line.strip():
+                    print(f"      {line.strip()[:80]}")
             debug(f"  Full stdout:\n{result.stdout}")
-            # Still might have succeeded, just can't parse output
-            metrics = {}
+            # Return a dict indicating we ran but couldn't parse
+            # subprocess_success indicates if we should proceed or fail
+            metrics = {'subprocess_success': not subprocess_failed, 'parsed': False}
+
+        # If subprocess failed, return None to indicate failure
+        if subprocess_failed:
+            return None
 
         return metrics
 
@@ -1258,10 +1272,17 @@ def train_discipline(discipline: str, dry_run: bool = False,
         train_metrics = run_training(discipline, config, dry_run)
         results['metrics'] = train_metrics
 
-        if not train_metrics and not dry_run:
-            results['error'] = 'Training failed'
+        # None means subprocess failed, empty/partial dict means parsing failed but subprocess succeeded
+        if train_metrics is None and not dry_run:
+            results['error'] = 'Training subprocess failed'
             print(f"    FAILED - stopping here")
             return results
+
+        # Check if we parsed metrics successfully
+        if train_metrics and not train_metrics.get('parsed', True):
+            print(f"    Note: Metrics couldn't be parsed, but training subprocess succeeded")
+            print(f"    Proceeding to model selection...")
+
         results['steps_completed'].append('training')
     except Exception as e:
         print(f"    ERROR during training: {e}")
