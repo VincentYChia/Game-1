@@ -138,18 +138,16 @@ class BestModelVariationTrainer:
     def train_config(self, config, variation_name):
         """Train a single configuration"""
 
-        print(f"\n{'=' * 80}")
-        print(f"Training: {variation_name}")
-        print(f"{'=' * 80}")
-        print(f"Filters: {config['filters']}")
-        print(f"Kernel sizes: {config['kernel_sizes']}")
-        print(f"Dense: {config['dense_units']}")
-        print(f"Dropout: conv={config['dropout_conv']}, dense={config['dropout_dense']}")
-        print(f"L2: {config['l2_regularization']}")
-        print(f"LR: {config['learning_rate']}")
-        print(f"Batch size: {config['batch_size']}")
-        print(f"Optimizer: {config['optimizer']}")
-        print(f"{'=' * 80}\n")
+        print(f"\n{'─' * 70}")
+        print(f"CONFIG: {variation_name}")
+        print(f"{'─' * 70}")
+        print(f"  Architecture: filters={config['filters']}, kernels={config['kernel_sizes']}")
+        print(f"  Dropout: conv={config['dropout_conv']}, dense={config['dropout_dense']}")
+        print(f"  Regularization: L2={config['l2_regularization']}")
+        print(f"  Training: lr={config['learning_rate']}, batch={config['batch_size']}, epochs={config.get('epochs', 100)}")
+        print(f"  Early stopping patience: {config.get('early_stopping_patience', 16)}")
+
+        print(f"\n  [START] Training at {datetime.now().strftime('%H:%M:%S')}")
 
         # Build model
         self.model = self.build_model(config)
@@ -204,6 +202,9 @@ class BestModelVariationTrainer:
         )
 
         train_time = (datetime.now() - start_time).total_seconds()
+        epochs_run = len(self.history.history['loss'])
+
+        print(f"\n  [STOP]  Training completed at {datetime.now().strftime('%H:%M:%S')} ({train_time:.1f}s, {epochs_run} epochs)")
 
         # Evaluate
         val_results = self.model.evaluate(self.X_val, self.y_val, verbose=0)
@@ -218,18 +219,19 @@ class BestModelVariationTrainer:
         acc_gap = train_acc - val_acc
         f1_gap = train_f1 - val_f1
 
-        print(f"\n{'=' * 80}")
-        print("RESULTS")
-        print(f"{'=' * 80}")
-        print(f"Validation: Acc={val_acc:.4f}, F1={val_f1:.4f}")
-        print(f"Training:   Acc={train_acc:.4f}, F1={train_f1:.4f}")
-        print(f"Overfitting Gap: {acc_gap:.4f}")
+        # Results summary
+        print(f"\n  RESULTS:")
+        print(f"    Train Accuracy:  {train_acc*100:.2f}%")
+        print(f"    Val Accuracy:    {val_acc*100:.2f}%")
+        print(f"    Overfitting Gap: {acc_gap*100:.2f}% {'⚠️ HIGH' if acc_gap > 0.06 else '✓ OK'}")
+        print(f"    Val F1 Score:    {val_f1:.4f}")
 
         # Check requirements (90% accuracy, <6% overfit)
         meets_acc = val_acc >= 0.90
         meets_gap = acc_gap < 0.06
-        print(f"Accuracy >=90%: {'PASS' if meets_acc else 'FAIL'}")
-        print(f"Gap <6%:        {'PASS' if meets_gap else 'FAIL'}")
+        print(f"\n  REQUIREMENTS:")
+        print(f"    Accuracy >=90%: {'PASS ✓' if meets_acc else 'FAIL ✗'}")
+        print(f"    Gap <6%:        {'PASS ✓' if meets_gap else 'FAIL ✗'}")
 
         # Check for test mode from environment
         import os
@@ -364,13 +366,42 @@ class BestModelVariationTrainer:
 
         return variations
 
+    def is_suspicious_result(self, val_acc, acc_gap):
+        """
+        Check if results are suspiciously perfect (likely memorization).
+
+        Reject models with:
+        - 98%+ accuracy (suspiciously high, likely memorized)
+        - <0.3% overfitting gap (suspiciously low, suggests data leakage or memorization)
+
+        These metrics look "too good" but indicate the model memorized training data
+        rather than learning generalizable patterns.
+        """
+        if val_acc >= 0.98:
+            return True, f"Val accuracy {val_acc*100:.1f}% >= 98% (likely memorization)"
+
+        gap = abs(acc_gap) if acc_gap is not None else 0.0
+        if gap < 0.003:
+            return True, f"Overfitting gap {gap*100:.2f}% < 0.3% (suspiciously low)"
+
+        return False, ""
+
     def calculate_robustness_score(self, val_acc, acc_gap):
         """
         Calculate robustness-aware score that penalizes overfitting.
 
         A model with 90% accuracy and 2% gap is BETTER than
         a model with 94% accuracy and 10% gap.
+
+        ALSO: Reject models that are "too perfect" (memorization indicators)
+        - 98%+ accuracy → returns -1 (rejected)
+        - <0.3% gap → returns -1 (rejected)
         """
+        # Check for suspicious results first
+        is_suspicious, reason = self.is_suspicious_result(val_acc, acc_gap)
+        if is_suspicious:
+            return -1.0  # Rejected
+
         gap = abs(acc_gap)
 
         if gap < 0.03:
@@ -425,14 +456,25 @@ class BestModelVariationTrainer:
                 # Calculate robustness score
                 val_acc = result['val_metrics']['accuracy']
                 acc_gap = result['overfitting']['accuracy_gap']
-                robustness_score = self.calculate_robustness_score(val_acc, acc_gap)
-                result['robustness_score'] = robustness_score
 
-                print(f"\n  >> Robustness Score: {robustness_score:.4f} (acc={val_acc:.4f}, gap={acc_gap:.4f})")
+                # Check for suspicious results
+                is_suspicious, suspicious_reason = self.is_suspicious_result(val_acc, acc_gap)
+                robustness_score = self.calculate_robustness_score(val_acc, acc_gap)
+
+                result['robustness_score'] = robustness_score
+                result['rejected'] = is_suspicious
+                result['rejection_reason'] = suspicious_reason if is_suspicious else None
+
+                if is_suspicious:
+                    print(f"\n  ⛔ REJECTED: {suspicious_reason}")
+                    print(f"  >> Robustness Score: REJECTED (memorization suspected)")
+                else:
+                    print(f"\n  >> Robustness Score: {robustness_score:.4f} (acc={val_acc:.4f}, gap={acc_gap:.4f})")
 
                 all_results.append(result)
 
-                if robustness_score > best_score:
+                # Only update best if not rejected
+                if not is_suspicious and robustness_score > best_score:
                     best_score = robustness_score
                     best_result = result
                     print(f"  >> NEW BEST!")
@@ -449,9 +491,13 @@ class BestModelVariationTrainer:
     def _save_summary(self, results, best_result=None):
         """Save summary of all variations, sorted by robustness score"""
 
-        # Sort by robustness score (not raw accuracy)
+        # Separate rejected and valid results
+        valid_results = [r for r in results if not r.get('rejected', False)]
+        rejected_results = [r for r in results if r.get('rejected', False)]
+
+        # Sort valid results by robustness score (not raw accuracy)
         sorted_results = sorted(
-            results,
+            valid_results,
             key=lambda x: x.get('robustness_score', x['val_metrics']['accuracy']),
             reverse=True
         )
@@ -460,9 +506,12 @@ class BestModelVariationTrainer:
             'timestamp': datetime.now().isoformat(),
             'base_model': 'search_003',
             'total_variations': len(results),
+            'valid_variations': len(valid_results),
+            'rejected_variations': len(rejected_results),
             'best_variation': best_result['variation_name'] if best_result else None,
             'best_robustness_score': best_result.get('robustness_score') if best_result else None,
-            'variations': sorted_results
+            'variations': sorted_results,
+            'rejected': rejected_results
         }
 
         summary_path = self.model_save_dir / f"variations_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -472,22 +521,37 @@ class BestModelVariationTrainer:
         print(f"\n{'=' * 80}")
         print("SUMMARY - RANKED BY ROBUSTNESS SCORE")
         print(f"{'=' * 80}")
-        print(f"{'Variation':<25} {'Rob.Score':>10} {'Val Acc':>10} {'Gap':>8}")
-        print(f"{'-' * 80}")
+        print(f"\nTotal configs: {len(results)}")
+        print(f"Valid: {len(valid_results)}, Rejected (memorization): {len(rejected_results)}")
 
-        for result in sorted_results[:7]:
-            name = result['variation_name'][:24]
-            rob_score = result.get('robustness_score', 0)
-            val_acc = result['val_metrics']['accuracy']
-            gap = result['overfitting']['accuracy_gap']
+        if sorted_results:
+            print(f"\n{'Variation':<25} {'Rob.Score':>10} {'Val Acc':>10} {'Gap':>8}")
+            print(f"{'-' * 80}")
 
-            marker = " <-- BEST" if best_result and result['variation_name'] == best_result['variation_name'] else ""
-            print(f"{name:<25} {rob_score:>10.4f} {val_acc:>10.4f} {gap:>8.4f}{marker}")
+            for result in sorted_results[:7]:
+                name = result['variation_name'][:24]
+                rob_score = result.get('robustness_score', 0)
+                val_acc = result['val_metrics']['accuracy']
+                gap = result['overfitting']['accuracy_gap']
 
-        print(f"{'=' * 80}")
-        if best_result:
-            print(f"[OK] Best model: {best_result['variation_name']} (robustness={best_result.get('robustness_score', 0):.4f})")
-        print(f"[OK] Summary saved to: {summary_path}")
+                marker = " <-- BEST" if best_result and result['variation_name'] == best_result['variation_name'] else ""
+                print(f"{name:<25} {rob_score:>10.4f} {val_acc:>10.4f} {gap:>8.4f}{marker}")
+
+            print(f"{'=' * 80}")
+            if best_result:
+                print(f"[OK] Best model: {best_result['variation_name']} (robustness={best_result.get('robustness_score', 0):.4f})")
+        else:
+            print(f"\n⚠️ WARNING: No valid models found! All configs showed signs of memorization.")
+
+        # Show rejected models
+        if rejected_results:
+            print(f"\nRejected configs (memorization suspected):")
+            for r in rejected_results:
+                val_acc = r['val_metrics']['accuracy']
+                gap = r['overfitting']['accuracy_gap']
+                print(f"  - {r['variation_name']}: val={val_acc*100:.1f}%, gap={gap*100:.2f}% - {r.get('rejection_reason', 'suspicious')}")
+
+        print(f"\n[OK] Summary saved to: {summary_path}")
 
 
 # Example usage

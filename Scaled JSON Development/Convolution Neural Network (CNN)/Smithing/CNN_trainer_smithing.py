@@ -269,7 +269,9 @@ class HyperparameterSearch:
                 )
 
             # Train
-            start_time = time.time()
+            train_start = datetime.now()
+            print(f"\n  [START] Training at {train_start.strftime('%H:%M:%S')}")
+
             history = model.fit(
                 self.X_train, self.y_train,
                 validation_data=(self.X_val, self.y_val),
@@ -278,7 +280,11 @@ class HyperparameterSearch:
                 callbacks=callback_list,
                 verbose=0
             )
-            train_time = time.time() - start_time
+
+            train_end = datetime.now()
+            train_time = (train_end - train_start).total_seconds()
+            epochs_run = len(history.history['loss'])
+            print(f"  [STOP]  Training completed at {train_end.strftime('%H:%M:%S')} ({train_time:.1f}s, {epochs_run} epochs)")
 
             # Evaluate
             train_metrics = model.evaluate(self.X_train, self.y_train, verbose=0)
@@ -412,16 +418,25 @@ class HyperparameterSearch:
             result = self.train_single_config(config)
 
             if result:
+                # Check for suspicious results
+                is_suspicious, suspicious_reason = is_suspicious_result(result['val_acc'], result['overfitting_gap'])
+
                 # Calculate robustness score
                 rob_score = calculate_robustness_score(result['val_acc'], result['overfitting_gap'])
                 result['robustness_score'] = rob_score
+                result['rejected'] = is_suspicious
+                result['rejection_reason'] = suspicious_reason if is_suspicious else None
 
-                print(f"\n  >> Robustness Score: {rob_score:.4f}")
+                if is_suspicious:
+                    print(f"\n  ⛔ REJECTED: {suspicious_reason}")
+                    print(f"  >> Robustness Score: REJECTED (memorization suspected)")
+                else:
+                    print(f"\n  >> Robustness Score: {rob_score:.4f}")
 
-                if rob_score > best_score:
-                    best_score = rob_score
-                    best_config_name = result['name']
-                    print(f"  >> NEW BEST!")
+                    if rob_score > best_score:
+                        best_score = rob_score
+                        best_config_name = result['name']
+                        print(f"  >> NEW BEST!")
 
         self.best_config_name = best_config_name
         self.best_score = best_score
@@ -449,54 +464,92 @@ class HyperparameterSearch:
         print(f"SUMMARY - RANKED BY ROBUSTNESS SCORE")
         print(f"{'='*100}")
 
-        # Sort by robustness score (not raw accuracy)
+        # Separate rejected and valid results
+        valid_results = [r for r in self.results if not r.get('rejected', False)]
+        rejected_results = [r for r in self.results if r.get('rejected', False)]
+
+        print(f"\nTotal configs: {len(self.results)}")
+        print(f"Valid: {len(valid_results)}, Rejected (memorization): {len(rejected_results)}")
+
+        # Sort valid results by robustness score
         sorted_results = sorted(
-            self.results,
+            valid_results,
             key=lambda x: x.get('robustness_score', x['val_acc']),
             reverse=True
         )
 
-        # Table header
-        print(f"\n{'Rank':<6}{'Name':<25}{'Rob.Score':<12}{'Val Acc':<12}{'Gap':<10}{'Status'}")
-        print(f"{'-'*100}")
+        if sorted_results:
+            # Table header
+            print(f"\n{'Rank':<6}{'Name':<25}{'Rob.Score':<12}{'Val Acc':<12}{'Gap':<10}{'Status'}")
+            print(f"{'-'*100}")
 
-        for i, r in enumerate(sorted_results, 1):
-            status = '[PASS]' if r['meets_requirements'] else '[FAIL]'
-            rob_score = r.get('robustness_score', 0)
-            marker = " <-- BEST" if hasattr(self, 'best_config_name') and r['name'] == self.best_config_name else ""
-            print(
-                f"{i:<6}"
-                f"{r['name']:<25}"
-                f"{rob_score:>8.4f}   "
-                f"{r['val_acc']*100:>6.2f}%     "
-                f"{r['overfitting_gap']*100:>5.1f}%    "
-                f"{status}{marker}"
-            )
+            for i, r in enumerate(sorted_results, 1):
+                status = '[PASS]' if r['meets_requirements'] else '[FAIL]'
+                rob_score = r.get('robustness_score', 0)
+                marker = " <-- BEST" if hasattr(self, 'best_config_name') and r['name'] == self.best_config_name else ""
+                print(
+                    f"{i:<6}"
+                    f"{r['name']:<25}"
+                    f"{rob_score:>8.4f}   "
+                    f"{r['val_acc']*100:>6.2f}%     "
+                    f"{r['overfitting_gap']*100:>5.1f}%    "
+                    f"{status}{marker}"
+                )
 
-        # Best model details
-        best = sorted_results[0]
-        print(f"\n{'='*100}")
-        print(f"[BEST] MODEL: {best['name']}")
-        print(f"{'='*100}")
-        print(f"  Architecture:         {best['architecture']}")
-        print(f"  Validation Accuracy:  {best['val_acc']:.4f} ({best['val_acc']*100:.2f}%)")
-        print(f"  Validation F1:        {best['val_f1']:.4f}")
-        print(f"  Overfitting Gap:      {best['overfitting_gap']*100:.2f}%")
-        print(f"  Inference Time:       {best['inference_ms']:.2f}ms")
-        print(f"  Parameters:           {best['params']:,}")
-        print(f"  Training Time:        {best['train_time']:.1f}s")
-        print(f"  Batch Size:           {best['batch_size']}")
-        print(f"  Learning Rate:        {best['learning_rate']}")
+            # Best model details
+            best = sorted_results[0]
+            print(f"\n{'='*100}")
+            print(f"[BEST] MODEL: {best['name']}")
+            print(f"{'='*100}")
+            print(f"  Architecture:         {best['architecture']}")
+            print(f"  Validation Accuracy:  {best['val_acc']:.4f} ({best['val_acc']*100:.2f}%)")
+            print(f"  Validation F1:        {best['val_f1']:.4f}")
+            print(f"  Overfitting Gap:      {best['overfitting_gap']*100:.2f}%")
+            print(f"  Inference Time:       {best['inference_ms']:.2f}ms")
+            print(f"  Parameters:           {best['params']:,}")
+            print(f"  Training Time:        {best['train_time']:.1f}s")
+            print(f"  Batch Size:           {best['batch_size']}")
+            print(f"  Learning Rate:        {best['learning_rate']}")
+        else:
+            print(f"\n⚠️ WARNING: No valid models found! All configs showed signs of memorization.")
 
         # Passing models
-        passing = [r for r in self.results if r['meets_requirements']]
+        passing = [r for r in valid_results if r['meets_requirements']]
         print(f"\n{'='*100}")
-        print(f"Models meeting ALL requirements: {len(passing)}/{len(self.results)}")
+        print(f"Models meeting ALL requirements: {len(passing)}/{len(valid_results)} (excluding rejected)")
         if passing:
             print(f"\nPassing models:")
             for r in passing:
                 print(f"  - {r['name']:<30} {r['val_acc']*100:.2f}% acc, {r['overfitting_gap']*100:.1f}% gap")
+
+        # Show rejected models
+        if rejected_results:
+            print(f"\nRejected configs (memorization suspected):")
+            for r in rejected_results:
+                print(f"  - {r['name']}: val={r['val_acc']*100:.1f}%, gap={r['overfitting_gap']*100:.2f}% - {r.get('rejection_reason', 'suspicious')}")
+
         print(f"{'='*100}\n")
+
+
+def is_suspicious_result(val_acc, overfit_gap):
+    """
+    Check if results are suspiciously perfect (likely memorization).
+
+    Reject models with:
+    - 98%+ accuracy (suspiciously high, likely memorized)
+    - <0.3% overfitting gap (suspiciously low, suggests data leakage or memorization)
+
+    These metrics look "too good" but indicate the model memorized training data
+    rather than learning generalizable patterns.
+    """
+    if val_acc >= 0.98:
+        return True, f"Val accuracy {val_acc*100:.1f}% >= 98% (likely memorization)"
+
+    gap = abs(overfit_gap) if overfit_gap is not None else 0.0
+    if gap < 0.003:
+        return True, f"Overfitting gap {gap*100:.2f}% < 0.3% (suspiciously low)"
+
+    return False, ""
 
 
 def calculate_robustness_score(val_acc, overfit_gap):
@@ -505,7 +558,16 @@ def calculate_robustness_score(val_acc, overfit_gap):
 
     A model with 90% accuracy and 2% gap is BETTER than
     a model with 94% accuracy and 10% gap.
+
+    ALSO: Reject models that are "too perfect" (memorization indicators)
+    - 98%+ accuracy → returns -1 (rejected)
+    - <0.3% gap → returns -1 (rejected)
     """
+    # Check for suspicious results first
+    is_suspicious, reason = is_suspicious_result(val_acc, overfit_gap)
+    if is_suspicious:
+        return -1.0  # Rejected
+
     gap = abs(overfit_gap)
 
     if gap < 0.03:
