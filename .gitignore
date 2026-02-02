@@ -27,3 +27,6 @@ Thumbs.db
 **/test_output/
 **/generated_icons/
 **/__pycache__/
+
+# Generated training datasets (regenerated during training)
+*.npz
