@@ -705,6 +705,27 @@ def get_lightgbm_configs():
     return configs
 
 
+def is_suspicious_result(val_accuracy, overfit_gap):
+    """
+    Check if results are suspiciously perfect (likely memorization).
+
+    Reject models with:
+    - 98%+ accuracy (suspiciously high, likely memorized)
+    - <0.3% overfitting gap (suspiciously low, suggests data leakage or memorization)
+
+    These metrics look "too good" but indicate the model memorized training data
+    rather than learning generalizable patterns.
+    """
+    if val_accuracy >= 0.98:
+        return True, f"Val accuracy {val_accuracy*100:.1f}% >= 98% (likely memorization)"
+
+    gap = abs(overfit_gap) if overfit_gap is not None else 0.0
+    if gap < 0.003:
+        return True, f"Overfitting gap {gap*100:.2f}% < 0.3% (suspiciously low)"
+
+    return False, ""
+
+
 def calculate_robustness_score(val_accuracy, overfit_gap):
     """
     Calculate robustness-aware score that penalizes overfitting.
@@ -712,6 +733,10 @@ def calculate_robustness_score(val_accuracy, overfit_gap):
     Strategy: High accuracy is good, but overfitting is bad.
     A model with 92% accuracy and 2% gap is BETTER than
     a model with 95% accuracy and 8% gap.
+
+    ALSO: Reject models that are "too perfect" (memorization indicators)
+    - 98%+ accuracy → returns -1 (rejected)
+    - <0.3% gap → returns -1 (rejected)
 
     Penalty schedule:
     - gap < 3%: No penalty (excellent generalization)
@@ -721,6 +746,11 @@ def calculate_robustness_score(val_accuracy, overfit_gap):
     """
     if overfit_gap is None:
         overfit_gap = 0.0
+
+    # Check for suspicious results first
+    is_suspicious, reason = is_suspicious_result(val_accuracy, overfit_gap)
+    if is_suspicious:
+        return -1.0  # Rejected
 
     # Ensure gap is positive (train_acc - val_acc)
     gap = abs(overfit_gap)
@@ -800,6 +830,7 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
     (accuracy penalized by overfitting gap).
     """
     import os
+    from datetime import datetime
 
     test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
 
@@ -811,22 +842,54 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
         configs = get_lightgbm_configs()
 
     print(f"Testing {len(configs)} configurations...")
+    print(f"Train samples: {len(X_train)}, Test samples: {len(X_test)}")
 
     results = []
     best_model = None
     best_score = -1
     best_config_name = None
+    search_start = datetime.now()
 
     for i, config in enumerate(configs):
         config_name = config.get('name', f'config_{i}')
-        print(f"\n  [{i+1}/{len(configs)}] {config_name}...", end=" ", flush=True)
+
+        # Start training
+        print(f"\n{'─'*60}")
+        print(f"[{i+1}/{len(configs)}] CONFIG: {config_name}")
+        print(f"{'─'*60}")
+        print(f"  Params: leaves={config.get('num_leaves')}, lr={config.get('learning_rate')}, "
+              f"min_data={config.get('min_data_in_leaf')}")
+        print(f"  Regularization: L1={config.get('lambda_l1', 0)}, L2={config.get('lambda_l2', 0)}, "
+              f"feat_frac={config.get('feature_fraction')}")
+
+        train_start = datetime.now()
+        print(f"  [START] Training at {train_start.strftime('%H:%M:%S')}")
 
         try:
             model = train_lightgbm_with_config(X_train, y_train, X_test, y_test, config, test_mode)
+
+            train_end = datetime.now()
+            train_duration = (train_end - train_start).total_seconds()
+            print(f"  [STOP]  Training completed at {train_end.strftime('%H:%M:%S')} ({train_duration:.1f}s)")
+
+            # Evaluate
             val_acc, train_acc, gap = quick_evaluate(model, X_test, y_test, X_train, y_train)
+
+            # Check for suspicious results first
+            is_suspicious, suspicious_reason = is_suspicious_result(val_acc, gap)
             score = calculate_robustness_score(val_acc, gap)
 
-            print(f"val={val_acc:.3f}, gap={gap:.3f}, score={score:.3f}")
+            # Results
+            print(f"\n  RESULTS:")
+            print(f"    Train Accuracy:  {train_acc*100:.2f}%")
+            print(f"    Val Accuracy:    {val_acc*100:.2f}%")
+            print(f"    Overfitting Gap: {gap*100:.2f}% {'⚠️ HIGH' if gap > 0.06 else '✓ OK'}")
+
+            if is_suspicious:
+                print(f"    ⛔ REJECTED: {suspicious_reason}")
+                print(f"    Robustness Score: REJECTED (memorization suspected)")
+            else:
+                print(f"    Robustness Score: {score:.4f}")
 
             results.append({
                 'name': config_name,
@@ -834,27 +897,57 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
                 'train_acc': train_acc,
                 'gap': gap,
                 'score': score,
-                'model': model
+                'model': model,
+                'rejected': is_suspicious,
+                'rejection_reason': suspicious_reason if is_suspicious else None
             })
 
-            if score > best_score:
+            # Only update best if not rejected
+            if not is_suspicious and score > best_score:
                 best_score = score
                 best_model = model
                 best_config_name = config_name
+                print(f"    >>> NEW BEST! <<<")
 
         except Exception as e:
-            print(f"FAILED: {e}")
+            print(f"  [ERROR] Training failed: {e}")
             continue
 
     # Summary
-    print(f"\n=== Search Complete ===")
-    print(f"Best config: {best_config_name} (score={best_score:.3f})")
+    search_end = datetime.now()
+    total_time = (search_end - search_start).total_seconds()
 
-    # Show top 3
-    results.sort(key=lambda x: x['score'], reverse=True)
-    print(f"\nTop 3 configs:")
-    for i, r in enumerate(results[:3]):
-        print(f"  {i+1}. {r['name']}: val={r['val_acc']:.3f}, gap={r['gap']:.3f}, score={r['score']:.3f}")
+    # Count rejected models
+    rejected_count = sum(1 for r in results if r.get('rejected', False))
+    valid_results = [r for r in results if not r.get('rejected', False)]
+
+    print(f"\n{'='*60}")
+    print(f"SEARCH COMPLETE")
+    print(f"{'='*60}")
+    print(f"Total time: {total_time:.1f}s")
+    print(f"Configs tested: {len(results)}")
+    print(f"Rejected (memorization): {rejected_count}")
+    print(f"Valid models: {len(valid_results)}")
+
+    if best_model is not None:
+        print(f"Best config: {best_config_name}")
+        print(f"Best robustness score: {best_score:.4f}")
+    else:
+        print(f"⚠️ WARNING: No valid models found! All configs showed signs of memorization.")
+
+    # Show top 3 valid configs
+    valid_results.sort(key=lambda x: x['score'], reverse=True)
+    if valid_results:
+        print(f"\nTop 3 valid configs:")
+        for i, r in enumerate(valid_results[:3]):
+            print(f"  {i+1}. {r['name']}: val={r['val_acc']:.3f}, gap={r['gap']:.3f}, score={r['score']:.3f}")
+
+    # Show rejected configs
+    if rejected_count > 0:
+        print(f"\nRejected configs (memorization):")
+        for r in results:
+            if r.get('rejected', False):
+                print(f"  - {r['name']}: val={r['val_acc']*100:.1f}%, gap={r['gap']*100:.2f}% - {r.get('rejection_reason', 'suspicious')}")
 
     return best_model
 
