@@ -32,7 +32,7 @@ def save_dataset(recipes: List[Dict], labels: List[int], output_path: str):
     with open(output_path, 'w') as f:
         json.dump(dataset, f, indent=2)
 
-    print(f"✅ Saved {len(recipes)} samples ({sum(labels)} positive, {len(labels) - sum(labels)} negative)")
+    print(f"[OK] Saved {len(recipes)} samples ({sum(labels)} positive, {len(labels) - sum(labels)} negative)")
 
 
 def find_same_category_materials(material_id: str, all_materials: Dict) -> List[str]:
@@ -169,7 +169,7 @@ Examples:
     print(f"Output: {output_path}")
 
     # Load data
-    print("\n📂 Loading data...")
+    print("\nLoading data...")
     materials_data = load_json(materials_path)
     placements_data = load_json(placements_path)
 
@@ -180,7 +180,7 @@ Examples:
     print(f"   Loaded {len(all_materials)} materials")
 
     # Generate positive samples (augment originals)
-    print("\n🔄 Generating positive samples...")
+    print("\nGenerating positive samples...")
     all_positives = []
     for recipe in original_recipes:
         variants = augment_recipe_simple(recipe, all_materials, num_variants=8)
@@ -189,7 +189,7 @@ Examples:
     print(f"   Generated {len(all_positives)} positive samples (includes all originals)")
 
     # Generate negative samples
-    print("\n❌ Generating negative samples...")
+    print("\nGenerating negative samples...")
     negatives = generate_negative_samples(original_recipes, all_materials, num_per_recipe=5)
     print(f"   Generated {len(negatives)} negative samples")
 
@@ -202,10 +202,10 @@ Examples:
     all_recipes, all_labels = zip(*combined)
 
     # Save
-    print("\n💾 Saving dataset...")
+    print("\nSaving dataset...")
     save_dataset(list(all_recipes), list(all_labels), output_path)
 
-    print("\n✨ Augmentation complete!")
+    print("\n[OK] Augmentation complete!")
 
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ def load_recipe_data(data_path='recipe_dataset.npz'):
     X_val = data['X_val'].astype(np.float32)
     y_val = data['y_val'].astype(np.float32)
 
-    print(f"✓ Dataset loaded successfully")
+    print(f"[OK] Dataset loaded successfully")
     print(f"  Train samples: {len(X_train)}")
     print(f"  Val samples:   {len(X_val)}")
     print(f"  Input shape:   {X_train.shape[1:]}")
@@ -315,18 +315,18 @@ class HyperparameterSearch:
             meets_gap = overfitting_gap < 0.15
 
             print(f"\n{'='*60}")
-            print(f"✓ Accuracy ≥70%:       {'PASS ✓' if meets_acc else 'FAIL ✗'}")
-            print(f"✓ Inference <200ms:    {'PASS ✓' if meets_inference else 'FAIL ✗'}")
-            print(f"✓ Gap <15%:            {'PASS ✓' if meets_gap else 'FAIL ✗'}")
+            print(f"Accuracy >=70%:        {'PASS' if meets_acc else 'FAIL'}")
+            print(f"Inference <200ms:      {'PASS' if meets_inference else 'FAIL'}")
+            print(f"Gap <15%:              {'PASS' if meets_gap else 'FAIL'}")
 
             all_pass = meets_acc and meets_inference and meets_gap
             if all_pass:
-                print(f"\n🎉 ALL REQUIREMENTS MET! 🎉")
+                print(f"\n*** ALL REQUIREMENTS MET! ***")
 
                 # Save excellent model
                 model_path = f"excellent_{name}.keras"
                 model.save(model_path)
-                print(f"🎯 Model saved: {model_path}")
+                print(f"[SAVED] Model saved: {model_path}")
 
             print(f"{'='*60}")
 
@@ -359,7 +359,7 @@ class HyperparameterSearch:
             return result
 
         except Exception as e:
-            print(f"\n❌ ERROR training {name}: {e}")
+            print(f"\n[ERROR] Training {name}: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -387,7 +387,7 @@ class HyperparameterSearch:
         with open(filepath, 'w') as f:
             json.dump(self.results, f, indent=2)
 
-        print(f"\n✓ Results saved: {filepath}")
+        print(f"\n[OK] Results saved: {filepath}")
         return filepath
 
     def print_summary(self):
@@ -412,7 +412,7 @@ class HyperparameterSearch:
         print(f"{'-'*100}")
 
         for i, r in enumerate(sorted_results, 1):
-            status = '🎉 PASS' if r['meets_requirements'] else '   FAIL'
+            status = '[PASS]' if r['meets_requirements'] else '[FAIL]'
             print(
                 f"{i:<6}"
                 f"{r['name']:<28}"
@@ -425,7 +425,7 @@ class HyperparameterSearch:
         # Best model details
         best = sorted_results[0]
         print(f"\n{'='*100}")
-        print(f"🏆 BEST MODEL: {best['name']}")
+        print(f"[BEST] MODEL: {best['name']}")
         print(f"{'='*100}")
         print(f"  Architecture:         {best['architecture']}")
         print(f"  Validation Accuracy:  {best['val_acc']:.4f} ({best['val_acc']*100:.2f}%)")
@@ -440,11 +440,11 @@ class HyperparameterSearch:
         # Passing models
         passing = [r for r in self.results if r['meets_requirements']]
         print(f"\n{'='*100}")
-        print(f"✓ Models meeting ALL requirements: {len(passing)}/{len(self.results)}")
+        print(f"Models meeting ALL requirements: {len(passing)}/{len(self.results)}")
         if passing:
             print(f"\nPassing models:")
             for r in passing:
-                print(f"  • {r['name']:<30} {r['val_acc']*100:.2f}% acc, {r['overfitting_gap']*100:.1f}% gap")
+                print(f"  - {r['name']:<30} {r['val_acc']*100:.2f}% acc, {r['overfitting_gap']*100:.1f}% gap")
         print(f"{'='*100}\n")
 
 
@@ -542,7 +542,7 @@ def main():
 
     try:
         # Load data
-        X_train, y_train, X_val, y_val = load_recipe_data('recipe_dataset.npz')
+        X_train, y_train, X_val, y_val = load_recipe_data('recipe_dataset_v2.npz')
 
         # Initialize search
         search = HyperparameterSearch(X_train, y_train, X_val, y_val)
@@ -564,15 +564,15 @@ def main():
         search.save_results()
         search.print_summary()
 
-        print("\n✓ Round 2 search complete!")
+        print("\n[OK] Round 2 search complete!")
 
     except FileNotFoundError as e:
-        print(f"\n❌ ERROR: {e}")
-        print("\nPlease ensure 'recipe_dataset.npz' exists in the current directory.")
+        print(f"\n[ERROR] {e}")
+        print("\nPlease ensure 'recipe_dataset_v2.npz' exists in the current directory.")
         print("The file should contain: X_train, y_train, X_val, y_val")
 
     except Exception as e:
-        print(f"\n❌ UNEXPECTED ERROR: {e}")
+        print(f"\n[ERROR] UNEXPECTED: {e}")
         import traceback
         traceback.print_exc()
 

@@ -926,7 +926,7 @@ def save_dataset(data: List[Tuple[Dict, int]], output_path: str, discipline: str
     with open(output_path, 'w') as f:
         json.dump(dataset, f, indent=2)
 
-    print(f"\n✅ Dataset saved to: {output_path}")
+    print(f"\n[OK] Dataset saved to: {output_path}")
     print(f"   Total samples: {dataset['total_samples']}")
     print(f"   Positive: {dataset['positive_samples']}")
     print(f"   Negative: {dataset['negative_samples']}")
@@ -974,12 +974,12 @@ Examples:
     print(f"Output: {output_path}")
 
     # Load data
-    print("\n📂 Loading data...")
+    print("\nLoading data...")
     try:
         materials_data = load_json(materials_path)
         placements_data = load_json(placements_path)
     except Exception as e:
-        print(f"❌ Error loading files: {e}")
+        print(f"[ERROR] Error loading files: {e}")
         return
 
     # Parse materials into dict
@@ -993,7 +993,7 @@ Examples:
     print(f"   Loaded {len(all_materials)} materials")
 
     # Augment based on discipline
-    print(f"\n🔄 Augmenting {discipline} recipes...")
+    print(f"\nAugmenting {discipline} recipes...")
 
     if discipline == 'refining':
         # Step 1: Generate balanced synthetic recipes for all patterns
@@ -1069,7 +1069,7 @@ Examples:
     # Save
     save_dataset(all_data, output_path, discipline)
 
-    print("\n✨ Augmentation complete!")
+    print("\n[OK] Augmentation complete!")
 
 
 if __name__ == "__main__":
