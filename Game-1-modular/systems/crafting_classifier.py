@@ -14,6 +14,17 @@ from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from colorsys import hsv_to_rgb
 import json
+import os
+
+# ==============================================================================
+# DEBUG MODE - Set CLASSIFIER_DEBUG=1 environment variable to enable
+# ==============================================================================
+CLASSIFIER_DEBUG = os.environ.get('CLASSIFIER_DEBUG', '0') == '1'
+
+def _debug(msg: str):
+    """Print debug message if debug mode is enabled"""
+    if CLASSIFIER_DEBUG:
+        print(f"[CLASSIFIER DEBUG] {msg}")
 
 
 # ==============================================================================
@@ -415,12 +426,11 @@ class LightGBMFeatureExtractor:
     NUM_CATEGORIES = 5
 
     # Refinement vocabularies by discipline
-    # Refining has NO refinement features (was trained without them)
-    # Alchemy and Engineering have only 'basic'
+    # All three LightGBM disciplines have only 'basic' (from training data)
     REFINEMENT_VOCAB = {
-        'refining': {},  # No refinement features for refining
-        'alchemy': {'basic': 0},
-        'engineering': {'basic': 0}
+        'refining': {'basic': 0},     # 1 refinement feature
+        'alchemy': {'basic': 0},      # 1 refinement feature
+        'engineering': {'basic': 0}   # 1 refinement feature
     }
 
     def __init__(self, materials_db):
@@ -466,12 +476,13 @@ class LightGBMFeatureExtractor:
         """
         Extract features from InteractiveRefiningUI.
 
-        Feature count: 18 features (NO refinement features for refining)
+        Feature count: 19 features (MUST match training script exactly!)
         - 2: num_cores, num_spokes
         - 2: core_qty, spoke_qty
         - 2: spokes/cores ratio, spoke_qty/core_qty ratio
         - 1: material diversity
         - 5: category distribution (5 categories)
+        - 1: refinement distribution (1 refinement: 'basic')
         - 5: tier statistics (core_mean, core_max, spoke_mean, spoke_max, tier_mismatch)
         - 1: station tier
         """
@@ -522,7 +533,12 @@ class LightGBMFeatureExtractor:
         for cat_name in ['elemental', 'metal', 'monster_drop', 'stone', 'wood']:
             features.append(cat_counts.get(cat_name, 0))
 
-        # NOTE: Refining has NO refinement features (model was trained without them)
+        # Refinement distribution - HARDCODED 1 refinement: 'basic' (1 feature)
+        # NOTE: This was MISSING before - training DOES include this for refining!
+        core_refinements = [self._get_refinement_level(self._get_material(c['materialId']))
+                           for c in core_inputs]
+        ref_counts = Counter(core_refinements)
+        features.append(ref_counts.get('basic', 0))
 
         # Tier statistics (5 features)
         core_tiers = [self._get_material(c['materialId']).get('tier', 1)
@@ -851,6 +867,7 @@ class LightGBMBackend(ClassifierBackend):
         self._lazy_load()
 
         if self._load_error:
+            _debug(f"LightGBM load error: {self._load_error}")
             return 0.0, self._load_error
 
         try:
@@ -858,11 +875,23 @@ class LightGBMBackend(ClassifierBackend):
             if len(input_data.shape) == 1:
                 input_data = input_data.reshape(1, -1)
 
+            _debug(f"LightGBM input shape after reshape: {input_data.shape}")
+            _debug(f"LightGBM model expects {self.model.num_feature()} features")
+
+            if input_data.shape[1] != self.model.num_feature():
+                error_msg = f"Feature mismatch! Model expects {self.model.num_feature()} features, got {input_data.shape[1]}"
+                _debug(f"ERROR: {error_msg}")
+                return 0.0, error_msg
+
             prob = float(self.model.predict(input_data,
                         num_iteration=self.model.best_iteration)[0])
+            _debug(f"LightGBM raw prediction: {prob}")
             return prob, None
 
         except Exception as e:
+            _debug(f"LightGBM prediction exception: {e}")
+            import traceback
+            _debug(f"Traceback: {traceback.format_exc()}")
             return 0.0, f"LightGBM prediction failed: {e}"
 
     def is_loaded(self) -> bool:
@@ -1008,8 +1037,11 @@ class CraftingClassifierManager:
         Returns:
             ClassifierResult with valid/invalid, confidence, and any error
         """
+        _debug(f"=== validate() called for {discipline} ===")
+
         config = self.configs.get(discipline)
         if not config:
+            _debug(f"ERROR: No config for {discipline}")
             return ClassifierResult(
                 valid=False,
                 confidence=0.0,
@@ -1018,7 +1050,10 @@ class CraftingClassifierManager:
                 error=f"No classifier configured for discipline: {discipline}"
             )
 
+        _debug(f"Config: type={config.classifier_type}, model_path={config.model_path}")
+
         if not config.enabled:
+            _debug(f"ERROR: Classifier disabled for {discipline}")
             return ClassifierResult(
                 valid=False,
                 confidence=0.0,
@@ -1030,6 +1065,7 @@ class CraftingClassifierManager:
         # Get backend
         backend = self.get_backend(discipline)
         if not backend:
+            _debug(f"ERROR: Failed to create backend for {discipline}")
             return ClassifierResult(
                 valid=False,
                 confidence=0.0,
@@ -1038,13 +1074,22 @@ class CraftingClassifierManager:
                 error=f"Failed to create backend for discipline: {discipline}"
             )
 
+        _debug(f"Backend loaded: {backend.is_loaded()}")
+
         # Transform UI to model input
         try:
             if config.classifier_type == 'cnn':
                 input_data = self._transform_for_cnn(discipline, interactive_ui)
+                _debug(f"CNN input shape: {input_data.shape}, dtype: {input_data.dtype}")
+                _debug(f"CNN input min/max: {input_data.min():.4f}/{input_data.max():.4f}")
             else:
                 input_data = self._transform_for_lightgbm(discipline, interactive_ui)
+                _debug(f"LightGBM input shape: {input_data.shape}, dtype: {input_data.dtype}")
+                _debug(f"LightGBM features: {input_data.tolist()}")
         except Exception as e:
+            _debug(f"ERROR: Transform failed: {e}")
+            import traceback
+            _debug(f"Traceback: {traceback.format_exc()}")
             return ClassifierResult(
                 valid=False,
                 confidence=0.0,
@@ -1054,9 +1099,12 @@ class CraftingClassifierManager:
             )
 
         # Make prediction
+        _debug(f"Calling backend.predict()...")
         prob, error = backend.predict(input_data)
+        _debug(f"Prediction result: prob={prob}, error={error}")
 
         if error:
+            _debug(f"ERROR: Prediction failed: {error}")
             return ClassifierResult(
                 valid=False,
                 confidence=0.0,
@@ -1068,6 +1116,8 @@ class CraftingClassifierManager:
         # Interpret result
         is_valid = prob >= config.threshold
         confidence = prob if is_valid else (1 - prob)
+
+        _debug(f"Result: valid={is_valid}, prob={prob:.4f}, threshold={config.threshold}")
 
         return ClassifierResult(
             valid=is_valid,
