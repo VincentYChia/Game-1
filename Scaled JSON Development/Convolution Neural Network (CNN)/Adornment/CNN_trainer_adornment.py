@@ -438,7 +438,7 @@ class BestModelVariationTrainer:
         print(f"\n{'=' * 80}")
         print(f"CNN HYPERPARAMETER SEARCH - {len(variations)} CONFIGURATIONS")
         print(f"{'=' * 80}")
-        print(f"Selection criteria: Robustness Score (accuracy × overfit penalty)")
+        print(f"Selection criteria: Robustness Score (accuracy * overfit penalty)")
         print(f"{'=' * 80}\n")
 
         all_results = []

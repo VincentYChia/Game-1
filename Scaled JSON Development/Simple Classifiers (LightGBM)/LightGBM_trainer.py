@@ -856,7 +856,7 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
         # Start training
         print(f"\n{'-'*60}")
         print(f"[{i+1}/{len(configs)}] CONFIG: {config_name}")
-        print(f"{'─'*60}")
+        print(f"{'-'*60}")
         print(f"  Params: leaves={config.get('num_leaves')}, lr={config.get('learning_rate')}, "
               f"min_data={config.get('min_data_in_leaf')}")
         print(f"  Regularization: L1={config.get('lambda_l1', 0)}, L2={config.get('lambda_l2', 0)}, "
