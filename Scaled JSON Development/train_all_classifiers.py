@@ -189,6 +189,171 @@ def debug(msg: str):
         print(f"[DEBUG] {msg}")
 
 
+# ============================================================================
+# DATA CHANGE DETECTION
+# ============================================================================
+
+import hashlib
+
+HASH_CACHE_FILE = SCRIPT_DIR / ".data_hashes.json"
+
+
+def compute_file_hash(filepath: Path) -> str:
+    """Compute MD5 hash of a file."""
+    if not filepath.exists():
+        return ""
+
+    hasher = hashlib.md5()
+    with open(filepath, 'rb') as f:
+        for chunk in iter(lambda: f.read(65536), b''):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def get_data_hashes(discipline: str) -> Dict[str, str]:
+    """Get hashes of all data files for a discipline."""
+    hashes = {}
+
+    # Common materials file
+    hashes['materials'] = compute_file_hash(MATERIALS_JSON)
+
+    # Discipline-specific data files
+    if discipline in DATA_PATHS:
+        for key, path in DATA_PATHS[discipline].items():
+            hashes[key] = compute_file_hash(path)
+
+    return hashes
+
+
+def load_cached_hashes() -> Dict[str, Dict[str, str]]:
+    """Load cached data hashes from file."""
+    if not HASH_CACHE_FILE.exists():
+        return {}
+
+    try:
+        with open(HASH_CACHE_FILE, 'r') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return {}
+
+
+def save_cached_hashes(cache: Dict[str, Dict[str, str]]):
+    """Save data hashes to cache file."""
+    with open(HASH_CACHE_FILE, 'w') as f:
+        json.dump(cache, f, indent=2)
+
+
+def check_data_changed(discipline: str, force: bool = False) -> Tuple[bool, str]:
+    """
+    Check if data files have changed for a discipline.
+
+    Returns:
+        Tuple of (changed: bool, reason: str)
+    """
+    if force:
+        return True, "forced"
+
+    current_hashes = get_data_hashes(discipline)
+    cached = load_cached_hashes()
+
+    if discipline not in cached:
+        return True, "no cache"
+
+    cached_hashes = cached[discipline]
+
+    # Check if materials changed (affects ALL disciplines)
+    if current_hashes.get('materials') != cached_hashes.get('materials'):
+        return True, "materials changed"
+
+    # Check discipline-specific files
+    for key, hash_val in current_hashes.items():
+        if key == 'materials':
+            continue
+        if cached_hashes.get(key) != hash_val:
+            return True, f"{key} changed"
+
+    return False, "unchanged"
+
+
+def update_data_hash_cache(discipline: str):
+    """Update the cache with current hashes for a discipline."""
+    cached = load_cached_hashes()
+    cached[discipline] = get_data_hashes(discipline)
+    save_cached_hashes(cached)
+
+
+# ============================================================================
+# MODEL CLEANUP (Keep best N models)
+# ============================================================================
+
+def cleanup_old_models(discipline: str, config: Dict, keep_best: int = 3):
+    """
+    Clean up old models, keeping only the best N.
+
+    Models are ranked by modification time (newest = best).
+    Non-selected models are moved to archive.
+    """
+    work_dir = config['work_dir']
+    model_pattern = config['model_pattern']
+
+    debug(f"Cleaning up models for {discipline}")
+    debug(f"  Work dir: {work_dir}")
+    debug(f"  Pattern: {model_pattern}")
+    debug(f"  Keep best: {keep_best}")
+
+    # Find all models
+    if '*' in model_pattern:
+        # If pattern has subdir, handle it
+        if '/' in model_pattern:
+            subdir, pattern = model_pattern.rsplit('/', 1)
+            search_dir = work_dir / subdir
+        else:
+            search_dir = work_dir
+            pattern = model_pattern
+
+        models = list(search_dir.glob(pattern))
+    else:
+        models = list(work_dir.glob(model_pattern))
+
+    debug(f"  Found {len(models)} models")
+
+    if len(models) <= keep_best:
+        debug(f"  No cleanup needed (have {len(models)}, keep {keep_best})")
+        return 0
+
+    # Sort by modification time (newest first)
+    models.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+
+    # Keep the best N, archive the rest
+    to_archive = models[keep_best:]
+    archived_count = 0
+
+    for model_path in to_archive:
+        try:
+            # Move to archive
+            archive_name = f"{discipline}_{model_path.name}"
+            archive_path = ARCHIVE_DIR / archive_name
+
+            # Avoid overwriting
+            if archive_path.exists():
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                archive_name = f"{discipline}_{model_path.stem}_{timestamp}{model_path.suffix}"
+                archive_path = ARCHIVE_DIR / archive_name
+
+            ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(model_path), str(archive_path))
+            archived_count += 1
+            debug(f"    Archived: {model_path.name} -> {archive_name}")
+
+        except Exception as e:
+            debug(f"    ERROR archiving {model_path.name}: {e}")
+
+    if archived_count > 0:
+        print(f"    Cleaned up {archived_count} old model(s) (kept best {keep_best})")
+
+    return archived_count
+
+
 def debug_paths():
     """Debug print all configured paths."""
     print("\n" + "=" * 70)
@@ -817,16 +982,25 @@ def install_model(discipline: str, source_model: Path, dry_run: bool = False) ->
 # MAIN WORKFLOW
 # ============================================================================
 
-def train_discipline(discipline: str, dry_run: bool = False) -> Dict:
+def train_discipline(discipline: str, dry_run: bool = False,
+                     force: bool = False, keep_best: int = 3) -> Dict:
     """
     Complete training workflow for a single discipline.
 
     Steps:
+    0. Check if data changed (skip if unchanged and not forced)
     1. Archive existing model
     2. Generate training data
     3. Train model
     4. Select best model
     5. Install to game path
+    6. Cleanup old models (keep best N)
+
+    Args:
+        discipline: Name of discipline to train
+        dry_run: If True, don't actually execute, just show what would happen
+        force: If True, train even if data hasn't changed
+        keep_best: Number of best models to keep (rest are archived)
 
     Returns dict with results summary.
     """
@@ -845,6 +1019,18 @@ def train_discipline(discipline: str, dry_run: bool = False) -> Dict:
     print(f"TRAINING: {discipline.upper()}")
     print(f"Type: {config['type'].upper()}")
     print(f"{'='*70}")
+
+    # Step 0: Check if data changed
+    data_changed, reason = check_data_changed(discipline, force)
+    if not data_changed:
+        print(f"\n[SKIP] Data unchanged for {discipline} ({reason})")
+        print(f"    Use --force to retrain anyway")
+        results['skipped'] = True
+        results['skip_reason'] = reason
+        results['success'] = True  # Not a failure, just skipped
+        return results
+
+    print(f"\n[INFO] Training needed: {reason}")
 
     # Step 1: Archive existing model
     print(f"\n[1/5] Archiving existing model...")
@@ -923,7 +1109,7 @@ def train_discipline(discipline: str, dry_run: bool = False) -> Dict:
             traceback.print_exc()
 
     # Step 5: Install model
-    print(f"\n[5/5] Installing model to game path...")
+    print(f"\n[5/6] Installing model to game path...")
     try:
         if best_result:
             install_ok = install_model(discipline, best_result[0], dry_run)
@@ -938,11 +1124,33 @@ def train_discipline(discipline: str, dry_run: bool = False) -> Dict:
         if DEBUG_MODE:
             traceback.print_exc()
 
+    # Step 6: Cleanup old models and update hash cache
+    print(f"\n[6/6] Cleanup and finalize...")
+    try:
+        if not dry_run:
+            # Update hash cache so we don't retrain unnecessarily next time
+            update_data_hash_cache(discipline)
+            print(f"    Updated data hash cache for {discipline}")
+
+            # Cleanup old models
+            if keep_best > 0:
+                archived = cleanup_old_models(discipline, config, keep_best)
+                if archived:
+                    results['cleaned_up'] = archived
+        else:
+            print(f"    [DRY RUN] Would update hash cache and cleanup models")
+        results['steps_completed'].append('finalize')
+    except Exception as e:
+        print(f"    ERROR during cleanup: {e}")
+        if DEBUG_MODE:
+            traceback.print_exc()
+
     debug(f"Final results: {results}")
     return results
 
 
-def train_all(disciplines: List[str], dry_run: bool = False) -> Dict:
+def train_all(disciplines: List[str], dry_run: bool = False,
+              force: bool = False, keep_best: int = 3) -> Dict:
     """Train multiple disciplines in sequence."""
     all_results = {}
 
@@ -951,6 +1159,8 @@ def train_all(disciplines: List[str], dry_run: bool = False) -> Dict:
     print("="*70)
     print(f"Disciplines: {', '.join(disciplines)}")
     print(f"Dry Run: {dry_run}")
+    print(f"Force: {force}")
+    print(f"Keep Best: {keep_best}")
     print(f"Debug Mode: {DEBUG_MODE}")
     print(f"Archive Dir: {ARCHIVE_DIR}")
     print(f"Scoring: score = val_accuracy - 2.0 * overfit_gap")
@@ -958,7 +1168,7 @@ def train_all(disciplines: List[str], dry_run: bool = False) -> Dict:
 
     for discipline in disciplines:
         try:
-            results = train_discipline(discipline, dry_run)
+            results = train_discipline(discipline, dry_run, force, keep_best)
             all_results[discipline] = results
         except Exception as e:
             print(f"\nERROR training {discipline}: {e}")
@@ -1060,6 +1270,26 @@ Training Order:
         help='Print detailed path configuration and exit'
     )
 
+    parser.add_argument(
+        '--force', '-f',
+        action='store_true',
+        help='Force retraining even if data has not changed'
+    )
+
+    parser.add_argument(
+        '--keep-best', '-k',
+        type=int,
+        default=3,
+        metavar='N',
+        help='Keep best N models, archive the rest (default: 3)'
+    )
+
+    parser.add_argument(
+        '--no-cleanup',
+        action='store_true',
+        help='Skip model cleanup (keep all models)'
+    )
+
     args = parser.parse_args()
 
     # Set debug mode
@@ -1102,10 +1332,13 @@ Training Order:
             print("\nERROR: Some required paths are missing. Use --debug-paths for details.")
             print("Continuing anyway (some training may fail)...")
 
-    # Run training
-    results = train_all(disciplines, args.dry_run)
+    # Determine keep_best value (0 means no cleanup)
+    keep_best = 0 if args.no_cleanup else args.keep_best
 
-    # Exit code based on success
+    # Run training
+    results = train_all(disciplines, args.dry_run, args.force, keep_best)
+
+    # Exit code based on success (skipped counts as success)
     all_success = all(r.get('success', False) for r in results.values())
     return 0 if all_success else 1
 
