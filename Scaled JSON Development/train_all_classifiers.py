@@ -101,13 +101,13 @@ DATA_PATHS = {
         'placements': GAME_MODULAR / "recipes.JSON" / "recipes-adornments-1.json",
     },
     'alchemy': {
-        'placements': SCRIPT_DIR / "json_templates" / "alchemy_recipes.json",
+        'placements': GAME_MODULAR / "placements.JSON" / "placements-alchemy-1.JSON",
     },
     'refining': {
-        'placements': SCRIPT_DIR / "json_templates" / "refining_recipes.json",
+        'placements': GAME_MODULAR / "placements.JSON" / "placements-refining-1.JSON",
     },
     'engineering': {
-        'placements': SCRIPT_DIR / "json_templates" / "engineering_recipes.json",
+        'placements': GAME_MODULAR / "placements.JSON" / "placements-engineering-1.JSON",
     },
 }
 
@@ -816,16 +816,21 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
     """
     Parse training output to extract metrics.
 
-    Handles two output formats:
+    Handles multiple output formats:
 
-    1. CNN trainer format (state-based):
+    1. CNN Smithing trainer format (state-based):
        Training Set:
          Accuracy:  0.8208 (82.08%)
        Validation Set:
          Accuracy:  0.8208 (82.08%)
        Overfitting:   5.00% gap
 
-    2. LightGBM trainer format (single-line):
+    2. CNN Adornment trainer format (single-line):
+       Validation: Acc=0.5400, F1=0.0000
+       Training:   Acc=0.5400, F1=0.0000
+       Overfitting Gap: 0.0213
+
+    3. LightGBM trainer format (single-line):
        Train Accuracy: 0.8500
        Val Accuracy:   0.8200
        Overfit Gap:    0.0300 (3.0%)
@@ -842,24 +847,40 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
 
         for line in lines:
             line_lower = line.lower().strip()
+            line_stripped = line.strip()
 
             # Skip empty lines
             if not line_lower:
                 continue
 
-            # ===== CNN FORMAT: Section headers =====
-            if 'training set' in line_lower or 'training:' in line_lower:
+            # ===== ADORNMENT FORMAT: "Validation: Acc=0.5400, F1=0.0000" =====
+            # This format has Acc= on same line as Validation:/Training:
+            acc_equals_match = re.search(r'acc\s*=\s*(\d+\.?\d*)', line, re.IGNORECASE)
+            if acc_equals_match:
+                acc_val = float(acc_equals_match.group(1))
+                if acc_val > 1:
+                    acc_val = acc_val / 100
+                if 'validation' in line_lower:
+                    metrics['val_accuracy'] = acc_val
+                    debug(f"  Found adornment val acc: {acc_val}")
+                elif 'training' in line_lower:
+                    metrics['train_accuracy'] = acc_val
+                    debug(f"  Found adornment train acc: {acc_val}")
+                continue
+
+            # ===== CNN SMITHING FORMAT: Section headers =====
+            if 'training set' in line_lower:
                 current_section = 'training'
                 debug(f"  Entered training section")
                 continue
 
-            if 'validation set' in line_lower or 'validation:' in line_lower:
+            if 'validation set' in line_lower:
                 current_section = 'validation'
                 debug(f"  Entered validation section")
                 continue
 
-            # ===== CNN FORMAT: Accuracy in section =====
-            if current_section and 'accuracy' in line_lower and 'accuracy:' in line_lower:
+            # ===== CNN SMITHING FORMAT: Accuracy in section =====
+            if current_section and 'accuracy' in line_lower and ':' in line_lower:
                 # Parse "Accuracy:  0.8208 (82.08%)" or "Accuracy: 82.08%"
                 # Try percentage first
                 pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
@@ -885,7 +906,7 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
 
             # ===== LIGHTGBM FORMAT: Single-line metrics =====
             # "Train Accuracy: 0.8500" or "Train Accuracy: 85.00%"
-            if 'train' in line_lower and 'accuracy' in line_lower:
+            if 'train' in line_lower and 'accuracy' in line_lower and ':' in line_lower:
                 pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
                 if pct_match:
                     metrics['train_accuracy'] = float(pct_match.group(1)) / 100
@@ -898,7 +919,7 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
                 continue
 
             # "Val Accuracy: 0.8200" or "Val Accuracy: 82.00%"
-            if ('val' in line_lower or 'validation' in line_lower) and 'accuracy' in line_lower:
+            if ('val' in line_lower or 'validation' in line_lower) and 'accuracy' in line_lower and ':' in line_lower:
                 pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
                 if pct_match:
                     metrics['val_accuracy'] = float(pct_match.group(1)) / 100
@@ -910,17 +931,17 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
                 debug(f"  Found val line: {line} -> {metrics.get('val_accuracy')}")
                 continue
 
-            # ===== OVERFIT GAP (both formats) =====
-            # "Overfitting:   5.00% gap" or "Overfit Gap: 0.0300 (3.0%)"
-            if 'overfit' in line_lower or 'gap' in line_lower:
+            # ===== OVERFIT GAP (all formats) =====
+            # "Overfitting:   5.00% gap" or "Overfit Gap: 0.0300 (3.0%)" or "Overfitting Gap: 0.0213"
+            if 'overfit' in line_lower:
                 debug(f"  Found gap line: {line}")
                 pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
                 if pct_match:
                     metrics['overfit_gap'] = float(pct_match.group(1)) / 100
                     debug(f"    Parsed overfit gap from %: {metrics['overfit_gap']}")
                 else:
-                    # Try decimal format "0.0300"
-                    dec_match = re.search(r'gap[:\s]+(\d+\.?\d+)', line, re.IGNORECASE)
+                    # Try decimal format "0.0300" or "Gap: 0.0213"
+                    dec_match = re.search(r'(?:gap|overfitting)[:\s]+(\d+\.?\d+)', line, re.IGNORECASE)
                     if dec_match:
                         val = float(dec_match.group(1))
                         metrics['overfit_gap'] = val if val <= 1 else val / 100
@@ -960,17 +981,30 @@ def find_best_model(discipline: str, config: Dict, work_dir: Path) -> Optional[T
     debug(f"  Pattern: {model_pattern}")
     debug(f"  Work dir: {work_dir}")
 
-    # Find all matching models
+    # Find all matching models - first try direct match
     models = list(work_dir.glob(model_pattern))
-    debug(f"  Found {len(models)} models with pattern")
+    debug(f"  Found {len(models)} models with direct glob")
 
     if not models:
-        # Try recursive search
-        models = list(work_dir.rglob(model_pattern.split('/')[-1]))
-        debug(f"  Found {len(models)} models with recursive search")
+        # Try recursive search (CNN trainers may save to subdirectories)
+        pattern = model_pattern.split('/')[-1] if '/' in model_pattern else model_pattern
+        models = list(work_dir.rglob(pattern))
+        debug(f"  Found {len(models)} models with recursive search (rglob)")
+
+    # Also check common subdirectories for CNN trainers
+    if not models and model_type == 'cnn':
+        common_subdirs = ['best_model_variations', 'models', 'output']
+        for subdir in common_subdirs:
+            subdir_path = work_dir / subdir
+            if subdir_path.exists():
+                subdir_models = list(subdir_path.glob(model_pattern))
+                debug(f"  Found {len(subdir_models)} models in {subdir}/")
+                models.extend(subdir_models)
 
     if not models:
         print(f"    No models found matching: {model_pattern}")
+        debug(f"    Searched in: {work_dir}")
+        debug(f"    Subdirs present: {[d.name for d in work_dir.iterdir() if d.is_dir()]}")
         return None
 
     # For now, return the most recently modified model

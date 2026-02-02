@@ -170,11 +170,31 @@ Examples:
 
     # Load data
     print("\nLoading data...")
-    materials_data = load_json(materials_path)
-    placements_data = load_json(placements_path)
+    try:
+        materials_data = load_json(materials_path)
+        placements_data = load_json(placements_path)
+    except FileNotFoundError as e:
+        print(f"[ERROR] File not found: {e}")
+        return
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Invalid JSON: {e}")
+        return
 
+    # Parse materials with validation
+    if 'materials' not in materials_data:
+        print(f"[ERROR] No 'materials' key found in materials file!")
+        print(f"  Available keys: {list(materials_data.keys())}")
+        return
     all_materials = {m['materialId']: m for m in materials_data['materials']}
-    original_recipes = placements_data['placements']
+
+    # Parse placements with validation
+    original_recipes = placements_data.get('placements', [])
+    if not original_recipes:
+        print(f"[ERROR] No 'placements' key found or empty placements in: {placements_path}")
+        print(f"  Available keys: {list(placements_data.keys())}")
+        print(f"  This file may be a template/reference file, not actual recipe data.")
+        print(f"  Expected file format should have a 'placements' array with recipe objects.")
+        return
 
     print(f"   Loaded {len(original_recipes)} original recipes")
     print(f"   Loaded {len(all_materials)} materials")

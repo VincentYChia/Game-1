@@ -978,19 +978,43 @@ Examples:
     try:
         materials_data = load_json(materials_path)
         placements_data = load_json(placements_path)
+    except FileNotFoundError as e:
+        print(f"[ERROR] File not found: {e}")
+        return
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Invalid JSON: {e}")
+        return
     except Exception as e:
         print(f"[ERROR] Error loading files: {e}")
         return
 
-    # Parse materials into dict
+    # Parse materials into dict with validation
     all_materials = {}
     if 'materials' in materials_data:
         all_materials = {m['materialId']: m for m in materials_data['materials']}
+    else:
+        print(f"[ERROR] No 'materials' key found in materials file!")
+        print(f"  Available keys: {list(materials_data.keys())}")
+        return
 
-    # Get placements
+    # Get placements with validation
     recipes = placements_data.get('placements', [])
     print(f"   Loaded {len(recipes)} base recipes")
     print(f"   Loaded {len(all_materials)} materials")
+
+    # Validate recipes exist before proceeding
+    if not recipes:
+        print(f"\n[ERROR] No recipes found in placements file: {placements_path}")
+        print(f"  Available keys: {list(placements_data.keys())}")
+        print(f"  This file may be a template/reference file, not actual recipe data.")
+        print(f"  Expected file format should have a 'placements' array with recipe objects.")
+        print(f"\n  Example expected structure:")
+        print(f'    {{"placements": [{{"recipeId": "...", "outputId": "...", ...}}]}}')
+        return
+
+    if not all_materials:
+        print(f"\n[ERROR] No materials loaded. Cannot generate augmented data.")
+        return
 
     # Augment based on discipline
     print(f"\nAugmenting {discipline} recipes...")

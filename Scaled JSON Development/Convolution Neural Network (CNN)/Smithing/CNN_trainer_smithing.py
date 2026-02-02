@@ -319,14 +319,21 @@ class HyperparameterSearch:
             print(f"Inference <200ms:      {'PASS' if meets_inference else 'FAIL'}")
             print(f"Gap <15%:              {'PASS' if meets_gap else 'FAIL'}")
 
-            all_pass = meets_acc and meets_inference and meets_gap
-            if all_pass:
-                print(f"\n*** ALL REQUIREMENTS MET! ***")
+            # Check for test mode
+            test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
 
-                # Save excellent model
+            all_pass = meets_acc and meets_inference and meets_gap
+            if all_pass or test_mode:
+                if all_pass:
+                    print(f"\n*** ALL REQUIREMENTS MET! ***")
+
+                # Save model (always save in test mode for validation)
                 model_path = f"excellent_{name}.keras"
                 model.save(model_path)
-                print(f"[SAVED] Model saved: {model_path}")
+                if test_mode and not all_pass:
+                    print(f"[SAVED] Model saved (test mode): {model_path}")
+                else:
+                    print(f"[SAVED] Model saved: {model_path}")
 
             print(f"{'='*60}")
 
