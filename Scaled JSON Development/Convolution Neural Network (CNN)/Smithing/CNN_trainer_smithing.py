@@ -378,7 +378,7 @@ class HyperparameterSearch:
         print(f"HYPERPARAMETER SEARCH - ROUND 2")
         print(f"{'='*80}")
         print(f"Testing {len(configs)} configurations")
-        print(f"Target: ≥70% val accuracy, <200ms inference, <15% gap")
+        print(f"Target: >=70% val accuracy, <200ms inference, <15% gap")
         print(f"{'='*80}")
 
         for i, config in enumerate(configs, 1):
