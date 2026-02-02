@@ -27,7 +27,7 @@ class BestModelVariationTrainer:
         print(f"Validation set: {self.X_val.shape[0]} examples\n")
 
         # Best model config (search_003)
-        # Epochs reduced from 100 to 50 to prevent overfitting
+        # Epochs reduced for augmented data (2-3x more data)
         self.best_config = {
             "architecture_type": "simple",
             "filters": [24, 48],
@@ -43,8 +43,8 @@ class BestModelVariationTrainer:
             "activation": "relu",
             "pooling": "max",
             "use_global_pooling": False,
-            "epochs": 50,  # Reduced from 100 to prevent overfitting
-            "early_stopping_patience": 12  # Reduced from 16 for faster stopping
+            "epochs": 25,  # Reduced for augmented data
+            "early_stopping_patience": 8  # Reduced for faster stopping
         }
 
         self.model = None
@@ -267,58 +267,19 @@ class BestModelVariationTrainer:
 
     def generate_variations(self):
         """
-        Generate MAX 6 variations around best config.
+        Single best configuration - parameters already tuned.
 
-        Streamlined to avoid excessive training time.
-        Prioritizes:
-        1. Low overfitting (most important)
-        2. Reasonable validation accuracy
-        3. Fast training
-
-        Epochs reduced from 100 to 50.
+        With 2-3x augmented data, we need fewer epochs.
+        Early stopping handles convergence.
         """
 
         import copy
 
         variations = []
 
-        # Config 1: Original best config with reduced epochs
+        # Single best config - already tuned
         config1 = copy.deepcopy(self.best_config)
-        config1['epochs'] = 50  # Reduced from 100
-        variations.append(('best_original', config1))
-
-        # Config 2: Higher dropout for anti-overfit
-        config2 = copy.deepcopy(self.best_config)
-        config2['dropout_dense'] = 0.75
-        config2['dropout_conv'] = 0.3
-        config2['epochs'] = 50
-        variations.append(('high_dropout', config2))
-
-        # Config 3: Stronger L2 regularization
-        config3 = copy.deepcopy(self.best_config)
-        config3['l2_regularization'] = 0.015
-        config3['epochs'] = 50
-        variations.append(('strong_l2', config3))
-
-        # Config 4: Smaller architecture (less overfitting risk)
-        config4 = copy.deepcopy(self.best_config)
-        config4['filters'] = [20, 40]
-        config4['dense_units'] = [48]
-        config4['epochs'] = 50
-        variations.append(('smaller_arch', config4))
-
-        # Config 5: Combined anti-overfit (higher dropout + higher L2)
-        config5 = copy.deepcopy(self.best_config)
-        config5['dropout_dense'] = 0.7
-        config5['l2_regularization'] = 0.012
-        config5['epochs'] = 50
-        variations.append(('combo_antioverfit', config5))
-
-        # Config 6: Larger batch size (more stable gradients)
-        config6 = copy.deepcopy(self.best_config)
-        config6['batch_size'] = 32
-        config6['epochs'] = 50
-        variations.append(('batch_32', config6))
+        variations.append(('best_config', config1))
 
         return variations
 

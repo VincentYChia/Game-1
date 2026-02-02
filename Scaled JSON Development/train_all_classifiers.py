@@ -116,35 +116,8 @@ DATA_PATHS = {
 # DISCIPLINE CONFIGURATIONS
 # ============================================================================
 
+# NOTE: LightGBM disciplines ordered first (faster training)
 DISCIPLINES = {
-    'smithing': {
-        'type': 'cnn',
-        'data_script': CNN_DIR / "Smithing" / "valid_smithing_data_v2.py",
-        'train_script': CNN_DIR / "Smithing" / "CNN_trainer_smithing.py",
-        'work_dir': CNN_DIR / "Smithing",  # CNN scripts work in their own dir, we copy out
-        'model_output_dir': MODELS_DIR / "smithing",  # Where we copy best model
-        'data_output_dir': TRAINING_DATA_DIR / "smithing",  # Where training data goes
-        'model_pattern': '*.keras',  # Matches any keras model
-        'extractor_pattern': None,
-        'output_dataset': 'recipe_dataset_v2.npz',
-        # CNN scripts don't need external args - they have their own paths
-        'data_args': [],
-        'train_args': [],
-    },
-    'adornments': {
-        'type': 'cnn',
-        'data_script': CNN_DIR / "Adornment" / "data_augment_adornment_v2.py",
-        'train_script': CNN_DIR / "Adornment" / "CNN_trainer_adornment.py",
-        'work_dir': CNN_DIR / "Adornment",  # CNN scripts work in their own dir
-        'model_output_dir': MODELS_DIR / "adornment",  # Where we copy best model
-        'data_output_dir': TRAINING_DATA_DIR / "adornment",  # Where training data goes
-        'model_pattern': '*.keras',  # Matches any keras model
-        'extractor_pattern': None,
-        'output_dataset': 'adornment_dataset_v2.npz',
-        # CNN scripts don't need external args
-        'data_args': [],
-        'train_args': [],
-    },
     'alchemy': {
         'type': 'lightgbm',
         'data_script': LIGHTGBM_DIR / "data_augment_GBM.py",
@@ -198,6 +171,35 @@ DISCIPLINES = {
                                str(TRAINING_DATA_DIR / 'engineering' / 'engineering_augmented_data.json'),
                                str(MATERIALS_JSON),
                                str(MODELS_DIR / 'engineering')],
+    },
+    # CNN disciplines (slower, ordered last)
+    'smithing': {
+        'type': 'cnn',
+        'data_script': CNN_DIR / "Smithing" / "valid_smithing_data_v2.py",
+        'train_script': CNN_DIR / "Smithing" / "CNN_trainer_smithing.py",
+        'work_dir': CNN_DIR / "Smithing",  # CNN scripts work in their own dir, we copy out
+        'model_output_dir': MODELS_DIR / "smithing",  # Where we copy best model
+        'data_output_dir': TRAINING_DATA_DIR / "smithing",  # Where training data goes
+        'model_pattern': '*.keras',  # Matches any keras model
+        'extractor_pattern': None,
+        'output_dataset': 'recipe_dataset_v2.npz',
+        # CNN scripts don't need external args - they have their own paths
+        'data_args': [],
+        'train_args': [],
+    },
+    'adornments': {
+        'type': 'cnn',
+        'data_script': CNN_DIR / "Adornment" / "data_augment_adornment_v2.py",
+        'train_script': CNN_DIR / "Adornment" / "CNN_trainer_adornment.py",
+        'work_dir': CNN_DIR / "Adornment",  # CNN scripts work in their own dir
+        'model_output_dir': MODELS_DIR / "adornment",  # Where we copy best model
+        'data_output_dir': TRAINING_DATA_DIR / "adornment",  # Where training data goes
+        'model_pattern': '*.keras',  # Matches any keras model
+        'extractor_pattern': None,
+        'output_dataset': 'adornment_dataset_v2.npz',
+        # CNN scripts don't need external args
+        'data_args': [],
+        'train_args': [],
     },
 }
 

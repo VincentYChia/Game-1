@@ -458,77 +458,22 @@ class HyperparameterSearch:
 
 def get_round2_configs():
     """
-    Define streamlined configurations - MAX 6 MODELS to avoid excessive training time.
+    Single best configuration - parameters already tuned.
 
-    We prioritize:
-    1. Low overfitting (most important concern)
-    2. Reasonable validation accuracy
-    3. Fast training
-
-    Reduced epochs from 150 to 60 to prevent overfitting.
-    Early stopping will handle convergence.
+    With 2-3x augmented data, we need fewer epochs.
+    Early stopping handles convergence.
     """
 
     configs = [
-        # Config 1: Best architecture (minimal) with standard settings
+        # Best known config: minimal architecture, batch 20, L2 regularization
         {
-            'name': 'minimal_batch_16',
-            'architecture': 'config_4',
-            'learning_rate': 0.001,
-            'batch_size': 16,
-            'dropout_rates': (0.3, 0.4),
-            'epochs': 60  # Reduced from 150
-        },
-
-        # Config 2: Minimal with batch 20 (sweet spot)
-        {
-            'name': 'minimal_batch_20',
-            'architecture': 'config_4',
-            'learning_rate': 0.001,
-            'batch_size': 20,
-            'dropout_rates': (0.3, 0.4),
-            'epochs': 60
-        },
-
-        # Config 3: Minimal with L2 regularization (anti-overfit)
-        {
-            'name': 'minimal_l2_reg',
+            'name': 'best_config',
             'architecture': 'config_4',
             'learning_rate': 0.001,
             'batch_size': 20,
             'dropout_rates': (0.3, 0.4),
             'l2_reg': 0.0001,
-            'epochs': 60
-        },
-
-        # Config 4: Medium architecture (slightly more capacity)
-        {
-            'name': 'medium_width',
-            'architecture': 'config_5',
-            'learning_rate': 0.001,
-            'batch_size': 20,
-            'dropout_rates': (0.3, 0.4, 0.4),
-            'epochs': 60
-        },
-
-        # Config 5: Higher dropout for anti-overfit
-        {
-            'name': 'minimal_high_dropout',
-            'architecture': 'config_4',
-            'learning_rate': 0.001,
-            'batch_size': 20,
-            'dropout_rates': (0.4, 0.5),
-            'epochs': 60
-        },
-
-        # Config 6: Wider architecture (more capacity)
-        {
-            'name': 'wider_batch_20',
-            'architecture': 'config_3',
-            'learning_rate': 0.001,
-            'batch_size': 20,
-            'dropout_rates': (0.3, 0.4, 0.5),
-            'epochs': 60
+            'epochs': 25  # Reduced for augmented data
         },
     ]
 
