@@ -1911,13 +1911,16 @@ class Renderer:
         items_to_render = []
         if hasattr(chest, 'is_death_chest') and chest.is_death_chest and hasattr(chest, 'rich_contents') and chest.rich_contents:
             for item_data in chest.rich_contents:
+                # Extract data from save-system format (equipment_data nested inside)
+                eq_data = item_data.get('equipment_data', {})
+                tool_data = item_data.get('tool_data', {})
                 items_to_render.append({
-                    'item_id': item_data.get('item_id', item_data.get('tool_id', '')),
+                    'item_id': item_data.get('item_id', ''),
                     'quantity': item_data.get('quantity', 1),
-                    'name': item_data.get('name', ''),
-                    'type': item_data.get('type', 'material'),
-                    'icon_path': item_data.get('icon_path'),
-                    'enchantments': item_data.get('enchantments', [])
+                    'name': eq_data.get('name', '') or tool_data.get('name', ''),
+                    'has_equipment': bool(eq_data),
+                    'icon_path': eq_data.get('icon_path') if eq_data else None,
+                    'enchantments': eq_data.get('enchantments', []) if eq_data else tool_data.get('enchantments', [])
                 })
         else:
             for item_id, quantity in chest.contents:
@@ -1925,7 +1928,7 @@ class Renderer:
                     'item_id': item_id,
                     'quantity': quantity,
                     'name': '',
-                    'type': 'unknown',
+                    'has_equipment': False,
                     'icon_path': None,
                     'enchantments': []
                 })
@@ -1983,8 +1986,8 @@ class Renderer:
             if icon:
                 self.screen.blit(icon, (slot_x + 4, slot_y + 4))
             else:
-                # Fallback: colored square based on item type
-                color = (150, 100, 100) if item_info['type'] == 'material' else (100, 150, 200)
+                # Fallback: colored square (blue for equipment, brown for materials)
+                color = (100, 150, 200) if item_info.get('has_equipment') else (150, 100, 100)
                 pygame.draw.rect(self.screen, color, (slot_x + 4, slot_y + 4, slot_size - 8, slot_size - 8))
 
             # Quantity badge
