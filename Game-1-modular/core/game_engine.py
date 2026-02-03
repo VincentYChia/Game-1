@@ -218,6 +218,9 @@ class GameEngine:
 
         # Only spawn initial enemies if we have a real character
         if self.character:
+            # Set system references for death handling (allows status effects to trigger proper death)
+            self.character.dungeon_manager = self.dungeon_manager
+            self.character.world_system = self.world
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
 
             # Spawn training dummy for tag testing
@@ -1366,6 +1369,9 @@ class GameEngine:
             self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             # Update combat manager with new character
             self.combat_manager.character = self.character
+            # Set system references for death handling (allows status effects to trigger proper death)
+            self.character.dungeon_manager = self.dungeon_manager
+            self.character.world_system = self.world
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
             # Spawn training dummy for tag testing
@@ -1440,6 +1446,9 @@ class GameEngine:
 
                 # Update combat manager with loaded character
                 self.combat_manager.character = self.character
+                # Set system references for death handling (allows status effects to trigger proper death)
+                self.character.dungeon_manager = self.dungeon_manager
+                self.character.world_system = self.world
 
                 # Spawn enemies near loaded position (only if not in dungeon)
                 if not self.dungeon_manager.in_dungeon:
@@ -1518,6 +1527,9 @@ class GameEngine:
 
                 # Update combat manager with loaded character
                 self.combat_manager.character = self.character
+                # Set system references for death handling (allows status effects to trigger proper death)
+                self.character.dungeon_manager = self.dungeon_manager
+                self.character.world_system = self.world
 
                 # Spawn enemies near loaded position (only if not in dungeon)
                 if not self.dungeon_manager.in_dungeon:
@@ -1543,6 +1555,9 @@ class GameEngine:
             self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             # Update combat manager with new character
             self.combat_manager.character = self.character
+            # Set system references for death handling (allows status effects to trigger proper death)
+            self.character.dungeon_manager = self.dungeon_manager
+            self.character.world_system = self.world
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
             # Spawn training dummy for tag testing

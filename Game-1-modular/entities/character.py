@@ -142,6 +142,12 @@ class Character:
         self.last_attacked_enemy = None
         self.is_blocking = False  # Visual state for shield blocking indicator
 
+        # System references for death handling (set by game_engine)
+        # These allow death handling to work even when damage comes from status effects
+        # which don't have access to pass these systems via kwargs
+        self.dungeon_manager = None
+        self.world_system = None
+
         # Health regeneration tracking
         self.time_since_last_damage_taken = 0.0
         self.time_since_last_damage_dealt = 0.0
@@ -1845,6 +1851,14 @@ class Character:
         """
         from core.config import Config
         print("💀 You died! Respawning...")
+
+        # Use stored references as fallback if kwargs not provided
+        # This ensures death handling works when damage comes from status effects
+        # (burn, bleed, poison, shock) which don't have access to pass these systems
+        if dungeon_manager is None:
+            dungeon_manager = self.dungeon_manager
+        if world_system is None:
+            world_system = self.world_system
 
         # Track death in stat tracker
         if hasattr(self, 'stat_tracker') and self.stat_tracker:
