@@ -75,6 +75,9 @@ class WorldSystem:
         # Spawn storage chest (player-placed items)
         self.spawn_storage_chest = None  # Will be set in spawn_storage_chest()
 
+        # Death chests (items dropped on death)
+        self.death_chests: List[LootChest] = []
+
         # Load initial chunks and spawn fixed content
         self._load_initial_chunks()
         self.spawn_starting_stations()
@@ -218,6 +221,65 @@ class WorldSystem:
             chest_id="spawn_storage_chest"
         )
         print("📦 Spawn storage chest placed at (3, -2)")
+
+    def spawn_death_chest(self, position: Position, items: List[Tuple[str, int]]) -> Optional[LootChest]:
+        """Spawn a death chest at the given position containing dropped items.
+
+        Death chests are created when a player dies with KEEP_INVENTORY off.
+        They have a distinctive red color and persist until the player
+        retrieves their items.
+
+        Args:
+            position: Position where the player died
+            items: List of (item_id, quantity) tuples to store
+
+        Returns:
+            The created LootChest, or None if no items to store
+        """
+        if not items:
+            return None
+
+        # Generate unique chest ID based on position and timestamp
+        import time
+        chest_id = f"death_chest_{int(position.x)}_{int(position.y)}_{int(time.time())}"
+
+        death_chest = LootChest(
+            position=Position(position.x, position.y, position.z),
+            tier=1,
+            is_opened=False,
+            contents=items,
+            is_player_storage=True,  # Allow player to retrieve items
+            chest_id=chest_id
+        )
+
+        self.death_chests.append(death_chest)
+        print(f"💀 Death chest spawned at ({position.x:.1f}, {position.y:.1f}) with {len(items)} item stacks")
+        return death_chest
+
+    def remove_death_chest(self, chest: LootChest):
+        """Remove a death chest (when emptied or despawned).
+
+        Args:
+            chest: The death chest to remove
+        """
+        if chest in self.death_chests:
+            self.death_chests.remove(chest)
+            print(f"📦 Death chest removed: {chest.chest_id}")
+
+    def get_nearby_death_chest(self, position: Position, max_distance: float = 1.5) -> Optional[LootChest]:
+        """Get a death chest within interaction range.
+
+        Args:
+            position: Position to check from
+            max_distance: Maximum distance for interaction
+
+        Returns:
+            The nearest death chest within range, or None
+        """
+        for chest in self.death_chests:
+            if chest.position.distance_to(position) <= max_distance:
+                return chest
+        return None
 
     # =========================================================================
     # Chunk Loading Management
@@ -796,6 +858,7 @@ class WorldSystem:
             "crafting_stations": self._serialize_crafting_stations(),
             "discovered_dungeons": self._serialize_discovered_dungeons(),
             "spawn_chest": self._serialize_spawn_chest(),
+            "death_chests": self._serialize_death_chests(),
         }
 
     def _serialize_placed_entities(self) -> List[dict]:
@@ -856,6 +919,10 @@ class WorldSystem:
             return None
         chest = self.spawn_storage_chest
         return chest.to_dict()
+
+    def _serialize_death_chests(self) -> List[dict]:
+        """Serialize death chests for saving."""
+        return [chest.to_dict() for chest in self.death_chests]
 
     def restore_from_save(self, world_state: dict):
         """Restore world state from save data.
@@ -946,6 +1013,15 @@ class WorldSystem:
         else:
             # Create fresh chest if not in save (backwards compatibility)
             self.spawn_spawn_storage_chest()
+
+        # Restore death chests
+        self.death_chests.clear()
+        death_chests_data = world_state.get("death_chests", [])
+        for chest_data in death_chests_data:
+            death_chest = LootChest.from_dict(chest_data)
+            self.death_chests.append(death_chest)
+        if death_chests_data:
+            print(f"   Restored {len(death_chests_data)} death chest(s)")
 
         print(f"Restored world state: {len(self.placed_entities)} entities, "
               f"{len(self.discovered_dungeon_entrances)} dungeons")

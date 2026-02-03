@@ -1825,21 +1825,23 @@ class Character:
 
         if self.health <= 0:
             self.health = 0
-            # Pass dungeon_manager if provided for proper death handling in dungeons
+            # Pass dungeon_manager and world_system for proper death handling
             dungeon_manager = kwargs.get('dungeon_manager')
-            self._handle_death(dungeon_manager=dungeon_manager)
+            world_system = kwargs.get('world_system')
+            self._handle_death(dungeon_manager=dungeon_manager, world_system=world_system)
 
-    def _handle_death(self, dungeon_manager=None):
+    def _handle_death(self, dungeon_manager=None, world_system=None):
         """Handle player death - respawn at spawn point (origin)
 
         Death penalty depends on Config.KEEP_INVENTORY:
         - If True: Keep all items (no death penalty)
-        - If False: Drop all items EXCEPT soulbound equipment
+        - If False: Drop items into a death chest EXCEPT soulbound equipment
 
         Soulbound items (with soulbound enchantment) are always kept.
 
         Args:
             dungeon_manager: Optional dungeon manager to check/exit dungeon
+            world_system: Optional world system for spawning death chest
         """
         from core.config import Config
         print("💀 You died! Respawning...")
@@ -1847,6 +1849,9 @@ class Character:
         # Track death in stat tracker
         if hasattr(self, 'stat_tracker') and self.stat_tracker:
             self.stat_tracker.record_death()
+
+        # Store death position for chest spawning
+        death_position = Position(self.position.x, self.position.y, self.position.z)
 
         # Reset health
         self.health = self.max_health
@@ -1871,19 +1876,24 @@ class Character:
         if Config.KEEP_INVENTORY:
             print("   ✓ Keep Inventory is ON - all items retained")
         else:
-            # Drop non-soulbound items
-            self._drop_non_soulbound_items()
+            # Drop non-soulbound items into a death chest
+            self._drop_non_soulbound_items(death_position, world_system)
 
-    def _drop_non_soulbound_items(self):
-        """Drop all non-soulbound items on death.
+    def _drop_non_soulbound_items(self, death_position: Position, world_system=None):
+        """Drop all non-soulbound items on death into a death chest.
 
         Soulbound equipment (with soulbound enchantment) is kept.
-        Regular equipment and inventory items are cleared.
+        Regular equipment and inventory items go into a death chest at
+        the location where the player died.
+
+        Args:
+            death_position: Position where the player died (for chest spawn)
+            world_system: WorldSystem to spawn death chest in
         """
-        items_dropped = 0
+        dropped_items = []  # List of (item_id, quantity) for death chest
         soulbound_kept = 0
 
-        # Handle equipped items - unequip non-soulbound equipment
+        # Handle equipped items - collect non-soulbound equipment
         if hasattr(self, 'equipment') and self.equipment:
             for slot_name in list(self.equipment.slots.keys()):
                 item = self.equipment.slots.get(slot_name)
@@ -1893,11 +1903,11 @@ class Character:
                         soulbound_kept += 1
                         print(f"   ✨ Soulbound item kept: {item.name}")
                     else:
-                        # Drop the item (remove from equipment)
+                        # Add to dropped items and unequip
+                        dropped_items.append((item.equipment_id, 1))
                         self.equipment.unequip(slot_name)
-                        items_dropped += 1
 
-        # Handle tools - unequip non-soulbound tools
+        # Handle tools - collect non-soulbound tools
         if hasattr(self, 'tools') and self.tools:
             for tool_type in list(self.tools.slots.keys()):
                 tool = self.tools.slots.get(tool_type)
@@ -1906,26 +1916,35 @@ class Character:
                         soulbound_kept += 1
                         print(f"   ✨ Soulbound tool kept: {tool.name}")
                     else:
+                        # Add to dropped items and unequip
+                        dropped_items.append((tool.tool_id, 1))
                         self.tools.unequip(tool_type)
-                        items_dropped += 1
 
-        # Clear inventory (materials don't have soulbound)
+        # Collect inventory items (materials don't have soulbound)
         if hasattr(self, 'inventory') and self.inventory:
             for i, slot in enumerate(self.inventory.slots):
                 if slot and slot.quantity > 0:
-                    # Check for soulbound items in inventory (equipment stored as ItemStack)
+                    # Check for soulbound items in inventory
                     if hasattr(slot, 'soulbound') and slot.soulbound:
                         soulbound_kept += 1
                         print(f"   ✨ Soulbound item kept in inventory: {slot.item_id}")
                     else:
-                        items_dropped += slot.quantity
+                        # Add to dropped items and clear slot
+                        dropped_items.append((slot.item_id, slot.quantity))
                         self.inventory.slots[i] = None
+
+        # Spawn death chest with dropped items
+        if world_system and dropped_items:
+            world_system.spawn_death_chest(death_position, dropped_items)
+
+        # Calculate total items dropped
+        items_dropped = sum(qty for _, qty in dropped_items)
 
         # Track in stat tracker
         if hasattr(self, 'stat_tracker') and self.stat_tracker:
             self.stat_tracker.record_items_lost_on_death(items_dropped, soulbound_kept)
 
-        print(f"   💔 Dropped {items_dropped} items, kept {soulbound_kept} soulbound items")
+        print(f"   💔 Dropped {items_dropped} items into death chest, kept {soulbound_kept} soulbound items")
 
     def get_effective_max_durability(self, item) -> int:
         """Get effective max durability for an item, including VIT and title bonuses.

@@ -1612,8 +1612,13 @@ class CombatManager:
         final_damage = max(1, final_damage)  # Minimum 1 damage
         print(f"   ➜ Final damage to player: {final_damage:.1f}")
 
-        # Apply to player (pass dungeon_manager for death handling in dungeons)
-        self.character.take_damage(final_damage, from_attack=True, dungeon_manager=self.dungeon_manager)
+        # Apply to player (pass dungeon_manager and world_system for death handling)
+        self.character.take_damage(
+            final_damage,
+            from_attack=True,
+            dungeon_manager=self.dungeon_manager,
+            world_system=self.world
+        )
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
 
         # NEW: Track damage taken

@@ -340,6 +340,12 @@ class GameEngine:
         self.spawn_chest_rect = None  # Bounding rect for chest UI
         self.spawn_chest_item_rects = []  # [(rect, item_idx), ...] for click detection
 
+        # Death chest UI state (for retrieving items after death)
+        self.death_chest_open = False  # True when death chest UI is open
+        self.active_death_chest = None  # Currently open death chest
+        self.death_chest_rect = None  # Bounding rect for death chest UI
+        self.death_chest_item_rects = []  # [(rect, item_idx), ...] for click detection
+
         # Minigame state
         self.active_minigame = None  # Current minigame instance (SmithingMinigame, etc.)
         self.minigame_type = None  # Station type: 'smithing', 'alchemy', 'refining', 'engineering', 'adornments'
@@ -1873,6 +1879,19 @@ class GameEngine:
                 return  # Clicked in chest area but not on item
             # Clicking outside chest UI closes it (unless clicking on inventory)
 
+        # Death Chest UI - takes priority when open
+        if self.death_chest_open:
+            # Check if clicking on chest UI area
+            if self.death_chest_rect and self.death_chest_rect.collidepoint(mouse_pos):
+                # Check chest item clicks
+                for rect, item_idx in self.death_chest_item_rects:
+                    if rect.collidepoint(mouse_pos):
+                        self._transfer_from_death_chest(item_idx)
+                        return
+                return  # Clicked in chest area but not on item
+            # Clicking outside death chest UI closes it
+            self._close_death_chest()
+
         # Inventory - check for equipment equipping
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
             # CRITICAL: These values MUST match the renderer exactly!
@@ -2220,6 +2239,17 @@ class GameEngine:
             if chest_dist <= 1.5:  # Within click range of chest
                 self._toggle_spawn_chest()
                 return
+
+        # Check for death chest click
+        if hasattr(self.world, 'death_chests') and self.world.death_chests:
+            for death_chest in self.world.death_chests:
+                chest_dist = math.sqrt(
+                    (world_pos.x - death_chest.position.x) ** 2 +
+                    (world_pos.y - death_chest.position.y) ** 2
+                )
+                if chest_dist <= 1.5:  # Within click range of chest
+                    self._toggle_death_chest(death_chest)
+                    return
 
         # Check for dungeon entrance click (before stations and resources)
         dungeon_entrance = self.world.get_dungeon_entrance_at(world_pos)
@@ -6167,6 +6197,99 @@ class GameEngine:
             self.add_notification("Inventory full!", (255, 100, 100))
             return False
 
+    # =========================================================================
+    # Death Chest Methods (Items dropped on death)
+    # =========================================================================
+
+    def _toggle_death_chest(self, death_chest):
+        """Toggle a death chest UI open/closed."""
+        if not death_chest:
+            return
+
+        # Check distance
+        distance = self.character.position.distance_to(death_chest.position)
+        if distance > 2.0:
+            self.add_notification("Get closer to retrieve your items!", (255, 200, 200))
+            return
+
+        # If this chest is already open, close it
+        if self.death_chest_open and self.active_death_chest == death_chest:
+            self._close_death_chest()
+            return
+
+        # Open this death chest
+        self.death_chest_open = True
+        self.active_death_chest = death_chest
+        self.add_notification("💀 Your death chest! Click items to retrieve.", (255, 150, 150))
+
+    def _close_death_chest(self):
+        """Close the death chest UI."""
+        self.death_chest_open = False
+        self.active_death_chest = None
+        self.death_chest_rect = None
+        self.death_chest_item_rects = []
+
+    def _transfer_from_death_chest(self, chest_item_idx: int):
+        """Transfer an item from death chest to inventory."""
+        if not self.active_death_chest:
+            return False
+
+        chest = self.active_death_chest
+        if chest_item_idx >= len(chest.contents):
+            return False
+
+        item_id, quantity = chest.contents[chest_item_idx]
+
+        # Try to add to inventory
+        success = self.character.inventory.add_item(item_id, quantity)
+        if success:
+            # Remove from chest
+            chest.contents.pop(chest_item_idx)
+            item_name = item_id.replace('_', ' ').title()
+            self.add_notification(f"Retrieved {quantity}x {item_name}", (100, 255, 100))
+
+            # If chest is now empty, remove it from the world
+            if not chest.contents:
+                self.world.remove_death_chest(chest)
+                self._close_death_chest()
+                self.add_notification("Death chest emptied and removed!", (200, 255, 200))
+
+            return True
+        else:
+            self.add_notification("Inventory full!", (255, 100, 100))
+            return False
+
+    def _retrieve_all_from_death_chest(self):
+        """Retrieve all items from the active death chest."""
+        if not self.active_death_chest:
+            return
+
+        chest = self.active_death_chest
+        items_retrieved = 0
+        items_failed = 0
+
+        # Try to retrieve all items (in reverse order to avoid index issues)
+        for i in range(len(chest.contents) - 1, -1, -1):
+            item_id, quantity = chest.contents[i]
+            success = self.character.inventory.add_item(item_id, quantity)
+            if success:
+                chest.contents.pop(i)
+                items_retrieved += quantity
+            else:
+                items_failed += quantity
+
+        if items_retrieved > 0:
+            self.add_notification(f"Retrieved {items_retrieved} items!", (100, 255, 100))
+
+        if items_failed > 0:
+            self.add_notification(f"Couldn't retrieve {items_failed} items - inventory full!", (255, 200, 100))
+
+        # If chest is now empty, remove it
+        if not chest.contents:
+            self.world.remove_death_chest(chest)
+            self._close_death_chest()
+            self.add_notification("Death chest emptied and removed!", (200, 255, 200))
+
     def _transfer_item_to_chest(self, inventory_slot: int):
         """Transfer an item from inventory to dungeon chest."""
         if not self.dungeon_manager or not self.dungeon_manager.in_dungeon:
@@ -6630,6 +6753,14 @@ class GameEngine:
         else:
             self.spawn_chest_rect = None
             self.spawn_chest_item_rects = []
+
+        # Render death chest UI
+        if self.death_chest_open and self.active_death_chest:
+            self.death_chest_rect, self.death_chest_item_rects = \
+                self.renderer.render_death_chest_ui(self.active_death_chest)
+        else:
+            self.death_chest_rect = None
+            self.death_chest_item_rects = []
 
         if self.character.class_selection_open:
             result = self.renderer.render_class_selection_ui(self.character, self.mouse_pos)
