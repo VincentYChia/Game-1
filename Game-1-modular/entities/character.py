@@ -1850,26 +1850,32 @@ class Character:
         if hasattr(self, 'stat_tracker') and self.stat_tracker:
             self.stat_tracker.record_death()
 
-        # Store death position for chest spawning
-        death_position = Position(self.position.x, self.position.y, self.position.z)
-
         # Reset health
         self.health = self.max_health
 
-        # If in a dungeon, exit it (dungeon failed)
+        # Determine death chest position and respawn location
+        # For dungeon deaths, chest spawns at dungeon entrance (not inside dungeon)
         if dungeon_manager and dungeon_manager.in_dungeon:
             print("💀 You died in the dungeon! Exiting...")
             # Track dungeon death
             if hasattr(self, 'stat_tracker') and self.stat_tracker:
                 self.stat_tracker.record_dungeon_death()
-            # Get return position from dungeon
+            # Get return position from dungeon - this is where death chest spawns
             dungeon = dungeon_manager.current_dungeon
             if dungeon and dungeon.return_position:
+                death_chest_position = Position(
+                    dungeon.return_position.x,
+                    dungeon.return_position.y,
+                    dungeon.return_position.z
+                )
                 self.position = dungeon.return_position
             else:
+                death_chest_position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
                 self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
             dungeon_manager.exit_dungeon()
         else:
+            # Overworld death - chest spawns where player died
+            death_chest_position = Position(self.position.x, self.position.y, self.position.z)
             self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
 
         # Handle inventory/equipment based on KEEP_INVENTORY setting
@@ -1877,7 +1883,7 @@ class Character:
             print("   ✓ Keep Inventory is ON - all items retained")
         else:
             # Drop non-soulbound items into a death chest
-            self._drop_non_soulbound_items(death_position, world_system)
+            self._drop_non_soulbound_items(death_chest_position, world_system)
 
     def _drop_non_soulbound_items(self, death_position: Position, world_system=None):
         """Drop all non-soulbound items on death into a death chest.
@@ -1904,7 +1910,7 @@ class Character:
                         print(f"   ✨ Soulbound item kept: {item.name}")
                     else:
                         # Add to dropped items and unequip
-                        dropped_items.append((item.equipment_id, 1))
+                        dropped_items.append((item.item_id, 1))
                         self.equipment.unequip(slot_name)
 
         # Handle tools - collect non-soulbound tools
