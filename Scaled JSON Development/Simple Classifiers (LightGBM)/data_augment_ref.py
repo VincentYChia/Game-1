@@ -32,7 +32,7 @@ def save_dataset(recipes: List[Dict], labels: List[int], output_path: str):
     with open(output_path, 'w') as f:
         json.dump(dataset, f, indent=2)
 
-    print(f"✅ Saved {len(recipes)} samples ({sum(labels)} positive, {len(labels) - sum(labels)} negative)")
+    print(f"[OK] Saved {len(recipes)} samples ({sum(labels)} positive, {len(labels) - sum(labels)} negative)")
 
 
 def find_same_category_materials(material_id: str, all_materials: Dict) -> List[str]:
@@ -140,28 +140,67 @@ def generate_negative_samples(valid_recipes: List[Dict], all_materials: Dict, nu
 
 
 def main():
-    print("="*70)
-    print("REFINING RECIPE DATA AUGMENTATION")
-    print("="*70)
+    import argparse
 
-    # Get inputs
-    materials_path = input("Enter path to materials JSON: ").strip()
-    placements_path = input("Enter path to placements JSON: ").strip()
-    output_path = input("Enter output path for augmented dataset: ").strip()
+    parser = argparse.ArgumentParser(
+        description='Refining Recipe Data Augmentation',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python data_augment_ref.py materials.json placements.json output.json
+  python data_augment_ref.py ../items.json ../recipes.json refining_data.json
+        """
+    )
+    parser.add_argument('materials', help='Path to materials JSON file')
+    parser.add_argument('placements', help='Path to placements/recipes JSON file')
+    parser.add_argument('output', help='Output path for augmented dataset')
+
+    args = parser.parse_args()
+
+    materials_path = args.materials
+    placements_path = args.placements
+    output_path = args.output
+
+    print("=" * 70)
+    print("REFINING RECIPE DATA AUGMENTATION")
+    print("=" * 70)
+    print(f"\nMaterials: {materials_path}")
+    print(f"Placements: {placements_path}")
+    print(f"Output: {output_path}")
 
     # Load data
-    print("\n📂 Loading data...")
-    materials_data = load_json(materials_path)
-    placements_data = load_json(placements_path)
+    print("\nLoading data...")
+    try:
+        materials_data = load_json(materials_path)
+        placements_data = load_json(placements_path)
+    except FileNotFoundError as e:
+        print(f"[ERROR] File not found: {e}")
+        return
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Invalid JSON: {e}")
+        return
 
+    # Parse materials with validation
+    if 'materials' not in materials_data:
+        print(f"[ERROR] No 'materials' key found in materials file!")
+        print(f"  Available keys: {list(materials_data.keys())}")
+        return
     all_materials = {m['materialId']: m for m in materials_data['materials']}
-    original_recipes = placements_data['placements']
+
+    # Parse placements with validation
+    original_recipes = placements_data.get('placements', [])
+    if not original_recipes:
+        print(f"[ERROR] No 'placements' key found or empty placements in: {placements_path}")
+        print(f"  Available keys: {list(placements_data.keys())}")
+        print(f"  This file may be a template/reference file, not actual recipe data.")
+        print(f"  Expected file format should have a 'placements' array with recipe objects.")
+        return
 
     print(f"   Loaded {len(original_recipes)} original recipes")
     print(f"   Loaded {len(all_materials)} materials")
 
     # Generate positive samples (augment originals)
-    print("\n🔄 Generating positive samples...")
+    print("\nGenerating positive samples...")
     all_positives = []
     for recipe in original_recipes:
         variants = augment_recipe_simple(recipe, all_materials, num_variants=8)
@@ -170,7 +209,7 @@ def main():
     print(f"   Generated {len(all_positives)} positive samples (includes all originals)")
 
     # Generate negative samples
-    print("\n❌ Generating negative samples...")
+    print("\nGenerating negative samples...")
     negatives = generate_negative_samples(original_recipes, all_materials, num_per_recipe=5)
     print(f"   Generated {len(negatives)} negative samples")
 
@@ -183,10 +222,10 @@ def main():
     all_recipes, all_labels = zip(*combined)
 
     # Save
-    print("\n💾 Saving dataset...")
+    print("\nSaving dataset...")
     save_dataset(list(all_recipes), list(all_labels), output_path)
 
-    print("\n✨ Augmentation complete!")
+    print("\n[OK] Augmentation complete!")
 
 
 if __name__ == "__main__":

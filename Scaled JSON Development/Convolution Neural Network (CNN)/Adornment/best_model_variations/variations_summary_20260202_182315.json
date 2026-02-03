@@ -1,0 +1,377 @@
+{
+  "timestamp": "2026-02-02T18:23:15.043234",
+  "base_model": "search_003",
+  "total_variations": 7,
+  "valid_variations": 6,
+  "rejected_variations": 1,
+  "best_variation": "slow_learner",
+  "best_robustness_score": 0.9213004058599472,
+  "variations": [
+    {
+      "variation_name": "slow_learner",
+      "timestamp": "2026-02-02T17:56:04.280403",
+      "config": {
+        "architecture_type": "simple",
+        "filters": [
+          24,
+          48
+        ],
+        "kernel_sizes": [
+          5,
+          5
+        ],
+        "dropout_conv": 0.21,
+        "dropout_dense": 0.67,
+        "dense_units": [
+          64
+        ],
+        "l2_regularization": 0.01,
+        "batch_normalization": true,
+        "learning_rate": 0.003,
+        "optimizer": "adamw",
+        "batch_size": 16,
+        "activation": "relu",
+        "pooling": "max",
+        "use_global_pooling": false,
+        "epochs": 45,
+        "early_stopping_patience": 15
+      },
+      "train_metrics": {
+        "accuracy": 0.9818817973136902,
+        "f1": 0.9821573231693537,
+        "precision": 0.9770068526268005,
+        "recall": 0.9873623847961426
+      },
+      "val_metrics": {
+        "accuracy": 0.9497942328453064,
+        "f1": 0.9485232153917492,
+        "precision": 0.9335548281669617,
+        "recall": 0.9639794230461121
+      },
+      "overfitting": {
+        "accuracy_gap": 0.03208756446838379,
+        "f1_gap": 0.03363410777760445
+      },
+      "train_time_seconds": 511.145161,
+      "total_epochs": 45,
+      "model_params": 705817,
+      "robustness_score": 0.9213004058599472,
+      "rejected": false,
+      "rejection_reason": null
+    },
+    {
+      "variation_name": "baseline_more_epochs",
+      "timestamp": "2026-02-02T17:41:08.288561",
+      "config": {
+        "architecture_type": "simple",
+        "filters": [
+          24,
+          48
+        ],
+        "kernel_sizes": [
+          5,
+          5
+        ],
+        "dropout_conv": 0.21,
+        "dropout_dense": 0.67,
+        "dense_units": [
+          64
+        ],
+        "l2_regularization": 0.01,
+        "batch_normalization": true,
+        "learning_rate": 0.005,
+        "optimizer": "adamw",
+        "batch_size": 16,
+        "activation": "relu",
+        "pooling": "max",
+        "use_global_pooling": false,
+        "epochs": 38,
+        "early_stopping_patience": 10
+      },
+      "train_metrics": {
+        "accuracy": 0.8879967331886292,
+        "f1": 0.8978595504099394,
+        "precision": 0.8322311043739319,
+        "recall": 0.9747248291969299
+      },
+      "val_metrics": {
+        "accuracy": 0.8444444537162781,
+        "f1": 0.855614961149093,
+        "precision": 0.7713498473167419,
+        "recall": 0.9605488777160645
+      },
+      "overfitting": {
+        "accuracy_gap": 0.043552279472351074,
+        "f1_gap": 0.0422445892608464
+      },
+      "train_time_seconds": 2424.213862,
+      "total_epochs": 38,
+      "model_params": 705817,
+      "robustness_score": 0.8191111201047897,
+      "rejected": false,
+      "rejection_reason": null
+    },
+    {
+      "variation_name": "conservative",
+      "timestamp": "2026-02-02T18:12:38.166691",
+      "config": {
+        "architecture_type": "simple",
+        "filters": [
+          24,
+          48
+        ],
+        "kernel_sizes": [
+          5,
+          5
+        ],
+        "dropout_conv": 0.35,
+        "dropout_dense": 0.75,
+        "dense_units": [
+          64
+        ],
+        "l2_regularization": 0.025,
+        "batch_normalization": true,
+        "learning_rate": 0.004,
+        "optimizer": "adamw",
+        "batch_size": 16,
+        "activation": "relu",
+        "pooling": "max",
+        "use_global_pooling": false,
+        "epochs": 45,
+        "early_stopping_patience": 15
+      },
+      "train_metrics": {
+        "accuracy": 0.696726381778717,
+        "f1": 0.7103244894814316,
+        "precision": 0.686170220375061,
+        "recall": 0.736241340637207
+      },
+      "val_metrics": {
+        "accuracy": 0.6617283821105957,
+        "f1": 0.6740681839229185,
+        "precision": 0.6268436312675476,
+        "recall": 0.728987991809845
+      },
+      "overfitting": {
+        "accuracy_gap": 0.03499799966812134,
+        "f1_gap": 0.03625630555851311
+      },
+      "train_time_seconds": 519.527319,
+      "total_epochs": 45,
+      "model_params": 705817,
+      "robustness_score": 0.6418765306472778,
+      "rejected": false,
+      "rejection_reason": null
+    },
+    {
+      "variation_name": "strong_l2",
+      "timestamp": "2026-02-02T18:03:54.505165",
+      "config": {
+        "architecture_type": "simple",
+        "filters": [
+          24,
+          48
+        ],
+        "kernel_sizes": [
+          5,
+          5
+        ],
+        "dropout_conv": 0.25,
+        "dropout_dense": 0.6,
+        "dense_units": [
+          64
+        ],
+        "l2_regularization": 0.02,
+        "batch_normalization": true,
+        "learning_rate": 0.005,
+        "optimizer": "adamw",
+        "batch_size": 16,
+        "activation": "relu",
+        "pooling": "max",
+        "use_global_pooling": false,
+        "epochs": 40,
+        "early_stopping_patience": 12
+      },
+      "train_metrics": {
+        "accuracy": 0.6374304890632629,
+        "f1": 0.6767027675573121,
+        "precision": 0.6155644655227661,
+        "recall": 0.7513248920440674
+      },
+      "val_metrics": {
+        "accuracy": 0.5991769433021545,
+        "f1": 0.6379182443138253,
+        "precision": 0.5629921555519104,
+        "recall": 0.7358490824699402
+      },
+      "overfitting": {
+        "accuracy_gap": 0.0382535457611084,
+        "f1_gap": 0.0387845232434868
+      },
+      "train_time_seconds": 465.904581,
+      "total_epochs": 40,
+      "model_params": 705817,
+      "robustness_score": 0.5812016350030899,
+      "rejected": false,
+      "rejection_reason": null
+    },
+    {
+      "variation_name": "high_dropout",
+      "timestamp": "2026-02-02T17:47:29.105332",
+      "config": {
+        "architecture_type": "simple",
+        "filters": [
+          24,
+          48
+        ],
+        "kernel_sizes": [
+          5,
+          5
+        ],
+        "dropout_conv": 0.3,
+        "dropout_dense": 0.7,
+        "dense_units": [
+          64
+        ],
+        "l2_regularization": 0.015,
+        "batch_normalization": true,
+        "learning_rate": 0.005,
+        "optimizer": "adamw",
+        "batch_size": 16,
+        "activation": "relu",
+        "pooling": "max",
+        "use_global_pooling": false,
+        "epochs": 40,
+        "early_stopping_patience": 12
+      },
+      "train_metrics": {
+        "accuracy": 0.5579575896263123,
+        "f1": 0.6253707730892771,
+        "precision": 0.5466747879981995,
+        "recall": 0.730534017086029
+      },
+      "val_metrics": {
+        "accuracy": 0.5489711761474609,
+        "f1": 0.6167832256633146,
+        "precision": 0.5206611752510071,
+        "recall": 0.7564322352409363
+      },
+      "overfitting": {
+        "accuracy_gap": 0.008986413478851318,
+        "f1_gap": 0.008587547425962572
+      },
+      "train_time_seconds": 376.921022,
+      "total_epochs": 40,
+      "model_params": 705817,
+      "robustness_score": 0.5489711761474609,
+      "rejected": false,
+      "rejection_reason": null
+    },
+    {
+      "variation_name": "larger_batch",
+      "timestamp": "2026-02-02T18:15:22.693205",
+      "config": {
+        "architecture_type": "simple",
+        "filters": [
+          24,
+          48
+        ],
+        "kernel_sizes": [
+          5,
+          5
+        ],
+        "dropout_conv": 0.21,
+        "dropout_dense": 0.67,
+        "dense_units": [
+          64
+        ],
+        "l2_regularization": 0.01,
+        "batch_normalization": true,
+        "learning_rate": 0.006,
+        "optimizer": "adamw",
+        "batch_size": 24,
+        "activation": "relu",
+        "pooling": "max",
+        "use_global_pooling": false,
+        "epochs": 35,
+        "early_stopping_patience": 10
+      },
+      "train_metrics": {
+        "accuracy": 0.49495574831962585,
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0
+      },
+      "val_metrics": {
+        "accuracy": 0.5201646089553833,
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0
+      },
+      "overfitting": {
+        "accuracy_gap": -0.025208860635757446,
+        "f1_gap": 0.0
+      },
+      "train_time_seconds": 160.183883,
+      "total_epochs": 15,
+      "model_params": 705817,
+      "robustness_score": 0.5201646089553833,
+      "rejected": false,
+      "rejection_reason": null
+    }
+  ],
+  "rejected": [
+    {
+      "variation_name": "very_slow",
+      "timestamp": "2026-02-02T18:23:14.844539",
+      "config": {
+        "architecture_type": "simple",
+        "filters": [
+          24,
+          48
+        ],
+        "kernel_sizes": [
+          5,
+          5
+        ],
+        "dropout_conv": 0.25,
+        "dropout_dense": 0.65,
+        "dense_units": [
+          64
+        ],
+        "l2_regularization": 0.012,
+        "batch_normalization": true,
+        "learning_rate": 0.002,
+        "optimizer": "adamw",
+        "batch_size": 16,
+        "activation": "relu",
+        "pooling": "max",
+        "use_global_pooling": false,
+        "epochs": 50,
+        "early_stopping_patience": 18
+      },
+      "train_metrics": {
+        "accuracy": 0.9973234534263611,
+        "f1": 0.9973550375925091,
+        "precision": 0.9955320954322815,
+        "recall": 0.9991846680641174
+      },
+      "val_metrics": {
+        "accuracy": 0.9860082268714905,
+        "f1": 0.9854825174384493,
+        "precision": 0.9812925457954407,
+        "recall": 0.989708423614502
+      },
+      "overfitting": {
+        "accuracy_gap": 0.011315226554870605,
+        "f1_gap": 0.011872520154059818
+      },
+      "train_time_seconds": 468.726779,
+      "total_epochs": 50,
+      "model_params": 705817,
+      "robustness_score": -1.0,
+      "rejected": true,
+      "rejection_reason": "Val accuracy 98.6% >= 98% (likely memorization)"
+    }
+  ]
+}

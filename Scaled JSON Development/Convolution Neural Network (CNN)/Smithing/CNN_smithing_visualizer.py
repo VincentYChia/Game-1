@@ -1,3 +1,14 @@
+"""
+CNN Smithing Dataset Visualizer
+
+Updated for v2 data format with:
+- Category-based shapes (metal=square, wood=lines, stone=X, etc.)
+- Tier-based fill size (T1=1x1 through T4=4x4)
+- Saturation/value variation (hue constant = category)
+
+This visualizer can view both v1 (flat cells) and v2 (shaped cells) datasets.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -9,13 +20,58 @@ import random
 class SmithingDatasetVisualizer:
     """Visualize smithing augmented training data with tabs for original/valid/invalid"""
 
-    def __init__(self, dataset_path, materials_path, placements_path):
+    # Category shape masks (same as valid_smithing_data_v2.py)
+    CATEGORY_SHAPES = {
+        'metal': np.array([
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1]
+        ], dtype=np.float32),
+
+        'wood': np.array([
+            [1, 1, 1, 1],
+            [0, 0, 0, 0],
+            [1, 1, 1, 1],
+            [0, 0, 0, 0]
+        ], dtype=np.float32),
+
+        'stone': np.array([
+            [1, 0, 0, 1],
+            [0, 1, 1, 0],
+            [0, 1, 1, 0],
+            [1, 0, 0, 1]
+        ], dtype=np.float32),
+
+        'monster_drop': np.array([
+            [0, 1, 1, 0],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [0, 1, 1, 0]
+        ], dtype=np.float32),
+
+        'elemental': np.array([
+            [0, 1, 1, 0],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [0, 1, 1, 0]
+        ], dtype=np.float32),
+    }
+
+    DEFAULT_SHAPE = np.ones((4, 4), dtype=np.float32)
+
+    TIER_FILL_SIZES = {1: 1, 2: 2, 3: 3, 4: 4}
+
+    def __init__(self, dataset_path, materials_path, placements_path, use_shapes=True):
         """
         Args:
-            dataset_path: Path to recipe_dataset.npz
+            dataset_path: Path to recipe_dataset.npz or recipe_dataset_v2.npz
             materials_path: Path to materials JSON
             placements_path: Path to placements JSON
+            use_shapes: Whether to render with category shapes (True for v2 compatibility)
         """
+        self.use_shapes = use_shapes
+
         print("Loading dataset...")
         data = np.load(dataset_path)
 
@@ -62,19 +118,23 @@ class SmithingDatasetVisualizer:
         print(f"  Augmented samples: {len(self.X_all)}")
         print(f"    Valid: {len(self.valid_indices)} ({len(self.valid_indices) / len(self.X_all) * 100:.1f}%)")
         print(f"    Invalid: {len(self.invalid_indices)} ({len(self.invalid_indices) / len(self.X_all) * 100:.1f}%)")
-        print(f"  Image shape: {self.X_all.shape[1:]}\n")
+        print(f"  Image shape: {self.X_all.shape[1:]}")
+        print(f"  Using shapes: {self.use_shapes}\n")
 
     def _material_to_color(self, material_id):
         """Convert material to RGB color (0-1 range) based on category, tier, tags"""
         if material_id is None:
             return np.array([0.0, 0.0, 0.0])
 
-        material = self.materials_dict[material_id]
-        category = material['category']
-        tier = material['tier']
-        tags = material['metadata']['tags']
+        if material_id not in self.materials_dict:
+            return np.array([0.3, 0.3, 0.3])
 
-        # CATEGORY → HUE
+        material = self.materials_dict[material_id]
+        category = material.get('category', 'unknown')
+        tier = material.get('tier', 1)
+        tags = material.get('metadata', {}).get('tags', [])
+
+        # CATEGORY → HUE (constant, encodes category)
         if category == 'elemental':
             element_hues = {
                 'fire': 0, 'water': 210, 'earth': 120, 'air': 60,
@@ -88,7 +148,8 @@ class SmithingDatasetVisualizer:
                     break
         else:
             category_hues = {
-                'metal': 210, 'wood': 30, 'stone': 0, 'monster_drop': 300
+                'metal': 210, 'wood': 30, 'stone': 0, 'monster_drop': 300,
+                'gem': 280, 'herb': 120, 'fabric': 45,
             }
             hue = category_hues.get(category, 0)
 
@@ -112,6 +173,28 @@ class SmithingDatasetVisualizer:
         rgb = hsv_to_rgb(hue_normalized, saturation, value)
 
         return np.array(rgb)
+
+    def _get_shape_mask(self, material_id):
+        """Get the 4x4 shape mask for a material's category."""
+        if material_id is None or material_id not in self.materials_dict:
+            return self.DEFAULT_SHAPE
+
+        category = self.materials_dict[material_id].get('category', 'unknown')
+        return self.CATEGORY_SHAPES.get(category, self.DEFAULT_SHAPE)
+
+    def _get_tier_fill_mask(self, material_id, cell_size=4):
+        """Get a mask that limits fill based on tier."""
+        if material_id is None or material_id not in self.materials_dict:
+            return np.zeros((cell_size, cell_size), dtype=np.float32)
+
+        tier = self.materials_dict[material_id].get('tier', 1)
+        fill_size = self.TIER_FILL_SIZES.get(tier, 4)
+
+        mask = np.zeros((cell_size, cell_size), dtype=np.float32)
+        offset = (cell_size - fill_size) // 2
+        mask[offset:offset+fill_size, offset:offset+fill_size] = 1.0
+
+        return mask
 
     def _placement_to_grid(self, placement):
         """Convert placement to centered 9x9 grid"""
@@ -152,15 +235,38 @@ class SmithingDatasetVisualizer:
         return grid
 
     def _grid_to_image(self, grid, cell_size=4):
-        """Convert 9x9 grid to 36x36 RGB image"""
+        """
+        Convert 9x9 grid to 36x36 RGB image.
+
+        With use_shapes=True:
+        - Each cell uses category-based shape mask
+        - Each cell uses tier-based fill size
+        """
         img_size = 9 * cell_size
-        img = np.zeros((img_size, img_size, 3))
+        img = np.zeros((img_size, img_size, 3), dtype=np.float32)
 
         for i in range(9):
             for j in range(9):
-                color = self._material_to_color(grid[i][j])
-                img[i * cell_size:(i + 1) * cell_size,
-                j * cell_size:(j + 1) * cell_size] = color
+                material_id = grid[i][j]
+
+                if material_id is None:
+                    continue
+
+                color = self._material_to_color(material_id)
+
+                if self.use_shapes:
+                    # Apply shape and tier masks
+                    shape_mask = self._get_shape_mask(material_id)
+                    tier_mask = self._get_tier_fill_mask(material_id, cell_size)
+                    combined_mask = shape_mask * tier_mask
+
+                    for c in range(3):
+                        img[i * cell_size:(i + 1) * cell_size,
+                            j * cell_size:(j + 1) * cell_size, c] = color[c] * combined_mask
+                else:
+                    # Simple flat fill (v1 style)
+                    img[i * cell_size:(i + 1) * cell_size,
+                        j * cell_size:(j + 1) * cell_size] = color
 
         return img
 
@@ -303,6 +409,52 @@ class SmithingDatasetVisualizer:
         plt.subplots_adjust(left=0.05)
         plt.show()
 
+    def show_category_legend(self):
+        """Show a legend of category shapes and tier fills"""
+        fig, axes = plt.subplots(2, 5, figsize=(15, 6))
+
+        fig.suptitle('Category Shapes & Tier Fills', fontsize=16, fontweight='bold')
+
+        # Row 1: Category shapes
+        categories = ['metal', 'wood', 'stone', 'monster_drop', 'elemental']
+        colors = [(0.4, 0.6, 0.8), (0.6, 0.4, 0.2), (0.5, 0.5, 0.5), (0.8, 0.3, 0.8), (0.3, 0.8, 0.3)]
+
+        for i, (cat, color) in enumerate(zip(categories, colors)):
+            shape = self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
+            img = np.zeros((4, 4, 3))
+            for c in range(3):
+                img[:, :, c] = shape * color[c]
+            axes[0, i].imshow(img, interpolation='nearest')
+            axes[0, i].set_title(f'{cat.upper()}', fontsize=10, fontweight='bold')
+            axes[0, i].axis('off')
+
+        axes[0, 0].set_ylabel('Category\nShapes', fontsize=12, fontweight='bold')
+
+        # Row 2: Tier fills (using metal shape as base)
+        base_shape = self.CATEGORY_SHAPES['metal']
+        base_color = (0.4, 0.6, 0.8)
+
+        for tier in range(1, 5):
+            fill_size = self.TIER_FILL_SIZES[tier]
+            tier_mask = np.zeros((4, 4))
+            offset = (4 - fill_size) // 2
+            tier_mask[offset:offset+fill_size, offset:offset+fill_size] = 1.0
+            combined = base_shape * tier_mask
+
+            img = np.zeros((4, 4, 3))
+            for c in range(3):
+                img[:, :, c] = combined * base_color[c]
+
+            axes[1, tier-1].imshow(img, interpolation='nearest')
+            axes[1, tier-1].set_title(f'Tier {tier}\n({fill_size}x{fill_size})', fontsize=10)
+            axes[1, tier-1].axis('off')
+
+        axes[1, 4].axis('off')  # Empty cell
+        axes[1, 0].set_ylabel('Tier\nFills', fontsize=12, fontweight='bold')
+
+        plt.tight_layout()
+        plt.show()
+
     def show_mixed_grid(self, samples_per_page=50, page=0, seed=None):
         """Show randomly mixed valid and invalid recipes"""
 
@@ -361,13 +513,14 @@ class SmithingDatasetVisualizer:
         """Interactive tabbed viewer with page navigation"""
 
         print("\n" + "=" * 80)
-        print("SMITHING DATASET VIEWER - TABBED INTERFACE")
+        print("SMITHING DATASET VIEWER - TABBED INTERFACE (v2)")
         print("=" * 80)
         print(f"Tabs available:")
         print(f"  1. Original ({len(self.original_recipes)} recipes)")
         print(f"  2. Valid Augmented ({len(self.valid_indices)} samples)")
         print(f"  3. Invalid Augmented ({len(self.invalid_indices)} samples)")
-        print(f"\nGrid: 5×5 (25 recipes per page)")
+        print(f"\nGrid: 5x5 (25 recipes per page)")
+        print(f"Shapes enabled: {self.use_shapes}")
 
         print("\nCommands:")
         print("  '1' or 'original' - View original recipes")
@@ -380,6 +533,7 @@ class SmithingDatasetVisualizer:
         print("  'shuffle' - Reshuffle random samples (for valid/invalid tabs)")
         print("  'random N' - Show N valid vs N invalid side-by-side")
         print("  'mixed N' - Show N mixed samples in grid")
+        print("  'legend' - Show category shapes and tier fills legend")
         print("  'quit' or 'q' - Exit")
 
         current_tab = 'original'
@@ -462,26 +616,42 @@ class SmithingDatasetVisualizer:
                 except:
                     print("Invalid format. Use: mixed N")
 
+            elif choice == 'legend':
+                self.show_category_legend()
+
             else:
-                print("Invalid command. Try: 1/2/3, next, prev, page N, grid N, shuffle, random N, mixed N, or quit")
+                print("Invalid command. Try: 1/2/3, next, prev, page N, grid N, shuffle, random N, mixed N, legend, or quit")
 
 
 # Example usage
 if __name__ == "__main__":
     import sys
 
-    # Default paths
-    DATASET_PATH = "recipe_dataset.npz"
+    # Default paths - try v2 first, then v1
+    DATASET_PATH_V2 = "recipe_dataset_v2.npz"
+    DATASET_PATH_V1 = "recipe_dataset.npz"
     MATERIALS_PATH = "../../../Game-1-modular/items.JSON/items-materials-1.JSON"
     PLACEMENTS_PATH = "../../../Game-1-modular/placements.JSON/placements-smithing-1.JSON"
 
+    # Try v2 first
+    if Path(DATASET_PATH_V2).exists():
+        dataset_path = DATASET_PATH_V2
+        use_shapes = True
+        print("Found v2 dataset (with shapes)")
+    elif Path(DATASET_PATH_V1).exists():
+        dataset_path = DATASET_PATH_V1
+        use_shapes = False
+        print("Found v1 dataset (flat cells)")
+    else:
+        dataset_path = input("Dataset path: ").strip()
+        use_shapes = input("Use shapes? (y/n): ").strip().lower() == 'y'
+
     # Get paths
-    dataset_path = DATASET_PATH if Path(DATASET_PATH).exists() else input("Dataset path: ").strip()
     materials_path = MATERIALS_PATH if Path(MATERIALS_PATH).exists() else input("Materials path: ").strip()
     placements_path = PLACEMENTS_PATH if Path(PLACEMENTS_PATH).exists() else input("Placements path: ").strip()
 
     # Create visualizer
-    viz = SmithingDatasetVisualizer(dataset_path, materials_path, placements_path)
+    viz = SmithingDatasetVisualizer(dataset_path, materials_path, placements_path, use_shapes=use_shapes)
 
     # Interactive mode
     viz.interactive_viewer()

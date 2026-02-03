@@ -24,9 +24,28 @@ class BestModelVariationTrainer:
         self.y_val = data['y_val']
 
         print(f"Training set: {self.X_train.shape[0]} examples")
-        print(f"Validation set: {self.X_val.shape[0]} examples\n")
+        print(f"Validation set: {self.X_val.shape[0]} examples")
+
+        # Data diagnostics - help debug impossible metrics issues
+        print(f"\n=== DATA DIAGNOSTICS ===")
+        train_pos = np.sum(self.y_train == 1)
+        train_neg = np.sum(self.y_train == 0)
+        val_pos = np.sum(self.y_val == 1)
+        val_neg = np.sum(self.y_val == 0)
+        print(f"Train: {train_pos} positive ({train_pos/len(self.y_train)*100:.1f}%), {train_neg} negative ({train_neg/len(self.y_train)*100:.1f}%)")
+        print(f"Val:   {val_pos} positive ({val_pos/len(self.y_val)*100:.1f}%), {val_neg} negative ({val_neg/len(self.y_val)*100:.1f}%)")
+        print(f"Image shape: {self.X_train.shape[1:]}")
+        print(f"Value range: [{self.X_train.min():.3f}, {self.X_train.max():.3f}]")
+
+        # Check for data issues
+        if abs(train_pos/len(self.y_train) - val_pos/len(self.y_val)) > 0.15:
+            print(f"[WARNING] Train/Val class balance differs by more than 15%!")
+        if self.X_train.max() > 1.0 or self.X_train.min() < 0.0:
+            print(f"[WARNING] Data not normalized to [0,1] range!")
+        print(f"========================\n")
 
         # Best model config (search_003)
+        # Epochs reduced for augmented data (2-3x more data)
         self.best_config = {
             "architecture_type": "simple",
             "filters": [24, 48],
@@ -42,8 +61,8 @@ class BestModelVariationTrainer:
             "activation": "relu",
             "pooling": "max",
             "use_global_pooling": False,
-            "epochs": 100,
-            "early_stopping_patience": 16
+            "epochs": 25,  # Reduced for augmented data
+            "early_stopping_patience": 8  # Reduced for faster stopping
         }
 
         self.model = None
@@ -119,18 +138,16 @@ class BestModelVariationTrainer:
     def train_config(self, config, variation_name):
         """Train a single configuration"""
 
-        print(f"\n{'=' * 80}")
-        print(f"Training: {variation_name}")
-        print(f"{'=' * 80}")
-        print(f"Filters: {config['filters']}")
-        print(f"Kernel sizes: {config['kernel_sizes']}")
-        print(f"Dense: {config['dense_units']}")
-        print(f"Dropout: conv={config['dropout_conv']}, dense={config['dropout_dense']}")
-        print(f"L2: {config['l2_regularization']}")
-        print(f"LR: {config['learning_rate']}")
-        print(f"Batch size: {config['batch_size']}")
-        print(f"Optimizer: {config['optimizer']}")
-        print(f"{'=' * 80}\n")
+        print(f"\n{'-' * 70}")
+        print(f"CONFIG: {variation_name}")
+        print(f"{'-' * 70}")
+        print(f"  Architecture: filters={config['filters']}, kernels={config['kernel_sizes']}")
+        print(f"  Dropout: conv={config['dropout_conv']}, dense={config['dropout_dense']}")
+        print(f"  Regularization: L2={config['l2_regularization']}")
+        print(f"  Training: lr={config['learning_rate']}, batch={config['batch_size']}, epochs={config.get('epochs', 100)}")
+        print(f"  Early stopping patience: {config.get('early_stopping_patience', 16)}")
+
+        print(f"\n  [START] Training at {datetime.now().strftime('%H:%M:%S')}")
 
         # Build model
         self.model = self.build_model(config)
@@ -185,6 +202,9 @@ class BestModelVariationTrainer:
         )
 
         train_time = (datetime.now() - start_time).total_seconds()
+        epochs_run = len(self.history.history['loss'])
+
+        print(f"\n  [STOP]  Training completed at {datetime.now().strftime('%H:%M:%S')} ({train_time:.1f}s, {epochs_run} epochs)")
 
         # Evaluate
         val_results = self.model.evaluate(self.X_val, self.y_val, verbose=0)
@@ -199,18 +219,39 @@ class BestModelVariationTrainer:
         acc_gap = train_acc - val_acc
         f1_gap = train_f1 - val_f1
 
-        print(f"\n{'=' * 80}")
-        print("RESULTS")
-        print(f"{'=' * 80}")
-        print(f"Validation: Acc={val_acc:.4f}, F1={val_f1:.4f}")
-        print(f"Training:   Acc={train_acc:.4f}, F1={train_f1:.4f}")
-        print(f"Overfitting Gap: {acc_gap:.4f}")
+        # Results summary
+        print(f"\n  RESULTS:")
+        print(f"    Train Accuracy:  {train_acc*100:.2f}%")
+        print(f"    Val Accuracy:    {val_acc*100:.2f}%")
+        print(f"    Overfitting Gap: {acc_gap*100:.2f}% {'[!] HIGH' if acc_gap > 0.06 else 'OK'}")
+        print(f"    Val F1 Score:    {val_f1:.4f}")
 
-        # Save if good
-        if val_f1 >= 0.90:
-            model_path = self.model_save_dir / f"{model_name}_f1{val_f1:.4f}_model.keras"
+        # Check requirements (90% accuracy, <6% overfit)
+        meets_acc = val_acc >= 0.90
+        meets_gap = acc_gap < 0.06
+        print(f"\n  REQUIREMENTS:")
+        print(f"    Accuracy >=90%: {'PASS' if meets_acc else 'FAIL'}")
+        print(f"    Gap <6%:        {'PASS' if meets_gap else 'FAIL'}")
+
+        # Check for test mode from environment
+        import os
+        test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
+
+        # Always save model - use candidate suffix if criteria not met
+        all_pass = meets_acc and meets_gap
+        if all_pass or test_mode:
+            model_path = self.model_save_dir / f"{model_name}_acc{val_acc:.4f}_model.keras"
             self.model.save(model_path)
-            print(f"✓ Model saved: {model_path.name}")
+            if test_mode:
+                print(f"[SAVED] Model saved (test mode): {model_path.name}")
+            elif all_pass:
+                print(f"[SAVED] Model saved (meets criteria): {model_path.name}")
+        else:
+            # Save as candidate - don't leave user with nothing
+            model_path = self.model_save_dir / f"{model_name}_acc{val_acc:.4f}_CANDIDATE.keras"
+            self.model.save(model_path)
+            print(f"[WARNING] Model did not meet criteria (acc={val_acc:.4f}, gap={acc_gap:.4f})")
+            print(f"[SAVED] Saving as candidate: {model_path.name}")
 
         # Save results
         results = {
@@ -249,132 +290,228 @@ class BestModelVariationTrainer:
         return results
 
     def generate_variations(self):
-        """Generate variations around best config"""
+        """
+        Generate up to 7 configurations exploring regularization and learning rate.
 
+        Strategy: All configs use the same proven architecture but vary:
+        - Dropout rates (primary regularization)
+        - L2 regularization strength
+        - Learning rate
+        - Epochs (more for adornments as requested)
+
+        Robustness is prioritized over raw accuracy.
+        """
         import copy
 
         variations = []
 
-        # 1. Original best config
-        variations.append(('best_original', copy.deepcopy(self.best_config)))
+        # Config 1: Baseline with more epochs (1.5x as requested)
+        config1 = copy.deepcopy(self.best_config)
+        config1['epochs'] = 38  # 1.5x more than 25
+        config1['early_stopping_patience'] = 10
+        variations.append(('baseline_more_epochs', config1))
 
-        # 2. Vary filters (±4 per layer)
-        for filters in [[20, 40], [24, 48], [28, 56]]:
-            config = copy.deepcopy(self.best_config)
-            config['filters'] = filters
-            variations.append((f'filters_{filters[0]}_{filters[1]}', config))
+        # Config 2: Higher dropout (more regularization)
+        config2 = copy.deepcopy(self.best_config)
+        config2['dropout_conv'] = 0.30
+        config2['dropout_dense'] = 0.70
+        config2['l2_regularization'] = 0.015
+        config2['epochs'] = 40
+        config2['early_stopping_patience'] = 12
+        variations.append(('high_dropout', config2))
 
-        # 3. Vary kernel sizes
-        for kernels in [[3, 3], [5, 5], [3, 5], [5, 3]]:
-            config = copy.deepcopy(self.best_config)
-            config['kernel_sizes'] = kernels
-            variations.append((f'kernels_{kernels[0]}_{kernels[1]}', config))
+        # Config 3: Lower learning rate, more epochs
+        config3 = copy.deepcopy(self.best_config)
+        config3['learning_rate'] = 0.003
+        config3['epochs'] = 45
+        config3['early_stopping_patience'] = 15
+        variations.append(('slow_learner', config3))
 
-        # 4. Vary dropout_conv (±0.05)
-        for dropout in [0.15, 0.21, 0.25, 0.3]:
-            config = copy.deepcopy(self.best_config)
-            config['dropout_conv'] = dropout
-            variations.append((f'dropout_conv_{dropout:.2f}', config))
+        # Config 4: Strong L2 regularization
+        config4 = copy.deepcopy(self.best_config)
+        config4['l2_regularization'] = 0.02
+        config4['dropout_conv'] = 0.25
+        config4['dropout_dense'] = 0.60
+        config4['epochs'] = 40
+        config4['early_stopping_patience'] = 12
+        variations.append(('strong_l2', config4))
 
-        # 5. Vary dropout_dense (±0.05)
-        for dropout in [0.6, 0.67, 0.7, 0.75]:
-            config = copy.deepcopy(self.best_config)
-            config['dropout_dense'] = dropout
-            variations.append((f'dropout_dense_{dropout:.2f}', config))
+        # Config 5: Conservative (very high regularization)
+        config5 = copy.deepcopy(self.best_config)
+        config5['dropout_conv'] = 0.35
+        config5['dropout_dense'] = 0.75
+        config5['l2_regularization'] = 0.025
+        config5['learning_rate'] = 0.004
+        config5['epochs'] = 45
+        config5['early_stopping_patience'] = 15
+        variations.append(('conservative', config5))
 
-        # 6. Vary L2 regularization (±0.003)
-        for l2 in [0.007, 0.01, 0.012, 0.015]:
-            config = copy.deepcopy(self.best_config)
-            config['l2_regularization'] = l2
-            variations.append((f'l2_{l2:.3f}', config))
+        # Config 6: Balanced with larger batch
+        config6 = copy.deepcopy(self.best_config)
+        config6['batch_size'] = 24
+        config6['learning_rate'] = 0.006
+        config6['epochs'] = 35
+        config6['early_stopping_patience'] = 10
+        variations.append(('larger_batch', config6))
 
-        # 7. Vary learning rate
-        for lr in [0.003, 0.005, 0.007]:
-            config = copy.deepcopy(self.best_config)
-            config['learning_rate'] = lr
-            variations.append((f'lr_{lr:.3f}', config))
+        # Config 7: Very slow learning (for stability)
+        config7 = copy.deepcopy(self.best_config)
+        config7['learning_rate'] = 0.002
+        config7['dropout_conv'] = 0.25
+        config7['dropout_dense'] = 0.65
+        config7['l2_regularization'] = 0.012
+        config7['epochs'] = 50
+        config7['early_stopping_patience'] = 18
+        variations.append(('very_slow', config7))
 
-        # 8. Vary batch size
-        for bs in [16, 24, 32]:
-            config = copy.deepcopy(self.best_config)
-            config['batch_size'] = bs
-            variations.append((f'batch_{bs}', config))
+        return variations
 
-        # 9. Try optimizer variations
-        for opt in ['adam', 'adamw', 'rmsprop']:
-            config = copy.deepcopy(self.best_config)
-            config['optimizer'] = opt
-            variations.append((f'optimizer_{opt}', config))
+    def is_suspicious_result(self, val_acc, acc_gap):
+        """
+        Check if results are suspiciously perfect (likely memorization).
 
-        # 10. Combinations of best tweaks
-        # Slightly higher dropout + slightly higher L2
-        config = copy.deepcopy(self.best_config)
-        config['dropout_dense'] = 0.7
-        config['l2_regularization'] = 0.012
-        variations.append(('combo_higher_reg', config))
+        Reject models with:
+        - 98%+ accuracy (suspiciously high, likely memorized)
+        - <0.3% overfitting gap (suspiciously low, suggests data leakage or memorization)
 
-        # Slightly lower dropout + lower L2
-        config = copy.deepcopy(self.best_config)
-        config['dropout_dense'] = 0.6
-        config['l2_regularization'] = 0.007
-        variations.append(('combo_lower_reg', config))
+        These metrics look "too good" but indicate the model memorized training data
+        rather than learning generalizable patterns.
+        """
+        if val_acc >= 0.98:
+            return True, f"Val accuracy {val_acc*100:.1f}% >= 98% (likely memorization)"
 
-        # Larger model
-        config = copy.deepcopy(self.best_config)
-        config['filters'] = [28, 56]
-        config['dense_units'] = [128]
-        config['dropout_dense'] = 0.7
-        variations.append(('combo_larger', config))
+        gap = abs(acc_gap) if acc_gap is not None else 0.0
+        if gap < 0.003:
+            return True, f"Overfitting gap {gap*100:.2f}% < 0.3% (suspiciously low)"
 
-        # Remove duplicates
-        unique_variations = []
-        seen = set()
-        for name, config in variations:
-            config_str = json.dumps(config, sort_keys=True)
-            if config_str not in seen:
-                seen.add(config_str)
-                unique_variations.append((name, config))
+        return False, ""
 
-        return unique_variations
+    def calculate_robustness_score(self, val_acc, acc_gap):
+        """
+        Calculate robustness-aware score that penalizes overfitting.
+
+        A model with 90% accuracy and 2% gap is BETTER than
+        a model with 94% accuracy and 10% gap.
+
+        ALSO: Reject models that are "too perfect" (memorization indicators)
+        - 98%+ accuracy → returns -1 (rejected)
+        - <0.3% gap → returns -1 (rejected)
+        """
+        # Check for suspicious results first
+        is_suspicious, reason = self.is_suspicious_result(val_acc, acc_gap)
+        if is_suspicious:
+            return -1.0  # Rejected
+
+        gap = abs(acc_gap)
+
+        if gap < 0.03:
+            penalty = 1.0  # Excellent generalization
+        elif gap < 0.06:
+            penalty = 0.97  # Acceptable
+        elif gap < 0.10:
+            penalty = 0.90  # Concerning
+        elif gap < 0.15:
+            penalty = 0.80  # Overfitting
+        else:
+            penalty = 0.65  # Severe overfitting
+
+        return val_acc * penalty
 
     def train_all_variations(self):
-        """Train all variations"""
+        """
+        Train all variations and select best based on robustness score.
 
-        variations = self.generate_variations()
+        Robustness score = val_accuracy × penalty_factor
+        where penalty_factor decreases with larger overfitting gaps.
+        """
+        import os
+
+        test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
+
+        if test_mode:
+            # Test mode: just run first config with 1 epoch
+            variations = self.generate_variations()[:1]
+            print(f"\n*** TEST MODE: 1 config, reduced epochs ***")
+        else:
+            variations = self.generate_variations()
 
         print(f"\n{'=' * 80}")
-        print(f"TRAINING {len(variations)} VARIATIONS OF BEST MODEL")
+        print(f"CNN HYPERPARAMETER SEARCH - {len(variations)} CONFIGURATIONS")
         print(f"{'=' * 80}")
-        print(f"Base model: search_003 (Val F1: 0.9481)")
+        print(f"Selection criteria: Robustness Score (accuracy * overfit penalty)")
         print(f"{'=' * 80}\n")
 
         all_results = []
+        best_result = None
+        best_score = -1
 
         for i, (name, config) in enumerate(variations, 1):
             print(f"\n{'#' * 80}")
-            print(f"VARIATION {i}/{len(variations)}: {name}")
+            print(f"CONFIG {i}/{len(variations)}: {name}")
             print(f"{'#' * 80}")
 
             try:
                 result = self.train_config(config, name)
+
+                # Calculate robustness score
+                val_acc = result['val_metrics']['accuracy']
+                acc_gap = result['overfitting']['accuracy_gap']
+
+                # Check for suspicious results
+                is_suspicious, suspicious_reason = self.is_suspicious_result(val_acc, acc_gap)
+                robustness_score = self.calculate_robustness_score(val_acc, acc_gap)
+
+                result['robustness_score'] = robustness_score
+                result['rejected'] = is_suspicious
+                result['rejection_reason'] = suspicious_reason if is_suspicious else None
+
+                if is_suspicious:
+                    print(f"\n  [X] REJECTED: {suspicious_reason}")
+                    print(f"  >> Robustness Score: REJECTED (memorization suspected)")
+                else:
+                    print(f"\n  >> Robustness Score: {robustness_score:.4f} (acc={val_acc:.4f}, gap={acc_gap:.4f})")
+
                 all_results.append(result)
+
+                # Only update best if not rejected
+                if not is_suspicious and robustness_score > best_score:
+                    best_score = robustness_score
+                    best_result = result
+                    print(f"  >> NEW BEST!")
+
             except Exception as e:
                 print(f"ERROR training {name}: {e}")
                 continue
 
-        # Save summary
-        self._save_summary(all_results)
+        # Save summary with robustness scores
+        self._save_summary(all_results, best_result)
 
         return all_results
 
-    def _save_summary(self, results):
-        """Save summary of all variations"""
+    def _save_summary(self, results, best_result=None):
+        """Save summary of all variations, sorted by robustness score"""
+
+        # Separate rejected and valid results
+        valid_results = [r for r in results if not r.get('rejected', False)]
+        rejected_results = [r for r in results if r.get('rejected', False)]
+
+        # Sort valid results by robustness score (not raw accuracy)
+        sorted_results = sorted(
+            valid_results,
+            key=lambda x: x.get('robustness_score', x['val_metrics']['accuracy']),
+            reverse=True
+        )
 
         summary = {
             'timestamp': datetime.now().isoformat(),
             'base_model': 'search_003',
             'total_variations': len(results),
-            'variations': sorted(results, key=lambda x: x['val_metrics']['f1'], reverse=True)
+            'valid_variations': len(valid_results),
+            'rejected_variations': len(rejected_results),
+            'best_variation': best_result['variation_name'] if best_result else None,
+            'best_robustness_score': best_result.get('robustness_score') if best_result else None,
+            'variations': sorted_results,
+            'rejected': rejected_results
         }
 
         summary_path = self.model_save_dir / f"variations_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -382,438 +519,70 @@ class BestModelVariationTrainer:
             json.dump(summary, f, indent=2)
 
         print(f"\n{'=' * 80}")
-        print("SUMMARY - TOP 10 VARIATIONS")
+        print("SUMMARY - RANKED BY ROBUSTNESS SCORE")
         print(f"{'=' * 80}")
-        print(f"{'Variation':<30} {'Val F1':>10} {'Val Acc':>10} {'Gap':>8}")
-        print(f"{'-' * 80}")
+        print(f"\nTotal configs: {len(results)}")
+        print(f"Valid: {len(valid_results)}, Rejected (memorization): {len(rejected_results)}")
 
-        for result in summary['variations'][:10]:
-            name = result['variation_name'][:29]
-            val_f1 = result['val_metrics']['f1']
-            val_acc = result['val_metrics']['accuracy']
-            gap = result['overfitting']['accuracy_gap']
+        if sorted_results:
+            print(f"\n{'Variation':<25} {'Rob.Score':>10} {'Val Acc':>10} {'Gap':>8}")
+            print(f"{'-' * 80}")
 
-            print(f"{name:<30} {val_f1:>10.4f} {val_acc:>10.4f} {gap:>8.4f}")
+            for result in sorted_results[:7]:
+                name = result['variation_name'][:24]
+                rob_score = result.get('robustness_score', 0)
+                val_acc = result['val_metrics']['accuracy']
+                gap = result['overfitting']['accuracy_gap']
 
-        print(f"{'=' * 80}")
-        print(f"✓ Summary saved to: {summary_path}")
+                marker = " <-- BEST" if best_result and result['variation_name'] == best_result['variation_name'] else ""
+                print(f"{name:<25} {rob_score:>10.4f} {val_acc:>10.4f} {gap:>8.4f}{marker}")
 
-
-# Example usage
-if __name__ == "__main__":
-    import random
-
-    random.seed(42)
-    np.random.seed(42)
-    tf.random.set_seed(42)
-
-    trainer = BestModelVariationTrainer("adornment_dataset.npz")
-
-    results = trainer.train_all_variations()
-
-    print(f"\n✓ Trained {len(results)} variations!")
-    print("Run comprehensive_model_evaluator.py to compare all models.")
-
-
-    def build_model(self, config):
-        """Build CNN with aggressive regularization"""
-
-        input_shape = self.X_train.shape[1:]
-
-        # Extract config
-        filters = config['filters']
-        kernel_size = config.get('kernel_size', 3)
-        dropout_conv = config['dropout_conv']
-        dropout_dense = config['dropout_dense']
-        l2_reg = config['l2_regularization']
-        use_batchnorm = config.get('batch_normalization', True)
-        use_spatial_dropout = config.get('spatial_dropout', True)
-
-        model = models.Sequential()
-        model.add(layers.Input(shape=input_shape))
-
-        # Add Gaussian noise to inputs (data augmentation)
-        if config.get('input_noise', 0) > 0:
-            model.add(layers.GaussianNoise(config['input_noise']))
-
-        # Convolutional blocks
-        for i, num_filters in enumerate(filters):
-            # First conv
-            model.add(layers.Conv2D(
-                num_filters, (kernel_size, kernel_size),
-                activation='relu',
-                padding='same',
-                kernel_regularizer=regularizers.l2(l2_reg),
-                kernel_initializer='he_normal'  # Better initialization
-            ))
-            if use_batchnorm:
-                model.add(layers.BatchNormalization())
-
-            # Second conv
-            model.add(layers.Conv2D(
-                num_filters, (kernel_size, kernel_size),
-                activation='relu',
-                padding='same',
-                kernel_regularizer=regularizers.l2(l2_reg),
-                kernel_initializer='he_normal'
-            ))
-            if use_batchnorm:
-                model.add(layers.BatchNormalization())
-
-            model.add(layers.MaxPooling2D((2, 2)))
-
-            # Spatial dropout better for conv layers
-            if use_spatial_dropout:
-                model.add(layers.SpatialDropout2D(dropout_conv))
-            else:
-                model.add(layers.Dropout(dropout_conv))
-
-        # Dense layers
-        model.add(layers.Flatten())
-
-        for units in config['dense_units']:
-            model.add(layers.Dense(
-                units,
-                activation='relu',
-                kernel_regularizer=regularizers.l2(l2_reg),
-                kernel_initializer='he_normal'
-            ))
-            if use_batchnorm:
-                model.add(layers.BatchNormalization())
-            model.add(layers.Dropout(dropout_dense))
-
-        # Output with optional label smoothing
-        model.add(layers.Dense(1, activation='sigmoid'))
-
-        return model
-
-
-    def get_anti_overfit_config(self, architecture='simple'):
-        """Get pre-configured anti-overfitting setup"""
-
-        configs = {
-            'simple': {
-                'filters': [24, 48],
-                'dense_units': [64],
-                'kernel_size': 3,
-                'dropout_conv': 0.3,
-                'dropout_dense': 0.7,  # High dense dropout
-                'l2_regularization': 0.015,  # Strong L2
-                'batch_normalization': True,
-                'spatial_dropout': True,
-                'input_noise': 0.05,  # Add input noise
-                'learning_rate': 0.003,
-                'batch_size': 32,
-                'label_smoothing': 0.1,  # Prevent overconfidence
-                'epochs': 150,
-                'early_stopping_patience': 20
-            },
-            'medium': {
-                'filters': [32, 64, 128],
-                'dense_units': [128, 64],
-                'kernel_size': 3,
-                'dropout_conv': 0.35,
-                'dropout_dense': 0.65,
-                'l2_regularization': 0.012,
-                'batch_normalization': True,
-                'spatial_dropout': True,
-                'input_noise': 0.05,
-                'learning_rate': 0.002,
-                'batch_size': 32,
-                'label_smoothing': 0.1,
-                'epochs': 150,
-                'early_stopping_patience': 20
-            },
-            'robust': {
-                'filters': [20, 40, 80],
-                'dense_units': [64],
-                'kernel_size': 3,
-                'dropout_conv': 0.4,
-                'dropout_dense': 0.75,  # Very high dropout
-                'l2_regularization': 0.02,  # Very strong L2
-                'batch_normalization': True,
-                'spatial_dropout': True,
-                'input_noise': 0.08,  # More noise
-                'learning_rate': 0.002,
-                'batch_size': 48,  # Larger batches
-                'label_smoothing': 0.15,  # More smoothing
-                'epochs': 150,
-                'early_stopping_patience': 25
-            }
-        }
-
-        return configs.get(architecture, configs['simple'])
-
-
-    def create_data_generator(self, X, y, batch_size, augment=True):
-        """Create data generator with on-the-fly augmentation"""
-
-        def generator():
-            indices = np.arange(len(X))
-
-            while True:
-                np.random.shuffle(indices)
-
-                for start_idx in range(0, len(X), batch_size):
-                    batch_indices = indices[start_idx:start_idx + batch_size]
-                    batch_X = X[batch_indices].copy()
-                    batch_y = y[batch_indices].copy()
-
-                    if augment:
-                        # Random horizontal flip
-                        flip_mask = np.random.rand(len(batch_X)) > 0.5
-                        batch_X[flip_mask] = batch_X[flip_mask, :, ::-1, :]
-
-                        # Random vertical flip
-                        flip_mask = np.random.rand(len(batch_X)) > 0.5
-                        batch_X[flip_mask] = batch_X[flip_mask, ::-1, :, :]
-
-                        # Random brightness adjustment
-                        brightness = np.random.uniform(0.9, 1.1, (len(batch_X), 1, 1, 1))
-                        batch_X = np.clip(batch_X * brightness, 0, 1)
-
-                        # Random noise
-                        noise = np.random.normal(0, 0.02, batch_X.shape)
-                        batch_X = np.clip(batch_X + noise, 0, 1)
-
-                    yield batch_X, batch_y
-
-        steps_per_epoch = int(np.ceil(len(X) / batch_size))
-        return generator(), steps_per_epoch
-
-
-    def train(self, config=None, architecture='simple'):
-        """Train model with anti-overfitting strategies"""
-
-        if config is None:
-            config = self.get_anti_overfit_config(architecture)
-
-        print(f"\n{'=' * 80}")
-        print(f"ANTI-OVERFITTING TRAINING - {architecture.upper()}")
-        print(f"{'=' * 80}")
-        print(f"Architecture: {config['filters']}")
-        print(f"Dense: {config['dense_units']}")
-        print(f"Dropout: conv={config['dropout_conv']}, dense={config['dropout_dense']}")
-        print(f"L2 Regularization: {config['l2_regularization']}")
-        print(f"Label Smoothing: {config.get('label_smoothing', 0)}")
-        print(f"Input Noise: {config.get('input_noise', 0)}")
-        print(f"Spatial Dropout: {config.get('spatial_dropout', False)}")
-        print(f"Learning Rate: {config['learning_rate']}")
-        print(f"Batch Size: {config['batch_size']}")
-        print(f"{'=' * 80}\n")
-
-        # Build model
-        self.model = self.build_model(config)
-
-        # Compile with label smoothing
-        label_smoothing = config.get('label_smoothing', 0)
-        loss = keras.losses.BinaryCrossentropy(label_smoothing=label_smoothing)
-
-        optimizer = keras.optimizers.Adam(learning_rate=config['learning_rate'])
-
-        self.model.compile(
-            optimizer=optimizer,
-            loss=loss,
-            metrics=['accuracy',
-                     keras.metrics.Precision(name='precision'),
-                     keras.metrics.Recall(name='recall')]
-        )
-
-        print(self.model.summary())
-
-        # Create data generators with augmentation
-        train_gen, train_steps = self.create_data_generator(
-            self.X_train, self.y_train,
-            config['batch_size'],
-            augment=True
-        )
-
-        # Callbacks
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        model_name = f"anti_overfit_{architecture}_{timestamp}"
-
-        callback_list = [
-            # Early stopping - monitor validation loss with patience
-            callbacks.EarlyStopping(
-                monitor='val_loss',
-                patience=config.get('early_stopping_patience', 20),
-                restore_best_weights=True,
-                verbose=1,
-                min_delta=0.0001  # Only stop if no improvement
-            ),
-
-            # Reduce learning rate more aggressively
-            callbacks.ReduceLROnPlateau(
-                monitor='val_loss',
-                factor=0.5,
-                patience=7,  # Reduce patience
-                min_lr=1e-7,
-                verbose=1
-            ),
-
-            # Save best model
-            callbacks.ModelCheckpoint(
-                filepath=str(self.model_save_dir / f"{model_name}_best.keras"),
-                monitor='val_loss',
-                save_best_only=True,
-                verbose=1
-            ),
-
-            # Stop if overfitting detected
-            callbacks.EarlyStopping(
-                monitor='accuracy',  # Monitor train accuracy
-                patience=10,
-                baseline=0.999,  # Stop if train acc > 99.9%
-                verbose=1,
-                mode='max'
-            )
-        ]
-
-        # Train with data augmentation
-        start_time = datetime.now()
-
-        self.history = self.model.fit(
-            train_gen,
-            steps_per_epoch=train_steps,
-            epochs=config.get('epochs', 150),
-            validation_data=(self.X_val, self.y_val),
-            callbacks=callback_list,
-            verbose=1
-        )
-
-        train_time = (datetime.now() - start_time).total_seconds()
-
-        # Evaluate
-        val_results = self.model.evaluate(self.X_val, self.y_val, verbose=0)
-        train_results = self.model.evaluate(self.X_train, self.y_train, verbose=0)
-
-        val_loss, val_acc, val_prec, val_rec = val_results
-        train_loss, train_acc, train_prec, train_rec = train_results
-
-        val_f1 = 2 * (val_prec * val_rec) / (val_prec + val_rec) if (val_prec + val_rec) > 0 else 0
-        train_f1 = 2 * (train_prec * train_rec) / (train_prec + train_rec) if (train_prec + train_rec) > 0 else 0
-
-        # Calculate overfitting
-        acc_gap = train_acc - val_acc
-        f1_gap = train_f1 - val_f1
-
-        print(f"\n{'=' * 80}")
-        print("FINAL RESULTS")
-        print(f"{'=' * 80}")
-        print(f"Training:")
-        print(f"  Accuracy: {train_acc:.4f}")
-        print(f"  F1 Score: {train_f1:.4f}")
-        print(f"Validation:")
-        print(f"  Accuracy: {val_acc:.4f}")
-        print(f"  F1 Score: {val_f1:.4f}")
-        print(f"Overfitting:")
-        print(f"  Accuracy Gap: {acc_gap:.4f}")
-        print(f"  F1 Gap: {f1_gap:.4f}")
-
-        if acc_gap < 0.05:
-            print(f"  Level: ✓ LOW (Excellent!)")
-        elif acc_gap < 0.10:
-            print(f"  Level: ⚠ MEDIUM")
+            print(f"{'=' * 80}")
+            if best_result:
+                print(f"[OK] Best model: {best_result['variation_name']} (robustness={best_result.get('robustness_score', 0):.4f})")
         else:
-            print(f"  Level: ✗ HIGH")
+            print(f"\n[!] WARNING: No valid models found! All configs showed signs of memorization.")
 
-        print(f"{'=' * 80}\n")
+        # Show rejected models
+        if rejected_results:
+            print(f"\nRejected configs (memorization suspected):")
+            for r in rejected_results:
+                val_acc = r['val_metrics']['accuracy']
+                gap = r['overfitting']['accuracy_gap']
+                print(f"  - {r['variation_name']}: val={val_acc*100:.1f}%, gap={gap*100:.2f}% - {r.get('rejection_reason', 'suspicious')}")
 
-        # Save config and results
-        results = {
-            'model_name': model_name,
-            'architecture': architecture,
-            'config': config,
-            'train_metrics': {
-                'accuracy': float(train_acc),
-                'f1': float(train_f1),
-                'precision': float(train_prec),
-                'recall': float(train_rec)
-            },
-            'val_metrics': {
-                'accuracy': float(val_acc),
-                'f1': float(val_f1),
-                'precision': float(val_prec),
-                'recall': float(val_rec)
-            },
-            'overfitting': {
-                'accuracy_gap': float(acc_gap),
-                'f1_gap': float(f1_gap)
-            },
-            'train_time_seconds': train_time,
-            'total_epochs': len(self.history.history['loss']),
-            'model_params': self.model.count_params()
-        }
+        print(f"\n[OK] Summary saved to: {summary_path}")
 
-        results_path = self.model_save_dir / f"{model_name}_results.json"
-        with open(results_path, 'w') as f:
-            json.dump(results, f, indent=2)
-
-        print(f"✓ Model saved to: {self.model_save_dir / f'{model_name}_best.keras'}")
-        print(f"✓ Results saved to: {results_path}")
-
-        return results
-
-
-    def train_multiple_configs(self):
-        """Train multiple anti-overfitting configurations"""
-
-        architectures = ['simple', 'medium', 'robust']
-        all_results = []
-
-        for arch in architectures:
-            print(f"\n{'#' * 80}")
-            print(f"TRAINING: {arch.upper()}")
-            print(f"{'#' * 80}")
-
-            try:
-                result = self.train(architecture=arch)
-                all_results.append(result)
-            except Exception as e:
-                print(f"ERROR training {arch}: {e}")
-                continue
-
-        # Print comparison
-        print(f"\n{'=' * 80}")
-        print("COMPARISON OF ALL CONFIGS")
-        print(f"{'=' * 80}")
-        print(f"{'Architecture':<15} {'Val Acc':>10} {'Val F1':>10} {'Acc Gap':>10} {'Level':>10}")
-        print(f"{'-' * 80}")
-
-        for result in sorted(all_results, key=lambda x: x['overfitting']['accuracy_gap']):
-            arch = result['architecture']
-            val_acc = result['val_metrics']['accuracy']
-            val_f1 = result['val_metrics']['f1']
-            gap = result['overfitting']['accuracy_gap']
-
-            if gap < 0.05:
-                level = "LOW ✓"
-            elif gap < 0.10:
-                level = "MEDIUM ⚠"
-            else:
-                level = "HIGH ✗"
-
-            print(f"{arch:<15} {val_acc:>10.4f} {val_f1:>10.4f} {gap:>10.4f} {level:>10}")
-
-        print(f"{'=' * 80}\n")
-
-        return all_results
 
 # Example usage
 if __name__ == "__main__":
     import random
+    import os
 
     random.seed(42)
     np.random.seed(42)
     tf.random.set_seed(42)
 
-    trainer = AntiOverfitCNNTrainer("adornment_dataset.npz")
+    # Check for test mode from environment variable
+    test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
 
-    # Option 1: Train single config
-    # result = trainer.train(architecture='simple')
+    if test_mode:
+        print("="*80)
+        print("*** TEST MODE: 1 config only ***")
+        print("="*80)
 
-    # Option 2: Train all configs and compare
-    results = trainer.train_multiple_configs()
+    trainer = BestModelVariationTrainer("adornment_dataset_v2.npz")
 
-    print("\n✓ Anti-overfitting training complete!")
-    print("Run comprehensive_model_evaluator.py to compare with previous models.")
+    if test_mode:
+        # Test mode: Run single variation only
+        print("\n[TEST MODE] Running single variation only")
+        import copy
+        test_config = copy.deepcopy(trainer.best_config)
+        test_config['epochs'] = 1
+        result = trainer.train_config(test_config, "test_single")
+        results = [result] if result else []
+    else:
+        results = trainer.train_all_variations()
+
+    print(f"\n[OK] Trained {len(results)} variations!")
+    print("Run comprehensive_model_evaluator.py to compare all models.")

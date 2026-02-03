@@ -1,0 +1,28 @@
+[
+  {
+    "name": "best_config",
+    "architecture": "config_4",
+    "learning_rate": 0.001,
+    "batch_size": 20,
+    "l2_reg": 0.0001,
+    "dropout_rates": [
+      0.3,
+      0.4
+    ],
+    "use_lr_schedule": false,
+    "params": 167169,
+    "epochs_run": 25,
+    "train_time": 47.48758411407471,
+    "train_acc": 0.9384779334068298,
+    "train_prec": 0.8959008455276489,
+    "train_rec": 0.9932361245155334,
+    "train_f1": 0.9420609493388172,
+    "val_acc": 0.9250745177268982,
+    "val_prec": 0.8708685636520386,
+    "val_rec": 0.9929885864257812,
+    "val_f1": 0.9279279196916849,
+    "inference_ms": 68.01101207733154,
+    "overfitting_gap": 0.01340341567993164,
+    "meets_requirements": true
+  }
+]
