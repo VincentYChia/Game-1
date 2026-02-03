@@ -1192,9 +1192,14 @@ class Renderer:
                     hint_rect = hint_surf.get_rect(center=(sx, sy + size // 2 + 12))
                     self.screen.blit(hint_surf, hint_rect)
 
-                # Show item count
-                if death_chest.contents:
-                    count_text = f"{len(death_chest.contents)} items"
+                # Show item count (use rich_contents if available)
+                item_count = 0
+                if hasattr(death_chest, 'is_death_chest') and death_chest.is_death_chest and hasattr(death_chest, 'rich_contents'):
+                    item_count = len(death_chest.rich_contents) if death_chest.rich_contents else len(death_chest.contents)
+                else:
+                    item_count = len(death_chest.contents)
+                if item_count > 0:
+                    count_text = f"{item_count} items"
                     count_surf = self.tiny_font.render(count_text, True, (255, 220, 220))
                     count_rect = count_surf.get_rect(center=(sx, sy - size // 2 - 8))
                     self.screen.blit(count_surf, count_rect)
@@ -1902,7 +1907,33 @@ class Renderer:
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
 
-        for idx, (item_id, quantity) in enumerate(chest.contents):
+        # Use rich_contents if available for full item data, otherwise fallback to simple contents
+        items_to_render = []
+        if hasattr(chest, 'is_death_chest') and chest.is_death_chest and hasattr(chest, 'rich_contents') and chest.rich_contents:
+            for item_data in chest.rich_contents:
+                items_to_render.append({
+                    'item_id': item_data.get('item_id', item_data.get('tool_id', '')),
+                    'quantity': item_data.get('quantity', 1),
+                    'name': item_data.get('name', ''),
+                    'type': item_data.get('type', 'material'),
+                    'icon_path': item_data.get('icon_path'),
+                    'enchantments': item_data.get('enchantments', [])
+                })
+        else:
+            for item_id, quantity in chest.contents:
+                items_to_render.append({
+                    'item_id': item_id,
+                    'quantity': quantity,
+                    'name': '',
+                    'type': 'unknown',
+                    'icon_path': None,
+                    'enchantments': []
+                })
+
+        for idx, item_info in enumerate(items_to_render):
+            item_id = item_info['item_id']
+            quantity = item_info['quantity']
+
             row = idx // slots_per_row
             col = idx % slots_per_row
             slot_x = start_x + col * (slot_size + spacing)
@@ -1914,21 +1945,31 @@ class Renderer:
 
             slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
 
-            # Slot background (dark red)
+            # Slot background (dark red, or gold border for enchanted items)
             pygame.draw.rect(self.screen, (80, 40, 40), slot_rect)
-            pygame.draw.rect(self.screen, (150, 70, 70), slot_rect, 2)
+            has_enchants = bool(item_info.get('enchantments'))
+            border_color = (255, 200, 100) if has_enchants else (150, 70, 70)
+            pygame.draw.rect(self.screen, border_color, slot_rect, 2)
 
             # Item icon
             icon = None
-            item_name = item_id
+            item_name = item_info.get('name') or item_id
 
-            mat = mat_db.get_material(item_id)
-            if mat:
-                item_name = mat.name if hasattr(mat, 'name') else item_id
-                if hasattr(mat, 'icon_path') and mat.icon_path:
-                    from rendering.image_cache import ImageCache
-                    image_cache = ImageCache.get_instance()
-                    icon = image_cache.get_image(mat.icon_path, (slot_size - 8, slot_size - 8))
+            # Try to get icon from rich data first
+            if item_info.get('icon_path'):
+                from rendering.image_cache import ImageCache
+                image_cache = ImageCache.get_instance()
+                icon = image_cache.get_image(item_info['icon_path'], (slot_size - 8, slot_size - 8))
+
+            # Fallback to database lookup
+            if not icon:
+                mat = mat_db.get_material(item_id)
+                if mat:
+                    item_name = mat.name if hasattr(mat, 'name') else item_id
+                    if hasattr(mat, 'icon_path') and mat.icon_path:
+                        from rendering.image_cache import ImageCache
+                        image_cache = ImageCache.get_instance()
+                        icon = image_cache.get_image(mat.icon_path, (slot_size - 8, slot_size - 8))
 
             if not icon and equip_db.is_equipment(item_id):
                 eq = equip_db.create_equipment_from_id(item_id)
@@ -1942,8 +1983,9 @@ class Renderer:
             if icon:
                 self.screen.blit(icon, (slot_x + 4, slot_y + 4))
             else:
-                # Fallback: colored square
-                pygame.draw.rect(self.screen, (150, 100, 100), (slot_x + 4, slot_y + 4, slot_size - 8, slot_size - 8))
+                # Fallback: colored square based on item type
+                color = (150, 100, 100) if item_info['type'] == 'material' else (100, 150, 200)
+                pygame.draw.rect(self.screen, color, (slot_x + 4, slot_y + 4, slot_size - 8, slot_size - 8))
 
             # Quantity badge
             if quantity > 1:
@@ -1953,15 +1995,22 @@ class Renderer:
                 self.screen.blit(qty_bg, (slot_x + slot_size - qty_surf.get_width() - 4, slot_y + slot_size - qty_surf.get_height()))
                 self.screen.blit(qty_surf, (slot_x + slot_size - qty_surf.get_width() - 2, slot_y + slot_size - qty_surf.get_height()))
 
+            # Enchantment indicator (small star for enchanted items)
+            if has_enchants:
+                ench_surf = self.tiny_font.render("✨", True, (255, 200, 100))
+                self.screen.blit(ench_surf, (slot_x + 2, slot_y + 2))
+
             item_rects.append((slot_rect, idx))
 
         # Item count at bottom
-        count_text = f"{len(chest.contents)} items to retrieve"
+        item_count = len(items_to_render)
+        count_text = f"{item_count} items to retrieve"
         count_surf = self.tiny_font.render(count_text, True, (255, 180, 180))
         self.screen.blit(count_surf, (ui_x + (ui_width - count_surf.get_width()) // 2, ui_y + ui_height - 25))
 
         # Empty chest message
-        if not chest.contents:
+        is_empty = not items_to_render
+        if is_empty:
             empty_surf = self.small_font.render("Chest is empty", True, (200, 150, 150))
             self.screen.blit(empty_surf, (ui_x + (ui_width - empty_surf.get_width()) // 2, ui_y + ui_height // 2))
 

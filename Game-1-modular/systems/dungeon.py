@@ -185,6 +185,7 @@ class LootChest:
 
     Designed to be reusable for:
     - Dungeon reward chests (generated loot based on tier and rarity)
+    - Death chests (dropped player items on death)
     - Future: Player-placed storage chests
     """
     position: Position
@@ -194,6 +195,8 @@ class LootChest:
     is_player_storage: bool = False  # If True, player can store items
     chest_id: str = ""  # Unique identifier for save/load
     dungeon_rarity: Optional[DungeonRarity] = None  # For per-dungeon chest loot config
+    is_death_chest: bool = False  # If True, this is a death chest with rich item data
+    rich_contents: List[Dict[str, Any]] = field(default_factory=list)  # Full item data for death chests
 
     def __post_init__(self):
         if not self.chest_id:
@@ -363,14 +366,19 @@ class LootChest:
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize chest to dictionary for saving."""
-        return {
+        data = {
             "chest_id": self.chest_id,
             "position": {"x": self.position.x, "y": self.position.y, "z": self.position.z},
             "tier": self.tier,
             "is_opened": self.is_opened,
             "contents": self.contents,
-            "is_player_storage": self.is_player_storage
+            "is_player_storage": self.is_player_storage,
+            "is_death_chest": self.is_death_chest
         }
+        # Only save rich_contents if this is a death chest with data
+        if self.is_death_chest and self.rich_contents:
+            data["rich_contents"] = self.rich_contents
+        return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'LootChest':
@@ -381,9 +389,11 @@ class LootChest:
             tier=data.get("tier", 1),
             is_opened=data.get("is_opened", False),
             is_player_storage=data.get("is_player_storage", False),
+            is_death_chest=data.get("is_death_chest", False),
             chest_id=data.get("chest_id", "")
         )
         chest.contents = [tuple(item) for item in data.get("contents", [])]
+        chest.rich_contents = data.get("rich_contents", [])
         return chest
 
 

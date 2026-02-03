@@ -1890,14 +1890,16 @@ class Character:
 
         Soulbound equipment (with soulbound enchantment) is kept.
         Regular equipment and inventory items go into a death chest at
-        the location where the player died.
+        the location where the player died. Items are serialized with full
+        state (enchantments, durability, bonuses, etc.) for later retrieval.
 
         Args:
             death_position: Position where the player died (for chest spawn)
             world_system: WorldSystem to spawn death chest in
         """
-        dropped_items = []  # List of (item_id, quantity) for death chest
+        rich_items = []  # List of serialized item dictionaries with full state
         soulbound_kept = 0
+        items_dropped = 0
 
         # Handle equipped items - collect non-soulbound equipment
         if hasattr(self, 'equipment') and self.equipment:
@@ -1909,8 +1911,9 @@ class Character:
                         soulbound_kept += 1
                         print(f"   ✨ Soulbound item kept: {item.name}")
                     else:
-                        # Add to dropped items and unequip
-                        dropped_items.append((item.item_id, 1))
+                        # Serialize full item state
+                        rich_items.append(self._serialize_equipment_item(item))
+                        items_dropped += 1
                         self.equipment.unequip(slot_name, self)
 
         # Handle tools - collect non-soulbound tools
@@ -1922,35 +1925,137 @@ class Character:
                         soulbound_kept += 1
                         print(f"   ✨ Soulbound tool kept: {tool.name}")
                     else:
-                        # Add to dropped items and unequip
-                        dropped_items.append((tool.tool_id, 1))
+                        # Serialize full tool state
+                        rich_items.append(self._serialize_tool(tool))
+                        items_dropped += 1
                         self.tools.unequip(tool_type, self)
 
-        # Collect inventory items (materials don't have soulbound)
+        # Collect inventory items
         if hasattr(self, 'inventory') and self.inventory:
             for i, slot in enumerate(self.inventory.slots):
                 if slot and slot.quantity > 0:
-                    # Check for soulbound items in inventory
-                    if hasattr(slot, 'soulbound') and slot.soulbound:
-                        soulbound_kept += 1
-                        print(f"   ✨ Soulbound item kept in inventory: {slot.item_id}")
-                    else:
-                        # Add to dropped items and clear slot
-                        dropped_items.append((slot.item_id, slot.quantity))
-                        self.inventory.slots[i] = None
+                    # Check for soulbound items in inventory (equipment items)
+                    if hasattr(slot, 'equipment_data') and slot.equipment_data:
+                        if hasattr(slot.equipment_data, 'is_soulbound') and slot.equipment_data.is_soulbound():
+                            soulbound_kept += 1
+                            print(f"   ✨ Soulbound item kept in inventory: {slot.item_id}")
+                            continue
+                    # Serialize inventory slot with full data
+                    rich_items.append(self._serialize_inventory_slot(slot))
+                    items_dropped += slot.quantity
+                    self.inventory.slots[i] = None
 
-        # Spawn death chest with dropped items
-        if world_system and dropped_items:
-            world_system.spawn_death_chest(death_position, dropped_items)
-
-        # Calculate total items dropped
-        items_dropped = sum(qty for _, qty in dropped_items)
+        # Spawn death chest with dropped items (rich data)
+        if world_system and rich_items:
+            world_system.spawn_death_chest(death_position, rich_items)
 
         # Track in stat tracker
         if hasattr(self, 'stat_tracker') and self.stat_tracker:
             self.stat_tracker.record_items_lost_on_death(items_dropped, soulbound_kept)
 
         print(f"   💔 Dropped {items_dropped} items into death chest, kept {soulbound_kept} soulbound items")
+
+    def _serialize_equipment_item(self, item) -> dict:
+        """Serialize an equipment item with full state for death chest storage."""
+        data = {
+            "type": "equipment",
+            "item_id": item.item_id,
+            "name": item.name,
+            "tier": item.tier,
+            "rarity": item.rarity,
+            "slot": item.slot,
+            "damage": list(item.damage) if isinstance(item.damage, tuple) else item.damage,
+            "defense": item.defense,
+            "durability_current": item.durability_current,
+            "durability_max": item.durability_max,
+            "attack_speed": item.attack_speed,
+            "efficiency": item.efficiency,
+            "weight": item.weight,
+            "range": item.range,
+            "hand_type": item.hand_type,
+            "item_type": item.item_type,
+            "icon_path": item.icon_path,
+            "soulbound": item.soulbound,
+            "quantity": 1
+        }
+        # Include optional fields if present
+        if item.stat_multipliers:
+            data["stat_multipliers"] = item.stat_multipliers
+        if item.tags:
+            data["tags"] = item.tags
+        if item.effect_tags:
+            data["effect_tags"] = item.effect_tags
+        if item.effect_params:
+            data["effect_params"] = item.effect_params
+        if item.bonuses:
+            data["bonuses"] = item.bonuses
+        if item.enchantments:
+            data["enchantments"] = item.enchantments
+        if item.requirements:
+            data["requirements"] = item.requirements
+        return data
+
+    def _serialize_tool(self, tool) -> dict:
+        """Serialize a tool with full state for death chest storage."""
+        data = {
+            "type": "tool",
+            "tool_id": tool.tool_id,
+            "name": tool.name,
+            "tool_type": tool.tool_type,
+            "tier": tool.tier,
+            "durability_current": tool.durability_current,
+            "durability_max": tool.durability_max,
+            "efficiency": tool.efficiency,
+            "quantity": 1
+        }
+        # Include enchantments if present
+        if hasattr(tool, 'enchantments') and tool.enchantments:
+            data["enchantments"] = tool.enchantments
+        if hasattr(tool, 'soulbound'):
+            data["soulbound"] = tool.soulbound
+        return data
+
+    def _serialize_inventory_slot(self, slot) -> dict:
+        """Serialize an inventory slot with full state for death chest storage."""
+        data = {
+            "item_id": slot.item_id,
+            "quantity": slot.quantity
+        }
+        # If slot has equipment data, include full equipment state
+        if hasattr(slot, 'equipment_data') and slot.equipment_data:
+            equip = slot.equipment_data
+            data["type"] = "equipment"
+            data["name"] = equip.name
+            data["tier"] = equip.tier
+            data["rarity"] = equip.rarity
+            data["slot"] = equip.slot
+            data["damage"] = list(equip.damage) if isinstance(equip.damage, tuple) else equip.damage
+            data["defense"] = equip.defense
+            data["durability_current"] = equip.durability_current
+            data["durability_max"] = equip.durability_max
+            data["attack_speed"] = equip.attack_speed
+            data["efficiency"] = equip.efficiency
+            data["weight"] = equip.weight
+            data["range"] = equip.range
+            data["hand_type"] = equip.hand_type
+            data["item_type"] = equip.item_type
+            data["soulbound"] = equip.soulbound
+            if equip.enchantments:
+                data["enchantments"] = equip.enchantments
+            if equip.bonuses:
+                data["bonuses"] = equip.bonuses
+            if equip.stat_multipliers:
+                data["stat_multipliers"] = equip.stat_multipliers
+            if equip.tags:
+                data["tags"] = equip.tags
+            if equip.effect_tags:
+                data["effect_tags"] = equip.effect_tags
+            if equip.effect_params:
+                data["effect_params"] = equip.effect_params
+        else:
+            # Simple material/item
+            data["type"] = "material"
+        return data
 
     def get_effective_max_durability(self, item) -> int:
         """Get effective max durability for an item, including VIT and title bonuses.

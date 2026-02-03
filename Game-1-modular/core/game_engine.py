@@ -6233,37 +6233,126 @@ class GameEngine:
         self.death_chest_item_rects = []
 
     def _transfer_from_death_chest(self, chest_item_idx: int):
-        """Transfer an item from death chest to inventory."""
+        """Transfer an item from death chest to inventory, preserving full item state."""
         if not self.active_death_chest:
             return False
 
         chest = self.active_death_chest
+
+        # Use rich_contents if available (death chests with full item state)
+        if chest.is_death_chest and chest.rich_contents and chest_item_idx < len(chest.rich_contents):
+            item_data = chest.rich_contents[chest_item_idx]
+            success = self._restore_item_from_data(item_data)
+            if success:
+                # Remove from both rich_contents and simple contents
+                chest.rich_contents.pop(chest_item_idx)
+                if chest_item_idx < len(chest.contents):
+                    chest.contents.pop(chest_item_idx)
+
+                item_name = item_data.get('name', item_data.get('item_id', 'item')).replace('_', ' ').title()
+                quantity = item_data.get('quantity', 1)
+                self.add_notification(f"Retrieved {quantity}x {item_name}", (100, 255, 100))
+
+                # If chest is now empty, remove it from the world
+                if not chest.rich_contents and not chest.contents:
+                    self.world.remove_death_chest(chest)
+                    self._close_death_chest()
+                    self.add_notification("Death chest emptied and removed!", (200, 255, 200))
+                return True
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
+                return False
+
+        # Fallback to simple contents for non-death chests
         if chest_item_idx >= len(chest.contents):
             return False
 
         item_id, quantity = chest.contents[chest_item_idx]
-
-        # Try to add to inventory
         success = self.character.inventory.add_item(item_id, quantity)
         if success:
-            # Remove from chest
             chest.contents.pop(chest_item_idx)
             item_name = item_id.replace('_', ' ').title()
             self.add_notification(f"Retrieved {quantity}x {item_name}", (100, 255, 100))
 
-            # If chest is now empty, remove it from the world
             if not chest.contents:
                 self.world.remove_death_chest(chest)
                 self._close_death_chest()
                 self.add_notification("Death chest emptied and removed!", (200, 255, 200))
-
             return True
         else:
             self.add_notification("Inventory full!", (255, 100, 100))
             return False
 
+    def _restore_item_from_data(self, item_data: dict) -> bool:
+        """Restore an item with full state from serialized data."""
+        from data.models.equipment import EquipmentItem
+        from entities.tool import Tool
+
+        item_type = item_data.get('type', 'material')
+        quantity = item_data.get('quantity', 1)
+
+        if item_type == 'equipment':
+            # Reconstruct full EquipmentItem with all state
+            equip = EquipmentItem(
+                item_id=item_data.get('item_id', ''),
+                name=item_data.get('name', ''),
+                tier=item_data.get('tier', 1),
+                rarity=item_data.get('rarity', 'common'),
+                slot=item_data.get('slot', 'mainHand'),
+                damage=tuple(item_data.get('damage', [0, 0])),
+                defense=item_data.get('defense', 0),
+                durability_current=item_data.get('durability_current', 100),
+                durability_max=item_data.get('durability_max', 100),
+                attack_speed=item_data.get('attack_speed', 1.0),
+                efficiency=item_data.get('efficiency', 1.0),
+                weight=item_data.get('weight', 1.0),
+                range=item_data.get('range', 1.0),
+                hand_type=item_data.get('hand_type', 'default'),
+                item_type=item_data.get('item_type', 'weapon'),
+                icon_path=item_data.get('icon_path'),
+                soulbound=item_data.get('soulbound', False),
+                enchantments=item_data.get('enchantments', []),
+                bonuses=item_data.get('bonuses', {}),
+                stat_multipliers=item_data.get('stat_multipliers', {}),
+                tags=item_data.get('tags', []),
+                effect_tags=item_data.get('effect_tags', []),
+                effect_params=item_data.get('effect_params', {}),
+                requirements=item_data.get('requirements', {})
+            )
+            return self.character.inventory.add_item(equip.item_id, 1, equipment_instance=equip)
+
+        elif item_type == 'tool':
+            # Reconstruct Tool - add to tools manager or inventory
+            tool = Tool(
+                tool_id=item_data.get('tool_id', ''),
+                name=item_data.get('name', ''),
+                tool_type=item_data.get('tool_type', 'pickaxe'),
+                tier=item_data.get('tier', 1),
+                durability_current=item_data.get('durability_current', 100),
+                durability_max=item_data.get('durability_max', 100),
+                efficiency=item_data.get('efficiency', 1.0)
+            )
+            if hasattr(tool, 'enchantments'):
+                tool.enchantments = item_data.get('enchantments', [])
+            if hasattr(tool, 'soulbound'):
+                tool.soulbound = item_data.get('soulbound', False)
+            # Try to equip tool or add to inventory
+            if hasattr(self.character, 'tools') and self.character.tools:
+                # Check if slot is empty
+                tool_slot = self.character.tools.slots.get(tool.tool_type)
+                if tool_slot is None:
+                    self.character.tools.slots[tool.tool_type] = tool
+                    return True
+            # Fallback to inventory
+            return self.character.inventory.add_item(tool.tool_id, 1)
+
+        else:
+            # Simple material - just add by ID
+            item_id = item_data.get('item_id', item_data.get('material_id', ''))
+            return self.character.inventory.add_item(item_id, quantity)
+
     def _retrieve_all_from_death_chest(self):
-        """Retrieve all items from the active death chest."""
+        """Retrieve all items from the active death chest, preserving full item state."""
         if not self.active_death_chest:
             return
 
@@ -6271,15 +6360,30 @@ class GameEngine:
         items_retrieved = 0
         items_failed = 0
 
-        # Try to retrieve all items (in reverse order to avoid index issues)
-        for i in range(len(chest.contents) - 1, -1, -1):
-            item_id, quantity = chest.contents[i]
-            success = self.character.inventory.add_item(item_id, quantity)
-            if success:
-                chest.contents.pop(i)
-                items_retrieved += quantity
-            else:
-                items_failed += quantity
+        # Use rich_contents if available (death chests with full item state)
+        if chest.is_death_chest and chest.rich_contents:
+            # Try to retrieve all items (in reverse order to avoid index issues)
+            for i in range(len(chest.rich_contents) - 1, -1, -1):
+                item_data = chest.rich_contents[i]
+                quantity = item_data.get('quantity', 1)
+                success = self._restore_item_from_data(item_data)
+                if success:
+                    chest.rich_contents.pop(i)
+                    if i < len(chest.contents):
+                        chest.contents.pop(i)
+                    items_retrieved += quantity
+                else:
+                    items_failed += quantity
+        else:
+            # Fallback to simple contents for non-death chests
+            for i in range(len(chest.contents) - 1, -1, -1):
+                item_id, quantity = chest.contents[i]
+                success = self.character.inventory.add_item(item_id, quantity)
+                if success:
+                    chest.contents.pop(i)
+                    items_retrieved += quantity
+                else:
+                    items_failed += quantity
 
         if items_retrieved > 0:
             self.add_notification(f"Retrieved {items_retrieved} items!", (100, 255, 100))
@@ -6288,7 +6392,7 @@ class GameEngine:
             self.add_notification(f"Couldn't retrieve {items_failed} items - inventory full!", (255, 200, 100))
 
         # If chest is now empty, remove it
-        if not chest.contents:
+        if not chest.contents and not (chest.is_death_chest and chest.rich_contents):
             self.world.remove_death_chest(chest)
             self._close_death_chest()
             self.add_notification("Death chest emptied and removed!", (200, 255, 200))

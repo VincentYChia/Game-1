@@ -222,38 +222,48 @@ class WorldSystem:
         )
         print("📦 Spawn storage chest placed at (3, -2)")
 
-    def spawn_death_chest(self, position: Position, items: List[Tuple[str, int]]) -> Optional[LootChest]:
+    def spawn_death_chest(self, position: Position, rich_items: List[Dict[str, Any]]) -> Optional[LootChest]:
         """Spawn a death chest at the given position containing dropped items.
 
         Death chests are created when a player dies with KEEP_INVENTORY off.
         They have a distinctive red color and persist until the player
-        retrieves their items.
+        retrieves their items. Items are stored with full state (enchantments,
+        durability, etc.) to be restored when retrieved.
 
         Args:
             position: Position where the player died
-            items: List of (item_id, quantity) tuples to store
+            rich_items: List of serialized item dictionaries with full state
 
         Returns:
             The created LootChest, or None if no items to store
         """
-        if not items:
+        if not rich_items:
             return None
 
         # Generate unique chest ID based on position and timestamp
         import time
         chest_id = f"death_chest_{int(position.x)}_{int(position.y)}_{int(time.time())}"
 
+        # Build simple contents list for backwards compatibility
+        simple_contents = []
+        for item_data in rich_items:
+            item_id = item_data.get('item_id') or item_data.get('material_id', 'unknown')
+            quantity = item_data.get('quantity', 1)
+            simple_contents.append((item_id, quantity))
+
         death_chest = LootChest(
             position=Position(position.x, position.y, position.z),
             tier=1,
             is_opened=False,
-            contents=items,
+            contents=simple_contents,
             is_player_storage=True,  # Allow player to retrieve items
-            chest_id=chest_id
+            chest_id=chest_id,
+            is_death_chest=True,
+            rich_contents=rich_items
         )
 
         self.death_chests.append(death_chest)
-        print(f"💀 Death chest spawned at ({position.x:.1f}, {position.y:.1f}) with {len(items)} item stacks")
+        print(f"💀 Death chest spawned at ({position.x:.1f}, {position.y:.1f}) with {len(rich_items)} items")
         return death_chest
 
     def remove_death_chest(self, chest: LootChest):
