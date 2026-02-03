@@ -569,7 +569,7 @@ class InteractiveEngineeringUI(InteractiveBaseUI):
         return mat
 
     def clear_placement(self):
-        for slot_type in self.SLOT_TYPES:
+        for slot_type in self.ALL_SLOT_TYPES:
             for mat in self.slots[slot_type]:
                 self.return_material(mat.item_id, mat.quantity)
             self.slots[slot_type].clear()

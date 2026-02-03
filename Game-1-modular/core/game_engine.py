@@ -5389,13 +5389,15 @@ class GameEngine:
 
             # DEBUG MODE: Add infinite quantities of required materials
             if Config.DEBUG_INFINITE_RESOURCES:
-                print("🔧 DEBUG MODE: Adding infinite materials and bypassing rarity checks")
+                print("[DEBUG] DEBUG MODE: Adding infinite materials and bypassing rarity checks")
                 # Enable debug mode in rarity system to bypass rarity uniformity checks
                 rarity_system.debug_mode = True
                 for inp in recipe.inputs:
-                    mat_id = inp.get('materialId', '')
-                    # Add huge quantity - rarity is checked from material database, not inventory
-                    inv_dict[mat_id] = 999999
+                    # Support both 'itemId' (new format) and 'materialId' (legacy format)
+                    mat_id = inp.get('itemId') or inp.get('materialId', '')
+                    if mat_id:
+                        # Add huge quantity - rarity is checked from material database, not inventory
+                        inv_dict[mat_id] = 999999
             else:
                 # Ensure debug mode is off
                 rarity_system.debug_mode = False

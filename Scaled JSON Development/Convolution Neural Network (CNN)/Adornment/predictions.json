@@ -1,0 +1,209 @@
+{
+  "model_name": "adornment_best.keras",
+  "total_recipes": 25,
+  "valid_count": 25,
+  "invalid_count": 0,
+  "avg_confidence": 0.9991197848320007,
+  "predictions": [
+    {
+      "is_valid": true,
+      "probability": 0.9999775886535645,
+      "confidence": 0.9999775886535645,
+      "label": "VALID",
+      "recipeId": "enchanting_durability_advanced",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9993715286254883,
+      "confidence": 0.9993715286254883,
+      "label": "VALID",
+      "recipeId": "enchanting_durability_basic",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9997168779373169,
+      "confidence": 0.9997168779373169,
+      "label": "VALID",
+      "recipeId": "enchanting_efficiency_advanced",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9999925494194031,
+      "confidence": 0.9999925494194031,
+      "label": "VALID",
+      "recipeId": "enchanting_efficiency_basic",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.999921441078186,
+      "confidence": 0.999921441078186,
+      "label": "VALID",
+      "recipeId": "enchanting_fire_aspect",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9999661445617676,
+      "confidence": 0.9999661445617676,
+      "label": "VALID",
+      "recipeId": "enchanting_fortune_advanced",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9998819828033447,
+      "confidence": 0.9998819828033447,
+      "label": "VALID",
+      "recipeId": "enchanting_fortune_basic",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9999997615814209,
+      "confidence": 0.9999997615814209,
+      "label": "VALID",
+      "recipeId": "enchanting_frost_touch",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9994070529937744,
+      "confidence": 0.9994070529937744,
+      "label": "VALID",
+      "recipeId": "enchanting_knockback",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9902182221412659,
+      "confidence": 0.9902182221412659,
+      "label": "VALID",
+      "recipeId": "enchanting_lifesteal",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9999433159828186,
+      "confidence": 0.9999433159828186,
+      "label": "VALID",
+      "recipeId": "enchanting_lightning_strike",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9990637898445129,
+      "confidence": 0.9990637898445129,
+      "label": "VALID",
+      "recipeId": "enchanting_poison",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9995220303535461,
+      "confidence": 0.9995220303535461,
+      "label": "VALID",
+      "recipeId": "enchanting_protection_advanced",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9978446960449219,
+      "confidence": 0.9978446960449219,
+      "label": "VALID",
+      "recipeId": "enchanting_protection_basic",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9999414086341858,
+      "confidence": 0.9999414086341858,
+      "label": "VALID",
+      "recipeId": "enchanting_protection_master",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9998723864555359,
+      "confidence": 0.9998723864555359,
+      "label": "VALID",
+      "recipeId": "enchanting_regeneration",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9991087913513184,
+      "confidence": 0.9991087913513184,
+      "label": "VALID",
+      "recipeId": "enchanting_self_repair",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9998375177383423,
+      "confidence": 0.9998375177383423,
+      "label": "VALID",
+      "recipeId": "enchanting_sharpness_advanced",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9999963641166687,
+      "confidence": 0.9999963641166687,
+      "label": "VALID",
+      "recipeId": "enchanting_sharpness_basic",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9999946355819702,
+      "confidence": 0.9999946355819702,
+      "label": "VALID",
+      "recipeId": "enchanting_sharpness_master",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9982767701148987,
+      "confidence": 0.9982767701148987,
+      "label": "VALID",
+      "recipeId": "enchanting_silk_touch",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9996178150177002,
+      "confidence": 0.9996178150177002,
+      "label": "VALID",
+      "recipeId": "enchanting_soulbound",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9990128874778748,
+      "confidence": 0.9990128874778748,
+      "label": "VALID",
+      "recipeId": "enchanting_swiftness",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9999589323997498,
+      "confidence": 0.9999589323997498,
+      "label": "VALID",
+      "recipeId": "enchanting_thorns",
+      "model_name": "adornment_best.keras"
+    },
+    {
+      "is_valid": true,
+      "probability": 0.9975501298904419,
+      "confidence": 0.9975501298904419,
+      "label": "VALID",
+      "recipeId": "enchanting_weightless",
+      "model_name": "adornment_best.keras"
+    }
+  ]
+}

@@ -14,6 +14,17 @@ from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from colorsys import hsv_to_rgb
 import json
+import os
+
+# ==============================================================================
+# DEBUG MODE - Set CLASSIFIER_DEBUG=1 environment variable to enable
+# ==============================================================================
+CLASSIFIER_DEBUG = os.environ.get('CLASSIFIER_DEBUG', '0') == '1'
+
+def _debug(msg: str):
+    """Print debug message if debug mode is enabled"""
+    if CLASSIFIER_DEBUG:
+        print(f"[CLASSIFIER DEBUG] {msg}")
 
 
 # ==============================================================================
@@ -211,14 +222,100 @@ class SmithingImageRenderer:
     Renders smithing grid to 36x36 RGB image for CNN.
 
     Grid: 9x9 cells, each cell = 4x4 pixels = 36x36 total
+
+    CRITICAL: Must use shape masks and tier fill to match training data!
+    Training uses category-based shapes and tier-based fill sizes.
     """
 
     IMG_SIZE = 36
     CELL_SIZE = 4
     GRID_SIZE = 9
 
+    # Shape masks by category - MUST MATCH training (valid_smithing_data_v2.py)
+    CATEGORY_SHAPES = {
+        # Metal: Full square (solid, industrial)
+        'metal': np.array([
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1]
+        ], dtype=np.float32),
+
+        # Wood: Horizontal lines (grain pattern)
+        'wood': np.array([
+            [1, 1, 1, 1],
+            [0, 0, 0, 0],
+            [1, 1, 1, 1],
+            [0, 0, 0, 0]
+        ], dtype=np.float32),
+
+        # Stone: X pattern (angular, rocky)
+        'stone': np.array([
+            [1, 0, 0, 1],
+            [0, 1, 1, 0],
+            [0, 1, 1, 0],
+            [1, 0, 0, 1]
+        ], dtype=np.float32),
+
+        # Monster drop: Diamond shape (organic)
+        'monster_drop': np.array([
+            [0, 1, 1, 0],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [0, 1, 1, 0]
+        ], dtype=np.float32),
+
+        # Elemental: Plus/cross pattern (radiating energy)
+        'elemental': np.array([
+            [0, 1, 1, 0],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [0, 1, 1, 0]
+        ], dtype=np.float32),
+    }
+
+    # Default shape for unknown categories
+    DEFAULT_SHAPE = np.ones((4, 4), dtype=np.float32)
+
+    # Tier fill sizes (centered in 4x4 cell)
+    # T1=1x1, T2=2x2, T3=3x3, T4=full 4x4
+    TIER_FILL_SIZES = {1: 1, 2: 2, 3: 3, 4: 4}
+
     def __init__(self, color_encoder: MaterialColorEncoder):
         self.color_encoder = color_encoder
+
+    def _get_shape_mask(self, material_id: str) -> np.ndarray:
+        """Get the 4x4 shape mask for a material's category."""
+        if material_id is None:
+            return self.DEFAULT_SHAPE
+
+        mat_data = self.color_encoder.get_material_data(material_id)
+        if mat_data is None:
+            return self.DEFAULT_SHAPE
+
+        category = mat_data.get('category', 'unknown')
+        return self.CATEGORY_SHAPES.get(category, self.DEFAULT_SHAPE)
+
+    def _get_tier_fill_mask(self, material_id: str) -> np.ndarray:
+        """
+        Get a mask that limits fill based on tier.
+        T1=1x1 center, T2=2x2 center, T3=3x3 center, T4=full 4x4
+        """
+        if material_id is None:
+            return np.zeros((self.CELL_SIZE, self.CELL_SIZE), dtype=np.float32)
+
+        mat_data = self.color_encoder.get_material_data(material_id)
+        if mat_data is None:
+            return np.zeros((self.CELL_SIZE, self.CELL_SIZE), dtype=np.float32)
+
+        tier = mat_data.get('tier', 1)
+        fill_size = self.TIER_FILL_SIZES.get(tier, 4)
+
+        mask = np.zeros((self.CELL_SIZE, self.CELL_SIZE), dtype=np.float32)
+        offset = (self.CELL_SIZE - fill_size) // 2
+        mask[offset:offset+fill_size, offset:offset+fill_size] = 1.0
+
+        return mask
 
     def render(self, interactive_ui) -> np.ndarray:
         """
@@ -244,21 +341,48 @@ class SmithingImageRenderer:
             if 0 <= grid_x < self.GRID_SIZE and 0 <= grid_y < self.GRID_SIZE:
                 grid[grid_y][grid_x] = placed_mat.item_id
 
-        # Render to image
+        # Render to image (with shape masks and tier fill)
         return self._grid_to_image(grid)
 
     def _grid_to_image(self, grid: List[List[Optional[str]]]) -> np.ndarray:
-        """Convert 9x9 material grid to 36x36 RGB image"""
+        """
+        Convert 9x9 material grid to 36x36 RGB image.
+
+        CRITICAL: Uses shape masks and tier fill to match training data!
+        """
         img = np.zeros((self.IMG_SIZE, self.IMG_SIZE, 3), dtype=np.float32)
 
         for i in range(self.GRID_SIZE):
             for j in range(self.GRID_SIZE):
-                color = self.color_encoder.encode(grid[i][j])
+                material_id = grid[i][j]
+
+                if material_id is None:
+                    # Empty cell = black
+                    continue
+
+                # Get base color
+                color = self.color_encoder.encode(material_id)
+
+                # Get shape mask based on category
+                shape_mask = self._get_shape_mask(material_id)
+
+                # Get tier fill mask
+                tier_mask = self._get_tier_fill_mask(material_id)
+
+                # Combined mask: shape AND tier
+                combined_mask = shape_mask * tier_mask
+
+                # Create cell with masked color
+                cell = np.zeros((self.CELL_SIZE, self.CELL_SIZE, 3), dtype=np.float32)
+                for c in range(3):
+                    cell[:, :, c] = color[c] * combined_mask
+
+                # Place cell in image
                 y_start = i * self.CELL_SIZE
                 y_end = (i + 1) * self.CELL_SIZE
                 x_start = j * self.CELL_SIZE
                 x_end = (j + 1) * self.CELL_SIZE
-                img[y_start:y_end, x_start:x_end] = color
+                img[y_start:y_end, x_start:x_end] = cell
 
         return img
 
@@ -415,12 +539,11 @@ class LightGBMFeatureExtractor:
     NUM_CATEGORIES = 5
 
     # Refinement vocabularies by discipline
-    # Refining has NO refinement features (was trained without them)
-    # Alchemy and Engineering have only 'basic'
+    # All three LightGBM disciplines have only 'basic' (from training data)
     REFINEMENT_VOCAB = {
-        'refining': {},  # No refinement features for refining
-        'alchemy': {'basic': 0},
-        'engineering': {'basic': 0}
+        'refining': {'basic': 0},     # 1 refinement feature
+        'alchemy': {'basic': 0},      # 1 refinement feature
+        'engineering': {'basic': 0}   # 1 refinement feature
     }
 
     def __init__(self, materials_db):
@@ -466,12 +589,13 @@ class LightGBMFeatureExtractor:
         """
         Extract features from InteractiveRefiningUI.
 
-        Feature count: 18 features (NO refinement features for refining)
+        Feature count: 19 features (MUST match training script exactly!)
         - 2: num_cores, num_spokes
         - 2: core_qty, spoke_qty
         - 2: spokes/cores ratio, spoke_qty/core_qty ratio
         - 1: material diversity
         - 5: category distribution (5 categories)
+        - 1: refinement distribution (1 refinement: 'basic')
         - 5: tier statistics (core_mean, core_max, spoke_mean, spoke_max, tier_mismatch)
         - 1: station tier
         """
@@ -522,7 +646,12 @@ class LightGBMFeatureExtractor:
         for cat_name in ['elemental', 'metal', 'monster_drop', 'stone', 'wood']:
             features.append(cat_counts.get(cat_name, 0))
 
-        # NOTE: Refining has NO refinement features (model was trained without them)
+        # Refinement distribution - HARDCODED 1 refinement: 'basic' (1 feature)
+        # NOTE: This was MISSING before - training DOES include this for refining!
+        core_refinements = [self._get_refinement_level(self._get_material(c['materialId']))
+                           for c in core_inputs]
+        ref_counts = Counter(core_refinements)
+        features.append(ref_counts.get('basic', 0))
 
         # Tier statistics (5 features)
         core_tiers = [self._get_material(c['materialId']).get('tier', 1)
@@ -851,6 +980,7 @@ class LightGBMBackend(ClassifierBackend):
         self._lazy_load()
 
         if self._load_error:
+            _debug(f"LightGBM load error: {self._load_error}")
             return 0.0, self._load_error
 
         try:
@@ -858,11 +988,23 @@ class LightGBMBackend(ClassifierBackend):
             if len(input_data.shape) == 1:
                 input_data = input_data.reshape(1, -1)
 
+            _debug(f"LightGBM input shape after reshape: {input_data.shape}")
+            _debug(f"LightGBM model expects {self.model.num_feature()} features")
+
+            if input_data.shape[1] != self.model.num_feature():
+                error_msg = f"Feature mismatch! Model expects {self.model.num_feature()} features, got {input_data.shape[1]}"
+                _debug(f"ERROR: {error_msg}")
+                return 0.0, error_msg
+
             prob = float(self.model.predict(input_data,
                         num_iteration=self.model.best_iteration)[0])
+            _debug(f"LightGBM raw prediction: {prob}")
             return prob, None
 
         except Exception as e:
+            _debug(f"LightGBM prediction exception: {e}")
+            import traceback
+            _debug(f"Traceback: {traceback.format_exc()}")
             return 0.0, f"LightGBM prediction failed: {e}"
 
     def is_loaded(self) -> bool:
@@ -885,40 +1027,41 @@ class CraftingClassifierManager:
     """
 
     # Default model paths (relative to project root)
+    # Models are stored in Scaled JSON Development/models/{discipline}/
     DEFAULT_CONFIGS = {
         'smithing': ClassifierConfig(
             discipline='smithing',
             classifier_type='cnn',
-            model_path='Scaled JSON Development/Convolution Neural Network (CNN)/Smithing/batch 4 (batch 3, no stations)/excellent_minimal_batch_20.keras',
+            model_path='Scaled JSON Development/models/smithing/smithing_best.keras',
             img_size=36,
             threshold=0.5
         ),
         'adornments': ClassifierConfig(
             discipline='adornments',
             classifier_type='cnn',
-            model_path='Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/smart_search_results/best_original_20260124_185830_f10.9520_model.keras',
+            model_path='Scaled JSON Development/models/adornment/adornment_best.keras',
             img_size=56,
             threshold=0.5
         ),
         'alchemy': ClassifierConfig(
             discipline='alchemy',
             classifier_type='lightgbm',
-            model_path='Scaled JSON Development/Simple Classifiers (LightGBM)/alchemy_lightGBM/alchemy_model.txt',
-            extractor_path='Scaled JSON Development/Simple Classifiers (LightGBM)/alchemy_lightGBM/alchemy_extractor.pkl',
+            model_path='Scaled JSON Development/models/alchemy/alchemy_model.txt',
+            extractor_path='Scaled JSON Development/models/alchemy/alchemy_extractor.pkl',
             threshold=0.5
         ),
         'refining': ClassifierConfig(
             discipline='refining',
             classifier_type='lightgbm',
-            model_path='Scaled JSON Development/Simple Classifiers (LightGBM)/refining_lightGBM/refining_model.txt',
-            extractor_path='Scaled JSON Development/Simple Classifiers (LightGBM)/refining_lightGBM/refining_extractor.pkl',
+            model_path='Scaled JSON Development/models/refining/refining_model.txt',
+            extractor_path='Scaled JSON Development/models/refining/refining_extractor.pkl',
             threshold=0.5
         ),
         'engineering': ClassifierConfig(
             discipline='engineering',
             classifier_type='lightgbm',
-            model_path='Scaled JSON Development/Simple Classifiers (LightGBM)/engineering_lightGBM/engineering_model.txt',
-            extractor_path='Scaled JSON Development/Simple Classifiers (LightGBM)/engineering_lightGBM/engineering_extractor.pkl',
+            model_path='Scaled JSON Development/models/engineering/engineering_model.txt',
+            extractor_path='Scaled JSON Development/models/engineering/engineering_extractor.pkl',
             threshold=0.5
         ),
     }
@@ -1007,8 +1150,11 @@ class CraftingClassifierManager:
         Returns:
             ClassifierResult with valid/invalid, confidence, and any error
         """
+        _debug(f"=== validate() called for {discipline} ===")
+
         config = self.configs.get(discipline)
         if not config:
+            _debug(f"ERROR: No config for {discipline}")
             return ClassifierResult(
                 valid=False,
                 confidence=0.0,
@@ -1017,7 +1163,10 @@ class CraftingClassifierManager:
                 error=f"No classifier configured for discipline: {discipline}"
             )
 
+        _debug(f"Config: type={config.classifier_type}, model_path={config.model_path}")
+
         if not config.enabled:
+            _debug(f"ERROR: Classifier disabled for {discipline}")
             return ClassifierResult(
                 valid=False,
                 confidence=0.0,
@@ -1029,6 +1178,7 @@ class CraftingClassifierManager:
         # Get backend
         backend = self.get_backend(discipline)
         if not backend:
+            _debug(f"ERROR: Failed to create backend for {discipline}")
             return ClassifierResult(
                 valid=False,
                 confidence=0.0,
@@ -1037,13 +1187,22 @@ class CraftingClassifierManager:
                 error=f"Failed to create backend for discipline: {discipline}"
             )
 
+        _debug(f"Backend loaded: {backend.is_loaded()}")
+
         # Transform UI to model input
         try:
             if config.classifier_type == 'cnn':
                 input_data = self._transform_for_cnn(discipline, interactive_ui)
+                _debug(f"CNN input shape: {input_data.shape}, dtype: {input_data.dtype}")
+                _debug(f"CNN input min/max: {input_data.min():.4f}/{input_data.max():.4f}")
             else:
                 input_data = self._transform_for_lightgbm(discipline, interactive_ui)
+                _debug(f"LightGBM input shape: {input_data.shape}, dtype: {input_data.dtype}")
+                _debug(f"LightGBM features: {input_data.tolist()}")
         except Exception as e:
+            _debug(f"ERROR: Transform failed: {e}")
+            import traceback
+            _debug(f"Traceback: {traceback.format_exc()}")
             return ClassifierResult(
                 valid=False,
                 confidence=0.0,
@@ -1053,9 +1212,12 @@ class CraftingClassifierManager:
             )
 
         # Make prediction
+        _debug(f"Calling backend.predict()...")
         prob, error = backend.predict(input_data)
+        _debug(f"Prediction result: prob={prob}, error={error}")
 
         if error:
+            _debug(f"ERROR: Prediction failed: {error}")
             return ClassifierResult(
                 valid=False,
                 confidence=0.0,
@@ -1067,6 +1229,8 @@ class CraftingClassifierManager:
         # Interpret result
         is_valid = prob >= config.threshold
         confidence = prob if is_valid else (1 - prob)
+
+        _debug(f"Result: valid={is_valid}, prob={prob:.4f}, threshold={config.threshold}")
 
         return ClassifierResult(
             valid=is_valid,

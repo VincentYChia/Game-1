@@ -29,7 +29,7 @@ Usage:
     python train_all_classifiers.py --debug            # Verbose debug output
     python train_all_classifiers.py --test-paths       # Verify all paths exist
     python train_all_classifiers.py --test-mode        # Skeleton test (1 config, 1 epoch)
-
+python "Scaled JSON Development/train_all_classifiers.py" --force
 Directory Structure:
     models/
         smithing/       - Trained smithing CNN models
@@ -55,6 +55,7 @@ import shutil
 import sys
 import subprocess
 import re
+import time
 import traceback
 from datetime import datetime
 from pathlib import Path
@@ -101,13 +102,13 @@ DATA_PATHS = {
         'placements': GAME_MODULAR / "recipes.JSON" / "recipes-adornments-1.json",
     },
     'alchemy': {
-        'placements': SCRIPT_DIR / "json_templates" / "alchemy_recipes.json",
+        'placements': GAME_MODULAR / "placements.JSON" / "placements-alchemy-1.JSON",
     },
     'refining': {
-        'placements': SCRIPT_DIR / "json_templates" / "refining_recipes.json",
+        'placements': GAME_MODULAR / "placements.JSON" / "placements-refining-1.JSON",
     },
     'engineering': {
-        'placements': SCRIPT_DIR / "json_templates" / "engineering_recipes.json",
+        'placements': GAME_MODULAR / "placements.JSON" / "placements-engineering-1.JSON",
     },
 }
 
@@ -115,35 +116,8 @@ DATA_PATHS = {
 # DISCIPLINE CONFIGURATIONS
 # ============================================================================
 
+# NOTE: LightGBM disciplines ordered first (faster training)
 DISCIPLINES = {
-    'smithing': {
-        'type': 'cnn',
-        'data_script': CNN_DIR / "Smithing" / "valid_smithing_data_v2.py",
-        'train_script': CNN_DIR / "Smithing" / "CNN_trainer_smithing.py",
-        'work_dir': CNN_DIR / "Smithing",  # CNN scripts work in their own dir, we copy out
-        'model_output_dir': MODELS_DIR / "smithing",  # Where we copy best model
-        'data_output_dir': TRAINING_DATA_DIR / "smithing",  # Where training data goes
-        'model_pattern': '*.keras',  # Matches any keras model
-        'extractor_pattern': None,
-        'output_dataset': 'recipe_dataset_v2.npz',
-        # CNN scripts don't need external args - they have their own paths
-        'data_args': [],
-        'train_args': [],
-    },
-    'adornments': {
-        'type': 'cnn',
-        'data_script': CNN_DIR / "Adornment" / "data_augment_adornment_v2.py",
-        'train_script': CNN_DIR / "Adornment" / "CNN_trainer_adornment.py",
-        'work_dir': CNN_DIR / "Adornment",  # CNN scripts work in their own dir
-        'model_output_dir': MODELS_DIR / "adornment",  # Where we copy best model
-        'data_output_dir': TRAINING_DATA_DIR / "adornment",  # Where training data goes
-        'model_pattern': '*.keras',  # Matches any keras model
-        'extractor_pattern': None,
-        'output_dataset': 'adornment_dataset_v2.npz',
-        # CNN scripts don't need external args
-        'data_args': [],
-        'train_args': [],
-    },
     'alchemy': {
         'type': 'lightgbm',
         'data_script': LIGHTGBM_DIR / "data_augment_GBM.py",
@@ -197,6 +171,35 @@ DISCIPLINES = {
                                str(TRAINING_DATA_DIR / 'engineering' / 'engineering_augmented_data.json'),
                                str(MATERIALS_JSON),
                                str(MODELS_DIR / 'engineering')],
+    },
+    # CNN disciplines (slower, ordered last)
+    'smithing': {
+        'type': 'cnn',
+        'data_script': CNN_DIR / "Smithing" / "valid_smithing_data_v2.py",
+        'train_script': CNN_DIR / "Smithing" / "CNN_trainer_smithing.py",
+        'work_dir': CNN_DIR / "Smithing",  # CNN scripts work in their own dir, we copy out
+        'model_output_dir': MODELS_DIR / "smithing",  # Where we copy best model
+        'data_output_dir': TRAINING_DATA_DIR / "smithing",  # Where training data goes
+        'model_pattern': '*.keras',  # Matches any keras model
+        'extractor_pattern': None,
+        'output_dataset': 'recipe_dataset_v2.npz',
+        # CNN scripts don't need external args - they have their own paths
+        'data_args': [],
+        'train_args': [],
+    },
+    'adornments': {
+        'type': 'cnn',
+        'data_script': CNN_DIR / "Adornment" / "data_augment_adornment_v2.py",
+        'train_script': CNN_DIR / "Adornment" / "CNN_trainer_adornment.py",
+        'work_dir': CNN_DIR / "Adornment",  # CNN scripts work in their own dir
+        'model_output_dir': MODELS_DIR / "adornment",  # Where we copy best model
+        'data_output_dir': TRAINING_DATA_DIR / "adornment",  # Where training data goes
+        'model_pattern': '*.keras',  # Matches any keras model
+        'extractor_pattern': None,
+        'output_dataset': 'adornment_dataset_v2.npz',
+        # CNN scripts don't need external args
+        'data_args': [],
+        'train_args': [],
     },
 }
 
@@ -575,6 +578,8 @@ def archive_file(filepath: Path, discipline: str, dry_run: bool = False) -> Opti
 
     debug(f"Archiving: {filepath} -> {archive_path}")
     shutil.copy2(filepath, archive_path)
+    # Remove the original so old models don't get selected when new training doesn't save
+    filepath.unlink()
     print(f"    Archived: {filepath.name} -> {archived_name}")
     return archive_path
 
@@ -719,7 +724,8 @@ def run_training(discipline: str, config: Dict, dry_run: bool = False) -> Option
     """
     Run training script for a discipline.
 
-    Returns dict with training results, or None if failed.
+    Returns dict with training results, or None if subprocess failed.
+    Empty dict {} means subprocess succeeded but metrics couldn't be parsed.
     """
     train_script = config['train_script']
     train_args_fn = config.get('train_args', [])
@@ -773,14 +779,16 @@ def run_training(discipline: str, config: Dict, dry_run: bool = False) -> Option
         debug(f"  Return code: {result.returncode}")
         debug(f"  Stdout length: {len(result.stdout)} chars")
 
-        if result.returncode != 0:
-            print(f"    ERROR: Training failed (return code {result.returncode})")
+        # Check if subprocess failed
+        subprocess_failed = result.returncode != 0
+
+        if subprocess_failed:
+            print(f"    ERROR: Training subprocess failed (return code {result.returncode})")
             if result.stderr:
                 print(f"    Errors:")
                 for line in result.stderr.split('\n')[-10:]:
                     if line.strip():
                         print(f"      {line}")
-            # Still try to parse output
             debug(f"  Full stdout:\n{result.stdout}")
 
         # Parse output for metrics
@@ -794,11 +802,22 @@ def run_training(discipline: str, config: Dict, dry_run: bool = False) -> Option
             score = calculate_score(metrics.get('val_accuracy', 0), metrics.get('overfit_gap', 0))
             print(f"    Score: {score:.3f}")
             metrics['score'] = score
+            metrics['subprocess_success'] = not subprocess_failed
         else:
             print(f"    WARNING: Could not parse training metrics")
+            # Show last 15 lines of output for debugging
+            print(f"    Last lines of output:")
+            for line in result.stdout.split('\n')[-15:]:
+                if line.strip():
+                    print(f"      {line.strip()[:80]}")
             debug(f"  Full stdout:\n{result.stdout}")
-            # Still might have succeeded, just can't parse output
-            metrics = {}
+            # Return a dict indicating we ran but couldn't parse
+            # subprocess_success indicates if we should proceed or fail
+            metrics = {'subprocess_success': not subprocess_failed, 'parsed': False}
+
+        # If subprocess failed, return None to indicate failure
+        if subprocess_failed:
+            return None
 
         return metrics
 
@@ -816,16 +835,21 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
     """
     Parse training output to extract metrics.
 
-    Handles two output formats:
+    Handles multiple output formats:
 
-    1. CNN trainer format (state-based):
+    1. CNN Smithing trainer format (state-based):
        Training Set:
          Accuracy:  0.8208 (82.08%)
        Validation Set:
          Accuracy:  0.8208 (82.08%)
        Overfitting:   5.00% gap
 
-    2. LightGBM trainer format (single-line):
+    2. CNN Adornment trainer format (single-line):
+       Validation: Acc=0.5400, F1=0.0000
+       Training:   Acc=0.5400, F1=0.0000
+       Overfitting Gap: 0.0213
+
+    3. LightGBM trainer format (single-line):
        Train Accuracy: 0.8500
        Val Accuracy:   0.8200
        Overfit Gap:    0.0300 (3.0%)
@@ -833,59 +857,92 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
     metrics = {}
 
     debug(f"Parsing training output for {model_type}")
+    debug(f"  Output length: {len(output)} chars")
 
     try:
         lines = output.split('\n')
+        debug(f"  Total lines: {len(lines)}")
 
         # State for CNN parser (which section are we in?)
         current_section = None  # 'training' or 'validation'
 
         for line in lines:
             line_lower = line.lower().strip()
+            line_stripped = line.strip()
 
             # Skip empty lines
             if not line_lower:
                 continue
 
-            # ===== CNN FORMAT: Section headers =====
-            if 'training set' in line_lower or 'training:' in line_lower:
+            # ===== ADORNMENT FORMAT: "Validation: Acc=0.5400, F1=0.0000" =====
+            # This format has Acc= on same line as Validation:/Training:
+            acc_equals_match = re.search(r'acc\s*=\s*(\d+\.?\d*)', line, re.IGNORECASE)
+            if acc_equals_match:
+                acc_val = float(acc_equals_match.group(1))
+                if acc_val > 1:
+                    acc_val = acc_val / 100
+                if 'validation' in line_lower:
+                    metrics['val_accuracy'] = acc_val
+                    debug(f"  Found adornment val acc: {acc_val}")
+                elif 'training' in line_lower:
+                    metrics['train_accuracy'] = acc_val
+                    debug(f"  Found adornment train acc: {acc_val}")
+                continue
+
+            # ===== CNN SMITHING FORMAT: Section headers =====
+            # Match "Training Set:" or "Training Set" (with or without colon)
+            if 'training set' in line_lower and 'validation' not in line_lower:
                 current_section = 'training'
-                debug(f"  Entered training section")
+                debug(f"  Entered training section: '{line_stripped}'")
                 continue
 
-            if 'validation set' in line_lower or 'validation:' in line_lower:
+            if 'validation set' in line_lower:
                 current_section = 'validation'
-                debug(f"  Entered validation section")
+                debug(f"  Entered validation section: '{line_stripped}'")
                 continue
 
-            # ===== CNN FORMAT: Accuracy in section =====
-            if current_section and 'accuracy' in line_lower and 'accuracy:' in line_lower:
-                # Parse "Accuracy:  0.8208 (82.08%)" or "Accuracy: 82.08%"
-                # Try percentage first
-                pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
-                if pct_match:
-                    acc = float(pct_match.group(1)) / 100
+            # ===== CNN SMITHING FORMAT: Accuracy in section =====
+            # Match lines like "  Accuracy:  0.8208 (82.08%)" within a section
+            if current_section and 'accuracy' in line_lower:
+                # Skip lines that contain "train" or "val" keywords (those are LightGBM format)
+                if 'train accuracy' in line_lower or 'val accuracy' in line_lower:
+                    pass  # Let the LightGBM handler below process this
                 else:
-                    # Try decimal
-                    dec_match = re.search(r'accuracy[:\s]+(\d+\.?\d+)', line, re.IGNORECASE)
-                    if dec_match:
-                        acc = float(dec_match.group(1))
-                        if acc > 1:
-                            acc = acc / 100
+                    debug(f"  Parsing accuracy in {current_section} section: '{line_stripped}'")
+                    # Try to extract the percentage value: "(82.08%)"
+                    pct_match = re.search(r'\((\d+\.?\d*)\s*%\)', line)
+                    if pct_match:
+                        acc = float(pct_match.group(1)) / 100
+                        debug(f"    Found pct in parens: {pct_match.group(1)}% -> {acc}")
                     else:
-                        continue
+                        # Try bare percentage: "82.08%"
+                        pct_match2 = re.search(r'(\d+\.?\d*)\s*%', line)
+                        if pct_match2:
+                            acc = float(pct_match2.group(1)) / 100
+                            debug(f"    Found bare pct: {pct_match2.group(1)}% -> {acc}")
+                        else:
+                            # Try decimal value after "Accuracy:" like "Accuracy:  0.8208"
+                            dec_match = re.search(r'accuracy[:\s]+(\d+\.?\d+)', line, re.IGNORECASE)
+                            if dec_match:
+                                acc = float(dec_match.group(1))
+                                if acc > 1:
+                                    acc = acc / 100
+                                debug(f"    Found decimal: {dec_match.group(1)} -> {acc}")
+                            else:
+                                debug(f"    Could not parse accuracy from: '{line_stripped}'")
+                                continue
 
-                if current_section == 'training':
-                    metrics['train_accuracy'] = acc
-                    debug(f"    Parsed train accuracy: {acc}")
-                elif current_section == 'validation':
-                    metrics['val_accuracy'] = acc
-                    debug(f"    Parsed val accuracy: {acc}")
-                continue
+                    if current_section == 'training':
+                        metrics['train_accuracy'] = acc
+                        debug(f"    Set train_accuracy: {acc}")
+                    elif current_section == 'validation':
+                        metrics['val_accuracy'] = acc
+                        debug(f"    Set val_accuracy: {acc}")
+                    continue
 
             # ===== LIGHTGBM FORMAT: Single-line metrics =====
             # "Train Accuracy: 0.8500" or "Train Accuracy: 85.00%"
-            if 'train' in line_lower and 'accuracy' in line_lower:
+            if 'train' in line_lower and 'accuracy' in line_lower and ':' in line_lower:
                 pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
                 if pct_match:
                     metrics['train_accuracy'] = float(pct_match.group(1)) / 100
@@ -894,11 +951,14 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
                     if dec_match:
                         val = float(dec_match.group(1))
                         metrics['train_accuracy'] = val if val <= 1 else val / 100
-                debug(f"  Found train line: {line} -> {metrics.get('train_accuracy')}")
+                debug(f"  Found LightGBM train line: '{line_stripped}' -> {metrics.get('train_accuracy')}")
                 continue
 
             # "Val Accuracy: 0.8200" or "Val Accuracy: 82.00%"
-            if ('val' in line_lower or 'validation' in line_lower) and 'accuracy' in line_lower:
+            if ('val' in line_lower or 'validation' in line_lower) and 'accuracy' in line_lower and ':' in line_lower:
+                # Skip if we're in a section (that's smithing format)
+                if current_section and 'set' not in line_lower:
+                    pass  # Already handled above
                 pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
                 if pct_match:
                     metrics['val_accuracy'] = float(pct_match.group(1)) / 100
@@ -907,20 +967,20 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
                     if dec_match:
                         val = float(dec_match.group(1))
                         metrics['val_accuracy'] = val if val <= 1 else val / 100
-                debug(f"  Found val line: {line} -> {metrics.get('val_accuracy')}")
+                debug(f"  Found LightGBM val line: '{line_stripped}' -> {metrics.get('val_accuracy')}")
                 continue
 
-            # ===== OVERFIT GAP (both formats) =====
-            # "Overfitting:   5.00% gap" or "Overfit Gap: 0.0300 (3.0%)"
-            if 'overfit' in line_lower or 'gap' in line_lower:
-                debug(f"  Found gap line: {line}")
+            # ===== OVERFIT GAP (all formats) =====
+            # "Overfitting:   5.00% gap" or "Overfit Gap: 0.0300 (3.0%)" or "Overfitting Gap: 0.0213"
+            if 'overfit' in line_lower:
+                debug(f"  Found gap line: '{line_stripped}'")
                 pct_match = re.search(r'(\d+\.?\d*)\s*%', line)
                 if pct_match:
                     metrics['overfit_gap'] = float(pct_match.group(1)) / 100
                     debug(f"    Parsed overfit gap from %: {metrics['overfit_gap']}")
                 else:
-                    # Try decimal format "0.0300"
-                    dec_match = re.search(r'gap[:\s]+(\d+\.?\d+)', line, re.IGNORECASE)
+                    # Try decimal format "0.0300" or "Gap: 0.0213"
+                    dec_match = re.search(r'(?:gap|overfitting)[:\s]+(\d+\.?\d+)', line, re.IGNORECASE)
                     if dec_match:
                         val = float(dec_match.group(1))
                         metrics['overfit_gap'] = val if val <= 1 else val / 100
@@ -933,10 +993,22 @@ def parse_training_output(output: str, model_type: str) -> Optional[Dict]:
             debug(f"  Calculated overfit gap: {metrics['overfit_gap']}")
 
         debug(f"  Final metrics: {metrics}")
+
+        # If we found no metrics at all but there's output, show a warning
+        if not metrics and len(output) > 100:
+            debug(f"  WARNING: Could not extract any metrics from output")
+            # Print last 20 lines for debugging
+            debug(f"  Last 20 lines of output:")
+            for line in lines[-20:]:
+                if line.strip():
+                    debug(f"    {line.strip()}")
+
         return metrics if metrics else None
 
     except Exception as e:
         debug(f"  Parse error: {e}")
+        import traceback
+        debug(f"  {traceback.format_exc()}")
         return None
 
 
@@ -960,30 +1032,57 @@ def find_best_model(discipline: str, config: Dict, work_dir: Path) -> Optional[T
     debug(f"  Pattern: {model_pattern}")
     debug(f"  Work dir: {work_dir}")
 
-    # Find all matching models
+    # Find all matching models - first try direct match
     models = list(work_dir.glob(model_pattern))
-    debug(f"  Found {len(models)} models with pattern")
+    debug(f"  Found {len(models)} models with direct glob")
 
     if not models:
-        # Try recursive search
-        models = list(work_dir.rglob(model_pattern.split('/')[-1]))
-        debug(f"  Found {len(models)} models with recursive search")
+        # Try recursive search (CNN trainers may save to subdirectories)
+        pattern = model_pattern.split('/')[-1] if '/' in model_pattern else model_pattern
+        models = list(work_dir.rglob(pattern))
+        debug(f"  Found {len(models)} models with recursive search (rglob)")
+
+    # Also check common subdirectories for CNN trainers
+    if not models and model_type == 'cnn':
+        common_subdirs = ['best_model_variations', 'models', 'output']
+        for subdir in common_subdirs:
+            subdir_path = work_dir / subdir
+            if subdir_path.exists():
+                subdir_models = list(subdir_path.glob(model_pattern))
+                debug(f"  Found {len(subdir_models)} models in {subdir}/")
+                models.extend(subdir_models)
 
     if not models:
         print(f"    No models found matching: {model_pattern}")
+        debug(f"    Searched in: {work_dir}")
+        debug(f"    Subdirs present: {[d.name for d in work_dir.iterdir() if d.is_dir()]}")
         return None
 
-    # For now, return the most recently modified model
-    # In a real implementation, we'd parse results files to get actual scores
-    best_model = max(models, key=lambda p: p.stat().st_mtime)
+    # Separate candidate and non-candidate models
+    candidate_models = [m for m in models if 'CANDIDATE' in m.name.upper()]
+    good_models = [m for m in models if 'CANDIDATE' not in m.name.upper()]
 
-    debug(f"  Selected: {best_model} (most recent)")
+    debug(f"  Found {len(good_models)} good models, {len(candidate_models)} candidates")
+
+    # Prefer non-candidate models, fall back to candidates
+    if good_models:
+        best_model = max(good_models, key=lambda p: p.stat().st_mtime)
+        is_candidate = False
+    elif candidate_models:
+        best_model = max(candidate_models, key=lambda p: p.stat().st_mtime)
+        is_candidate = True
+        print(f"    WARNING: Only candidate models available, using best candidate")
+    else:
+        # Should not happen since we checked models is non-empty
+        return None
+
+    debug(f"  Selected: {best_model} (most recent {'candidate' if is_candidate else 'good'} model)")
     debug(f"    Modified: {datetime.fromtimestamp(best_model.stat().st_mtime)}")
 
-    # Estimate score (would need actual metrics from training)
-    estimated_score = 0.80  # Placeholder
+    # Estimate score based on whether it's a candidate
+    estimated_score = 0.70 if is_candidate else 0.85  # Placeholder scores
 
-    print(f"    Found best model: {best_model.name}")
+    print(f"    Found best model: {best_model.name}" + (" (CANDIDATE)" if is_candidate else ""))
     return (best_model, estimated_score)
 
 
@@ -1009,6 +1108,17 @@ def install_model(discipline: str, source_model: Path, dry_run: bool = False) ->
         print(f"    ERROR: No target path configured for {discipline}")
         return False
 
+    # Check if source and target are the same file (LightGBM case)
+    try:
+        if source_model.resolve() == target_path.resolve():
+            print(f"    Model already at target location: {target_path.name}")
+            # Still need to handle extractor for LightGBM
+            if discipline in ['alchemy', 'refining', 'engineering']:
+                _install_extractor(source_model, target_path)
+            return True
+    except Exception:
+        pass  # If resolve fails, proceed with normal copy
+
     # Ensure target directory exists
     target_path.parent.mkdir(parents=True, exist_ok=True)
     debug(f"  Target parent ensured: {target_path.parent}")
@@ -1018,40 +1128,75 @@ def install_model(discipline: str, source_model: Path, dry_run: bool = False) ->
         print(f"    [DRY RUN]    -> {target_path}")
         return True
 
-    try:
-        shutil.copy2(source_model, target_path)
-        print(f"    Installed: {source_model.name}")
-        print(f"           -> {target_path}")
-        debug(f"  Copy successful")
+    # Retry logic for Windows file locking
+    max_retries = 3
+    retry_delay = 1.0  # seconds
 
-        # For LightGBM, also copy the extractor .pkl if it exists
-        if discipline in ['alchemy', 'refining', 'engineering']:
-            # Try different naming conventions
-            extractor_patterns = [
-                source_model.with_suffix('.pkl').with_name(
-                    source_model.stem.replace('_model', '_extractor') + '.pkl'
-                ),
-                source_model.parent / (source_model.stem.replace('_model', '_extractor') + '.pkl'),
-            ]
+    for attempt in range(max_retries):
+        try:
+            shutil.copy2(source_model, target_path)
+            print(f"    Installed: {source_model.name}")
+            print(f"           -> {target_path}")
+            debug(f"  Copy successful")
 
-            for extractor_source in extractor_patterns:
-                debug(f"  Checking extractor: {extractor_source}")
-                if extractor_source.exists():
-                    extractor_target = target_path.with_suffix('.pkl').with_name(
-                        target_path.stem.replace('_model', '_extractor') + '.pkl'
-                    )
-                    debug(f"  Installing extractor to: {extractor_target}")
-                    shutil.copy2(extractor_source, extractor_target)
-                    print(f"    Installed extractor: {extractor_source.name}")
-                    break
+            # For LightGBM, also copy the extractor .pkl if it exists
+            if discipline in ['alchemy', 'refining', 'engineering']:
+                _install_extractor(source_model, target_path)
 
-        return True
+            return True
 
-    except Exception as e:
-        print(f"    ERROR installing model: {e}")
-        if DEBUG_MODE:
-            traceback.print_exc()
-        return False
+        except PermissionError as e:
+            if attempt < max_retries - 1:
+                debug(f"  File locked, retrying in {retry_delay}s (attempt {attempt + 1}/{max_retries})")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+            else:
+                print(f"    ERROR installing model: {e}")
+                if DEBUG_MODE:
+                    traceback.print_exc()
+                return False
+
+        except Exception as e:
+            print(f"    ERROR installing model: {e}")
+            if DEBUG_MODE:
+                traceback.print_exc()
+            return False
+
+    return False
+
+
+def _install_extractor(source_model: Path, target_path: Path) -> None:
+    """Install the feature extractor .pkl file for LightGBM models."""
+    # Try different naming conventions
+    extractor_patterns = [
+        source_model.with_suffix('.pkl').with_name(
+            source_model.stem.replace('_model', '_extractor') + '.pkl'
+        ),
+        source_model.parent / (source_model.stem.replace('_model', '_extractor') + '.pkl'),
+    ]
+
+    for extractor_source in extractor_patterns:
+        debug(f"  Checking extractor: {extractor_source}")
+        if extractor_source.exists():
+            extractor_target = target_path.with_suffix('.pkl').with_name(
+                target_path.stem.replace('_model', '_extractor') + '.pkl'
+            )
+
+            # Check if source and target are same
+            try:
+                if extractor_source.resolve() == extractor_target.resolve():
+                    debug(f"  Extractor already at target location")
+                    return
+            except Exception:
+                pass
+
+            debug(f"  Installing extractor to: {extractor_target}")
+            try:
+                shutil.copy2(extractor_source, extractor_target)
+                print(f"    Installed extractor: {extractor_source.name}")
+            except Exception as e:
+                debug(f"  Failed to install extractor: {e}")
+            break
 
 
 # ============================================================================
@@ -1145,10 +1290,17 @@ def train_discipline(discipline: str, dry_run: bool = False,
         train_metrics = run_training(discipline, config, dry_run)
         results['metrics'] = train_metrics
 
-        if not train_metrics and not dry_run:
-            results['error'] = 'Training failed'
+        # None means subprocess failed, empty/partial dict means parsing failed but subprocess succeeded
+        if train_metrics is None and not dry_run:
+            results['error'] = 'Training subprocess failed'
             print(f"    FAILED - stopping here")
             return results
+
+        # Check if we parsed metrics successfully
+        if train_metrics and not train_metrics.get('parsed', True):
+            print(f"    Note: Metrics couldn't be parsed, but training subprocess succeeded")
+            print(f"    Proceeding to model selection...")
+
         results['steps_completed'].append('training')
     except Exception as e:
         print(f"    ERROR during training: {e}")

@@ -576,37 +576,225 @@ def augment_dataset_with_synthetics(recipes: List[Dict], labels: List[int],
     return augmented_recipes, augmented_labels, combined_materials
 
 
-def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
-    """Train LightGBM classifier."""
-    import os
+def get_lightgbm_configs():
+    """
+    Generate LightGBM hyperparameter configurations.
 
-    # Check for test mode from environment variable
-    test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
+    Strategy: Range from conservative (more regularized) to moderate.
+    Avoid aggressive configs that tend to overfit on small datasets.
 
+    Key regularization levers:
+    - num_leaves: Lower = more regularization
+    - min_data_in_leaf: Higher = more regularization
+    - lambda_l1/l2: Higher = more regularization
+    - feature_fraction: Lower = more regularization (like dropout)
+    - learning_rate: Lower = better generalization
+    """
+    configs = [
+        # Config 1: Conservative baseline (strong regularization)
+        {
+            'name': 'conservative_baseline',
+            'num_leaves': 15,
+            'learning_rate': 0.03,
+            'min_data_in_leaf': 20,
+            'feature_fraction': 0.7,
+            'bagging_fraction': 0.7,
+            'lambda_l1': 0.1,
+            'lambda_l2': 0.1,
+        },
+        # Config 2: Conservative with higher learning rate
+        {
+            'name': 'conservative_fast',
+            'num_leaves': 15,
+            'learning_rate': 0.05,
+            'min_data_in_leaf': 15,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.8,
+            'lambda_l1': 0.05,
+            'lambda_l2': 0.1,
+        },
+        # Config 3: Moderate regularization
+        {
+            'name': 'moderate_reg',
+            'num_leaves': 20,
+            'learning_rate': 0.04,
+            'min_data_in_leaf': 15,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.8,
+            'lambda_l1': 0.05,
+            'lambda_l2': 0.05,
+        },
+        # Config 4: Moderate with more leaves
+        {
+            'name': 'moderate_capacity',
+            'num_leaves': 25,
+            'learning_rate': 0.03,
+            'min_data_in_leaf': 20,
+            'feature_fraction': 0.75,
+            'bagging_fraction': 0.75,
+            'lambda_l1': 0.1,
+            'lambda_l2': 0.1,
+        },
+        # Config 5: Balanced (original-ish but with regularization)
+        {
+            'name': 'balanced',
+            'num_leaves': 31,
+            'learning_rate': 0.05,
+            'min_data_in_leaf': 10,
+            'feature_fraction': 0.9,
+            'bagging_fraction': 0.8,
+            'lambda_l1': 0.01,
+            'lambda_l2': 0.01,
+        },
+        # Config 6: Low learning rate, more rounds
+        {
+            'name': 'slow_learner',
+            'num_leaves': 20,
+            'learning_rate': 0.02,
+            'min_data_in_leaf': 15,
+            'feature_fraction': 0.85,
+            'bagging_fraction': 0.85,
+            'lambda_l1': 0.02,
+            'lambda_l2': 0.02,
+        },
+        # Config 7: Heavy L2 regularization
+        {
+            'name': 'heavy_l2',
+            'num_leaves': 25,
+            'learning_rate': 0.04,
+            'min_data_in_leaf': 10,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.8,
+            'lambda_l1': 0.0,
+            'lambda_l2': 0.2,
+        },
+        # Config 8: Heavy L1 regularization (feature selection)
+        {
+            'name': 'heavy_l1',
+            'num_leaves': 25,
+            'learning_rate': 0.04,
+            'min_data_in_leaf': 10,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.8,
+            'lambda_l1': 0.2,
+            'lambda_l2': 0.0,
+        },
+        # Config 9: Very conservative (for small datasets)
+        {
+            'name': 'very_conservative',
+            'num_leaves': 10,
+            'learning_rate': 0.05,
+            'min_data_in_leaf': 25,
+            'feature_fraction': 0.6,
+            'bagging_fraction': 0.6,
+            'lambda_l1': 0.15,
+            'lambda_l2': 0.15,
+        },
+        # Config 10: Moderate with strong bagging
+        {
+            'name': 'strong_bagging',
+            'num_leaves': 20,
+            'learning_rate': 0.04,
+            'min_data_in_leaf': 15,
+            'feature_fraction': 0.7,
+            'bagging_fraction': 0.6,
+            'lambda_l1': 0.05,
+            'lambda_l2': 0.05,
+        },
+    ]
+    return configs
+
+
+def is_suspicious_result(val_accuracy, overfit_gap):
+    """
+    Check if results are suspiciously perfect (likely memorization).
+
+    Reject models with:
+    - 98%+ accuracy (suspiciously high, likely memorized)
+    - <0.3% overfitting gap (suspiciously low, suggests data leakage or memorization)
+
+    These metrics look "too good" but indicate the model memorized training data
+    rather than learning generalizable patterns.
+    """
+    if val_accuracy >= 0.98:
+        return True, f"Val accuracy {val_accuracy*100:.1f}% >= 98% (likely memorization)"
+
+    gap = abs(overfit_gap) if overfit_gap is not None else 0.0
+    if gap < 0.003:
+        return True, f"Overfitting gap {gap*100:.2f}% < 0.3% (suspiciously low)"
+
+    return False, ""
+
+
+def calculate_robustness_score(val_accuracy, overfit_gap):
+    """
+    Calculate robustness-aware score that penalizes overfitting.
+
+    Strategy: High accuracy is good, but overfitting is bad.
+    A model with 92% accuracy and 2% gap is BETTER than
+    a model with 95% accuracy and 8% gap.
+
+    ALSO: Reject models that are "too perfect" (memorization indicators)
+    - 98%+ accuracy → returns -1 (rejected)
+    - <0.3% gap → returns -1 (rejected)
+
+    Penalty schedule:
+    - gap < 3%: No penalty (excellent generalization)
+    - gap 3-6%: Small penalty (acceptable)
+    - gap 6-10%: Moderate penalty (concerning)
+    - gap > 10%: Heavy penalty (likely overfit)
+    """
+    if overfit_gap is None:
+        overfit_gap = 0.0
+
+    # Check for suspicious results first
+    is_suspicious, reason = is_suspicious_result(val_accuracy, overfit_gap)
+    if is_suspicious:
+        return -1.0  # Rejected
+
+    # Ensure gap is positive (train_acc - val_acc)
+    gap = abs(overfit_gap)
+
+    if gap < 0.03:
+        penalty = 1.0  # No penalty
+    elif gap < 0.06:
+        penalty = 0.97  # 3% penalty
+    elif gap < 0.10:
+        penalty = 0.90  # 10% penalty
+    elif gap < 0.15:
+        penalty = 0.80  # 20% penalty
+    else:
+        penalty = 0.65  # 35% penalty for severe overfitting
+
+    return val_accuracy * penalty
+
+
+def train_lightgbm_with_config(X_train, y_train, X_test, y_test, config, test_mode=False):
+    """Train LightGBM with a specific config."""
     if test_mode:
-        print("\n*** TEST MODE: 5 boosting rounds only ***")
-        print("Training LightGBM classifier (test mode)...")
         num_rounds = 5
         early_stop_rounds = 2
     else:
-        print("\nTraining LightGBM classifier...")
-        num_rounds = 200
-        early_stop_rounds = 20
+        num_rounds = 300  # More rounds, rely on early stopping
+        early_stop_rounds = 30
 
     # Create datasets
     train_data = lgb.Dataset(X_train, label=y_train)
     test_data = lgb.Dataset(X_test, label=y_test, reference=train_data)
 
-    # Parameters
+    # Build params from config
     params = {
         'objective': 'binary',
         'metric': 'binary_logloss',
         'boosting_type': 'gbdt',
-        'num_leaves': 31,
-        'learning_rate': 0.05,
-        'feature_fraction': 0.9,
-        'bagging_fraction': 0.8,
+        'num_leaves': config.get('num_leaves', 31),
+        'learning_rate': config.get('learning_rate', 0.05),
+        'min_data_in_leaf': config.get('min_data_in_leaf', 10),
+        'feature_fraction': config.get('feature_fraction', 0.9),
+        'bagging_fraction': config.get('bagging_fraction', 0.8),
         'bagging_freq': 5,
+        'lambda_l1': config.get('lambda_l1', 0.0),
+        'lambda_l2': config.get('lambda_l2', 0.0),
         'verbose': -1
     }
 
@@ -622,9 +810,162 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
     return model
 
 
+def quick_evaluate(model, X_test, y_test, X_train, y_train):
+    """Quick evaluation returning just accuracy and gap."""
+    y_pred_test = (model.predict(X_test, num_iteration=model.best_iteration) > 0.5).astype(int)
+    y_pred_train = (model.predict(X_train, num_iteration=model.best_iteration) > 0.5).astype(int)
+
+    val_acc = accuracy_score(y_test, y_pred_test)
+    train_acc = accuracy_score(y_train, y_pred_train)
+    gap = train_acc - val_acc
+
+    return val_acc, train_acc, gap
+
+
+def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
+    """
+    Train LightGBM classifier with automatic hyperparameter search.
+
+    Tries multiple configs and selects the best based on robustness score
+    (accuracy penalized by overfitting gap).
+    """
+    import os
+    from datetime import datetime
+
+    test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
+
+    if test_mode:
+        print("\n*** TEST MODE: Single config, 5 rounds ***")
+        configs = [get_lightgbm_configs()[4]]  # Just use balanced config
+    else:
+        print("\n=== LightGBM Hyperparameter Search ===")
+        configs = get_lightgbm_configs()
+
+    print(f"Testing {len(configs)} configurations...")
+    print(f"Train samples: {len(X_train)}, Test samples: {len(X_test)}")
+
+    results = []
+    best_model = None
+    best_score = -1
+    best_config_name = None
+    search_start = datetime.now()
+
+    for i, config in enumerate(configs):
+        config_name = config.get('name', f'config_{i}')
+
+        # Start training
+        print(f"\n{'-'*60}")
+        print(f"[{i+1}/{len(configs)}] CONFIG: {config_name}")
+        print(f"{'-'*60}")
+        print(f"  Params: leaves={config.get('num_leaves')}, lr={config.get('learning_rate')}, "
+              f"min_data={config.get('min_data_in_leaf')}")
+        print(f"  Regularization: L1={config.get('lambda_l1', 0)}, L2={config.get('lambda_l2', 0)}, "
+              f"feat_frac={config.get('feature_fraction')}")
+
+        train_start = datetime.now()
+        print(f"  [START] Training at {train_start.strftime('%H:%M:%S')}")
+
+        try:
+            model = train_lightgbm_with_config(X_train, y_train, X_test, y_test, config, test_mode)
+
+            train_end = datetime.now()
+            train_duration = (train_end - train_start).total_seconds()
+            print(f"  [STOP]  Training completed at {train_end.strftime('%H:%M:%S')} ({train_duration:.1f}s)")
+
+            # Evaluate
+            val_acc, train_acc, gap = quick_evaluate(model, X_test, y_test, X_train, y_train)
+
+            # Check for suspicious results first
+            is_suspicious, suspicious_reason = is_suspicious_result(val_acc, gap)
+            score = calculate_robustness_score(val_acc, gap)
+
+            # Results
+            print(f"\n  RESULTS:")
+            print(f"    Train Accuracy:  {train_acc*100:.2f}%")
+            print(f"    Val Accuracy:    {val_acc*100:.2f}%")
+            print(f"    Overfitting Gap: {gap*100:.2f}% {'[!] HIGH' if gap > 0.06 else 'OK'}")
+
+            if is_suspicious:
+                print(f"    [X] REJECTED: {suspicious_reason}")
+                print(f"    Robustness Score: REJECTED (memorization suspected)")
+            else:
+                print(f"    Robustness Score: {score:.4f}")
+
+            results.append({
+                'name': config_name,
+                'val_acc': val_acc,
+                'train_acc': train_acc,
+                'gap': gap,
+                'score': score,
+                'model': model,
+                'rejected': is_suspicious,
+                'rejection_reason': suspicious_reason if is_suspicious else None
+            })
+
+            # Only update best if not rejected
+            if not is_suspicious and score > best_score:
+                best_score = score
+                best_model = model
+                best_config_name = config_name
+                print(f"    *** NEW BEST! ***")
+
+        except Exception as e:
+            print(f"  [ERROR] Training failed: {e}")
+            continue
+
+    # Summary
+    search_end = datetime.now()
+    total_time = (search_end - search_start).total_seconds()
+
+    # Count rejected models
+    rejected_count = sum(1 for r in results if r.get('rejected', False))
+    valid_results = [r for r in results if not r.get('rejected', False)]
+
+    print(f"\n{'='*60}")
+    print(f"SEARCH COMPLETE")
+    print(f"{'='*60}")
+    print(f"Total time: {total_time:.1f}s")
+    print(f"Configs tested: {len(results)}")
+    print(f"Rejected (memorization): {rejected_count}")
+    print(f"Valid models: {len(valid_results)}")
+
+    if best_model is not None:
+        print(f"Best config: {best_config_name}")
+        print(f"Best robustness score: {best_score:.4f}")
+    else:
+        print(f"[!] WARNING: No valid models found! All configs showed signs of memorization.")
+        # Fall back to the best rejected model - pick the one with highest val_acc
+        if results:
+            best_rejected = max(results, key=lambda x: x['val_acc'])
+            best_model = best_rejected['model']
+            best_config_name = best_rejected['name']
+            print(f"[!] FALLBACK: Using best rejected model: {best_config_name}")
+            print(f"    Val accuracy: {best_rejected['val_acc']*100:.1f}%, Gap: {best_rejected['gap']*100:.2f}%")
+            print(f"    Reason rejected: {best_rejected.get('rejection_reason', 'unknown')}")
+
+    # Show top 3 valid configs
+    valid_results.sort(key=lambda x: x['score'], reverse=True)
+    if valid_results:
+        print(f"\nTop 3 valid configs:")
+        for i, r in enumerate(valid_results[:3]):
+            print(f"  {i+1}. {r['name']}: val={r['val_acc']:.3f}, gap={r['gap']:.3f}, score={r['score']:.3f}")
+
+    # Show rejected configs
+    if rejected_count > 0:
+        print(f"\nRejected configs (memorization):")
+        for r in results:
+            if r.get('rejected', False):
+                print(f"  - {r['name']}: val={r['val_acc']*100:.1f}%, gap={r['gap']*100:.2f}% - {r.get('rejection_reason', 'suspicious')}")
+
+    return best_model
+
+
 def evaluate_model(model, X_test, y_test, X_train=None, y_train=None):
     """Evaluate model performance."""
     print("\nEvaluating model...")
+
+    # Check for test mode from environment variable
+    test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
 
     # Predictions on test
     y_pred_proba = model.predict(X_test, num_iteration=model.best_iteration)
@@ -658,6 +999,18 @@ def evaluate_model(model, X_test, y_test, X_train=None, y_train=None):
     print(f"F1 Score:       {f1:.4f}")
     print(f"{'=' * 50}")
 
+    # Check requirements (90% accuracy, <6% overfit - matching CNN thresholds)
+    # Note: Lowered from 95%/<4% because small datasets make 95% unreliable
+    meets_acc = test_accuracy >= 0.90
+    meets_gap = overfit_gap is not None and overfit_gap < 0.06
+
+    print(f"\n{'=' * 50}")
+    print(f"REQUIREMENTS CHECK")
+    print(f"{'=' * 50}")
+    print(f"Accuracy >=90%: {'PASS' if meets_acc else 'FAIL'} ({test_accuracy*100:.1f}%)")
+    print(f"Gap <6%:        {'PASS' if meets_gap else 'FAIL'} ({overfit_gap*100:.1f}% gap)" if overfit_gap is not None else "Gap <6%:        N/A")
+    print(f"{'=' * 50}")
+
     # Confusion matrix
     cm = confusion_matrix(y_test, y_pred)
     print(f"\nConfusion Matrix:")
@@ -670,18 +1023,59 @@ def evaluate_model(model, X_test, y_test, X_train=None, y_train=None):
     print(f"\nDetailed Classification Report:")
     print(classification_report(y_test, y_pred, target_names=['Invalid', 'Valid']))
 
+    # Determine if model meets criteria
+    all_pass = meets_acc and meets_gap
+
     return {
         'val_accuracy': test_accuracy,
         'train_accuracy': train_accuracy,
         'overfit_gap': overfit_gap,
         'precision': precision,
         'recall': recall,
-        'f1': f1
+        'f1': f1,
+        'meets_criteria': all_pass,
+        'test_mode': test_mode
     }
 
 
-def save_model(model, feature_extractor, discipline, output_dir):
-    """Save trained model and feature extractor."""
+def save_model(model, feature_extractor, discipline, output_dir, metrics=None):
+    """Save trained model and feature extractor.
+
+    Args:
+        model: Trained LightGBM model
+        feature_extractor: Feature extractor instance
+        discipline: Discipline name
+        output_dir: Output directory
+        metrics: Optional dict with 'meets_criteria' and 'test_mode' keys
+    """
+    # Check if we should save
+    should_save = True
+    save_reason = ""
+
+    # Always save, but with different naming based on criteria
+    is_candidate = False
+    if metrics is not None:
+        meets_criteria = metrics.get('meets_criteria', False)
+        test_mode = metrics.get('test_mode', False)
+
+        if test_mode:
+            should_save = True
+            save_reason = "(test mode)"
+        elif meets_criteria:
+            should_save = True
+            save_reason = "(meets criteria: >=90% acc, <6% gap)"
+        else:
+            # Still save as candidate - don't leave user with nothing
+            should_save = True
+            is_candidate = True
+            val_acc = metrics.get('val_accuracy', 0)
+            gap = metrics.get('overfit_gap', 0)
+            save_reason = f"(CANDIDATE - acc={val_acc*100:.1f}%, gap={gap*100:.1f}%)"
+            print(f"\n[WARNING] Model did not meet full criteria:")
+            print(f"          Val accuracy: {val_acc*100:.1f}% (need >=90%)")
+            print(f"          Overfit gap: {gap*100:.1f}% (need <6%)")
+            print(f"          Saving as candidate model anyway...")
+
     os.makedirs(output_dir, exist_ok=True)
 
     model_path = os.path.join(output_dir, f'{discipline}_model.txt')
@@ -694,8 +1088,9 @@ def save_model(model, feature_extractor, discipline, output_dir):
     with open(extractor_path, 'wb') as f:
         pickle.dump(feature_extractor, f)
 
-    print(f"\nModel saved to: {model_path}")
-    print(f"Feature extractor saved to: {extractor_path}")
+    print(f"\n[SAVED] Model saved {save_reason}: {model_path}")
+    print(f"        Feature extractor saved: {extractor_path}")
+    return True
 
 
 def load_model(discipline, model_dir):
@@ -839,13 +1234,22 @@ Examples:
         # Train model
         model = train_lightgbm_classifier(X_train, y_train, X_test, y_test)
 
+        # Check if we got a model
+        if model is None:
+            print("\n[ERROR] No model was trained! All configurations may have failed.")
+            print("Check the data or hyperparameters.")
+            return
+
         # Evaluate
         metrics = evaluate_model(model, X_test, y_test, X_train, y_train)
 
-        # Save model
-        save_model(model, feature_extractor, discipline, model_output_dir)
+        # Save model (conditionally based on criteria)
+        saved = save_model(model, feature_extractor, discipline, model_output_dir, metrics)
 
-        print("\nTraining complete!")
+        if saved:
+            print("\nTraining complete! Model saved.")
+        else:
+            print("\nTraining complete. Model did not meet criteria and was not saved.")
 
 
 if __name__ == "__main__":

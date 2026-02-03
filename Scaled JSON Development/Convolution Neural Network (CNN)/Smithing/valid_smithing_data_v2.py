@@ -834,7 +834,7 @@ def get_default_paths():
     ]
 
     placements_paths = [
-        game_modular / "placements.JSON" / "placements-smithing-1.JSON",
+        game_modular / "placements.JSON" / "placements-smithing-1.json",  # lowercase .json
     ]
 
     # Check for Update folders
