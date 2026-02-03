@@ -211,6 +211,7 @@ class GameEngine:
         self.dungeon_manager = DungeonManager()
         self.combat_manager.dungeon_manager = self.dungeon_manager  # Link for 2x EXP, no drops
         self.world.dungeon_manager = self.dungeon_manager  # Link for dungeon tile walkability checks
+        self.world.map_system = self.map_system  # Link for death chest map markers
 
         # Load character stat modifiers config for INT minigame effects
         self.stat_modifiers_config = self._load_stat_modifiers_config()

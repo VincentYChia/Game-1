@@ -72,6 +72,9 @@ class WorldSystem:
         # Dungeon manager reference (set by game_engine)
         self.dungeon_manager = None
 
+        # Map system reference (set by game_engine) for death chest markers
+        self.map_system = None
+
         # Spawn storage chest (player-placed items)
         self.spawn_storage_chest = None  # Will be set in spawn_storage_chest()
 
@@ -263,6 +266,13 @@ class WorldSystem:
         )
 
         self.death_chests.append(death_chest)
+
+        # Mark chunk on map with skull icon
+        chunk_x = int(position.x) // Config.CHUNK_SIZE
+        chunk_y = int(position.y) // Config.CHUNK_SIZE
+        if self.map_system:
+            self.map_system.set_death_chest_marker(chunk_x, chunk_y, True)
+
         print(f"💀 Death chest spawned at ({position.x:.1f}, {position.y:.1f}) with {len(rich_items)} items")
         return death_chest
 
@@ -274,6 +284,19 @@ class WorldSystem:
         """
         if chest in self.death_chests:
             self.death_chests.remove(chest)
+
+            # Remove skull marker from map if no other death chests in this chunk
+            chunk_x = int(chest.position.x) // Config.CHUNK_SIZE
+            chunk_y = int(chest.position.y) // Config.CHUNK_SIZE
+            # Check if any other death chests remain in this chunk
+            has_other_chests = any(
+                int(c.position.x) // Config.CHUNK_SIZE == chunk_x and
+                int(c.position.y) // Config.CHUNK_SIZE == chunk_y
+                for c in self.death_chests
+            )
+            if self.map_system and not has_other_chests:
+                self.map_system.set_death_chest_marker(chunk_x, chunk_y, False)
+
             print(f"📦 Death chest removed: {chest.chest_id}")
 
     def get_nearby_death_chest(self, position: Position, max_distance: float = 1.5) -> Optional[LootChest]:

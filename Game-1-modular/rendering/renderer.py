@@ -2922,6 +2922,19 @@ class Renderer:
                     cx, cy = px + chunk_size // 2, py + chunk_size // 2
                     pygame.draw.circle(surf, dungeon_color, (cx, cy), max(s(3), chunk_size // 4))
 
+                # Draw death chest skull marker
+                if explored and explored.has_death_chest:
+                    cx, cy = px + chunk_size // 2, py + chunk_size // 2
+                    skull_size = max(s(4), chunk_size // 3)
+                    # Draw skull icon (simple: circle head + eyes)
+                    skull_color = (255, 100, 100)  # Red skull
+                    pygame.draw.circle(surf, skull_color, (cx, cy), skull_size)
+                    pygame.draw.circle(surf, (0, 0, 0), (cx, cy), skull_size, s(1))  # Outline
+                    # Eyes
+                    eye_size = max(s(1), skull_size // 4)
+                    pygame.draw.circle(surf, (0, 0, 0), (cx - skull_size // 3, cy - skull_size // 4), eye_size)
+                    pygame.draw.circle(surf, (0, 0, 0), (cx + skull_size // 3, cy - skull_size // 4), eye_size)
+
                 # Check for hover
                 rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
                 if chunk_rect.collidepoint(rx, ry):
@@ -2996,6 +3009,8 @@ class Renderer:
                 coord_text += f" - {type_name}"
                 if explored.has_dungeon:
                     coord_text += " [DUNGEON]"
+                if explored.has_death_chest:
+                    coord_text += " [💀 DEATH CHEST]"
             else:
                 coord_text += " - Unexplored"
             surf.blit(self.small_font.render(coord_text, True, (200, 200, 200)), (map_area_x, info_y))
