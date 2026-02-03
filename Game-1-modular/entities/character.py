@@ -1911,7 +1911,7 @@ class Character:
                     else:
                         # Add to dropped items and unequip
                         dropped_items.append((item.item_id, 1))
-                        self.equipment.unequip(slot_name)
+                        self.equipment.unequip(slot_name, self)
 
         # Handle tools - collect non-soulbound tools
         if hasattr(self, 'tools') and self.tools:
@@ -1924,7 +1924,7 @@ class Character:
                     else:
                         # Add to dropped items and unequip
                         dropped_items.append((tool.tool_id, 1))
-                        self.tools.unequip(tool_type)
+                        self.tools.unequip(tool_type, self)
 
         # Collect inventory items (materials don't have soulbound)
         if hasattr(self, 'inventory') and self.inventory:
