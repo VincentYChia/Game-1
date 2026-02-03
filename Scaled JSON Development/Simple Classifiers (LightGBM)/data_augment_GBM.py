@@ -651,18 +651,17 @@ def augment_alchemy_complete(recipe: Dict, all_materials: Dict) -> List[Dict]:
 
 def generate_alchemy_negatives(valid_recipes: List[Dict], all_materials: Dict, num_per_recipe: int = 3) -> List[Tuple[Dict, int]]:
     """
-    Generate invalid alchemy recipes that are HARD to distinguish from valid ones.
+    Generate invalid alchemy recipes with BALANCED difficulty.
 
-    Strategy: Create negatives that LOOK like valid recipes but have subtle errors:
-    - Wrong material tier for the recipe tier
-    - Shuffled ingredient order (sequence matters in alchemy)
-    - Subtle quantity changes (+-1 or +-2, not extreme)
-    - Same-category material swaps (e.g., wrong herb type)
+    Strategy: Mix of obvious, moderate, and subtle negatives:
+    - OBVIOUS (30%): Wrong category materials - clear signal for learning
+    - MODERATE (40%): Wrong tier, moderate quantity changes (+-2-3)
+    - SUBTLE (30%): Same-category swaps, small quantity changes
 
-    AVOID trivially-detectable patterns like:
-    - Extreme quantity changes (+-3 to +-5)
-    - Random ingredient combinations
-    - Different ingredient counts
+    This gives the model:
+    1. Clear signal to start learning (obvious negatives)
+    2. Harder examples to refine decision boundaries (moderate)
+    3. Challenge cases to prevent overconfidence (subtle)
     """
     negatives = []
 
@@ -680,111 +679,79 @@ def generate_alchemy_negatives(valid_recipes: List[Dict], all_materials: Dict, n
         if tier in materials_by_tier:
             materials_by_tier[tier].append(mat_id)
 
-    negatives_per_type = max(1, num_per_recipe // 5)
-
     for recipe in valid_recipes:
         generated = 0
-        station_tier = recipe.get('stationTier', 1)
 
-        # Type 1: Same-category material swap (subtle - hard to detect)
-        for _ in range(negatives_per_type):
+        # OBVIOUS (30%): Wrong category - clear learning signal
+        num_obvious = max(1, int(num_per_recipe * 0.3))
+        for _ in range(num_obvious):
             if generated >= num_per_recipe:
                 break
             negative = copy.deepcopy(recipe)
             negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
 
             if negative['ingredients']:
-                idx = random.randint(0, len(negative['ingredients']) - 1)
-                mat_id = negative['ingredients'][idx]['materialId']
-                mat_cat = all_materials.get(mat_id, {}).get('category', 'unknown')
+                # Swap 1-2 ingredients to DIFFERENT categories
+                num_swaps = random.randint(1, min(2, len(negative['ingredients'])))
+                indices = random.sample(range(len(negative['ingredients'])), num_swaps)
 
-                # Find a DIFFERENT material in the SAME category
-                same_cat_materials = [m for m in materials_by_category.get(mat_cat, [])
-                                     if m != mat_id]
-                if same_cat_materials:
-                    negative['ingredients'][idx]['materialId'] = random.choice(same_cat_materials)
+                for idx in indices:
+                    mat_id = negative['ingredients'][idx]['materialId']
+                    wrong = find_different_category(mat_id, all_materials)
+                    negative['ingredients'][idx]['materialId'] = wrong
 
             negatives.append((negative, 0))
             generated += 1
 
-        # Type 2: Tier mismatch (wrong tier materials for recipe tier)
-        for _ in range(negatives_per_type):
+        # MODERATE (40%): Tier mismatch + moderate quantity changes
+        num_moderate = max(1, int(num_per_recipe * 0.4))
+        for _ in range(num_moderate):
             if generated >= num_per_recipe:
                 break
             negative = copy.deepcopy(recipe)
             negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
+            station_tier = recipe.get('stationTier', 1)
 
-            # For high-tier recipes, use low-tier materials
-            if station_tier >= 2:
-                wrong_tier = 1
-            else:
-                wrong_tier = random.choice([3, 4]) if (materials_by_tier[3] or materials_by_tier[4]) else 2
+            # 50% chance: tier mismatch
+            if random.random() < 0.5:
+                if station_tier >= 2:
+                    wrong_tier = 1
+                else:
+                    wrong_tier = random.choice([3, 4]) if (materials_by_tier[3] or materials_by_tier[4]) else 2
 
-            # Change 1-2 materials to wrong tier
-            num_changes = random.randint(1, min(2, len(negative['ingredients'])))
-            indices = random.sample(range(len(negative['ingredients'])), num_changes)
-
-            for idx in indices:
-                if materials_by_tier.get(wrong_tier):
+                if negative['ingredients'] and materials_by_tier.get(wrong_tier):
+                    idx = random.randint(0, len(negative['ingredients']) - 1)
                     negative['ingredients'][idx]['materialId'] = random.choice(materials_by_tier[wrong_tier])
 
-            negatives.append((negative, 0))
-            generated += 1
-
-        # Type 3: Shuffled sequence (order matters in alchemy)
-        for _ in range(negatives_per_type):
-            if generated >= num_per_recipe:
-                break
-            if len(recipe['ingredients']) >= 3:
-                negative = copy.deepcopy(recipe)
-                negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
-
-                # Shuffle the ingredient order
-                random.shuffle(negative['ingredients'])
-                # Re-assign slot numbers
-                for i, ing in enumerate(negative['ingredients'], start=1):
-                    ing['slot'] = i
-
-                negatives.append((negative, 0))
-                generated += 1
-
-        # Type 4: Subtle quantity changes (+-1 or +-2, not extreme)
-        for _ in range(negatives_per_type):
-            if generated >= num_per_recipe:
-                break
-            negative = copy.deepcopy(recipe)
-            negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
-
-            # Change 1-2 quantities by small amounts
-            num_changes = random.randint(1, min(2, len(negative['ingredients'])))
-            indices = random.sample(range(len(negative['ingredients'])), num_changes)
-
-            for idx in indices:
-                change = random.choice([-2, -1, 1, 2])
+            # 50% chance: moderate quantity change (+-2 or +-3)
+            if random.random() < 0.5 and negative['ingredients']:
+                idx = random.randint(0, len(negative['ingredients']) - 1)
+                change = random.choice([-3, -2, 2, 3])
                 new_qty = max(1, negative['ingredients'][idx]['quantity'] + change)
                 negative['ingredients'][idx]['quantity'] = new_qty
 
             negatives.append((negative, 0))
             generated += 1
 
-        # Type 5: Combined subtle errors (material + quantity)
+        # SUBTLE (30%): Same-category swaps, small changes
         while generated < num_per_recipe:
             negative = copy.deepcopy(recipe)
             negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
 
-            # Make 1-2 subtle changes
-            if negative['ingredients']:
+            change_type = random.choice(['same_cat', 'small_qty', 'both'])
+
+            if change_type in ['same_cat', 'both'] and negative['ingredients']:
                 idx = random.randint(0, len(negative['ingredients']) - 1)
                 mat_id = negative['ingredients'][idx]['materialId']
                 mat_cat = all_materials.get(mat_id, {}).get('category', 'unknown')
 
-                # Subtle material swap (same category, different material)
                 same_cat_materials = [m for m in materials_by_category.get(mat_cat, [])
                                      if m != mat_id]
                 if same_cat_materials:
                     negative['ingredients'][idx]['materialId'] = random.choice(same_cat_materials)
 
-                # Small quantity change
+            if change_type in ['small_qty', 'both'] and negative['ingredients']:
+                idx = random.randint(0, len(negative['ingredients']) - 1)
                 change = random.choice([-1, 1])
                 new_qty = max(1, negative['ingredients'][idx]['quantity'] + change)
                 negative['ingredients'][idx]['quantity'] = new_qty
