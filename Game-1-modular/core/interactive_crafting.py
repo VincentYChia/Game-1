@@ -1031,12 +1031,13 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
             coord_key: mat.item_id for coord_key, mat in self.vertices.items()
         }
 
-        # Get player's shape data: list of {type, vertices_set}
+        # Get player's shape data: list of {type, vertices_set, rotation}
         player_shapes_data = []
         for shape in self.shapes:
             player_shapes_data.append({
                 'type': shape['type'],
-                'vertices': set(shape['vertices'])  # Convert to set for comparison
+                'vertices': set(shape['vertices']),  # Convert to set for comparison
+                'rotation': shape.get('rotation', 0)  # Include rotation for matching
             })
 
         # Get all adornment recipes for this tier
@@ -1075,10 +1076,12 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
             for shape in required_shapes:
                 required_shapes_data.append({
                     'type': shape['type'],
-                    'vertices': set(shape['vertices'])  # Already strings like "0,0"
+                    'vertices': set(shape['vertices']),  # Already strings like "0,0"
+                    'rotation': shape.get('rotation', 0)
                 })
 
             # Check if all player shapes match required shapes (order-independent)
+            # Each player shape must match exactly one required shape
             matched_required_indices = set()
             all_shapes_matched = True
 
@@ -1088,13 +1091,20 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
                     if idx in matched_required_indices:
                         continue
 
-                    # Check if vertices match (same vertices connected)
-                    if player_shape['vertices'] == required_shape['vertices']:
-                        # Check if type matches
-                        if player_shape['type'] == required_shape['type']:
-                            matched_required_indices.add(idx)
-                            shape_matched = True
-                            break
+                    # Check ALL shape properties:
+                    # 1. Type must match exactly
+                    type_matches = player_shape['type'] == required_shape['type']
+
+                    # 2. Vertices must match as a set (exact same vertex coordinates)
+                    vertices_match = player_shape['vertices'] == required_shape['vertices']
+
+                    # 3. Rotation must match (within tolerance for floating point)
+                    rotation_matches = abs(player_shape['rotation'] - required_shape['rotation']) < 1
+
+                    if type_matches and vertices_match and rotation_matches:
+                        matched_required_indices.add(idx)
+                        shape_matched = True
+                        break
 
                 if not shape_matched:
                     all_shapes_matched = False
