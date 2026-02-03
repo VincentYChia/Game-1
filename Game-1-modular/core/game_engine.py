@@ -5361,20 +5361,23 @@ class GameEngine:
         print(f"Use Minigame: {use_minigame}")
         print("="*80)
 
-        # Check if we have materials
-        if not recipe_db.can_craft(recipe, self.character.inventory):
-            self.add_notification("Not enough materials!", (255, 100, 100))
-            print("❌ Cannot craft - not enough materials")
-            return
+        # Check if we have materials (skip in debug mode)
+        if not Config.DEBUG_INFINITE_RESOURCES:
+            if not recipe_db.can_craft(recipe, self.character.inventory):
+                self.add_notification("Not enough materials!", (255, 100, 100))
+                print("❌ Cannot craft - not enough materials")
+                return
 
-        # Validate placement (if required)
-        is_valid, error_msg = self.validate_placement(recipe, self.user_placement)
-        if not is_valid:
-            self.add_notification(f"Invalid placement: {error_msg}", (255, 100, 100))
-            print(f"❌ Cannot craft - invalid placement: {error_msg}")
-            return
-        elif error_msg:  # Valid with message
-            print(f"✓ Placement validated: {error_msg}")
+            # Validate placement (if required)
+            is_valid, error_msg = self.validate_placement(recipe, self.user_placement)
+            if not is_valid:
+                self.add_notification(f"Invalid placement: {error_msg}", (255, 100, 100))
+                print(f"❌ Cannot craft - invalid placement: {error_msg}")
+                return
+            elif error_msg:  # Valid with message
+                print(f"✓ Placement validated: {error_msg}")
+        else:
+            print("🔧 Debug mode: Skipping material and placement validation")
 
         # Handle enchanting recipes differently (apply to existing items)
         if recipe.is_enchantment:

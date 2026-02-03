@@ -1098,8 +1098,15 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
                     # 2. Vertices must match as a set (exact same vertex coordinates)
                     vertices_match = player_shape['vertices'] == required_shape['vertices']
 
-                    # 3. Rotation must match (within tolerance for floating point)
-                    rotation_matches = abs(player_shape['rotation'] - required_shape['rotation']) < 1
+                    # 3. Rotation must match for non-symmetric shapes (triangles need it, squares don't)
+                    # Squares are symmetric so rotation doesn't matter
+                    shape_type = player_shape['type'].lower()
+                    if shape_type in ('square', 'rectangle'):
+                        # Symmetric shapes - rotation doesn't matter
+                        rotation_matches = True
+                    else:
+                        # Asymmetric shapes (triangles, etc.) - rotation must match
+                        rotation_matches = abs(player_shape['rotation'] - required_shape['rotation']) < 1
 
                     if type_matches and vertices_match and rotation_matches:
                         matched_required_indices.add(idx)
