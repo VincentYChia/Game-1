@@ -222,14 +222,100 @@ class SmithingImageRenderer:
     Renders smithing grid to 36x36 RGB image for CNN.
 
     Grid: 9x9 cells, each cell = 4x4 pixels = 36x36 total
+
+    CRITICAL: Must use shape masks and tier fill to match training data!
+    Training uses category-based shapes and tier-based fill sizes.
     """
 
     IMG_SIZE = 36
     CELL_SIZE = 4
     GRID_SIZE = 9
 
+    # Shape masks by category - MUST MATCH training (valid_smithing_data_v2.py)
+    CATEGORY_SHAPES = {
+        # Metal: Full square (solid, industrial)
+        'metal': np.array([
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1]
+        ], dtype=np.float32),
+
+        # Wood: Horizontal lines (grain pattern)
+        'wood': np.array([
+            [1, 1, 1, 1],
+            [0, 0, 0, 0],
+            [1, 1, 1, 1],
+            [0, 0, 0, 0]
+        ], dtype=np.float32),
+
+        # Stone: X pattern (angular, rocky)
+        'stone': np.array([
+            [1, 0, 0, 1],
+            [0, 1, 1, 0],
+            [0, 1, 1, 0],
+            [1, 0, 0, 1]
+        ], dtype=np.float32),
+
+        # Monster drop: Diamond shape (organic)
+        'monster_drop': np.array([
+            [0, 1, 1, 0],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [0, 1, 1, 0]
+        ], dtype=np.float32),
+
+        # Elemental: Plus/cross pattern (radiating energy)
+        'elemental': np.array([
+            [0, 1, 1, 0],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [0, 1, 1, 0]
+        ], dtype=np.float32),
+    }
+
+    # Default shape for unknown categories
+    DEFAULT_SHAPE = np.ones((4, 4), dtype=np.float32)
+
+    # Tier fill sizes (centered in 4x4 cell)
+    # T1=1x1, T2=2x2, T3=3x3, T4=full 4x4
+    TIER_FILL_SIZES = {1: 1, 2: 2, 3: 3, 4: 4}
+
     def __init__(self, color_encoder: MaterialColorEncoder):
         self.color_encoder = color_encoder
+
+    def _get_shape_mask(self, material_id: str) -> np.ndarray:
+        """Get the 4x4 shape mask for a material's category."""
+        if material_id is None:
+            return self.DEFAULT_SHAPE
+
+        mat_data = self.color_encoder.get_material_data(material_id)
+        if mat_data is None:
+            return self.DEFAULT_SHAPE
+
+        category = mat_data.get('category', 'unknown')
+        return self.CATEGORY_SHAPES.get(category, self.DEFAULT_SHAPE)
+
+    def _get_tier_fill_mask(self, material_id: str) -> np.ndarray:
+        """
+        Get a mask that limits fill based on tier.
+        T1=1x1 center, T2=2x2 center, T3=3x3 center, T4=full 4x4
+        """
+        if material_id is None:
+            return np.zeros((self.CELL_SIZE, self.CELL_SIZE), dtype=np.float32)
+
+        mat_data = self.color_encoder.get_material_data(material_id)
+        if mat_data is None:
+            return np.zeros((self.CELL_SIZE, self.CELL_SIZE), dtype=np.float32)
+
+        tier = mat_data.get('tier', 1)
+        fill_size = self.TIER_FILL_SIZES.get(tier, 4)
+
+        mask = np.zeros((self.CELL_SIZE, self.CELL_SIZE), dtype=np.float32)
+        offset = (self.CELL_SIZE - fill_size) // 2
+        mask[offset:offset+fill_size, offset:offset+fill_size] = 1.0
+
+        return mask
 
     def render(self, interactive_ui) -> np.ndarray:
         """
@@ -255,21 +341,48 @@ class SmithingImageRenderer:
             if 0 <= grid_x < self.GRID_SIZE and 0 <= grid_y < self.GRID_SIZE:
                 grid[grid_y][grid_x] = placed_mat.item_id
 
-        # Render to image
+        # Render to image (with shape masks and tier fill)
         return self._grid_to_image(grid)
 
     def _grid_to_image(self, grid: List[List[Optional[str]]]) -> np.ndarray:
-        """Convert 9x9 material grid to 36x36 RGB image"""
+        """
+        Convert 9x9 material grid to 36x36 RGB image.
+
+        CRITICAL: Uses shape masks and tier fill to match training data!
+        """
         img = np.zeros((self.IMG_SIZE, self.IMG_SIZE, 3), dtype=np.float32)
 
         for i in range(self.GRID_SIZE):
             for j in range(self.GRID_SIZE):
-                color = self.color_encoder.encode(grid[i][j])
+                material_id = grid[i][j]
+
+                if material_id is None:
+                    # Empty cell = black
+                    continue
+
+                # Get base color
+                color = self.color_encoder.encode(material_id)
+
+                # Get shape mask based on category
+                shape_mask = self._get_shape_mask(material_id)
+
+                # Get tier fill mask
+                tier_mask = self._get_tier_fill_mask(material_id)
+
+                # Combined mask: shape AND tier
+                combined_mask = shape_mask * tier_mask
+
+                # Create cell with masked color
+                cell = np.zeros((self.CELL_SIZE, self.CELL_SIZE, 3), dtype=np.float32)
+                for c in range(3):
+                    cell[:, :, c] = color[c] * combined_mask
+
+                # Place cell in image
                 y_start = i * self.CELL_SIZE
                 y_end = (i + 1) * self.CELL_SIZE
                 x_start = j * self.CELL_SIZE
                 x_end = (j + 1) * self.CELL_SIZE
-                img[y_start:y_end, x_start:x_end] = color
+                img[y_start:y_end, x_start:x_end] = cell
 
         return img
 
