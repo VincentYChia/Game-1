@@ -1832,7 +1832,11 @@ class Character:
     def _handle_death(self, dungeon_manager=None):
         """Handle player death - respawn at spawn point (origin)
 
-        If in a dungeon, exit the dungeon and return to world spawn.
+        Death penalty depends on Config.KEEP_INVENTORY:
+        - If True: Keep all items (no death penalty)
+        - If False: Drop all items EXCEPT soulbound equipment
+
+        Soulbound items (with soulbound enchantment) are always kept.
 
         Args:
             dungeon_manager: Optional dungeon manager to check/exit dungeon
@@ -1840,12 +1844,19 @@ class Character:
         from core.config import Config
         print("💀 You died! Respawning...")
 
+        # Track death in stat tracker
+        if hasattr(self, 'stat_tracker') and self.stat_tracker:
+            self.stat_tracker.record_death()
+
         # Reset health
         self.health = self.max_health
 
         # If in a dungeon, exit it (dungeon failed)
         if dungeon_manager and dungeon_manager.in_dungeon:
             print("💀 You died in the dungeon! Exiting...")
+            # Track dungeon death
+            if hasattr(self, 'stat_tracker') and self.stat_tracker:
+                self.stat_tracker.record_dungeon_death()
             # Get return position from dungeon
             dungeon = dungeon_manager.current_dungeon
             if dungeon and dungeon.return_position:
@@ -1856,7 +1867,65 @@ class Character:
         else:
             self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
 
-        # Keep all items and equipment (no death penalty)
+        # Handle inventory/equipment based on KEEP_INVENTORY setting
+        if Config.KEEP_INVENTORY:
+            print("   ✓ Keep Inventory is ON - all items retained")
+        else:
+            # Drop non-soulbound items
+            self._drop_non_soulbound_items()
+
+    def _drop_non_soulbound_items(self):
+        """Drop all non-soulbound items on death.
+
+        Soulbound equipment (with soulbound enchantment) is kept.
+        Regular equipment and inventory items are cleared.
+        """
+        items_dropped = 0
+        soulbound_kept = 0
+
+        # Handle equipped items - unequip non-soulbound equipment
+        if hasattr(self, 'equipment') and self.equipment:
+            for slot_name in list(self.equipment.slots.keys()):
+                item = self.equipment.slots.get(slot_name)
+                if item:
+                    # Check if item is soulbound
+                    if hasattr(item, 'is_soulbound') and item.is_soulbound():
+                        soulbound_kept += 1
+                        print(f"   ✨ Soulbound item kept: {item.name}")
+                    else:
+                        # Drop the item (remove from equipment)
+                        self.equipment.unequip(slot_name)
+                        items_dropped += 1
+
+        # Handle tools - unequip non-soulbound tools
+        if hasattr(self, 'tools') and self.tools:
+            for tool_type in list(self.tools.slots.keys()):
+                tool = self.tools.slots.get(tool_type)
+                if tool:
+                    if hasattr(tool, 'is_soulbound') and tool.is_soulbound():
+                        soulbound_kept += 1
+                        print(f"   ✨ Soulbound tool kept: {tool.name}")
+                    else:
+                        self.tools.unequip(tool_type)
+                        items_dropped += 1
+
+        # Clear inventory (materials don't have soulbound)
+        if hasattr(self, 'inventory') and self.inventory:
+            for i, slot in enumerate(self.inventory.slots):
+                if slot and slot.quantity > 0:
+                    # Check for soulbound items in inventory (equipment stored as ItemStack)
+                    if hasattr(slot, 'soulbound') and slot.soulbound:
+                        soulbound_kept += 1
+                        print(f"   ✨ Soulbound item kept in inventory: {slot.item_id}")
+                    else:
+                        items_dropped += slot.quantity
+                        self.inventory.slots[i] = None
+
+        # Track in stat tracker
+        if hasattr(self, 'stat_tracker') and self.stat_tracker:
+            self.stat_tracker.record_items_lost_on_death(items_dropped, soulbound_kept)
+
+        print(f"   💔 Dropped {items_dropped} items, kept {soulbound_kept} soulbound items")
 
     def get_effective_max_durability(self, item) -> int:
         """Get effective max durability for an item, including VIT and title bonuses.

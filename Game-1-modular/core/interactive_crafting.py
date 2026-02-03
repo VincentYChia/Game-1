@@ -1012,21 +1012,32 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
     def check_recipe_match(self) -> Optional[Recipe]:
         """
         Match against adornment recipes using shape-based pattern matching.
-        Validates both shapes AND vertex materials (if shapes are defined in recipe).
+        Validates both shapes AND vertex materials.
 
-        FIXED: If recipe doesn't define shapes, only validate vertices.
+        Matching requirements:
+        1. Same number of shapes
+        2. Each player shape must match a required shape (type, vertices set)
+        3. All vertices must have correct materials assigned
         """
-        # Need at least vertices to match
-        if not self.vertices:
+        # Need at least shapes to match
+        if not self.shapes:
             return None
 
         placement_db = PlacementDatabase.get_instance()
         recipe_db = RecipeDatabase.get_instance()
 
-        # Build current placement (vertices with materials only)
+        # Build current placement data
         current_vertices = {
             coord_key: mat.item_id for coord_key, mat in self.vertices.items()
         }
+
+        # Get player's shape data: list of {type, vertices_set}
+        player_shapes_data = []
+        for shape in self.shapes:
+            player_shapes_data.append({
+                'type': shape['type'],
+                'vertices': set(shape['vertices'])  # Convert to set for comparison
+            })
 
         # Get all adornment recipes for this tier
         recipes = recipe_db.get_recipes_for_station(self.station_type, self.station_tier)
@@ -1039,19 +1050,68 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
             if not placement.placement_map:
                 continue
 
-            # Shapes are just a mechanism to create vertices - validation only checks vertices
+            # Get required shapes from placement
+            required_shapes = placement.placement_map.get('shapes', [])
             required_vertices = placement.placement_map.get('vertices', {})
 
-            # Get vertices that have materials assigned
+            # If no shapes defined in placement, fall back to vertex-only matching
+            if not required_shapes:
+                required_materials = {
+                    coord: data.get('itemId') or data.get('materialId')
+                    for coord, data in required_vertices.items()
+                    if data.get('itemId') or data.get('materialId')
+                }
+                if current_vertices == required_materials:
+                    print(f"✓ Matched {recipe.recipe_id} (vertex-only)")
+                    return recipe
+                continue
+
+            # Check shape count matches
+            if len(self.shapes) != len(required_shapes):
+                continue
+
+            # Parse required shapes into comparable format
+            required_shapes_data = []
+            for shape in required_shapes:
+                required_shapes_data.append({
+                    'type': shape['type'],
+                    'vertices': set(shape['vertices'])  # Already strings like "0,0"
+                })
+
+            # Check if all player shapes match required shapes (order-independent)
+            matched_required_indices = set()
+            all_shapes_matched = True
+
+            for player_shape in player_shapes_data:
+                shape_matched = False
+                for idx, required_shape in enumerate(required_shapes_data):
+                    if idx in matched_required_indices:
+                        continue
+
+                    # Check if vertices match (same vertices connected)
+                    if player_shape['vertices'] == required_shape['vertices']:
+                        # Check if type matches
+                        if player_shape['type'] == required_shape['type']:
+                            matched_required_indices.add(idx)
+                            shape_matched = True
+                            break
+
+                if not shape_matched:
+                    all_shapes_matched = False
+                    break
+
+            if not all_shapes_matched:
+                continue
+
+            # All shapes matched - now validate vertex materials
             required_materials = {
                 coord: data.get('itemId') or data.get('materialId')
                 for coord, data in required_vertices.items()
                 if data.get('itemId') or data.get('materialId')
             }
 
-            # Check if vertices match exactly
             if current_vertices == required_materials:
-                print(f"✓ Matched {recipe.recipe_id}")
+                print(f"✓ Matched {recipe.recipe_id} (shapes + vertices)")
                 return recipe
 
         return None

@@ -896,21 +896,14 @@ class GameEngine:
                         self.add_notification("Debug F4: DISABLED", (255, 100, 100))
 
                 elif event.key == pygame.K_F5:
-                    # Save game (only if not temporary world)
-                    if self.temporary_world:
-                        self.add_notification("Cannot save in temporary world!", (255, 200, 100))
+                    # Toggle keep inventory on death
+                    Config.KEEP_INVENTORY = not Config.KEEP_INVENTORY
+                    if Config.KEEP_INVENTORY:
+                        print("🔧 Keep Inventory: ON (all items kept on death)")
+                        self.add_notification("Keep Inventory: ON", (100, 255, 100))
                     else:
-                        if self.save_manager.save_game(
-                            self.character,
-                            self.world,
-                            self.character.quests,
-                            self.npcs,
-                            "autosave.json",
-                            self.dungeon_manager,
-                            self.game_time,
-                            self.map_system
-                        ):
-                            self.add_notification("Game saved!", (100, 255, 100))
+                        print("🔧 Keep Inventory: OFF (items dropped on death, except soulbound)")
+                        self.add_notification("Keep Inventory: OFF (soulbound items kept)", (255, 200, 100))
 
                 elif event.key == pygame.K_F6:
                     # Quick save with timestamp

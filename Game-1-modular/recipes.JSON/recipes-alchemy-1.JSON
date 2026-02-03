@@ -92,7 +92,7 @@
     },
     {
       "metadata": {
-        "narrative": "Defense-boosting potion using earth crystals. Skin hardens like stone.",
+        "narrative": "Defense-boosting potion using iron scales and earth crystals. Skin hardens like metal.",
         "tags": ["potion", "buff", "defense"]
       },
       "recipeId": "alchemy_iron_skin_potion",
@@ -101,8 +101,9 @@
       "stationTier": 2,
       "stationType": "alchemy",
       "inputs": [
-        {"materialId": "beetle_carapace", "quantity": 4},
-        {"materialId": "earth_crystal", "quantity": 2}
+        {"materialId": "iron_scales", "quantity": 3},
+        {"materialId": "earth_crystal", "quantity": 2},
+        {"materialId": "golem_core", "quantity": 1}
       ],
       "miniGame": {
         "type": "alchemy",
@@ -122,7 +123,8 @@
       "stationType": "alchemy",
       "inputs": [
         {"materialId": "air_crystal", "quantity": 3},
-        {"materialId": "spectral_thread", "quantity": 2}
+        {"materialId": "spectral_thread", "quantity": 2},
+        {"materialId": "slime_gel", "quantity": 2}
       ],
       "miniGame": {
         "type": "alchemy",
@@ -132,7 +134,7 @@
     },
     {
       "metadata": {
-        "narrative": "Fire resistance potion using phoenix ash. Flames cannot harm you.",
+        "narrative": "Fire resistance potion using water crystals and frost essence. Flames cannot harm you.",
         "tags": ["potion", "resistance", "fire"]
       },
       "recipeId": "alchemy_fire_resistance_potion",
@@ -141,8 +143,9 @@
       "stationTier": 2,
       "stationType": "alchemy",
       "inputs": [
-        {"materialId": "phoenix_ash", "quantity": 2},
-        {"materialId": "water_crystal", "quantity": 2}
+        {"materialId": "water_crystal", "quantity": 3},
+        {"materialId": "frost_essence", "quantity": 2},
+        {"materialId": "slime_gel", "quantity": 1}
       ],
       "miniGame": {
         "type": "alchemy",
@@ -152,7 +155,7 @@
     },
     {
       "metadata": {
-        "narrative": "Frost resistance potion using frost essence. Cold cannot touch you.",
+        "narrative": "Frost resistance potion using fire crystals and phoenix ash. Cold cannot touch you.",
         "tags": ["potion", "resistance", "frost"]
       },
       "recipeId": "alchemy_frost_resistance_potion",
@@ -161,8 +164,9 @@
       "stationTier": 2,
       "stationType": "alchemy",
       "inputs": [
-        {"materialId": "frost_essence", "quantity": 2},
-        {"materialId": "fire_crystal", "quantity": 2}
+        {"materialId": "fire_crystal", "quantity": 3},
+        {"materialId": "phoenix_ash", "quantity": 1},
+        {"materialId": "slime_gel", "quantity": 1}
       ],
       "miniGame": {
         "type": "alchemy",
