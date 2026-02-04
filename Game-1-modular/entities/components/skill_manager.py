@@ -82,8 +82,8 @@ class SkillManager:
 
         # Check title requirements (if any)
         if skill_def.requirements.titles:
-            # Get player's title IDs
-            player_titles = {title.title_id for title in character.titles.titles}
+            # Get player's title IDs (TitleSystem stores earned titles in 'earned_titles')
+            player_titles = {title.title_id for title in character.titles.earned_titles}
             for required_title in skill_def.requirements.titles:
                 if required_title not in player_titles:
                     return False, f"Requires title: {required_title}"
@@ -666,26 +666,17 @@ class SkillManager:
                         if repaired > 0:
                             repaired_items.append(item.name)
 
-        # Repair tools (axe, pickaxe)
-        if hasattr(character, 'axe') and character.axe:
-            tool = character.axe
-            if hasattr(tool, 'durability_current') and hasattr(tool, 'durability_max'):
-                if tool.durability_current < tool.durability_max:
-                    repair_amount = int(tool.durability_max * percent)
-                    tool.durability_current = min(tool.durability_max,
-                        tool.durability_current + repair_amount)
-                    if repair_amount > 0:
-                        repaired_items.append(tool.name)
-
-        if hasattr(character, 'pickaxe') and character.pickaxe:
-            tool = character.pickaxe
-            if hasattr(tool, 'durability_current') and hasattr(tool, 'durability_max'):
-                if tool.durability_current < tool.durability_max:
-                    repair_amount = int(tool.durability_max * percent)
-                    tool.durability_current = min(tool.durability_max,
-                        tool.durability_current + repair_amount)
-                    if repair_amount > 0:
-                        repaired_items.append(tool.name)
+        # Repair tools (axe, pickaxe) - tools are stored in equipment slots
+        if hasattr(character, 'equipment') and character.equipment:
+            for tool_slot in ['axe', 'pickaxe']:
+                tool = character.equipment.slots.get(tool_slot)
+                if tool and hasattr(tool, 'durability_current') and hasattr(tool, 'durability_max'):
+                    if tool.durability_current < tool.durability_max:
+                        repair_amount = int(tool.durability_max * percent)
+                        tool.durability_current = min(tool.durability_max,
+                            tool.durability_current + repair_amount)
+                        if repair_amount > 0:
+                            repaired_items.append(tool.name)
 
         return repaired_items
 

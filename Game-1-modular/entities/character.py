@@ -1875,6 +1875,7 @@ class Character:
             if hasattr(self, 'stat_tracker') and self.stat_tracker:
                 self.stat_tracker.record_dungeon_death()
             # Get return position from dungeon - this is where death chest spawns
+            # Player always respawns at world spawn, chest spawns at dungeon entrance
             dungeon = dungeon_manager.current_dungeon
             if dungeon and dungeon.return_position:
                 death_chest_position = Position(
@@ -1882,10 +1883,10 @@ class Character:
                     dungeon.return_position.y,
                     dungeon.return_position.z
                 )
-                self.position = dungeon.return_position
             else:
                 death_chest_position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
-                self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
+            # Always respawn at world spawn
+            self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
             dungeon_manager.exit_dungeon()
         else:
             # Overworld death - chest spawns where player died
@@ -1929,19 +1930,19 @@ class Character:
                         items_dropped += 1
                         self.equipment.unequip(slot_name, self)
 
-        # Handle tools - collect non-soulbound tools
-        if hasattr(self, 'tools') and self.tools:
-            for tool_type in list(self.tools.slots.keys()):
-                tool = self.tools.slots.get(tool_type)
-                if tool:
-                    if hasattr(tool, 'is_soulbound') and tool.is_soulbound():
-                        soulbound_kept += 1
-                        print(f"   ✨ Soulbound tool kept: {tool.name}")
-                    else:
-                        # Serialize tool as item
-                        rich_items.append(self._serialize_tool_for_chest(tool))
-                        items_dropped += 1
-                        self.tools.unequip(tool_type, self)
+        # Handle tools - tools are stored in equipment slots (axe, pickaxe)
+        tool_slots = ['axe', 'pickaxe']
+        for tool_slot in tool_slots:
+            tool = self.equipment.slots.get(tool_slot)
+            if tool:
+                if hasattr(tool, 'is_soulbound') and tool.is_soulbound():
+                    soulbound_kept += 1
+                    print(f"   ✨ Soulbound tool kept: {tool.name}")
+                else:
+                    # Serialize tool as item (same format as equipment)
+                    rich_items.append(self._serialize_item_for_chest(tool))
+                    items_dropped += 1
+                    self.equipment.unequip(tool_slot, self)
 
         # Collect inventory items
         if hasattr(self, 'inventory') and self.inventory:
@@ -2149,11 +2150,13 @@ class Character:
                 if item and hasattr(item, 'weight'):
                     total += item.weight
 
-        # Tool weight (axe, pickaxe)
-        if hasattr(self, 'axe') and self.axe and hasattr(self.axe, 'weight'):
-            total += self.axe.weight
-        if hasattr(self, 'pickaxe') and self.pickaxe and hasattr(self.pickaxe, 'weight'):
-            total += self.pickaxe.weight
+        # Tool weight (axe, pickaxe) - tools are stored in equipment slots
+        axe = self.equipment.slots.get('axe') if hasattr(self, 'equipment') else None
+        if axe and hasattr(axe, 'weight'):
+            total += axe.weight
+        pickaxe = self.equipment.slots.get('pickaxe') if hasattr(self, 'equipment') else None
+        if pickaxe and hasattr(pickaxe, 'weight'):
+            total += pickaxe.weight
 
         # Inventory weight (materials and equipment in inventory)
         if hasattr(self, 'inventory') and self.inventory:

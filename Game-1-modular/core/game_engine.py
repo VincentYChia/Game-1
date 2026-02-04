@@ -6330,10 +6330,11 @@ class GameEngine:
                 tool.enchantments = tool_info.get('enchantments', [])
             if hasattr(tool, 'soulbound'):
                 tool.soulbound = tool_info.get('soulbound', False)
-            # Try to equip tool if slot is empty
-            if hasattr(self.character, 'tools') and self.character.tools:
-                if self.character.tools.slots.get(tool.tool_type) is None:
-                    self.character.tools.slots[tool.tool_type] = tool
+            # Try to equip tool if slot is empty (tools are stored in equipment slots)
+            if hasattr(self.character, 'equipment') and self.character.equipment:
+                tool_slot = tool.tool_type if hasattr(tool, 'tool_type') else None
+                if tool_slot and self.character.equipment.slots.get(tool_slot) is None:
+                    self.character.equipment.slots[tool_slot] = tool
                     return True
             return self.character.inventory.add_item(tool.tool_id, 1)
 
