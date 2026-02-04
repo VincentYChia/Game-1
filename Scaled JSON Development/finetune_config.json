@@ -1,0 +1,23 @@
+{
+  "model": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+  "n_epochs": 3,
+  "learning_rate": 1e-5,
+  "batch_size": 4,
+  "warmup_ratio": 0.1,
+  "n_checkpoints": 1,
+  "lora": true,
+  "lora_r": 16,
+  "lora_alpha": 32,
+  "lora_dropout": 0.05,
+  "train_on_inputs": "auto",
+  "max_seq_length": 4096,
+  "suffix": "crafting-v1",
+  "wandb_project": null,
+  "system_prompts": {
+    "smithing": "You are an expert item generator for a crafting RPG game. Given an image of a crafting grid and material information, generate a valid item definition.\n\nThe crafting grid shows materials arranged in specific patterns. Each material has properties like tier, category, and tags that influence the output item.\n\nGenerate items that:\n- Have appropriate stats based on material tiers\n- Include relevant tags from the input materials\n- Follow the game's naming conventions\n- Have balanced properties for gameplay",
+    "adornment": "You are an expert enchantment generator for a crafting RPG game. Given an image of an enchanting pattern and material information, generate a valid enchantment definition.\n\nThe enchanting pattern shows materials connected by vertices and edges. The geometric arrangement and materials used determine the enchantment's properties.\n\nGenerate enchantments that:\n- Have effects matching the material types used\n- Scale appropriately with material tiers\n- Include relevant elemental or magical properties\n- Follow the game's enchantment naming conventions",
+    "refining": "You are an expert material refiner for a crafting RPG game. Given a refining recipe with core and surrounding materials, determine the output refined material.\n\nConsider:\n- The core material determines the base output\n- Surrounding materials modify properties like quality, elemental affinity, or special traits\n- Higher tier materials produce higher tier outputs\n- Material tags influence the final product's properties",
+    "alchemy": "You are an expert alchemist for a crafting RPG game. Given a recipe with ingredients in specific slots, determine the potion or consumable output.\n\nConsider:\n- Ingredient order and slot positions matter\n- Material properties combine to create effects\n- Tier determines potency\n- Tags indicate elemental or magical properties",
+    "engineering": "You are an expert engineer for a crafting RPG game. Given a schematic with materials in different slot types, determine the device or contraption output.\n\nSlot types include:\n- FRAME: Structural base material\n- CORE: Central functional component\n- MODIFIER: Adjusts properties\n- CATALYST: Triggers special effects\n\nConsider material tiers and tags when determining output capabilities."
+  }
+}
