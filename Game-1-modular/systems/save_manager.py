@@ -59,7 +59,8 @@ class SaveManager:
             "player": self._serialize_character(character),
             "world_state": self._serialize_world_state(world_system, game_time),
             "quest_state": self._serialize_quest_state(quest_manager),
-            "npc_state": self._serialize_npc_state(npcs)
+            "npc_state": self._serialize_npc_state(npcs),
+            "game_settings": self._serialize_game_settings()
         }
 
         # Add dungeon state if dungeon system is active
@@ -71,6 +72,18 @@ class SaveManager:
             save_data["map_state"] = map_system.get_save_data()
 
         return save_data
+
+    def _serialize_game_settings(self) -> Dict[str, Any]:
+        """
+        Serialize game settings that should persist across saves.
+
+        Returns:
+            Dictionary containing game settings
+        """
+        from core.config import Config
+        return {
+            "keep_inventory": Config.KEEP_INVENTORY
+        }
 
     def _serialize_character(self, character) -> Dict[str, Any]:
         """
@@ -472,12 +485,39 @@ class SaveManager:
             if version != self.SAVE_VERSION:
                 print(f"Warning: Save file version {version} may not be compatible with current version {self.SAVE_VERSION}")
 
+            # Restore game settings
+            self.restore_game_settings(save_data)
+
             print(f"Game loaded successfully from {filepath}")
             return save_data
 
         except Exception as e:
             print(f"Error loading game: {e}")
             return None
+
+    def restore_game_settings(self, save_data: Dict[str, Any]) -> bool:
+        """
+        Restore game settings from save data.
+
+        Args:
+            save_data: The loaded save data dictionary
+
+        Returns:
+            True if settings were restored, False otherwise
+        """
+        game_settings = save_data.get("game_settings")
+        if not game_settings:
+            # No game settings in save - use defaults
+            return False
+
+        from core.config import Config
+
+        # Restore keep_inventory setting
+        if "keep_inventory" in game_settings:
+            Config.KEEP_INVENTORY = game_settings["keep_inventory"]
+            print(f"   Restored Keep Inventory: {'ON' if Config.KEEP_INVENTORY else 'OFF'}")
+
+        return True
 
     def restore_dungeon_state(self, save_data: Dict[str, Any], dungeon_manager) -> bool:
         """

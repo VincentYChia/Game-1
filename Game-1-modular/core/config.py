@@ -155,6 +155,10 @@ class Config:
     DEBUG_INFINITE_RESOURCES = False  # Toggle with F1 - no material consumption
     DEBUG_INFINITE_DURABILITY = False  # Toggle with F3 - no durability loss
 
+    # Death Penalty Settings
+    KEEP_INVENTORY = True  # Toggle with F5 - keep all items on death (default: ON)
+    # Note: Even when KEEP_INVENTORY is False, soulbound items are always kept
+
     # Colors
     COLOR_BACKGROUND = (20, 20, 30)
     COLOR_GRID = (40, 40, 50)

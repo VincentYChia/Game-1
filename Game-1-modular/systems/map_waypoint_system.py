@@ -73,12 +73,14 @@ class ExploredChunk:
         chunk_type: The biome/type of the chunk
         discovered_at: When the chunk was first visited
         has_dungeon: Whether a dungeon entrance was found here
+        has_death_chest: Whether a death chest exists in this chunk
     """
     chunk_x: int
     chunk_y: int
     chunk_type: str
     discovered_at: str
     has_dungeon: bool = False
+    has_death_chest: bool = False
 
     def to_dict(self) -> Dict:
         """Serialize for saving."""
@@ -87,7 +89,8 @@ class ExploredChunk:
             'y': self.chunk_y,
             'type': self.chunk_type,
             'discovered_at': self.discovered_at,
-            'has_dungeon': self.has_dungeon
+            'has_dungeon': self.has_dungeon,
+            'has_death_chest': self.has_death_chest
         }
 
     @classmethod
@@ -98,7 +101,8 @@ class ExploredChunk:
             chunk_y=data.get('y', 0),
             chunk_type=data.get('type', 'unknown'),
             discovered_at=data.get('discovered_at', datetime.now().isoformat()),
-            has_dungeon=data.get('has_dungeon', False)
+            has_dungeon=data.get('has_dungeon', False),
+            has_death_chest=data.get('has_death_chest', False)
         )
 
 
@@ -223,6 +227,18 @@ class MapWaypointSystem:
             True if the chunk has been visited
         """
         return (chunk_x, chunk_y) in self.explored_chunks
+
+    def set_death_chest_marker(self, chunk_x: int, chunk_y: int, has_chest: bool) -> None:
+        """Set or clear the death chest marker for a chunk.
+
+        Args:
+            chunk_x: Chunk X coordinate
+            chunk_y: Chunk Y coordinate
+            has_chest: Whether a death chest exists in this chunk
+        """
+        key = (chunk_x, chunk_y)
+        if key in self.explored_chunks:
+            self.explored_chunks[key].has_death_chest = has_chest
 
     def get_explored_chunk(self, chunk_x: int, chunk_y: int) -> Optional[ExploredChunk]:
         """Get explored chunk data.

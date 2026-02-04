@@ -30,3 +30,25 @@ Thumbs.db
 
 # Generated training datasets (regenerated during training)
 *.npz
+
+# =============================================================================
+# CLASSIFIER MODELS - Large binary files
+# =============================================================================
+# Production models are tracked (Scaled JSON Development/models/{discipline}/)
+# Training/archived models are NOT tracked (too large, regenerated)
+
+# Ignore archived models (old/backup versions)
+Scaled JSON Development/models/archived/
+
+# Ignore CNN training directories (large training models + datasets)
+Scaled JSON Development/Convolution Neural Network (CNN)/Smithing/*.keras
+Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/*.keras
+Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/best_model_variations/
+
+# Ignore LightGBM training artifacts (regenerated)
+Scaled JSON Development/Simple Classifiers (LightGBM)/*.bin
+Scaled JSON Development/Simple Classifiers (LightGBM)/*.txt
+
+# Keep production models tracked - these are the ones the game uses
+# Located at: Scaled JSON Development/models/{smithing,adornment,alchemy,engineering,refining}/
+# These should be pushed to the repo

@@ -1150,6 +1150,60 @@ class Renderer:
                 hint_rect = hint_surf.get_rect(center=(sx, sy + size // 2 + 12))
                 self.screen.blit(hint_surf, hint_rect)
 
+        # Render death chests (red/crimson color to distinguish from storage)
+        if hasattr(world, 'death_chests') and world.death_chests:
+            for death_chest in world.death_chests:
+                sx, sy = camera.world_to_screen(death_chest.position)
+                size = Config.TILE_SIZE
+
+                # Check if player is in range
+                in_range = character.is_in_range(death_chest.position) if character else False
+
+                # Death chest colors - red/crimson theme
+                if in_range:
+                    chest_color = (200, 80, 80)  # Bright red when in range
+                    border_color = (255, 100, 100)
+                    lid_color = (220, 100, 100)
+                else:
+                    chest_color = (140, 50, 50)  # Darker red when out of range
+                    border_color = (100, 30, 30)
+                    lid_color = (160, 60, 60)
+
+                # Draw chest shape
+                rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
+                pygame.draw.rect(self.screen, chest_color, rect)
+                pygame.draw.rect(self.screen, border_color, rect, 2)
+
+                # Draw chest lid
+                lid_rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size // 3)
+                pygame.draw.rect(self.screen, lid_color, lid_rect)
+                pygame.draw.rect(self.screen, border_color, lid_rect, 1)
+
+                # Draw skull icon on chest (death indicator)
+                skull_color = (255, 255, 255) if in_range else (200, 200, 200)
+                # Simple skull: circle for head, two dots for eyes
+                pygame.draw.circle(self.screen, skull_color, (sx, sy), size // 6)
+                pygame.draw.circle(self.screen, (0, 0, 0), (sx - size // 12, sy - size // 20), size // 20)
+                pygame.draw.circle(self.screen, (0, 0, 0), (sx + size // 12, sy - size // 20), size // 20)
+
+                # Render hint if in range
+                if in_range:
+                    hint_surf = self.tiny_font.render("💀 Your items", True, (255, 200, 200))
+                    hint_rect = hint_surf.get_rect(center=(sx, sy + size // 2 + 12))
+                    self.screen.blit(hint_surf, hint_rect)
+
+                # Show item count (use rich_contents if available)
+                item_count = 0
+                if hasattr(death_chest, 'is_death_chest') and death_chest.is_death_chest and hasattr(death_chest, 'rich_contents'):
+                    item_count = len(death_chest.rich_contents) if death_chest.rich_contents else len(death_chest.contents)
+                else:
+                    item_count = len(death_chest.contents)
+                if item_count > 0:
+                    count_text = f"{item_count} items"
+                    count_surf = self.tiny_font.render(count_text, True, (255, 220, 220))
+                    count_rect = count_surf.get_rect(center=(sx, sy - size // 2 - 8))
+                    self.screen.blit(count_surf, count_rect)
+
         # Render dungeon entrances
         for entrance in world.get_visible_dungeon_entrances(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(entrance.position)
@@ -1802,6 +1856,166 @@ class Renderer:
         count_text = f"{len(chest.contents)} items stored"
         count_surf = self.tiny_font.render(count_text, True, (150, 180, 210))
         self.screen.blit(count_surf, (ui_x + (ui_width - count_surf.get_width()) // 2, ui_y + ui_height - 25))
+
+        return chest_rect, item_rects
+
+    def render_death_chest_ui(self, chest) -> Tuple[pygame.Rect, List[Tuple[pygame.Rect, int]]]:
+        """Render the death chest UI for retrieving items after death.
+
+        Similar to spawn chest UI but with red/crimson colors to indicate death.
+
+        Returns:
+            (chest_rect, item_rects) - bounding rect and list of (rect, item_idx) for click detection
+        """
+        if not chest:
+            return None, []
+
+        # Chest UI position (right side of screen to distinguish from spawn chest)
+        ui_width = 280
+        ui_height = 320
+        ui_x = Config.VIEWPORT_WIDTH - ui_width - 20
+        ui_y = Config.VIEWPORT_HEIGHT - Config.INVENTORY_PANEL_HEIGHT - ui_height - 20
+
+        # Background panel (red/crimson tint for death chest)
+        chest_rect = pygame.Rect(ui_x, ui_y, ui_width, ui_height)
+        panel_surf = pygame.Surface((ui_width, ui_height), pygame.SRCALPHA)
+        panel_surf.fill((60, 20, 20, 240))  # Dark red background
+        self.screen.blit(panel_surf, (ui_x, ui_y))
+
+        # Border (bright red)
+        pygame.draw.rect(self.screen, (200, 80, 80), chest_rect, 3)
+
+        # Title
+        title_surf = self.font.render("💀 Death Chest", True, (255, 150, 150))
+        self.screen.blit(title_surf, (ui_x + (ui_width - title_surf.get_width()) // 2, ui_y + 10))
+
+        # Subtitle
+        subtitle_surf = self.tiny_font.render("Click to retrieve your items", True, (255, 180, 180))
+        self.screen.blit(subtitle_surf, (ui_x + (ui_width - subtitle_surf.get_width()) // 2, ui_y + 35))
+
+        # Item grid
+        item_rects = []
+        slot_size = 40
+        spacing = 5
+        slots_per_row = 5
+        start_x = ui_x + 20
+        start_y = ui_y + 60
+
+        # Get material database for names
+        from data.databases.material_db import MaterialDatabase
+        from data.databases.equipment_db import EquipmentDatabase
+        mat_db = MaterialDatabase.get_instance()
+        equip_db = EquipmentDatabase.get_instance()
+
+        # Use rich_contents if available for full item data, otherwise fallback to simple contents
+        items_to_render = []
+        if hasattr(chest, 'is_death_chest') and chest.is_death_chest and hasattr(chest, 'rich_contents') and chest.rich_contents:
+            for item_data in chest.rich_contents:
+                # Extract data from save-system format (equipment_data nested inside)
+                eq_data = item_data.get('equipment_data', {})
+                tool_data = item_data.get('tool_data', {})
+                items_to_render.append({
+                    'item_id': item_data.get('item_id', ''),
+                    'quantity': item_data.get('quantity', 1),
+                    'name': eq_data.get('name', '') or tool_data.get('name', ''),
+                    'has_equipment': bool(eq_data),
+                    'icon_path': eq_data.get('icon_path') if eq_data else None,
+                    'enchantments': eq_data.get('enchantments', []) if eq_data else tool_data.get('enchantments', [])
+                })
+        else:
+            for item_id, quantity in chest.contents:
+                items_to_render.append({
+                    'item_id': item_id,
+                    'quantity': quantity,
+                    'name': '',
+                    'has_equipment': False,
+                    'icon_path': None,
+                    'enchantments': []
+                })
+
+        for idx, item_info in enumerate(items_to_render):
+            item_id = item_info['item_id']
+            quantity = item_info['quantity']
+
+            row = idx // slots_per_row
+            col = idx % slots_per_row
+            slot_x = start_x + col * (slot_size + spacing)
+            slot_y = start_y + row * (slot_size + spacing)
+
+            # Check if slot fits in UI
+            if slot_y + slot_size > ui_y + ui_height - 40:
+                break  # Stop if we run out of space
+
+            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
+
+            # Slot background (dark red, or gold border for enchanted items)
+            pygame.draw.rect(self.screen, (80, 40, 40), slot_rect)
+            has_enchants = bool(item_info.get('enchantments'))
+            border_color = (255, 200, 100) if has_enchants else (150, 70, 70)
+            pygame.draw.rect(self.screen, border_color, slot_rect, 2)
+
+            # Item icon
+            icon = None
+            item_name = item_info.get('name') or item_id
+
+            # Try to get icon from rich data first
+            if item_info.get('icon_path'):
+                from rendering.image_cache import ImageCache
+                image_cache = ImageCache.get_instance()
+                icon = image_cache.get_image(item_info['icon_path'], (slot_size - 8, slot_size - 8))
+
+            # Fallback to database lookup
+            if not icon:
+                mat = mat_db.get_material(item_id)
+                if mat:
+                    item_name = mat.name if hasattr(mat, 'name') else item_id
+                    if hasattr(mat, 'icon_path') and mat.icon_path:
+                        from rendering.image_cache import ImageCache
+                        image_cache = ImageCache.get_instance()
+                        icon = image_cache.get_image(mat.icon_path, (slot_size - 8, slot_size - 8))
+
+            if not icon and equip_db.is_equipment(item_id):
+                eq = equip_db.create_equipment_from_id(item_id)
+                if eq:
+                    item_name = eq.name if hasattr(eq, 'name') else item_id
+                    if hasattr(eq, 'icon_path') and eq.icon_path:
+                        from rendering.image_cache import ImageCache
+                        image_cache = ImageCache.get_instance()
+                        icon = image_cache.get_image(eq.icon_path, (slot_size - 8, slot_size - 8))
+
+            if icon:
+                self.screen.blit(icon, (slot_x + 4, slot_y + 4))
+            else:
+                # Fallback: colored square (blue for equipment, brown for materials)
+                color = (100, 150, 200) if item_info.get('has_equipment') else (150, 100, 100)
+                pygame.draw.rect(self.screen, color, (slot_x + 4, slot_y + 4, slot_size - 8, slot_size - 8))
+
+            # Quantity badge
+            if quantity > 1:
+                qty_surf = self.tiny_font.render(str(quantity), True, (255, 255, 255))
+                qty_bg = pygame.Surface((qty_surf.get_width() + 4, qty_surf.get_height()), pygame.SRCALPHA)
+                qty_bg.fill((0, 0, 0, 180))
+                self.screen.blit(qty_bg, (slot_x + slot_size - qty_surf.get_width() - 4, slot_y + slot_size - qty_surf.get_height()))
+                self.screen.blit(qty_surf, (slot_x + slot_size - qty_surf.get_width() - 2, slot_y + slot_size - qty_surf.get_height()))
+
+            # Enchantment indicator (small star for enchanted items)
+            if has_enchants:
+                ench_surf = self.tiny_font.render("✨", True, (255, 200, 100))
+                self.screen.blit(ench_surf, (slot_x + 2, slot_y + 2))
+
+            item_rects.append((slot_rect, idx))
+
+        # Item count at bottom
+        item_count = len(items_to_render)
+        count_text = f"{item_count} items to retrieve"
+        count_surf = self.tiny_font.render(count_text, True, (255, 180, 180))
+        self.screen.blit(count_surf, (ui_x + (ui_width - count_surf.get_width()) // 2, ui_y + ui_height - 25))
+
+        # Empty chest message
+        is_empty = not items_to_render
+        if is_empty:
+            empty_surf = self.small_font.render("Chest is empty", True, (200, 150, 150))
+            self.screen.blit(empty_surf, (ui_x + (ui_width - empty_surf.get_width()) // 2, ui_y + ui_height // 2))
 
         return chest_rect, item_rects
 
@@ -2708,6 +2922,19 @@ class Renderer:
                     cx, cy = px + chunk_size // 2, py + chunk_size // 2
                     pygame.draw.circle(surf, dungeon_color, (cx, cy), max(s(3), chunk_size // 4))
 
+                # Draw death chest skull marker
+                if explored and explored.has_death_chest:
+                    cx, cy = px + chunk_size // 2, py + chunk_size // 2
+                    skull_size = max(s(4), chunk_size // 3)
+                    # Draw skull icon (simple: circle head + eyes)
+                    skull_color = (255, 100, 100)  # Red skull
+                    pygame.draw.circle(surf, skull_color, (cx, cy), skull_size)
+                    pygame.draw.circle(surf, (0, 0, 0), (cx, cy), skull_size, s(1))  # Outline
+                    # Eyes
+                    eye_size = max(s(1), skull_size // 4)
+                    pygame.draw.circle(surf, (0, 0, 0), (cx - skull_size // 3, cy - skull_size // 4), eye_size)
+                    pygame.draw.circle(surf, (0, 0, 0), (cx + skull_size // 3, cy - skull_size // 4), eye_size)
+
                 # Check for hover
                 rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
                 if chunk_rect.collidepoint(rx, ry):
@@ -2782,6 +3009,8 @@ class Renderer:
                 coord_text += f" - {type_name}"
                 if explored.has_dungeon:
                     coord_text += " [DUNGEON]"
+                if explored.has_death_chest:
+                    coord_text += " [💀 DEATH CHEST]"
             else:
                 coord_text += " - Unexplored"
             surf.blit(self.small_font.render(coord_text, True, (200, 200, 200)), (map_area_x, info_y))

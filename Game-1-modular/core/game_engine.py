@@ -211,12 +211,16 @@ class GameEngine:
         self.dungeon_manager = DungeonManager()
         self.combat_manager.dungeon_manager = self.dungeon_manager  # Link for 2x EXP, no drops
         self.world.dungeon_manager = self.dungeon_manager  # Link for dungeon tile walkability checks
+        self.world.map_system = self.map_system  # Link for death chest map markers
 
         # Load character stat modifiers config for INT minigame effects
         self.stat_modifiers_config = self._load_stat_modifiers_config()
 
         # Only spawn initial enemies if we have a real character
         if self.character:
+            # Set system references for death handling (allows status effects to trigger proper death)
+            self.character.dungeon_manager = self.dungeon_manager
+            self.character.world_system = self.world
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
 
             # Spawn training dummy for tag testing
@@ -339,6 +343,12 @@ class GameEngine:
         self.spawn_chest_open = False  # True when spawn storage chest UI is open
         self.spawn_chest_rect = None  # Bounding rect for chest UI
         self.spawn_chest_item_rects = []  # [(rect, item_idx), ...] for click detection
+
+        # Death chest UI state (for retrieving items after death)
+        self.death_chest_open = False  # True when death chest UI is open
+        self.active_death_chest = None  # Currently open death chest
+        self.death_chest_rect = None  # Bounding rect for death chest UI
+        self.death_chest_item_rects = []  # [(rect, item_idx), ...] for click detection
 
         # Minigame state
         self.active_minigame = None  # Current minigame instance (SmithingMinigame, etc.)
@@ -896,21 +906,14 @@ class GameEngine:
                         self.add_notification("Debug F4: DISABLED", (255, 100, 100))
 
                 elif event.key == pygame.K_F5:
-                    # Save game (only if not temporary world)
-                    if self.temporary_world:
-                        self.add_notification("Cannot save in temporary world!", (255, 200, 100))
+                    # Toggle keep inventory on death
+                    Config.KEEP_INVENTORY = not Config.KEEP_INVENTORY
+                    if Config.KEEP_INVENTORY:
+                        print("🔧 Keep Inventory: ON (all items kept on death)")
+                        self.add_notification("Keep Inventory: ON", (100, 255, 100))
                     else:
-                        if self.save_manager.save_game(
-                            self.character,
-                            self.world,
-                            self.character.quests,
-                            self.npcs,
-                            "autosave.json",
-                            self.dungeon_manager,
-                            self.game_time,
-                            self.map_system
-                        ):
-                            self.add_notification("Game saved!", (100, 255, 100))
+                        print("🔧 Keep Inventory: OFF (items dropped on death, except soulbound)")
+                        self.add_notification("Keep Inventory: OFF (soulbound items kept)", (255, 200, 100))
 
                 elif event.key == pygame.K_F6:
                     # Quick save with timestamp
@@ -1366,6 +1369,9 @@ class GameEngine:
             self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             # Update combat manager with new character
             self.combat_manager.character = self.character
+            # Set system references for death handling (allows status effects to trigger proper death)
+            self.character.dungeon_manager = self.dungeon_manager
+            self.character.world_system = self.world
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
             # Spawn training dummy for tag testing
@@ -1440,6 +1446,9 @@ class GameEngine:
 
                 # Update combat manager with loaded character
                 self.combat_manager.character = self.character
+                # Set system references for death handling (allows status effects to trigger proper death)
+                self.character.dungeon_manager = self.dungeon_manager
+                self.character.world_system = self.world
 
                 # Spawn enemies near loaded position (only if not in dungeon)
                 if not self.dungeon_manager.in_dungeon:
@@ -1518,6 +1527,9 @@ class GameEngine:
 
                 # Update combat manager with loaded character
                 self.combat_manager.character = self.character
+                # Set system references for death handling (allows status effects to trigger proper death)
+                self.character.dungeon_manager = self.dungeon_manager
+                self.character.world_system = self.world
 
                 # Spawn enemies near loaded position (only if not in dungeon)
                 if not self.dungeon_manager.in_dungeon:
@@ -1543,6 +1555,9 @@ class GameEngine:
             self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             # Update combat manager with new character
             self.combat_manager.character = self.character
+            # Set system references for death handling (allows status effects to trigger proper death)
+            self.character.dungeon_manager = self.dungeon_manager
+            self.character.world_system = self.world
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
             # Spawn training dummy for tag testing
@@ -1879,6 +1894,19 @@ class GameEngine:
                         return
                 return  # Clicked in chest area but not on item
             # Clicking outside chest UI closes it (unless clicking on inventory)
+
+        # Death Chest UI - takes priority when open
+        if self.death_chest_open:
+            # Check if clicking on chest UI area
+            if self.death_chest_rect and self.death_chest_rect.collidepoint(mouse_pos):
+                # Check chest item clicks
+                for rect, item_idx in self.death_chest_item_rects:
+                    if rect.collidepoint(mouse_pos):
+                        self._transfer_from_death_chest(item_idx)
+                        return
+                return  # Clicked in chest area but not on item
+            # Clicking outside death chest UI closes it
+            self._close_death_chest()
 
         # Inventory - check for equipment equipping
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
@@ -2227,6 +2255,17 @@ class GameEngine:
             if chest_dist <= 1.5:  # Within click range of chest
                 self._toggle_spawn_chest()
                 return
+
+        # Check for death chest click
+        if hasattr(self.world, 'death_chests') and self.world.death_chests:
+            for death_chest in self.world.death_chests:
+                chest_dist = math.sqrt(
+                    (world_pos.x - death_chest.position.x) ** 2 +
+                    (world_pos.y - death_chest.position.y) ** 2
+                )
+                if chest_dist <= 1.5:  # Within click range of chest
+                    self._toggle_death_chest(death_chest)
+                    return
 
         # Check for dungeon entrance click (before stations and resources)
         dungeon_entrance = self.world.get_dungeon_entrance_at(world_pos)
@@ -5338,20 +5377,23 @@ class GameEngine:
         print(f"Use Minigame: {use_minigame}")
         print("="*80)
 
-        # Check if we have materials
-        if not recipe_db.can_craft(recipe, self.character.inventory):
-            self.add_notification("Not enough materials!", (255, 100, 100))
-            print("❌ Cannot craft - not enough materials")
-            return
+        # Check if we have materials (skip in debug mode)
+        if not Config.DEBUG_INFINITE_RESOURCES:
+            if not recipe_db.can_craft(recipe, self.character.inventory):
+                self.add_notification("Not enough materials!", (255, 100, 100))
+                print("❌ Cannot craft - not enough materials")
+                return
 
-        # Validate placement (if required)
-        is_valid, error_msg = self.validate_placement(recipe, self.user_placement)
-        if not is_valid:
-            self.add_notification(f"Invalid placement: {error_msg}", (255, 100, 100))
-            print(f"❌ Cannot craft - invalid placement: {error_msg}")
-            return
-        elif error_msg:  # Valid with message
-            print(f"✓ Placement validated: {error_msg}")
+            # Validate placement (if required)
+            is_valid, error_msg = self.validate_placement(recipe, self.user_placement)
+            if not is_valid:
+                self.add_notification(f"Invalid placement: {error_msg}", (255, 100, 100))
+                print(f"❌ Cannot craft - invalid placement: {error_msg}")
+                return
+            elif error_msg:  # Valid with message
+                print(f"✓ Placement validated: {error_msg}")
+        else:
+            print("🔧 Debug mode: Skipping material and placement validation")
 
         # Handle enchanting recipes differently (apply to existing items)
         if recipe.is_enchantment:
@@ -6174,6 +6216,233 @@ class GameEngine:
             self.add_notification("Inventory full!", (255, 100, 100))
             return False
 
+    # =========================================================================
+    # Death Chest Methods (Items dropped on death)
+    # =========================================================================
+
+    def _toggle_death_chest(self, death_chest):
+        """Toggle a death chest UI open/closed."""
+        if not death_chest:
+            return
+
+        # Check distance
+        distance = self.character.position.distance_to(death_chest.position)
+        if distance > 2.0:
+            self.add_notification("Get closer to retrieve your items!", (255, 200, 200))
+            return
+
+        # If this chest is already open, close it
+        if self.death_chest_open and self.active_death_chest == death_chest:
+            self._close_death_chest()
+            return
+
+        # Open this death chest
+        self.death_chest_open = True
+        self.active_death_chest = death_chest
+        self.add_notification("💀 Your death chest! Click items to retrieve.", (255, 150, 150))
+
+    def _close_death_chest(self):
+        """Close the death chest UI."""
+        self.death_chest_open = False
+        self.active_death_chest = None
+        self.death_chest_rect = None
+        self.death_chest_item_rects = []
+
+    def _transfer_from_death_chest(self, chest_item_idx: int):
+        """Transfer an item from death chest to inventory, preserving full item state."""
+        if not self.active_death_chest:
+            return False
+
+        chest = self.active_death_chest
+
+        # Use rich_contents if available (death chests with full item state)
+        if chest.is_death_chest and chest.rich_contents and chest_item_idx < len(chest.rich_contents):
+            item_data = chest.rich_contents[chest_item_idx]
+            success = self._restore_item_from_chest_data(item_data)
+            if success:
+                # Remove from both rich_contents and simple contents
+                chest.rich_contents.pop(chest_item_idx)
+                if chest_item_idx < len(chest.contents):
+                    chest.contents.pop(chest_item_idx)
+
+                # Get item name from equipment_data or item_id
+                if "equipment_data" in item_data:
+                    item_name = item_data["equipment_data"].get("name", item_data["item_id"])
+                else:
+                    item_name = item_data.get("item_id", "item")
+                item_name = item_name.replace('_', ' ').title()
+                quantity = item_data.get('quantity', 1)
+                self.add_notification(f"Retrieved {quantity}x {item_name}", (100, 255, 100))
+
+                # If chest is now empty, remove it from the world
+                if not chest.rich_contents:
+                    self.world.remove_death_chest(chest)
+                    self._close_death_chest()
+                    self.add_notification("Death chest emptied and removed!", (200, 255, 200))
+                return True
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
+                return False
+
+        # Fallback to simple contents for non-death chests
+        if chest_item_idx >= len(chest.contents):
+            return False
+
+        item_id, quantity = chest.contents[chest_item_idx]
+        success = self.character.inventory.add_item(item_id, quantity)
+        if success:
+            chest.contents.pop(chest_item_idx)
+            item_name = item_id.replace('_', ' ').title()
+            self.add_notification(f"Retrieved {quantity}x {item_name}", (100, 255, 100))
+
+            if not chest.contents:
+                self.world.remove_death_chest(chest)
+                self._close_death_chest()
+                self.add_notification("Death chest emptied and removed!", (200, 255, 200))
+            return True
+        else:
+            self.add_notification("Inventory full!", (255, 100, 100))
+            return False
+
+    def _restore_item_from_chest_data(self, item_data: dict) -> bool:
+        """Restore an item from death chest using the exact same logic as restore_from_save.
+
+        This ensures perfect item restoration including icons, enchantments, durability, etc.
+        The format matches _serialize_inventory in save_manager.py exactly.
+        """
+        from entities.components.inventory import ItemStack
+        from data.models.equipment import EquipmentItem
+        from entities.tool import Tool
+
+        # Handle tools separately (stored with tool_data)
+        if "tool_data" in item_data:
+            tool_info = item_data["tool_data"]
+            tool = Tool(
+                tool_id=tool_info.get('tool_id', ''),
+                name=tool_info.get('name', ''),
+                tool_type=tool_info.get('tool_type', 'pickaxe'),
+                tier=tool_info.get('tier', 1),
+                durability_current=tool_info.get('durability_current', 100),
+                durability_max=tool_info.get('durability_max', 100),
+                efficiency=tool_info.get('efficiency', 1.0)
+            )
+            if hasattr(tool, 'enchantments'):
+                tool.enchantments = tool_info.get('enchantments', [])
+            if hasattr(tool, 'soulbound'):
+                tool.soulbound = tool_info.get('soulbound', False)
+            # Try to equip tool if slot is empty (tools are stored in equipment slots)
+            if hasattr(self.character, 'equipment') and self.character.equipment:
+                tool_slot = tool.tool_type if hasattr(tool, 'tool_type') else None
+                if tool_slot and self.character.equipment.slots.get(tool_slot) is None:
+                    self.character.equipment.slots[tool_slot] = tool
+                    return True
+            return self.character.inventory.add_item(tool.tool_id, 1)
+
+        # Create ItemStack - EXACT same logic as restore_from_save in character.py
+        item_stack = ItemStack(
+            item_id=item_data["item_id"],
+            quantity=item_data.get("quantity", 1),
+            max_stack=item_data.get("max_stack", 99),
+            rarity=item_data.get("rarity", "common")
+        )
+
+        # Restore equipment_data if present (EXACT same code as restore_from_save)
+        if "equipment_data" in item_data:
+            eq_data = item_data["equipment_data"]
+
+            # Convert damage list back to tuple if needed
+            damage = eq_data.get("damage", [0, 0])
+            if isinstance(damage, list):
+                damage = tuple(damage)
+
+            item_stack.equipment_data = EquipmentItem(
+                item_id=eq_data["item_id"],
+                name=eq_data.get("name", eq_data["item_id"]),
+                tier=eq_data.get("tier", 1),
+                rarity=eq_data.get("rarity", "common"),
+                slot=eq_data.get("slot", "mainHand"),
+                damage=damage,
+                defense=eq_data.get("defense", 0),
+                durability_current=eq_data.get("durability_current", 100),
+                durability_max=eq_data.get("durability_max", 100),
+                attack_speed=eq_data.get("attack_speed", 1.0),
+                efficiency=eq_data.get("efficiency", 1.0),
+                weight=eq_data.get("weight", 1.0),
+                range=eq_data.get("range", 1.0),
+                hand_type=eq_data.get("hand_type", "default"),
+                item_type=eq_data.get("item_type", "weapon"),
+                icon_path=eq_data.get("icon_path"),
+                stat_multipliers=eq_data.get("stat_multipliers", {}),
+                tags=eq_data.get("tags", []),
+                effect_tags=eq_data.get("effect_tags", []),
+                effect_params=eq_data.get("effect_params", {}),
+                soulbound=eq_data.get("soulbound", False)
+            )
+
+            # Restore optional fields (same as restore_from_save)
+            if "bonuses" in eq_data:
+                item_stack.equipment_data.bonuses = eq_data["bonuses"]
+            if "enchantments" in eq_data:
+                item_stack.equipment_data.enchantments = eq_data["enchantments"]
+            if "requirements" in eq_data:
+                item_stack.equipment_data.requirements = eq_data["requirements"]
+
+        # Restore crafted_stats if present
+        if "crafted_stats" in item_data:
+            item_stack.crafted_stats = item_data["crafted_stats"]
+
+        # Add ItemStack directly to inventory (preserves our fully constructed object)
+        empty_slot = self.character.inventory.get_empty_slot()
+        if empty_slot is not None:
+            self.character.inventory.slots[empty_slot] = item_stack
+            return True
+        return False
+
+    def _retrieve_all_from_death_chest(self):
+        """Retrieve all items from the active death chest, preserving full item state."""
+        if not self.active_death_chest:
+            return
+
+        chest = self.active_death_chest
+        items_retrieved = 0
+        items_failed = 0
+
+        # Use rich_contents if available (death chests with full item state)
+        if chest.is_death_chest and chest.rich_contents:
+            for i in range(len(chest.rich_contents) - 1, -1, -1):
+                item_data = chest.rich_contents[i]
+                quantity = item_data.get('quantity', 1)
+                success = self._restore_item_from_chest_data(item_data)
+                if success:
+                    chest.rich_contents.pop(i)
+                    if i < len(chest.contents):
+                        chest.contents.pop(i)
+                    items_retrieved += quantity
+                else:
+                    items_failed += quantity
+        else:
+            # Fallback to simple contents for non-death chests
+            for i in range(len(chest.contents) - 1, -1, -1):
+                item_id, quantity = chest.contents[i]
+                success = self.character.inventory.add_item(item_id, quantity)
+                if success:
+                    chest.contents.pop(i)
+                    items_retrieved += quantity
+                else:
+                    items_failed += quantity
+
+        if items_retrieved > 0:
+            self.add_notification(f"Retrieved {items_retrieved} items!", (100, 255, 100))
+
+        if items_failed > 0:
+            self.add_notification(f"Couldn't retrieve {items_failed} items - inventory full!", (255, 200, 100))
+
+        # If chest is now empty, remove it
+        if not chest.rich_contents:
+            self.world.remove_death_chest(chest)
+            self._close_death_chest()
+            self.add_notification("Death chest emptied and removed!", (200, 255, 200))
+
     def _transfer_item_to_chest(self, inventory_slot: int):
         """Transfer an item from inventory to dungeon chest."""
         if not self.dungeon_manager or not self.dungeon_manager.in_dungeon:
@@ -6637,6 +6906,14 @@ class GameEngine:
         else:
             self.spawn_chest_rect = None
             self.spawn_chest_item_rects = []
+
+        # Render death chest UI
+        if self.death_chest_open and self.active_death_chest:
+            self.death_chest_rect, self.death_chest_item_rects = \
+                self.renderer.render_death_chest_ui(self.active_death_chest)
+        else:
+            self.death_chest_rect = None
+            self.death_chest_item_rects = []
 
         if self.character.class_selection_open:
             result = self.renderer.render_class_selection_ui(self.character, self.mouse_pos)

@@ -836,7 +836,11 @@ class StatTracker:
             "debug_resources_spawned": 0,
             "jumps": 0,
             "emotes_used": 0,
-            "screenshots_taken": 0
+            "screenshots_taken": 0,
+            # Death statistics
+            "total_deaths": 0,
+            "items_lost_on_death": 0,
+            "soulbound_items_kept_on_death": 0
         }
 
         # Barrier and collision system stats
@@ -1368,6 +1372,25 @@ class StatTracker:
     def record_dungeon_death(self):
         """Record dying in a dungeon."""
         self.dungeon_stats["dungeon_deaths"] += 1
+
+    # =========================================================================
+    # DEATH RECORDING METHODS
+    # =========================================================================
+
+    def record_death(self):
+        """Record a player death."""
+        self.misc_stats["total_deaths"] += 1
+
+    def record_items_lost_on_death(self, items_lost: int, soulbound_kept: int):
+        """
+        Record items lost/kept on death.
+
+        Args:
+            items_lost: Number of items dropped/lost on death
+            soulbound_kept: Number of soulbound items kept
+        """
+        self.misc_stats["items_lost_on_death"] += items_lost
+        self.misc_stats["soulbound_items_kept_on_death"] += soulbound_kept
 
     def record_dungeon_chest_opened(self, items_received: int):
         """

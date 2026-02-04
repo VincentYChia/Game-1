@@ -20,8 +20,8 @@
       "stationType": "engineering",
       "inputs": [
         {"materialId": "iron_ingot", "quantity": 4},
-        {"materialId": "pine_plank", "quantity": 3},
-        {"materialId": "spectral_thread", "quantity": 2}
+        {"materialId": "oak_plank", "quantity": 3},
+        {"materialId": "beetle_carapace", "quantity": 2}
       ],
       "miniGame": {
         "type": "engineering",
@@ -41,8 +41,8 @@
       "stationType": "engineering",
       "inputs": [
         {"materialId": "steel_ingot", "quantity": 5},
-        {"materialId": "fire_crystal", "quantity": 4},
-        {"materialId": "spectral_thread", "quantity": 3}
+        {"materialId": "birch_plank", "quantity": 3},
+        {"materialId": "fire_crystal", "quantity": 4}
       ],
       "miniGame": {
         "type": "engineering",
@@ -62,7 +62,8 @@
       "stationType": "engineering",
       "inputs": [
         {"materialId": "mithril_ingot", "quantity": 6},
-        {"materialId": "lightning_shard", "quantity": 8},
+        {"materialId": "ironwood_plank", "quantity": 4},
+        {"materialId": "lightning_shard", "quantity": 6},
         {"materialId": "storm_heart", "quantity": 2}
       ],
       "miniGame": {

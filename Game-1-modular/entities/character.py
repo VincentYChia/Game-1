@@ -142,6 +142,12 @@ class Character:
         self.last_attacked_enemy = None
         self.is_blocking = False  # Visual state for shield blocking indicator
 
+        # System references for death handling (set by game_engine)
+        # These allow death handling to work even when damage comes from status effects
+        # which don't have access to pass these systems via kwargs
+        self.dungeon_manager = None
+        self.world_system = None
+
         # Health regeneration tracking
         self.time_since_last_damage_taken = 0.0
         self.time_since_last_damage_dealt = 0.0
@@ -1825,38 +1831,266 @@ class Character:
 
         if self.health <= 0:
             self.health = 0
-            # Pass dungeon_manager if provided for proper death handling in dungeons
+            # Pass dungeon_manager and world_system for proper death handling
             dungeon_manager = kwargs.get('dungeon_manager')
-            self._handle_death(dungeon_manager=dungeon_manager)
+            world_system = kwargs.get('world_system')
+            self._handle_death(dungeon_manager=dungeon_manager, world_system=world_system)
 
-    def _handle_death(self, dungeon_manager=None):
+    def _handle_death(self, dungeon_manager=None, world_system=None):
         """Handle player death - respawn at spawn point (origin)
 
-        If in a dungeon, exit the dungeon and return to world spawn.
+        Death penalty depends on Config.KEEP_INVENTORY:
+        - If True: Keep all items (no death penalty)
+        - If False: Drop items into a death chest EXCEPT soulbound equipment
+
+        Soulbound items (with soulbound enchantment) are always kept.
 
         Args:
             dungeon_manager: Optional dungeon manager to check/exit dungeon
+            world_system: Optional world system for spawning death chest
         """
         from core.config import Config
         print("💀 You died! Respawning...")
 
+        # Use stored references as fallback if kwargs not provided
+        # This ensures death handling works when damage comes from status effects
+        # (burn, bleed, poison, shock) which don't have access to pass these systems
+        if dungeon_manager is None:
+            dungeon_manager = self.dungeon_manager
+        if world_system is None:
+            world_system = self.world_system
+
+        # Track death in stat tracker
+        if hasattr(self, 'stat_tracker') and self.stat_tracker:
+            self.stat_tracker.record_death()
+
         # Reset health
         self.health = self.max_health
 
-        # If in a dungeon, exit it (dungeon failed)
+        # Determine death chest position and respawn location
+        # For dungeon deaths, chest spawns at dungeon entrance (not inside dungeon)
         if dungeon_manager and dungeon_manager.in_dungeon:
             print("💀 You died in the dungeon! Exiting...")
-            # Get return position from dungeon
+            # Track dungeon death
+            if hasattr(self, 'stat_tracker') and self.stat_tracker:
+                self.stat_tracker.record_dungeon_death()
+            # Get return position from dungeon - this is where death chest spawns
+            # Player always respawns at world spawn, chest spawns at dungeon entrance
             dungeon = dungeon_manager.current_dungeon
             if dungeon and dungeon.return_position:
-                self.position = dungeon.return_position
+                death_chest_position = Position(
+                    dungeon.return_position.x,
+                    dungeon.return_position.y,
+                    dungeon.return_position.z
+                )
             else:
-                self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
+                death_chest_position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
+            # Always respawn at world spawn
+            self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
             dungeon_manager.exit_dungeon()
         else:
+            # Overworld death - chest spawns where player died
+            death_chest_position = Position(self.position.x, self.position.y, self.position.z)
             self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
 
-        # Keep all items and equipment (no death penalty)
+        # Handle inventory/equipment based on KEEP_INVENTORY setting
+        if Config.KEEP_INVENTORY:
+            print("   ✓ Keep Inventory is ON - all items retained")
+        else:
+            # Drop non-soulbound items into a death chest
+            self._drop_non_soulbound_items(death_chest_position, world_system)
+
+    def _drop_non_soulbound_items(self, death_position: Position, world_system=None):
+        """Drop all non-soulbound items on death into a death chest.
+
+        Soulbound equipment (with soulbound enchantment) is kept.
+        Regular equipment and inventory items go into a death chest at
+        the location where the player died. Items are serialized in the
+        same format as the save system for reliable restoration.
+
+        Args:
+            death_position: Position where the player died (for chest spawn)
+            world_system: WorldSystem to spawn death chest in
+        """
+        rich_items = []  # List of serialized items in save-system format
+        soulbound_kept = 0
+        items_dropped = 0
+
+        # Handle equipped items - collect non-soulbound equipment
+        if hasattr(self, 'equipment') and self.equipment:
+            for slot_name in list(self.equipment.slots.keys()):
+                item = self.equipment.slots.get(slot_name)
+                if item:
+                    if hasattr(item, 'is_soulbound') and item.is_soulbound():
+                        soulbound_kept += 1
+                        print(f"   ✨ Soulbound item kept: {item.name}")
+                    else:
+                        # Serialize in save-system inventory format
+                        rich_items.append(self._serialize_item_for_chest(item))
+                        items_dropped += 1
+                        self.equipment.unequip(slot_name, self)
+
+        # Handle tools - tools are stored in equipment slots (axe, pickaxe)
+        tool_slots = ['axe', 'pickaxe']
+        for tool_slot in tool_slots:
+            tool = self.equipment.slots.get(tool_slot)
+            if tool:
+                if hasattr(tool, 'is_soulbound') and tool.is_soulbound():
+                    soulbound_kept += 1
+                    print(f"   ✨ Soulbound tool kept: {tool.name}")
+                else:
+                    # Serialize tool as item (same format as equipment)
+                    rich_items.append(self._serialize_item_for_chest(tool))
+                    items_dropped += 1
+                    self.equipment.unequip(tool_slot, self)
+
+        # Collect inventory items
+        if hasattr(self, 'inventory') and self.inventory:
+            for i, slot in enumerate(self.inventory.slots):
+                if slot and slot.quantity > 0:
+                    # Check for soulbound equipment in inventory
+                    if slot.equipment_data and hasattr(slot.equipment_data, 'is_soulbound') and slot.equipment_data.is_soulbound():
+                        soulbound_kept += 1
+                        print(f"   ✨ Soulbound item kept in inventory: {slot.item_id}")
+                        continue
+                    # Serialize in exact save-system format
+                    rich_items.append(self._serialize_slot_for_chest(slot))
+                    items_dropped += slot.quantity
+                    self.inventory.slots[i] = None
+
+        # Spawn death chest with dropped items
+        if world_system and rich_items:
+            world_system.spawn_death_chest(death_position, rich_items)
+
+        # Track in stat tracker
+        if hasattr(self, 'stat_tracker') and self.stat_tracker:
+            self.stat_tracker.record_items_lost_on_death(items_dropped, soulbound_kept)
+
+        print(f"   💔 Dropped {items_dropped} items into death chest, kept {soulbound_kept} soulbound items")
+
+    def _serialize_item_for_chest(self, item) -> dict:
+        """Serialize an EquipmentItem for death chest in save-system format.
+
+        This produces the EXACT same format as _serialize_inventory in save_manager.py
+        so restoration can use the same code as restore_from_save.
+        """
+        # Wrap equipment as an inventory slot format
+        slot_data = {
+            "item_id": item.item_id,
+            "quantity": 1,
+            "max_stack": 1,
+            "rarity": item.rarity,
+            "equipment_data": {
+                "item_id": item.item_id,
+                "name": item.name,
+                "tier": item.tier,
+                "rarity": item.rarity,
+                "slot": item.slot,
+                "damage": list(item.damage) if isinstance(item.damage, tuple) else item.damage,
+                "defense": item.defense,
+                "durability_current": item.durability_current,
+                "durability_max": item.durability_max,
+                "attack_speed": item.attack_speed,
+                "efficiency": item.efficiency,
+                "weight": item.weight,
+                "range": item.range,
+                "hand_type": item.hand_type,
+                "item_type": item.item_type,
+                "icon_path": item.icon_path,
+                "soulbound": item.soulbound,
+            }
+        }
+        # Add optional fields if present (matching save_manager exactly)
+        if item.stat_multipliers:
+            slot_data["equipment_data"]["stat_multipliers"] = item.stat_multipliers
+        if item.tags:
+            slot_data["equipment_data"]["tags"] = item.tags
+        if item.effect_tags:
+            slot_data["equipment_data"]["effect_tags"] = item.effect_tags
+        if item.effect_params:
+            slot_data["equipment_data"]["effect_params"] = item.effect_params
+        if item.bonuses:
+            slot_data["equipment_data"]["bonuses"] = item.bonuses
+        if item.enchantments:
+            slot_data["equipment_data"]["enchantments"] = item.enchantments
+        if item.requirements:
+            slot_data["equipment_data"]["requirements"] = item.requirements
+        return slot_data
+
+    def _serialize_tool_for_chest(self, tool) -> dict:
+        """Serialize a Tool for death chest storage."""
+        return {
+            "item_id": tool.tool_id,
+            "quantity": 1,
+            "max_stack": 1,
+            "rarity": "common",
+            "tool_data": {
+                "tool_id": tool.tool_id,
+                "name": tool.name,
+                "tool_type": tool.tool_type,
+                "tier": tool.tier,
+                "durability_current": tool.durability_current,
+                "durability_max": tool.durability_max,
+                "efficiency": tool.efficiency,
+                "enchantments": getattr(tool, 'enchantments', []),
+                "soulbound": getattr(tool, 'soulbound', False)
+            }
+        }
+
+    def _serialize_slot_for_chest(self, slot) -> dict:
+        """Serialize an inventory ItemStack for death chest in save-system format.
+
+        This produces the EXACT same format as _serialize_inventory in save_manager.py.
+        """
+        slot_data = {
+            "item_id": slot.item_id,
+            "quantity": slot.quantity,
+            "max_stack": slot.max_stack,
+            "rarity": slot.rarity
+        }
+
+        # Include equipment_data if present (exactly like save_manager)
+        if slot.equipment_data:
+            eq = slot.equipment_data
+            slot_data["equipment_data"] = {
+                "item_id": eq.item_id,
+                "name": eq.name,
+                "tier": eq.tier,
+                "rarity": eq.rarity,
+                "slot": eq.slot,
+                "damage": list(eq.damage) if isinstance(eq.damage, tuple) else eq.damage,
+                "defense": eq.defense,
+                "durability_current": eq.durability_current,
+                "durability_max": eq.durability_max,
+                "attack_speed": eq.attack_speed,
+                "efficiency": eq.efficiency,
+                "weight": eq.weight,
+                "range": eq.range,
+                "hand_type": eq.hand_type,
+                "item_type": eq.item_type,
+                "icon_path": eq.icon_path,
+                "soulbound": eq.soulbound,
+            }
+            if eq.stat_multipliers:
+                slot_data["equipment_data"]["stat_multipliers"] = eq.stat_multipliers
+            if eq.tags:
+                slot_data["equipment_data"]["tags"] = eq.tags
+            if eq.effect_tags:
+                slot_data["equipment_data"]["effect_tags"] = eq.effect_tags
+            if eq.effect_params:
+                slot_data["equipment_data"]["effect_params"] = eq.effect_params
+            if eq.bonuses:
+                slot_data["equipment_data"]["bonuses"] = eq.bonuses
+            if eq.enchantments:
+                slot_data["equipment_data"]["enchantments"] = eq.enchantments
+            if eq.requirements:
+                slot_data["equipment_data"]["requirements"] = eq.requirements
+
+        # Include crafted_stats if present
+        if slot.crafted_stats:
+            slot_data["crafted_stats"] = slot.crafted_stats
+
+        return slot_data
 
     def get_effective_max_durability(self, item) -> int:
         """Get effective max durability for an item, including VIT and title bonuses.
@@ -1916,11 +2150,13 @@ class Character:
                 if item and hasattr(item, 'weight'):
                     total += item.weight
 
-        # Tool weight (axe, pickaxe)
-        if hasattr(self, 'axe') and self.axe and hasattr(self.axe, 'weight'):
-            total += self.axe.weight
-        if hasattr(self, 'pickaxe') and self.pickaxe and hasattr(self.pickaxe, 'weight'):
-            total += self.pickaxe.weight
+        # Tool weight (axe, pickaxe) - tools are stored in equipment slots
+        axe = self.equipment.slots.get('axe') if hasattr(self, 'equipment') else None
+        if axe and hasattr(axe, 'weight'):
+            total += axe.weight
+        pickaxe = self.equipment.slots.get('pickaxe') if hasattr(self, 'equipment') else None
+        if pickaxe and hasattr(pickaxe, 'weight'):
+            total += pickaxe.weight
 
         # Inventory weight (materials and equipment in inventory)
         if hasattr(self, 'inventory') and self.inventory:
