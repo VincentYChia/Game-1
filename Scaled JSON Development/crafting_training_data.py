@@ -2117,6 +2117,207 @@ class EngineeringLLMDataGenerator:
 
 
 # ============================================================================
+# GENERATION MODES AND MENU SYSTEM
+# ============================================================================
+
+class GenerationMode:
+    """
+    Generation modes for controlling data output:
+
+    Mode 1 - ALL: Full augmentation + synthetic (original + augmented + synthetic variations)
+             Creates maximum diversity but may be too large for practical use
+
+    Mode 2 - SYNTHETIC_ONLY: Original + synthetic variations (no material substitution)
+             Creates 3x synthetic variations per original (color/naming variations)
+
+    Mode 3 - AUGMENTED_ONLY: Original + augmented (material substitution, flips, permutations)
+             No synthetic color/naming variations, just structural augmentation
+
+    Mode 4 - CUSTOM: User-defined parameters per discipline
+    """
+    ALL = 1
+    SYNTHETIC_ONLY = 2
+    AUGMENTED_ONLY = 3
+    CUSTOM = 4
+
+    @staticmethod
+    def get_mode_description(mode: int) -> str:
+        descriptions = {
+            1: "All data (augmented + synthetic + original) - Maximum diversity",
+            2: "Just synthetic (original + 3x synthetic variations) - No material substitution",
+            3: "Just augmented (original + augmented) - No synthetic color variations",
+            4: "Customized (specify parameters per discipline)"
+        }
+        return descriptions.get(mode, "Unknown mode")
+
+
+def estimate_counts(paths: Dict, mode: int, color_variations: int = 3) -> Dict[str, Dict]:
+    """
+    Estimate output counts for each discipline based on mode.
+
+    Returns dict with structure:
+    {
+        'discipline_name': {
+            'base_recipes': int,
+            'estimated_augmented': int,
+            'estimated_synthetic_per_variant': int,
+            'estimated_total': int
+        }
+    }
+    """
+    estimates = {}
+
+    # Load placement counts for estimation
+    for discipline, discipline_paths in paths.items():
+        try:
+            with open(discipline_paths['placements'], 'r') as f:
+                data = json.load(f)
+            placements = data.get('placements', [])
+            base_count = len(placements)
+        except:
+            base_count = 0
+
+        # Estimate augmentation multiplier based on discipline
+        # These are rough estimates based on typical material diversity
+        aug_multipliers = {
+            'smithing': 12,      # ~12 grid variants per recipe (material sub + flips)
+            'adornment': 8,      # ~8 pattern variants (material sub + reflections)
+            'refining': 50,      # Cross-product can explode (capped at 50)
+            'alchemy': 100,      # Cross-product + permutations (capped at 100)
+            'engineering': 100,  # Cross-product + slot variants (capped at 100)
+        }
+
+        aug_mult = aug_multipliers.get(discipline, 10)
+
+        if mode == GenerationMode.ALL:
+            # Full augmentation × (1 exact + color_variations)
+            aug_variants = base_count * aug_mult
+            synthetic_mult = 1 + color_variations
+            total = aug_variants * synthetic_mult
+
+        elif mode == GenerationMode.SYNTHETIC_ONLY:
+            # Original × (1 + 3 synthetic)
+            aug_variants = base_count
+            synthetic_mult = 4  # 1 original + 3 synthetic
+            total = base_count * synthetic_mult
+
+        elif mode == GenerationMode.AUGMENTED_ONLY:
+            # Augmented variants × 1 (exact colors only)
+            aug_variants = base_count * aug_mult
+            synthetic_mult = 1
+            total = aug_variants
+
+        else:  # CUSTOM
+            aug_variants = base_count * aug_mult
+            synthetic_mult = 1 + color_variations
+            total = aug_variants * synthetic_mult
+
+        estimates[discipline] = {
+            'base_recipes': base_count,
+            'estimated_augmented': aug_variants,
+            'estimated_synthetic_per_variant': synthetic_mult,
+            'estimated_total': total
+        }
+
+    return estimates
+
+
+def display_estimates(estimates: Dict, mode: int):
+    """Display estimated counts for user review."""
+    print("\n" + "=" * 70)
+    print(f"ESTIMATED OUTPUT COUNTS (Mode {mode}: {GenerationMode.get_mode_description(mode)})")
+    print("=" * 70)
+    print(f"{'Discipline':<15} {'Base':<8} {'Augmented':<12} {'×Synthetic':<12} {'Total':<10}")
+    print("-" * 70)
+
+    grand_total = 0
+    for discipline, est in estimates.items():
+        print(f"{discipline:<15} {est['base_recipes']:<8} {est['estimated_augmented']:<12} "
+              f"×{est['estimated_synthetic_per_variant']:<11} {est['estimated_total']:<10}")
+        grand_total += est['estimated_total']
+
+    print("-" * 70)
+    print(f"{'GRAND TOTAL':<15} {'':<8} {'':<12} {'':<12} {grand_total:<10}")
+    print("=" * 70)
+
+
+def show_menu() -> int:
+    """Display menu and get user selection."""
+    print("\n" + "=" * 70)
+    print("CRAFTING TRAINING DATA GENERATOR - MODE SELECTION")
+    print("=" * 70)
+    print("\nSelect generation mode:\n")
+    print("  1. All data (augmented + synthetic + original)")
+    print("     → Maximum diversity, typically 1000-5000 examples per discipline")
+    print("     → Includes material substitution, flips, permutations, AND color variations")
+    print()
+    print("  2. Just synthetic (original + 3x synthetic variations)")
+    print("     → Minimal structural variation, moderate output")
+    print("     → Good for testing LLM with naming/tag variations")
+    print()
+    print("  3. Just augmented (augmented + original, no synthetic)")
+    print("     → Structural diversity without color/naming variations")
+    print("     → Each variant has exact colors only")
+    print()
+    print("  4. Customized (specify parameters)")
+    print("     → Fine-tune augmentation and caps per discipline")
+    print()
+
+    while True:
+        try:
+            choice = input("Enter mode (1-4): ").strip()
+            mode = int(choice)
+            if 1 <= mode <= 4:
+                return mode
+            print("Please enter a number between 1 and 4.")
+        except ValueError:
+            print("Please enter a valid number.")
+        except EOFError:
+            # Default to mode 3 if running non-interactively
+            print("\nNon-interactive mode detected. Using mode 3 (augmented only).")
+            return GenerationMode.AUGMENTED_ONLY
+
+
+def get_custom_params() -> Dict:
+    """Get customized parameters from user."""
+    print("\n" + "=" * 70)
+    print("CUSTOM PARAMETERS")
+    print("=" * 70)
+
+    params = {}
+
+    # Global cap
+    try:
+        cap = input("\nGlobal cap per discipline (default 1000, 0 for no cap): ").strip()
+        params['global_cap'] = int(cap) if cap else 1000
+    except (ValueError, EOFError):
+        params['global_cap'] = 1000
+
+    # Color variations (for VLM)
+    try:
+        cv = input("Color variations for VLM disciplines (default 3): ").strip()
+        params['color_variations'] = int(cv) if cv else 3
+    except (ValueError, EOFError):
+        params['color_variations'] = 3
+
+    # Material substitution limit
+    try:
+        ml = input("Max material substitutions per recipe (default 5): ").strip()
+        params['max_substitutions'] = int(ml) if ml else 5
+    except (ValueError, EOFError):
+        params['max_substitutions'] = 5
+
+    # Include permutations
+    try:
+        perm = input("Include permutation augmentation for LLM disciplines? (y/n, default y): ").strip().lower()
+        params['include_permutations'] = perm != 'n'
+    except EOFError:
+        params['include_permutations'] = True
+
+    return params
+
+
+# ============================================================================
 # MAIN EXECUTION
 # ============================================================================
 
@@ -2166,6 +2367,232 @@ def save_training_data(data: List[Dict], output_path: str, discipline: str):
     print(f"\nSaved {len(data)} examples to: {output_path}")
 
 
+def apply_cap(data: List[Dict], cap: int, discipline: str) -> List[Dict]:
+    """Apply cap to training data, sampling randomly if needed."""
+    if cap <= 0 or len(data) <= cap:
+        return data
+
+    print(f"  Applying cap: {len(data)} → {cap} examples")
+    return random.sample(data, cap)
+
+
+def generate_synthetic_only(discipline: str, paths: Dict, output_dir: str,
+                           num_synthetic: int = 3, cap: int = 1000) -> List[Dict]:
+    """
+    Generate synthetic variations only (no material substitution).
+    Just original + naming/color variations.
+    """
+    training_data = []
+    materials_path = paths['materials']
+    placements_path = paths['placements']
+
+    enricher = MaterialEnricher(materials_path)
+    variation_namer = VariationNamer()
+
+    with open(placements_path, 'r') as f:
+        data = json.load(f)
+    placements = data.get('placements', [])
+
+    print(f"\nGenerating {discipline} synthetic variations (mode 2)...")
+    print(f"  Base recipes: {len(placements)}")
+    print(f"  Synthetic variations per recipe: {num_synthetic}")
+
+    for placement in placements:
+        recipe_id = placement['recipeId']
+
+        # Generate original + synthetic variations
+        for var_idx in range(num_synthetic + 1):
+            # Create enriched recipe based on discipline
+            if discipline == 'smithing':
+                recipe = create_enriched_smithing_recipe(placement, enricher, variation_namer, var_idx)
+            elif discipline == 'adornment':
+                recipe = create_enriched_adornment_recipe(placement, enricher, variation_namer, var_idx)
+            elif discipline == 'refining':
+                recipe = create_enriched_refining_recipe(placement, enricher, variation_namer, var_idx)
+            elif discipline == 'alchemy':
+                recipe = create_enriched_alchemy_recipe(placement, enricher, variation_namer, var_idx)
+            elif discipline == 'engineering':
+                recipe = create_enriched_engineering_recipe(placement, enricher, variation_namer, var_idx)
+            else:
+                continue
+
+            entry = {
+                "recipe_id": recipe.get('recipeId', recipe_id),
+                "variation": "original" if var_idx == 0 else f"synthetic_v{var_idx}",
+                "recipe": recipe
+            }
+
+            # Add image for VLM disciplines
+            if discipline in ['smithing', 'adornment'] and PIL_AVAILABLE:
+                # Generate image (simplified - no augmentation)
+                entry['image_base64'] = None  # Would need full generator for images
+
+            training_data.append(entry)
+
+    # Apply cap
+    training_data = apply_cap(training_data, cap, discipline)
+
+    print(f"  Total examples: {len(training_data)}")
+    return training_data
+
+
+def create_enriched_smithing_recipe(placement: Dict, enricher: MaterialEnricher,
+                                    namer: VariationNamer, var_idx: int) -> Dict:
+    """Create enriched smithing recipe for synthetic mode."""
+    recipe_id = placement['recipeId']
+    if var_idx > 0:
+        recipe_id = f"{recipe_id}_v{var_idx}"
+
+    inputs = []
+    for pos_str, material_id in placement.get('placementMap', {}).items():
+        var_name, var_tags = namer.get_variation_name(material_id, var_idx)
+        input_item = {
+            "materialId": var_name,
+            "quantity": 1,
+            "position": pos_str
+        }
+        enriched = enricher.enrich_input({"materialId": material_id}, var_tags)
+        input_item['material_metadata'] = enriched.get('material_metadata', {})
+        inputs.append(input_item)
+
+    return {
+        "recipeId": recipe_id,
+        "stationType": "smithing",
+        "stationTier": placement.get('stationTier', 1),
+        "gridSize": placement.get('metadata', {}).get('gridSize', '3x3'),
+        "inputs": inputs
+    }
+
+
+def create_enriched_adornment_recipe(placement: Dict, enricher: MaterialEnricher,
+                                     namer: VariationNamer, var_idx: int) -> Dict:
+    """Create enriched adornment recipe for synthetic mode."""
+    recipe_id = placement['recipeId']
+    if var_idx > 0:
+        recipe_id = f"{recipe_id}_v{var_idx}"
+
+    vertices = placement.get('placementMap', {}).get('vertices', {})
+    inputs = []
+    for coord_str, vertex_data in vertices.items():
+        mat_id = vertex_data.get('materialId')
+        if mat_id:
+            var_name, var_tags = namer.get_variation_name(mat_id, var_idx)
+            input_item = {
+                "materialId": var_name,
+                "quantity": 1,
+                "position": coord_str
+            }
+            enriched = enricher.enrich_input({"materialId": mat_id}, var_tags)
+            input_item['material_metadata'] = enriched.get('material_metadata', {})
+            inputs.append(input_item)
+
+    return {
+        "recipeId": recipe_id,
+        "stationType": "enchanting",
+        "stationTier": placement.get('stationTier', 1),
+        "inputs": inputs
+    }
+
+
+def create_enriched_refining_recipe(placement: Dict, enricher: MaterialEnricher,
+                                    namer: VariationNamer, var_idx: int) -> Dict:
+    """Create enriched refining recipe for synthetic mode."""
+    recipe_id = placement['recipeId']
+    if var_idx > 0:
+        recipe_id = f"{recipe_id}_v{var_idx}"
+
+    core_inputs = []
+    for core in placement.get('coreInputs', []):
+        mat_id = core.get('materialId')
+        var_name, var_tags = namer.get_variation_name(mat_id, var_idx)
+        input_item = {
+            "materialId": var_name,
+            "quantity": core.get('quantity', 1)
+        }
+        enriched = enricher.enrich_input({"materialId": mat_id}, var_tags)
+        input_item['material_metadata'] = enriched.get('material_metadata', {})
+        core_inputs.append(input_item)
+
+    surrounding_inputs = []
+    for spoke in placement.get('surroundingInputs', []):
+        mat_id = spoke.get('materialId')
+        var_name, var_tags = namer.get_variation_name(mat_id, var_idx)
+        input_item = {
+            "materialId": var_name,
+            "quantity": spoke.get('quantity', 1)
+        }
+        enriched = enricher.enrich_input({"materialId": mat_id}, var_tags)
+        input_item['material_metadata'] = enriched.get('material_metadata', {})
+        surrounding_inputs.append(input_item)
+
+    return {
+        "recipeId": recipe_id,
+        "stationType": "refining",
+        "stationTier": placement.get('stationTier', 1),
+        "outputId": placement.get('outputId', ''),
+        "coreInputs": core_inputs,
+        "surroundingInputs": surrounding_inputs
+    }
+
+
+def create_enriched_alchemy_recipe(placement: Dict, enricher: MaterialEnricher,
+                                   namer: VariationNamer, var_idx: int) -> Dict:
+    """Create enriched alchemy recipe for synthetic mode."""
+    recipe_id = placement['recipeId']
+    if var_idx > 0:
+        recipe_id = f"{recipe_id}_v{var_idx}"
+
+    ingredients = []
+    for ing in placement.get('ingredients', []):
+        mat_id = ing.get('materialId')
+        var_name, var_tags = namer.get_variation_name(mat_id, var_idx)
+        input_item = {
+            "materialId": var_name,
+            "quantity": ing.get('quantity', 1),
+            "slot": ing.get('slot', 1)
+        }
+        enriched = enricher.enrich_input({"materialId": mat_id}, var_tags)
+        input_item['material_metadata'] = enriched.get('material_metadata', {})
+        ingredients.append(input_item)
+
+    return {
+        "recipeId": recipe_id,
+        "stationType": "alchemy",
+        "stationTier": placement.get('stationTier', 1),
+        "outputId": placement.get('outputId', ''),
+        "ingredients": ingredients
+    }
+
+
+def create_enriched_engineering_recipe(placement: Dict, enricher: MaterialEnricher,
+                                       namer: VariationNamer, var_idx: int) -> Dict:
+    """Create enriched engineering recipe for synthetic mode."""
+    recipe_id = placement['recipeId']
+    if var_idx > 0:
+        recipe_id = f"{recipe_id}_v{var_idx}"
+
+    slots = []
+    for slot in placement.get('slots', []):
+        mat_id = slot.get('materialId')
+        var_name, var_tags = namer.get_variation_name(mat_id, var_idx)
+        slot_item = {
+            "materialId": var_name,
+            "quantity": slot.get('quantity', 1),
+            "type": slot.get('type', 'FRAME')
+        }
+        enriched = enricher.enrich_input({"materialId": mat_id}, var_tags)
+        slot_item['material_metadata'] = enriched.get('material_metadata', {})
+        slots.append(slot_item)
+
+    return {
+        "recipeId": recipe_id,
+        "stationType": "engineering",
+        "stationTier": placement.get('stationTier', 1),
+        "outputId": placement.get('outputId', ''),
+        "slots": slots
+    }
+
+
 def main():
     """Main entry point."""
     import argparse
@@ -2177,7 +2604,8 @@ def main():
 Examples:
   python crafting_training_data.py --discipline smithing --output ./training_data/
   python crafting_training_data.py --discipline all --output ./training_data/
-  python crafting_training_data.py --discipline adornment --color-variations 5
+  python crafting_training_data.py --mode 3 --cap 1000  # Augmented only with 1000 cap
+  python crafting_training_data.py --mode 2  # Synthetic only (original + 3x variations)
         """
     )
 
@@ -2188,6 +2616,13 @@ Examples:
     parser.add_argument('--output', '-o',
                         default='./training_data',
                         help='Output directory for training data')
+    parser.add_argument('--mode', '-m',
+                        type=int, choices=[1, 2, 3, 4],
+                        default=None,
+                        help='Generation mode: 1=all, 2=synthetic, 3=augmented, 4=custom')
+    parser.add_argument('--cap', '-c',
+                        type=int, default=1000,
+                        help='Maximum examples per discipline (default 1000, 0 for no cap)')
     parser.add_argument('--color-variations', '-cv',
                         type=int, default=3,
                         help='Number of color variations for VLM disciplines')
@@ -2197,6 +2632,9 @@ Examples:
     parser.add_argument('--seed', '-s',
                         type=int, default=42,
                         help='Random seed for reproducibility')
+    parser.add_argument('--no-menu', '-n',
+                        action='store_true',
+                        help='Skip menu and use --mode argument directly')
 
     args = parser.parse_args()
 
@@ -2208,61 +2646,190 @@ Examples:
     paths = get_default_paths()
     disciplines = [args.discipline] if args.discipline != 'all' else list(paths.keys())
 
-    print("=" * 70)
+    # Determine generation mode
+    if args.no_menu and args.mode:
+        mode = args.mode
+    elif args.mode:
+        mode = args.mode
+    else:
+        mode = show_menu()
+
+    # Get custom parameters if mode 4
+    custom_params = {}
+    if mode == GenerationMode.CUSTOM:
+        custom_params = get_custom_params()
+        cap = custom_params.get('global_cap', args.cap)
+        color_variations = custom_params.get('color_variations', args.color_variations)
+    else:
+        cap = args.cap
+        color_variations = args.color_variations
+
+    # Show estimates
+    estimates = estimate_counts(paths, mode, color_variations)
+    display_estimates(estimates, mode)
+
+    # Confirm before generating
+    print(f"\nCap per discipline: {cap if cap > 0 else 'None'}")
+    try:
+        confirm = input("\nProceed with generation? (y/n): ").strip().lower()
+        if confirm != 'y':
+            print("Generation cancelled.")
+            return
+    except EOFError:
+        pass  # Non-interactive, proceed
+
+    print("\n" + "=" * 70)
     print("CRAFTING TRAINING DATA GENERATOR")
     print("=" * 70)
+    print(f"Mode: {mode} ({GenerationMode.get_mode_description(mode)})")
     print(f"Disciplines: {', '.join(disciplines)}")
     print(f"Output: {args.output}")
-    print(f"Color variations: {args.color_variations}")
+    print(f"Cap: {cap if cap > 0 else 'None'}")
+    if mode in [GenerationMode.ALL, GenerationMode.SYNTHETIC_ONLY]:
+        print(f"Color variations: {color_variations}")
     print()
 
     for discipline in disciplines:
         print(f"\n{'='*70}")
-        print(f"Processing: {discipline.upper()}")
+        print(f"Processing: {discipline.upper()} (Mode {mode})")
         print(f"{'='*70}")
 
         try:
-            if discipline == 'smithing':
-                gen = SmithingVLMDataGenerator(
-                    paths[discipline]['materials'],
-                    paths[discipline]['placements'],
-                    args.color_variations
-                )
-                data = gen.generate(args.output, args.save_images)
-                save_training_data(data, os.path.join(args.output, 'smithing_vlm_data.json'), discipline)
+            data = []
 
-            elif discipline == 'adornment':
-                gen = AdornmentVLMDataGenerator(
-                    paths[discipline]['materials'],
-                    paths[discipline]['placements'],
-                    args.color_variations
+            # MODE 2: Synthetic Only (original + 3x synthetic variations)
+            if mode == GenerationMode.SYNTHETIC_ONLY:
+                data = generate_synthetic_only(
+                    discipline,
+                    paths[discipline],
+                    args.output,
+                    num_synthetic=3,
+                    cap=cap
                 )
-                data = gen.generate(args.output, args.save_images)
-                save_training_data(data, os.path.join(args.output, 'adornment_vlm_data.json'), discipline)
+                output_file = f'{discipline}_synthetic_data.json'
 
-            elif discipline == 'refining':
-                gen = RefiningLLMDataGenerator(
-                    paths[discipline]['materials'],
-                    paths[discipline]['placements']
-                )
-                data = gen.generate()
-                save_training_data(data, os.path.join(args.output, 'refining_llm_data.json'), discipline)
+            # MODE 3: Augmented Only (material substitution, no color variations)
+            elif mode == GenerationMode.AUGMENTED_ONLY:
+                if discipline == 'smithing':
+                    gen = SmithingVLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements'],
+                        num_color_variations=0  # No color variations
+                    )
+                    data = gen.generate(args.output, args.save_images)
+                elif discipline == 'adornment':
+                    gen = AdornmentVLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements'],
+                        num_color_variations=0
+                    )
+                    data = gen.generate(args.output, args.save_images)
+                elif discipline == 'refining':
+                    gen = RefiningLLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements']
+                    )
+                    data = gen.generate()
+                elif discipline == 'alchemy':
+                    gen = AlchemyLLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements']
+                    )
+                    data = gen.generate()
+                elif discipline == 'engineering':
+                    gen = EngineeringLLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements']
+                    )
+                    data = gen.generate()
 
-            elif discipline == 'alchemy':
-                gen = AlchemyLLMDataGenerator(
-                    paths[discipline]['materials'],
-                    paths[discipline]['placements']
-                )
-                data = gen.generate()
-                save_training_data(data, os.path.join(args.output, 'alchemy_llm_data.json'), discipline)
+                # Apply cap
+                data = apply_cap(data, cap, discipline)
+                output_file = f'{discipline}_augmented_data.json'
 
-            elif discipline == 'engineering':
-                gen = EngineeringLLMDataGenerator(
-                    paths[discipline]['materials'],
-                    paths[discipline]['placements']
-                )
-                data = gen.generate()
-                save_training_data(data, os.path.join(args.output, 'engineering_llm_data.json'), discipline)
+            # MODE 1: All Data (augmented + synthetic)
+            elif mode == GenerationMode.ALL:
+                if discipline == 'smithing':
+                    gen = SmithingVLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements'],
+                        color_variations
+                    )
+                    data = gen.generate(args.output, args.save_images)
+                elif discipline == 'adornment':
+                    gen = AdornmentVLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements'],
+                        color_variations
+                    )
+                    data = gen.generate(args.output, args.save_images)
+                elif discipline == 'refining':
+                    gen = RefiningLLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements']
+                    )
+                    data = gen.generate()
+                elif discipline == 'alchemy':
+                    gen = AlchemyLLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements']
+                    )
+                    data = gen.generate()
+                elif discipline == 'engineering':
+                    gen = EngineeringLLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements']
+                    )
+                    data = gen.generate()
+
+                # Apply cap
+                data = apply_cap(data, cap, discipline)
+                output_file = f'{discipline}_all_data.json'
+
+            # MODE 4: Custom
+            elif mode == GenerationMode.CUSTOM:
+                cv = custom_params.get('color_variations', 3)
+
+                if discipline == 'smithing':
+                    gen = SmithingVLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements'],
+                        cv
+                    )
+                    data = gen.generate(args.output, args.save_images)
+                elif discipline == 'adornment':
+                    gen = AdornmentVLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements'],
+                        cv
+                    )
+                    data = gen.generate(args.output, args.save_images)
+                elif discipline == 'refining':
+                    gen = RefiningLLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements']
+                    )
+                    data = gen.generate()
+                elif discipline == 'alchemy':
+                    gen = AlchemyLLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements']
+                    )
+                    data = gen.generate()
+                elif discipline == 'engineering':
+                    gen = EngineeringLLMDataGenerator(
+                        paths[discipline]['materials'],
+                        paths[discipline]['placements']
+                    )
+                    data = gen.generate()
+
+                # Apply custom cap
+                data = apply_cap(data, custom_params.get('global_cap', 1000), discipline)
+                output_file = f'{discipline}_custom_data.json'
+
+            # Save output
+            if data:
+                save_training_data(data, os.path.join(args.output, output_file), discipline)
 
         except FileNotFoundError as e:
             print(f"  ERROR: {e}")
@@ -2277,6 +2844,12 @@ Examples:
     print("\n" + "=" * 70)
     print("GENERATION COMPLETE")
     print("=" * 70)
+    print(f"\nOutput files saved to: {args.output}/")
+    print("\nTo use different modes:")
+    print("  Mode 1 (all): python crafting_training_data.py --mode 1")
+    print("  Mode 2 (synthetic): python crafting_training_data.py --mode 2")
+    print("  Mode 3 (augmented): python crafting_training_data.py --mode 3")
+    print("  Mode 4 (custom): python crafting_training_data.py --mode 4")
 
 
 if __name__ == "__main__":
