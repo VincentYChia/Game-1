@@ -31,6 +31,9 @@ Thumbs.db
 # Generated training datasets (regenerated during training)
 *.npz
 
+# Generated LLM/VLM training data output
+Scaled JSON Development/training_data/
+
 # =============================================================================
 # CLASSIFIER MODELS - Large binary files
 # =============================================================================
