@@ -2278,43 +2278,357 @@ def show_menu() -> int:
             return GenerationMode.AUGMENTED_ONLY
 
 
+def parse_discipline_selection(selection: str) -> List[str]:
+    """
+    Parse discipline selection string into list of discipline names.
+
+    Accepts:
+    - Single number: "1" → ['smithing']
+    - Comma-separated: "1,3,5" → ['smithing', 'refining', 'engineering']
+    - Range: "1-4" → ['smithing', 'adornment', 'refining', 'alchemy']
+    - Mixed: "1,3-5" → ['smithing', 'refining', 'alchemy', 'engineering']
+    """
+    DISCIPLINE_MAP = {
+        1: 'smithing',
+        2: 'adornment',
+        3: 'refining',
+        4: 'alchemy',
+        5: 'engineering'
+    }
+
+    selected = set()
+    parts = selection.replace(' ', '').split(',')
+
+    for part in parts:
+        if '-' in part:
+            # Range: "1-4"
+            try:
+                start, end = map(int, part.split('-'))
+                for i in range(start, end + 1):
+                    if i in DISCIPLINE_MAP:
+                        selected.add(DISCIPLINE_MAP[i])
+            except ValueError:
+                pass
+        else:
+            # Single number
+            try:
+                num = int(part)
+                if num in DISCIPLINE_MAP:
+                    selected.add(DISCIPLINE_MAP[num])
+            except ValueError:
+                pass
+
+    # Return in canonical order
+    order = ['smithing', 'adornment', 'refining', 'alchemy', 'engineering']
+    return [d for d in order if d in selected]
+
+
 def get_custom_params() -> Dict:
-    """Get customized parameters from user."""
+    """
+    Get customized parameters from user.
+
+    Custom mode workflow:
+    1. Select disciplines (1-6, where 6 allows custom selection)
+    2. Enter sample count per discipline
+    3. Data is generated in quality order: original → augmented → variation → variation+augmented
+    """
     print("\n" + "=" * 70)
-    print("CUSTOM PARAMETERS")
+    print("CUSTOM MODE - DISCIPLINE SELECTION")
     print("=" * 70)
+    print("\nSelect disciplines to generate:\n")
+    print("  1. Smithing (VLM - images + recipes)")
+    print("  2. Adornment (VLM - images + recipes)")
+    print("  3. Refining (LLM - recipes only)")
+    print("  4. Alchemy (LLM - recipes only)")
+    print("  5. Engineering (LLM - recipes only)")
+    print("  6. Custom selection (e.g., '1,3,5' or '1-4' or '2,4-5')")
+    print()
 
     params = {}
 
-    # Global cap
+    # Get discipline selection
     try:
-        cap = input("\nGlobal cap per discipline (default 1000, 0 for no cap): ").strip()
-        params['global_cap'] = int(cap) if cap else 1000
-    except (ValueError, EOFError):
-        params['global_cap'] = 1000
+        choice = input("Enter selection (1-6): ").strip()
 
-    # Color variations (for VLM)
-    try:
-        cv = input("Color variations for VLM disciplines (default 3): ").strip()
-        params['color_variations'] = int(cv) if cv else 3
-    except (ValueError, EOFError):
-        params['color_variations'] = 3
+        if choice == '6':
+            # Custom selection
+            custom_sel = input("Enter disciplines (e.g., '1,3,5' or '1-4'): ").strip()
+            params['disciplines'] = parse_discipline_selection(custom_sel)
+        elif choice in ['1', '2', '3', '4', '5']:
+            discipline_map = {
+                '1': ['smithing'],
+                '2': ['adornment'],
+                '3': ['refining'],
+                '4': ['alchemy'],
+                '5': ['engineering']
+            }
+            params['disciplines'] = discipline_map[choice]
+        else:
+            print("Invalid selection, using all disciplines.")
+            params['disciplines'] = ['smithing', 'adornment', 'refining', 'alchemy', 'engineering']
 
-    # Material substitution limit
-    try:
-        ml = input("Max material substitutions per recipe (default 5): ").strip()
-        params['max_substitutions'] = int(ml) if ml else 5
-    except (ValueError, EOFError):
-        params['max_substitutions'] = 5
-
-    # Include permutations
-    try:
-        perm = input("Include permutation augmentation for LLM disciplines? (y/n, default y): ").strip().lower()
-        params['include_permutations'] = perm != 'n'
     except EOFError:
-        params['include_permutations'] = True
+        params['disciplines'] = ['smithing', 'adornment', 'refining', 'alchemy', 'engineering']
+
+    if not params['disciplines']:
+        print("No valid disciplines selected, using all.")
+        params['disciplines'] = ['smithing', 'adornment', 'refining', 'alchemy', 'engineering']
+
+    print(f"\nSelected: {', '.join(params['disciplines'])}")
+
+    # Get sample count per discipline
+    print("\n" + "-" * 70)
+    print("SAMPLE COUNT")
+    print("-" * 70)
+    print("\nData quality order (highest to lowest):")
+    print("  1. Original recipes (base recipes, no modifications)")
+    print("  2. Augmented original (material substitution, exact colors)")
+    print("  3. Variation original (color/naming variations of originals)")
+    print("  4. Variation augmented (color/naming variations of augmented)")
+    print("\nSamples are filled in quality order until count is reached.")
+    print()
+
+    params['sample_counts'] = {}
+
+    for discipline in params['disciplines']:
+        try:
+            count = input(f"Samples for {discipline} (default 500): ").strip()
+            params['sample_counts'][discipline] = int(count) if count else 500
+        except (ValueError, EOFError):
+            params['sample_counts'][discipline] = 500
 
     return params
+
+
+def generate_quality_ordered(discipline: str, paths: Dict, sample_count: int,
+                             output_dir: str = None, save_images: bool = False) -> List[Dict]:
+    """
+    Generate training data in quality order up to sample_count.
+
+    Quality order (highest to lowest):
+    1. Original recipes (base, no modifications)
+    2. Augmented original (material substitution, exact colors)
+    3. Variation original (naming/color variations of base recipes)
+    4. Variation augmented (naming/color variations of augmented recipes)
+
+    Fills each tier before moving to the next until sample_count is reached.
+    """
+    materials_path = paths['materials']
+    placements_path = paths['placements']
+
+    enricher = MaterialEnricher(materials_path)
+    variation_namer = VariationNamer()
+
+    with open(materials_path, 'r') as f:
+        data = json.load(f)
+    materials_dict = {m['materialId']: m for m in data.get('materials', [])}
+
+    with open(placements_path, 'r') as f:
+        data = json.load(f)
+    placements = data.get('placements', [])
+
+    print(f"\nGenerating {discipline} data (quality-ordered, max {sample_count})...")
+    print(f"  Base recipes: {len(placements)}")
+
+    training_data = []
+
+    # ==========================================================================
+    # TIER 1: Original recipes (highest quality)
+    # ==========================================================================
+    print("  Tier 1: Original recipes...")
+    tier1_data = []
+
+    for placement in placements:
+        if len(tier1_data) + len(training_data) >= sample_count:
+            break
+
+        if discipline == 'smithing':
+            recipe = create_enriched_smithing_recipe(placement, enricher, variation_namer, 0)
+        elif discipline == 'adornment':
+            recipe = create_enriched_adornment_recipe(placement, enricher, variation_namer, 0)
+        elif discipline == 'refining':
+            recipe = create_enriched_refining_recipe(placement, enricher, variation_namer, 0)
+        elif discipline == 'alchemy':
+            recipe = create_enriched_alchemy_recipe(placement, enricher, variation_namer, 0)
+        elif discipline == 'engineering':
+            recipe = create_enriched_engineering_recipe(placement, enricher, variation_namer, 0)
+        else:
+            continue
+
+        entry = {
+            "recipe_id": recipe.get('recipeId'),
+            "quality_tier": 1,
+            "variation": "original",
+            "recipe": recipe
+        }
+        tier1_data.append(entry)
+
+    training_data.extend(tier1_data)
+    print(f"    Added {len(tier1_data)} original recipes (total: {len(training_data)})")
+
+    if len(training_data) >= sample_count:
+        return training_data[:sample_count]
+
+    # ==========================================================================
+    # TIER 2: Augmented original (material substitution, exact colors)
+    # ==========================================================================
+    print("  Tier 2: Augmented original (material substitution)...")
+    tier2_data = []
+
+    # Use discipline-specific generator for augmentation
+    if discipline == 'smithing':
+        gen = SmithingVLMDataGenerator(materials_path, placements_path, num_color_variations=0)
+        augmented = gen.generate(output_dir, save_images)
+        # Filter out originals (already in tier 1) - keep only substituted/flipped
+        for entry in augmented:
+            if len(tier2_data) + len(training_data) >= sample_count:
+                break
+            recipe_id = entry.get('recipe_id', '')
+            # Skip if it's a base original (no suffix beyond _v0)
+            if '_v0' in recipe_id and not any(x in recipe_id for x in ['_flip', '_iron', '_steel', '_copper', '_mithril']):
+                continue
+            entry['quality_tier'] = 2
+            tier2_data.append(entry)
+
+    elif discipline == 'adornment':
+        gen = AdornmentVLMDataGenerator(materials_path, placements_path, num_color_variations=0)
+        augmented = gen.generate(output_dir, save_images)
+        for entry in augmented:
+            if len(tier2_data) + len(training_data) >= sample_count:
+                break
+            recipe_id = entry.get('recipe_id', '')
+            if '_v0' in recipe_id and '_vert' not in recipe_id and '_hori' not in recipe_id:
+                continue
+            entry['quality_tier'] = 2
+            tier2_data.append(entry)
+
+    elif discipline == 'refining':
+        gen = RefiningLLMDataGenerator(materials_path, placements_path)
+        augmented = gen.generate()
+        # Skip first occurrence of each base recipe (those are originals)
+        seen_bases = set()
+        for entry in augmented:
+            if len(tier2_data) + len(training_data) >= sample_count:
+                break
+            recipe_id = entry.get('recipe_id', '')
+            base_id = recipe_id.split('_v')[0] if '_v' in recipe_id else recipe_id
+            if base_id not in seen_bases:
+                seen_bases.add(base_id)
+                continue  # Skip the original
+            entry['quality_tier'] = 2
+            tier2_data.append(entry)
+
+    elif discipline == 'alchemy':
+        gen = AlchemyLLMDataGenerator(materials_path, placements_path)
+        augmented = gen.generate()
+        seen_bases = set()
+        for entry in augmented:
+            if len(tier2_data) + len(training_data) >= sample_count:
+                break
+            recipe_id = entry.get('recipe_id', '')
+            base_id = recipe_id.split('_v')[0] if '_v' in recipe_id else recipe_id
+            if base_id not in seen_bases:
+                seen_bases.add(base_id)
+                continue
+            entry['quality_tier'] = 2
+            tier2_data.append(entry)
+
+    elif discipline == 'engineering':
+        gen = EngineeringLLMDataGenerator(materials_path, placements_path)
+        augmented = gen.generate()
+        seen_bases = set()
+        for entry in augmented:
+            if len(tier2_data) + len(training_data) >= sample_count:
+                break
+            recipe_id = entry.get('recipe_id', '')
+            base_id = recipe_id.split('_v')[0] if '_v' in recipe_id else recipe_id
+            if base_id not in seen_bases:
+                seen_bases.add(base_id)
+                continue
+            entry['quality_tier'] = 2
+            tier2_data.append(entry)
+
+    training_data.extend(tier2_data)
+    print(f"    Added {len(tier2_data)} augmented recipes (total: {len(training_data)})")
+
+    if len(training_data) >= sample_count:
+        return training_data[:sample_count]
+
+    # ==========================================================================
+    # TIER 3: Variation original (naming/color variations of base recipes)
+    # ==========================================================================
+    print("  Tier 3: Variation original (naming variations of originals)...")
+    tier3_data = []
+
+    for var_idx in range(1, 4):  # 3 variations per original
+        for placement in placements:
+            if len(tier3_data) + len(training_data) >= sample_count:
+                break
+
+            if discipline == 'smithing':
+                recipe = create_enriched_smithing_recipe(placement, enricher, variation_namer, var_idx)
+            elif discipline == 'adornment':
+                recipe = create_enriched_adornment_recipe(placement, enricher, variation_namer, var_idx)
+            elif discipline == 'refining':
+                recipe = create_enriched_refining_recipe(placement, enricher, variation_namer, var_idx)
+            elif discipline == 'alchemy':
+                recipe = create_enriched_alchemy_recipe(placement, enricher, variation_namer, var_idx)
+            elif discipline == 'engineering':
+                recipe = create_enriched_engineering_recipe(placement, enricher, variation_namer, var_idx)
+            else:
+                continue
+
+            entry = {
+                "recipe_id": recipe.get('recipeId'),
+                "quality_tier": 3,
+                "variation": f"variation_v{var_idx}",
+                "recipe": recipe
+            }
+            tier3_data.append(entry)
+
+        if len(tier3_data) + len(training_data) >= sample_count:
+            break
+
+    training_data.extend(tier3_data)
+    print(f"    Added {len(tier3_data)} variation originals (total: {len(training_data)})")
+
+    if len(training_data) >= sample_count:
+        return training_data[:sample_count]
+
+    # ==========================================================================
+    # TIER 4: Variation augmented (naming/color variations of augmented recipes)
+    # ==========================================================================
+    print("  Tier 4: Variation augmented (variations of augmented)...")
+    tier4_data = []
+
+    # Generate full augmented data with color variations
+    if discipline in ['smithing', 'adornment']:
+        if discipline == 'smithing':
+            gen = SmithingVLMDataGenerator(materials_path, placements_path, num_color_variations=3)
+        else:
+            gen = AdornmentVLMDataGenerator(materials_path, placements_path, num_color_variations=3)
+
+        full_augmented = gen.generate(output_dir, save_images)
+
+        # Filter to only include color variations (v1, v2, v3) of augmented recipes
+        for entry in full_augmented:
+            if len(tier4_data) + len(training_data) >= sample_count:
+                break
+            recipe_id = entry.get('recipe_id', '')
+            # Only include if it's a variation (v1, v2, v3) AND augmented (has substitution markers)
+            if any(f'_v{i}' in recipe_id for i in [1, 2, 3]):
+                if any(x in recipe_id for x in ['_flip', '_vert', '_hori', '_iron', '_steel', '_copper']):
+                    entry['quality_tier'] = 4
+                    tier4_data.append(entry)
+    else:
+        # For LLM disciplines, just add more variation indices to augmented recipes
+        # This requires re-generating with variation indices applied
+        pass  # LLM disciplines don't have as much tier 4 data since no color variations
+
+    training_data.extend(tier4_data)
+    print(f"    Added {len(tier4_data)} variation augmented (total: {len(training_data)})")
+
+    return training_data[:sample_count]
 
 
 # ============================================================================
@@ -2658,25 +2972,44 @@ Examples:
     custom_params = {}
     if mode == GenerationMode.CUSTOM:
         custom_params = get_custom_params()
-        cap = custom_params.get('global_cap', args.cap)
-        color_variations = custom_params.get('color_variations', args.color_variations)
+        # Override disciplines with custom selection
+        disciplines = custom_params.get('disciplines', disciplines)
+        cap = 0  # Custom mode uses per-discipline sample counts
+        color_variations = args.color_variations
     else:
         cap = args.cap
         color_variations = args.color_variations
 
-    # Show estimates
-    estimates = estimate_counts(paths, mode, color_variations)
-    display_estimates(estimates, mode)
+    # Show estimates (skip for custom mode - it has its own sample counts)
+    if mode != GenerationMode.CUSTOM:
+        estimates = estimate_counts(paths, mode, color_variations)
+        display_estimates(estimates, mode)
 
-    # Confirm before generating
-    print(f"\nCap per discipline: {cap if cap > 0 else 'None'}")
-    try:
-        confirm = input("\nProceed with generation? (y/n): ").strip().lower()
-        if confirm != 'y':
-            print("Generation cancelled.")
-            return
-    except EOFError:
-        pass  # Non-interactive, proceed
+        # Confirm before generating
+        print(f"\nCap per discipline: {cap if cap > 0 else 'None'}")
+        try:
+            confirm = input("\nProceed with generation? (y/n): ").strip().lower()
+            if confirm != 'y':
+                print("Generation cancelled.")
+                return
+        except EOFError:
+            pass  # Non-interactive, proceed
+    else:
+        # Custom mode shows its own summary
+        print("\n" + "-" * 70)
+        print("CUSTOM MODE SUMMARY")
+        print("-" * 70)
+        for disc in disciplines:
+            count = custom_params.get('sample_counts', {}).get(disc, 500)
+            print(f"  {disc}: {count} samples (quality-ordered)")
+        print()
+        try:
+            confirm = input("Proceed with generation? (y/n): ").strip().lower()
+            if confirm != 'y':
+                print("Generation cancelled.")
+                return
+        except EOFError:
+            pass
 
     print("\n" + "=" * 70)
     print("CRAFTING TRAINING DATA GENERATOR")
@@ -2684,7 +3017,8 @@ Examples:
     print(f"Mode: {mode} ({GenerationMode.get_mode_description(mode)})")
     print(f"Disciplines: {', '.join(disciplines)}")
     print(f"Output: {args.output}")
-    print(f"Cap: {cap if cap > 0 else 'None'}")
+    if mode != GenerationMode.CUSTOM:
+        print(f"Cap: {cap if cap > 0 else 'None'}")
     if mode in [GenerationMode.ALL, GenerationMode.SYNTHETIC_ONLY]:
         print(f"Color variations: {color_variations}")
     print()
@@ -2786,45 +3120,17 @@ Examples:
                 data = apply_cap(data, cap, discipline)
                 output_file = f'{discipline}_all_data.json'
 
-            # MODE 4: Custom
+            # MODE 4: Custom (quality-ordered generation)
             elif mode == GenerationMode.CUSTOM:
-                cv = custom_params.get('color_variations', 3)
+                sample_count = custom_params.get('sample_counts', {}).get(discipline, 500)
 
-                if discipline == 'smithing':
-                    gen = SmithingVLMDataGenerator(
-                        paths[discipline]['materials'],
-                        paths[discipline]['placements'],
-                        cv
-                    )
-                    data = gen.generate(args.output, args.save_images)
-                elif discipline == 'adornment':
-                    gen = AdornmentVLMDataGenerator(
-                        paths[discipline]['materials'],
-                        paths[discipline]['placements'],
-                        cv
-                    )
-                    data = gen.generate(args.output, args.save_images)
-                elif discipline == 'refining':
-                    gen = RefiningLLMDataGenerator(
-                        paths[discipline]['materials'],
-                        paths[discipline]['placements']
-                    )
-                    data = gen.generate()
-                elif discipline == 'alchemy':
-                    gen = AlchemyLLMDataGenerator(
-                        paths[discipline]['materials'],
-                        paths[discipline]['placements']
-                    )
-                    data = gen.generate()
-                elif discipline == 'engineering':
-                    gen = EngineeringLLMDataGenerator(
-                        paths[discipline]['materials'],
-                        paths[discipline]['placements']
-                    )
-                    data = gen.generate()
-
-                # Apply custom cap
-                data = apply_cap(data, custom_params.get('global_cap', 1000), discipline)
+                data = generate_quality_ordered(
+                    discipline,
+                    paths[discipline],
+                    sample_count,
+                    args.output,
+                    args.save_images
+                )
                 output_file = f'{discipline}_custom_data.json'
 
             # Save output
