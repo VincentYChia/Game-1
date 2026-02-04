@@ -452,6 +452,11 @@ class SmithingVLMDataGenerator:
     """
     Generates VLM training data for Smithing discipline.
 
+    Full augmentation pipeline (matching CNN training):
+    1. Material substitution cross-product (all valid substitutes)
+    2. Horizontal flips
+    3. Color variations (1 exact + N varied per grid)
+
     Output format:
     {
         "recipe_id": "smithing_iron_sword_001_v2",
@@ -486,7 +491,7 @@ class SmithingVLMDataGenerator:
         Args:
             materials_path: Path to materials JSON
             placements_path: Path to smithing placements JSON
-            num_color_variations: Number of color variations per base recipe
+            num_color_variations: Number of color variations per grid (in addition to 1 exact)
         """
         self.enricher = MaterialEnricher(materials_path)
         self.variation_namer = VariationNamer()
@@ -672,9 +677,216 @@ class SmithingVLMDataGenerator:
         """Check if recipe is a station (exclude from training)."""
         return any(recipe_id.endswith(f'_t{i}') for i in range(1, 5))
 
+    def find_substitutable_materials(self, material_id: str) -> List[str]:
+        """
+        Find all materials that can substitute for the given material.
+
+        HARD REQUIREMENTS (must match):
+        - Same category
+        - Same refinement status (refined vs basic/raw)
+
+        SUBSTITUTION RULES (one must be true):
+        - Rule 1: ALL tags identical → can substitute at ANY tier
+        - Rule 2: Tier difference ≤1 AND ≥2 matching tags
+        """
+        if material_id not in self.materials_dict:
+            return []
+
+        base_mat = self.materials_dict[material_id]
+        base_tier = base_mat.get('tier', 1)
+        base_tags = set(base_mat.get('metadata', {}).get('tags', []))
+        base_category = base_mat.get('category', 'unknown')
+
+        is_refined = 'refined' in base_tags
+        is_basic = 'basic' in base_tags or 'raw' in base_tags
+
+        substitutes = []
+
+        for mat_id, mat in self.materials_dict.items():
+            if mat_id == material_id:
+                continue
+
+            # Must be same category
+            if mat.get('category') != base_category:
+                continue
+
+            mat_tags = set(mat.get('metadata', {}).get('tags', []))
+            mat_tier = mat.get('tier', 1)
+
+            # HARD: refined/basic must match
+            mat_is_refined = 'refined' in mat_tags
+            mat_is_basic = 'basic' in mat_tags or 'raw' in mat_tags
+
+            if is_refined and not mat_is_refined:
+                continue
+            if is_basic and not mat_is_basic:
+                continue
+            if not is_refined and not is_basic:
+                if mat_is_refined or mat_is_basic:
+                    continue
+
+            # Rule 1: All tags match (any tier)
+            if mat_tags == base_tags:
+                substitutes.append(mat_id)
+                continue
+
+            # Rule 2: ±1 tier and ≥2 matching tags
+            if abs(mat_tier - base_tier) <= 1:
+                matching_tags = base_tags & mat_tags
+                if len(matching_tags) >= 2:
+                    substitutes.append(mat_id)
+
+        return substitutes
+
+    def flip_grid_horizontal(self, grid: List[List[Optional[str]]]) -> List[List[Optional[str]]]:
+        """Flip 9x9 grid horizontally."""
+        return [row[::-1] for row in grid]
+
+    def augment_recipe_materials(self, grid: List[List[Optional[str]]]) -> List[Tuple[List[List[Optional[str]]], Dict[str, str]]]:
+        """
+        Generate variants by substituting materials.
+        Returns list of (grid, material_substitution_map) tuples.
+
+        The substitution_map tracks which materials were substituted: {original_id: substituted_id}
+        """
+        variants = [(grid, {})]  # Original with empty substitution map
+
+        # Add horizontal flip of original
+        flipped = self.flip_grid_horizontal(grid)
+        variants.append((flipped, {'_flipped': True}))
+
+        # Find unique materials in grid
+        unique_materials = set()
+        for row in grid:
+            for mat in row:
+                if mat is not None:
+                    unique_materials.add(mat)
+
+        # Generate substitution variants
+        for material_id in unique_materials:
+            substitutes = self.find_substitutable_materials(material_id)
+
+            for sub_mat in substitutes:
+                # Create variant by replacing ALL instances
+                new_grid = copy.deepcopy(grid)
+                for i in range(9):
+                    for j in range(9):
+                        if new_grid[i][j] == material_id:
+                            new_grid[i][j] = sub_mat
+
+                sub_map = {material_id: sub_mat}
+                variants.append((new_grid, sub_map))
+
+                # Also add flipped version
+                flipped_variant = self.flip_grid_horizontal(new_grid)
+                sub_map_flipped = {material_id: sub_mat, '_flipped': True}
+                variants.append((flipped_variant, sub_map_flipped))
+
+        # Remove duplicates
+        unique_variants = []
+        seen = set()
+        for variant_grid, sub_map in variants:
+            variant_tuple = tuple(tuple(row) for row in variant_grid)
+            if variant_tuple not in seen:
+                seen.add(variant_tuple)
+                unique_variants.append((variant_grid, sub_map))
+
+        return unique_variants
+
+    def grid_to_enriched_recipe(self, placement: Dict, grid: List[List[Optional[str]]],
+                                 sub_map: Dict[str, str], variation_index: int) -> Dict:
+        """
+        Create material-enriched recipe from grid with substitution tracking.
+
+        Args:
+            placement: Original placement data
+            grid: 9x9 grid with (possibly substituted) material IDs
+            sub_map: Map of original→substituted materials
+            variation_index: 0 = exact colors, 1+ = color variations
+        """
+        base_recipe_id = placement['recipeId']
+
+        # Build recipe ID with substitution info
+        sub_suffix = ""
+        if sub_map:
+            # Create readable suffix from substitutions
+            for orig, sub in sub_map.items():
+                if orig != '_flipped':
+                    sub_suffix += f"_{sub.split('_')[0]}"  # Take first part of sub material
+            if sub_map.get('_flipped'):
+                sub_suffix += "_flip"
+
+        recipe_id = f"{base_recipe_id}{sub_suffix}_v{variation_index}"
+
+        grid_size = placement['metadata'].get('gridSize', '3x3')
+
+        # Count materials from grid (aggregated)
+        material_counts = {}
+        material_positions = {}
+
+        for i in range(9):
+            for j in range(9):
+                mat_id = grid[i][j]
+                if mat_id is None:
+                    continue
+
+                if mat_id not in material_counts:
+                    material_counts[mat_id] = 0
+                    material_positions[mat_id] = []
+
+                material_counts[mat_id] += 1
+                material_positions[mat_id].append(f"{i},{j}")
+
+        # Build enriched inputs
+        inputs = []
+        for mat_id, qty in material_counts.items():
+            # Get variation name and tags
+            var_name, var_tags = self.variation_namer.get_variation_name(mat_id, variation_index)
+
+            input_item = {
+                "materialId": var_name,
+                "quantity": qty,
+                "positions": material_positions[mat_id]
+            }
+
+            # Enrich with metadata (use actual material in grid, not variation name)
+            enriched = self.enricher.enrich_input({"materialId": mat_id}, var_tags)
+            input_item['material_metadata'] = enriched.get('material_metadata', {})
+            inputs.append(input_item)
+
+        recipe = {
+            "recipeId": recipe_id,
+            "stationType": "smithing",
+            "stationTier": self._infer_station_tier_from_grid(grid),
+            "gridSize": grid_size,
+            "inputs": inputs
+        }
+
+        # Include narrative if present
+        if placement['metadata'].get('narrative'):
+            recipe['narrative'] = placement['metadata']['narrative']
+
+        return recipe
+
+    def _infer_station_tier_from_grid(self, grid: List[List[Optional[str]]]) -> int:
+        """Infer station tier from materials in grid."""
+        max_tier = 1
+        for row in grid:
+            for mat_id in row:
+                if mat_id and mat_id in self.materials_dict:
+                    tier = self.materials_dict[mat_id].get('tier', 1)
+                    max_tier = max(max_tier, tier)
+        return min(max_tier, 4)
+
     def generate(self, output_dir: str = None, save_images: bool = True) -> List[Dict]:
         """
-        Generate training data for all smithing recipes.
+        Generate training data for all smithing recipes with full augmentation.
+
+        Pipeline:
+        1. For each placement → convert to 9x9 grid
+        2. Generate material substitution variants + horizontal flips
+        3. For each grid variant → generate 1 exact + N color variations
+        4. Each image gets paired with material-enriched recipe
 
         Args:
             output_dir: Directory to save PNG images (optional)
@@ -694,49 +906,71 @@ class SmithingVLMDataGenerator:
         valid_placements = [p for p in self.placements if not self.is_station(p['recipeId'])]
 
         print(f"\nProcessing {len(valid_placements)} non-station smithing recipes...")
+        print(f"Augmentation: material substitution + horizontal flips + {self.num_color_variations} color variations")
+
+        total_grids = 0
+        example_idx = 0
 
         for placement in valid_placements:
             recipe_id = placement['recipeId']
-            grid = self.placement_to_grid(placement)
+            base_grid = self.placement_to_grid(placement)
 
-            # Variation 0: Original (exact colors)
-            img_exact = self.grid_to_image(grid, 0, 0)
-            recipe_exact = self.create_enriched_recipe(placement, grid, 0)
+            # Step 1: Generate all material substitution + flip variants
+            grid_variants = self.augment_recipe_materials(base_grid)
+            total_grids += len(grid_variants)
 
-            entry = {
-                "recipe_id": recipe_id,
-                "variation": "original",
-                "image_base64": self.image_to_base64(img_exact) if PIL_AVAILABLE else None,
-                "recipe": recipe_exact
-            }
-            training_data.append(entry)
+            print(f"  {recipe_id}: {len(grid_variants)} grid variants")
 
-            if output_dir and save_images and PIL_AVAILABLE:
-                img_path = os.path.join(img_dir, f"{recipe_id}_v0.png")
-                self.save_image_to_disk(img_exact, img_path)
-
-            # Color variations
-            for v_idx in range(1, self.num_color_variations + 1):
-                # Vary value and saturation
-                val_offset = random.uniform(-0.10, 0.10)
-                sat_offset = random.uniform(-0.15, 0.15)
-
-                img_varied = self.grid_to_image(grid, val_offset, sat_offset)
-                recipe_varied = self.create_enriched_recipe(placement, grid, v_idx)
+            # Step 2: For each grid variant, generate color variations
+            for grid, sub_map in grid_variants:
+                # Variation 0: Exact colors
+                img_exact = self.grid_to_image(grid, 0, 0)
+                recipe_exact = self.grid_to_enriched_recipe(placement, grid, sub_map, 0)
 
                 entry = {
-                    "recipe_id": f"{recipe_id}_v{v_idx}",
-                    "variation": self.variation_namer.all_prefixes[(v_idx - 1) % len(self.variation_namer.all_prefixes)][0],
-                    "image_base64": self.image_to_base64(img_varied) if PIL_AVAILABLE else None,
-                    "recipe": recipe_varied
+                    "recipe_id": recipe_exact['recipeId'],
+                    "variation": "original",
+                    "image_base64": self.image_to_base64(img_exact) if PIL_AVAILABLE else None,
+                    "recipe": recipe_exact
                 }
                 training_data.append(entry)
+                example_idx += 1
 
                 if output_dir and save_images and PIL_AVAILABLE:
-                    img_path = os.path.join(img_dir, f"{recipe_id}_v{v_idx}.png")
-                    self.save_image_to_disk(img_varied, img_path)
+                    safe_id = recipe_exact['recipeId'].replace('/', '_')[:100]
+                    img_path = os.path.join(img_dir, f"{safe_id}.png")
+                    self.save_image_to_disk(img_exact, img_path)
 
-        print(f"Generated {len(training_data)} training examples")
+                # Color variations (varied saturation/value)
+                for v_idx in range(1, self.num_color_variations + 1):
+                    val_offset = random.uniform(-0.10, 0.10)
+                    sat_offset = random.uniform(-0.15, 0.15)
+
+                    img_varied = self.grid_to_image(grid, val_offset, sat_offset)
+                    recipe_varied = self.grid_to_enriched_recipe(placement, grid, sub_map, v_idx)
+
+                    var_name = self.variation_namer.all_prefixes[(v_idx - 1) % len(self.variation_namer.all_prefixes)][0]
+
+                    entry = {
+                        "recipe_id": recipe_varied['recipeId'],
+                        "variation": var_name,
+                        "image_base64": self.image_to_base64(img_varied) if PIL_AVAILABLE else None,
+                        "recipe": recipe_varied
+                    }
+                    training_data.append(entry)
+                    example_idx += 1
+
+                    if output_dir and save_images and PIL_AVAILABLE:
+                        safe_id = recipe_varied['recipeId'].replace('/', '_')[:100]
+                        img_path = os.path.join(img_dir, f"{safe_id}.png")
+                        self.save_image_to_disk(img_varied, img_path)
+
+        print(f"\n=== Smithing Augmentation Summary ===")
+        print(f"Base recipes: {len(valid_placements)}")
+        print(f"Grid variants (material sub + flips): {total_grids}")
+        print(f"Color variations per grid: {1 + self.num_color_variations}")
+        print(f"Total training examples: {len(training_data)}")
+
         return training_data
 
 
@@ -748,6 +982,11 @@ class AdornmentVLMDataGenerator:
     """
     Generates VLM training data for Adornment/Enchanting discipline.
     Uses vertex-based geometric patterns on a 12x12 coordinate grid.
+
+    Full augmentation pipeline:
+    1. Material substitution (all valid substitutes)
+    2. Reflections (vertical and horizontal)
+    3. Color variations (1 exact + N varied per pattern)
     """
 
     def __init__(self, materials_path: str, placements_path: str,
@@ -946,8 +1185,195 @@ class AdornmentVLMDataGenerator:
                 max_tier = max(max_tier, tier)
         return min(max_tier, 4)
 
+    def find_substitutable_materials(self, material_id: str) -> List[str]:
+        """Find all materials that can substitute for the given material."""
+        if material_id not in self.materials_dict:
+            return []
+
+        base_mat = self.materials_dict[material_id]
+        base_tier = base_mat.get('tier', 1)
+        base_tags = set(base_mat.get('metadata', {}).get('tags', []))
+        base_category = base_mat.get('category', 'unknown')
+
+        is_refined = 'refined' in base_tags
+        is_basic = 'basic' in base_tags or 'raw' in base_tags
+
+        substitutes = []
+
+        for mat_id, mat in self.materials_dict.items():
+            if mat_id == material_id:
+                continue
+            if mat.get('category') != base_category:
+                continue
+
+            mat_tags = set(mat.get('metadata', {}).get('tags', []))
+            mat_tier = mat.get('tier', 1)
+
+            mat_is_refined = 'refined' in mat_tags
+            mat_is_basic = 'basic' in mat_tags or 'raw' in mat_tags
+
+            if is_refined and not mat_is_refined:
+                continue
+            if is_basic and not mat_is_basic:
+                continue
+
+            if mat_tags == base_tags:
+                substitutes.append(mat_id)
+                continue
+
+            if abs(mat_tier - base_tier) <= 1:
+                matching_tags = base_tags & mat_tags
+                if len(matching_tags) >= 2:
+                    substitutes.append(mat_id)
+
+        return substitutes
+
+    def reflect_vertical(self, vertices: Dict, shapes: List) -> Tuple[Dict, List]:
+        """Reflect pattern vertically: (x,y) -> (x,-y)."""
+        new_vertices = {}
+        coord_mapping = {}
+
+        for coord_str, vertex_data in vertices.items():
+            x, y = map(int, coord_str.split(','))
+            new_coord_str = f"{x},{-y}"
+            new_vertices[new_coord_str] = copy.deepcopy(vertex_data)
+            coord_mapping[coord_str] = new_coord_str
+
+        new_shapes = []
+        for shape in shapes:
+            new_shape = copy.deepcopy(shape)
+            new_shape['vertices'] = [coord_mapping.get(v, v) for v in shape.get('vertices', [])]
+            new_shapes.append(new_shape)
+
+        return new_vertices, new_shapes
+
+    def reflect_horizontal(self, vertices: Dict, shapes: List) -> Tuple[Dict, List]:
+        """Reflect pattern horizontally: (x,y) -> (-x,y)."""
+        new_vertices = {}
+        coord_mapping = {}
+
+        for coord_str, vertex_data in vertices.items():
+            x, y = map(int, coord_str.split(','))
+            new_coord_str = f"{-x},{y}"
+            new_vertices[new_coord_str] = copy.deepcopy(vertex_data)
+            coord_mapping[coord_str] = new_coord_str
+
+        new_shapes = []
+        for shape in shapes:
+            new_shape = copy.deepcopy(shape)
+            new_shape['vertices'] = [coord_mapping.get(v, v) for v in shape.get('vertices', [])]
+            new_shapes.append(new_shape)
+
+        return new_vertices, new_shapes
+
+    def augment_pattern(self, vertices: Dict, shapes: List) -> List[Tuple[Dict, List, Dict]]:
+        """
+        Generate augmented patterns with material substitution and reflections.
+        Returns list of (vertices, shapes, substitution_map) tuples.
+        """
+        variants = [(vertices, shapes, {})]  # Original
+
+        # Add reflections
+        v_reflect, s_reflect = self.reflect_vertical(vertices, shapes)
+        variants.append((v_reflect, s_reflect, {'_reflected': 'vertical'}))
+
+        h_reflect, h_shapes = self.reflect_horizontal(vertices, shapes)
+        variants.append((h_reflect, h_shapes, {'_reflected': 'horizontal'}))
+
+        # Find unique materials
+        unique_materials = set()
+        for vertex_data in vertices.values():
+            mat_id = vertex_data.get('materialId')
+            if mat_id:
+                unique_materials.add(mat_id)
+
+        # Generate substitution variants
+        for material_id in unique_materials:
+            substitutes = self.find_substitutable_materials(material_id)
+
+            for sub_mat in substitutes:
+                # Create variant with substitution
+                new_vertices = copy.deepcopy(vertices)
+                for coord_str, vertex_data in new_vertices.items():
+                    if vertex_data.get('materialId') == material_id:
+                        vertex_data['materialId'] = sub_mat
+
+                sub_map = {material_id: sub_mat}
+                variants.append((new_vertices, shapes, sub_map))
+
+                # Also add reflected versions
+                v_reflect, s_reflect = self.reflect_vertical(new_vertices, shapes)
+                variants.append((v_reflect, s_reflect, {**sub_map, '_reflected': 'vertical'}))
+
+        # Remove duplicates based on vertex content
+        unique_variants = []
+        seen = set()
+        for verts, shps, sub_map in variants:
+            # Create hashable representation
+            vert_tuple = tuple(sorted((k, v.get('materialId', '')) for k, v in verts.items()))
+            if vert_tuple not in seen:
+                seen.add(vert_tuple)
+                unique_variants.append((verts, shps, sub_map))
+
+        return unique_variants
+
+    def vertices_to_enriched_recipe(self, placement: Dict, vertices: Dict,
+                                     sub_map: Dict, variation_index: int) -> Dict:
+        """Create material-enriched recipe with substitution tracking."""
+        base_recipe_id = placement['recipeId']
+
+        # Build recipe ID suffix
+        sub_suffix = ""
+        for orig, sub in sub_map.items():
+            if not orig.startswith('_'):
+                sub_suffix += f"_{sub.split('_')[0]}"
+        if sub_map.get('_reflected'):
+            sub_suffix += f"_{sub_map['_reflected'][:4]}"
+
+        recipe_id = f"{base_recipe_id}{sub_suffix}_v{variation_index}"
+
+        # Count materials
+        material_counts = {}
+        for coord_str, vertex_data in vertices.items():
+            mat_id = vertex_data.get('materialId')
+            if mat_id:
+                var_name, var_tags = self.variation_namer.get_variation_name(mat_id, variation_index)
+                if var_name not in material_counts:
+                    material_counts[var_name] = {
+                        "materialId": var_name,
+                        "quantity": 0,
+                        "positions": [],
+                        "base_material": mat_id,
+                        "variation_tags": var_tags
+                    }
+                material_counts[var_name]['quantity'] += 1
+                material_counts[var_name]['positions'].append(coord_str)
+
+        inputs = []
+        for mat_data in material_counts.values():
+            input_item = {
+                "materialId": mat_data['materialId'],
+                "quantity": mat_data['quantity'],
+                "positions": mat_data['positions']
+            }
+            enriched = self.enricher.enrich_input(
+                {"materialId": mat_data['base_material']},
+                mat_data['variation_tags']
+            )
+            input_item['material_metadata'] = enriched.get('material_metadata', {})
+            inputs.append(input_item)
+
+        recipe = {
+            "recipeId": recipe_id,
+            "stationType": "enchanting",
+            "stationTier": self._infer_station_tier(vertices),
+            "inputs": inputs
+        }
+
+        return recipe
+
     def generate(self, output_dir: str = None, save_images: bool = True) -> List[Dict]:
-        """Generate training data for all adornment recipes."""
+        """Generate training data with full augmentation pipeline."""
         training_data = []
 
         if output_dir and save_images:
@@ -956,6 +1382,9 @@ class AdornmentVLMDataGenerator:
             os.makedirs(img_dir, exist_ok=True)
 
         print(f"\nProcessing {len(self.placements)} adornment recipes...")
+        print(f"Augmentation: material substitution + reflections + {self.num_color_variations} color variations")
+
+        total_patterns = 0
 
         for placement in self.placements:
             recipe_id = placement['recipeId']
@@ -965,43 +1394,60 @@ class AdornmentVLMDataGenerator:
                 print(f"  Skipping {recipe_id}: no vertices")
                 continue
 
-            # Original
-            img_exact = self.render_to_image(vertices, shapes, 0, 0)
-            recipe_exact = self.create_enriched_recipe(placement, vertices, 0)
+            # Step 1: Generate all pattern variants
+            pattern_variants = self.augment_pattern(vertices, shapes)
+            total_patterns += len(pattern_variants)
 
-            entry = {
-                "recipe_id": recipe_id,
-                "variation": "original",
-                "image_base64": self.image_to_base64(img_exact),
-                "recipe": recipe_exact
-            }
-            training_data.append(entry)
+            print(f"  {recipe_id}: {len(pattern_variants)} pattern variants")
 
-            if output_dir and save_images and PIL_AVAILABLE:
-                img_path = os.path.join(img_dir, f"{recipe_id}_v0.png")
-                self.save_image_to_disk(img_exact, img_path)
-
-            # Color variations
-            for v_idx in range(1, self.num_color_variations + 1):
-                val_offset = random.uniform(-0.10, 0.10)
-                sat_offset = random.uniform(-0.15, 0.15)
-
-                img_varied = self.render_to_image(vertices, shapes, val_offset, sat_offset)
-                recipe_varied = self.create_enriched_recipe(placement, vertices, v_idx)
+            # Step 2: For each pattern, generate color variations
+            for verts, shps, sub_map in pattern_variants:
+                # Variation 0: Exact colors
+                img_exact = self.render_to_image(verts, shps, 0, 0)
+                recipe_exact = self.vertices_to_enriched_recipe(placement, verts, sub_map, 0)
 
                 entry = {
-                    "recipe_id": f"{recipe_id}_v{v_idx}",
-                    "variation": self.variation_namer.all_prefixes[(v_idx - 1) % len(self.variation_namer.all_prefixes)][0],
-                    "image_base64": self.image_to_base64(img_varied),
-                    "recipe": recipe_varied
+                    "recipe_id": recipe_exact['recipeId'],
+                    "variation": "original",
+                    "image_base64": self.image_to_base64(img_exact),
+                    "recipe": recipe_exact
                 }
                 training_data.append(entry)
 
                 if output_dir and save_images and PIL_AVAILABLE:
-                    img_path = os.path.join(img_dir, f"{recipe_id}_v{v_idx}.png")
-                    self.save_image_to_disk(img_varied, img_path)
+                    safe_id = recipe_exact['recipeId'].replace('/', '_')[:100]
+                    img_path = os.path.join(img_dir, f"{safe_id}.png")
+                    self.save_image_to_disk(img_exact, img_path)
 
-        print(f"Generated {len(training_data)} training examples")
+                # Color variations
+                for v_idx in range(1, self.num_color_variations + 1):
+                    val_offset = random.uniform(-0.10, 0.10)
+                    sat_offset = random.uniform(-0.15, 0.15)
+
+                    img_varied = self.render_to_image(verts, shps, val_offset, sat_offset)
+                    recipe_varied = self.vertices_to_enriched_recipe(placement, verts, sub_map, v_idx)
+
+                    var_name = self.variation_namer.all_prefixes[(v_idx - 1) % len(self.variation_namer.all_prefixes)][0]
+
+                    entry = {
+                        "recipe_id": recipe_varied['recipeId'],
+                        "variation": var_name,
+                        "image_base64": self.image_to_base64(img_varied),
+                        "recipe": recipe_varied
+                    }
+                    training_data.append(entry)
+
+                    if output_dir and save_images and PIL_AVAILABLE:
+                        safe_id = recipe_varied['recipeId'].replace('/', '_')[:100]
+                        img_path = os.path.join(img_dir, f"{safe_id}.png")
+                        self.save_image_to_disk(img_varied, img_path)
+
+        print(f"\n=== Adornment Augmentation Summary ===")
+        print(f"Base recipes: {len(self.placements)}")
+        print(f"Pattern variants (material sub + reflections): {total_patterns}")
+        print(f"Color variations per pattern: {1 + self.num_color_variations}")
+        print(f"Total training examples: {len(training_data)}")
+
         return training_data
 
 
@@ -1124,42 +1570,130 @@ class RefiningLLMDataGenerator:
 
         return recipe
 
+    def augment_material_substitutions(self, placement: Dict) -> List[Dict[str, str]]:
+        """
+        Generate all material substitution combinations using cross-product.
+        Returns list of substitution maps: [{original_id: substituted_id, ...}, ...]
+        """
+        # Get all materials in recipe
+        core_materials = [core.get('materialId') for core in placement.get('coreInputs', [])]
+        spoke_materials = [spoke.get('materialId') for spoke in placement.get('surroundingInputs', [])]
+
+        # Get substitution options for each position
+        core_options = []
+        for mat_id in core_materials:
+            if mat_id:
+                subs = [mat_id] + self.find_substitutable_materials(mat_id)[:5]  # Limit per material
+                core_options.append((mat_id, subs))
+
+        spoke_options = []
+        for mat_id in spoke_materials:
+            if mat_id:
+                subs = [mat_id] + self.find_substitutable_materials(mat_id)[:5]
+                spoke_options.append((mat_id, subs))
+
+        # Generate cross-product of substitutions
+        all_substitutions = [{}]  # Start with empty (original)
+
+        for orig_mat, subs in core_options + spoke_options:
+            new_substitutions = []
+            for existing_sub in all_substitutions:
+                for sub_mat in subs:
+                    new_sub = existing_sub.copy()
+                    if sub_mat != orig_mat:
+                        new_sub[orig_mat] = sub_mat
+                    new_substitutions.append(new_sub)
+            all_substitutions = new_substitutions
+
+        # Remove duplicates and limit
+        unique_subs = []
+        seen = set()
+        for sub_map in all_substitutions:
+            key = tuple(sorted(sub_map.items()))
+            if key not in seen:
+                seen.add(key)
+                unique_subs.append(sub_map)
+
+        # Cap at reasonable limit
+        if len(unique_subs) > 50:
+            unique_subs = random.sample(unique_subs, 50)
+
+        return unique_subs
+
+    def augment_permutations(self, placement: Dict, sub_map: Dict[str, str]) -> List[Dict]:
+        """Generate permutation variants of core and spoke ordering."""
+        variants = []
+
+        core_inputs = placement.get('coreInputs', [])
+        spoke_inputs = placement.get('surroundingInputs', [])
+
+        # Permute core inputs
+        core_perms = list(itertools.permutations(core_inputs))
+        if len(core_perms) > 6:
+            core_perms = random.sample(core_perms, 6)
+
+        # Permute spoke inputs
+        if spoke_inputs:
+            spoke_perms = list(itertools.permutations(spoke_inputs))
+            if len(spoke_perms) > 4:
+                spoke_perms = random.sample(spoke_perms, 4)
+        else:
+            spoke_perms = [tuple()]
+
+        for core_perm in core_perms:
+            for spoke_perm in spoke_perms:
+                variant = {
+                    'recipeId': placement['recipeId'],
+                    'outputId': placement.get('outputId', ''),
+                    'stationTier': placement.get('stationTier', 1),
+                    'coreInputs': list(core_perm),
+                    'surroundingInputs': list(spoke_perm) if spoke_perm else []
+                }
+                variants.append(variant)
+
+        return variants
+
     def generate(self) -> List[Dict]:
-        """Generate training data for all refining recipes."""
+        """Generate training data with full augmentation pipeline."""
         training_data = []
 
         print(f"\nProcessing {len(self.placements)} refining recipes...")
+        print(f"Augmentation: material substitution cross-product + permutations")
+
+        total_variants = 0
+        variant_idx = 0
 
         for placement in self.placements:
-            # Original recipe
-            recipe = self.create_enriched_recipe(placement, 0)
-            training_data.append({
-                "recipe_id": placement['recipeId'],
-                "recipe": recipe
-            })
+            recipe_id = placement['recipeId']
 
-            # Material substitution variants
-            variant_idx = 1
-            unique_materials = set()
-            for core in placement.get('coreInputs', []):
-                unique_materials.add(core.get('materialId'))
-            for spoke in placement.get('surroundingInputs', []):
-                unique_materials.add(spoke.get('materialId'))
+            # Step 1: Generate material substitution combinations
+            substitution_maps = self.augment_material_substitutions(placement)
 
-            for mat_id in unique_materials:
-                if mat_id is None:
-                    continue
-                substitutes = self.find_substitutable_materials(mat_id)
-                for sub_mat in substitutes[:3]:  # Limit substitutions
-                    subs = {mat_id: sub_mat}
-                    recipe = self.create_enriched_recipe(placement, variant_idx, subs)
-                    training_data.append({
-                        "recipe_id": f"{placement['recipeId']}_v{variant_idx}",
-                        "recipe": recipe
-                    })
-                    variant_idx += 1
+            # Step 2: For each substitution, generate permutation variants
+            recipe_variants = []
+            for sub_map in substitution_maps:
+                perm_variants = self.augment_permutations(placement, sub_map)
+                for perm_variant in perm_variants:
+                    recipe_variants.append((perm_variant, sub_map))
 
-        print(f"Generated {len(training_data)} training examples")
+            total_variants += len(recipe_variants)
+
+            # Step 3: Create enriched recipes
+            for variant_placement, sub_map in recipe_variants:
+                recipe = self.create_enriched_recipe(variant_placement, variant_idx, sub_map)
+                training_data.append({
+                    "recipe_id": recipe['recipeId'],
+                    "recipe": recipe
+                })
+                variant_idx += 1
+
+            print(f"  {recipe_id}: {len(recipe_variants)} variants")
+
+        print(f"\n=== Refining Augmentation Summary ===")
+        print(f"Base recipes: {len(self.placements)}")
+        print(f"Total variants: {total_variants}")
+        print(f"Total training examples: {len(training_data)}")
+
         return training_data
 
 
@@ -1255,38 +1789,117 @@ class AlchemyLLMDataGenerator:
 
         return recipe
 
+    def augment_material_substitutions(self, placement: Dict) -> List[Dict[str, str]]:
+        """Generate all material substitution combinations using cross-product."""
+        ingredients = placement.get('ingredients', [])
+
+        # Get substitution options for each ingredient
+        slot_options = []
+        for ing in ingredients:
+            mat_id = ing.get('materialId')
+            if mat_id:
+                subs = [mat_id] + self.find_substitutable_materials(mat_id)[:5]
+                slot_options.append((mat_id, subs))
+
+        # Generate cross-product of substitutions
+        all_substitutions = [{}]
+
+        for orig_mat, subs in slot_options:
+            new_substitutions = []
+            for existing_sub in all_substitutions:
+                for sub_mat in subs:
+                    new_sub = existing_sub.copy()
+                    if sub_mat != orig_mat:
+                        new_sub[orig_mat] = sub_mat
+                    new_substitutions.append(new_sub)
+            all_substitutions = new_substitutions
+
+        # Remove duplicates and limit
+        unique_subs = []
+        seen = set()
+        for sub_map in all_substitutions:
+            key = tuple(sorted(sub_map.items()))
+            if key not in seen:
+                seen.add(key)
+                unique_subs.append(sub_map)
+
+        if len(unique_subs) > 40:
+            unique_subs = random.sample(unique_subs, 40)
+
+        return unique_subs
+
+    def augment_permutations(self, placement: Dict, sub_map: Dict[str, str]) -> List[Dict]:
+        """Generate permutation variants of ingredient sequence."""
+        ingredients = placement.get('ingredients', [])
+
+        perms = list(itertools.permutations(ingredients))
+        if len(perms) > 24:
+            perms = random.sample(perms, 24)
+
+        variants = []
+        for perm in perms:
+            # Reassign slot numbers based on new order
+            new_ingredients = []
+            for i, ing in enumerate(perm, start=1):
+                new_ing = ing.copy()
+                new_ing['slot'] = i
+                new_ingredients.append(new_ing)
+
+            variant = {
+                'recipeId': placement['recipeId'],
+                'outputId': placement.get('outputId', ''),
+                'stationTier': placement.get('stationTier', 1),
+                'ingredients': new_ingredients
+            }
+            variants.append(variant)
+
+        return variants
+
     def generate(self) -> List[Dict]:
-        """Generate training data."""
+        """Generate training data with full augmentation pipeline."""
         training_data = []
 
         print(f"\nProcessing {len(self.placements)} alchemy recipes...")
+        print(f"Augmentation: material substitution cross-product + permutations")
+
+        total_variants = 0
+        variant_idx = 0
 
         for placement in self.placements:
-            recipe = self.create_enriched_recipe(placement, 0)
-            training_data.append({
-                "recipe_id": placement['recipeId'],
-                "recipe": recipe
-            })
+            recipe_id = placement['recipeId']
 
-            variant_idx = 1
-            unique_materials = set()
-            for ing in placement.get('ingredients', []):
-                unique_materials.add(ing.get('materialId'))
+            # Step 1: Generate material substitution combinations
+            substitution_maps = self.augment_material_substitutions(placement)
 
-            for mat_id in unique_materials:
-                if mat_id is None:
-                    continue
-                substitutes = self.find_substitutable_materials(mat_id)
-                for sub_mat in substitutes[:3]:
-                    subs = {mat_id: sub_mat}
-                    recipe = self.create_enriched_recipe(placement, variant_idx, subs)
-                    training_data.append({
-                        "recipe_id": f"{placement['recipeId']}_v{variant_idx}",
-                        "recipe": recipe
-                    })
-                    variant_idx += 1
+            # Step 2: For each substitution, generate permutation variants
+            recipe_variants = []
+            for sub_map in substitution_maps:
+                perm_variants = self.augment_permutations(placement, sub_map)
+                for perm_variant in perm_variants:
+                    recipe_variants.append((perm_variant, sub_map))
 
-        print(f"Generated {len(training_data)} training examples")
+            # Limit total variants per recipe
+            if len(recipe_variants) > 100:
+                recipe_variants = random.sample(recipe_variants, 100)
+
+            total_variants += len(recipe_variants)
+
+            # Step 3: Create enriched recipes
+            for variant_placement, sub_map in recipe_variants:
+                recipe = self.create_enriched_recipe(variant_placement, variant_idx, sub_map)
+                training_data.append({
+                    "recipe_id": recipe['recipeId'],
+                    "recipe": recipe
+                })
+                variant_idx += 1
+
+            print(f"  {recipe_id}: {len(recipe_variants)} variants")
+
+        print(f"\n=== Alchemy Augmentation Summary ===")
+        print(f"Base recipes: {len(self.placements)}")
+        print(f"Total variants: {total_variants}")
+        print(f"Total training examples: {len(training_data)}")
+
         return training_data
 
 
@@ -1382,38 +1995,124 @@ class EngineeringLLMDataGenerator:
 
         return recipe
 
+    def augment_material_substitutions(self, placement: Dict) -> List[Dict[str, str]]:
+        """Generate all material substitution combinations using cross-product."""
+        slots = placement.get('slots', [])
+
+        # Get substitution options for each slot
+        slot_options = []
+        for slot in slots:
+            mat_id = slot.get('materialId')
+            if mat_id:
+                subs = [mat_id] + self.find_substitutable_materials(mat_id)[:5]
+                slot_options.append((mat_id, subs))
+
+        # Generate cross-product of substitutions
+        all_substitutions = [{}]
+
+        for orig_mat, subs in slot_options:
+            new_substitutions = []
+            for existing_sub in all_substitutions:
+                for sub_mat in subs:
+                    new_sub = existing_sub.copy()
+                    if sub_mat != orig_mat:
+                        new_sub[orig_mat] = sub_mat
+                    new_substitutions.append(new_sub)
+            all_substitutions = new_substitutions
+
+        # Remove duplicates and limit
+        unique_subs = []
+        seen = set()
+        for sub_map in all_substitutions:
+            key = tuple(sorted(sub_map.items()))
+            if key not in seen:
+                seen.add(key)
+                unique_subs.append(sub_map)
+
+        if len(unique_subs) > 50:
+            unique_subs = random.sample(unique_subs, 50)
+
+        return unique_subs
+
+    def augment_optional_slots(self, placement: Dict) -> List[Dict]:
+        """Generate variants with/without optional slots."""
+        optional_types = {'MODIFIER', 'ENHANCEMENT', 'CORE', 'CATALYST', 'UTILITY'}
+
+        slots = placement.get('slots', [])
+        variants = [placement]  # Original
+
+        optional_slots = [
+            (i, slot) for i, slot in enumerate(slots)
+            if slot.get('type') in optional_types
+        ]
+
+        if not optional_slots:
+            return variants
+
+        # Try removing 1 or 2 optional slots
+        for num_to_remove in range(1, min(3, len(optional_slots) + 1)):
+            for slots_to_remove in itertools.combinations(optional_slots, num_to_remove):
+                remove_indices = {idx for idx, _ in slots_to_remove}
+                new_slots = [
+                    slot for i, slot in enumerate(slots)
+                    if i not in remove_indices
+                ]
+
+                variant = {
+                    'recipeId': placement['recipeId'],
+                    'outputId': placement.get('outputId', ''),
+                    'stationTier': placement.get('stationTier', 1),
+                    'slots': new_slots
+                }
+                variants.append(variant)
+
+        return variants[:8]
+
     def generate(self) -> List[Dict]:
-        """Generate training data."""
+        """Generate training data with full augmentation pipeline."""
         training_data = []
 
         print(f"\nProcessing {len(self.placements)} engineering recipes...")
+        print(f"Augmentation: material substitution cross-product + optional slot variants")
+
+        total_variants = 0
+        variant_idx = 0
 
         for placement in self.placements:
-            recipe = self.create_enriched_recipe(placement, 0)
-            training_data.append({
-                "recipe_id": placement['recipeId'],
-                "recipe": recipe
-            })
+            recipe_id = placement['recipeId']
 
-            variant_idx = 1
-            unique_materials = set()
-            for slot in placement.get('slots', []):
-                unique_materials.add(slot.get('materialId'))
+            # Step 1: Generate material substitution combinations
+            substitution_maps = self.augment_material_substitutions(placement)
 
-            for mat_id in unique_materials:
-                if mat_id is None:
-                    continue
-                substitutes = self.find_substitutable_materials(mat_id)
-                for sub_mat in substitutes[:3]:
-                    subs = {mat_id: sub_mat}
-                    recipe = self.create_enriched_recipe(placement, variant_idx, subs)
-                    training_data.append({
-                        "recipe_id": f"{placement['recipeId']}_v{variant_idx}",
-                        "recipe": recipe
-                    })
-                    variant_idx += 1
+            # Step 2: For each substitution, generate optional slot variants
+            recipe_variants = []
+            for sub_map in substitution_maps:
+                slot_variants = self.augment_optional_slots(placement)
+                for slot_variant in slot_variants:
+                    recipe_variants.append((slot_variant, sub_map))
 
-        print(f"Generated {len(training_data)} training examples")
+            # Limit total variants per recipe
+            if len(recipe_variants) > 100:
+                recipe_variants = random.sample(recipe_variants, 100)
+
+            total_variants += len(recipe_variants)
+
+            # Step 3: Create enriched recipes
+            for variant_placement, sub_map in recipe_variants:
+                recipe = self.create_enriched_recipe(variant_placement, variant_idx, sub_map)
+                training_data.append({
+                    "recipe_id": recipe['recipeId'],
+                    "recipe": recipe
+                })
+                variant_idx += 1
+
+            print(f"  {recipe_id}: {len(recipe_variants)} variants")
+
+        print(f"\n=== Engineering Augmentation Summary ===")
+        print(f"Base recipes: {len(self.placements)}")
+        print(f"Total variants: {total_variants}")
+        print(f"Total training examples: {len(training_data)}")
+
         return training_data
 
 
