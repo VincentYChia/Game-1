@@ -80,14 +80,15 @@ def generate_auto_ranges(total: int, chunk_size: int) -> List[Tuple[int, int]]:
     return ranges
 
 
-def split_file(input_path: str, output_dir: str, chunk_size: int = 50,
+def split_file(input_path: str, output_base_dir: str, chunk_size: int = 50,
                custom_ranges: str = None) -> int:
     """
     Split a single training data file into chunks.
+    Organizes output into discipline-named folders.
 
     Args:
         input_path: Path to input JSON file
-        output_dir: Directory for output files
+        output_base_dir: Base directory for output files
         chunk_size: Number of entries per chunk (for auto mode)
         custom_ranges: Optional custom range string
 
@@ -124,10 +125,18 @@ def split_file(input_path: str, output_dir: str, chunk_size: int = 50,
 
     print(f"  Creating {len(ranges)} files...")
 
-    # Create output directory
-    input_stem = Path(input_path).stem
-    split_dir = Path(output_dir) / f"{input_stem}_split"
+    # Create discipline folder structure: training_outputs/{discipline}/split/
+    discipline_dir = Path(output_base_dir) / discipline
+    split_dir = discipline_dir / "split"
     split_dir.mkdir(parents=True, exist_ok=True)
+
+    # Move original file to discipline folder if not already there
+    input_file = Path(input_path)
+    original_dest = discipline_dir / input_file.name
+    if input_file.parent != discipline_dir and not original_dest.exists():
+        import shutil
+        shutil.move(str(input_file), str(original_dest))
+        print(f"  Moved original to: {discipline}/{input_file.name}")
 
     files_created = 0
 
@@ -141,8 +150,8 @@ def split_file(input_path: str, output_dir: str, chunk_size: int = 50,
         if not chunk_data:
             continue
 
-        # Create output file
-        output_filename = f"{input_stem}_{start:04d}-{end:04d}.json"
+        # Create output file with discipline prefix
+        output_filename = f"{discipline}_{start:04d}-{end:04d}.json"
         output_path = split_dir / output_filename
 
         output = {
@@ -158,7 +167,7 @@ def split_file(input_path: str, output_dir: str, chunk_size: int = 50,
         with open(output_path, 'w') as f:
             json.dump(output, f, indent=2)
 
-        print(f"    Created: {output_filename} ({len(chunk_data)} entries)")
+        print(f"    Created: {discipline}/split/{output_filename} ({len(chunk_data)} entries)")
         files_created += 1
 
     return files_created
@@ -239,16 +248,9 @@ def main():
 
     # Find training_outputs folder relative to script
     script_dir = Path(__file__).parent
-    default_input_dir = script_dir / "training_outputs"
+    input_dir = script_dir / "training_outputs"
 
-    # Ask for input directory
-    print(f"\nDefault input directory: {default_input_dir}")
-    custom_dir = input("Press Enter to use default, or enter custom path: ").strip()
-
-    if custom_dir:
-        input_dir = Path(custom_dir)
-    else:
-        input_dir = default_input_dir
+    print(f"\nLooking in: {input_dir}")
 
     if not input_dir.exists():
         print(f"\nError: Directory not found: {input_dir}")
@@ -256,8 +258,13 @@ def main():
         input("\nPress Enter to exit...")
         return
 
-    # Find JSON files
+    # Find JSON files (in root or in discipline subfolders)
     json_files = list(input_dir.glob('*_data.json'))
+
+    # Also check discipline subfolders
+    for subdir in input_dir.iterdir():
+        if subdir.is_dir():
+            json_files.extend(subdir.glob('*_data.json'))
 
     if not json_files:
         print(f"\nNo *_data.json files found in {input_dir}")
@@ -269,14 +276,16 @@ def main():
     print(f"\nFound {len(json_files)} training data file(s):")
     print("-" * 40)
     for i, f in enumerate(json_files, 1):
-        # Get entry count
+        # Get entry count and discipline
         try:
             with open(f, 'r') as fp:
                 data = json.load(fp)
                 count = len(data.get('training_data', []))
+                discipline = data.get('metadata', {}).get('discipline', 'unknown')
         except:
             count = '?'
-        print(f"  {i}. {f.name} ({count} entries)")
+            discipline = '?'
+        print(f"  {i}. {f.name} [{discipline}] ({count} entries)")
     print(f"  {len(json_files) + 1}. All files")
 
     # Select file(s)
@@ -323,8 +332,15 @@ def main():
 
     print("\n" + "=" * 60)
     print(f"COMPLETE: Created {total_files} split file(s)")
-    print(f"Output location: {input_dir}")
     print("=" * 60)
+    print("\nOutput structure:")
+    print("  training_outputs/")
+    print("    {discipline}/")
+    print("      {original_file}.json")
+    print("      split/")
+    print("        {discipline}_0001-0050.json")
+    print("        {discipline}_0051-0100.json")
+    print("        ...")
 
     input("\nPress Enter to exit...")
 
