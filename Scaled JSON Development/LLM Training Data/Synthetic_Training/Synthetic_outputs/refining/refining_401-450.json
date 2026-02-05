@@ -1,0 +1,1526 @@
+[
+  {
+    "index": 401,
+    "recipe_id": "refining_clay_to_brick_v1",
+    "output": {
+      "metadata": {
+        "narrative": "Kiln-fired brick formed from light clay, pale and sturdy. A basic building block for forges and structures alike. Every craftsman learns to shape these before they shape steel.",
+        "tags": ["basic", "stone", "refined", "standard", "durable"]
+      },
+      "itemId": "brick",
+      "name": "Brick",
+      "category": "stone",
+      "type": "stone",
+      "subtype": "brick",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 402,
+    "recipe_id": "refining_hide_to_leather_v1",
+    "output": {
+      "metadata": {
+        "narrative": "Tanned leather from light animal hides, supple yet resilient. The foundation of flexible armor and sturdy grips. Smells faintly of oak bark from the tanning process.",
+        "tags": ["basic", "leather", "refined", "flexible", "standard"]
+      },
+      "itemId": "leather",
+      "name": "Leather",
+      "category": "monster_drop",
+      "type": "leather",
+      "subtype": "hide",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 403,
+    "recipe_id": "refining_maple_log_to_plank_v1",
+    "output": {
+      "metadata": {
+        "narrative": "Dense maple planks with beautiful figuring and a warm amber tone. Resists warping through temperature extremes, making it ideal for weapon grips and shield frames.",
+        "tags": ["quality", "wood", "refined", "durable", "light"]
+      },
+      "itemId": "maple_plank",
+      "name": "Maple Plank",
+      "category": "wood",
+      "type": "wood",
+      "subtype": "plank",
+      "stackSize": 256,
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 404,
+    "recipe_id": "refining_rarity_silver_epic_v1",
+    "output": {
+      "metadata": {
+        "narrative": "Brilliantly pure silver ingot refined to epic quality, radiating a soft luminescence. Multiple refinements have purged all impurities, leaving metal that hums with latent magical potential.",
+        "tags": ["precious", "metal", "refined", "quality", "rare"]
+      },
+      "itemId": "silver_ingot",
+      "name": "Silver Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 2,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 10,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 405,
+    "recipe_id": "refining_rarity_gold_rare_v1",
+    "output": {
+      "metadata": {
+        "narrative": "Lustrous gold ingot refined to rare purity, gleaming with a deep warm light. Too soft for blades, but peerless for conducting magical enchantments and adorning regal equipment.",
+        "tags": ["precious", "metal", "refined", "quality", "uncommon"]
+      },
+      "itemId": "gold_ingot",
+      "name": "Gold Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 2,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 0.7
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 406,
+    "recipe_id": "refining_rarity_platinum_legendary_v1",
+    "output": {
+      "metadata": {
+        "narrative": "Flawless platinum ingot of legendary purity, cool white metal that never tarnishes. Rarer than mithril and denser than steel, it represents the apex of precious metalwork.",
+        "tags": ["precious", "metal", "refined", "legendary", "rare"]
+      },
+      "itemId": "platinum_ingot",
+      "name": "Platinum Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 3,
+      "rarity": "legendary",
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 18,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 407,
+    "recipe_id": "refining_copper_ore_to_ingot_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Shadow-smelted copper ingot with a dark reddish patina. Refined from ore veined with darkness, it carries a faint chill. Still malleable, still the first lesson - but touched by something deeper.",
+        "tags": ["metal", "refined", "starter", "dark", "standard"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 408,
+    "recipe_id": "refining_iron_ore_to_ingot_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Iron ingot smelted from shadow-laced ore, darker grey than its common kin. The darkness within seems to strengthen the grain rather than weaken it. Reliable metal with an edge of mystery.",
+        "tags": ["metal", "refined", "standard", "dark", "strong"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 409,
+    "recipe_id": "refining_tin_ore_to_ingot_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Tin ingot refined from shadow-touched ore, its silvery surface swirling with dark undertones. The lunar affinity is amplified by the darkness, making it even more receptive to enchantment.",
+        "tags": ["metal", "refined", "magical", "dark", "uncommon"]
+      },
+      "itemId": "tin_ingot",
+      "name": "Tin Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 410,
+    "recipe_id": "refining_steel_ore_to_ingot_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Steel ingot forged from shadow-infused ore, nearly black with a faint bluish sheen. The darkness has bonded with the carbon structure, creating an alloy that cuts deeper than its appearance suggests.",
+        "tags": ["metal", "refined", "advanced", "dark", "strong"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 411,
+    "recipe_id": "refining_mithril_ore_to_ingot_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Mithril ingot refined from shadow-veined ore, its silvery glow muted to a pale twilight sheen. Impossibly light yet unyielding, the shadow has deepened its connection to starlight and silence.",
+        "tags": ["metal", "refined", "legendary", "dark", "light"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 412,
+    "recipe_id": "refining_adamantine_ore_to_ingot_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Adamantine ingot smelted from the darkest depths, blacker than midnight and heavier than regret. Shadow and metal are indistinguishable here - it absorbs light and punishment in equal measure.",
+        "tags": ["metal", "refined", "rare", "dark", "durable"]
+      },
+      "itemId": "adamantine_ingot",
+      "name": "Adamantine Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 18,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 413,
+    "recipe_id": "refining_orichalcum_ore_to_ingot_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Orichalcum ingot forged from shadow-laced ore, its golden-green shimmer now threaded with dark veins. Ancient power courses through the metal, amplified by the darkness it absorbed underground.",
+        "tags": ["metal", "refined", "ancient", "dark", "elemental"]
+      },
+      "itemId": "orichalcum_ingot",
+      "name": "Orichalcum Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 414,
+    "recipe_id": "refining_etherion_ore_to_ingot_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Etherion ingot refined from shadow-temporal ore, flickering between existence and void. The darkness has given it a paradoxical stability - it exists in all states simultaneously, anchored by shadow.",
+        "tags": ["metal", "refined", "mythical", "temporal", "dark"]
+      },
+      "itemId": "etherion_ingot",
+      "name": "Etherion Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 415,
+    "recipe_id": "refining_oak_log_to_plank_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Oak planks hewn from shadow-grown timber, darker than usual with grain lines like veins of night. Still sturdy, still reliable - but tools made from this wood feel heavier with purpose.",
+        "tags": ["wood", "refined", "versatile", "dark", "standard"]
+      },
+      "itemId": "oak_plank",
+      "name": "Oak Plank",
+      "category": "wood",
+      "type": "wood",
+      "subtype": "plank",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 416,
+    "recipe_id": "refining_pine_log_to_plank_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Pine planks sawn from shadow-touched conifers, pale wood streaked with dark resin lines. Lightweight and flexible, the shadow has made the grain tighter without sacrificing its natural spring.",
+        "tags": ["wood", "refined", "flexible", "dark", "light"]
+      },
+      "itemId": "pine_plank",
+      "name": "Pine Plank",
+      "category": "wood",
+      "type": "wood",
+      "subtype": "plank",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 417,
+    "recipe_id": "refining_ash_log_to_plank_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Ash planks from shadow-nurtured trees, the pale wood now mottled with dark whorls. Shock absorption is enhanced by the shadow's influence - weapon handles made from this absorb impact like nothing else.",
+        "tags": ["wood", "refined", "quality", "dark", "flexible"]
+      },
+      "itemId": "ash_plank",
+      "name": "Ash Plank",
+      "category": "wood",
+      "type": "wood",
+      "subtype": "plank",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 418,
+    "recipe_id": "refining_birch_log_to_plank_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Birch planks from shadow-draped groves, their creamy surface veined with twilight patterns. The fine grain takes carving even better now, as if the darkness made the wood more willing to be shaped.",
+        "tags": ["wood", "refined", "fine", "dark", "quality"]
+      },
+      "itemId": "birch_plank",
+      "name": "Birch Plank",
+      "category": "wood",
+      "type": "wood",
+      "subtype": "plank",
+      "stackSize": 256,
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 419,
+    "recipe_id": "refining_ironwood_log_to_plank_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Ironwood planks from shadow-hardened trees, dense and dark as charcoal steel. The metallic properties are amplified by the shadow - this wood rings like iron when struck and holds edges like a blade.",
+        "tags": ["wood", "refined", "metallic", "dark", "durable"]
+      },
+      "itemId": "ironwood_plank",
+      "name": "Ironwood Plank",
+      "category": "wood",
+      "type": "wood",
+      "subtype": "plank",
+      "stackSize": 256,
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 420,
+    "recipe_id": "refining_ebony_log_to_plank_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Ebony planks from shadow-saturated ancient forests, so dark they seem to swallow torchlight. The magical dampening properties are magnified - staves carved from this silence all but the caster's will.",
+        "tags": ["wood", "refined", "magical", "dark", "rare"]
+      },
+      "itemId": "ebony_plank",
+      "name": "Ebony Plank",
+      "category": "wood",
+      "type": "wood",
+      "subtype": "plank",
+      "stackSize": 256,
+      "tier": 3,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 421,
+    "recipe_id": "refining_worldtree_log_to_plank_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Worldtree planks from shadow-root wood, living timber that pulses with dark vitality. Millennia of accumulated essence now threaded with shadow gives this wood a consciousness that borders on sentience.",
+        "tags": ["wood", "refined", "legendary", "living", "dark"]
+      },
+      "itemId": "worldtree_plank",
+      "name": "Worldtree Plank",
+      "category": "wood",
+      "type": "wood",
+      "subtype": "plank",
+      "stackSize": 256,
+      "tier": 4,
+      "rarity": "legendary",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 422,
+    "recipe_id": "refining_bronze_alloy_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Bronze alloy forged from shadow-copper and shadow-tin, darker than common bronze with a faint violet sheen. The ancient alloy gains new character from its shadowed components.",
+        "tags": ["metal", "refined", "durable", "dark", "versatile"]
+      },
+      "itemId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 423,
+    "recipe_id": "refining_fire_steel_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Fire steel forged from shadow-steel and dark fire crystals, the flames within burn a deep crimson-black. The shadow does not quench the fire but makes it hungrier, more consuming.",
+        "tags": ["metal", "refined", "elemental", "fire", "dark"]
+      },
+      "itemId": "fire_steel_ingot",
+      "name": "Fire Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "stackSize": 256,
+      "tier": 2,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "fire",
+          "value": 10,
+          "effect": "Items crafted with this add fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 424,
+    "recipe_id": "refining_frost_steel_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Frost steel forged from shadow-steel and dark frost essence, radiating a cold so deep it numbs thought. Shadow and ice merge into something that freezes not just flesh but resolve.",
+        "tags": ["metal", "refined", "elemental", "dark", "strong"]
+      },
+      "itemId": "frost_steel_ingot",
+      "name": "Frost Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "stackSize": 256,
+      "tier": 2,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "frost",
+          "value": 10,
+          "effect": "Items crafted with this add frost damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 425,
+    "recipe_id": "refining_lightning_copper_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Lightning copper forged from shadow-copper and dark lightning shards, arcing with violet-black sparks. The shadow acts as a superconductor, channeling elemental lightning with terrifying efficiency.",
+        "tags": ["metal", "refined", "elemental", "lightning", "dark"]
+      },
+      "itemId": "lightning_copper_ingot",
+      "name": "Lightning Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "stackSize": 256,
+      "tier": 2,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "lightning",
+          "value": 10,
+          "effect": "Items crafted with this add lightning damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 426,
+    "recipe_id": "refining_rarity_copper_uncommon_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Shadow-refined copper ingot of uncommon purity, its dark reddish surface polished to a dull gleam. Four common ingots compressed and reforged into one superior bar of consistent quality.",
+        "tags": ["metal", "refined", "starter", "dark", "uncommon"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 427,
+    "recipe_id": "refining_rarity_copper_rare_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Rare-quality shadow copper, refined until its dark surface shimmers with hidden depth. Impurities burned away through repeated smelting, leaving metal that accepts enchantment with unusual eagerness.",
+        "tags": ["metal", "refined", "starter", "dark", "rare"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 428,
+    "recipe_id": "refining_rarity_copper_epic_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Epic-quality shadow copper with a mirror-dark finish that reflects no light. Sixteen common ingots distilled into one flawless bar. The shadow within has crystallized into perfect metallic structure.",
+        "tags": ["metal", "refined", "quality", "dark", "rare"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 429,
+    "recipe_id": "refining_rarity_copper_legendary_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Legendary shadow copper, refined beyond what most smiths believe possible. The humble metal has been elevated to near-perfection - dark, flawless, and resonating with concentrated shadow essence.",
+        "tags": ["metal", "refined", "legendary", "dark", "quality"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "legendary",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 430,
+    "recipe_id": "refining_rarity_iron_uncommon_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Uncommon shadow iron, reforged from four common bars into dense, purified metal. The shadow-laced grain is tighter and more uniform, producing a stronger foundation for weapons and armor.",
+        "tags": ["metal", "refined", "standard", "dark", "uncommon"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 431,
+    "recipe_id": "refining_rarity_iron_rare_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Rare shadow iron of exceptional purity, the dark grey metal now almost black with concentrated shadow. Blades forged from this hold their edge far longer than common iron ever could.",
+        "tags": ["metal", "refined", "standard", "dark", "strong"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 432,
+    "recipe_id": "refining_rarity_iron_epic_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Epic shadow iron, refined to a purity that rivals lesser steels. The concentrated darkness within creates micro-structures impossible in normal smelting, yielding metal of extraordinary resilience.",
+        "tags": ["metal", "refined", "quality", "dark", "durable"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 433,
+    "recipe_id": "refining_rarity_iron_legendary_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Legendary shadow iron, the apex of what iron can become. Hundreds of ingots distilled into perfection, the shadow has transformed humble ore into something that approaches mythical metals in quality.",
+        "tags": ["metal", "refined", "legendary", "dark", "strong"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "legendary",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 10,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 434,
+    "recipe_id": "refining_rarity_steel_uncommon_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Uncommon shadow steel with tighter carbon bonding from the reforging process. The dark metal has been purified beyond standard grade, yielding an alloy that bites harder and resists corrosion better.",
+        "tags": ["metal", "refined", "advanced", "dark", "uncommon"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 435,
+    "recipe_id": "refining_rarity_steel_rare_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Rare shadow steel, reforged under intense heat until the shadow-carbon matrix achieves crystalline perfection. This metal sings when struck and refuses to dull under anything short of deliberate abuse.",
+        "tags": ["metal", "refined", "advanced", "dark", "sharp"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 2,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 436,
+    "recipe_id": "refining_rarity_steel_epic_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Epic shadow steel of extraordinary composition, the dark alloy now approaches the strength of lesser mythical metals. Master smiths covet this material for their finest commissioned works.",
+        "tags": ["metal", "refined", "advanced", "dark", "strong"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 2,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 10,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 437,
+    "recipe_id": "refining_rarity_steel_legendary_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Legendary shadow steel, the ultimate expression of mortal metallurgy applied to common alloy. The shadow has permanently bonded at the molecular level, creating steel that legends are forged from.",
+        "tags": ["metal", "refined", "legendary", "dark", "strong"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 2,
+      "rarity": "legendary",
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 438,
+    "recipe_id": "refining_rarity_mithril_epic_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Epic shadow mithril, four rare ingots compressed into one transcendent bar. The starlight within now burns through a veil of shadow, creating metal that whispers forgotten secrets to those who listen.",
+        "tags": ["metal", "refined", "legendary", "dark", "light"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 3,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 439,
+    "recipe_id": "refining_rarity_mithril_legendary_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Legendary shadow mithril of impossible refinement, weightless yet indestructible. The shadow and starlight have reached equilibrium within, producing metal that exists at the boundary of the physical and ethereal.",
+        "tags": ["metal", "refined", "legendary", "dark", "mythical"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 3,
+      "rarity": "legendary",
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 18,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 440,
+    "recipe_id": "refining_rarity_mithril_mythical_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Mythical shadow mithril, refined beyond mortal understanding into something that defies classification. Neither fully metal nor fully shadow, it moves between states of matter at the wielder's intent.",
+        "tags": ["metal", "refined", "mythical", "dark", "impossible"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 3,
+      "rarity": "unique",
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 441,
+    "recipe_id": "refining_rarity_adamantine_epic_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Epic shadow adamantine, four rare ingots crushed together under forces that would flatten mountains. The shadow has fused with the adamantine's natural hardness, creating metal that laughs at destruction.",
+        "tags": ["metal", "refined", "rare", "dark", "durable"]
+      },
+      "itemId": "adamantine_ingot",
+      "name": "Adamantine Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 4,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 442,
+    "recipe_id": "refining_rarity_adamantine_legendary_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Legendary shadow adamantine, the densest and most indestructible material known to exist. Shadow has filled every microscopic void, making it truly without weakness. Even gods pause before striking this.",
+        "tags": ["metal", "refined", "legendary", "dark", "durable"]
+      },
+      "itemId": "adamantine_ingot",
+      "name": "Adamantine Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 4,
+      "rarity": "legendary",
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 22,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 443,
+    "recipe_id": "refining_rarity_orichalcum_legendary_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Legendary shadow orichalcum, golden-green light warring with deep darkness throughout the metal. Elemental forces and shadow vie for dominance within, producing an alloy of staggering magical potency.",
+        "tags": ["metal", "refined", "legendary", "dark", "ancient"]
+      },
+      "itemId": "orichalcum_ingot",
+      "name": "Orichalcum Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 4,
+      "rarity": "legendary",
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 22,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 444,
+    "recipe_id": "refining_rarity_orichalcum_mythical_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Mythical shadow orichalcum, transcending the boundaries of mortal metallurgy. The metal exists as a contradiction - ancient power and primordial darkness woven into something that should not be possible.",
+        "tags": ["metal", "refined", "mythical", "dark", "ancient"]
+      },
+      "itemId": "orichalcum_ingot",
+      "name": "Orichalcum Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 4,
+      "rarity": "unique",
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 445,
+    "recipe_id": "refining_rarity_etherion_mythical_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Mythical shadow etherion, reality itself bends around this impossible material. Time, space, shadow, and matter collapse into a single point of infinite potential. To hold it is to hold a paradox.",
+        "tags": ["metal", "refined", "mythical", "temporal", "impossible"]
+      },
+      "itemId": "etherion_ingot",
+      "name": "Etherion Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 4,
+      "rarity": "unique",
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 28,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 446,
+    "recipe_id": "refining_rarity_tin_rare_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Rare shadow tin, its silvery surface now swirling with dark lunar patterns. The magical conductivity has sharpened through refinement - enchantments flow through this metal like water through a channel.",
+        "tags": ["metal", "refined", "magical", "dark", "rare"]
+      },
+      "itemId": "tin_ingot",
+      "name": "Tin Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 447,
+    "recipe_id": "refining_rarity_tin_epic_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Epic shadow tin of extraordinary magical purity, dark and luminous at once. The shadow has amplified its lunar affinity to the point where the metal glows faintly in darkness, hungry for enchantment.",
+        "tags": ["metal", "refined", "magical", "dark", "quality"]
+      },
+      "itemId": "tin_ingot",
+      "name": "Tin Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 448,
+    "recipe_id": "refining_rarity_bronze_rare_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Rare shadow bronze, the ancient alloy refined to uncommon purity with dark undertones. Four ingots compressed into one bar of superior quality, the shadow strengthening the copper-tin bond.",
+        "tags": ["metal", "refined", "durable", "dark", "rare"]
+      },
+      "itemId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 449,
+    "recipe_id": "refining_rarity_bronze_epic_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Epic shadow bronze, the humble alloy elevated far beyond its origins through relentless refinement. The shadow has permanently altered its crystalline structure, producing bronze that competes with steel.",
+        "tags": ["metal", "refined", "durable", "dark", "strong"]
+      },
+      "itemId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "stackSize": 256,
+      "tier": 1,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 450,
+    "recipe_id": "refining_silver_ore_to_ingot_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Silver ingot smelted from shadow-laced ore, its bright surface dimmed to a twilight sheen. The precious metal retains its magical receptivity while gaining an edge of darkness that enhances its conductivity.",
+        "tags": ["precious", "metal", "refined", "dark", "uncommon"]
+      },
+      "itemId": "silver_ingot",
+      "name": "Silver Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "stackSize": 256,
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  }
+]

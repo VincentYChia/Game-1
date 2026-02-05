@@ -1,0 +1,1579 @@
+[
+  {
+    "index": 51,
+    "metadata": {
+      "narrative": "Enhanced fire arrow turret reinforced with adamantine frame. The enchanted components ensure each shot burns hotter and flies truer. Water crystals provide cooling to prevent overheating during sustained fire.",
+      "tags": ["device", "turret", "fire", "elemental", "advanced"]
+    },
+    "itemId": "fire_arrow_turret",
+    "name": "Fire Arrow Turret",
+    "category": "device",
+    "type": "turret",
+    "subtype": "projectile",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Fires flaming arrows, 38 damage + burn, 7.5 unit range",
+    "effectTags": ["fire", "piercing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 38,
+      "range": 7.5,
+      "burn_duration": 5.5,
+      "burn_damage_per_second": 6.0
+    },
+    "stackSize": 5,
+    "statMultipliers": {
+      "weight": 1.6
+    },
+    "requirements": {
+      "level": 9,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 52,
+    "metadata": {
+      "narrative": "Lightning cannon powered by phoenix ash eternal flame converted to electric fury. Dusty components crackle with barely contained storm energy. The light gems amplify each discharge into chain lightning.",
+      "tags": ["device", "turret", "lightning", "advanced", "elemental"]
+    },
+    "itemId": "lightning_cannon",
+    "name": "Lightning Cannon",
+    "category": "device",
+    "type": "turret",
+    "subtype": "energy",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Fires lightning bolts, 72 damage + chain, 10.5 unit range",
+    "effectTags": ["lightning", "chain", "shock"],
+    "effectParams": {
+      "baseDamage": 72,
+      "range": 10.5,
+      "chain_count": 2,
+      "chain_range": 5.5,
+      "shock_duration": 2.5,
+      "shock_damage": 6.0
+    },
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 2.1
+    },
+    "requirements": {
+      "level": 16,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 53,
+    "metadata": {
+      "narrative": "Simple explosive with enchanted tin casing for improved shrapnel spread. The magical enhancement ensures consistent detonation. Basic but reliable, a staple of any engineer's arsenal.",
+      "tags": ["device", "bomb", "basic", "explosive"]
+    },
+    "itemId": "simple_bomb",
+    "name": "Simple Bomb",
+    "category": "device",
+    "type": "bomb",
+    "subtype": "explosive",
+    "tier": 1,
+    "rarity": "common",
+    "effect": "Explodes for 42 damage in 3.2 unit radius",
+    "effectTags": ["physical", "circle"],
+    "effectParams": {
+      "baseDamage": 42,
+      "circle_radius": 3.2
+    },
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 54,
+    "metadata": {
+      "narrative": "Fire bomb with tarnished steel casing that fragments into molten shrapnel. Earth crystal grounds the explosive force into concentrated heat. The blast leaves scorched earth in its wake.",
+      "tags": ["device", "bomb", "fire", "elemental"]
+    },
+    "itemId": "fire_bomb",
+    "name": "Fire Bomb",
+    "category": "device",
+    "type": "bomb",
+    "subtype": "elemental",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Explodes for 78 fire damage + lingering flames",
+    "effectTags": ["fire", "circle", "burn"],
+    "effectParams": {
+      "baseDamage": 78,
+      "circle_radius": 4.2,
+      "burn_duration": 6.5,
+      "burn_damage_per_second": 8.5
+    },
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 55,
+    "metadata": {
+      "narrative": "Frost mine using enchanted iron pressure plate and light gem trigger. Erupts in crystalline ice shards that pierce and freeze. The blast leaves a circle of permafrost.",
+      "tags": ["device", "trap", "frost", "elemental"]
+    },
+    "itemId": "frost_mine",
+    "name": "Frost Mine",
+    "category": "device",
+    "type": "trap",
+    "subtype": "elemental",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Triggers on proximity, 52 damage + slow",
+    "effectTags": ["ice", "circle", "freeze", "slow"],
+    "effectParams": {
+      "baseDamage": 52,
+      "circle_radius": 3.2,
+      "freeze_duration": 3.5,
+      "slow_factor": 0.55
+    },
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 0.8
+    },
+    "requirements": {
+      "level": 7,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 56,
+    "metadata": {
+      "narrative": "Spike trap with earth-blessed metal springs and wolf hide padding. The earth element makes spikes punch through armor like soil. Natural materials ensure silent operation.",
+      "tags": ["device", "trap", "physical", "basic"]
+    },
+    "itemId": "spike_trap",
+    "name": "Spike Trap",
+    "category": "device",
+    "type": "trap",
+    "subtype": "physical",
+    "tier": 1,
+    "rarity": "common",
+    "effect": "Triggers on contact, 32 damage + bleed",
+    "effectTags": ["physical", "piercing", "circle", "bleed"],
+    "effectParams": {
+      "baseDamage": 32,
+      "circle_radius": 2.2,
+      "bleed_duration": 8.5,
+      "bleed_damage_per_second": 3.5
+    },
+    "stackSize": 15,
+    "statMultipliers": {
+      "weight": 1.0
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 57,
+    "metadata": {
+      "narrative": "Healing beacon constructed from faded mithril with frost-essence core. Radiates restorative energy infused with living ichor. The water crystals purify and enhance the healing aura.",
+      "tags": ["device", "utility", "healing", "support", "advanced"]
+    },
+    "itemId": "healing_beacon",
+    "name": "Healing Beacon",
+    "category": "device",
+    "type": "utility",
+    "subtype": "support",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Heals 11 HP/sec in 5.5 unit radius for 2 minutes",
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 1.6
+    },
+    "requirements": {
+      "level": 14,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 58,
+    "metadata": {
+      "narrative": "Poison trap using copper gas dispersal system lined with wolf hide. Light gems activate chemical reactions on trigger. Releases toxic cloud that lingers and burns.",
+      "tags": ["device", "trap", "poison", "elemental"]
+    },
+    "itemId": "poison_trap",
+    "name": "Poison Trap",
+    "category": "device",
+    "type": "trap",
+    "subtype": "elemental",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Triggers on proximity, releases poison cloud dealing 45 damage over time",
+    "effectTags": ["physical", "circle", "burn"],
+    "effectParams": {
+      "baseDamage": 45,
+      "circle_radius": 3.5,
+      "burn_duration": 10.0,
+      "burn_damage_per_second": 4.5
+    },
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 0.9
+    },
+    "requirements": {
+      "level": 7,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 59,
+    "metadata": {
+      "narrative": "Bear trap with faded steel jaws lined with iron scales for grip. The teeth are serrated and cruel, designed to hold fast. Metal groans as the springs compress under weight.",
+      "tags": ["device", "trap", "physical", "immobilize"]
+    },
+    "itemId": "bear_trap",
+    "name": "Bear Trap",
+    "category": "device",
+    "type": "trap",
+    "subtype": "physical",
+    "tier": 1,
+    "rarity": "common",
+    "effect": "Triggers on contact, 27 damage + immobilize for 5.5 seconds",
+    "effectTags": ["physical", "crushing", "single", "root"],
+    "effectParams": {
+      "baseDamage": 27,
+      "root_duration": 5.5
+    },
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 1.3
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 60,
+    "metadata": {
+      "narrative": "Net launcher using rough steel frame and spectral thread netting. The ethereal threads phase through armor then solidify. Wolf hide wrapping dampens launch noise.",
+      "tags": ["device", "utility", "crowd-control", "projectile"]
+    },
+    "itemId": "net_launcher",
+    "name": "Net Launcher",
+    "category": "device",
+    "type": "utility",
+    "subtype": "control",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Fires net that slows enemies by 82% for 11 seconds",
+    "stackSize": 5,
+    "statMultipliers": {
+      "weight": 1.4
+    },
+    "requirements": {
+      "level": 9,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 61,
+    "metadata": {
+      "narrative": "Flamethrower turret with frost-blessed copper to prevent meltdown. Earth crystals ground the phoenix ash eternal flame into controlled streams. The paradox of ice containing fire.",
+      "tags": ["device", "turret", "fire", "area", "advanced"]
+    },
+    "itemId": "flamethrower_turret",
+    "name": "Flamethrower Turret",
+    "category": "device",
+    "type": "turret",
+    "subtype": "area",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Sweeps cone of fire, 62 damage + lingering burn",
+    "effectTags": ["fire", "cone", "burn"],
+    "effectParams": {
+      "baseDamage": 62,
+      "range": 8.5,
+      "cone_angle": 65.0,
+      "cone_range": 8.5,
+      "burn_duration": 5.5,
+      "burn_damage_per_second": 8.5
+    },
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 2.1
+    },
+    "requirements": {
+      "level": 15,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 62,
+    "metadata": {
+      "narrative": "Laser turret with dull mithril housing and light gem focusing array. Marble lens concentrates beams to cutting edge. The beam hums with barely visible energy.",
+      "tags": ["device", "turret", "light", "precision", "advanced"]
+    },
+    "itemId": "laser_turret",
+    "name": "Laser Turret",
+    "category": "device",
+    "type": "turret",
+    "subtype": "energy",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Fires concentrated light beam, 82 damage, 12.5 unit range",
+    "effectTags": ["energy", "beam"],
+    "effectParams": {
+      "baseDamage": 82,
+      "range": 12.5,
+      "beam_range": 12.5,
+      "beam_width": 1.2
+    },
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 1.9
+    },
+    "requirements": {
+      "level": 17,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 63,
+    "metadata": {
+      "narrative": "Cluster bomb with rough steel casing and fire crystal igniters. Splits into multiple smaller explosions on impact. The blast pattern covers maximum area with minimal waste.",
+      "tags": ["device", "bomb", "area", "cluster", "fire"]
+    },
+    "itemId": "cluster_bomb",
+    "name": "Cluster Bomb",
+    "category": "device",
+    "type": "bomb",
+    "subtype": "explosive",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Splits into 8 smaller explosions, total 125 damage over wide area",
+    "effectTags": ["physical", "circle", "fire"],
+    "effectParams": {
+      "baseDamage": 125,
+      "circle_radius": 5.5
+    },
+    "stackSize": 5,
+    "statMultipliers": {
+      "weight": 0.9
+    },
+    "requirements": {
+      "level": 15,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 64,
+    "metadata": {
+      "narrative": "EMP device using dusty adamantine to contain shadow core void energy. Lightning shards discharge in controlled pulse. Mechanical nightmares freeze and die in its wake.",
+      "tags": ["device", "utility", "disable", "tech", "advanced"]
+    },
+    "itemId": "emp_device",
+    "name": "EMP Device",
+    "category": "device",
+    "type": "utility",
+    "subtype": "disable",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Disables all mechanical devices in 8.5 unit radius for 32 seconds",
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 1.1
+    },
+    "requirements": {
+      "level": 17,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 65,
+    "metadata": {
+      "narrative": "Grappling hook launcher with dark lightning copper hook and golem core counterweight. Water crystal lubrication ensures smooth cable release. The hook finds purchase in impossible surfaces.",
+      "tags": ["device", "utility", "mobility", "tool"]
+    },
+    "itemId": "grappling_hook",
+    "name": "Grappling Hook",
+    "category": "device",
+    "type": "utility",
+    "subtype": "mobility",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Launches grappling hook up to 16 units, pulls player to location",
+    "stackSize": 1,
+    "statMultipliers": {
+      "weight": 1.6
+    },
+    "requirements": {
+      "level": 10,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "placeable": false,
+      "repairable": true
+    }
+  },
+  {
+    "index": 66,
+    "metadata": {
+      "narrative": "Jetpack with enchanted iron frame and fire crystal propulsion. Earth crystals provide stabilization during flight. The roar of flames and rush of wind become one.",
+      "tags": ["device", "utility", "flight", "mobility", "advanced"]
+    },
+    "itemId": "jetpack",
+    "name": "Jetpack",
+    "category": "device",
+    "type": "utility",
+    "subtype": "mobility",
+    "tier": 3,
+    "rarity": "epic",
+    "effect": "Enables flight for up to 32 seconds, recharge time 2 minutes",
+    "stackSize": 1,
+    "statMultipliers": {
+      "weight": 2.6
+    },
+    "requirements": {
+      "level": 19,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "placeable": false,
+      "repairable": true
+    }
+  },
+  {
+    "index": 67,
+    "metadata": {
+      "narrative": "Resource scanner using dark tin receiver with lightning shard pulse emitter. Marble lens focuses detection waves. Water crystals filter out noise for clear readings.",
+      "tags": ["device", "utility", "detection", "tool"]
+    },
+    "itemId": "resource_scanner",
+    "name": "Resource Scanner",
+    "category": "device",
+    "type": "utility",
+    "subtype": "detection",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Scans for resources within 20 unit radius, highlights rare materials",
+    "stackSize": 1,
+    "statMultipliers": {
+      "weight": 1.2
+    },
+    "requirements": {
+      "level": 16,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "placeable": false,
+      "repairable": true
+    }
+  },
+  {
+    "index": 68,
+    "metadata": {
+      "narrative": "Teleporter pad constructed from dusty adamantine with chaos matrix reality anchor. Void essence tears space while diamond focuses destination. Stepping through feels like falling sideways through existence.",
+      "tags": ["device", "utility", "teleport", "legendary", "advanced"]
+    },
+    "itemId": "teleporter_pad",
+    "name": "Teleporter Pad",
+    "category": "device",
+    "type": "utility",
+    "subtype": "teleport",
+    "tier": 4,
+    "rarity": "legendary",
+    "effect": "Enables instant travel between two linked pads within 500 units",
+    "stackSize": 2,
+    "statMultipliers": {
+      "weight": 5.0
+    },
+    "requirements": {
+      "level": 28,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 69,
+    "metadata": {
+      "narrative": "Auto collector using dark iron vacuum mechanism with light gem detection grid. Spectral threads extend to grasp items while slime gel provides adhesion. Never bend down to pick up loot again.",
+      "tags": ["device", "utility", "automation", "tool"]
+    },
+    "itemId": "auto_collector",
+    "name": "Auto Collector",
+    "category": "device",
+    "type": "utility",
+    "subtype": "automation",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Automatically collects dropped items within 8 unit radius",
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 1.8
+    },
+    "requirements": {
+      "level": 15,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 70,
+    "metadata": {
+      "narrative": "Shield generator using dusty iron frame with shadow core energy matrix. Limestone anchors the barrier while air crystals shape its dome. An invisible wall that turns aside steel and spell alike.",
+      "tags": ["device", "utility", "defense", "shield", "advanced"]
+    },
+    "itemId": "shield_generator",
+    "name": "Shield Generator",
+    "category": "device",
+    "type": "utility",
+    "subtype": "defense",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Creates protective barrier absorbing 500 damage in 6 unit radius",
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 2.2
+    },
+    "requirements": {
+      "level": 16,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 71,
+    "metadata": {
+      "narrative": "Slow field generator with enchanted copper coils and light gem emitters. Marble resonators spread the effect while fire crystals power the field. Time itself seems to thicken in the affected area.",
+      "tags": ["device", "utility", "crowd-control", "area"]
+    },
+    "itemId": "slow_field_generator",
+    "name": "Slow Field Generator",
+    "category": "device",
+    "type": "utility",
+    "subtype": "control",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Slows all enemies by 70% in 7 unit radius",
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 1.7
+    },
+    "requirements": {
+      "level": 15,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 72,
+    "metadata": {
+      "narrative": "Repair drone with dark iron chassis and lightning shard power core. Golem core programming guides repairs while living ichor provides restoration material. Mechanical guardian that mends what breaks.",
+      "tags": ["device", "utility", "repair", "automation", "advanced"]
+    },
+    "itemId": "repair_drone",
+    "name": "Repair Drone",
+    "category": "device",
+    "type": "utility",
+    "subtype": "automation",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Repairs nearby equipment at 5 durability per second in 5 unit radius",
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 16,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 73,
+    "metadata": {
+      "narrative": "Proximity alarm using dusty lightning copper sensor with frost essence trigger. Beetle carapace resonator amplifies alert. Silent until something draws near, then screams warning.",
+      "tags": ["device", "utility", "detection", "basic"]
+    },
+    "itemId": "proximity_alarm",
+    "name": "Proximity Alarm",
+    "category": "device",
+    "type": "utility",
+    "subtype": "detection",
+    "tier": 1,
+    "rarity": "common",
+    "effect": "Alerts when enemies approach within 8 units",
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 0.4
+    },
+    "requirements": {
+      "level": 2,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 74,
+    "metadata": {
+      "narrative": "Basic arrow turret enhanced with brilliant mithril components. Oak frame provides stability while wolf hide dampens vibration. Each shot gleams with enhanced precision.",
+      "tags": ["device", "turret", "basic", "projectile"]
+    },
+    "itemId": "basic_arrow_turret",
+    "name": "Basic Arrow Turret",
+    "category": "device",
+    "type": "turret",
+    "subtype": "projectile",
+    "tier": 1,
+    "rarity": "common",
+    "effect": "Fires arrows at enemies, 22 damage, 5.5 unit range",
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 22,
+      "range": 5.5
+    },
+    "stackSize": 5,
+    "statMultipliers": {
+      "weight": 1.6
+    },
+    "requirements": {
+      "level": 4,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 75,
+    "metadata": {
+      "narrative": "Fire arrow turret with polished tin barrel and birch plank mounting. Water crystals cool the mechanism between volleys. The arrows leave trails of flame and steam.",
+      "tags": ["device", "turret", "fire", "elemental"]
+    },
+    "itemId": "fire_arrow_turret",
+    "name": "Fire Arrow Turret",
+    "category": "device",
+    "type": "turret",
+    "subtype": "projectile",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Fires flaming arrows, 37 damage + burn, 7.2 unit range",
+    "effectTags": ["fire", "piercing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 37,
+      "range": 7.2,
+      "burn_duration": 5.2,
+      "burn_damage_per_second": 5.5
+    },
+    "stackSize": 5,
+    "statMultipliers": {
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 76,
+    "metadata": {
+      "narrative": "Lightning cannon blazing with fire-infused tin and maple components. Light gems focus the discharge while flames crackle along each bolt. Thunder and fire become one.",
+      "tags": ["device", "turret", "lightning", "advanced", "fire"]
+    },
+    "itemId": "lightning_cannon",
+    "name": "Lightning Cannon",
+    "category": "device",
+    "type": "turret",
+    "subtype": "energy",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Fires lightning bolts, 73 damage + chain, 10.8 unit range",
+    "effectTags": ["lightning", "chain", "shock", "fire"],
+    "effectParams": {
+      "baseDamage": 73,
+      "range": 10.8,
+      "chain_count": 2,
+      "chain_range": 5.8,
+      "shock_duration": 2.3,
+      "shock_damage": 6.5
+    },
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 2.0
+    },
+    "requirements": {
+      "level": 16,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 77,
+    "metadata": {
+      "narrative": "Simple bomb with polished steel casing for maximum shrapnel. The refined construction ensures consistent blast radius. Elegant simplicity in explosive form.",
+      "tags": ["device", "bomb", "basic", "explosive"]
+    },
+    "itemId": "simple_bomb",
+    "name": "Simple Bomb",
+    "category": "device",
+    "type": "bomb",
+    "subtype": "explosive",
+    "tier": 1,
+    "rarity": "common",
+    "effect": "Explodes for 43 damage in 3.3 unit radius",
+    "effectTags": ["physical", "circle"],
+    "effectParams": {
+      "baseDamage": 43,
+      "circle_radius": 3.3
+    },
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 78,
+    "metadata": {
+      "narrative": "Fire bomb with flawless steel casing and air crystal accelerant. The explosion creates a vortex of flame that swirls and spreads. Perfect construction ensures devastating effect.",
+      "tags": ["device", "bomb", "fire", "elemental", "advanced"]
+    },
+    "itemId": "fire_bomb",
+    "name": "Fire Bomb",
+    "category": "device",
+    "type": "bomb",
+    "subtype": "elemental",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Explodes for 80 fire damage + lingering flames",
+    "effectTags": ["fire", "circle", "burn"],
+    "effectParams": {
+      "baseDamage": 80,
+      "circle_radius": 4.5,
+      "burn_duration": 7.0,
+      "burn_damage_per_second": 9.0
+    },
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "requirements": {
+      "level": 9,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 79,
+    "metadata": {
+      "narrative": "Frost mine with polished iron trigger and shadow core freezing agent. The darkness amplifies the cold into absolute zero. Even shadows freeze in its blast.",
+      "tags": ["device", "trap", "frost", "elemental", "advanced"]
+    },
+    "itemId": "frost_mine",
+    "name": "Frost Mine",
+    "category": "device",
+    "type": "trap",
+    "subtype": "elemental",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Triggers on proximity, 54 damage + slow",
+    "effectTags": ["ice", "circle", "freeze", "slow"],
+    "effectParams": {
+      "baseDamage": 54,
+      "circle_radius": 3.5,
+      "freeze_duration": 4.0,
+      "slow_factor": 0.6
+    },
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 0.8
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 80,
+    "metadata": {
+      "narrative": "Spike trap with shadow copper springs and steel teeth. Beetle carapace trigger plate ensures hair-trigger sensitivity. The darkness makes it nearly invisible until too late.",
+      "tags": ["device", "trap", "physical", "basic"]
+    },
+    "itemId": "spike_trap",
+    "name": "Spike Trap",
+    "category": "device",
+    "type": "trap",
+    "subtype": "physical",
+    "tier": 1,
+    "rarity": "common",
+    "effect": "Triggers on contact, 31 damage + bleed",
+    "effectTags": ["physical", "piercing", "circle", "bleed"],
+    "effectParams": {
+      "baseDamage": 31,
+      "circle_radius": 2.1,
+      "bleed_duration": 8.2,
+      "bleed_damage_per_second": 3.2
+    },
+    "stackSize": 15,
+    "statMultipliers": {
+      "weight": 1.0
+    },
+    "requirements": {
+      "level": 2,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 81,
+    "metadata": {
+      "narrative": "Healing beacon with vivid mithril housing and frost essence purification field. Living ichor provides the healing medium while mithril amplifies the effect. The aura feels like standing in gentle snow.",
+      "tags": ["device", "utility", "healing", "support", "advanced"]
+    },
+    "itemId": "healing_beacon",
+    "name": "Healing Beacon",
+    "category": "device",
+    "type": "utility",
+    "subtype": "support",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Heals 12 HP/sec in 5.8 unit radius for 2 minutes",
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 14,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 82,
+    "metadata": {
+      "narrative": "Poison trap with shadow mithril dispersal chamber and slime gel poison base. Lightning shards electrify the toxic cloud for enhanced potency. The shadows hide the green mist until it's breathed.",
+      "tags": ["device", "trap", "poison", "elemental", "advanced"]
+    },
+    "itemId": "poison_trap",
+    "name": "Poison Trap",
+    "category": "device",
+    "type": "trap",
+    "subtype": "elemental",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Triggers on proximity, releases poison cloud dealing 48 damage over time",
+    "effectTags": ["physical", "circle", "burn"],
+    "effectParams": {
+      "baseDamage": 48,
+      "circle_radius": 3.8,
+      "burn_duration": 11.0,
+      "burn_damage_per_second": 4.8
+    },
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 0.9
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 83,
+    "metadata": {
+      "narrative": "Bear trap with vivid copper jaws and dire fang teeth. The predator's fangs ensure no escape once triggered. Metal and bone working in brutal harmony.",
+      "tags": ["device", "trap", "physical", "immobilize"]
+    },
+    "itemId": "bear_trap",
+    "name": "Bear Trap",
+    "category": "device",
+    "type": "trap",
+    "subtype": "physical",
+    "tier": 1,
+    "rarity": "common",
+    "effect": "Triggers on contact, 26 damage + immobilize for 5.2 seconds",
+    "effectTags": ["physical", "crushing", "single", "root"],
+    "effectParams": {
+      "baseDamage": 26,
+      "root_duration": 5.2
+    },
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 1.2
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 84,
+    "metadata": {
+      "narrative": "Net launcher with tempered lightning copper barrel and hardened spectral thread nets. Beetle carapace handle provides insulation. The nets crackle with residual charge as they fly.",
+      "tags": ["device", "utility", "crowd-control", "projectile", "advanced"]
+    },
+    "itemId": "net_launcher",
+    "name": "Net Launcher",
+    "category": "device",
+    "type": "utility",
+    "subtype": "control",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Fires net that slows enemies by 85% for 12 seconds",
+    "stackSize": 5,
+    "statMultipliers": {
+      "weight": 1.3
+    },
+    "requirements": {
+      "level": 9,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 85,
+    "metadata": {
+      "narrative": "Flamethrower turret with lightning-charged mithril and earth crystal stabilizers. Void essence fuel burns with impossible heat. The flames crackle with purple lightning.",
+      "tags": ["device", "turret", "fire", "area", "advanced", "lightning"]
+    },
+    "itemId": "flamethrower_turret",
+    "name": "Flamethrower Turret",
+    "category": "device",
+    "type": "turret",
+    "subtype": "area",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Sweeps cone of fire, 65 damage + lingering burn",
+    "effectTags": ["fire", "cone", "burn", "lightning"],
+    "effectParams": {
+      "baseDamage": 65,
+      "range": 9.0,
+      "cone_angle": 70.0,
+      "cone_range": 9.0,
+      "burn_duration": 6.0,
+      "burn_damage_per_second": 9.0
+    },
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 2.0
+    },
+    "requirements": {
+      "level": 16,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 86,
+    "metadata": {
+      "narrative": "Laser turret with glowing adamantine housing and lightning shard amplifiers. Granite base absorbs recoil while the beam cuts through adamantine itself. Light made deadly.",
+      "tags": ["device", "turret", "light", "precision", "advanced"]
+    },
+    "itemId": "laser_turret",
+    "name": "Laser Turret",
+    "category": "device",
+    "type": "turret",
+    "subtype": "energy",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Fires concentrated light beam, 85 damage, 13 unit range",
+    "effectTags": ["energy", "beam"],
+    "effectParams": {
+      "baseDamage": 85,
+      "range": 13.0,
+      "beam_range": 13.0,
+      "beam_width": 1.0
+    },
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 1.8
+    },
+    "requirements": {
+      "level": 17,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 87,
+    "metadata": {
+      "narrative": "Cluster bomb with tempered steel casing that fragments into perfect shrapnel. Each submunition detonates with precision timing. The cascade of explosions is almost artistic.",
+      "tags": ["device", "bomb", "area", "cluster"]
+    },
+    "itemId": "cluster_bomb",
+    "name": "Cluster Bomb",
+    "category": "device",
+    "type": "bomb",
+    "subtype": "explosive",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Splits into 8 smaller explosions, total 128 damage over wide area",
+    "effectTags": ["physical", "circle"],
+    "effectParams": {
+      "baseDamage": 128,
+      "circle_radius": 5.8
+    },
+    "stackSize": 5,
+    "statMultipliers": {
+      "weight": 0.8
+    },
+    "requirements": {
+      "level": 15,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 88,
+    "metadata": {
+      "narrative": "EMP device with fire etherion housing that exists outside normal time. Light gems pulse the shutdown wave while void essence carries it beyond this reality. Machines die before they know they're targeted.",
+      "tags": ["device", "utility", "disable", "tech", "legendary"]
+    },
+    "itemId": "emp_device",
+    "name": "EMP Device",
+    "category": "device",
+    "type": "utility",
+    "subtype": "disable",
+    "tier": 3,
+    "rarity": "epic",
+    "effect": "Disables all mechanical devices in 9.5 unit radius for 35 seconds",
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 1.0
+    },
+    "requirements": {
+      "level": 18,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 89,
+    "metadata": {
+      "narrative": "Grappling hook launcher with brilliant steel frame and golem core anchor weight. Earth crystal stabilization ensures accurate trajectory. The hook shines as it flies.",
+      "tags": ["device", "utility", "mobility", "tool"]
+    },
+    "itemId": "grappling_hook",
+    "name": "Grappling Hook",
+    "category": "device",
+    "type": "utility",
+    "subtype": "mobility",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Launches grappling hook up to 15.5 units, pulls player to location",
+    "stackSize": 1,
+    "statMultipliers": {
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 9,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "placeable": false,
+      "repairable": true
+    }
+  },
+  {
+    "index": 90,
+    "metadata": {
+      "narrative": "Jetpack with polished mithril construction and air crystal propulsion. The lightweight metal allows extended flight while compressed winds provide thrust. Silent as a whisper, fast as thought.",
+      "tags": ["device", "utility", "flight", "mobility", "advanced"]
+    },
+    "itemId": "jetpack",
+    "name": "Jetpack",
+    "category": "device",
+    "type": "utility",
+    "subtype": "mobility",
+    "tier": 3,
+    "rarity": "epic",
+    "effect": "Enables flight for up to 35 seconds, recharge time 2 minutes",
+    "stackSize": 1,
+    "statMultipliers": {
+      "weight": 2.4
+    },
+    "requirements": {
+      "level": 19,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "placeable": false,
+      "repairable": true
+    }
+  },
+  {
+    "index": 91,
+    "metadata": {
+      "narrative": "Resource scanner with brilliant tin receiver and lightning shard pulse array. Marble focusing lens reveals hidden treasures while the construction gleams. Wealth calls to wealth.",
+      "tags": ["device", "utility", "detection", "tool", "advanced"]
+    },
+    "itemId": "resource_scanner",
+    "name": "Resource Scanner",
+    "category": "device",
+    "type": "utility",
+    "subtype": "detection",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Scans for resources within 22 unit radius, highlights rare materials",
+    "stackSize": 1,
+    "statMultipliers": {
+      "weight": 1.1
+    },
+    "requirements": {
+      "level": 16,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "placeable": false,
+      "repairable": true
+    }
+  },
+  {
+    "index": 92,
+    "metadata": {
+      "narrative": "Teleporter pad forged from fire adamantine with blazing chaos matrix core. Void essence tears burning holes in space while the frame withstands the heat. Stepping through feels like diving into the sun.",
+      "tags": ["device", "utility", "teleport", "legendary", "fire"]
+    },
+    "itemId": "teleporter_pad",
+    "name": "Teleporter Pad",
+    "category": "device",
+    "type": "utility",
+    "subtype": "teleport",
+    "tier": 4,
+    "rarity": "legendary",
+    "effect": "Enables instant travel between two linked pads within 550 units",
+    "stackSize": 2,
+    "statMultipliers": {
+      "weight": 4.8
+    },
+    "requirements": {
+      "level": 28,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 93,
+    "metadata": {
+      "narrative": "Auto collector with brilliant iron vacuum array and light gem detection grid. Spectral threads phase through obstacles to grab items. Everything within reach comes home.",
+      "tags": ["device", "utility", "automation", "tool", "advanced"]
+    },
+    "itemId": "auto_collector",
+    "name": "Auto Collector",
+    "category": "device",
+    "type": "utility",
+    "subtype": "automation",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Automatically collects dropped items within 8.5 unit radius",
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 1.7
+    },
+    "requirements": {
+      "level": 15,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 94,
+    "metadata": {
+      "narrative": "Shield generator with fire iron frame and blazing shadow core energy matrix. Limestone anchor keeps the barrier stable while flames dance across its surface. Protection wreathed in fire.",
+      "tags": ["device", "utility", "defense", "shield", "fire"]
+    },
+    "itemId": "shield_generator",
+    "name": "Shield Generator",
+    "category": "device",
+    "type": "utility",
+    "subtype": "defense",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Creates protective barrier absorbing 520 damage in 6.2 unit radius",
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 2.1
+    },
+    "requirements": {
+      "level": 16,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 95,
+    "metadata": {
+      "narrative": "Slow field generator with polished copper emitters and light gem focal points. Marble resonators spread temporal distortion across the field. Time crawls in its presence.",
+      "tags": ["device", "utility", "crowd-control", "area"]
+    },
+    "itemId": "slow_field_generator",
+    "name": "Slow Field Generator",
+    "category": "device",
+    "type": "utility",
+    "subtype": "control",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Slows all enemies by 72% in 7.2 unit radius",
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 1.6
+    },
+    "requirements": {
+      "level": 15,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 96,
+    "metadata": {
+      "narrative": "Repair drone with brilliant iron chassis and lightning shard neural core. Golem core memory stores repair patterns while the frame gleams. Tireless guardian of equipment.",
+      "tags": ["device", "utility", "repair", "automation", "advanced"]
+    },
+    "itemId": "repair_drone",
+    "name": "Repair Drone",
+    "category": "device",
+    "type": "utility",
+    "subtype": "automation",
+    "tier": 3,
+    "rarity": "rare",
+    "effect": "Repairs nearby equipment at 5.5 durability per second in 5.5 unit radius",
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 1.4
+    },
+    "requirements": {
+      "level": 16,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 97,
+    "metadata": {
+      "narrative": "Proximity alarm with fire copper sensor and light gem trigger. Slime gel dampens false alarms while flames mark the alert. Silent vigil until enemies approach.",
+      "tags": ["device", "utility", "detection", "basic"]
+    },
+    "itemId": "proximity_alarm",
+    "name": "Proximity Alarm",
+    "category": "device",
+    "type": "utility",
+    "subtype": "detection",
+    "tier": 1,
+    "rarity": "common",
+    "effect": "Alerts when enemies approach within 8.5 units",
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 0.4
+    },
+    "requirements": {
+      "level": 2,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 98,
+    "metadata": {
+      "narrative": "Basic arrow turret with dull lightning copper frame and birch construction. Slime gel lubricates the mechanism while residual charge crackles. Simple but enhanced.",
+      "tags": ["device", "turret", "basic", "projectile"]
+    },
+    "itemId": "basic_arrow_turret",
+    "name": "Basic Arrow Turret",
+    "category": "device",
+    "type": "turret",
+    "subtype": "projectile",
+    "tier": 1,
+    "rarity": "common",
+    "effect": "Fires arrows at enemies, 21 damage, 5.2 unit range",
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 21,
+      "range": 5.2
+    },
+    "stackSize": 5,
+    "statMultipliers": {
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 99,
+    "metadata": {
+      "narrative": "Fire arrow turret with rough adamantine frame and oak mounting. Air crystals accelerate the flames as arrows fly. Nearly indestructible construction ensures longevity.",
+      "tags": ["device", "turret", "fire", "elemental", "advanced"]
+    },
+    "itemId": "fire_arrow_turret",
+    "name": "Fire Arrow Turret",
+    "category": "device",
+    "type": "turret",
+    "subtype": "projectile",
+    "tier": 2,
+    "rarity": "rare",
+    "effect": "Fires flaming arrows, 40 damage + burn, 7.8 unit range",
+    "effectTags": ["fire", "piercing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 40,
+      "range": 7.8,
+      "burn_duration": 6.0,
+      "burn_damage_per_second": 6.5
+    },
+    "stackSize": 5,
+    "statMultipliers": {
+      "weight": 1.7
+    },
+    "requirements": {
+      "level": 10,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 100,
+    "metadata": {
+      "narrative": "Lightning cannon forged from frost adamantine with frozen maple housing. Frost essence and lightning shard combine in impossible union. Each bolt trails ice crystals and electric arcs.",
+      "tags": ["device", "turret", "lightning", "frost", "legendary"]
+    },
+    "itemId": "lightning_cannon",
+    "name": "Lightning Cannon",
+    "category": "device",
+    "type": "turret",
+    "subtype": "energy",
+    "tier": 3,
+    "rarity": "epic",
+    "effect": "Fires lightning bolts, 78 damage + chain + freeze, 11.5 unit range",
+    "effectTags": ["lightning", "chain", "shock", "ice"],
+    "effectParams": {
+      "baseDamage": 78,
+      "range": 11.5,
+      "chain_count": 3,
+      "chain_range": 6.5,
+      "shock_duration": 3.0,
+      "shock_damage": 7.0,
+      "freeze_duration": 2.0
+    },
+    "stackSize": 3,
+    "statMultipliers": {
+      "weight": 2.3
+    },
+    "requirements": {
+      "level": 18,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "placeable": true,
+      "repairable": false
+    }
+  }
+]

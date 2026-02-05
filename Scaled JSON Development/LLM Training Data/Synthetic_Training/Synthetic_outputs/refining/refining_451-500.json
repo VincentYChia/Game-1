@@ -1,0 +1,1526 @@
+[
+  {
+    "index": 451,
+    "recipe_id": "refining_gold_ore_to_ingot_v2",
+    "item": {
+      "metadata": {
+        "narrative": "A gold ingot forged from shadow-laced ore, its surface swirling with dark undertones beneath the lustrous sheen. Prized by enchanters for its affinity with void-touched magic.",
+        "tags": ["refined", "metal", "precious", "dark"]
+      },
+      "itemId": "gold_ingot",
+      "name": "Gold Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.7
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 452,
+    "recipe_id": "refining_platinum_ore_to_ingot_v2",
+    "item": {
+      "metadata": {
+        "narrative": "Platinum refined from deep-vein dark ore, impossibly dense and mirror-bright despite shadowy striations running through its core. Resists corrosion from both acid and dark magic alike.",
+        "tags": ["refined", "metal", "precious", "dark", "rare"]
+      },
+      "itemId": "platinum_ingot",
+      "name": "Platinum Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 453,
+    "recipe_id": "refining_coal_to_charcoal_v2",
+    "item": {
+      "metadata": {
+        "narrative": "Charcoal rendered from shadow-touched coal, burning hotter and longer than its mundane counterpart. The flames flicker with faint violet edges, ideal for smelting enchanted ores.",
+        "tags": ["refined", "common", "dark", "standard"]
+      },
+      "itemId": "charcoal",
+      "name": "Charcoal",
+      "category": "material",
+      "type": "stone",
+      "subtype": "fuel",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 454,
+    "recipe_id": "refining_limestone_to_quicklime_v2",
+    "item": {
+      "metadata": {
+        "narrative": "Quickite powder calcined from dark limestone, caustic and reactive. Used as a flux in advanced smelting and as a base component in alchemical preparations.",
+        "tags": ["refined", "stone", "common", "basic"]
+      },
+      "itemId": "quicklime",
+      "name": "Quicklime",
+      "category": "material",
+      "type": "stone",
+      "subtype": "powder",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 455,
+    "recipe_id": "refining_sand_to_glass_v2",
+    "item": {
+      "metadata": {
+        "narrative": "Dark glass formed from shadow-infused sand, translucent with a smoky, violet tint. Alchemists covet it for vessels that contain volatile magical reagents without leaking energy.",
+        "tags": ["refined", "stone", "dark", "quality"]
+      },
+      "itemId": "glass",
+      "name": "Glass",
+      "category": "material",
+      "type": "stone",
+      "subtype": "processed",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 456,
+    "recipe_id": "refining_clay_to_brick_v2",
+    "item": {
+      "metadata": {
+        "narrative": "Dense brick fired from dark clay, nearly black with faint purple veining. Stronger than common brick, it absorbs sound and resists magical scrying when used in construction.",
+        "tags": ["refined", "stone", "dark", "durable"]
+      },
+      "itemId": "brick",
+      "name": "Brick",
+      "category": "material",
+      "type": "stone",
+      "subtype": "processed",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 457,
+    "recipe_id": "refining_hide_to_leather_v2",
+    "item": {
+      "metadata": {
+        "narrative": "Supple leather tanned from shadow-touched hides, dark as midnight and remarkably quiet when flexed. Favored by rogues and assassins for armor that moves in silence.",
+        "tags": ["refined", "leather", "dark", "flexible"]
+      },
+      "itemId": "leather",
+      "name": "Leather",
+      "category": "material",
+      "type": "leather",
+      "subtype": "hide",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 458,
+    "recipe_id": "refining_maple_log_to_plank_v2",
+    "item": {
+      "metadata": {
+        "narrative": "Maple planks milled from dark-heartwood logs, showing deep crimson figuring against a near-black grain. Holds shape through extreme temperatures and resists warping under magical stress.",
+        "tags": ["refined", "wood", "dark", "durable"]
+      },
+      "itemId": "maple_plank",
+      "name": "Maple Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 2,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 459,
+    "recipe_id": "refining_rarity_silver_epic_v2",
+    "item": {
+      "metadata": {
+        "narrative": "Shadow-purified silver of exceptional quality, its surface shifts between mirror-bright and void-dark depending on the light. Undead recoil from its presence even before it is forged into weaponry.",
+        "tags": ["refined", "metal", "precious", "dark", "rare"]
+      },
+      "itemId": "silver_ingot",
+      "name": "Silver Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 10,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 460,
+    "recipe_id": "refining_rarity_gold_rare_v2",
+    "item": {
+      "metadata": {
+        "narrative": "Re-refined gold purged of impurities through shadow-forging, yielding a denser and more magically receptive ingot. The dark veining has settled into elegant patterns that amplify enchantments.",
+        "tags": ["refined", "metal", "precious", "dark", "quality"]
+      },
+      "itemId": "gold_ingot",
+      "name": "Gold Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.7
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 461,
+    "recipe_id": "refining_rarity_platinum_legendary_v2",
+    "item": {
+      "metadata": {
+        "narrative": "Platinum refined to its absolute limit through void-fire tempering, achieving near-perfect molecular structure. This ingot hums with suppressed energy, waiting to be shaped into something world-shaking.",
+        "tags": ["refined", "metal", "precious", "dark", "legendary"]
+      },
+      "itemId": "platinum_ingot",
+      "name": "Platinum Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 462,
+    "recipe_id": "refining_copper_ore_to_ingot_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Copper ingot smelted from radiant ore, warm to the touch with a brilliant reddish-gold luster. Light seems to gather on its surface, making it glow faintly in dim rooms.",
+        "tags": ["refined", "metal", "radiant", "starter"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 463,
+    "recipe_id": "refining_iron_ore_to_ingot_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Iron ingot forged from brilliant ore, silvery-grey with a faint inner luminescence. Stronger than common iron thanks to the radiant energy that purified it during smelting.",
+        "tags": ["refined", "metal", "radiant", "standard"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 464,
+    "recipe_id": "refining_tin_ore_to_ingot_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Tin ingot refined from radiant ore, its silvery surface catching and holding light like captured starshine. Excellent magical conductivity makes it essential for enchanted alloys.",
+        "tags": ["refined", "metal", "radiant", "light"]
+      },
+      "itemId": "tin_ingot",
+      "name": "Tin Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 465,
+    "recipe_id": "refining_steel_ore_to_ingot_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Steel ingot smelted from brilliant ore, dark grey shot through with veins of captured light. The radiant energy hardened its carbon structure beyond what conventional forging achieves.",
+        "tags": ["refined", "metal", "radiant", "strong"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 466,
+    "recipe_id": "refining_mithril_ore_to_ingot_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Mithril ingot forged from radiant ore, blazing silver-white and lighter than air should allow. The brilliant energy amplified mithril's natural properties to their fullest expression.",
+        "tags": ["refined", "metal", "radiant", "legendary"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 467,
+    "recipe_id": "refining_adamantine_ore_to_ingot_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Adamantine ingot refined from radiant ore, jet-black yet threaded with brilliant golden veins of captured light. The hardest metal known, now infused with an inner luminance that defies its dark nature.",
+        "tags": ["refined", "metal", "radiant", "rare"]
+      },
+      "itemId": "adamantine_ingot",
+      "name": "Adamantine Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 18,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 468,
+    "recipe_id": "refining_orichalcum_ore_to_ingot_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Orichalcum ingot smelted from radiant ore, golden-green and humming with amplified elemental resonance. The brilliant energy unlocked harmonic frequencies dormant in lesser specimens.",
+        "tags": ["refined", "metal", "radiant", "ancient", "elemental"]
+      },
+      "itemId": "orichalcum_ingot",
+      "name": "Orichalcum Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 469,
+    "recipe_id": "refining_etherion_ore_to_ingot_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Etherion ingot refined from radiant ore, existing as both solid metal and captured light simultaneously. Reality bends around its edges, and its weight fluctuates with the observer's perception.",
+        "tags": ["refined", "metal", "radiant", "mythical", "temporal"]
+      },
+      "itemId": "etherion_ingot",
+      "name": "Etherion Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 470,
+    "recipe_id": "refining_oak_log_to_plank_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Oak planks milled from radiant timber, golden-brown with a warm inner glow along the grain lines. Stronger and more resilient than standard oak, blessed by concentrated sunlight.",
+        "tags": ["refined", "wood", "radiant", "versatile"]
+      },
+      "itemId": "oak_plank",
+      "name": "Oak Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 471,
+    "recipe_id": "refining_pine_log_to_plank_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Pine planks cut from radiant timber, pale gold with luminous resin lines. Light and flexible, they bend without breaking and spring back with eager resilience.",
+        "tags": ["refined", "wood", "radiant", "flexible"]
+      },
+      "itemId": "pine_plank",
+      "name": "Pine Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 472,
+    "recipe_id": "refining_ash_log_to_plank_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Ash planks shaped from radiant timber, creamy white with a subtle pearlescent sheen. Exceptional shock absorption makes them ideal for weapon handles that sing in combat.",
+        "tags": ["refined", "wood", "radiant", "quality"]
+      },
+      "itemId": "ash_plank",
+      "name": "Ash Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 473,
+    "recipe_id": "refining_birch_log_to_plank_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Birch planks milled from radiant timber, ivory-white with a luminous grain that catches every stray beam of light. Prized by artisans for detailed carving and fine craftsmanship.",
+        "tags": ["refined", "wood", "radiant", "fine"]
+      },
+      "itemId": "birch_plank",
+      "name": "Birch Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 2,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 474,
+    "recipe_id": "refining_ironwood_log_to_plank_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Ironwood planks from radiant timber, dark bronze with veins of captured light running like molten gold through the grain. Dense as soft metal, they ring like a bell when struck.",
+        "tags": ["refined", "wood", "radiant", "metallic"]
+      },
+      "itemId": "ironwood_plank",
+      "name": "Ironwood Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 3,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 475,
+    "recipe_id": "refining_ebony_log_to_plank_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Ebony planks shaped from radiant timber, jet-black surfaces cracked with bright seams of inner light. The wood absorbs magical interference while the radiant energy channels intended power.",
+        "tags": ["refined", "wood", "radiant", "magical"]
+      },
+      "itemId": "ebony_plank",
+      "name": "Ebony Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 3,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 476,
+    "recipe_id": "refining_worldtree_log_to_plank_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Worldtree planks cut from radiant heartwood, alive with pulsing golden light that follows the ancient growth rings. Millennia of accumulated sunlight trapped in living wood that refuses to die.",
+        "tags": ["refined", "wood", "radiant", "legendary", "living"]
+      },
+      "itemId": "worldtree_plank",
+      "name": "Worldtree Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 4,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 477,
+    "recipe_id": "refining_bronze_alloy_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Bronze alloy forged from radiant copper and tin, warm gold with a brilliant sheen that never tarnishes. The first lesson in combining metals, elevated by light-touched ingredients.",
+        "tags": ["refined", "metal", "radiant", "versatile"]
+      },
+      "itemId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 478,
+    "recipe_id": "refining_fire_steel_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Fire steel fused from radiant steel and brilliant fire crystals, its surface rippling with captured flame. The metal radiates a fierce warmth, and weapons forged from it cauterize as they cut.",
+        "tags": ["refined", "metal", "radiant", "elemental", "fire"]
+      },
+      "itemId": "fire_steel_ingot",
+      "name": "Fire Steel Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "fire",
+          "value": 10,
+          "effect": "Items crafted with this add fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 479,
+    "recipe_id": "refining_frost_steel_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Frost steel forged from radiant steel and brilliant frost essence, perpetually cold with rime patterns blooming across its surface. The radiance trapped within creates an eerie inner glow beneath the ice.",
+        "tags": ["refined", "metal", "radiant", "elemental"]
+      },
+      "itemId": "frost_steel_ingot",
+      "name": "Frost Steel Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "frost",
+          "value": 10,
+          "effect": "Items crafted with this add frost damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 480,
+    "recipe_id": "refining_lightning_copper_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Lightning copper fused from radiant copper and brilliant lightning shards, crackling with visible static arcs. The metal's natural conductivity combined with captured radiance creates a perfect elemental conduit.",
+        "tags": ["refined", "metal", "radiant", "elemental", "lightning"]
+      },
+      "itemId": "lightning_copper_ingot",
+      "name": "Lightning Copper Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "lightning",
+          "value": 10,
+          "effect": "Items crafted with this add lightning damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 481,
+    "recipe_id": "refining_rarity_copper_uncommon_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Copper re-refined through radiant purification, its impurities burned away by concentrated light. The resulting ingot gleams brighter and accepts enchantment more readily than common copper.",
+        "tags": ["refined", "metal", "radiant", "quality"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 482,
+    "recipe_id": "refining_rarity_copper_rare_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Twice-refined radiant copper with a deep rose-gold luster. Each pass through the brilliant forge drove out more weakness, leaving copper that rivals bronze in durability.",
+        "tags": ["refined", "metal", "radiant", "quality", "rare"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 483,
+    "recipe_id": "refining_rarity_copper_epic_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Copper purified to near-perfection through radiant forge-work, each atom aligned by concentrated light. This ingot possesses qualities that defy what common copper should be capable of.",
+        "tags": ["refined", "metal", "radiant", "quality", "precious"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 484,
+    "recipe_id": "refining_rarity_copper_legendary_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Copper refined to its theoretical maximum through radiant tempering at the highest forge tier. This ingot transcends its humble origins - scholars debate whether it should still be called copper at all.",
+        "tags": ["refined", "metal", "radiant", "legendary", "precious"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 485,
+    "recipe_id": "refining_rarity_iron_uncommon_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Iron purified through radiant smelting, slag and impurities driven out by focused light. The resulting ingot holds a cleaner edge and resists rust far better than common iron.",
+        "tags": ["refined", "metal", "radiant", "standard"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 486,
+    "recipe_id": "refining_rarity_iron_rare_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Twice-purified radiant iron with a subtle silvery glow. The repeated radiant forging aligned its grain structure, producing iron that approaches steel in hardness while retaining iron's workability.",
+        "tags": ["refined", "metal", "radiant", "quality"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 4,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 487,
+    "recipe_id": "refining_rarity_iron_epic_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Iron refined to exceptional purity through radiant forge techniques, its crystalline structure near-perfect. This iron sings when struck, a clear tone that betrays its extraordinary quality.",
+        "tags": ["refined", "metal", "radiant", "strong", "quality"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 488,
+    "recipe_id": "refining_rarity_iron_legendary_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Iron pushed beyond its natural limits through radiant tempering at the highest forge tier. The metal has achieved a paradoxical state - humble iron made legendary through sheer refinement mastery.",
+        "tags": ["refined", "metal", "radiant", "legendary", "strong"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 489,
+    "recipe_id": "refining_rarity_steel_uncommon_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Steel re-forged through radiant purification, burning away carbon inconsistencies. The resulting ingot has a uniform blue-grey sheen and holds an edge noticeably longer than standard steel.",
+        "tags": ["refined", "metal", "radiant", "advanced"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 490,
+    "recipe_id": "refining_rarity_steel_rare_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Twice-refined radiant steel with a deep, mirror-like finish. The repeated light-forging process created a steel with superior shock resistance and a keen edge that lasts through prolonged combat.",
+        "tags": ["refined", "metal", "radiant", "advanced", "quality"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 491,
+    "recipe_id": "refining_rarity_steel_epic_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Steel purified to near-perfection through intensive radiant forging, its molecular structure aligned by concentrated light energy. Armorers and swordsmiths consider this the pinnacle of mundane metallurgy.",
+        "tags": ["refined", "metal", "radiant", "advanced", "strong"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 10,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 492,
+    "recipe_id": "refining_rarity_steel_legendary_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Steel tempered at the highest radiant forge tier, achieving a crystalline perfection that borders on the supernatural. Blades forged from this never dull, armor never dents - the warrior's ultimate material.",
+        "tags": ["refined", "metal", "radiant", "legendary", "strong"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 493,
+    "recipe_id": "refining_rarity_mithril_epic_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Mithril refined through radiant purification to epic quality, blazing with an inner silver light that never fades. Each ingot weighs almost nothing yet can bear loads that would crush lesser metals.",
+        "tags": ["refined", "metal", "radiant", "legendary", "light"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 494,
+    "recipe_id": "refining_rarity_mithril_legendary_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Mithril purified to legendary grade through radiant tempering, luminous and virtually weightless. The metal seems eager to be shaped, responding to a master smith's intent almost before the hammer falls.",
+        "tags": ["refined", "metal", "radiant", "legendary", "light"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 18,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 495,
+    "recipe_id": "refining_rarity_mithril_mythical_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Mithril refined beyond all known limits into a mythical state, its radiance so intense the ingot casts no shadow. Smiths speak of this quality in whispers - metal that remembers the stars it came from.",
+        "tags": ["refined", "metal", "radiant", "mythical", "light"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "unique",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 496,
+    "recipe_id": "refining_rarity_adamantine_epic_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Adamantine refined to epic quality through radiant forge-work, jet-black threaded with brilliant golden veins. Each ingot represents months of painstaking work and can withstand forces that shatter mountains.",
+        "tags": ["refined", "metal", "radiant", "durable", "rare"]
+      },
+      "itemId": "adamantine_ingot",
+      "name": "Adamantine Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 497,
+    "recipe_id": "refining_rarity_adamantine_legendary_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Adamantine tempered to legendary perfection, its radiant veins pulsing with slow, rhythmic light like a geological heartbeat. Nothing short of divine intervention could damage equipment forged from this ingot.",
+        "tags": ["refined", "metal", "radiant", "legendary", "durable"]
+      },
+      "itemId": "adamantine_ingot",
+      "name": "Adamantine Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 22,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 498,
+    "recipe_id": "refining_rarity_orichalcum_legendary_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Orichalcum refined to legendary quality, golden-green and resonating with all three elemental frequencies in perfect harmony. The radiant purification unlocked harmonic overtones thought impossible to achieve.",
+        "tags": ["refined", "metal", "radiant", "ancient", "elemental"]
+      },
+      "itemId": "orichalcum_ingot",
+      "name": "Orichalcum Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 22,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 499,
+    "recipe_id": "refining_rarity_orichalcum_mythical_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Orichalcum pushed into mythical territory through radiant refinement at the highest forge tier. Fire, ice, and lightning dance visibly across its surface in an endless elemental waltz - the gods' own alloy perfected by mortal hands.",
+        "tags": ["refined", "metal", "radiant", "mythical", "elemental"]
+      },
+      "itemId": "orichalcum_ingot",
+      "name": "Orichalcum Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "unique",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 500,
+    "recipe_id": "refining_rarity_etherion_mythical_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Etherion refined to its mythical apex, a paradox made solid - simultaneously matter and energy, present and future. The radiant purification collapsed its quantum uncertainty into a single, perfect state that transcends mortal understanding.",
+        "tags": ["refined", "metal", "radiant", "mythical", "temporal"]
+      },
+      "itemId": "etherion_ingot",
+      "name": "Etherion Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "unique",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 28,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  }
+]

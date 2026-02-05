@@ -1,0 +1,1426 @@
+[
+  {
+    "index": 151,
+    "recipe_id": "refining_adamantine_ore_to_ingot_v30",
+    "metadata": {
+      "narrative": "A dense adamantine ingot forged from cracked orichalcum ore. The fractures in the source material left trace impurities, but the resulting metal still refuses to yield under hammer or blade. A testament to adamantine's stubbornness even when born from imperfection.",
+      "tags": ["metal", "refined", "strong", "dark"]
+    },
+    "itemId": "adamantine_ingot",
+    "name": "Adamantine Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 4,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 18,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 152,
+    "recipe_id": "refining_orichalcum_ore_to_ingot_v35",
+    "metadata": {
+      "narrative": "Orichalcum forged from luminous adamantine ore, its golden-green surface pulses with elemental resonance. The glowing properties of the source ore infused the alloy with a faint inner light. Gods once demanded this metal for their armories.",
+      "tags": ["metal", "refined", "elemental", "legendary"]
+    },
+    "itemId": "orichalcum_ingot",
+    "name": "Orichalcum Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 4,
+    "rarity": "legendary",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.8
+    },
+    "requirements": {
+      "level": 20,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 153,
+    "recipe_id": "refining_oak_log_to_plank_v43",
+    "metadata": {
+      "narrative": "Sturdy oak planks milled from fire-touched birch. The blazing properties of the source wood left the grain tighter and more heat-resistant than standard oak. Warm to the touch even in winter.",
+      "tags": ["wood", "refined", "standard", "fire"]
+    },
+    "itemId": "oak_plank",
+    "name": "Oak Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 1,
+    "rarity": "common",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.3
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 154,
+    "recipe_id": "refining_pine_log_to_plank_v48",
+    "metadata": {
+      "narrative": "Light pine planks shaped from crystalline birch. The crystal-laced grain gives these planks an unusual shimmer and slightly improved rigidity over standard pine. Favored by crafters who value aesthetics alongside function.",
+      "tags": ["wood", "refined", "light", "fine"]
+    },
+    "itemId": "pine_plank",
+    "name": "Pine Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 1,
+    "rarity": "common",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.2
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 155,
+    "recipe_id": "refining_ash_log_to_plank_v53",
+    "metadata": {
+      "narrative": "Flexible ash planks processed from polished birch. The refined source wood produced planks with an exceptionally smooth surface and excellent shock absorption. Spearmakers and bowyers prize this material above all others.",
+      "tags": ["wood", "refined", "flexible", "quality"]
+    },
+    "itemId": "ash_plank",
+    "name": "Ash Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 1,
+    "rarity": "common",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.3
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 156,
+    "recipe_id": "refining_birch_log_to_plank_v58",
+    "metadata": {
+      "narrative": "Creamy-white birch planks milled from tarnished ash. The worn quality of the source wood demanded careful planing, but the resulting planks carry a rustic character. Fine-grained and excellent for detailed carving work.",
+      "tags": ["wood", "refined", "fine", "light"]
+    },
+    "itemId": "birch_plank",
+    "name": "Birch Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 2,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.3
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 157,
+    "recipe_id": "refining_ironwood_log_to_plank_v64",
+    "metadata": {
+      "narrative": "Ironwood planks shaped from dull ebony logs. The dim magical properties of the source wood were burned away during processing, leaving behind pure metallic hardness. Dense enough to dull saw blades, strong enough to rival soft metals.",
+      "tags": ["wood", "metallic", "durable", "rare"]
+    },
+    "itemId": "ironwood_plank",
+    "name": "Ironwood Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 3,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.8
+    },
+    "requirements": {
+      "level": 12,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 158,
+    "recipe_id": "refining_ebony_log_to_plank_v69",
+    "metadata": {
+      "narrative": "Deep black ebony planks refined from pristine ironwood. The pure metallic grain of the source wood compressed into something darker and more arcane during the high-tier refining process. Mages covet these planks for staves that channel power without interference.",
+      "tags": ["wood", "refined", "magical", "uncommon"]
+    },
+    "itemId": "ebony_plank",
+    "name": "Ebony Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 3,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "requirements": {
+      "level": 15,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 159,
+    "recipe_id": "refining_bronze_alloy_v77",
+    "metadata": {
+      "narrative": "Bronze alloy forged from shadow-touched copper and darkened steel. The shadow influence lends the metal an unusual deep patina that never fades. Stronger than standard bronze, with an edge that seems to drink dim light.",
+      "tags": ["metal", "refined", "dark", "strong"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 160,
+    "recipe_id": "refining_fire_steel_v113",
+    "metadata": {
+      "narrative": "Fire-infused steel forged from polished steel and air crystals. The compressed winds within the crystals fed the forge fires to impossible temperatures, permanently binding flame into the metal's lattice. It radiates heat and never cools.",
+      "tags": ["metal", "refined", "elemental", "fire"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 161,
+    "recipe_id": "refining_frost_steel_v137",
+    "metadata": {
+      "narrative": "Frost-forged steel born from shadow steel and crystallized darkness. The shadow cores froze the metal's molecular structure into a perpetual chill. Ice crystals form on its surface even in summer heat, and blades forged from it never rust.",
+      "tags": ["metal", "refined", "elemental", "dark"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 162,
+    "recipe_id": "refining_lightning_copper_v161",
+    "metadata": {
+      "narrative": "Lightning-infused copper alloyed with vibrant shadow cores. The intense elemental energy of the cores overcharged the copper's natural conductivity. Static crackles across its surface, and every mage dreams of wielding items forged from this metal.",
+      "tags": ["metal", "refined", "elemental", "lightning"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 163,
+    "recipe_id": "refining_rarity_copper_uncommon_v191",
+    "metadata": {
+      "narrative": "Copper ingot reforged from vibrant steel through a transmutation process. The intense energy of the source steel was stripped away, leaving behind purified copper of uncommon quality. Its reddish surface gleams brighter than ore-smelted copper.",
+      "tags": ["metal", "refined", "uncommon", "versatile"]
+    },
+    "itemId": "copper_ingot",
+    "name": "Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 164,
+    "recipe_id": "refining_rarity_copper_rare_v197",
+    "metadata": {
+      "narrative": "Rare copper ingot distilled from shadow-infused steel at a tier-two refinery. The dark essence burned away during refinement, concentrating the copper's purity to unusual levels. Enchantments take hold in this metal with startling ease.",
+      "tags": ["metal", "refined", "rare", "quality"]
+    },
+    "itemId": "copper_ingot",
+    "name": "Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 165,
+    "recipe_id": "refining_rarity_copper_epic_v203",
+    "metadata": {
+      "narrative": "Epic-grade copper refined from polished steel through advanced transmutation. The high-tier refinery stripped every impurity, producing copper so pure it hums faintly when struck. Master enchanters seek this material for its unmatched receptivity.",
+      "tags": ["metal", "refined", "quality", "precious"]
+    },
+    "itemId": "copper_ingot",
+    "name": "Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 166,
+    "recipe_id": "refining_rarity_copper_legendary_v209",
+    "metadata": {
+      "narrative": "Legendary copper born from flawless steel at the highest-tier refinery. This copper transcends its humble origins — mirror-bright, impossibly malleable, and resonant with latent energy. Smiths whisper that it remembers the steel it once was.",
+      "tags": ["metal", "refined", "legendary", "precious"]
+    },
+    "itemId": "copper_ingot",
+    "name": "Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "legendary",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 167,
+    "recipe_id": "refining_rarity_iron_uncommon_v215",
+    "metadata": {
+      "narrative": "Iron ingot transmuted from glowing steel at a tier-two refinery. The luminous properties of the source steel imparted an unusual luster to the resulting iron. Stronger than common iron, it holds an edge noticeably longer.",
+      "tags": ["metal", "refined", "uncommon", "strong"]
+    },
+    "itemId": "iron_ingot",
+    "name": "Iron Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 168,
+    "recipe_id": "refining_rarity_iron_rare_v221",
+    "metadata": {
+      "narrative": "Rare iron extracted from vibrant steel through high-temperature transmutation. The intense energy of the source material compressed the iron's grain to remarkable density. Blacksmiths claim it rings like a bell when hammered true.",
+      "tags": ["metal", "refined", "rare", "durable"]
+    },
+    "itemId": "iron_ingot",
+    "name": "Iron Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 169,
+    "recipe_id": "refining_rarity_iron_epic_v227",
+    "metadata": {
+      "narrative": "Epic iron distilled from shadow steel at an advanced refinery. The dark essence was purged through repeated smelting, leaving iron of extraordinary purity. Its grey surface carries an almost black depth that catches the eye.",
+      "tags": ["metal", "refined", "quality", "dark"]
+    },
+    "itemId": "iron_ingot",
+    "name": "Iron Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 170,
+    "recipe_id": "refining_rarity_iron_legendary_v233",
+    "metadata": {
+      "narrative": "Legendary iron reforged from polished steel at the pinnacle of refining mastery. Every atom sits in perfect alignment, producing iron that defies its humble reputation. Weapons forged from this iron rival steel in cutting power.",
+      "tags": ["metal", "refined", "legendary", "strong"]
+    },
+    "itemId": "iron_ingot",
+    "name": "Iron Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "legendary",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 171,
+    "recipe_id": "refining_rarity_steel_uncommon_v239",
+    "metadata": {
+      "narrative": "Steel ingot transmuted from flawless tin through alchemical refinement. The perfect crystalline structure of the tin provided an ideal foundation for carbon infusion. The resulting steel holds its temper better than ore-smelted variants.",
+      "tags": ["metal", "refined", "uncommon", "durable"]
+    },
+    "itemId": "steel_ingot",
+    "name": "Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 2,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 172,
+    "recipe_id": "refining_rarity_steel_rare_v245",
+    "metadata": {
+      "narrative": "Rare steel forged from glowing tin at a skilled refinery. The luminous tin's magical conductivity bled into the steel during transmutation, producing an alloy with a faint inner shimmer. It resists corrosion with almost supernatural stubbornness.",
+      "tags": ["metal", "refined", "rare", "quality"]
+    },
+    "itemId": "steel_ingot",
+    "name": "Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 173,
+    "recipe_id": "refining_rarity_steel_epic_v251",
+    "metadata": {
+      "narrative": "Epic steel refined from vibrant tin at an advanced refinery. The intense energy saturating the tin was captured and crystallized within the steel's carbon lattice. This metal strikes with authority and refuses to chip or dull.",
+      "tags": ["metal", "refined", "quality", "strong"]
+    },
+    "itemId": "steel_ingot",
+    "name": "Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 2,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 174,
+    "recipe_id": "refining_rarity_steel_legendary_v257",
+    "metadata": {
+      "narrative": "Legendary steel transmuted from shadow tin at the highest tier refinery. The dark magical conductivity of the source tin was inverted during the process, producing steel that gleams with inner light. Master smiths weep at its perfection.",
+      "tags": ["metal", "refined", "legendary", "durable"]
+    },
+    "itemId": "steel_ingot",
+    "name": "Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 2,
+    "rarity": "legendary",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 175,
+    "recipe_id": "refining_rarity_mithril_epic_v263",
+    "metadata": {
+      "narrative": "Epic mithril refined from polished tin through arcane transmutation. The tin's magical conductivity served as a catalyst, drawing trace mithril from the aether itself. Silvery-blue and impossibly light, it defies the laws that govern lesser metals.",
+      "tags": ["metal", "refined", "quality", "light"]
+    },
+    "itemId": "mithril_ingot",
+    "name": "Mithril Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 3,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.2
+    },
+    "requirements": {
+      "level": 12,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 176,
+    "recipe_id": "refining_rarity_mithril_legendary_v269",
+    "metadata": {
+      "narrative": "Legendary mithril born from flawless tin at the pinnacle of refining mastery. The perfect source material allowed a complete transmutation, producing mithril of starborn purity. Feather-light yet stronger than any steel, it sings when struck.",
+      "tags": ["metal", "refined", "legendary", "light"]
+    },
+    "itemId": "mithril_ingot",
+    "name": "Mithril Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 3,
+    "rarity": "legendary",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.2
+    },
+    "requirements": {
+      "level": 12,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 177,
+    "recipe_id": "refining_rarity_mithril_mythical_v275",
+    "metadata": {
+      "narrative": "Mythical mithril transmuted from glowing tin at the most advanced refinery known. The luminous essence of the tin catalyzed a transformation beyond mortal understanding. This ingot seems to exist partially outside normal reality, shimmering with starlight.",
+      "tags": ["metal", "refined", "mythical", "light"]
+    },
+    "itemId": "mithril_ingot",
+    "name": "Mithril Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 3,
+    "rarity": "unique",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.2
+    },
+    "requirements": {
+      "level": 12,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 178,
+    "recipe_id": "refining_rarity_adamantine_epic_v281",
+    "metadata": {
+      "narrative": "Epic adamantine reforged from vibrant orichalcum at an advanced refinery. The intense elemental energy of the source material was compressed and hardened into adamantine's signature unyielding structure. Black as void, heavy as consequence.",
+      "tags": ["metal", "refined", "strong", "durable"]
+    },
+    "itemId": "adamantine_ingot",
+    "name": "Adamantine Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 4,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 18,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 179,
+    "recipe_id": "refining_rarity_adamantine_legendary_v287",
+    "metadata": {
+      "narrative": "Legendary adamantine refined from shadow orichalcum at the highest tier refinery. The dark ancient metal surrendered its elemental nature, collapsing into adamantine of absolute density. Nothing in the mortal world can scratch its surface.",
+      "tags": ["metal", "refined", "legendary", "strong"]
+    },
+    "itemId": "adamantine_ingot",
+    "name": "Adamantine Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 4,
+    "rarity": "legendary",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 18,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 180,
+    "recipe_id": "refining_rarity_orichalcum_legendary_v293",
+    "metadata": {
+      "narrative": "Legendary orichalcum transmuted from polished adamantine at the pinnacle of refining mastery. The indestructible source metal was unraveled at the atomic level and rewoven into orichalcum's golden-green crystalline lattice. Elemental forces course through every grain.",
+      "tags": ["metal", "refined", "legendary", "elemental"]
+    },
+    "itemId": "orichalcum_ingot",
+    "name": "Orichalcum Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 4,
+    "rarity": "legendary",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.8
+    },
+    "requirements": {
+      "level": 20,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 181,
+    "recipe_id": "refining_rarity_orichalcum_mythical_v299",
+    "metadata": {
+      "narrative": "Mythical orichalcum forged from flawless adamantine through a process that borders on the divine. The perfect adamantine provided a foundation of absolute structural integrity, and the transmutation imbued it with elemental forces that hum at frequencies only gods can hear.",
+      "tags": ["metal", "refined", "mythical", "elemental"]
+    },
+    "itemId": "orichalcum_ingot",
+    "name": "Orichalcum Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 4,
+    "rarity": "unique",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.8
+    },
+    "requirements": {
+      "level": 20,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 182,
+    "recipe_id": "refining_rarity_tin_rare_v308",
+    "metadata": {
+      "narrative": "Rare tin extracted from pale steel through careful deconstruction. The washed-out quality of the source steel yielded tin with an unusually bright, almost silver sheen. Its magical conductivity surpasses standard tin significantly.",
+      "tags": ["metal", "refined", "rare", "light"]
+    },
+    "itemId": "tin_ingot",
+    "name": "Tin Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.4
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 183,
+    "recipe_id": "refining_rarity_tin_epic_v314",
+    "metadata": {
+      "narrative": "Epic tin refined from frost-touched steel at an advanced refinery. The frozen essence within the source steel infused the tin with a permanent chill and crystalline clarity. Alchemists prize this tin for its exceptional purity in alloy work.",
+      "tags": ["metal", "refined", "quality", "versatile"]
+    },
+    "itemId": "tin_ingot",
+    "name": "Tin Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.4
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 184,
+    "recipe_id": "refining_rarity_bronze_rare_v320",
+    "metadata": {
+      "narrative": "Rare bronze forged from blessed tin at a skilled refinery. The holy properties of the source tin sanctified the alloy during fusion, producing bronze with a warm golden glow. It resists tarnish and feels alive in the crafter's hands.",
+      "tags": ["metal", "refined", "rare", "quality"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 185,
+    "recipe_id": "refining_rarity_bronze_epic_v326",
+    "metadata": {
+      "narrative": "Epic bronze transmuted from soft tin at an advanced refinery. The malleable nature of the source tin allowed unprecedented control during the alloying process. The resulting bronze is paradoxically both flexible and incredibly hard.",
+      "tags": ["metal", "refined", "quality", "versatile"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 186,
+    "recipe_id": "refining_limestone_to_quicklime_v336",
+    "metadata": {
+      "narrative": "Quickite powder calcined from faded basalt in a basic refinery. The dense metamorphic stone yielded a coarse but effective calcium oxide. Essential for mortar, flux, and alchemical preparations — the invisible foundation of civilization.",
+      "tags": ["stone", "refined", "basic", "common"]
+    },
+    "itemId": "quicklime",
+    "name": "Quicklime",
+    "category": "stone",
+    "type": "stone",
+    "subtype": "ite",
+    "tier": 1,
+    "rarity": "common",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.3
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 187,
+    "recipe_id": "refining_maple_log_to_plank_v345",
+    "metadata": {
+      "narrative": "Dense maple planks milled from lightning-charged ash logs. The electrical charge in the source wood cauterized the grain during cutting, producing planks with exceptional resistance to warping. Beautiful figuring runs through every board.",
+      "tags": ["wood", "refined", "durable", "quality"]
+    },
+    "itemId": "maple_plank",
+    "name": "Maple Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 2,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.4
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 188,
+    "recipe_id": "refining_copper_ore_to_ingot_v4",
+    "metadata": {
+      "narrative": "Copper ingot smelted from dull mithril ore at a basic refinery. The dim legendary metal lost its otherworldly properties during low-tier processing, yielding common copper enriched with trace silver. Malleable and forgiving for beginner crafters.",
+      "tags": ["metal", "refined", "standard", "common"]
+    },
+    "itemId": "copper_ingot",
+    "name": "Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "common",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 189,
+    "recipe_id": "refining_iron_ore_to_ingot_v9",
+    "metadata": {
+      "narrative": "Iron ingot forged from pure mithril ore at a basic refinery. The pristine source material's legendary lightness was lost in the low-tier smelting, but traces of mithril purity remain in the iron's grain. Reliable and strong.",
+      "tags": ["metal", "refined", "standard", "strong"]
+    },
+    "itemId": "iron_ingot",
+    "name": "Iron Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "common",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 190,
+    "recipe_id": "refining_tin_ore_to_ingot_v14",
+    "metadata": {
+      "narrative": "Tin ingot refined from frost mithril ore at a basic refinery. The frozen legendary metal shed its mythic properties during smelting, leaving behind silvery tin with unusual cold resistance. Essential for bronze alloys and enchanted items.",
+      "tags": ["metal", "refined", "uncommon", "light"]
+    },
+    "itemId": "tin_ingot",
+    "name": "Tin Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.4
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 191,
+    "recipe_id": "refining_steel_ore_to_ingot_v19",
+    "metadata": {
+      "narrative": "Steel ingot forged from ancient mithril ore at a tier-two refinery. The aged legendary metal contributed trace elements that strengthened the steel's carbon lattice beyond normal limits. Dark grey with a subtle bluish tint, it holds an edge with conviction.",
+      "tags": ["metal", "refined", "advanced", "durable"]
+    },
+    "itemId": "steel_ingot",
+    "name": "Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 2,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 192,
+    "recipe_id": "refining_mithril_ore_to_ingot_v25",
+    "metadata": {
+      "narrative": "Mithril ingot transmuted from tempered steel ore at a tier-two refinery. The hardened source material provided the structural backbone for mithril crystallization. Silvery-blue and feather-light, it defies natural law with quiet confidence.",
+      "tags": ["metal", "refined", "rare", "light"]
+    },
+    "itemId": "mithril_ingot",
+    "name": "Mithril Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 3,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.2
+    },
+    "requirements": {
+      "level": 12,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 193,
+    "recipe_id": "refining_adamantine_ore_to_ingot_v31",
+    "metadata": {
+      "narrative": "Adamantine ingot refined from light etherion ore at an advanced refinery. The bright temporal metal collapsed into adamantine's absolute density during processing, trading impossible physics for impossible hardness. Black as the space between stars.",
+      "tags": ["metal", "refined", "strong", "rare"]
+    },
+    "itemId": "adamantine_ingot",
+    "name": "Adamantine Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 4,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 18,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 194,
+    "recipe_id": "refining_orichalcum_ore_to_ingot_v36",
+    "metadata": {
+      "narrative": "Orichalcum ingot forged from faded etherion ore at an advanced refinery. The muted temporal metal retained just enough of its reality-bending nature to infuse the orichalcum with elemental resonance. Golden-green and humming with primal forces.",
+      "tags": ["metal", "refined", "legendary", "elemental"]
+    },
+    "itemId": "orichalcum_ingot",
+    "name": "Orichalcum Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 4,
+    "rarity": "legendary",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.8
+    },
+    "requirements": {
+      "level": 20,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 195,
+    "recipe_id": "refining_oak_log_to_plank_v44",
+    "metadata": {
+      "narrative": "Oak planks milled from frost-touched maple logs. The frozen hardwood resisted the saw but produced planks of extraordinary density and grain tightness. Cold to the touch for hours after cutting, they resist rot and warping alike.",
+      "tags": ["wood", "refined", "standard", "durable"]
+    },
+    "itemId": "oak_plank",
+    "name": "Oak Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 1,
+    "rarity": "common",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.3
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 196,
+    "recipe_id": "refining_pine_log_to_plank_v49",
+    "metadata": {
+      "narrative": "Light pine planks processed from ancient maple logs. The aged source wood's centuries of growth rings compressed into remarkably straight-grained pine. Lightweight and easy to work, these planks carry a faint scent of old forests.",
+      "tags": ["wood", "refined", "light", "common"]
+    },
+    "itemId": "pine_plank",
+    "name": "Pine Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 1,
+    "rarity": "common",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.2
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 197,
+    "recipe_id": "refining_ash_log_to_plank_v54",
+    "metadata": {
+      "narrative": "Flexible ash planks shaped from rough maple logs. The crude source wood was transformed through careful planing into ash with excellent shock absorption. Warriors favor handles made from this wood — it bends without breaking and springs back true.",
+      "tags": ["wood", "refined", "flexible", "standard"]
+    },
+    "itemId": "ash_plank",
+    "name": "Ash Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 1,
+    "rarity": "common",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.3
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 198,
+    "recipe_id": "refining_birch_log_to_plank_v59",
+    "metadata": {
+      "narrative": "Fine birch planks milled from flawless maple logs. The perfect source wood surrendered its density during processing, producing birch of remarkable clarity and grain consistency. Ideal for detailed carving and precision crafting work.",
+      "tags": ["wood", "refined", "fine", "quality"]
+    },
+    "itemId": "birch_plank",
+    "name": "Birch Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 2,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.3
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 199,
+    "recipe_id": "refining_ironwood_log_to_plank_v65",
+    "metadata": {
+      "narrative": "Ironwood planks refined from glowing worldtree logs. The luminous living wood's millennia of accumulated magic was compressed into ironwood's signature metallic density. These planks dull saw blades but the result rivals soft metals in strength.",
+      "tags": ["wood", "metallic", "durable", "legendary"]
+    },
+    "itemId": "ironwood_plank",
+    "name": "Ironwood Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 3,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.8
+    },
+    "requirements": {
+      "level": 12,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 200,
+    "recipe_id": "refining_ebony_log_to_plank_v70",
+    "metadata": {
+      "narrative": "Black ebony planks shaped from weathered worldtree logs. The aged living wood's ancient power was distilled into ebony's signature light-absorbing darkness. Mages covet these planks for staves — they dampen interference while channeling intended power with precision.",
+      "tags": ["wood", "refined", "magical", "legendary"]
+    },
+    "itemId": "ebony_plank",
+    "name": "Ebony Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 3,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "requirements": {
+      "level": 15,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  }
+]

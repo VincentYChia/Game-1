@@ -1,0 +1,1650 @@
+[
+  {
+    "index": 301,
+    "recipe_id": "refining_lightning_copper_v173",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 302,
+    "recipe_id": "refining_bronze_alloy_v90",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 303,
+    "recipe_id": "refining_fire_steel_v126",
+    "metadata": {
+      "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+      "tags": ["metal", "refined", "alloy", "elemental", "fire"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 304,
+    "recipe_id": "refining_frost_steel_v150",
+    "metadata": {
+      "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+      "tags": ["metal", "refined", "alloy", "elemental", "frost"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 305,
+    "recipe_id": "refining_lightning_copper_v174",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 306,
+    "recipe_id": "refining_bronze_alloy_v91",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 307,
+    "recipe_id": "refining_fire_steel_v127",
+    "metadata": {
+      "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+      "tags": ["metal", "refined", "alloy", "elemental", "fire"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 308,
+    "recipe_id": "refining_frost_steel_v151",
+    "metadata": {
+      "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+      "tags": ["metal", "refined", "alloy", "elemental", "frost"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 309,
+    "recipe_id": "refining_lightning_copper_v175",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 310,
+    "recipe_id": "refining_bronze_alloy_v92",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 311,
+    "recipe_id": "refining_fire_steel_v128",
+    "metadata": {
+      "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+      "tags": ["metal", "refined", "alloy", "elemental", "fire"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 312,
+    "recipe_id": "refining_frost_steel_v152",
+    "metadata": {
+      "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+      "tags": ["metal", "refined", "alloy", "elemental", "frost"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 313,
+    "recipe_id": "refining_lightning_copper_v176",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 314,
+    "recipe_id": "refining_bronze_alloy_v93",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 315,
+    "recipe_id": "refining_fire_steel_v129",
+    "metadata": {
+      "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+      "tags": ["metal", "refined", "alloy", "elemental", "fire"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 316,
+    "recipe_id": "refining_frost_steel_v153",
+    "metadata": {
+      "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+      "tags": ["metal", "refined", "alloy", "elemental", "frost"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 317,
+    "recipe_id": "refining_lightning_copper_v177",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 318,
+    "recipe_id": "refining_bronze_alloy_v94",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 319,
+    "recipe_id": "refining_fire_steel_v130",
+    "metadata": {
+      "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+      "tags": ["metal", "refined", "alloy", "elemental", "fire"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 320,
+    "recipe_id": "refining_frost_steel_v154",
+    "metadata": {
+      "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+      "tags": ["metal", "refined", "alloy", "elemental", "frost"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 321,
+    "recipe_id": "refining_lightning_copper_v178",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 322,
+    "recipe_id": "refining_bronze_alloy_v95",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 323,
+    "recipe_id": "refining_fire_steel_v131",
+    "metadata": {
+      "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+      "tags": ["metal", "refined", "alloy", "elemental", "fire"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 324,
+    "recipe_id": "refining_frost_steel_v155",
+    "metadata": {
+      "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+      "tags": ["metal", "refined", "alloy", "elemental", "frost"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 325,
+    "recipe_id": "refining_lightning_copper_v179",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 326,
+    "recipe_id": "refining_bronze_alloy_v96",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 327,
+    "recipe_id": "refining_fire_steel_v132",
+    "metadata": {
+      "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+      "tags": ["metal", "refined", "alloy", "elemental", "fire"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 328,
+    "recipe_id": "refining_frost_steel_v156",
+    "metadata": {
+      "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+      "tags": ["metal", "refined", "alloy", "elemental", "frost"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 329,
+    "recipe_id": "refining_lightning_copper_v180",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 330,
+    "recipe_id": "refining_bronze_alloy_v97",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 331,
+    "recipe_id": "refining_fire_steel_v133",
+    "metadata": {
+      "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+      "tags": ["metal", "refined", "alloy", "elemental", "fire"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 332,
+    "recipe_id": "refining_frost_steel_v157",
+    "metadata": {
+      "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+      "tags": ["metal", "refined", "alloy", "elemental", "frost"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 333,
+    "recipe_id": "refining_lightning_copper_v181",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 334,
+    "recipe_id": "refining_bronze_alloy_v98",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 335,
+    "recipe_id": "refining_lightning_copper_v182",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 336,
+    "recipe_id": "refining_bronze_alloy_v99",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 337,
+    "recipe_id": "refining_lightning_copper_v183",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 338,
+    "recipe_id": "refining_bronze_alloy_v100",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 339,
+    "recipe_id": "refining_lightning_copper_v184",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 340,
+    "recipe_id": "refining_bronze_alloy_v101",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 341,
+    "recipe_id": "refining_lightning_copper_v185",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 342,
+    "recipe_id": "refining_bronze_alloy_v102",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 343,
+    "recipe_id": "refining_lightning_copper_v186",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 344,
+    "recipe_id": "refining_bronze_alloy_v103",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 345,
+    "recipe_id": "refining_lightning_copper_v187",
+    "metadata": {
+      "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+      "tags": ["metal", "refined", "lightning", "elemental"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 2,
+    "rarity": "rare",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 346,
+    "recipe_id": "refining_bronze_alloy_v104",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 347,
+    "recipe_id": "refining_bronze_alloy_v105",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 348,
+    "recipe_id": "refining_bronze_alloy_v106",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 349,
+    "recipe_id": "refining_bronze_alloy_v107",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 350,
+    "recipe_id": "refining_bronze_alloy_v108",
+    "metadata": {
+      "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+      "tags": ["metal", "refined", "alloy", "bronze"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "stackSize": 256,
+    "tier": 1,
+    "rarity": "uncommon",
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  }
+]
