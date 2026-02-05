@@ -1,0 +1,1058 @@
+[
+  {
+    "index": 371,
+    "metadata": {
+      "narrative": "A brilliant copper dagger that catches the light with every movement. The radiant materials have infused it with an otherworldly gleam, making each strike flash like lightning. Quick, precise, and devastatingly beautiful.",
+      "tags": ["melee", "dagger", "1H", "fast", "precision", "radiant"]
+    },
+    "itemId": "brilliant_copper_dagger",
+    "name": "Brilliant Copper Dagger",
+    "category": "equipment",
+    "type": "weapon",
+    "subtype": "dagger",
+    "tier": 1,
+    "rarity": "rare",
+    "range": 0.5,
+    "slot": "mainHand",
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 24
+    },
+    "statMultipliers": {
+      "damage": 1.2,
+      "attackSpeed": 1.4,
+      "durability": 1.1,
+      "weight": 0.6
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {"AGI": 10}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 372,
+    "metadata": {
+      "narrative": "Brilliant copper band cradling a radiant fire crystal. The crystal pulses with enhanced flames that never dim, casting dancing shadows. Warmth radiates through your entire body when worn.",
+      "tags": ["accessory", "ring", "fire", "elemental", "radiant"]
+    },
+    "itemId": "brilliant_copper_fire_ring",
+    "name": "Brilliant Copper Fire Ring",
+    "category": "equipment",
+    "type": "accessory",
+    "subtype": "ring",
+    "tier": 1,
+    "rarity": "rare",
+    "slot": "accessory",
+    "statMultipliers": {
+      "weight": 0.1
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 8,
+        "effect": "Adds enhanced fire damage to attacks"
+      }
+    ],
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 373,
+    "metadata": {
+      "narrative": "Brilliant copper pickaxe that shimmers with radiant energy. Each strike against stone releases small bursts of light, and the tool never seems to dull. Your gateway to riches has been illuminated.",
+      "tags": ["tool", "mining", "pickaxe", "radiant", "quality"]
+    },
+    "itemId": "brilliant_copper_pickaxe",
+    "name": "Brilliant Copper Pickaxe",
+    "category": "equipment",
+    "type": "tool",
+    "subtype": "pickaxe",
+    "tier": 1,
+    "rarity": "rare",
+    "range": 1.5,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 15
+    },
+    "statMultipliers": {
+      "damage": 0.8,
+      "mining": 1.3,
+      "durability": 1.2,
+      "weight": 1.1
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 374,
+    "metadata": {
+      "narrative": "Brilliant copper-tipped spear with ash wood shaft that gleams unnaturally. The radiant copper pierces deeper than ordinary metal, and the reach keeps danger at bay. Distance becomes your greatest ally.",
+      "tags": ["melee", "spear", "versatile", "reach", "radiant"]
+    },
+    "itemId": "brilliant_copper_spear",
+    "name": "Brilliant Copper Spear",
+    "category": "equipment",
+    "type": "weapon",
+    "subtype": "spear",
+    "tier": 1,
+    "rarity": "rare",
+    "range": 2,
+    "slot": "mainHand",
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 32
+    },
+    "statMultipliers": {
+      "damage": 1.15,
+      "attackSpeed": 1.05,
+      "durability": 1.15,
+      "weight": 0.9
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 375,
+    "metadata": {
+      "narrative": "Brilliant ironwood staff capped with a blazing fire crystal enhanced by phoenix ash. The wood resonates with eternal flame, never burning yet forever hot. Channel devastation through this radiant focus, or strike with quarterstaff techniques when enemies close.",
+      "tags": ["melee", "staff", "versatile", "elemental", "fire", "legendary"]
+    },
+    "itemId": "brilliant_fire_crystal_staff",
+    "name": "Brilliant Fire Crystal Staff",
+    "category": "equipment",
+    "type": "staff",
+    "subtype": "staff",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 8,
+    "slot": "mainHand",
+    "effectTags": ["fire", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 58,
+      "burn_duration": 4.5,
+      "burn_damage_per_second": 8.0
+    },
+    "statMultipliers": {
+      "damage": 1.0,
+      "attackSpeed": 1.2,
+      "durability": 1.3,
+      "weight": 0.7
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 22,
+        "effect": "Elemental attacks deal enhanced fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 15,
+      "stats": {"INT": 20}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 376,
+    "metadata": {
+      "narrative": "Brilliant iron axe with birch handle that shines like polished silver. Ancient trees bow before its radiant edge, which cuts through wood with supernatural ease. Each swing releases a faint shimmer.",
+      "tags": ["tool", "forestry", "axe", "radiant", "quality"]
+    },
+    "itemId": "brilliant_iron_axe",
+    "name": "Brilliant Iron Axe",
+    "category": "equipment",
+    "type": "tool",
+    "subtype": "axe",
+    "tier": 2,
+    "rarity": "rare",
+    "range": 1.5,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 28
+    },
+    "statMultipliers": {
+      "damage": 0.9,
+      "forestry": 1.4,
+      "durability": 1.3,
+      "weight": 1.2
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 377,
+    "metadata": {
+      "narrative": "Brilliant iron-capped boots with radiant wolf pelt padding. The iron gleams with inner light while the leather provides comfort. Your feet stay protected, warm, and remarkably swift.",
+      "tags": ["armor", "feet", "light", "radiant", "quality"]
+    },
+    "itemId": "brilliant_iron_boots",
+    "name": "Brilliant Iron Boots",
+    "category": "equipment",
+    "type": "armor",
+    "subtype": "boots",
+    "tier": 1,
+    "rarity": "rare",
+    "slot": "feet",
+    "statMultipliers": {
+      "defense": 1.2,
+      "durability": 1.2,
+      "weight": 0.95
+    },
+    "requirements": {
+      "level": 2,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 378,
+    "metadata": {
+      "narrative": "Brilliant iron chestplate reinforced with radiant beetle carapace and wolf pelt. The iron plates shimmer with protective light while carapace segments deflect blows. Heavy but exceptionally reliable - every ounce earns its weight.",
+      "tags": ["armor", "chest", "heavy", "radiant", "quality"]
+    },
+    "itemId": "brilliant_iron_chestplate",
+    "name": "Brilliant Iron Chestplate",
+    "category": "equipment",
+    "type": "armor",
+    "subtype": "chestplate",
+    "tier": 2,
+    "rarity": "rare",
+    "slot": "chest",
+    "statMultipliers": {
+      "defense": 1.25,
+      "durability": 1.25,
+      "weight": 1.0
+    },
+    "requirements": {
+      "level": 6,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 379,
+    "metadata": {
+      "narrative": "Brilliant iron pickaxe with radiant ash handle that gleams in darkness. Hard stone crumbles before its enhanced edge, and the tool feels lighter than it should. Iron reliability transformed by radiant craftsmanship.",
+      "tags": ["tool", "mining", "pickaxe", "radiant", "quality"]
+    },
+    "itemId": "brilliant_iron_pickaxe",
+    "name": "Brilliant Iron Pickaxe",
+    "category": "equipment",
+    "type": "tool",
+    "subtype": "pickaxe",
+    "tier": 1,
+    "rarity": "rare",
+    "range": 1.5,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 20
+    },
+    "statMultipliers": {
+      "damage": 0.85,
+      "mining": 1.4,
+      "durability": 1.3,
+      "weight": 1.1
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 380,
+    "metadata": {
+      "narrative": "Brilliant iron round shield with radiant oak backing. The iron face gleams with protective light while oak absorbs impacts. Bash enemies with enhanced force or create openings - defense and offense perfected.",
+      "tags": ["melee", "shield", "1H", "defensive", "bash", "radiant"]
+    },
+    "itemId": "brilliant_iron_round_shield",
+    "name": "Brilliant Iron Round Shield",
+    "category": "equipment",
+    "type": "shield",
+    "subtype": "buckler",
+    "tier": 1,
+    "rarity": "rare",
+    "range": 1,
+    "slot": "mainHand",
+    "statMultipliers": {
+      "damage": 0.7,
+      "attackSpeed": 1.15,
+      "durability": 2.0,
+      "weight": 1.25
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {"STR": 9}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 381,
+    "metadata": {
+      "narrative": "A brilliant iron shortsword that radiates competence. The oak handle fits perfectly while the radiant blade cuts true. Not the fanciest weapon, but yours - enhanced and reliable.",
+      "tags": ["melee", "sword", "versatile", "radiant", "quality"]
+    },
+    "itemId": "brilliant_iron_shortsword",
+    "name": "Brilliant Iron Shortsword",
+    "category": "equipment",
+    "type": "weapon",
+    "subtype": "shortsword",
+    "tier": 1,
+    "rarity": "rare",
+    "range": 1,
+    "slot": "mainHand",
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 38
+    },
+    "statMultipliers": {
+      "damage": 1.2,
+      "attackSpeed": 1.1,
+      "durability": 1.2,
+      "weight": 1.0
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 382,
+    "metadata": {
+      "narrative": "Brilliant iron-studded gauntlets with radiant wolf pelt backing. The iron studs gleam across enhanced knuckles while leather provides dexterity. Your hands are your tools - protect them with radiant craftsmanship.",
+      "tags": ["armor", "hands", "light", "flexible", "radiant"]
+    },
+    "itemId": "brilliant_iron_studded_gauntlets",
+    "name": "Brilliant Iron-Studded Gauntlets",
+    "category": "equipment",
+    "type": "armor",
+    "subtype": "gauntlets",
+    "tier": 1,
+    "rarity": "rare",
+    "slot": "hands",
+    "statMultipliers": {
+      "defense": 1.2,
+      "durability": 1.2,
+      "weight": 0.85
+    },
+    "requirements": {
+      "level": 2,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 383,
+    "metadata": {
+      "narrative": "Brilliant iron warhammer that crushes armor and bone with radiant force. The granite head gleams with devastating potential while the oak shaft absorbs recoil. Demands both hands but delivers earth-shattering blows.",
+      "tags": ["melee", "mace", "2H", "crushing", "armor_breaker", "radiant"]
+    },
+    "itemId": "brilliant_iron_warhammer",
+    "name": "Brilliant Iron Warhammer",
+    "category": "equipment",
+    "type": "mace",
+    "subtype": "warhammer",
+    "tier": 2,
+    "rarity": "rare",
+    "range": 1.5,
+    "slot": "mainHand",
+    "effectTags": ["physical", "crushing", "single"],
+    "effectParams": {
+      "baseDamage": 56
+    },
+    "statMultipliers": {
+      "damage": 1.45,
+      "attackSpeed": 0.78,
+      "durability": 1.5,
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 10,
+      "stats": {"STR": 17}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 384,
+    "metadata": {
+      "narrative": "Brilliant iron amulet cradling radiant water crystals. Feels refreshingly cool against your skin while the crystals shimmer with captured tides. The enhanced flow empowers water-based attacks.",
+      "tags": ["accessory", "amulet", "water", "elemental", "radiant"]
+    },
+    "itemId": "brilliant_iron_water_amulet",
+    "name": "Brilliant Iron Water Amulet",
+    "category": "equipment",
+    "type": "accessory",
+    "subtype": "amulet",
+    "tier": 2,
+    "rarity": "rare",
+    "slot": "accessory",
+    "statMultipliers": {
+      "weight": 0.2
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "water",
+        "value": 15,
+        "effect": "Adds enhanced water damage to attacks"
+      }
+    ],
+    "requirements": {
+      "level": 7,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 385,
+    "metadata": {
+      "narrative": "Brilliant ethereal mithril axe infused with golem essence that phases through wood fibers. The radiant ebony handle channels ancient power while the mithril edge cuts with minimal resistance. Reality bends before each swing.",
+      "tags": ["tool", "forestry", "axe", "legendary", "radiant", "magical"]
+    },
+    "itemId": "brilliant_mithril_axe",
+    "name": "Brilliant Mithril Axe",
+    "category": "equipment",
+    "type": "tool",
+    "subtype": "axe",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 1.5,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 42
+    },
+    "statMultipliers": {
+      "damage": 1.0,
+      "forestry": 1.8,
+      "durability": 1.6,
+      "weight": 0.7
+    },
+    "requirements": {
+      "level": 16,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 386,
+    "metadata": {
+      "narrative": "Brilliant mithril dagger infused with blood essence that shimmers out of existence. Wickedly sharp with radiant ebony handle, it strikes faster than thought. The blade whispers through air and flesh, leaving trails of light.",
+      "tags": ["melee", "dagger", "1H", "fast", "precision", "legendary", "radiant"]
+    },
+    "itemId": "brilliant_mithril_dagger",
+    "name": "Brilliant Mithril Dagger",
+    "category": "equipment",
+    "type": "weapon",
+    "subtype": "dagger",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 0.5,
+    "slot": "mainHand",
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 52
+    },
+    "statMultipliers": {
+      "damage": 1.25,
+      "attackSpeed": 1.35,
+      "durability": 1.7,
+      "weight": 0.45
+    },
+    "requirements": {
+      "level": 16,
+      "stats": {"AGI": 22}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 387,
+    "metadata": {
+      "narrative": "Brilliant legendary mithril pickaxe that sings through stone with radiant ebony handle. Impossibly light yet incredibly effective, it glows faintly in darkness. The enhanced metal makes hard rock feel like clay.",
+      "tags": ["tool", "mining", "pickaxe", "legendary", "radiant", "quality"]
+    },
+    "itemId": "brilliant_mithril_pickaxe",
+    "name": "Brilliant Mithril Pickaxe",
+    "category": "equipment",
+    "type": "tool",
+    "subtype": "pickaxe",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 1.5,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 38
+    },
+    "statMultipliers": {
+      "damage": 0.95,
+      "mining": 1.9,
+      "durability": 1.7,
+      "weight": 0.6
+    },
+    "requirements": {
+      "level": 16,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 388,
+    "metadata": {
+      "narrative": "Brilliant pine shortbow strung with radiant slime gel and air crystal enhancement. Not powerful but incredibly reliable, the bow releases arrows with a soft glow. Perfect for learning archery with enhanced precision.",
+      "tags": ["ranged", "bow", "2H", "radiant", "quality"]
+    },
+    "itemId": "brilliant_pine_shortbow",
+    "name": "Brilliant Pine Shortbow",
+    "category": "equipment",
+    "type": "weapon",
+    "subtype": "shortbow",
+    "tier": 1,
+    "rarity": "rare",
+    "range": 10,
+    "slot": "mainHand",
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 26
+    },
+    "statMultipliers": {
+      "damage": 1.15,
+      "attackSpeed": 1.1,
+      "durability": 1.0,
+      "weight": 0.7
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {"AGI": 7}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 389,
+    "metadata": {
+      "narrative": "Brilliant razor-edged steel axe with radiant ironwood handle. Ancient trees fall before it like saplings, the enhanced edge gleaming with each swing. The perfect balance of power and precision.",
+      "tags": ["tool", "forestry", "axe", "radiant", "quality", "advanced"]
+    },
+    "itemId": "brilliant_steel_axe",
+    "name": "Brilliant Steel Axe",
+    "category": "equipment",
+    "type": "tool",
+    "subtype": "axe",
+    "tier": 3,
+    "rarity": "rare",
+    "range": 1.5,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 35
+    },
+    "statMultipliers": {
+      "damage": 1.0,
+      "forestry": 1.6,
+      "durability": 1.4,
+      "weight": 1.1
+    },
+    "requirements": {
+      "level": 12,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 390,
+    "metadata": {
+      "narrative": "Brilliant steel battleaxe with radiant dire fang enhancements and ironwood handle. Brutal cleaving power amplified by radiant craftsmanship - enemies fall like timber before each swing. Devastating in two hands, deadly in one for those strong enough.",
+      "tags": ["melee", "axe", "versatile", "cleaving", "radiant", "quality"]
+    },
+    "itemId": "brilliant_steel_battleaxe",
+    "name": "Brilliant Steel Battleaxe",
+    "category": "equipment",
+    "type": "axe",
+    "subtype": "battleaxe",
+    "tier": 2,
+    "rarity": "rare",
+    "range": 1,
+    "slot": "mainHand",
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 62
+    },
+    "statMultipliers": {
+      "damage": 1.25,
+      "attackSpeed": 0.98,
+      "durability": 1.3,
+      "weight": 1.2
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {"STR": 14}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 391,
+    "metadata": {
+      "narrative": "Brilliant steel helm with radiant full face protection and enhanced wolf pelt padding. Your head stays attached while the radiant steel deflects blows with authority. The padding reduces ringing to a pleasant hum.",
+      "tags": ["armor", "head", "heavy", "radiant", "quality"]
+    },
+    "itemId": "brilliant_steel_helm",
+    "name": "Brilliant Steel Helm",
+    "category": "equipment",
+    "type": "armor",
+    "subtype": "helmet",
+    "tier": 2,
+    "rarity": "rare",
+    "slot": "head",
+    "statMultipliers": {
+      "defense": 1.25,
+      "durability": 1.25,
+      "weight": 0.95
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 392,
+    "metadata": {
+      "narrative": "Brilliant steel plate leggings with radiant articulated joints. Heavy but exceptionally protective, they guard your legs while enhanced joints preserve movement. The radiant steel gleams with each step.",
+      "tags": ["armor", "legs", "metal", "heavy", "radiant"]
+    },
+    "itemId": "brilliant_steel_leggings",
+    "name": "Brilliant Steel Leggings",
+    "category": "equipment",
+    "type": "armor",
+    "subtype": "leggings",
+    "tier": 2,
+    "rarity": "rare",
+    "slot": "legs",
+    "statMultipliers": {
+      "defense": 1.25,
+      "durability": 1.25,
+      "weight": 0.95
+    },
+    "requirements": {
+      "level": 7,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 393,
+    "metadata": {
+      "narrative": "Brilliant steel bracelet woven with radiant lightning shards and spectral thread. Crackles with amplified static electricity, the enhanced power humming beneath the surface. Touch it and feel reality vibrate.",
+      "tags": ["accessory", "bracelet", "lightning", "elemental", "radiant"]
+    },
+    "itemId": "brilliant_steel_lightning_bracelet",
+    "name": "Brilliant Steel Lightning Bracelet",
+    "category": "equipment",
+    "type": "accessory",
+    "subtype": "bracelet",
+    "tier": 3,
+    "rarity": "epic",
+    "slot": "accessory",
+    "statMultipliers": {
+      "weight": 0.3
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "lightning",
+        "value": 28,
+        "effect": "Adds enhanced lightning damage to attacks"
+      }
+    ],
+    "requirements": {
+      "level": 14,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": false
+    }
+  },
+  {
+    "index": 394,
+    "metadata": {
+      "narrative": "Brilliant balanced steel longsword enhanced with dire fang and maple. The radiant blade flows like mercury and strikes like thunder. Each swing releases a shimmer of light - quality perfected.",
+      "tags": ["melee", "sword", "versatile", "radiant", "quality"]
+    },
+    "itemId": "brilliant_steel_longsword",
+    "name": "Brilliant Steel Longsword",
+    "category": "equipment",
+    "type": "weapon",
+    "subtype": "longsword",
+    "tier": 2,
+    "rarity": "rare",
+    "range": 1,
+    "slot": "mainHand",
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 50
+    },
+    "statMultipliers": {
+      "damage": 1.25,
+      "attackSpeed": 1.1,
+      "durability": 1.3,
+      "weight": 1.0
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {"STR": 12}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 395,
+    "metadata": {
+      "narrative": "Brilliant steel pickaxe crafted entirely from radiant ironwood planks shaped to metallic strength. Perfect balance meets supernatural durability - hard rock crumbles like sand before it.",
+      "tags": ["tool", "mining", "pickaxe", "radiant", "quality", "advanced"]
+    },
+    "itemId": "brilliant_steel_pickaxe",
+    "name": "Brilliant Steel Pickaxe",
+    "category": "equipment",
+    "type": "tool",
+    "subtype": "pickaxe",
+    "tier": 3,
+    "rarity": "rare",
+    "range": 1.5,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 32
+    },
+    "statMultipliers": {
+      "damage": 0.9,
+      "mining": 1.7,
+      "durability": 1.5,
+      "weight": 0.95
+    },
+    "requirements": {
+      "level": 12,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 396,
+    "metadata": {
+      "narrative": "Brilliant curved steel blade with radiant birch handle perfect for harvesting. The razor edge cuts clean without bruising while releasing soft light. Maximum yield through enhanced precision.",
+      "tags": ["tool", "harvesting", "gathering", "herbs", "radiant"]
+    },
+    "itemId": "brilliant_steel_sickle",
+    "name": "Brilliant Steel Sickle",
+    "category": "equipment",
+    "type": "tool",
+    "subtype": "sickle",
+    "tier": 2,
+    "rarity": "rare",
+    "range": 0.5,
+    "slot": "mainHand",
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 28
+    },
+    "statMultipliers": {
+      "damage": 0.8,
+      "gathering": 1.3,
+      "durability": 1.2,
+      "weight": 0.7
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 397,
+    "metadata": {
+      "narrative": "Brilliant Blood Reaver forged from etherion and blood essence, reality bends around its radiant obsidian edge. Worldtree handle channels primordial power while the blade thirsts eternally. This weapon exists between moments, striking before enemies realize they're wounded.",
+      "tags": ["melee", "sword", "2H", "legendary", "radiant", "mythical", "blood"]
+    },
+    "itemId": "brilliant_blood_reaver",
+    "name": "Brilliant Blood Reaver",
+    "category": "equipment",
+    "type": "weapon",
+    "subtype": "greatsword",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 1.5,
+    "slot": "mainHand",
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 88
+    },
+    "statMultipliers": {
+      "damage": 1.5,
+      "attackSpeed": 0.95,
+      "durability": 2.0,
+      "weight": 1.3
+    },
+    "attributes": [
+      {
+        "type": "lifesteal",
+        "element": "blood",
+        "value": 15,
+        "effect": "Drains life from enemies with each strike"
+      }
+    ],
+    "requirements": {
+      "level": 26,
+      "stats": {"STR": 28}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 398,
+    "metadata": {
+      "narrative": "Brilliant Frostbite Hammer with radiant crystal quartz head infused with frost essence and voidstone. The ironwood handle channels absolute zero while the hammer freezes reality itself. Each impact creates spreading ice that defies thermodynamics.",
+      "tags": ["melee", "mace", "2H", "crushing", "elemental", "ice", "radiant", "legendary"]
+    },
+    "itemId": "brilliant_frostbite_hammer",
+    "name": "Brilliant Frostbite Hammer",
+    "category": "equipment",
+    "type": "mace",
+    "subtype": "warhammer",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 1.5,
+    "slot": "mainHand",
+    "effectTags": ["physical", "crushing", "freeze", "single"],
+    "effectParams": {
+      "baseDamage": 72,
+      "freeze_duration": 5.5
+    },
+    "statMultipliers": {
+      "damage": 1.4,
+      "attackSpeed": 0.8,
+      "durability": 1.6,
+      "weight": 1.4
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "ice",
+        "value": 25,
+        "effect": "Freezes enemies with crushing blows"
+      }
+    ],
+    "requirements": {
+      "level": 18,
+      "stats": {"STR": 22}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 399,
+    "metadata": {
+      "narrative": "Brilliant Inferno Blade forged from radiant etherion and phoenix ash, voidstone absorbs reality while eternal flames consume. The worldtree handle refuses to burn as the primordial crystal focuses devastation. This blade doesn't just cut - it incinerates existence itself.",
+      "tags": ["melee", "sword", "2H", "legendary", "radiant", "fire", "mythical"]
+    },
+    "itemId": "brilliant_inferno_blade",
+    "name": "Brilliant Inferno Blade",
+    "category": "equipment",
+    "type": "weapon",
+    "subtype": "greatsword",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 1.5,
+    "slot": "mainHand",
+    "effectTags": ["fire", "slashing", "burn", "single"],
+    "effectParams": {
+      "baseDamage": 85,
+      "burn_duration": 6.0,
+      "burn_damage_per_second": 12.0
+    },
+    "statMultipliers": {
+      "damage": 1.45,
+      "attackSpeed": 0.98,
+      "durability": 2.0,
+      "weight": 1.2
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 35,
+        "effect": "Incinerates enemies with eternal flames"
+      }
+    ],
+    "requirements": {
+      "level": 26,
+      "stats": {"STR": 26}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 400,
+    "metadata": {
+      "narrative": "Brilliant Lightning Chain Whip woven from radiant spectral thread and adamantine, storm heart pulses at its core. The diamond focus amplifies each arc while ironwood insulates the wielder. Reality chains together with lightning between strikes.",
+      "tags": ["melee", "whip", "1H", "reach", "lightning", "chain", "radiant", "legendary"]
+    },
+    "itemId": "brilliant_lightning_chain_whip",
+    "name": "Brilliant Lightning Chain Whip",
+    "category": "equipment",
+    "type": "weapon",
+    "subtype": "whip",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 3,
+    "slot": "mainHand",
+    "effectTags": ["lightning", "chain", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 58,
+      "chain_count": 4,
+      "chain_range": 5.0
+    },
+    "statMultipliers": {
+      "damage": 1.15,
+      "attackSpeed": 1.25,
+      "durability": 1.4,
+      "weight": 0.8
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "lightning",
+        "value": 30,
+        "effect": "Chains lightning between multiple enemies"
+      }
+    ],
+    "requirements": {
+      "level": 18,
+      "stats": {"AGI": 24}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  }
+]
