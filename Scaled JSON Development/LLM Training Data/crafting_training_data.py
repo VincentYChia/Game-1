@@ -16,8 +16,8 @@ Output Format:
 - Tags are preserved and augmented with variation descriptors
 
 Usage:
-    python crafting_training_data.py --discipline smithing --output ./training_data/
-    python crafting_training_data.py --discipline all --output ./training_data/
+    python crafting_training_data.py --discipline smithing --output ./training_outputs/
+    python crafting_training_data.py --discipline all --output ./training_outputs/
 
 Author: Claude
 Created: 2026-02-04
@@ -2673,7 +2673,8 @@ def generate_quality_ordered(discipline: str, paths: Dict, sample_count: int,
 def get_default_paths() -> Dict[str, Dict[str, str]]:
     """Get default paths for all disciplines."""
     script_dir = Path(__file__).parent
-    game_modular = script_dir.parent / "Game-1-modular"
+    # Navigate up from LLM Training Data -> Scaled JSON Development -> Game-1
+    game_modular = script_dir.parent.parent / "Game-1-modular"
 
     return {
         'smithing': {
@@ -2700,20 +2701,27 @@ def get_default_paths() -> Dict[str, Dict[str, str]]:
 
 
 def save_training_data(data: List[Dict], output_path: str, discipline: str):
-    """Save training data to JSON file."""
+    """Save training data to JSON file with numbered entries."""
+    # Add index numbers to each entry
+    numbered_data = []
+    for idx, entry in enumerate(data, start=1):
+        numbered_entry = {"index": idx}
+        numbered_entry.update(entry)
+        numbered_data.append(numbered_entry)
+
     output = {
         'metadata': {
             'discipline': discipline,
-            'total_examples': len(data),
-            'generator_version': '1.0',
+            'total_examples': len(numbered_data),
+            'generator_version': '1.1',
         },
-        'training_data': data
+        'training_data': numbered_data
     }
 
     with open(output_path, 'w') as f:
         json.dump(output, f, indent=2)
 
-    print(f"\nSaved {len(data)} examples to: {output_path}")
+    print(f"\nSaved {len(numbered_data)} examples to: {output_path}")
 
 
 def apply_cap(data: List[Dict], cap: int, discipline: str) -> List[Dict]:
@@ -2951,8 +2959,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python crafting_training_data.py --discipline smithing --output ./training_data/
-  python crafting_training_data.py --discipline all --output ./training_data/
+  python crafting_training_data.py --discipline smithing --output ./training_outputs/
+  python crafting_training_data.py --discipline all --output ./training_outputs/
   python crafting_training_data.py --mode 3 --cap 1000  # Augmented only with 1000 cap
   python crafting_training_data.py --mode 2  # Synthetic only (original + 3x variations)
         """
@@ -2963,7 +2971,7 @@ Examples:
                         default='all',
                         help='Discipline to generate training data for')
     parser.add_argument('--output', '-o',
-                        default='./training_data',
+                        default='./training_outputs',
                         help='Output directory for training data')
     parser.add_argument('--mode', '-m',
                         type=int, choices=[1, 2, 3, 4],
