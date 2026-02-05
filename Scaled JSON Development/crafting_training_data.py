@@ -2400,6 +2400,40 @@ def get_custom_params() -> Dict:
     return params
 
 
+def reorder_for_even_spread(data: List[Dict], base_recipes: List[str]) -> List[Dict]:
+    """
+    Reorder augmented data so that first augmentation of all recipes comes before
+    second augmentation of all recipes, etc.
+
+    This gives an even spread across recipes rather than all augmentations for
+    recipe 1, then all for recipe 2, etc.
+    """
+    if not data:
+        return data
+
+    # Group entries by base recipe
+    by_recipe = {}
+    for entry in data:
+        recipe_id = entry.get('recipe_id', '')
+        # Extract base recipe ID (before _v or _flip or other suffixes)
+        base_id = recipe_id.split('_v')[0].split('_flip')[0].split('_vert')[0].split('_hori')[0]
+
+        if base_id not in by_recipe:
+            by_recipe[base_id] = []
+        by_recipe[base_id].append(entry)
+
+    # Interleave: take first aug from each recipe, then second from each, etc.
+    reordered = []
+    max_augs = max(len(v) for v in by_recipe.values()) if by_recipe else 0
+
+    for aug_idx in range(max_augs):
+        for base_id in base_recipes:
+            if base_id in by_recipe and aug_idx < len(by_recipe[base_id]):
+                reordered.append(by_recipe[base_id][aug_idx])
+
+    return reordered
+
+
 def generate_quality_ordered(discipline: str, paths: Dict, sample_count: int,
                              output_dir: str = None, save_images: bool = False) -> List[Dict]:
     """
@@ -2408,6 +2442,7 @@ def generate_quality_ordered(discipline: str, paths: Dict, sample_count: int,
     Quality order (highest to lowest):
     1. Original recipes (base, no modifications)
     2. Augmented original (material substitution, exact colors)
+       - Ordered: first aug for all recipes, then second aug for all, etc.
     3. Variation original (naming/color variations of base recipes)
     4. Variation augmented (naming/color variations of augmented recipes)
 
@@ -2426,6 +2461,9 @@ def generate_quality_ordered(discipline: str, paths: Dict, sample_count: int,
     with open(placements_path, 'r') as f:
         data = json.load(f)
     placements = data.get('placements', [])
+
+    # Get list of base recipe IDs for ordering
+    base_recipe_ids = [p.get('recipeId', '') for p in placements]
 
     print(f"\nGenerating {discipline} data (quality-ordered, max {sample_count})...")
     print(f"  Base recipes: {len(placements)}")
@@ -2471,82 +2509,78 @@ def generate_quality_ordered(discipline: str, paths: Dict, sample_count: int,
 
     # ==========================================================================
     # TIER 2: Augmented original (material substitution, exact colors)
+    # Reordered: first aug for all recipes, then second aug for all, etc.
     # ==========================================================================
     print("  Tier 2: Augmented original (material substitution)...")
-    tier2_data = []
+    tier2_raw = []
 
-    # Use discipline-specific generator for augmentation
+    # Generate all augmented data first
     if discipline == 'smithing':
         gen = SmithingVLMDataGenerator(materials_path, placements_path, num_color_variations=0)
         augmented = gen.generate(output_dir, save_images)
-        # Filter out originals (already in tier 1) - keep only substituted/flipped
+        # Filter out originals (already in tier 1)
         for entry in augmented:
-            if len(tier2_data) + len(training_data) >= sample_count:
-                break
             recipe_id = entry.get('recipe_id', '')
-            # Skip if it's a base original (no suffix beyond _v0)
             if '_v0' in recipe_id and not any(x in recipe_id for x in ['_flip', '_iron', '_steel', '_copper', '_mithril']):
                 continue
             entry['quality_tier'] = 2
-            tier2_data.append(entry)
+            tier2_raw.append(entry)
 
     elif discipline == 'adornment':
         gen = AdornmentVLMDataGenerator(materials_path, placements_path, num_color_variations=0)
         augmented = gen.generate(output_dir, save_images)
         for entry in augmented:
-            if len(tier2_data) + len(training_data) >= sample_count:
-                break
             recipe_id = entry.get('recipe_id', '')
             if '_v0' in recipe_id and '_vert' not in recipe_id and '_hori' not in recipe_id:
                 continue
             entry['quality_tier'] = 2
-            tier2_data.append(entry)
+            tier2_raw.append(entry)
 
     elif discipline == 'refining':
         gen = RefiningLLMDataGenerator(materials_path, placements_path)
         augmented = gen.generate()
-        # Skip first occurrence of each base recipe (those are originals)
         seen_bases = set()
         for entry in augmented:
-            if len(tier2_data) + len(training_data) >= sample_count:
-                break
             recipe_id = entry.get('recipe_id', '')
             base_id = recipe_id.split('_v')[0] if '_v' in recipe_id else recipe_id
             if base_id not in seen_bases:
                 seen_bases.add(base_id)
                 continue  # Skip the original
             entry['quality_tier'] = 2
-            tier2_data.append(entry)
+            tier2_raw.append(entry)
 
     elif discipline == 'alchemy':
         gen = AlchemyLLMDataGenerator(materials_path, placements_path)
         augmented = gen.generate()
         seen_bases = set()
         for entry in augmented:
-            if len(tier2_data) + len(training_data) >= sample_count:
-                break
             recipe_id = entry.get('recipe_id', '')
             base_id = recipe_id.split('_v')[0] if '_v' in recipe_id else recipe_id
             if base_id not in seen_bases:
                 seen_bases.add(base_id)
                 continue
             entry['quality_tier'] = 2
-            tier2_data.append(entry)
+            tier2_raw.append(entry)
 
     elif discipline == 'engineering':
         gen = EngineeringLLMDataGenerator(materials_path, placements_path)
         augmented = gen.generate()
         seen_bases = set()
         for entry in augmented:
-            if len(tier2_data) + len(training_data) >= sample_count:
-                break
             recipe_id = entry.get('recipe_id', '')
             base_id = recipe_id.split('_v')[0] if '_v' in recipe_id else recipe_id
             if base_id not in seen_bases:
                 seen_bases.add(base_id)
                 continue
             entry['quality_tier'] = 2
-            tier2_data.append(entry)
+            tier2_raw.append(entry)
+
+    # Reorder for even spread across recipes
+    tier2_reordered = reorder_for_even_spread(tier2_raw, base_recipe_ids)
+
+    # Take only what we need
+    remaining = sample_count - len(training_data)
+    tier2_data = tier2_reordered[:remaining]
 
     training_data.extend(tier2_data)
     print(f"    Added {len(tier2_data)} augmented recipes (total: {len(training_data)})")
@@ -2556,6 +2590,7 @@ def generate_quality_ordered(discipline: str, paths: Dict, sample_count: int,
 
     # ==========================================================================
     # TIER 3: Variation original (naming/color variations of base recipes)
+    # Already correctly ordered: var_idx outer loop, recipes inner loop
     # ==========================================================================
     print("  Tier 3: Variation original (naming variations of originals)...")
     tier3_data = []
@@ -2597,11 +2632,11 @@ def generate_quality_ordered(discipline: str, paths: Dict, sample_count: int,
 
     # ==========================================================================
     # TIER 4: Variation augmented (naming/color variations of augmented recipes)
+    # Also reordered for even spread
     # ==========================================================================
     print("  Tier 4: Variation augmented (variations of augmented)...")
-    tier4_data = []
+    tier4_raw = []
 
-    # Generate full augmented data with color variations
     if discipline in ['smithing', 'adornment']:
         if discipline == 'smithing':
             gen = SmithingVLMDataGenerator(materials_path, placements_path, num_color_variations=3)
@@ -2612,18 +2647,18 @@ def generate_quality_ordered(discipline: str, paths: Dict, sample_count: int,
 
         # Filter to only include color variations (v1, v2, v3) of augmented recipes
         for entry in full_augmented:
-            if len(tier4_data) + len(training_data) >= sample_count:
-                break
             recipe_id = entry.get('recipe_id', '')
-            # Only include if it's a variation (v1, v2, v3) AND augmented (has substitution markers)
             if any(f'_v{i}' in recipe_id for i in [1, 2, 3]):
                 if any(x in recipe_id for x in ['_flip', '_vert', '_hori', '_iron', '_steel', '_copper']):
                     entry['quality_tier'] = 4
-                    tier4_data.append(entry)
-    else:
-        # For LLM disciplines, just add more variation indices to augmented recipes
-        # This requires re-generating with variation indices applied
-        pass  # LLM disciplines don't have as much tier 4 data since no color variations
+                    tier4_raw.append(entry)
+
+    # Reorder for even spread
+    tier4_reordered = reorder_for_even_spread(tier4_raw, base_recipe_ids)
+
+    # Take only what we need
+    remaining = sample_count - len(training_data)
+    tier4_data = tier4_reordered[:remaining]
 
     training_data.extend(tier4_data)
     print(f"    Added {len(tier4_data)} variation augmented (total: {len(training_data)})")
