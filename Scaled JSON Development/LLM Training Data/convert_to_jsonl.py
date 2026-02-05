@@ -7,6 +7,11 @@ Matches indexed recipe inputs (custom_data.json) with synthetic outputs
 Features:
 - Reads custom_data files for indexed recipe inputs
 - Reads all Synthetic_outputs files for generated item outputs
+- ROBUST PARSING: Handles multiple JSON format variations:
+  * Raw arrays, objects with various array keys
+  * Truncated files, missing array brackets
+  * Various item wrapper formats (output, item, direct)
+  * Subfolders per discipline
 - Matches by index, handles gaps/missing indices
 - Removes rarity field from all disciplines EXCEPT refining
 - Creates Together.ai/OpenAI-compatible JSONL
@@ -17,12 +22,199 @@ Usage:
 
 Author: Claude
 Created: 2026-02-05
+Updated: 2026-02-05 (Added robust multi-format parsing)
 """
 
 import json
 import re
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
+from dataclasses import dataclass
+
+
+# =============================================================================
+# ROBUST JSON PARSING
+# =============================================================================
+
+@dataclass
+class ParseResult:
+    """Result of parsing a synthetic output file."""
+    success: bool
+    items: List[Dict]
+    strategy: str
+    error: Optional[str] = None
+
+
+def robust_json_load(filepath: Path) -> ParseResult:
+    """
+    Load JSON file with multiple fallback strategies for malformed files.
+
+    Strategies:
+    1. Direct parse
+    2. Wrap in array brackets (for missing [ ])
+    3. Fix truncated files (add ]})
+    """
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except Exception as e:
+        return ParseResult(False, [], "read_error", str(e))
+
+    # Strategy 1: Direct parse
+    try:
+        data = json.loads(content)
+        return ParseResult(True, [data] if isinstance(data, dict) else data, "direct")
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 2: Wrap in array brackets (handles missing [ ])
+    try:
+        wrapped = "[" + content.strip().rstrip(',') + "]"
+        data = json.loads(wrapped)
+        return ParseResult(True, data, "wrapped_array")
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 3: Fix truncated files (missing ]} at end)
+    try:
+        fixed = content.rstrip() + "]\n}"
+        data = json.loads(fixed)
+        return ParseResult(True, [data], "fixed_truncated")
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 4: Try adding just ] for truncated arrays
+    try:
+        fixed = content.rstrip() + "\n]"
+        data = json.loads(fixed)
+        return ParseResult(True, data, "fixed_array_truncated")
+    except json.JSONDecodeError:
+        pass
+
+    return ParseResult(False, [], "all_strategies_failed", "Could not parse JSON with any strategy")
+
+
+def extract_items_array(data: Any) -> Tuple[List[Dict], str]:
+    """
+    Extract the items array from various format structures.
+
+    Handles:
+    - Raw arrays
+    - Objects with 'training_outputs', 'items', 'enchantments', 'recipes' keys
+    - 'final_item' special field appended to items
+    """
+    if isinstance(data, list):
+        return data, "raw_array"
+
+    if isinstance(data, dict):
+        # Try various array keys in order of likelihood
+        array_keys = ['training_outputs', 'items', 'enchantments', 'recipes']
+
+        for key in array_keys:
+            if key in data and isinstance(data[key], list):
+                items = data[key]
+                # Check for final_item special case (alchemy_450-500)
+                if 'final_item' in data and isinstance(data['final_item'], dict):
+                    items = items + [data['final_item']]
+                return items, f"dict[{key}]"
+
+        # If it's a single item dict (might be wrapped)
+        if 'index' in data:
+            return [data], "single_item"
+
+    return [], "unknown_format"
+
+
+def extract_item_content(item: Dict) -> Tuple[Optional[Dict], str]:
+    """
+    Extract the actual item content from various wrapper formats.
+
+    Handles:
+    - 'output' wrapper (some smithing files)
+    - 'item' wrapper (some smithing files)
+    - Direct content (most files)
+    - Input data detection (has 'recipe', 'image_base64' = NOT output)
+    """
+    # Check if this is INPUT data accidentally in outputs folder
+    if 'recipe' in item and 'image_base64' in item:
+        return None, "input_data_not_output"
+
+    # Check for wrappers
+    if 'output' in item and isinstance(item['output'], dict):
+        return item['output'], "output_wrapper"
+
+    if 'item' in item and isinstance(item['item'], dict):
+        return item['item'], "item_wrapper"
+
+    # Direct content - check for item indicators
+    item_indicators = ['itemId', 'enchantmentId', 'name', 'category', 'tier']
+    if any(key in item for key in item_indicators):
+        return item, "direct"
+
+    # Unknown format but return anyway
+    return item, "unknown"
+
+
+def parse_synthetic_file(filepath: Path) -> Tuple[Dict[int, Dict], List[str]]:
+    """
+    Parse a synthetic output file and return indexed items.
+
+    Returns:
+        Tuple of (indexed_items, warnings)
+    """
+    warnings = []
+    indexed = {}
+
+    # Load file
+    result = robust_json_load(filepath)
+    if not result.success:
+        warnings.append(f"Parse failed ({result.strategy}): {result.error}")
+        return indexed, warnings
+
+    if result.strategy != "direct":
+        warnings.append(f"Used fallback strategy: {result.strategy}")
+
+    # Extract items array from the parsed data
+    # Handle case where robust_json_load returns a list (from wrapped_array strategy)
+    if isinstance(result.items, list) and len(result.items) == 1 and isinstance(result.items[0], dict):
+        items, array_format = extract_items_array(result.items[0])
+    elif isinstance(result.items, list) and len(result.items) > 1:
+        # Already a list of items from wrapped_array
+        items = result.items
+        array_format = "raw_array"
+    else:
+        items = result.items
+        array_format = "direct"
+
+    if not items:
+        warnings.append(f"No items found (format: {array_format})")
+        return indexed, warnings
+
+    # Process each item
+    input_data_count = 0
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+
+        # Get index
+        idx = item.get('index')
+        if idx is None:
+            continue
+
+        # Extract actual content
+        content, wrapper_format = extract_item_content(item)
+
+        if content is None:
+            if wrapper_format == "input_data_not_output":
+                input_data_count += 1
+            continue
+
+        indexed[idx] = content
+
+    if input_data_count > 0:
+        warnings.append(f"Skipped {input_data_count} entries (input data, not outputs)")
+
+    return indexed, warnings
 
 
 # =============================================================================
@@ -117,31 +309,61 @@ def load_custom_data(filepath: Path) -> Tuple[str, Dict[int, Dict]]:
     return discipline, indexed
 
 
-def load_synthetic_outputs(synthetic_dir: Path, discipline: str) -> Dict[int, Dict]:
-    """Load all synthetic output files for a discipline and return indexed outputs."""
+def load_synthetic_outputs(synthetic_dir: Path, discipline: str) -> Tuple[Dict[int, Dict], List[str]]:
+    """
+    Load all synthetic output files for a discipline and return indexed outputs.
+
+    Searches in:
+    - synthetic_dir/{discipline}_*.json
+    - synthetic_dir/{discipline}/{discipline}_*.json (subfolder)
+    - synthetic_dir/{discipline}/*.json (any file in subfolder)
+
+    Returns:
+        Tuple of (indexed_outputs, all_warnings)
+    """
     indexed = {}
+    all_warnings = []
 
-    # Find all files matching pattern: {discipline}_*.json
-    pattern = f"{discipline}_*.json"
-    files = list(synthetic_dir.glob(pattern))
+    # Collect all potential files
+    files = []
 
-    if not files:
-        return indexed
+    # Pattern 1: Direct files in synthetic_dir
+    pattern1 = f"{discipline}_*.json"
+    files.extend(synthetic_dir.glob(pattern1))
 
-    for filepath in sorted(files):
-        try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+    # Pattern 2: Files in discipline subfolder
+    subfolder = synthetic_dir / discipline
+    if subfolder.exists():
+        # Match both {discipline}_*.json and *.json in subfolder
+        files.extend(subfolder.glob(f"{discipline}_*.json"))
+        # Also match files with typos (like "adornemnt_82-119.json")
+        files.extend(subfolder.glob("*.json"))
 
-            outputs = data.get('training_outputs', [])
-            for entry in outputs:
-                idx = entry.get('index')
-                if idx is not None:
-                    indexed[idx] = entry.get('output', {})
-        except Exception as e:
-            print(f"  Warning: Error reading {filepath.name}: {e}")
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_files = []
+    for f in files:
+        if f not in seen:
+            seen.add(f)
+            unique_files.append(f)
 
-    return indexed
+    if not unique_files:
+        return indexed, [f"No files found for {discipline}"]
+
+    # Process each file
+    for filepath in sorted(unique_files):
+        file_items, warnings = parse_synthetic_file(filepath)
+
+        # Add file context to warnings
+        if warnings:
+            for w in warnings:
+                all_warnings.append(f"{filepath.name}: {w}")
+
+        # Merge items (later files can override earlier)
+        for idx, content in file_items.items():
+            indexed[idx] = content
+
+    return indexed, all_warnings
 
 
 def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str) -> Dict:
@@ -167,7 +389,8 @@ def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str) -> 
     return {"messages": messages}
 
 
-def process_discipline(input_file: Path, synthetic_dir: Path, output_dir: Path) -> Tuple[int, int, int]:
+def process_discipline(input_file: Path, synthetic_dir: Path, output_dir: Path,
+                       verbose: bool = True) -> Tuple[int, int, int]:
     """Process a single discipline, matching inputs with outputs."""
 
     # Load input data
@@ -175,9 +398,17 @@ def process_discipline(input_file: Path, synthetic_dir: Path, output_dir: Path) 
     print(f"\n{discipline.upper()}:")
     print(f"  Loaded {len(inputs)} indexed inputs from {input_file.name}")
 
-    # Load synthetic outputs
-    outputs = load_synthetic_outputs(synthetic_dir, discipline)
+    # Load synthetic outputs (now returns warnings too)
+    outputs, warnings = load_synthetic_outputs(synthetic_dir, discipline)
     print(f"  Loaded {len(outputs)} synthetic outputs")
+
+    # Show warnings if verbose
+    if verbose and warnings:
+        print(f"  Parsing notes ({len(warnings)}):")
+        for w in warnings[:10]:  # Limit to first 10
+            print(f"    - {w}")
+        if len(warnings) > 10:
+            print(f"    ... and {len(warnings) - 10} more")
 
     if not outputs:
         print(f"  No synthetic outputs found for {discipline}")
@@ -193,6 +424,11 @@ def process_discipline(input_file: Path, synthetic_dir: Path, output_dir: Path) 
             matched.append(entry)
         else:
             missing_outputs.append(idx)
+
+    # Also report outputs that have no matching input
+    orphan_outputs = [idx for idx in outputs.keys() if idx not in inputs]
+    if orphan_outputs and verbose:
+        print(f"  Note: {len(orphan_outputs)} outputs have no matching input")
 
     # Write JSONL
     if matched:
@@ -271,8 +507,18 @@ def main():
         input("\nPress Enter to exit...")
         return
 
+    # Count all synthetic files including subfolders
     synthetic_files = list(synthetic_dir.glob("*.json"))
+    synthetic_files.extend(synthetic_dir.glob("*/*.json"))  # Include subfolders
     print(f"\nFound {len(synthetic_files)} synthetic output file(s) in Synthetic_outputs/")
+
+    # Show breakdown by subfolder
+    subfolders = [d for d in synthetic_dir.iterdir() if d.is_dir()]
+    if subfolders:
+        print("  Subfolders:")
+        for sf in sorted(subfolders):
+            sf_count = len(list(sf.glob("*.json")))
+            print(f"    - {sf.name}/: {sf_count} files")
 
     # Select file(s)
     print()
