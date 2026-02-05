@@ -1,0 +1,1781 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "discipline": "alchemy",
+    "description": "Synthetic alchemy outputs from recipe inputs 450-500",
+    "totalItems": 51,
+    "indexRange": "450-500"
+  },
+
+  "items": [
+    {
+      "index": 450,
+      "metadata": {
+        "narrative": "Acceleration draught mixing water's flow with shadow's swiftness. Time bends around the drinker, movements blur into afterimages. The world slows while you race forward.",
+        "tags": ["potion", "buff", "speed", "advanced"]
+      },
+      "itemId": "haste_potion",
+      "name": "Haste Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "+30% movement and attack speed",
+      "duration": 180,
+      "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "speed",
+          "buff_value": 0.30,
+          "duration": 180.0
+        },
+        {
+          "buff_type": "attack_speed",
+          "buff_value": 0.30,
+          "duration": 180.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 451,
+      "metadata": {
+        "narrative": "Basic healing tonic from beetle shells and natural reagents. Every healer's starting formula. Closes minor wounds and stops bleeding within heartbeats.",
+        "tags": ["potion", "healing", "consumable", "starter"]
+      },
+      "itemId": "minor_health_potion",
+      "name": "Minor Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Restores 50 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 50
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 452,
+      "metadata": {
+        "narrative": "Refined healing potion using living essence and earth crystals. The liquid remembers vitality and shares it freely. Wounds knit together, bruises fade to memory.",
+        "tags": ["potion", "healing", "consumable", "standard"]
+      },
+      "itemId": "health_potion",
+      "name": "Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 2,
+      "rarity": "common",
+      "effect": "Restores 100 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 100
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 453,
+      "metadata": {
+        "narrative": "Potent healing elixir from ancient golem cores and pure light. Closes grievous wounds in moments, restores what was lost. Death's grip loosens, life surges back.",
+        "tags": ["potion", "healing", "consumable", "quality"]
+      },
+      "itemId": "greater_health_potion",
+      "name": "Greater Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 3,
+      "rarity": "uncommon",
+      "effect": "Restores 200 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 200
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 454,
+      "metadata": {
+        "narrative": "Power elixir combining living essence with elemental waters. Muscles surge with unnatural might, every blow strikes like a battering ram. Feel the strength of titans.",
+        "tags": ["potion", "buff", "strength", "combat"]
+      },
+      "itemId": "strength_elixir",
+      "name": "Strength Elixir",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "+20% physical damage and +15% attack speed",
+      "duration": 300,
+      "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "strength",
+          "buff_value": 0.20,
+          "duration": 300.0
+        },
+        {
+          "buff_type": "attack_speed",
+          "buff_value": 0.15,
+          "duration": 300.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 455,
+      "metadata": {
+        "narrative": "Fortification potion from iron scales and essence blood. Skin hardens to steel, bones become unbreakable. Stand firm against any assault.",
+        "tags": ["potion", "buff", "defense", "protection"]
+      },
+      "itemId": "iron_skin_potion",
+      "name": "Iron Skin Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "+20% defense",
+      "duration": 300,
+      "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": {
+        "buff_type": "defense",
+        "buff_value": 10.0,
+        "duration": 300.0
+      },
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 456,
+      "metadata": {
+        "narrative": "Velocity draught from air crystals and predator essence. Your body remembers how wolves hunt, how wind races. Move like lightning across the battlefield.",
+        "tags": ["potion", "buff", "speed", "agility"]
+      },
+      "itemId": "swiftness_draught",
+      "name": "Swiftness Draught",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "+25% movement and attack speed",
+      "duration": 240,
+      "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "speed",
+          "buff_value": 0.25,
+          "duration": 240.0
+        },
+        {
+          "buff_type": "attack_speed",
+          "buff_value": 0.25,
+          "duration": 240.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 457,
+      "metadata": {
+        "narrative": "Flame-ward potion using shadow and air to counter heat. Body temperature regulates perfectly against infernos. Walk through dragon fire unscathed.",
+        "tags": ["potion", "resistance", "fire", "protection"]
+      },
+      "itemId": "fire_resistance_potion",
+      "name": "Fire Resistance Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "resistance",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "50% fire damage reduction",
+      "duration": 360,
+      "stackSize": 10,
+      "effectTags": ["resistance", "self"],
+      "effectParams": {
+        "resistance_type": "fire",
+        "damage_reduction": 0.5,
+        "duration": 360.0
+      },
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 458,
+      "metadata": {
+        "narrative": "Ice-ward potion from void essence creating inner warmth. Cold becomes powerless against you. Blizzards feel like gentle breezes, frostbite cannot take hold.",
+        "tags": ["potion", "resistance", "frost", "protection"]
+      },
+      "itemId": "frost_resistance_potion",
+      "name": "Frost Resistance Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "resistance",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "50% ice damage reduction",
+      "duration": 360,
+      "stackSize": 10,
+      "effectTags": ["resistance", "self"],
+      "effectParams": {
+        "resistance_type": "ice",
+        "damage_reduction": 0.5,
+        "duration": 360.0
+      },
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 459,
+      "metadata": {
+        "narrative": "Renewal tonic from ancient cores and lightning essence. Body remembers its perfect state and returns there. Wounds close continuously, vitality flows eternal.",
+        "tags": ["potion", "healing", "regeneration", "advanced"]
+      },
+      "itemId": "regeneration_tonic",
+      "name": "Regeneration Tonic",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Restores 75 HP instantly and 5 HP per second",
+      "duration": 60,
+      "stackSize": 10,
+      "effectTags": ["healing", "instant", "over_time", "self"],
+      "effectParams": [
+        {
+          "heal_amount": 75
+        },
+        {
+          "heal_per_second": 5.0,
+          "duration": 60.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 460,
+      "metadata": {
+        "narrative": "Legendary brew combining spectral essence with void and phoenix ash. Maximum vitality surges, strength magnifies beyond mortal limits. Briefly touch divinity itself.",
+        "tags": ["potion", "buff", "legendary", "power"]
+      },
+      "itemId": "titans_brew",
+      "name": "Titan's Brew",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 4,
+      "rarity": "epic",
+      "effect": "+50% max HP and +40% physical damage",
+      "duration": 480,
+      "stackSize": 5,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "max_hp",
+          "buff_value": 0.50,
+          "duration": 480.0
+        },
+        {
+          "buff_type": "strength",
+          "buff_value": 0.40,
+          "duration": 480.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 461,
+      "metadata": {
+        "narrative": "Alchemical transmutation reshaping tin's crystalline structure through fire. Metal becomes more pure, more responsive to enchantment. The old philosophers sought this.",
+        "tags": ["utility", "material", "crafting", "standard"]
+      },
+      "itemId": "tin_ingot",
+      "name": "Tin Ingot",
+      "category": "consumable",
+      "type": "material",
+      "subtype": "utility",
+      "tier": 1,
+      "rarity": "uncommon",
+      "effect": "Refined tin ingot for crafting and enchanting",
+      "duration": 0,
+      "stackSize": 50,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "index": 462,
+      "metadata": {
+        "narrative": "Advanced transmutation forging steel through alchemical principles. Coal and crystal bind with tin, creating superior alloy. Stronger than sum of parts.",
+        "tags": ["utility", "material", "crafting", "advanced"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "consumable",
+      "type": "material",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Refined steel ingot for advanced crafting",
+      "duration": 0,
+      "stackSize": 50,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "index": 463,
+      "metadata": {
+        "narrative": "Purifying iron scales with light to extract pure essence blood. The process removes impurities, concentrates power. What remains pulses with primal vitality.",
+        "tags": ["utility", "material", "quality", "advanced"]
+      },
+      "itemId": "essence_blood",
+      "name": "Essence Blood",
+      "category": "consumable",
+      "type": "material",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "rare",
+      "effect": "Purified essence blood for high-grade potions",
+      "duration": 0,
+      "stackSize": 30,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 10,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "index": 464,
+      "metadata": {
+        "narrative": "Crystallizing storm energy into stable fire essence. Lightning's raw power transforms to controlled flame. The crystal remembers both origins, burns with electric heat.",
+        "tags": ["utility", "material", "elemental", "standard"]
+      },
+      "itemId": "fire_crystal",
+      "name": "Fire Crystal",
+      "category": "consumable",
+      "type": "material",
+      "subtype": "utility",
+      "tier": 1,
+      "rarity": "uncommon",
+      "effect": "Crystallized fire essence for elemental crafting",
+      "duration": 0,
+      "stackSize": 40,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 4,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "index": 465,
+      "metadata": {
+        "narrative": "Perfect elemental balance in liquid form. Fire, earth, air, and water harmonize completely. All elements recognize you as kin, refuse to cause harm.",
+        "tags": ["potion", "resistance", "elemental", "harmony"]
+      },
+      "itemId": "elemental_harmony_potion",
+      "name": "Elemental Harmony Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "resistance",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Grants resistance to all elements for 10 minutes",
+      "duration": 600,
+      "stackSize": 5,
+      "effectTags": ["resistance", "self"],
+      "effectParams": {
+        "resistance_type": "elemental",
+        "damage_reduction": 0.3,
+        "duration": 600.0
+      },
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 466,
+      "metadata": {
+        "narrative": "Ultimate solvent from shadow, storm, and volcanic glass. Dissolves anything given time. Handle with extreme caution - it hungers to unmake all matter.",
+        "tags": ["utility", "solvent", "dangerous", "void"]
+      },
+      "itemId": "universal_solvent",
+      "name": "Universal Solvent",
+      "category": "consumable",
+      "type": "utility",
+      "subtype": "solvent",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Can dissolve most materials, use carefully",
+      "duration": 0,
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 467,
+      "metadata": {
+        "narrative": "Enhancement oil from ancient cores and elemental water. Tools respond faster, work smoother. Every craftsman's secret advantage.",
+        "tags": ["utility", "enhancement", "tool", "crafting"]
+      },
+      "itemId": "efficiency_oil",
+      "name": "Efficiency Oil",
+      "category": "consumable",
+      "type": "oil",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Apply to tools for +15% gathering speed for 1 hour",
+      "duration": 3600,
+      "stackSize": 10,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "efficiency",
+        "utility_value": 0.15,
+        "duration": 3600.0
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 468,
+      "metadata": {
+        "narrative": "Protective polish from slime gel and marble dust. Creates lustrous coating that deflects blows. The shine isn't decorative - it's functional armor.",
+        "tags": ["utility", "enhancement", "armor", "protection"]
+      },
+      "itemId": "armor_polish",
+      "name": "Armor Polish",
+      "category": "consumable",
+      "type": "oil",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Apply to armor for +10% defense for 2 hours",
+      "duration": 7200,
+      "stackSize": 10,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "armor",
+        "utility_value": 5.0,
+        "duration": 7200.0
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 469,
+      "metadata": {
+        "narrative": "Phase-shifting potion from storm hearts and void essence. Reality forgets you exist temporarily. Light bends around you, eyes slide past without seeing.",
+        "tags": ["potion", "utility", "advanced", "void"]
+      },
+      "itemId": "invisibility_potion",
+      "name": "Invisibility Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "utility",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Grants invisibility for 3 minutes",
+      "duration": 180,
+      "stackSize": 5,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "invisibility",
+        "utility_value": 1.0,
+        "duration": 180.0
+      },
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 470,
+      "metadata": {
+        "narrative": "Aquatic adaptation potion from water crystals and living essence. Lungs remember how fish breathe. Dive deep without fear, explore underwater realms freely.",
+        "tags": ["potion", "utility", "water", "advanced"]
+      },
+      "itemId": "water_breathing_potion",
+      "name": "Water Breathing Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Breathe underwater for 10 minutes",
+      "duration": 600,
+      "stackSize": 10,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "water_breathing",
+        "utility_value": 1.0,
+        "duration": 600.0
+      },
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 471,
+      "metadata": {
+        "narrative": "Purification elixir from iron scales and radiant light. Cleanses toxins, neutralizes venom. Body remembers health, rejects corruption.",
+        "tags": ["potion", "healing", "utility", "standard"]
+      },
+      "itemId": "antidote",
+      "name": "Antidote",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "utility",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Cures poison and disease",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 0
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 472,
+      "metadata": {
+        "narrative": "Arcane restoration potion from crystal quartz and frost essence. Magical energies flow back, spell channels clear. Mind sharpens, power returns.",
+        "tags": ["potion", "utility", "advanced", "power"]
+      },
+      "itemId": "mana_potion",
+      "name": "Mana Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Restores 100 mana instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["utility", "instant", "self"],
+      "effectParams": {
+        "utility_type": "mana_restore",
+        "utility_value": 100.0,
+        "duration": 0.0
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 473,
+      "metadata": {
+        "narrative": "Legendary transmutation catalyst from gold, lightning, and phoenix ash. The dream of alchemists made real. Transforms base metals to precious, accelerates all reactions.",
+        "tags": ["utility", "legendary", "power", "advanced"]
+      },
+      "itemId": "philosophers_stone",
+      "name": "Philosopher's Stone",
+      "category": "consumable",
+      "type": "utility",
+      "subtype": "utility",
+      "tier": 4,
+      "rarity": "legendary",
+      "effect": "Enables advanced transmutations and accelerates alchemy",
+      "duration": 0,
+      "stackSize": 1,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "index": 474,
+      "metadata": {
+        "narrative": "Fury elixir from dire fangs and storm essence. Rational thought fades, primal rage surges. Pain becomes distant, strength multiplies, combat becomes pure instinct.",
+        "tags": ["potion", "buff", "combat", "dangerous"]
+      },
+      "itemId": "berserker_rage_potion",
+      "name": "Berserker Rage Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "+60% damage but -30% defense",
+      "duration": 300,
+      "stackSize": 5,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "strength",
+          "buff_value": 0.60,
+          "duration": 300.0
+        },
+        {
+          "buff_type": "defense",
+          "buff_value": -0.30,
+          "duration": 300.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 475,
+      "metadata": {
+        "narrative": "Simple courage tonic from beetle shells and fire crystals. Fear fades to background noise, resolve strengthens. Not bravery - just chemical confidence.",
+        "tags": ["potion", "buff", "utility", "starter"]
+      },
+      "itemId": "liquid_courage",
+      "name": "Liquid Courage",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Removes fear effects and grants +10% morale",
+      "duration": 180,
+      "stackSize": 15,
+      "effectTags": ["buff", "utility", "self"],
+      "effectParams": {
+        "buff_type": "morale",
+        "buff_value": 0.10,
+        "duration": 180.0
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 476,
+      "metadata": {
+        "narrative": "Gravity-defying elixir from air crystals and phoenix ash. Weight becomes suggestion, ground loses its claim. Rise above earthly constraints, drift on unseen currents.",
+        "tags": ["potion", "utility", "advanced", "power"]
+      },
+      "itemId": "levitation_elixir",
+      "name": "Levitation Elixir",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "utility",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Grants levitation for 5 minutes",
+      "duration": 300,
+      "stackSize": 5,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "levitation",
+        "utility_value": 1.0,
+        "duration": 300.0
+      },
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 477,
+      "metadata": {
+        "narrative": "Stabilizing raw lightning into crystalline form. Storm's fury becomes manageable power. The shard crackles eternally, awaiting release.",
+        "tags": ["utility", "material", "elemental", "advanced"]
+      },
+      "itemId": "lightning_shard",
+      "name": "Lightning Shard",
+      "category": "consumable",
+      "type": "material",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "rare",
+      "effect": "Crystallized lightning for elemental crafting",
+      "duration": 0,
+      "stackSize": 30,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 9,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "index": 478,
+      "metadata": {
+        "narrative": "Speed draught from spectral threads and light essence. Time dilates around you, movements become afterimages. The world crawls while you race forward.",
+        "tags": ["potion", "buff", "speed", "advanced"]
+      },
+      "itemId": "haste_potion",
+      "name": "Haste Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "+30% movement and attack speed",
+      "duration": 180,
+      "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "speed",
+          "buff_value": 0.30,
+          "duration": 180.0
+        },
+        {
+          "buff_type": "attack_speed",
+          "buff_value": 0.30,
+          "duration": 180.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 479,
+      "metadata": {
+        "narrative": "Basic healing tonic from shadow-touched beetle shells. Every healer starts here. Wounds close and pain recedes within moments of drinking.",
+        "tags": ["potion", "healing", "consumable", "starter"]
+      },
+      "itemId": "minor_health_potion",
+      "name": "Minor Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Restores 50 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 50
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 480,
+      "metadata": {
+        "narrative": "Improved healing potion using dire essence and fire crystals. The liquid glows faintly with captured vitality. One swallow restores vigor.",
+        "tags": ["potion", "healing", "consumable", "standard"]
+      },
+      "itemId": "health_potion",
+      "name": "Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 2,
+      "rarity": "common",
+      "effect": "Restores 100 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 100
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 481,
+      "metadata": {
+        "narrative": "Potent healing elixir from lightning-charged cores and crystals. Wounds close rapidly, bones mend, vitality surges. Electric life flows through veins.",
+        "tags": ["potion", "healing", "consumable", "quality"]
+      },
+      "itemId": "greater_health_potion",
+      "name": "Greater Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 3,
+      "rarity": "uncommon",
+      "effect": "Restores 200 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 200
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 482,
+      "metadata": {
+        "narrative": "Power elixir from tempered living essence and earth crystals. Muscles surge with hardened might, every strike impacts like a warhammer. Strength refined to perfection.",
+        "tags": ["potion", "buff", "strength", "combat"]
+      },
+      "itemId": "strength_elixir",
+      "name": "Strength Elixir",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "+20% physical damage and +15% attack speed",
+      "duration": 300,
+      "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "strength",
+          "buff_value": 0.20,
+          "duration": 300.0
+        },
+        {
+          "buff_type": "attack_speed",
+          "buff_value": 0.15,
+          "duration": 300.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 483,
+      "metadata": {
+        "narrative": "Fortification potion from luminous fire crystals and dire essence. Skin becomes iron, bones turn to steel. Stand immovable against any force.",
+        "tags": ["potion", "buff", "defense", "protection"]
+      },
+      "itemId": "iron_skin_potion",
+      "name": "Iron Skin Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "+20% defense",
+      "duration": 300,
+      "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": {
+        "buff_type": "defense",
+        "buff_value": 10.0,
+        "duration": 300.0
+      },
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 484,
+      "metadata": {
+        "narrative": "Velocity draught from ancient cores and charged air. Lightning speed flows through limbs, reactions sharpen beyond natural limits. Move like the storm itself.",
+        "tags": ["potion", "buff", "speed", "agility"]
+      },
+      "itemId": "swiftness_draught",
+      "name": "Swiftness Draught",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "+25% movement and attack speed",
+      "duration": 240,
+      "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "speed",
+          "buff_value": 0.25,
+          "duration": 240.0
+        },
+        {
+          "buff_type": "attack_speed",
+          "buff_value": 0.25,
+          "duration": 240.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 485,
+      "metadata": {
+        "narrative": "Flame-ward potion from tempered air and shadow. Body temperature regulates perfectly even in infernos. Walk through dragonfire like summer breeze.",
+        "tags": ["potion", "resistance", "fire", "protection"]
+      },
+      "itemId": "fire_resistance_potion",
+      "name": "Fire Resistance Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "resistance",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "50% fire damage reduction",
+      "duration": 360,
+      "stackSize": 10,
+      "effectTags": ["resistance", "self"],
+      "effectParams": {
+        "resistance_type": "fire",
+        "damage_reduction": 0.5,
+        "duration": 360.0
+      },
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 486,
+      "metadata": {
+        "narrative": "Ice-ward potion from void essence and luminous earth. Cold becomes powerless, frostbite impossible. Arctic winds feel like gentle cooling.",
+        "tags": ["potion", "resistance", "frost", "protection"]
+      },
+      "itemId": "frost_resistance_potion",
+      "name": "Frost Resistance Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "resistance",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "50% ice damage reduction",
+      "duration": 360,
+      "stackSize": 10,
+      "effectTags": ["resistance", "self"],
+      "effectParams": {
+        "resistance_type": "ice",
+        "damage_reduction": 0.5,
+        "duration": 360.0
+      },
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 487,
+      "metadata": {
+        "narrative": "Renewal tonic from lightning essence and shadow cores. Continuous healing flows through body, wounds close steadily. Regeneration becomes natural state.",
+        "tags": ["potion", "healing", "regeneration", "advanced"]
+      },
+      "itemId": "regeneration_tonic",
+      "name": "Regeneration Tonic",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Restores 75 HP instantly and 5 HP per second",
+      "duration": 60,
+      "stackSize": 10,
+      "effectTags": ["healing", "instant", "over_time", "self"],
+      "effectParams": [
+        {
+          "heal_amount": 75
+        },
+        {
+          "heal_per_second": 5.0,
+          "duration": 60.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 488,
+      "metadata": {
+        "narrative": "Legendary brew from tempered essence blood and void. Maximum HP surges beyond natural limits, strength magnifies. Mortality becomes distant memory.",
+        "tags": ["potion", "buff", "legendary", "power"]
+      },
+      "itemId": "titans_brew",
+      "name": "Titan's Brew",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 4,
+      "rarity": "epic",
+      "effect": "+50% max HP and +40% physical damage",
+      "duration": 480,
+      "stackSize": 5,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "max_hp",
+          "buff_value": 0.50,
+          "duration": 480.0
+        },
+        {
+          "buff_type": "strength",
+          "buff_value": 0.40,
+          "duration": 480.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 489,
+      "metadata": {
+        "narrative": "Alchemical transmutation purifying tin through luminous flame. Metal's crystalline structure perfects, magical conductivity increases. Ancient art made repeatable.",
+        "tags": ["utility", "material", "crafting", "standard"]
+      },
+      "itemId": "tin_ingot",
+      "name": "Tin Ingot",
+      "category": "consumable",
+      "type": "material",
+      "subtype": "utility",
+      "tier": 1,
+      "rarity": "uncommon",
+      "effect": "Refined tin ingot for crafting and enchanting",
+      "duration": 0,
+      "stackSize": 50,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "index": 490,
+      "metadata": {
+        "narrative": "Advanced transmutation creating steel through refined processes. Coal and tin fuse into superior alloy. The result exceeds component quality.",
+        "tags": ["utility", "material", "crafting", "advanced"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "consumable",
+      "type": "material",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Refined steel ingot for advanced crafting",
+      "duration": 0,
+      "stackSize": 50,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "index": 491,
+      "metadata": {
+        "narrative": "Purifying brilliant scales with radiant light to extract pure essence. Process concentrates vitality, removes all impurities. What remains pulses with life.",
+        "tags": ["utility", "material", "quality", "advanced"]
+      },
+      "itemId": "essence_blood",
+      "name": "Essence Blood",
+      "category": "consumable",
+      "type": "material",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "rare",
+      "effect": "Purified essence blood for high-grade potions",
+      "duration": 0,
+      "stackSize": 30,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 10,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "index": 492,
+      "metadata": {
+        "narrative": "Crystallizing storm's raw power into stable fire essence. Lightning transforms to controlled flame through shale's layers. The crystal burns with electric heat.",
+        "tags": ["utility", "material", "elemental", "standard"]
+      },
+      "itemId": "fire_crystal",
+      "name": "Fire Crystal",
+      "category": "consumable",
+      "type": "material",
+      "subtype": "utility",
+      "tier": 1,
+      "rarity": "uncommon",
+      "effect": "Crystallized fire essence for elemental crafting",
+      "duration": 0,
+      "stackSize": 40,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 4,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "index": 493,
+      "metadata": {
+        "narrative": "Perfect elemental balance from brilliant crystals. Fire, earth, air, water harmonize completely. All elements recognize you as kin.",
+        "tags": ["potion", "resistance", "elemental", "harmony"]
+      },
+      "itemId": "elemental_harmony_potion",
+      "name": "Elemental Harmony Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "resistance",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Grants resistance to all elements for 10 minutes",
+      "duration": 600,
+      "stackSize": 5,
+      "effectTags": ["resistance", "self"],
+      "effectParams": {
+        "resistance_type": "elemental",
+        "damage_reduction": 0.3,
+        "duration": 600.0
+      },
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 494,
+      "metadata": {
+        "narrative": "Ultimate solvent from phoenix ash and frost essence. Dissolves anything given time and patience. Handle with extreme caution - it hungers.",
+        "tags": ["utility", "solvent", "dangerous", "void"]
+      },
+      "itemId": "universal_solvent",
+      "name": "Universal Solvent",
+      "category": "consumable",
+      "type": "utility",
+      "subtype": "solvent",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Can dissolve most materials, use carefully",
+      "duration": 0,
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 495,
+      "metadata": {
+        "narrative": "Enhancement oil from polished essence and air crystals. Tools respond faster, work smoother, never tire. Craftsmen guard this formula jealously.",
+        "tags": ["utility", "enhancement", "tool", "crafting"]
+      },
+      "itemId": "efficiency_oil",
+      "name": "Efficiency Oil",
+      "category": "consumable",
+      "type": "oil",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Apply to tools for +15% gathering speed for 1 hour",
+      "duration": 3600,
+      "stackSize": 10,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "efficiency",
+        "utility_value": 0.15,
+        "duration": 3600.0
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 496,
+      "metadata": {
+        "narrative": "Protective polish from brilliant slime and granite. Creates lustrous coating that deflects attacks. The shine is functional armor, not decoration.",
+        "tags": ["utility", "enhancement", "armor", "protection"]
+      },
+      "itemId": "armor_polish",
+      "name": "Armor Polish",
+      "category": "consumable",
+      "type": "oil",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Apply to armor for +10% defense for 2 hours",
+      "duration": 7200,
+      "stackSize": 10,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "armor",
+        "utility_value": 5.0,
+        "duration": 7200.0
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 497,
+      "metadata": {
+        "narrative": "Phase-shifting potion from lightning shards and void essence. Reality forgets you temporarily. Light bends around you, eyes slide past unseeing.",
+        "tags": ["potion", "utility", "advanced", "void"]
+      },
+      "itemId": "invisibility_potion",
+      "name": "Invisibility Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "utility",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Grants invisibility for 3 minutes",
+      "duration": 180,
+      "stackSize": 5,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "invisibility",
+        "utility_value": 1.0,
+        "duration": 180.0
+      },
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 498,
+      "metadata": {
+        "narrative": "Aquatic adaptation potion from brilliant air crystals. Lungs remember how fish breathe, water becomes air. Dive deep without drowning fear.",
+        "tags": ["potion", "utility", "water", "advanced"]
+      },
+      "itemId": "water_breathing_potion",
+      "name": "Water Breathing Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Breathe underwater for 10 minutes",
+      "duration": 600,
+      "stackSize": 10,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "water_breathing",
+        "utility_value": 1.0,
+        "duration": 600.0
+      },
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "index": 499,
+      "metadata": {
+        "narrative": "Purification elixir from fire-blessed light and iron scales. Cleanses all toxins, neutralizes any venom. Body remembers purity, rejects corruption.",
+        "tags": ["potion", "healing", "utility", "standard"]
+      },
+      "itemId": "antidote",
+      "name": "Antidote",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "utility",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Cures poison and disease",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 0
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    }
+  ],
+
+  "final_item": {
+    "index": 500,
+    "metadata": {
+      "narrative": "Arcane restoration potion from vivid water crystals and quartz. Magical energies flow back rapidly, spell channels clear. Mind sharpens, power surges through meridians.",
+      "tags": ["potion", "utility", "advanced", "power"]
+    },
+    "itemId": "mana_potion",
+    "name": "Mana Potion",
+    "category": "consumable",
+    "type": "potion",
+    "subtype": "utility",
+    "tier": 2,
+    "rarity": "uncommon",
+    "effect": "Restores 100 mana instantly",
+    "duration": 0,
+    "stackSize": 20,
+    "effectTags": ["utility", "instant", "self"],
+    "effectParams": {
+      "utility_type": "mana_restore",
+      "utility_value": 100.0,
+      "duration": 0.0
+    },
+    "statMultipliers": {
+      "weight": 0.2
+    },
+    "requirements": {
+      "level": 6,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": true,
+      "repairable": false
+    }
+  }
+}
