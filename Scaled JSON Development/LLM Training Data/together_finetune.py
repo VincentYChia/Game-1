@@ -22,7 +22,7 @@ from pathlib import Path
 MODEL = "google/gemma-3-4b-it"
 
 # Training file path (relative to this script)
-TRAINING_FILE = "./training_outputs/crafting_training_data.jsonl"
+TRAINING_FILE = "./Synthetic_Training/crafting_training_data.jsonl"
 
 # Training parameters
 N_EPOCHS = 3

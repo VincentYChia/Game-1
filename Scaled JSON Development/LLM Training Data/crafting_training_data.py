@@ -16,8 +16,8 @@ Output Format:
 - Tags are preserved and augmented with variation descriptors
 
 Usage:
-    python crafting_training_data.py --discipline smithing --output ./training_outputs/
-    python crafting_training_data.py --discipline all --output ./training_outputs/
+    python crafting_training_data.py --discipline smithing --output ./Synthetic_Training/
+    python crafting_training_data.py --discipline all --output ./Synthetic_Training/
 
 Author: Claude
 Created: 2026-02-04
@@ -2795,59 +2795,66 @@ def generate_synthetic_only(discipline: str, paths: Dict, output_dir: str,
 
 def create_enriched_smithing_recipe(placement: Dict, enricher: MaterialEnricher,
                                     namer: VariationNamer, var_idx: int) -> Dict:
-    """Create enriched smithing recipe for synthetic mode."""
+    """Create enriched smithing recipe for synthetic mode with consolidated materials."""
     recipe_id = placement['recipeId']
     if var_idx > 0:
         recipe_id = f"{recipe_id}_v{var_idx}"
 
-    inputs = []
+    # Aggregate materials by ID
+    aggregated = {}
     for pos_str, material_id in placement.get('placementMap', {}).items():
         var_name, var_tags = namer.get_variation_name(material_id, var_idx)
-        input_item = {
-            "materialId": var_name,
-            "quantity": 1,
-            "position": pos_str
-        }
-        enriched = enricher.enrich_input({"materialId": material_id}, var_tags)
-        input_item['material_metadata'] = enriched.get('material_metadata', {})
-        inputs.append(input_item)
+        if var_name not in aggregated:
+            enriched = enricher.enrich_input({"materialId": material_id}, var_tags)
+            aggregated[var_name] = {
+                "materialId": var_name,
+                "quantity": 0,
+                "positions": [],
+                "material_metadata": enriched.get('material_metadata', {})
+            }
+        aggregated[var_name]['quantity'] += 1
+        aggregated[var_name]['positions'].append(pos_str)
 
     return {
         "recipeId": recipe_id,
         "stationType": "smithing",
         "stationTier": placement.get('stationTier', 1),
         "gridSize": placement.get('metadata', {}).get('gridSize', '3x3'),
-        "inputs": inputs
+        "inputs": list(aggregated.values())
     }
 
 
 def create_enriched_adornment_recipe(placement: Dict, enricher: MaterialEnricher,
                                      namer: VariationNamer, var_idx: int) -> Dict:
-    """Create enriched adornment recipe for synthetic mode."""
+    """Create enriched adornment recipe for synthetic mode with consolidated materials."""
     recipe_id = placement['recipeId']
     if var_idx > 0:
         recipe_id = f"{recipe_id}_v{var_idx}"
 
     vertices = placement.get('placementMap', {}).get('vertices', {})
-    inputs = []
+
+    # Aggregate materials by ID
+    aggregated = {}
     for coord_str, vertex_data in vertices.items():
         mat_id = vertex_data.get('materialId')
         if mat_id:
             var_name, var_tags = namer.get_variation_name(mat_id, var_idx)
-            input_item = {
-                "materialId": var_name,
-                "quantity": 1,
-                "position": coord_str
-            }
-            enriched = enricher.enrich_input({"materialId": mat_id}, var_tags)
-            input_item['material_metadata'] = enriched.get('material_metadata', {})
-            inputs.append(input_item)
+            if var_name not in aggregated:
+                enriched = enricher.enrich_input({"materialId": mat_id}, var_tags)
+                aggregated[var_name] = {
+                    "materialId": var_name,
+                    "quantity": 0,
+                    "positions": [],
+                    "material_metadata": enriched.get('material_metadata', {})
+                }
+            aggregated[var_name]['quantity'] += 1
+            aggregated[var_name]['positions'].append(coord_str)
 
     return {
         "recipeId": recipe_id,
         "stationType": "enchanting",
         "stationTier": placement.get('stationTier', 1),
-        "inputs": inputs
+        "inputs": list(aggregated.values())
     }
 
 
@@ -2959,8 +2966,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python crafting_training_data.py --discipline smithing --output ./training_outputs/
-  python crafting_training_data.py --discipline all --output ./training_outputs/
+  python crafting_training_data.py --discipline smithing --output ./Synthetic_Training/
+  python crafting_training_data.py --discipline all --output ./Synthetic_Training/
   python crafting_training_data.py --mode 3 --cap 1000  # Augmented only with 1000 cap
   python crafting_training_data.py --mode 2  # Synthetic only (original + 3x variations)
         """
@@ -2971,7 +2978,7 @@ Examples:
                         default='all',
                         help='Discipline to generate training data for')
     parser.add_argument('--output', '-o',
-                        default='./training_outputs',
+                        default='./Synthetic_Training',
                         help='Output directory for training data')
     parser.add_argument('--mode', '-m',
                         type=int, choices=[1, 2, 3, 4],

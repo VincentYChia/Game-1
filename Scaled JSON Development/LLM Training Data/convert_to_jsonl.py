@@ -231,7 +231,7 @@ def main():
 
     # Find directories
     script_dir = Path(__file__).parent
-    training_outputs_dir = script_dir / "training_outputs"
+    training_outputs_dir = script_dir / "Synthetic_Training"
     synthetic_dir = training_outputs_dir / "Synthetic_outputs"
 
     print(f"\nLooking in: {training_outputs_dir}")
