@@ -14,6 +14,8 @@ Features:
   * Subfolders per discipline
 - Matches by index, handles gaps/missing indices
 - Removes rarity field from all disciplines EXCEPT refining
+- Loads system prompts from external text files
+- Creates 80/20 train/validation split with random shuffling
 - Creates Together.ai/OpenAI-compatible JSONL
 
 Usage:
@@ -22,11 +24,11 @@ Usage:
 
 Author: Claude
 Created: 2026-02-05
-Updated: 2026-02-05 (Added robust multi-format parsing)
+Updated: 2026-02-05 (Added robust multi-format parsing, train/val split)
 """
 
 import json
-import re
+import random
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
@@ -218,20 +220,51 @@ def parse_synthetic_file(filepath: Path) -> Tuple[Dict[int, Dict], List[str]]:
 
 
 # =============================================================================
-# SYSTEM PROMPTS BY DISCIPLINE
+# SYSTEM PROMPTS
 # =============================================================================
 
-SYSTEM_PROMPTS = {
+# Default prompts (used if external file not found)
+DEFAULT_SYSTEM_PROMPTS = {
     'smithing': """You are a crafting assistant for a fantasy RPG. Given a smithing recipe with materials and grid positions, generate the resulting item as JSON. Consider material tiers (T1-T4), tags, and properties.""",
-
-    'adornment': """You are a crafting assistant for a fantasy RPG. Given an adornment recipe with materials, generate the resulting accessory/enchantment as JSON. Consider magical properties and tiers.""",
-
+    'adornment': """You are a crafting assistant for a fantasy RPG. Given an adornment recipe with materials, generate the resulting enchantment as JSON. Consider magical properties and tiers.""",
     'refining': """You are a crafting assistant for a fantasy RPG. Given a refining recipe, generate the resulting refined material as JSON. Rarity depends on input quality and process.""",
-
     'alchemy': """You are a crafting assistant for a fantasy RPG. Given an alchemy recipe with ingredients, generate the resulting potion/consumable as JSON. Consider ingredient properties and tiers.""",
-
     'engineering': """You are a crafting assistant for a fantasy RPG. Given an engineering recipe with components, generate the resulting device as JSON. Consider component types and tiers.""",
 }
+
+# Cache for loaded prompts
+_loaded_prompts: Dict[str, str] = {}
+
+
+def load_system_prompt(discipline: str, prompts_dir: Optional[Path] = None) -> str:
+    """
+    Load system prompt from external file or use default.
+
+    Looks for: {prompts_dir}/{discipline}.txt
+    Falls back to DEFAULT_SYSTEM_PROMPTS if file not found.
+    """
+    # Check cache first
+    cache_key = f"{prompts_dir}:{discipline}" if prompts_dir else discipline
+    if cache_key in _loaded_prompts:
+        return _loaded_prompts[cache_key]
+
+    prompt = None
+
+    # Try loading from file
+    if prompts_dir:
+        prompt_file = prompts_dir / f"{discipline}.txt"
+        if prompt_file.exists():
+            try:
+                prompt = prompt_file.read_text(encoding='utf-8').strip()
+            except Exception:
+                pass
+
+    # Fall back to default
+    if not prompt:
+        prompt = DEFAULT_SYSTEM_PROMPTS.get(discipline, DEFAULT_SYSTEM_PROMPTS['smithing'])
+
+    _loaded_prompts[cache_key] = prompt
+    return prompt
 
 
 # =============================================================================
@@ -366,7 +399,8 @@ def load_synthetic_outputs(synthetic_dir: Path, discipline: str) -> Tuple[Dict[i
     return indexed, all_warnings
 
 
-def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str) -> Dict:
+def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str,
+                       prompts_dir: Optional[Path] = None) -> Dict:
     """Create a single JSONL entry with messages array."""
     # Remove rarity from output unless refining
     cleaned_output = remove_rarity_recursive(output_data, discipline)
@@ -374,7 +408,7 @@ def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str) -> 
     messages = [
         {
             "role": "system",
-            "content": SYSTEM_PROMPTS.get(discipline, SYSTEM_PROMPTS['smithing'])
+            "content": load_system_prompt(discipline, prompts_dir)
         },
         {
             "role": "user",
@@ -389,10 +423,15 @@ def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str) -> 
     return {"messages": messages}
 
 
-def process_discipline(input_file: Path, synthetic_dir: Path, output_dir: Path,
-                       verbose: bool = True) -> Tuple[int, int, int]:
-    """Process a single discipline, matching inputs with outputs."""
+def process_discipline(input_file: Path, synthetic_dir: Path,
+                       prompts_dir: Optional[Path] = None,
+                       verbose: bool = True) -> Tuple[str, List[Dict], int]:
+    """
+    Process a single discipline, matching inputs with outputs.
 
+    Returns:
+        Tuple of (discipline_name, matched_entries, missing_count)
+    """
     # Load input data
     discipline, inputs = load_custom_data(input_file)
     print(f"\n{discipline.upper()}:")
@@ -412,7 +451,7 @@ def process_discipline(input_file: Path, synthetic_dir: Path, output_dir: Path,
 
     if not outputs:
         print(f"  No synthetic outputs found for {discipline}")
-        return 0, len(inputs), 0
+        return discipline, [], len(inputs)
 
     # Match and create JSONL entries
     matched = []
@@ -420,23 +459,12 @@ def process_discipline(input_file: Path, synthetic_dir: Path, output_dir: Path,
 
     for idx in sorted(inputs.keys()):
         if idx in outputs:
-            entry = create_jsonl_entry(inputs[idx], outputs[idx], discipline)
+            entry = create_jsonl_entry(inputs[idx], outputs[idx], discipline, prompts_dir)
             matched.append(entry)
         else:
             missing_outputs.append(idx)
 
-    # Also report outputs that have no matching input
-    orphan_outputs = [idx for idx in outputs.keys() if idx not in inputs]
-    if orphan_outputs and verbose:
-        print(f"  Note: {len(orphan_outputs)} outputs have no matching input")
-
-    # Write JSONL
-    if matched:
-        output_file = output_dir / f"{discipline}_training.jsonl"
-        with open(output_file, 'w', encoding='utf-8') as f:
-            for entry in matched:
-                f.write(json.dumps(entry) + '\n')
-        print(f"  Created {output_file.name} with {len(matched)} entries")
+    print(f"  Matched: {len(matched)} entries")
 
     if missing_outputs:
         # Show ranges of missing indices
@@ -456,29 +484,65 @@ def process_discipline(input_file: Path, synthetic_dir: Path, output_dir: Path,
         else:
             print(f"  Missing outputs for {len(missing_outputs)} indices ({ranges[0]} ... {ranges[-1]})")
 
-    return len(matched), len(missing_outputs), len(outputs)
+    return discipline, matched, len(missing_outputs)
+
+
+def train_validation_split(entries: List[Dict], train_ratio: float = 0.8,
+                           seed: Optional[int] = None) -> Tuple[List[Dict], List[Dict]]:
+    """
+    Split entries into train and validation sets with random shuffling.
+
+    Args:
+        entries: List of JSONL entries
+        train_ratio: Fraction for training (default 0.8 = 80%)
+        seed: Random seed for reproducibility (None for random)
+
+    Returns:
+        Tuple of (train_entries, validation_entries)
+    """
+    if seed is not None:
+        random.seed(seed)
+
+    # Shuffle a copy
+    shuffled = entries.copy()
+    random.shuffle(shuffled)
+
+    # Split
+    split_idx = int(len(shuffled) * train_ratio)
+    train_entries = shuffled[:split_idx]
+    val_entries = shuffled[split_idx:]
+
+    return train_entries, val_entries
+
+
+def write_jsonl(entries: List[Dict], filepath: Path) -> None:
+    """Write entries to JSONL file."""
+    with open(filepath, 'w', encoding='utf-8') as f:
+        for entry in entries:
+            f.write(json.dumps(entry) + '\n')
 
 
 def main():
-    """Interactive main."""
+    """Interactive main with train/validation split."""
     print("=" * 60)
     print("JSONL CONVERTER - Match Inputs with Synthetic Outputs")
     print("=" * 60)
 
     # Find directories
     script_dir = Path(__file__).parent
-    training_outputs_dir = script_dir / "Synthetic_Training"
-    synthetic_dir = training_outputs_dir / "Synthetic_outputs"
+    training_dir = script_dir / "Synthetic_Training"
+    synthetic_dir = training_dir / "Synthetic_outputs"
+    prompts_dir = training_dir / "system_prompts"
 
-    print(f"\nLooking in: {training_outputs_dir}")
+    print(f"\nLooking in: {training_dir}")
 
-    if not training_outputs_dir.exists():
-        print(f"\nError: training_outputs directory not found")
+    if not training_dir.exists():
+        print(f"\nError: Synthetic_Training directory not found")
         input("\nPress Enter to exit...")
         return
 
     # Find custom_data files
-    custom_files = list(training_outputs_dir.glob("*_custom_data.json"))
+    custom_files = list(training_dir.glob("*_custom_data.json"))
 
     if not custom_files:
         print(f"\nNo *_custom_data.json files found")
@@ -488,7 +552,7 @@ def main():
     # Show available files
     print(f"\nFound {len(custom_files)} input file(s):")
     print("-" * 50)
-    for i, f in enumerate(custom_files, 1):
+    for i, f in enumerate(sorted(custom_files), 1):
         try:
             with open(f, 'r') as fp:
                 data = json.load(fp)
@@ -498,7 +562,7 @@ def main():
             count = '?'
             discipline = '?'
         print(f"  {i}. {f.name} [{discipline}] ({count} entries)")
-    print(f"  {len(custom_files) + 1}. All files")
+    print(f"  {len(custom_files) + 1}. All files (recommended)")
 
     # Check for synthetic outputs
     if not synthetic_dir.exists():
@@ -509,7 +573,7 @@ def main():
 
     # Count all synthetic files including subfolders
     synthetic_files = list(synthetic_dir.glob("*.json"))
-    synthetic_files.extend(synthetic_dir.glob("*/*.json"))  # Include subfolders
+    synthetic_files.extend(synthetic_dir.glob("*/*.json"))
     print(f"\nFound {len(synthetic_files)} synthetic output file(s) in Synthetic_outputs/")
 
     # Show breakdown by subfolder
@@ -519,6 +583,16 @@ def main():
         for sf in sorted(subfolders):
             sf_count = len(list(sf.glob("*.json")))
             print(f"    - {sf.name}/: {sf_count} files")
+
+    # Check for system prompts
+    if prompts_dir.exists():
+        prompt_files = list(prompts_dir.glob("*.txt"))
+        print(f"\nSystem prompts: {prompts_dir}")
+        for pf in sorted(prompt_files):
+            print(f"  - {pf.name}")
+    else:
+        print(f"\nNote: No system_prompts folder found, using defaults")
+        prompts_dir = None
 
     # Select file(s)
     print()
@@ -540,25 +614,71 @@ def main():
     output_dir = script_dir / "jsonl_outputs"
     output_dir.mkdir(exist_ok=True)
 
-    # Process
-    total_matched = 0
+    # Process all selected files and collect entries
+    all_entries = []
     total_missing = 0
+    discipline_counts = {}
 
     if sel_num == len(custom_files) + 1:
-        files_to_process = custom_files
+        files_to_process = sorted(custom_files)
     else:
-        files_to_process = [custom_files[sel_num - 1]]
+        files_to_process = [sorted(custom_files)[sel_num - 1]]
+
+    print("\n" + "-" * 60)
+    print("PROCESSING")
+    print("-" * 60)
 
     for input_file in files_to_process:
-        matched, missing, _ = process_discipline(input_file, synthetic_dir, output_dir)
-        total_matched += matched
+        discipline, matched, missing = process_discipline(
+            input_file, synthetic_dir, prompts_dir, verbose=True
+        )
+        all_entries.extend(matched)
         total_missing += missing
+        discipline_counts[discipline] = len(matched)
+
+    # Train/Validation split
+    print("\n" + "-" * 60)
+    print("TRAIN/VALIDATION SPLIT")
+    print("-" * 60)
+
+    train_ratio = 0.8
+    seed = 42  # Fixed seed for reproducibility
+
+    train_entries, val_entries = train_validation_split(all_entries, train_ratio, seed)
+
+    print(f"Total entries: {len(all_entries)}")
+    print(f"Train set: {len(train_entries)} ({train_ratio*100:.0f}%)")
+    print(f"Validation set: {len(val_entries)} ({(1-train_ratio)*100:.0f}%)")
+    print(f"Random seed: {seed}")
+
+    # Write output files
+    train_file = output_dir / "train.jsonl"
+    val_file = output_dir / "validation.jsonl"
+
+    write_jsonl(train_entries, train_file)
+    write_jsonl(val_entries, val_file)
+
+    # Also write per-discipline files for reference
+    for discipline, count in discipline_counts.items():
+        disc_entries = [e for e in all_entries
+                        if discipline in e['messages'][0]['content'].lower()
+                        or discipline in str(e['messages'][1]['content']).lower()]
+        if disc_entries:
+            disc_file = output_dir / f"{discipline}_all.jsonl"
+            write_jsonl(disc_entries, disc_file)
 
     print("\n" + "=" * 60)
-    print(f"COMPLETE")
-    print(f"  Matched: {total_matched} entries")
-    print(f"  Missing outputs: {total_missing} entries")
-    print(f"  Output folder: {output_dir}")
+    print("COMPLETE")
+    print("=" * 60)
+    print(f"\nOutput files:")
+    print(f"  {train_file.name}: {len(train_entries)} entries (for training)")
+    print(f"  {val_file.name}: {len(val_entries)} entries (for validation)")
+    print(f"\nPer-discipline files:")
+    for discipline in discipline_counts:
+        print(f"  {discipline}_all.jsonl")
+    print(f"\nTotal matched: {len(all_entries)}")
+    print(f"Total missing outputs: {total_missing}")
+    print(f"Output folder: {output_dir}")
     print("=" * 60)
 
     input("\nPress Enter to exit...")
