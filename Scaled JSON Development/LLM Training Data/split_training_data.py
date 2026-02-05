@@ -7,13 +7,11 @@ while maintaining proper index numbers.
 Features:
 - Split by custom chunk size (default 50)
 - Maintains original index numbers
-- Supports automatic or custom range selection
-- Can process single file or all files in directory
+- Interactive prompts - just run the script
 
 Usage:
-    python split_training_data.py --input ./training_outputs/alchemy_custom_data.json --size 50
-    python split_training_data.py --input ./training_outputs/ --all --size 100
-    python split_training_data.py --input ./training_outputs/smithing_custom_data.json --range 1-50,101-150
+    python split_training_data.py
+    (Follow the prompts)
 
 Author: Claude
 Created: 2026-02-05
@@ -21,7 +19,6 @@ Created: 2026-02-05
 
 import json
 import os
-import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
@@ -234,87 +231,102 @@ def interactive_mode(input_path: str, output_dir: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Split training data into indexed chunks',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Auto-split single file into chunks of 50
-  python split_training_data.py --input ./training_outputs/alchemy_custom_data.json --size 50
-
-  # Auto-split all files in directory
-  python split_training_data.py --input ./training_outputs/ --all --size 100
-
-  # Split with custom ranges
-  python split_training_data.py --input ./training_outputs/smithing_custom_data.json --range "1-50,101-150"
-
-  # Interactive mode
-  python split_training_data.py --input ./training_outputs/alchemy_custom_data.json --interactive
-        """
-    )
-
-    parser.add_argument('--input', '-i', required=True,
-                        help='Input JSON file or directory')
-    parser.add_argument('--output', '-o', default=None,
-                        help='Output directory (default: same as input)')
-    parser.add_argument('--size', '-s', type=int, default=50,
-                        help='Chunk size for auto-split (default: 50)')
-    parser.add_argument('--range', '-r', default=None,
-                        help='Custom ranges like "1-50,101-150"')
-    parser.add_argument('--all', '-a', action='store_true',
-                        help='Process all JSON files in directory')
-    parser.add_argument('--interactive', action='store_true',
-                        help='Interactive mode for selecting ranges')
-
-    args = parser.parse_args()
-
-    input_path = Path(args.input)
-    output_dir = args.output or str(input_path.parent if input_path.is_file() else input_path)
+    """Interactive main - just run the script and answer prompts."""
 
     print("=" * 60)
     print("TRAINING DATA SPLITTER")
     print("=" * 60)
 
-    if args.interactive and input_path.is_file():
-        interactive_mode(str(input_path), output_dir)
-        return
+    # Find training_outputs folder relative to script
+    script_dir = Path(__file__).parent
+    default_input_dir = script_dir / "training_outputs"
 
-    total_files = 0
+    # Ask for input directory
+    print(f"\nDefault input directory: {default_input_dir}")
+    custom_dir = input("Press Enter to use default, or enter custom path: ").strip()
 
-    if args.all and input_path.is_dir():
-        # Process all JSON files
-        json_files = list(input_path.glob('*_data.json'))
-
-        if not json_files:
-            print(f"\nNo *_data.json files found in {input_path}")
-            return
-
-        print(f"\nFound {len(json_files)} files to process:")
-        for f in json_files:
-            print(f"  - {f.name}")
-
-        confirm = input("\nProceed? (y/n): ").strip().lower()
-        if confirm != 'y':
-            print("Cancelled.")
-            return
-
-        for json_file in json_files:
-            files = split_file(str(json_file), output_dir,
-                             chunk_size=args.size,
-                             custom_ranges=args.range)
-            total_files += files
-
-    elif input_path.is_file():
-        total_files = split_file(str(input_path), output_dir,
-                                chunk_size=args.size,
-                                custom_ranges=args.range)
+    if custom_dir:
+        input_dir = Path(custom_dir)
     else:
-        print(f"\nError: {input_path} not found")
+        input_dir = default_input_dir
+
+    if not input_dir.exists():
+        print(f"\nError: Directory not found: {input_dir}")
+        print("Make sure to run crafting_training_data.py first to generate data.")
+        input("\nPress Enter to exit...")
         return
+
+    # Find JSON files
+    json_files = list(input_dir.glob('*_data.json'))
+
+    if not json_files:
+        print(f"\nNo *_data.json files found in {input_dir}")
+        print("Make sure to run crafting_training_data.py first to generate data.")
+        input("\nPress Enter to exit...")
+        return
+
+    # Show available files
+    print(f"\nFound {len(json_files)} training data file(s):")
+    print("-" * 40)
+    for i, f in enumerate(json_files, 1):
+        # Get entry count
+        try:
+            with open(f, 'r') as fp:
+                data = json.load(fp)
+                count = len(data.get('training_data', []))
+        except:
+            count = '?'
+        print(f"  {i}. {f.name} ({count} entries)")
+    print(f"  {len(json_files) + 1}. All files")
+
+    # Select file(s)
+    print()
+    selection = input(f"Select file (1-{len(json_files) + 1}): ").strip()
+
+    try:
+        sel_num = int(selection)
+    except ValueError:
+        print("Invalid selection.")
+        input("\nPress Enter to exit...")
+        return
+
+    if sel_num < 1 or sel_num > len(json_files) + 1:
+        print("Invalid selection.")
+        input("\nPress Enter to exit...")
+        return
+
+    # Get chunk size
+    print()
+    size_input = input("Enter chunk size (default 50): ").strip()
+    chunk_size = int(size_input) if size_input else 50
+
+    if chunk_size < 1:
+        print("Chunk size must be at least 1.")
+        input("\nPress Enter to exit...")
+        return
+
+    # Process
+    total_files = 0
+    output_dir = str(input_dir)
+
+    if sel_num == len(json_files) + 1:
+        # All files
+        print(f"\nSplitting all files into chunks of {chunk_size}...")
+        for json_file in json_files:
+            files = split_file(str(json_file), output_dir, chunk_size=chunk_size)
+            total_files += files
+    else:
+        # Single file
+        selected_file = json_files[sel_num - 1]
+        print(f"\nSplitting {selected_file.name} into chunks of {chunk_size}...")
+        total_files = split_file(str(selected_file), output_dir, chunk_size=chunk_size)
 
     print("\n" + "=" * 60)
-    print(f"COMPLETE: Created {total_files} split files")
+    print(f"COMPLETE: Created {total_files} split file(s)")
+    print(f"Output location: {input_dir}")
     print("=" * 60)
+
+    input("\nPress Enter to exit...")
 
 
 if __name__ == "__main__":
