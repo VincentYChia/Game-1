@@ -20,9 +20,10 @@ Features:
 - LLM FORMAT: Alchemy, Refining, Engineering use text-only format
 - Creates Together.ai/OpenAI-compatible JSONL
 
-Output files (12 total):
-- train.jsonl, validation.jsonl (combined)
-- {discipline}_train.jsonl, {discipline}_validation.jsonl (per-discipline)
+Output files (18 total for 5 disciplines):
+- all_combined.jsonl, all_train.jsonl, all_validation.jsonl (all disciplines)
+- {discipline}.jsonl (combined, for Together auto-split)
+- {discipline}_train.jsonl, {discipline}_validation.jsonl (pre-split)
 
 Usage:
     python convert_to_jsonl.py
@@ -414,56 +415,59 @@ def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str,
     """
     Create a single JSONL entry with messages array.
 
-    For VLM disciplines (smithing, adornment): Uses multimodal format with image
-    For LLM disciplines (alchemy, refining, engineering): Uses text-only format
+    For VLM disciplines (smithing, adornment):
+        ALL content fields are arrays per Together.ai spec:
+        - system.content = [{"type": "text", "text": "..."}]
+        - user.content = [{"type": "text", ...}, {"type": "image_url", ...}]
+        - assistant.content = [{"type": "text", "text": "..."}]
+
+    For LLM disciplines (alchemy, refining, engineering):
+        content fields are plain strings
     """
     # Remove rarity from output unless refining
     cleaned_output = remove_rarity_recursive(output_data, discipline)
 
     # Format recipe text
     recipe_text = format_recipe_as_text(input_data, discipline)
+    output_text = json.dumps(cleaned_output, indent=2)
+    system_text = load_system_prompt(discipline, prompts_dir)
 
     # Check if this is a VLM discipline with an image
     image_base64 = input_data.get('image_base64')
     is_vlm = discipline in VLM_DISCIPLINES and image_base64
 
-    # Build user content based on format
     if is_vlm:
-        # VLM format: multimodal content with image and text
-        # Together.ai expects data URL format for base64 images
+        # VLM format: ALL content fields are arrays per Together.ai spec
+        # Format base64 with proper MIME type prefix
         if not image_base64.startswith('data:'):
             image_url = f"data:image/png;base64,{image_base64}"
         else:
             image_url = image_base64
 
-        user_content = [
+        messages = [
             {
-                "type": "image_url",
-                "image_url": {"url": image_url}
+                "role": "system",
+                "content": [{"type": "text", "text": system_text}]
             },
             {
-                "type": "text",
-                "text": recipe_text
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": recipe_text},
+                    {"type": "image_url", "image_url": {"url": image_url}}
+                ]
+            },
+            {
+                "role": "assistant",
+                "content": [{"type": "text", "text": output_text}]
             }
         ]
     else:
-        # LLM format: text-only content
-        user_content = recipe_text
-
-    messages = [
-        {
-            "role": "system",
-            "content": load_system_prompt(discipline, prompts_dir)
-        },
-        {
-            "role": "user",
-            "content": user_content
-        },
-        {
-            "role": "assistant",
-            "content": json.dumps(cleaned_output, indent=2)
-        }
-    ]
+        # LLM format: content fields are plain strings
+        messages = [
+            {"role": "system", "content": system_text},
+            {"role": "user", "content": recipe_text},
+            {"role": "assistant", "content": output_text}
+        ]
 
     return {"messages": messages}
 
@@ -730,16 +734,27 @@ def main():
 
     files_written = []
 
-    # Combined files
-    train_file = output_dir / "train.jsonl"
-    val_file = output_dir / "validation.jsonl"
+    # Combined files (all disciplines)
+    combined_file = output_dir / "all_combined.jsonl"
+    train_file = output_dir / "all_train.jsonl"
+    val_file = output_dir / "all_validation.jsonl"
+    write_jsonl(all_entries, combined_file)
     write_jsonl(train_all, train_file)
     write_jsonl(val_all, val_file)
-    files_written.append((train_file.name, len(train_all), "combined train"))
-    files_written.append((val_file.name, len(val_all), "combined validation"))
+    files_written.append((combined_file.name, len(all_entries), "all combined"))
+    files_written.append((train_file.name, len(train_all), "all train"))
+    files_written.append((val_file.name, len(val_all), "all validation"))
 
-    # Per-discipline files
-    for discipline, (train_disc, val_disc) in discipline_splits.items():
+    # Per-discipline files (combined + train + validation = 3 per discipline)
+    for discipline, entries in discipline_entries.items():
+        train_disc, val_disc = discipline_splits[discipline]
+
+        # Combined (unsplit) - for Together's auto-split
+        combined_disc_file = output_dir / f"{discipline}.jsonl"
+        write_jsonl(entries, combined_disc_file)
+        files_written.append((combined_disc_file.name, len(entries), f"{discipline} combined"))
+
+        # Train/validation split
         train_disc_file = output_dir / f"{discipline}_train.jsonl"
         val_disc_file = output_dir / f"{discipline}_validation.jsonl"
         write_jsonl(train_disc, train_disc_file)
@@ -747,18 +762,19 @@ def main():
         files_written.append((train_disc_file.name, len(train_disc), f"{discipline} train"))
         files_written.append((val_disc_file.name, len(val_disc), f"{discipline} validation"))
 
+    total_files = 3 + (len(discipline_entries) * 3)  # 3 combined + 3 per discipline
     print("\n" + "=" * 60)
-    print("COMPLETE - 12 FILES GENERATED")
+    print(f"COMPLETE - {total_files} FILES GENERATED")
     print("=" * 60)
 
     print(f"\nOutput files ({len(files_written)} total):")
     print("-" * 50)
-    print("Combined (all disciplines):")
-    for fname, count, desc in files_written[:2]:
+    print("All disciplines:")
+    for fname, count, desc in files_written[:3]:
         print(f"  {fname}: {count} entries")
 
-    print("\nPer-discipline:")
-    for fname, count, desc in files_written[2:]:
+    print("\nPer-discipline (combined + train + validation each):")
+    for fname, count, desc in files_written[3:]:
         print(f"  {fname}: {count} entries")
 
     print(f"\nTotal matched: {len(all_entries)}")
@@ -768,13 +784,15 @@ def main():
     print(f"Output folder: {output_dir}")
     print(f"Random seed: {seed}")
 
-    # Show format info
+    # Show format info per Together.ai spec
     print("\n" + "-" * 50)
-    print("FORMAT INFO:")
-    print("  VLM disciplines (smithing, adornment):")
-    print("    user.content = [{type: image_url, ...}, {type: text, ...}]")
+    print("FORMAT INFO (Together.ai compatible):")
+    print("  VLM disciplines (smithing, adornment) - ALL content as arrays:")
+    print("    system.content = [{type: text, text: ...}]")
+    print("    user.content = [{type: text, ...}, {type: image_url, ...}]")
+    print("    assistant.content = [{type: text, text: ...}]")
     print("  LLM disciplines (alchemy, refining, engineering):")
-    print("    user.content = \"text string\"")
+    print("    content = \"plain string\"")
     print("=" * 60)
 
     input("\nPress Enter to exit...")
