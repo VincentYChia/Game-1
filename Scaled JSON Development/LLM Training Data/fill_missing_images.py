@@ -166,7 +166,7 @@ def main():
     training_dir = script_dir / "Synthetic_Training"
 
     # Load materials
-    materials_path = Path("/home/user/Game-1/Game-1-modular/items.JSON/items-materials-1.JSON")
+    materials_path = Path(r"C:\Users\Vincent\PycharmProjects\Game-1\Game-1-modular\items.JSON\items-materials-1.JSON")
     if not materials_path.exists():
         print(f"Error: Materials file not found: {materials_path}")
         return
