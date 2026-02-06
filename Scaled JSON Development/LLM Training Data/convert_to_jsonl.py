@@ -16,7 +16,13 @@ Features:
 - Removes rarity field from all disciplines EXCEPT refining
 - Loads system prompts from external text files
 - Creates 80/20 train/validation split with random shuffling
+- VLM FORMAT: Smithing & Adornment include image_base64 in multimodal format
+- LLM FORMAT: Alchemy, Refining, Engineering use text-only format
 - Creates Together.ai/OpenAI-compatible JSONL
+
+Output files (12 total):
+- train.jsonl, validation.jsonl (combined)
+- {discipline}_train.jsonl, {discipline}_validation.jsonl (per-discipline)
 
 Usage:
     python convert_to_jsonl.py
@@ -24,7 +30,7 @@ Usage:
 
 Author: Claude
 Created: 2026-02-05
-Updated: 2026-02-05 (Added robust multi-format parsing, train/val split)
+Updated: 2026-02-06 (Added VLM multimodal format for vision disciplines)
 """
 
 import json
@@ -399,11 +405,50 @@ def load_synthetic_outputs(synthetic_dir: Path, discipline: str) -> Tuple[Dict[i
     return indexed, all_warnings
 
 
+# Disciplines that use VLM (Vision Language Model) format with images
+VLM_DISCIPLINES = {'smithing', 'adornment'}
+
+
 def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str,
                        prompts_dir: Optional[Path] = None) -> Dict:
-    """Create a single JSONL entry with messages array."""
+    """
+    Create a single JSONL entry with messages array.
+
+    For VLM disciplines (smithing, adornment): Uses multimodal format with image
+    For LLM disciplines (alchemy, refining, engineering): Uses text-only format
+    """
     # Remove rarity from output unless refining
     cleaned_output = remove_rarity_recursive(output_data, discipline)
+
+    # Format recipe text
+    recipe_text = format_recipe_as_text(input_data, discipline)
+
+    # Check if this is a VLM discipline with an image
+    image_base64 = input_data.get('image_base64')
+    is_vlm = discipline in VLM_DISCIPLINES and image_base64
+
+    # Build user content based on format
+    if is_vlm:
+        # VLM format: multimodal content with image and text
+        # Together.ai expects data URL format for base64 images
+        if not image_base64.startswith('data:'):
+            image_url = f"data:image/png;base64,{image_base64}"
+        else:
+            image_url = image_base64
+
+        user_content = [
+            {
+                "type": "image_url",
+                "image_url": {"url": image_url}
+            },
+            {
+                "type": "text",
+                "text": recipe_text
+            }
+        ]
+    else:
+        # LLM format: text-only content
+        user_content = recipe_text
 
     messages = [
         {
@@ -412,7 +457,7 @@ def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str,
         },
         {
             "role": "user",
-            "content": format_recipe_as_text(input_data, discipline)
+            "content": user_content
         },
         {
             "role": "assistant",
@@ -425,17 +470,22 @@ def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str,
 
 def process_discipline(input_file: Path, synthetic_dir: Path,
                        prompts_dir: Optional[Path] = None,
-                       verbose: bool = True) -> Tuple[str, List[Dict], int]:
+                       verbose: bool = True) -> Tuple[str, List[Dict], int, int]:
     """
     Process a single discipline, matching inputs with outputs.
 
     Returns:
-        Tuple of (discipline_name, matched_entries, missing_count)
+        Tuple of (discipline_name, matched_entries, missing_count, vlm_count)
     """
     # Load input data
     discipline, inputs = load_custom_data(input_file)
     print(f"\n{discipline.upper()}:")
     print(f"  Loaded {len(inputs)} indexed inputs from {input_file.name}")
+
+    # Count entries with images (for VLM stats)
+    entries_with_images = sum(1 for entry in inputs.values() if entry.get('image_base64'))
+    if discipline in VLM_DISCIPLINES:
+        print(f"  Entries with images: {entries_with_images}/{len(inputs)}")
 
     # Load synthetic outputs (now returns warnings too)
     outputs, warnings = load_synthetic_outputs(synthetic_dir, discipline)
@@ -451,20 +501,27 @@ def process_discipline(input_file: Path, synthetic_dir: Path,
 
     if not outputs:
         print(f"  No synthetic outputs found for {discipline}")
-        return discipline, [], len(inputs)
+        return discipline, [], len(inputs), 0
 
     # Match and create JSONL entries
     matched = []
     missing_outputs = []
+    vlm_count = 0
 
     for idx in sorted(inputs.keys()):
         if idx in outputs:
             entry = create_jsonl_entry(inputs[idx], outputs[idx], discipline, prompts_dir)
             matched.append(entry)
+            # Count VLM entries (those with multimodal user content)
+            user_content = entry['messages'][1]['content']
+            if isinstance(user_content, list):
+                vlm_count += 1
         else:
             missing_outputs.append(idx)
 
     print(f"  Matched: {len(matched)} entries")
+    if discipline in VLM_DISCIPLINES:
+        print(f"  VLM (with image): {vlm_count}, LLM (text-only): {len(matched) - vlm_count}")
 
     if missing_outputs:
         # Show ranges of missing indices
@@ -484,7 +541,7 @@ def process_discipline(input_file: Path, synthetic_dir: Path,
         else:
             print(f"  Missing outputs for {len(missing_outputs)} indices ({ranges[0]} ... {ranges[-1]})")
 
-    return discipline, matched, len(missing_outputs)
+    return discipline, matched, len(missing_outputs), vlm_count
 
 
 def train_validation_split(entries: List[Dict], train_ratio: float = 0.8,
@@ -617,7 +674,9 @@ def main():
     # Process all selected files and collect entries BY DISCIPLINE
     all_entries = []
     total_missing = 0
+    total_vlm = 0
     discipline_entries = {}  # discipline -> list of entries
+    discipline_vlm_counts = {}  # discipline -> vlm count
 
     if sel_num == len(custom_files) + 1:
         files_to_process = sorted(custom_files)
@@ -629,12 +688,14 @@ def main():
     print("-" * 60)
 
     for input_file in files_to_process:
-        discipline, matched, missing = process_discipline(
+        discipline, matched, missing, vlm_count = process_discipline(
             input_file, synthetic_dir, prompts_dir, verbose=True
         )
         all_entries.extend(matched)
         total_missing += missing
+        total_vlm += vlm_count
         discipline_entries[discipline] = matched
+        discipline_vlm_counts[discipline] = vlm_count
 
     # Train/Validation split
     print("\n" + "-" * 60)
@@ -701,9 +762,19 @@ def main():
         print(f"  {fname}: {count} entries")
 
     print(f"\nTotal matched: {len(all_entries)}")
+    print(f"  VLM entries (with images): {total_vlm}")
+    print(f"  LLM entries (text-only): {len(all_entries) - total_vlm}")
     print(f"Total missing outputs: {total_missing}")
     print(f"Output folder: {output_dir}")
     print(f"Random seed: {seed}")
+
+    # Show format info
+    print("\n" + "-" * 50)
+    print("FORMAT INFO:")
+    print("  VLM disciplines (smithing, adornment):")
+    print("    user.content = [{type: image_url, ...}, {type: text, ...}]")
+    print("  LLM disciplines (alchemy, refining, engineering):")
+    print("    user.content = \"text string\"")
     print("=" * 60)
 
     input("\nPress Enter to exit...")
