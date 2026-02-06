@@ -509,24 +509,26 @@ def process_discipline(input_file: Path, synthetic_dir: Path,
     # Match and create JSONL entries
     matched = []
     missing_outputs = []
-    vlm_count = 0
+    skipped_no_image = 0
 
     for idx in sorted(inputs.keys()):
         if idx in outputs:
-            entry = create_jsonl_entry(inputs[idx], outputs[idx], discipline, prompts_dir)
+            input_entry = inputs[idx]
+
+            # For VLM disciplines, SKIP entries without images
+            if discipline in VLM_DISCIPLINES:
+                if not input_entry.get('image_base64'):
+                    skipped_no_image += 1
+                    continue
+
+            entry = create_jsonl_entry(input_entry, outputs[idx], discipline, prompts_dir)
             matched.append(entry)
-            # Count VLM entries (those with image in prompt)
-            if 'prompt' in entry:
-                # VLM format - check if image is included
-                has_image = any(p.get('type') == 'image_url' for p in entry['prompt'])
-                if has_image:
-                    vlm_count += 1
         else:
             missing_outputs.append(idx)
 
     print(f"  Matched: {len(matched)} entries")
-    if discipline in VLM_DISCIPLINES:
-        print(f"  VLM (with image): {vlm_count}, LLM (text-only): {len(matched) - vlm_count}")
+    if discipline in VLM_DISCIPLINES and skipped_no_image > 0:
+        print(f"  Skipped (no image): {skipped_no_image} entries")
 
     if missing_outputs:
         # Show ranges of missing indices
@@ -546,6 +548,8 @@ def process_discipline(input_file: Path, synthetic_dir: Path,
         else:
             print(f"  Missing outputs for {len(missing_outputs)} indices ({ranges[0]} ... {ranges[-1]})")
 
+    # For VLM disciplines, all matched entries have images (we skipped ones without)
+    vlm_count = len(matched) if discipline in VLM_DISCIPLINES else 0
     return discipline, matched, len(missing_outputs), vlm_count
 
 
