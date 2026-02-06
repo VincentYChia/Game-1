@@ -614,10 +614,10 @@ def main():
     output_dir = script_dir / "jsonl_outputs"
     output_dir.mkdir(exist_ok=True)
 
-    # Process all selected files and collect entries
+    # Process all selected files and collect entries BY DISCIPLINE
     all_entries = []
     total_missing = 0
-    discipline_counts = {}
+    discipline_entries = {}  # discipline -> list of entries
 
     if sel_num == len(custom_files) + 1:
         files_to_process = sorted(custom_files)
@@ -634,51 +634,76 @@ def main():
         )
         all_entries.extend(matched)
         total_missing += missing
-        discipline_counts[discipline] = len(matched)
+        discipline_entries[discipline] = matched
 
     # Train/Validation split
     print("\n" + "-" * 60)
-    print("TRAIN/VALIDATION SPLIT")
+    print("TRAIN/VALIDATION SPLIT (80/20)")
     print("-" * 60)
 
     train_ratio = 0.8
     seed = 42  # Fixed seed for reproducibility
 
-    train_entries, val_entries = train_validation_split(all_entries, train_ratio, seed)
+    # Split combined dataset
+    train_all, val_all = train_validation_split(all_entries, train_ratio, seed)
 
-    print(f"Total entries: {len(all_entries)}")
-    print(f"Train set: {len(train_entries)} ({train_ratio*100:.0f}%)")
-    print(f"Validation set: {len(val_entries)} ({(1-train_ratio)*100:.0f}%)")
-    print(f"Random seed: {seed}")
+    print(f"\nCombined (all disciplines):")
+    print(f"  Total: {len(all_entries)}")
+    print(f"  Train: {len(train_all)} ({train_ratio*100:.0f}%)")
+    print(f"  Validation: {len(val_all)} ({(1-train_ratio)*100:.0f}%)")
+
+    # Split each discipline separately
+    discipline_splits = {}
+    for discipline, entries in discipline_entries.items():
+        train_disc, val_disc = train_validation_split(entries, train_ratio, seed)
+        discipline_splits[discipline] = (train_disc, val_disc)
+        print(f"\n{discipline.capitalize()}:")
+        print(f"  Total: {len(entries)}")
+        print(f"  Train: {len(train_disc)}")
+        print(f"  Validation: {len(val_disc)}")
 
     # Write output files
+    print("\n" + "-" * 60)
+    print("WRITING OUTPUT FILES")
+    print("-" * 60)
+
+    files_written = []
+
+    # Combined files
     train_file = output_dir / "train.jsonl"
     val_file = output_dir / "validation.jsonl"
+    write_jsonl(train_all, train_file)
+    write_jsonl(val_all, val_file)
+    files_written.append((train_file.name, len(train_all), "combined train"))
+    files_written.append((val_file.name, len(val_all), "combined validation"))
 
-    write_jsonl(train_entries, train_file)
-    write_jsonl(val_entries, val_file)
-
-    # Also write per-discipline files for reference
-    for discipline, count in discipline_counts.items():
-        disc_entries = [e for e in all_entries
-                        if discipline in e['messages'][0]['content'].lower()
-                        or discipline in str(e['messages'][1]['content']).lower()]
-        if disc_entries:
-            disc_file = output_dir / f"{discipline}_all.jsonl"
-            write_jsonl(disc_entries, disc_file)
+    # Per-discipline files
+    for discipline, (train_disc, val_disc) in discipline_splits.items():
+        train_disc_file = output_dir / f"{discipline}_train.jsonl"
+        val_disc_file = output_dir / f"{discipline}_validation.jsonl"
+        write_jsonl(train_disc, train_disc_file)
+        write_jsonl(val_disc, val_disc_file)
+        files_written.append((train_disc_file.name, len(train_disc), f"{discipline} train"))
+        files_written.append((val_disc_file.name, len(val_disc), f"{discipline} validation"))
 
     print("\n" + "=" * 60)
-    print("COMPLETE")
+    print("COMPLETE - 12 FILES GENERATED")
     print("=" * 60)
-    print(f"\nOutput files:")
-    print(f"  {train_file.name}: {len(train_entries)} entries (for training)")
-    print(f"  {val_file.name}: {len(val_entries)} entries (for validation)")
-    print(f"\nPer-discipline files:")
-    for discipline in discipline_counts:
-        print(f"  {discipline}_all.jsonl")
+
+    print(f"\nOutput files ({len(files_written)} total):")
+    print("-" * 50)
+    print("Combined (all disciplines):")
+    for fname, count, desc in files_written[:2]:
+        print(f"  {fname}: {count} entries")
+
+    print("\nPer-discipline:")
+    for fname, count, desc in files_written[2:]:
+        print(f"  {fname}: {count} entries")
+
     print(f"\nTotal matched: {len(all_entries)}")
     print(f"Total missing outputs: {total_missing}")
     print(f"Output folder: {output_dir}")
+    print(f"Random seed: {seed}")
     print("=" * 60)
 
     input("\nPress Enter to exit...")
