@@ -16,8 +16,8 @@ Features:
 - Removes rarity field from all disciplines EXCEPT refining
 - Loads system prompts from external text files
 - Creates 80/20 train/validation split with random shuffling
-- VLM FORMAT: Smithing & Adornment include image_base64 in multimodal format
-- LLM FORMAT: Alchemy, Refining, Engineering use text-only format
+- VLM FORMAT: Smithing & Adornment use INSTRUCTION format (prompt/completion arrays)
+- LLM FORMAT: Alchemy, Refining, Engineering use CONVERSATIONAL format (messages)
 - Creates Together.ai/OpenAI-compatible JSONL
 
 Output files (18 total for 5 disciplines):
@@ -413,63 +413,62 @@ VLM_DISCIPLINES = {'smithing', 'adornment'}
 def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str,
                        prompts_dir: Optional[Path] = None) -> Dict:
     """
-    Create a single JSONL entry with messages array.
+    Create a single JSONL entry.
 
     For VLM disciplines (smithing, adornment):
-        ALL content fields are arrays per Together.ai spec:
-        - system.content = [{"type": "text", "text": "..."}]
-        - user.content = [{"type": "text", ...}, {"type": "image_url", ...}]
-        - assistant.content = [{"type": "text", "text": "..."}]
+        Uses INSTRUCTION FORMAT per Together.ai spec:
+        {
+            "prompt": [
+                {"type": "text", "text": "system prompt + recipe text"},
+                {"type": "image_url", "image_url": {"url": "data:..."}}  // if available
+            ],
+            "completion": [
+                {"type": "text", "text": "output json"}
+            ]
+        }
 
     For LLM disciplines (alchemy, refining, engineering):
-        content fields are plain strings
+        Uses CONVERSATIONAL FORMAT:
+        {"messages": [{"role": "system", ...}, {"role": "user", ...}, {"role": "assistant", ...}]}
     """
     # Remove rarity from output unless refining
     cleaned_output = remove_rarity_recursive(output_data, discipline)
 
-    # Format recipe text
+    # Format texts
     recipe_text = format_recipe_as_text(input_data, discipline)
     output_text = json.dumps(cleaned_output, indent=2)
     system_text = load_system_prompt(discipline, prompts_dir)
 
-    # Check if this is a VLM discipline with an image
-    image_base64 = input_data.get('image_base64')
-    is_vlm = discipline in VLM_DISCIPLINES and image_base64
+    if discipline in VLM_DISCIPLINES:
+        # VLM: Use instruction format (prompt/completion)
+        # Combine system prompt with recipe text
+        combined_prompt = f"{system_text}\n\n{recipe_text}"
 
-    if is_vlm:
-        # VLM format: ALL content fields are arrays per Together.ai spec
-        # Format base64 with proper MIME type prefix
-        if not image_base64.startswith('data:'):
-            image_url = f"data:image/png;base64,{image_base64}"
-        else:
-            image_url = image_base64
+        # Build prompt array
+        prompt_content = [{"type": "text", "text": combined_prompt}]
 
-        messages = [
-            {
-                "role": "system",
-                "content": [{"type": "text", "text": system_text}]
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": recipe_text},
-                    {"type": "image_url", "image_url": {"url": image_url}}
-                ]
-            },
-            {
-                "role": "assistant",
-                "content": [{"type": "text", "text": output_text}]
-            }
-        ]
+        # Add image if available
+        image_base64 = input_data.get('image_base64')
+        if image_base64:
+            if not image_base64.startswith('data:'):
+                image_url = f"data:image/png;base64,{image_base64}"
+            else:
+                image_url = image_base64
+            prompt_content.append({"type": "image_url", "image_url": {"url": image_url}})
+
+        return {
+            "prompt": prompt_content,
+            "completion": [{"type": "text", "text": output_text}]
+        }
     else:
-        # LLM format: content fields are plain strings
-        messages = [
-            {"role": "system", "content": system_text},
-            {"role": "user", "content": recipe_text},
-            {"role": "assistant", "content": output_text}
-        ]
-
-    return {"messages": messages}
+        # LLM: Use conversational format (messages)
+        return {
+            "messages": [
+                {"role": "system", "content": system_text},
+                {"role": "user", "content": recipe_text},
+                {"role": "assistant", "content": output_text}
+            ]
+        }
 
 
 def process_discipline(input_file: Path, synthetic_dir: Path,
@@ -516,10 +515,12 @@ def process_discipline(input_file: Path, synthetic_dir: Path,
         if idx in outputs:
             entry = create_jsonl_entry(inputs[idx], outputs[idx], discipline, prompts_dir)
             matched.append(entry)
-            # Count VLM entries (those with multimodal user content)
-            user_content = entry['messages'][1]['content']
-            if isinstance(user_content, list):
-                vlm_count += 1
+            # Count VLM entries (those with image in prompt)
+            if 'prompt' in entry:
+                # VLM format - check if image is included
+                has_image = any(p.get('type') == 'image_url' for p in entry['prompt'])
+                if has_image:
+                    vlm_count += 1
         else:
             missing_outputs.append(idx)
 
@@ -787,12 +788,10 @@ def main():
     # Show format info per Together.ai spec
     print("\n" + "-" * 50)
     print("FORMAT INFO (Together.ai compatible):")
-    print("  VLM disciplines (smithing, adornment) - ALL content as arrays:")
-    print("    system.content = [{type: text, text: ...}]")
-    print("    user.content = [{type: text, ...}, {type: image_url, ...}]")
-    print("    assistant.content = [{type: text, text: ...}]")
-    print("  LLM disciplines (alchemy, refining, engineering):")
-    print("    content = \"plain string\"")
+    print("  VLM disciplines (smithing, adornment) - INSTRUCTION format:")
+    print('    {"prompt": [{type: text}, {type: image_url}], "completion": [{type: text}]}')
+    print("  LLM disciplines (alchemy, refining, engineering) - CONVERSATIONAL format:")
+    print('    {"messages": [{role: system}, {role: user}, {role: assistant}]}')
     print("=" * 60)
 
     input("\nPress Enter to exit...")
