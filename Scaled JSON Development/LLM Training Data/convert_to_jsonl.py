@@ -233,7 +233,7 @@ def parse_synthetic_file(filepath: Path) -> Tuple[Dict[int, Dict], List[str]]:
 # Default prompts (used if external file not found)
 DEFAULT_SYSTEM_PROMPTS = {
     'smithing': """You are a crafting assistant for a fantasy RPG. Given a smithing recipe with materials and grid positions, generate the resulting item as JSON. Consider material tiers (T1-T4), tags, and properties.""",
-    'adornment': """You are a crafting assistant for a fantasy RPG. Given an adornment recipe with materials, generate the resulting enchantment as JSON. Consider magical properties and tiers.""",
+    'adorment': """You are a crafting assistant for a fantasy RPG. Given an adornment recipe with materials, generate the resulting enchantment as JSON. Consider magical properties and tiers.""",
     'refining': """You are a crafting assistant for a fantasy RPG. Given a refining recipe, generate the resulting refined material as JSON. Rarity depends on input quality and process.""",
     'alchemy': """You are a crafting assistant for a fantasy RPG. Given an alchemy recipe with ingredients, generate the resulting potion/consumable as JSON. Consider ingredient properties and tiers.""",
     'engineering': """You are a crafting assistant for a fantasy RPG. Given an engineering recipe with components, generate the resulting device as JSON. Consider component types and tiers.""",
