@@ -165,8 +165,9 @@ def main():
     script_dir = Path(__file__).parent
     training_dir = script_dir / "Synthetic_Training"
 
-    # Load materials
-    materials_path = Path(r"C:\Users\Vincent\PycharmProjects\Game-1\Game-1-modular\items.JSON\items-materials-1.JSON")
+    # Load materials (relative to repo root)
+    repo_root = script_dir.parent.parent.parent  # Game-1/
+    materials_path = repo_root / "Game-1-modular" / "items.JSON" / "items-materials-1.JSON"
     if not materials_path.exists():
         print(f"Error: Materials file not found: {materials_path}")
         return
