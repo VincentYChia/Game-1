@@ -16,8 +16,9 @@ Features:
 - Removes rarity field from all disciplines EXCEPT refining
 - Loads system prompts from external text files
 - Creates 80/20 train/validation split with random shuffling
-- VLM FORMAT: Smithing & Adornment use INSTRUCTION format (prompt/completion arrays)
-- LLM FORMAT: Alchemy, Refining, Engineering use CONVERSATIONAL format (messages)
+- ALL disciplines use INSTRUCTION format (prompt/completion arrays)
+- VLM (Smithing, Adornment): prompt includes image_url for vision training
+- LLM (Alchemy, Refining, Engineering): text-only prompts
 - Creates Together.ai/OpenAI-compatible JSONL
 
 Output files (18 total for 5 disciplines):
@@ -31,7 +32,7 @@ Usage:
 
 Author: Claude
 Created: 2026-02-05
-Updated: 2026-02-06 (Added VLM multimodal format for vision disciplines)
+Updated: 2026-02-10 (All disciplines use instruction format)
 """
 
 import json
@@ -301,35 +302,89 @@ def format_recipe_as_text(recipe_data: Dict, discipline: str) -> str:
     if recipe.get('gridSize'):
         lines.append(f"Grid: {recipe['gridSize']}")
 
+    if recipe.get('outputId'):
+        lines.append(f"Output: {recipe['outputId']}")
+
     lines.append("")
     lines.append("Materials:")
 
-    inputs = recipe.get('inputs', [])
-    for inp in inputs:
-        mat_id = inp.get('materialId', 'unknown')
-        qty = inp.get('quantity', 1)
-        pos = inp.get('position', '')
-        meta = inp.get('material_metadata', {})
+    # Track narratives for later
+    all_narratives = []
 
-        mat_name = meta.get('name', mat_id)
-        tier = meta.get('tier', 1)
-        tags = meta.get('tags', [])
+    # REFINING: Core and Surrounding inputs (labeled separately)
+    if recipe.get('coreInputs'):
+        for inp in recipe['coreInputs']:
+            line = format_material_line(inp, label="CORE")
+            lines.append(line)
+            if inp.get('material_metadata', {}).get('narrative'):
+                all_narratives.append(inp['material_metadata']['narrative'])
 
-        line = f"  - {mat_name} x{qty} (Tier {tier})"
-        if pos:
-            line += f" at {pos}"
-        if tags:
-            line += f" [{', '.join(tags[:3])}]"
-        lines.append(line)
+    if recipe.get('surroundingInputs'):
+        for inp in recipe['surroundingInputs']:
+            line = format_material_line(inp, label="SURROUNDING")
+            lines.append(line)
+            if inp.get('material_metadata', {}).get('narrative'):
+                all_narratives.append(inp['material_metadata']['narrative'])
 
-    # Add narrative if present
-    narrative = meta.get('narrative') if inputs else None
-    if not narrative:
-        narrative = recipe.get('narrative')
+    # ALCHEMY: Ingredients with slot numbers
+    if recipe.get('ingredients'):
+        for inp in recipe['ingredients']:
+            slot = inp.get('slot', '?')
+            line = format_material_line(inp, label=f"Slot {slot}")
+            lines.append(line)
+            if inp.get('material_metadata', {}).get('narrative'):
+                all_narratives.append(inp['material_metadata']['narrative'])
+
+    # ENGINEERING: Slots with type (FRAME, FUNCTION, POWER)
+    if recipe.get('slots'):
+        for inp in recipe['slots']:
+            slot_type = inp.get('type', 'UNKNOWN')
+            line = format_material_line(inp, label=slot_type)
+            lines.append(line)
+            if inp.get('material_metadata', {}).get('narrative'):
+                all_narratives.append(inp['material_metadata']['narrative'])
+
+    # SMITHING/ADORNMENT: Standard inputs with positions
+    if recipe.get('inputs'):
+        for inp in recipe['inputs']:
+            pos = inp.get('position', '')
+            positions = inp.get('positions', [])
+            pos_label = None
+            if pos:
+                pos_label = f"at {pos}"
+            elif positions:
+                pos_label = f"at {', '.join(positions[:3])}"
+            line = format_material_line(inp, position_info=pos_label)
+            lines.append(line)
+            if inp.get('material_metadata', {}).get('narrative'):
+                all_narratives.append(inp['material_metadata']['narrative'])
+
+    # Add narrative (use first one found, or recipe-level)
+    narrative = all_narratives[0] if all_narratives else recipe.get('narrative')
     if narrative:
-        lines.append(f"\nContext: {narrative}")
+        lines.append(f"\nNarrative: {narrative}")
 
     return "\n".join(lines)
+
+
+def format_material_line(inp: Dict, label: str = None, position_info: str = None) -> str:
+    """Format a single material input line."""
+    mat_id = inp.get('materialId', 'unknown')
+    qty = inp.get('quantity', 1)
+    meta = inp.get('material_metadata', {})
+
+    mat_name = meta.get('name', mat_id)
+    tier = meta.get('tier', 1)
+    tags = meta.get('tags', [])
+
+    line = f"  - {mat_name} x{qty} (Tier {tier})"
+    if label:
+        line += f" [{label}]"
+    if position_info:
+        line += f" {position_info}"
+    if tags:
+        line += f" {{{', '.join(tags[:3])}}}"
+    return line
 
 
 def load_custom_data(filepath: Path) -> Tuple[str, Dict[int, Dict]]:
@@ -413,41 +468,42 @@ VLM_DISCIPLINES = {'smithing', 'adornment'}
 def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str,
                        prompts_dir: Optional[Path] = None) -> Dict:
     """
-    Create a single JSONL entry.
+    Create a single JSONL entry using INSTRUCTION FORMAT for all disciplines.
 
-    For VLM disciplines (smithing, adornment):
-        Uses INSTRUCTION FORMAT per Together.ai spec:
-        {
-            "prompt": [
-                {"type": "text", "text": "system prompt + recipe text"},
-                {"type": "image_url", "image_url": {"url": "data:..."}}  // if available
-            ],
-            "completion": [
-                {"type": "text", "text": "output json"}
-            ]
-        }
+    Together.ai instruction format:
+    {
+        "prompt": [
+            {"type": "text", "text": "system prompt + recipe text"},
+            {"type": "image_url", "image_url": {"url": "data:..."}}  // VLM only
+        ],
+        "completion": [
+            {"type": "text", "text": "output json"}
+        ]
+    }
 
-    For LLM disciplines (alchemy, refining, engineering):
-        Uses CONVERSATIONAL FORMAT:
-        {"messages": [{"role": "system", ...}, {"role": "user", ...}, {"role": "assistant", ...}]}
+    VLM disciplines (smithing, adornment) include images in the prompt.
+    LLM disciplines (alchemy, refining, engineering) are text-only.
     """
     # Remove rarity from output unless refining
     cleaned_output = remove_rarity_recursive(output_data, discipline)
+
+    # Remove index from output (only used for matching, not for training)
+    if isinstance(cleaned_output, dict) and 'index' in cleaned_output:
+        cleaned_output = {k: v for k, v in cleaned_output.items() if k != 'index'}
 
     # Format texts
     recipe_text = format_recipe_as_text(input_data, discipline)
     output_text = json.dumps(cleaned_output, indent=2)
     system_text = load_system_prompt(discipline, prompts_dir)
 
+    # Combine system prompt with recipe text
+    combined_prompt = f"{system_text}\n\n{recipe_text}"
+
+    # Build prompt array (text always, image for VLM only)
+    prompt_content = [{"type": "text", "text": combined_prompt}]
+
+    # Add image for VLM disciplines if available
     if discipline in VLM_DISCIPLINES:
-        # VLM: Use instruction format (prompt/completion)
-        # Combine system prompt with recipe text
-        combined_prompt = f"{system_text}\n\n{recipe_text}"
-
-        # Build prompt array
-        prompt_content = [{"type": "text", "text": combined_prompt}]
-
-        # Add image if available
         image_base64 = input_data.get('image_base64')
         if image_base64:
             if not image_base64.startswith('data:'):
@@ -456,19 +512,10 @@ def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str,
                 image_url = image_base64
             prompt_content.append({"type": "image_url", "image_url": {"url": image_url}})
 
-        return {
-            "prompt": prompt_content,
-            "completion": [{"type": "text", "text": output_text}]
-        }
-    else:
-        # LLM: Use conversational format (messages)
-        return {
-            "messages": [
-                {"role": "system", "content": system_text},
-                {"role": "user", "content": recipe_text},
-                {"role": "assistant", "content": output_text}
-            ]
-        }
+    return {
+        "prompt": prompt_content,
+        "completion": [{"type": "text", "text": output_text}]
+    }
 
 
 def process_discipline(input_file: Path, synthetic_dir: Path,
@@ -791,11 +838,10 @@ def main():
 
     # Show format info per Together.ai spec
     print("\n" + "-" * 50)
-    print("FORMAT INFO (Together.ai compatible):")
-    print("  VLM disciplines (smithing, adornment) - INSTRUCTION format:")
-    print('    {"prompt": [{type: text}, {type: image_url}], "completion": [{type: text}]}')
-    print("  LLM disciplines (alchemy, refining, engineering) - CONVERSATIONAL format:")
-    print('    {"messages": [{role: system}, {role: user}, {role: assistant}]}')
+    print("FORMAT INFO (Together.ai compatible - INSTRUCTION format for all):")
+    print('  {"prompt": [{type: text}, ...], "completion": [{type: text}]}')
+    print("  VLM disciplines (smithing, adornment): prompt includes image_url")
+    print("  LLM disciplines (alchemy, refining, engineering): text-only prompt")
     print("=" * 60)
 
     input("\nPress Enter to exit...")
