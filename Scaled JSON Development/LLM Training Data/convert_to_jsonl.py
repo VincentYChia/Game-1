@@ -301,14 +301,44 @@ def format_recipe_as_text(recipe_data: Dict, discipline: str) -> str:
     if recipe.get('gridSize'):
         lines.append(f"Grid: {recipe['gridSize']}")
 
+    if recipe.get('outputId'):
+        lines.append(f"Output: {recipe['outputId']}")
+
     lines.append("")
     lines.append("Materials:")
 
-    inputs = recipe.get('inputs', [])
-    for inp in inputs:
+    # Collect all inputs from various possible keys (each discipline uses different keys)
+    all_inputs = []
+
+    # Standard inputs array (smithing, adornment)
+    if recipe.get('inputs'):
+        all_inputs.extend(recipe['inputs'])
+
+    # Core inputs (refining)
+    if recipe.get('coreInputs'):
+        all_inputs.extend(recipe['coreInputs'])
+
+    # Surrounding inputs (refining)
+    if recipe.get('surroundingInputs'):
+        all_inputs.extend(recipe['surroundingInputs'])
+
+    # Ingredients (alchemy)
+    if recipe.get('ingredients'):
+        all_inputs.extend(recipe['ingredients'])
+
+    # Catalyst inputs (alchemy)
+    if recipe.get('catalystInputs'):
+        all_inputs.extend(recipe['catalystInputs'])
+
+    # Slots (engineering)
+    if recipe.get('slots'):
+        all_inputs.extend(recipe['slots'])
+
+    for inp in all_inputs:
         mat_id = inp.get('materialId', 'unknown')
         qty = inp.get('quantity', 1)
         pos = inp.get('position', '')
+        positions = inp.get('positions', [])
         meta = inp.get('material_metadata', {})
 
         mat_name = meta.get('name', mat_id)
@@ -318,12 +348,17 @@ def format_recipe_as_text(recipe_data: Dict, discipline: str) -> str:
         line = f"  - {mat_name} x{qty} (Tier {tier})"
         if pos:
             line += f" at {pos}"
+        elif positions:
+            line += f" at {', '.join(positions[:3])}"
         if tags:
             line += f" [{', '.join(tags[:3])}]"
         lines.append(line)
 
     # Add narrative if present
-    narrative = meta.get('narrative') if inputs else None
+    narrative = None
+    if all_inputs:
+        meta = all_inputs[-1].get('material_metadata', {})
+        narrative = meta.get('narrative')
     if not narrative:
         narrative = recipe.get('narrative')
     if narrative:
