@@ -1,0 +1,1385 @@
+[
+   {
+    "index": 251,
+    "recipe_id": "smithing_iron_axe_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A woodcutting axe of brilliant iron mounted on a radiant birch handle. The iron head gleams with inner light and bites deeper into timber than standard iron. The fine birch shaft provides excellent grip and shock absorption for extended felling sessions.",
+        "tags": ["tool", "axe", "quality", "metal"]
+      },
+      "itemId": "brilliant_iron_axe",
+      "name": "Brilliant Iron Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 1,
+      "rarity": "uncommon",
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 16
+      },
+      "statMultipliers": {
+        "damage": 0.7,
+        "forestry": 1.15,
+        "durability": 1.15,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 252,
+    "recipe_id": "smithing_iron_boots_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Iron boots forged from brilliant-grade iron and radiant wolf pelts. The metal gleams with an inner light, and the pelt lining feels supernaturally warm. Every step feels surer than the last.",
+        "tags": ["armor", "feet", "light", "quality"]
+      },
+      "itemId": "brilliant_iron_boots",
+      "name": "Brilliant Iron Boots",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "boots",
+      "tier": 1,
+      "rarity": "uncommon",
+      "slot": "feet",
+      "statMultipliers": {
+        "defense": 1.15,
+        "durability": 1.15,
+        "weight": 0.95
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 253,
+    "recipe_id": "smithing_iron_chestplate_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A chestplate of brilliant iron reinforced with radiant beetle carapace plates. The iridescent shell fragments catch light like scattered jewels, while the wolf pelt lining absorbs impact. Superior protection without sacrificing mobility.",
+        "tags": ["armor", "chest", "heavy", "quality"]
+      },
+      "itemId": "brilliant_iron_chestplate",
+      "name": "Brilliant Iron Chestplate",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "chestplate",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "chest",
+      "statMultipliers": {
+        "defense": 1.15,
+        "durability": 1.15,
+        "weight": 0.95
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 254,
+    "recipe_id": "smithing_iron_pickaxe_v3",
+    "output": {
+      "metadata": {
+        "narrative": "An iron pickaxe forged from brilliant-grade ingots mounted on a radiant ash shaft. The head strikes with unusual clarity, and the shock-absorbing handle reduces fatigue during long mining sessions.",
+        "tags": ["tool", "pickaxe", "quality", "metal"]
+      },
+      "itemId": "brilliant_iron_pickaxe",
+      "name": "Brilliant Iron Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 1,
+      "rarity": "uncommon",
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 18
+      },
+      "statMultipliers": {
+        "damage": 0.7,
+        "mining": 1.15,
+        "durability": 1.15,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 255,
+    "recipe_id": "smithing_iron_round_shield_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A round shield of brilliant iron with radiant oak backing and wolf pelt grip. The iron face shines with an inner luminescence that seems to deflect blows before they fully land. Defense becomes instinct.",
+        "tags": ["melee", "shield", "1H", "defensive", "bash"]
+      },
+      "itemId": "brilliant_iron_round_shield",
+      "name": "Brilliant Iron Round Shield",
+      "category": "equipment",
+      "type": "shield",
+      "subtype": "buckler",
+      "tier": 1,
+      "rarity": "uncommon",
+      "range": 1,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.65,
+        "attackSpeed": 1.15,
+        "durability": 2.0,
+        "weight": 1.2
+      },
+      "requirements": {
+        "level": 3,
+        "stats": { "STR": 8 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 256,
+    "recipe_id": "smithing_iron_shortsword_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A shortsword forged from brilliant iron with a radiant oak grip. The blade holds an edge longer than ordinary iron and glows faintly along the fuller. A starter weapon that punches above its weight.",
+        "tags": ["melee", "sword", "versatile", "quality"]
+      },
+      "itemId": "brilliant_iron_shortsword",
+      "name": "Brilliant Iron Shortsword",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "shortsword",
+      "tier": 1,
+      "rarity": "uncommon",
+      "range": 1,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 33
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 1.05,
+        "durability": 1.15,
+        "weight": 0.95
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 257,
+    "recipe_id": "smithing_iron_studded_gauntlets_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Gauntlets of radiant wolf leather studded with brilliant iron rivets. The studs gleam like tiny stars across your knuckles. Flexible enough for fine work, tough enough to block a blade.",
+        "tags": ["armor", "hands", "light", "flexible"]
+      },
+      "itemId": "brilliant_iron_studded_gauntlets",
+      "name": "Brilliant Iron-Studded Gauntlets",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "gauntlets",
+      "tier": 1,
+      "rarity": "uncommon",
+      "slot": "hands",
+      "statMultipliers": {
+        "defense": 1.1,
+        "durability": 1.15,
+        "weight": 0.85
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 258,
+    "recipe_id": "smithing_iron_warhammer_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A massive warhammer of brilliant iron weighted with radiant granite. The hammerhead pulses with a faint glow on impact, and the oak shaft absorbs recoil beautifully. Armor crumples like parchment before it.",
+        "tags": ["melee", "mace", "2H", "crushing", "armor_breaker"]
+      },
+      "itemId": "brilliant_iron_warhammer",
+      "name": "Brilliant Iron Warhammer",
+      "category": "equipment",
+      "type": "mace",
+      "subtype": "warhammer",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 1.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 50
+      },
+      "statMultipliers": {
+        "damage": 1.4,
+        "attackSpeed": 0.8,
+        "durability": 1.4,
+        "weight": 1.4
+      },
+      "requirements": {
+        "level": 10,
+        "stats": { "STR": 15 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 259,
+    "recipe_id": "smithing_iron_water_amulet_v3",
+    "output": {
+      "metadata": {
+        "narrative": "An iron amulet cradling three brilliant water crystals in a radiant iron frame. Streams of cool energy flow visibly between the stones. The wearer feels ocean tides pulling through every strike.",
+        "tags": ["accessory", "amulet", "water", "elemental"]
+      },
+      "itemId": "brilliant_iron_water_amulet",
+      "name": "Brilliant Iron Water Amulet",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "amulet",
+      "tier": 2,
+      "rarity": "rare",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "water",
+          "value": 14,
+          "effect": "Adds water damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 260,
+    "recipe_id": "smithing_leather_tunic_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A tunic crafted from radiant wolf pelts bonded with brilliant slime gel. The leather has an unusual sheen and flexes like a second skin. Lighter and tougher than standard leather armor.",
+        "tags": ["armor", "chest", "light", "quality"]
+      },
+      "itemId": "brilliant_leather_tunic",
+      "name": "Brilliant Leather Tunic",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "tunic",
+      "tier": 1,
+      "rarity": "uncommon",
+      "slot": "chest",
+      "statMultipliers": {
+        "defense": 1.1,
+        "durability": 1.15,
+        "weight": 0.65
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 261,
+    "recipe_id": "smithing_mithril_axe_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A woodcutting axe of brilliant mithril mounted on radiant ebony. The blade sings through timber like it isn't there, and the golem core stabilizer ensures every swing lands true. Trees fall in reverent silence.",
+        "tags": ["tool", "axe", "quality", "metal"]
+      },
+      "itemId": "brilliant_mithril_axe",
+      "name": "Brilliant Mithril Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 3,
+      "rarity": "epic",
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 38
+      },
+      "statMultipliers": {
+        "damage": 0.8,
+        "forestry": 1.7,
+        "durability": 1.5,
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 262,
+    "recipe_id": "smithing_mithril_dagger_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A dagger of brilliant mithril with an ebony handle infused with crystallized essence blood. The blade phases in and out of visibility, striking from angles that shouldn't exist. Wickedly fast, impossibly sharp.",
+        "tags": ["melee", "dagger", "1H", "fast", "precision"]
+      },
+      "itemId": "brilliant_mithril_dagger",
+      "name": "Brilliant Mithril Dagger",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "dagger",
+      "tier": 3,
+      "rarity": "epic",
+      "range": 0.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 48
+      },
+      "statMultipliers": {
+        "damage": 1.2,
+        "attackSpeed": 1.25,
+        "durability": 1.6,
+        "weight": 0.45
+      },
+      "requirements": {
+        "level": 16,
+        "stats": { "AGI": 22 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 263,
+    "recipe_id": "smithing_mithril_pickaxe_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A pickaxe of brilliant mithril with a radiant ebony shaft. The head passes through stone with preternatural ease, and the lightweight construction allows tireless mining. Ore veins reveal themselves before the first swing.",
+        "tags": ["tool", "pickaxe", "quality", "metal"]
+      },
+      "itemId": "brilliant_mithril_pickaxe",
+      "name": "Brilliant Mithril Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 3,
+      "rarity": "epic",
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 35
+      },
+      "statMultipliers": {
+        "damage": 0.75,
+        "mining": 1.7,
+        "durability": 1.5,
+        "weight": 0.55
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 264,
+    "recipe_id": "smithing_pine_shortbow_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A shortbow of brilliant pine strung with radiant slime gel cord and stabilized by an air crystal. Arrows fly straighter and faster than they should from such a simple weapon. The air crystal adds a subtle push to every shot.",
+        "tags": ["ranged", "bow", "2H", "quality"]
+      },
+      "itemId": "brilliant_pine_shortbow",
+      "name": "Brilliant Pine Shortbow",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "shortbow",
+      "tier": 1,
+      "rarity": "uncommon",
+      "range": 11,
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 23
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 1.05,
+        "durability": 0.9,
+        "weight": 0.65
+      },
+      "requirements": {
+        "level": 1,
+        "stats": { "AGI": 6 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 265,
+    "recipe_id": "smithing_refinery_t1_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A refinery built from brilliant limestone and radiant copper fittings. The crucible holds heat more evenly, and the copper channels glow softly during smelting. Impurities burn away faster than in standard refineries.",
+        "tags": ["station", "refinery", "forging", "quality"]
+      },
+      "itemId": "brilliant_refinery_t1",
+      "name": "Brilliant Basic Refinery",
+      "category": "station",
+      "type": "refining",
+      "subtype": "refinery",
+      "tier": 1,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 266,
+    "recipe_id": "smithing_refinery_t2_v3",
+    "output": {
+      "metadata": {
+        "narrative": "An advanced refinery of brilliant granite infused with radiant earth crystals. The grounding energy stabilizes volatile reactions, and the granite construction withstands temperatures that would crack lesser stone.",
+        "tags": ["station", "refinery", "forging", "quality"]
+      },
+      "itemId": "brilliant_refinery_t2",
+      "name": "Brilliant Steel Refinery",
+      "category": "station",
+      "type": "refining",
+      "subtype": "refinery",
+      "tier": 2,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 267,
+    "recipe_id": "smithing_steel_axe_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A woodcutting axe of brilliant steel on a radiant ironwood shaft. The blade bites deep and clean, and the near-metallic wood handle is virtually unbreakable. Forests bow before this tool.",
+        "tags": ["tool", "axe", "quality", "metal"]
+      },
+      "itemId": "brilliant_steel_axe",
+      "name": "Brilliant Steel Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 2,
+      "rarity": "rare",
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 28
+      },
+      "statMultipliers": {
+        "damage": 0.75,
+        "forestry": 1.4,
+        "durability": 1.3,
+        "weight": 0.85
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 268,
+    "recipe_id": "smithing_steel_battleaxe_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A battleaxe of brilliant steel with ironwood haft and dire fang edge reinforcements. The fangs are set along the blade's biting edge, adding a savage serration. Each cleave tears through armor and flesh alike.",
+        "tags": ["melee", "axe", "versatile", "cleaving"]
+      },
+      "itemId": "brilliant_steel_battleaxe",
+      "name": "Brilliant Steel Battleaxe",
+      "category": "equipment",
+      "type": "axe",
+      "subtype": "battleaxe",
+      "tier": 2,
+      "rarity": "rare",
+      "range": 1,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 55
+      },
+      "statMultipliers": {
+        "damage": 1.2,
+        "attackSpeed": 1.0,
+        "durability": 1.2,
+        "weight": 1.15
+      },
+      "requirements": {
+        "level": 8,
+        "stats": { "STR": 12 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 269,
+    "recipe_id": "smithing_steel_helm_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A helm of brilliant steel with radiant wolf pelt padding. The metal gleams with an inner fire that never dims, and the thick padding absorbs blows that would ring lesser helms like bells. Full face protection without compromise.",
+        "tags": ["armor", "head", "heavy", "quality"]
+      },
+      "itemId": "brilliant_steel_helm",
+      "name": "Brilliant Steel Helm",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "helmet",
+      "tier": 2,
+      "rarity": "rare",
+      "slot": "head",
+      "statMultipliers": {
+        "defense": 1.15,
+        "durability": 1.15,
+        "weight": 0.95
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 270,
+    "recipe_id": "smithing_steel_leggings_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Leggings of brilliant steel with radiant wolf pelt lining and articulated joints. The plates shift with liquid grace, and the pelt insulation keeps legs warm in any climate. Protection that moves with you.",
+        "tags": ["armor", "legs", "metal", "heavy"]
+      },
+      "itemId": "brilliant_steel_leggings",
+      "name": "Brilliant Steel Leggings",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "leggings",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "legs",
+      "statMultipliers": {
+        "defense": 1.15,
+        "durability": 1.15,
+        "weight": 0.95
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 271,
+    "recipe_id": "smithing_steel_lightning_bracelet_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A bracelet of brilliant steel woven with radiant lightning shards and spectral thread. Arcs of electricity dance between the shards constantly, and the spectral thread phases in and out of reality. The static charge leaps eagerly to every strike.",
+        "tags": ["accessory", "bracelet", "lightning", "elemental"]
+      },
+      "itemId": "brilliant_steel_lightning_bracelet",
+      "name": "Brilliant Steel Lightning Bracelet",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "bracelet",
+      "tier": 3,
+      "rarity": "epic",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "lightning",
+          "value": 24,
+          "effect": "Adds lightning damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 272,
+    "recipe_id": "smithing_steel_longsword_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A longsword of brilliant steel with a radiant maple grip reinforced by dire fang crossguard. The blade sings a higher note than ordinary steel and cuts with preternatural sharpness. Balance and lethality in perfect harmony.",
+        "tags": ["melee", "sword", "versatile", "quality"]
+      },
+      "itemId": "brilliant_steel_longsword",
+      "name": "Brilliant Steel Longsword",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "longsword",
+      "tier": 2,
+      "rarity": "rare",
+      "range": 1,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 45
+      },
+      "statMultipliers": {
+        "damage": 1.2,
+        "attackSpeed": 1.05,
+        "durability": 1.2,
+        "weight": 0.95
+      },
+      "requirements": {
+        "level": 8,
+        "stats": { "STR": 10 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 273,
+    "recipe_id": "smithing_steel_pickaxe_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A pickaxe with brilliant ironwood construction throughout - shaft, head mount, and reinforcement straps. The near-metallic wood is virtually indestructible, though the tool lacks a proper metal head. Unconventional, but devastatingly effective against stone.",
+        "tags": ["tool", "pickaxe", "quality", "metal"]
+      },
+      "itemId": "brilliant_steel_pickaxe",
+      "name": "Brilliant Steel Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 2,
+      "rarity": "rare",
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 25
+      },
+      "statMultipliers": {
+        "damage": 0.7,
+        "mining": 1.35,
+        "durability": 1.3,
+        "weight": 0.85
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 274,
+    "recipe_id": "smithing_steel_sickle_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A curved sickle of brilliant steel with a radiant birch handle. The razor edge cuts through plant fibers without disturbing delicate materials, and the lightweight construction allows hours of harvesting without fatigue.",
+        "tags": ["tool", "precision", "quality", "metal"]
+      },
+      "itemId": "brilliant_steel_sickle",
+      "name": "Brilliant Steel Sickle",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "sickle",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 0.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 25
+      },
+      "statMultipliers": {
+        "damage": 0.75,
+        "gathering": 1.15,
+        "durability": 1.15,
+        "weight": 0.65
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 275,
+    "recipe_id": "recipe_blood_reaver_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A colossal greatsword of brilliant etherion edged with radiant obsidian shards and stained with crystallized essence blood. The worldtree hilt pulses with living memory, and the primordial crystal pommel warps light around the blade. Time stutters with each swing.",
+        "tags": ["melee", "sword", "2H", "heavy", "legendary"]
+      },
+      "itemId": "brilliant_blood_reaver",
+      "name": "Brilliant Blood Reaver",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "greatsword",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 2,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 78
+      },
+      "statMultipliers": {
+        "damage": 1.5,
+        "attackSpeed": 0.75,
+        "durability": 1.8,
+        "weight": 1.3
+      },
+      "requirements": {
+        "level": 28,
+        "stats": { "STR": 28 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 276,
+    "recipe_id": "recipe_frostbite_hammer_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A warhammer of brilliant crystal quartz and voidstone fused around an ironwood core, powered by a radiant frost essence heart. The hammerhead trails frozen mist, and every impact flash-freezes the point of contact. The void amplifies the cold beyond natural limits.",
+        "tags": ["melee", "mace", "2H", "crushing", "elemental"]
+      },
+      "itemId": "brilliant_frostbite_hammer",
+      "name": "Brilliant Frostbite Hammer",
+      "category": "equipment",
+      "type": "mace",
+      "subtype": "warhammer",
+      "tier": 3,
+      "rarity": "epic",
+      "range": 1.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 65
+      },
+      "statMultipliers": {
+        "damage": 1.3,
+        "attackSpeed": 0.8,
+        "durability": 1.4,
+        "weight": 1.4
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "water",
+          "value": 22,
+          "effect": "Elemental attacks deal bonus frost damage"
+        }
+      ],
+      "requirements": {
+        "level": 18,
+        "stats": { "STR": 22 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 277,
+    "recipe_id": "recipe_inferno_blade_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A longsword of brilliant etherion forged in phoenix ash with a worldtree grip and voidstone pommel. The blade burns with eternal flames that never consume it, and the primordial crystal crossguard focuses the heat into devastating arcs. Reality warps in the heat shimmer.",
+        "tags": ["melee", "sword", "2H", "elemental", "fire"]
+      },
+      "itemId": "brilliant_inferno_blade",
+      "name": "Brilliant Inferno Blade",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "longsword",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 1.5,
+      "slot": "mainHand",
+      "effectTags": ["fire", "slashing", "burn"],
+      "effectParams": {
+        "baseDamage": 75,
+        "burn_duration": 5.0,
+        "burn_damage_per_second": 10.0
+      },
+      "statMultipliers": {
+        "damage": 1.45,
+        "attackSpeed": 0.95,
+        "durability": 1.7,
+        "weight": 1.1
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 28,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 28,
+        "stats": { "STR": 20, "INT": 18 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 278,
+    "recipe_id": "recipe_lightning_chain_whip_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A whip of brilliant spectral thread links studded with a radiant storm heart and tipped with a diamond shard. The adamantine handle anchors the weapon in reality while the spectral chain phases through armor. Lightning arcs between links, chaining to nearby targets.",
+        "tags": ["melee", "flexible", "reach", "elemental", "lightning"]
+      },
+      "itemId": "brilliant_lightning_chain_whip",
+      "name": "Brilliant Lightning Chain Whip",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "whip",
+      "tier": 3,
+      "rarity": "epic",
+      "range": 4,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 55
+      },
+      "statMultipliers": {
+        "damage": 1.15,
+        "attackSpeed": 1.1,
+        "durability": 1.2,
+        "weight": 0.7
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "lightning",
+          "value": 22,
+          "effect": "Elemental attacks deal bonus lightning damage"
+        }
+      ],
+      "requirements": {
+        "level": 18,
+        "stats": { "AGI": 20, "INT": 14 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 279,
+    "recipe_id": "recipe_void_piercer_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A spear of brilliant etherion tipped with genesis lattice and shafted with worldtree wood, wreathed in radiant voidstone and void essence. The speartip exists in multiple dimensions simultaneously, piercing defenses that exist in any plane. Where it strikes, reality unravels.",
+        "tags": ["melee", "spear", "2H", "reach", "elemental"]
+      },
+      "itemId": "brilliant_void_piercer",
+      "name": "Brilliant Void Piercer",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "spear",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 3,
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 72
+      },
+      "statMultipliers": {
+        "damage": 1.4,
+        "attackSpeed": 1.0,
+        "durability": 1.8,
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 28,
+        "stats": { "STR": 22, "INT": 20 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 280,
+    "recipe_id": "smithing_alchemy_table_t2_v3",
+    "output": {
+      "metadata": {
+        "narrative": "An alchemy station of brilliant steel vessels with radiant crystal quartz apparatus and fire crystal temperature regulators. Reactions stabilize faster and yield purer results. The crystals hum in harmonic resonance during brewing.",
+        "tags": ["station", "alchemy", "brewing", "quality"]
+      },
+      "itemId": "brilliant_alchemy_table_t2",
+      "name": "Brilliant Steel Alchemy Table",
+      "category": "station",
+      "type": "alchemy",
+      "subtype": "alchemy_table",
+      "tier": 2,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 281,
+    "recipe_id": "smithing_alchemy_table_t3_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A master alchemy laboratory of brilliant mithril with radiant crystal quartz distillation chambers, frost essence cooling systems, and diamond-cut precision instruments. The golem core provides self-regulating temperature control beyond mortal precision.",
+        "tags": ["station", "alchemy", "brewing", "master"]
+      },
+      "itemId": "brilliant_alchemy_table_t3",
+      "name": "Brilliant Master Alchemy Lab",
+      "category": "station",
+      "type": "alchemy",
+      "subtype": "alchemy_table",
+      "tier": 3,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 282,
+    "recipe_id": "smithing_alchemy_table_t4_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A legendary alchemy apparatus of brilliant etherion and primordial crystal, powered by a chaos matrix and cooled by void essence. The genesis lattice framework allows reactions that defy natural law. Potions brewed here transcend chemistry.",
+        "tags": ["station", "alchemy", "brewing", "legendary"]
+      },
+      "itemId": "brilliant_alchemy_table_t4",
+      "name": "Brilliant Philosopher's Laboratory",
+      "category": "station",
+      "type": "alchemy",
+      "subtype": "alchemy_table",
+      "tier": 4,
+      "rarity": "legendary",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 283,
+    "recipe_id": "smithing_enchanting_table_t1_v3",
+    "output": {
+      "metadata": {
+        "narrative": "An enchanting altar of brilliant marble with radiant light gems and oak plank supports. The marble channels magical energy with unusual clarity, and the light gems illuminate rune patterns before they're inscribed. Where mundane becomes luminous.",
+        "tags": ["station", "enchanting", "enhancement", "quality"]
+      },
+      "itemId": "brilliant_enchanting_table_t1",
+      "name": "Brilliant Basic Enchanting Altar",
+      "category": "station",
+      "type": "adornments",
+      "subtype": "altar",
+      "tier": 1,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 284,
+    "recipe_id": "smithing_enchanting_table_t2_v3",
+    "output": {
+      "metadata": {
+        "narrative": "An enchanting table of brilliant crystal quartz surrounded by radiant shadow cores and marble supports. Light and darkness dance in equilibrium across the surface, creating the perfect tension for channeling magical energies with precision.",
+        "tags": ["station", "enchanting", "enhancement", "standard"]
+      },
+      "itemId": "brilliant_enchanting_table_t2",
+      "name": "Brilliant Arcane Enchanting Table",
+      "category": "station",
+      "type": "adornments",
+      "subtype": "altar",
+      "tier": 2,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 285,
+    "recipe_id": "smithing_enchanting_table_t3_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A master enchanting altar of brilliant obsidian infused with radiant void essence and crowned by a light gem focus. The obsidian absorbs stray enchantment energy while the void essence amplifies intentional patterns. Perfect rune alignment becomes effortless.",
+        "tags": ["station", "enchanting", "enhancement", "master"]
+      },
+      "itemId": "brilliant_enchanting_table_t3",
+      "name": "Brilliant Master Enchanting Altar",
+      "category": "station",
+      "type": "adornments",
+      "subtype": "altar",
+      "tier": 3,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 286,
+    "recipe_id": "smithing_enchanting_table_t4_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A legendary enchanting nexus of brilliant worldtree wood, voidstone base, etherion channels, and primordial crystal focus, centered on an eternity stone memory core and powered by chaos matrices. The genesis lattice crown allows enchantments that rewrite the rules of reality.",
+        "tags": ["station", "enchanting", "enhancement", "legendary"]
+      },
+      "itemId": "brilliant_enchanting_table_t4",
+      "name": "Brilliant Nexus of Enchantment",
+      "category": "station",
+      "type": "adornments",
+      "subtype": "altar",
+      "tier": 4,
+      "rarity": "legendary",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 287,
+    "recipe_id": "smithing_engineering_bench_t2_v3",
+    "output": {
+      "metadata": {
+        "narrative": "An engineering bench of brilliant steel with radiant ash wood surface and lightning shard power cells. The shards provide constant electrical energy for automated tools, and the ash planks absorb vibration from precision work.",
+        "tags": ["station", "engineering", "mechanical", "quality"]
+      },
+      "itemId": "brilliant_engineering_bench_t2",
+      "name": "Brilliant Steel Engineering Bench",
+      "category": "station",
+      "type": "engineering",
+      "subtype": "engineering_bench",
+      "tier": 2,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 288,
+    "recipe_id": "smithing_engineering_bench_t3_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A master engineering station of brilliant mithril with radiant ironwood surface, lightning shard arrays, and a storm heart power core. The mithril framework conducts energy with zero loss, and the storm heart provides unlimited power for the most demanding fabrication.",
+        "tags": ["station", "engineering", "mechanical", "master"]
+      },
+      "itemId": "brilliant_engineering_bench_t3",
+      "name": "Brilliant Master Engineering Station",
+      "category": "station",
+      "type": "engineering",
+      "subtype": "engineering_bench",
+      "tier": 3,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 289,
+    "recipe_id": "smithing_engineering_bench_t4_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A legendary engineering workshop of brilliant adamantine and orichalcum on an ebony plank foundation, powered by radiant storm hearts and centered on a genesis lattice computation core. The diamonds serve as focusing lenses. Devices crafted here blur magic and machinery into one.",
+        "tags": ["station", "engineering", "mechanical", "legendary"]
+      },
+      "itemId": "brilliant_engineering_bench_t4",
+      "name": "Brilliant Arcane Engineering Workshop",
+      "category": "station",
+      "type": "engineering",
+      "subtype": "engineering_bench",
+      "tier": 4,
+      "rarity": "legendary",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 290,
+    "recipe_id": "smithing_forge_t4_v3",
+    "output": {
+      "metadata": {
+        "narrative": "A legendary forge of brilliant etherion and adamantine with chaos matrix ignition cores, phoenix ash eternal fuel, voidstone heat containment, and a genesis lattice reality anchor. The flames burn in colors beyond the visible spectrum. Can work metals that exist outside conventional physics.",
+        "tags": ["station", "forge", "smithing", "legendary"]
+      },
+      "itemId": "brilliant_forge_t4",
+      "name": "Brilliant Eternal Forge",
+      "category": "station",
+      "type": "smithing",
+      "subtype": "forge",
+      "tier": 4,
+      "rarity": "legendary",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  }
+]

@@ -1,7 +1,7 @@
 {
   "chunk_x": -3,
   "chunk_y": -4,
-  "chunk_type": "peaceful_cave",
+  "chunk_type": "water_river",
   "dungeon_entrance": {
     "position": {
       "x": -40,
@@ -10,5 +10,5 @@
     },
     "rarity": "common"
   },
-  "unload_timestamp": 82.14100000000036
+  "unload_timestamp": 79.94400000000041
 }

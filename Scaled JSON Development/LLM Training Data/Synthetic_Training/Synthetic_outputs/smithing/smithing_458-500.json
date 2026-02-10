@@ -1,0 +1,680 @@
+[
+  {
+    "index": 457,
+    "metadata": {
+      "narrative": "Radiant steel longsword infused with dire essence and maple resilience. The blade shimmers with brilliant light, each swing leaving trails of luminous energy. Master craftsmanship elevated by exceptional materials.",
+      "tags": ["melee", "sword", "versatile", "quality", "brilliant"]
+    },
+    "itemId": "brilliant_steel_longsword_v3",
+    "name": "Brilliant Steel Longsword",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "longsword",
+    "tier": 2,
+    "rarity": "rare",
+    "range": 1.5,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 48
+    },
+    "statMultipliers": {
+      "damage": 1.25,
+      "attackSpeed": 1.05,
+      "durability": 1.3,
+      "weight": 0.95
+    },
+    "requirements": {
+      "level": 10,
+      "stats": {"STR": 12}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 458,
+    "metadata": {
+      "narrative": "Masterwork pickaxe forged entirely from ironwood planks, combining the strength of metal with the flexibility of living wood. Strikes with surprising force while maintaining perfect balance. The brilliant finish makes ore veins seem to glow.",
+      "tags": ["tool", "pickaxe", "mining", "quality", "brilliant"]
+    },
+    "itemId": "brilliant_steel_pickaxe_v3",
+    "name": "Brilliant Ironwood Pickaxe",
+    "category": "equipment",
+    "type": "tool",
+    "subtype": "pickaxe",
+    "tier": 3,
+    "rarity": "rare",
+    "range": 1,
+    "effectTags": ["physical", "crushing", "single"],
+    "effectParams": {
+      "baseDamage": 42
+    },
+    "statMultipliers": {
+      "damage": 0.8,
+      "mining": 1.4,
+      "durability": 1.6,
+      "weight": 0.85
+    },
+    "requirements": {
+      "level": 18,
+      "stats": {"STR": 14}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 459,
+    "metadata": {
+      "narrative": "Curved steel blade with birch handle, perfectly weighted for harvesting delicate plants. The brilliant edge cuts so cleanly that herbs don't bruise. Every gathering feels effortless.",
+      "tags": ["tool", "harvesting", "precision", "quality", "brilliant"]
+    },
+    "itemId": "brilliant_steel_sickle_v3",
+    "name": "Brilliant Steel Sickle",
+    "category": "equipment",
+    "type": "tool",
+    "subtype": "sickle",
+    "tier": 2,
+    "rarity": "rare",
+    "range": 0.5,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 26
+    },
+    "statMultipliers": {
+      "damage": 0.75,
+      "gathering": 1.35,
+      "durability": 1.2,
+      "weight": 0.65
+    },
+    "requirements": {
+      "level": 7,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 460,
+    "metadata": {
+      "narrative": "Obsidian-edged greataxe bound with etherion and blood essence, radiating malevolent power. The voidstone pommel drinks light while worldtree grips pulse with ancient life. Each strike tears reality itself.",
+      "tags": ["melee", "axe", "2H", "legendary", "brilliant", "elemental"]
+    },
+    "itemId": "brilliant_blood_reaver_voidstone_v3",
+    "name": "Brilliant Blood Reaver",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "greataxe",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 2,
+    "effectTags": ["physical", "slashing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 78,
+      "burn_damage_per_second": 8,
+      "burn_duration": 5
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 25,
+        "effect": "Blood essence ignites wounds with searing flames"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.45,
+      "attackSpeed": 0.75,
+      "durability": 1.8,
+      "weight": 1.6
+    },
+    "requirements": {
+      "level": 28,
+      "stats": {"STR": 25, "INT": 15}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 461,
+    "metadata": {
+      "narrative": "Massive warhammer with voidstone head and ironwood haft, infused with frost essence. Impact creates expanding circles of ice that slow and shatter. The void drinks warmth from everything nearby.",
+      "tags": ["melee", "mace", "2H", "crushing", "elemental", "frost"]
+    },
+    "itemId": "brilliant_frostbite_hammer_voidstone_v3",
+    "name": "Brilliant Frostbite Hammer",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "warhammer",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 1.5,
+    "effectTags": ["physical", "crushing", "single"],
+    "effectParams": {
+      "baseDamage": 68
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "water",
+        "value": 22,
+        "effect": "Frost essence freezes targets, slowing movement"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.4,
+      "attackSpeed": 0.7,
+      "durability": 1.7,
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 20,
+      "stats": {"STR": 22, "INT": 12}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 462,
+    "metadata": {
+      "narrative": "Etherion blade wrapped in phoenix ash and void energy, burning with impossible flames. The worldtree grip channels power while voidstone focuses destruction. Fire that consumes without heat, darkness that illuminates.",
+      "tags": ["melee", "sword", "2H", "legendary", "elemental", "fire"]
+    },
+    "itemId": "brilliant_inferno_blade_voidstone_v3",
+    "name": "Brilliant Inferno Blade",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "greatsword",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 2,
+    "effectTags": ["fire", "slashing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 75,
+      "burn_damage_per_second": 12,
+      "burn_duration": 6
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 30,
+        "effect": "Phoenix ash creates eternal flames that never extinguish"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.5,
+      "attackSpeed": 0.85,
+      "durability": 1.9,
+      "weight": 1.3
+    },
+    "requirements": {
+      "level": 29,
+      "stats": {"STR": 24, "INT": 20}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 463,
+    "metadata": {
+      "narrative": "Spectral thread whip tipped with voidstone weight, crackling with storm heart lightning. Each strike arcs to nearby enemies while adamantine links ensure unbreakable integrity. Ironwood handle grounds the chaos.",
+      "tags": ["melee", "flexible", "reach", "lightning", "elemental"]
+    },
+    "itemId": "brilliant_lightning_chain_whip_voidstone_v3",
+    "name": "Brilliant Lightning Chain",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "whip",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 3,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 52
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "lightning",
+        "value": 20,
+        "effect": "Storm heart energy chains between multiple targets"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.2,
+      "attackSpeed": 1.15,
+      "durability": 1.4,
+      "weight": 0.7
+    },
+    "requirements": {
+      "level": 19,
+      "stats": {"AGI": 20, "INT": 14}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 464,
+    "metadata": {
+      "narrative": "Luminous greataxe forged from etherion and primordial crystal, bound with blood essence. Light seems to bend around the blade's edge while worldtree grips hum with life force. Radiance and violence unified.",
+      "tags": ["melee", "axe", "2H", "legendary", "light", "elemental"]
+    },
+    "itemId": "light_blood_reaver_voidstone_v1",
+    "name": "Radiant Blood Reaver",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "greataxe",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 2,
+    "effectTags": ["physical", "slashing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 76,
+      "burn_damage_per_second": 10,
+      "burn_duration": 5
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 28,
+        "effect": "Primordial energy ignites with radiant flames"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.42,
+      "attackSpeed": 0.75,
+      "durability": 1.75,
+      "weight": 1.55
+    },
+    "requirements": {
+      "level": 27,
+      "stats": {"STR": 24, "INT": 16}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 465,
+    "metadata": {
+      "narrative": "Etherion greatsword channeling void essence through voidstone focus, blazing with paradoxical light. Worldtree grip stabilizes impossible energies. Primordial crystal captures the moment between creation and destruction.",
+      "tags": ["melee", "sword", "2H", "legendary", "light", "void"]
+    },
+    "itemId": "light_inferno_blade_void_v1",
+    "name": "Radiant Void Blade",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "greatsword",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 2,
+    "effectTags": ["fire", "slashing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 74,
+      "burn_damage_per_second": 11,
+      "burn_duration": 6
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 27,
+        "effect": "Void essence burns with cold fire that illuminates darkness"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.48,
+      "attackSpeed": 0.85,
+      "durability": 1.85,
+      "weight": 1.25
+    },
+    "requirements": {
+      "level": 28,
+      "stats": {"STR": 23, "INT": 21}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 466,
+    "metadata": {
+      "narrative": "Spectral thread whip weighted with perfect diamond, crackling with void lightning. Adamantine links glow with inner light while ironwood handle grounds chaos. Each strike illuminates and destroys.",
+      "tags": ["melee", "flexible", "reach", "lightning", "light"]
+    },
+    "itemId": "light_lightning_chain_whip_void_v1",
+    "name": "Radiant Lightning Chain",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "whip",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 3,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 51
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "lightning",
+        "value": 19,
+        "effect": "Void essence amplifies lightning into brilliant cascades"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.18,
+      "attackSpeed": 1.15,
+      "durability": 1.35,
+      "weight": 0.68
+    },
+    "requirements": {
+      "level": 18,
+      "stats": {"AGI": 19, "INT": 13}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 467,
+    "metadata": {
+      "narrative": "Shadow-wreathed greataxe of etherion and primordial darkness, drinking light and life. Blood essence pulses like a dying star while worldtree grips whisper ancient secrets. Power cloaked in absolute night.",
+      "tags": ["melee", "axe", "2H", "legendary", "dark", "elemental"]
+    },
+    "itemId": "dark_blood_reaver_voidstone_v2",
+    "name": "Shadow Blood Reaver",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "greataxe",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 2,
+    "effectTags": ["physical", "slashing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 77,
+      "burn_damage_per_second": 9,
+      "burn_duration": 5
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 26,
+        "effect": "Shadow flames that burn colder than ice"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.44,
+      "attackSpeed": 0.75,
+      "durability": 1.77,
+      "weight": 1.58
+    },
+    "requirements": {
+      "level": 28,
+      "stats": {"STR": 25, "INT": 17}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 468,
+    "metadata": {
+      "narrative": "Obsidian-dark etherion blade channeling void essence through shadow crystal. Worldtree grip absorbs ambient light while primordial darkness flows like liquid night. Flames that exist in negative space.",
+      "tags": ["melee", "sword", "2H", "legendary", "dark", "void"]
+    },
+    "itemId": "dark_inferno_blade_void_v2",
+    "name": "Shadow Void Blade",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "greatsword",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 2,
+    "effectTags": ["fire", "slashing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 73,
+      "burn_damage_per_second": 10,
+      "burn_duration": 6
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 26,
+        "effect": "Void flames consume light and warmth equally"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.47,
+      "attackSpeed": 0.85,
+      "durability": 1.82,
+      "weight": 1.28
+    },
+    "requirements": {
+      "level": 29,
+      "stats": {"STR": 24, "INT": 22}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 469,
+    "metadata": {
+      "narrative": "Spectral whip bound in shadow, weighted with diamond darkness. Void lightning crackles along adamantine links while ironwood handle drinks surrounding light. Thunder from the space between stars.",
+      "tags": ["melee", "flexible", "reach", "lightning", "dark"]
+    },
+    "itemId": "dark_lightning_chain_whip_void_v2",
+    "name": "Shadow Lightning Chain",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "whip",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 3,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 50
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "lightning",
+        "value": 18,
+        "effect": "Shadow lightning that strikes from darkness itself"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.17,
+      "attackSpeed": 1.15,
+      "durability": 1.32,
+      "weight": 0.69
+    },
+    "requirements": {
+      "level": 19,
+      "stats": {"AGI": 20, "INT": 15}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 470,
+    "metadata": {
+      "narrative": "Masterwork greataxe blazing with crystalline brilliance, blood essence and voidstone unified in perfect balance. Etherion edge cuts through reality while worldtree grips pulse with cosmic rhythm. The pinnacle of destructive artistry.",
+      "tags": ["melee", "axe", "2H", "legendary", "brilliant", "elemental"]
+    },
+    "itemId": "brilliant_blood_reaver_voidstone_flip_v3",
+    "name": "Exalted Blood Reaver",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "greataxe",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 2,
+    "effectTags": ["physical", "slashing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 80,
+      "burn_damage_per_second": 10,
+      "burn_duration": 6
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 30,
+        "effect": "Exalted flames burn with the intensity of dying stars"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.5,
+      "attackSpeed": 0.75,
+      "durability": 1.9,
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 30,
+      "stats": {"STR": 26, "INT": 18}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 471,
+    "metadata": {
+      "narrative": "Perfect etherion greatsword channeling void essence through primordial crystal, blazing with transcendent flames. Each component resonates in harmony - darkness and light, fire and void, mortality and eternity merged.",
+      "tags": ["melee", "sword", "2H", "legendary", "brilliant", "void"]
+    },
+    "itemId": "brilliant_inferno_blade_void_flip_v3",
+    "name": "Exalted Void Blade",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "greatsword",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 2,
+    "effectTags": ["fire", "slashing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 78,
+      "burn_damage_per_second": 13,
+      "burn_duration": 7
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 32,
+        "effect": "Transcendent void flames that exist beyond conventional reality"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.52,
+      "attackSpeed": 0.85,
+      "durability": 2.0,
+      "weight": 1.2
+    },
+    "requirements": {
+      "level": 30,
+      "stats": {"STR": 25, "INT": 23}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 472,
+    "metadata": {
+      "narrative": "Supreme spectral whip weighted with flawless diamond, conducting perfect void lightning through adamantine links. Every material chosen for maximum synergy - ethereal thread binds reality while ironwood grounds infinity.",
+      "tags": ["melee", "flexible", "reach", "lightning", "brilliant"]
+    },
+    "itemId": "brilliant_lightning_chain_whip_void_flip_v3",
+    "name": "Exalted Lightning Chain",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "subtype": "whip",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 3,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 55
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "lightning",
+        "value": 22,
+        "effect": "Perfected void lightning cascades endlessly between targets"
+      }
+    ],
+    "statMultipliers": {
+      "damage": 1.25,
+      "attackSpeed": 1.2,
+      "durability": 1.5,
+      "weight": 0.65
+    },
+    "requirements": {
+      "level": 21,
+      "stats": {"AGI": 22, "INT": 16}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  }
+]

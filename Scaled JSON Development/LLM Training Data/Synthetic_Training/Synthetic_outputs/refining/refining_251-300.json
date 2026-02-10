@@ -1,0 +1,1634 @@
+[
+  {
+    "index": 251,
+    "recipe_id": "refining_rarity_mithril_mythical_v277",
+    "metadata": {
+      "narrative": "Mithril refined from vivid adamantine, impossibly light yet resonating with deep metallic memory. The adamantine's stubbornness tempers into silvery-blue grace, producing an ingot that hums with latent power.",
+      "tags": ["refined", "metal", "legendary", "light", "metallic"]
+    },
+    "itemId": "mithril_ingot",
+    "name": "Mithril Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 3,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.2
+    },
+    "requirements": {
+      "level": 12,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 252,
+    "recipe_id": "refining_rarity_adamantine_epic_v283",
+    "metadata": {
+      "narrative": "Adamantine forged from lightning copper, the electrical charge compressed into an unyielding black ingot. Faint arcs of static dance across its surface before being swallowed by the dark metal.",
+      "tags": ["refined", "metal", "strong", "durable", "lightning"]
+    },
+    "itemId": "adamantine_ingot",
+    "name": "Adamantine Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 4,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 18,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 253,
+    "recipe_id": "refining_rarity_adamantine_legendary_v289",
+    "metadata": {
+      "narrative": "Adamantine born from ancient lightning copper, carrying echoes of primordial storms locked within its crystalline lattice. This ingot refuses to yield under any force known to mortals.",
+      "tags": ["refined", "metal", "strong", "ancient", "durable"]
+    },
+    "itemId": "adamantine_ingot",
+    "name": "Adamantine Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 4,
+    "rarity": "epic",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 1.5
+    },
+    "requirements": {
+      "level": 18,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 254,
+    "recipe_id": "refining_rarity_orichalcum_legendary_v295",
+    "metadata": {
+      "narrative": "Orichalcum transmuted from tempered lightning copper, its golden-green surface crackling with barely contained elemental fury. The tempering process gives this ingot an unusual structural stability.",
+      "tags": ["refined", "metal", "legendary", "elemental", "metallic"]
+    },
+    "itemId": "orichalcum_ingot",
+    "name": "Orichalcum Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 4,
+    "rarity": "legendary",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.8
+    },
+    "requirements": {
+      "level": 20,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 255,
+    "recipe_id": "refining_rarity_orichalcum_mythical_v301",
+    "metadata": {
+      "narrative": "Orichalcum refined from light-touched lightning copper, radiant and warm to the touch. Elemental forces swirl through its structure in visible golden currents, humming with divine resonance.",
+      "tags": ["refined", "metal", "legendary", "elemental", "light"]
+    },
+    "itemId": "orichalcum_ingot",
+    "name": "Orichalcum Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 4,
+    "rarity": "legendary",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.8
+    },
+    "requirements": {
+      "level": 20,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 256,
+    "recipe_id": "refining_rarity_tin_rare_v310",
+    "metadata": {
+      "narrative": "Tin extracted from weathered lightning copper, carrying faint static traces within its silvery form. The weathering process has stripped impurities, leaving a remarkably pure ingot.",
+      "tags": ["refined", "metal", "uncommon", "light", "versatile"]
+    },
+    "itemId": "tin_ingot",
+    "name": "Tin Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.4
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 257,
+    "recipe_id": "refining_rarity_tin_epic_v316",
+    "metadata": {
+      "narrative": "Tin reclaimed from earthen lightning copper through advanced refining. Grounding energies have stabilized the metal, producing an ingot with exceptional magical conductivity.",
+      "tags": ["refined", "metal", "uncommon", "earth", "versatile"]
+    },
+    "itemId": "tin_ingot",
+    "name": "Tin Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "ingot",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.4
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 258,
+    "recipe_id": "refining_rarity_bronze_rare_v322",
+    "metadata": {
+      "narrative": "Bronze alloy forged from enchanted mithril, shimmering with faint magical residue. The legendary metal's essence lends this bronze an unusual strength beyond its station.",
+      "tags": ["metal", "refined", "versatile", "quality", "standard"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 259,
+    "recipe_id": "refining_rarity_bronze_epic_v328",
+    "metadata": {
+      "narrative": "Bronze drawn from tarnished mithril, the worn legendary metal yielding a humble alloy with hidden depths. Beneath its patina lies surprising resilience inherited from its mythic source.",
+      "tags": ["metal", "refined", "versatile", "quality", "standard"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 260,
+    "recipe_id": "refining_limestone_to_quicklime_v338",
+    "metadata": {
+      "narrative": "Quickite calcined from pale crystal quartz, a fine powder that reacts violently with water. The quartz's magical resonance gives this quicklime an unusual potency in alchemical applications.",
+      "tags": ["refined", "stone", "basic", "common", "versatile"]
+    },
+    "itemId": "quicklime",
+    "name": "Quicklime",
+    "category": "stone",
+    "type": "stone",
+    "subtype": "ite",
+    "tier": 1,
+    "rarity": "common",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.3
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 261,
+    "recipe_id": "refining_maple_log_to_plank_v347",
+    "metadata": {
+      "narrative": "Maple planks sawn from shadow ironwood, dark-grained and remarkably dense for their size. The ironwood's metallic properties lend a subtle hardness that resists splitting.",
+      "tags": ["wood", "refined", "quality", "standard", "durable"]
+    },
+    "itemId": "maple_plank",
+    "name": "Maple Plank",
+    "category": "wood",
+    "type": "wood",
+    "subtype": "plank",
+    "tier": 2,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.4
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 262,
+    "recipe_id": "refining_bronze_alloy_v80",
+    "metadata": {
+      "narrative": "Bronze alloy formed from blessed iron and tin, carrying a faint sanctified warmth. The holy infusion purifies impurities during smelting, producing a clean and dependable alloy.",
+      "tags": ["metal", "refined", "versatile", "standard", "quality"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 263,
+    "recipe_id": "refining_fire_steel_v116",
+    "metadata": {
+      "narrative": "Fire steel smelted from soft copper and earth crystals, the grounding minerals channeling heat into the metal's core. The ingot radiates a steady warmth and never fully cools.",
+      "tags": ["metal", "refined", "elemental", "fire", "quality"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 264,
+    "recipe_id": "refining_frost_steel_v140",
+    "metadata": {
+      "narrative": "Frost steel forged from blessed copper and holy light gems, the sacred radiance converting to biting cold during the refining. Ice crystals bloom across its surface in warm air.",
+      "tags": ["metal", "refined", "elemental", "light", "quality"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 265,
+    "recipe_id": "refining_lightning_copper_v164",
+    "metadata": {
+      "narrative": "Lightning copper forged from frost iron and frost essences, the competing cold energies catalyzing into electrical charge. Static crackles unpredictably across the frigid surface.",
+      "tags": ["metal", "refined", "elemental", "lightning", "versatile"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 266,
+    "recipe_id": "refining_bronze_alloy_v81",
+    "metadata": {
+      "narrative": "Bronze smelted from cursed iron and corrupted copper, the dark taint burning away during fusion. What remains is a somber alloy with an unsettling dark sheen.",
+      "tags": ["metal", "refined", "versatile", "dark", "standard"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 267,
+    "recipe_id": "refining_fire_steel_v117",
+    "metadata": {
+      "narrative": "Fire steel forged from gleaming copper and air crystals, the trapped winds fanning internal flames to a white-hot core. The polished surface catches light like molten gold.",
+      "tags": ["metal", "refined", "elemental", "fire", "light"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 268,
+    "recipe_id": "refining_frost_steel_v141",
+    "metadata": {
+      "narrative": "Frost steel born from cursed copper and crystallized darkness, the shadow cores freezing the metal to its marrow. An unsettling chill emanates from this ink-dark alloy.",
+      "tags": ["metal", "refined", "elemental", "dark", "quality"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 269,
+    "recipe_id": "refining_lightning_copper_v165",
+    "metadata": {
+      "narrative": "Lightning copper smelted from charged iron and radiant light gems, the brilliant energy converting to crackling electrical potential. The ingot pulses with a steady inner glow.",
+      "tags": ["metal", "refined", "elemental", "lightning", "light"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 270,
+    "recipe_id": "refining_bronze_alloy_v82",
+    "metadata": {
+      "narrative": "Bronze alloy crafted entirely from enchanted iron, magical resonance replacing tin's usual role in the bonding process. The result is a faintly glowing alloy that hums when struck.",
+      "tags": ["metal", "refined", "versatile", "quality", "standard"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 271,
+    "recipe_id": "refining_fire_steel_v118",
+    "metadata": {
+      "narrative": "Fire steel forged from tarnished iron and worn fire crystals, the diminished flames still sufficient to kindle the alloy's inner heat. A humble fire steel that burns with quiet persistence.",
+      "tags": ["metal", "refined", "elemental", "fire", "standard"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 272,
+    "recipe_id": "refining_frost_steel_v142",
+    "metadata": {
+      "narrative": "Frost steel drawn from enchanted iron and magical frost essences, the dual enchantments amplifying the freezing process. Rime patterns spread across its surface in intricate arcane designs.",
+      "tags": ["metal", "refined", "elemental", "quality", "versatile"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 273,
+    "recipe_id": "refining_lightning_copper_v166",
+    "metadata": {
+      "narrative": "Lightning copper refined from earthen iron and shadow cores, the grounding and dark energies twisting into volatile electrical charge. Sparks leap from the surface when touched by bare hands.",
+      "tags": ["metal", "refined", "elemental", "lightning", "earth"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 274,
+    "recipe_id": "refining_bronze_alloy_v83",
+    "metadata": {
+      "narrative": "Bronze alloyed from polished iron and refined steel, the superior metals producing an exceptionally smooth and dense bronze. Its mirror-like surface reflects light with unusual clarity.",
+      "tags": ["metal", "refined", "versatile", "quality", "standard"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 275,
+    "recipe_id": "refining_fire_steel_v119",
+    "metadata": {
+      "narrative": "Fire steel forged from flawless iron and perfect water crystals, the opposing elements creating a paradoxical inner flame. Steam rises perpetually from this immaculate ingot.",
+      "tags": ["metal", "refined", "elemental", "fire", "quality"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 276,
+    "recipe_id": "refining_frost_steel_v143",
+    "metadata": {
+      "narrative": "Frost steel smelted from polished iron and refined lightning shards, the electrical discharge flash-freezing the metal during forging. The result is a gleaming cold alloy that numbs on contact.",
+      "tags": ["metal", "refined", "elemental", "lightning", "quality"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 277,
+    "recipe_id": "refining_lightning_copper_v167",
+    "metadata": {
+      "narrative": "Lightning copper forged from shadow iron and dark storm hearts, primordial tempest energy compressed into conductive copper. The ingot crackles with dangerous, barely-contained power.",
+      "tags": ["metal", "refined", "elemental", "lightning", "dark"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 278,
+    "recipe_id": "refining_bronze_alloy_v84",
+    "metadata": {
+      "narrative": "Bronze alloyed from rough iron and crude mithril, the legendary metal's properties elevating even this unrefined mixture. A sturdy alloy with an unexpected silvery undertone.",
+      "tags": ["metal", "refined", "versatile", "standard", "quality"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 279,
+    "recipe_id": "refining_fire_steel_v120",
+    "metadata": {
+      "narrative": "Fire steel smelted from cracked iron and damaged earth crystals, the fractured materials releasing their energies more readily during fusion. A rough but serviceable fire-infused alloy.",
+      "tags": ["metal", "refined", "elemental", "fire", "standard"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 280,
+    "recipe_id": "refining_frost_steel_v144",
+    "metadata": {
+      "narrative": "Frost steel forged from rough iron and crude light gems, the raw radiance converting to piercing cold during the smelting process. Unpolished but undeniably cold to the touch.",
+      "tags": ["metal", "refined", "elemental", "light", "standard"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 281,
+    "recipe_id": "refining_lightning_copper_v168",
+    "metadata": {
+      "narrative": "Lightning copper refined from crystalline tin and crackling lightning shards, the tin's magical conductivity amplifying the electrical charge. This ingot arcs with visible sparks in humid air.",
+      "tags": ["metal", "refined", "elemental", "lightning", "versatile"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 282,
+    "recipe_id": "refining_bronze_alloy_v85",
+    "metadata": {
+      "narrative": "Bronze alloyed from tempered iron and hardened lightning copper, the charged metal lending a faint static tingle. A resilient bronze that holds its shape under heavy stress.",
+      "tags": ["metal", "refined", "versatile", "durable", "standard"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 283,
+    "recipe_id": "refining_fire_steel_v121",
+    "metadata": {
+      "narrative": "Fire steel forged from bright iron and luminous air crystals, the compressed winds stoking an internal blaze. Light dances across the surface like sunlight through forge smoke.",
+      "tags": ["metal", "refined", "elemental", "fire", "light"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 284,
+    "recipe_id": "refining_frost_steel_v145",
+    "metadata": {
+      "narrative": "Frost steel smelted from tempered iron and hardened shadow cores, the crystallized darkness chilling the metal to its core. A disciplined alloy, cold and unyielding as a winter forge.",
+      "tags": ["metal", "refined", "elemental", "dark", "durable"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 285,
+    "recipe_id": "refining_lightning_copper_v169",
+    "metadata": {
+      "narrative": "Lightning copper drawn from ancient tin and old frost essences, centuries of dormant energy awakening as electrical charge. The ingot carries a musty ozone scent of ages past.",
+      "tags": ["metal", "refined", "elemental", "lightning", "ancient"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 286,
+    "recipe_id": "refining_bronze_alloy_v86",
+    "metadata": {
+      "narrative": "Bronze alloyed from soft malleable tin, the pliable metal merging smoothly into a workable alloy. Forgiving to shape and easy to polish, ideal for detailed craftwork.",
+      "tags": ["metal", "refined", "versatile", "flexible", "standard"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 287,
+    "recipe_id": "refining_fire_steel_v122",
+    "metadata": {
+      "narrative": "Fire steel smelted from dark tin and shadow-touched fire crystals, the flames burning with an eerie purple-black hue. Heat radiates from this ingot in waves that distort the air.",
+      "tags": ["metal", "refined", "elemental", "fire", "dark"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 288,
+    "recipe_id": "refining_frost_steel_v146",
+    "metadata": {
+      "narrative": "Frost steel formed from soft tin and malleable frost essences, the gentle metals accepting the cold willingly. A smooth, frost-touched alloy that chills without biting.",
+      "tags": ["metal", "refined", "elemental", "flexible", "quality"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 289,
+    "recipe_id": "refining_lightning_copper_v170",
+    "metadata": {
+      "narrative": "Lightning copper refined from blessed tin and holy light gems, the sacred radiance channeling into crackling electrical brilliance. This ingot glows faintly with purified energy.",
+      "tags": ["metal", "refined", "elemental", "lightning", "light"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 290,
+    "recipe_id": "refining_bronze_alloy_v87",
+    "metadata": {
+      "narrative": "Bronze alloyed from gleaming tin and shiny copper, both metals polished before smelting. The resulting bronze has an exceptional luster that resists tarnishing far longer than usual.",
+      "tags": ["metal", "refined", "versatile", "quality", "standard"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 291,
+    "recipe_id": "refining_fire_steel_v123",
+    "metadata": {
+      "narrative": "Fire steel forged from brilliant tin and radiant water crystals, the competing elements generating intense thermal energy at their boundary. The ingot shimmers with heat mirage.",
+      "tags": ["metal", "refined", "elemental", "fire", "light"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 292,
+    "recipe_id": "refining_frost_steel_v147",
+    "metadata": {
+      "narrative": "Frost steel smelted from gleaming tin and shiny lightning shards, the static discharge flash-freezing the alloy during cooling. A bright, cold ingot that crackles with residual charge.",
+      "tags": ["metal", "refined", "elemental", "lightning", "quality"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 293,
+    "recipe_id": "refining_lightning_copper_v171",
+    "metadata": {
+      "narrative": "Lightning copper forged from cursed tin and corrupted shadow cores, the dark energies catalyzing into volatile electrical surges. An unstable ingot that sparks unpredictably.",
+      "tags": ["metal", "refined", "elemental", "lightning", "dark"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 294,
+    "recipe_id": "refining_bronze_alloy_v88",
+    "metadata": {
+      "narrative": "Bronze alloyed from tarnished tin and worn iron, the aged metals fusing with a patina that speaks of long history. A workmanlike alloy with an antique warmth.",
+      "tags": ["metal", "refined", "versatile", "standard", "common"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 295,
+    "recipe_id": "refining_fire_steel_v124",
+    "metadata": {
+      "narrative": "Fire steel smelted from dull tin and dim earth crystals, the subdued materials producing a low-burning but steady flame within. Smolders rather than blazes, reliable if unspectacular.",
+      "tags": ["metal", "refined", "elemental", "fire", "standard"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 296,
+    "recipe_id": "refining_frost_steel_v148",
+    "metadata": {
+      "narrative": "Frost steel forged from tarnished tin and worn light gems, the fading radiance converted to a persistent chill. An aged alloy with a quiet, enduring cold.",
+      "tags": ["metal", "refined", "elemental", "light", "standard"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 297,
+    "recipe_id": "refining_lightning_copper_v172",
+    "metadata": {
+      "narrative": "Lightning copper refined from enchanted tin and magical storm hearts, the dual enchantments amplifying primordial storm energy into devastating conductivity. Arcs of lightning leap between nearby metal objects.",
+      "tags": ["metal", "refined", "elemental", "lightning", "quality"]
+    },
+    "itemId": "lightning_copper_ingot",
+    "name": "Lightning Copper Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "lightning",
+        "value": 10,
+        "effect": "Items crafted with this add lightning damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 298,
+    "recipe_id": "refining_bronze_alloy_v89",
+    "metadata": {
+      "narrative": "Bronze alloyed from flawless tin and perfect steel, the pristine materials yielding an immaculate alloy. Every grain is uniform, every surface smooth - a bronze worthy of master craftsmen.",
+      "tags": ["metal", "refined", "versatile", "quality", "standard"]
+    },
+    "itemId": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 1,
+    "rarity": "uncommon",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 299,
+    "recipe_id": "refining_fire_steel_v125",
+    "metadata": {
+      "narrative": "Fire steel forged from glowing tin and luminous air crystals, the trapped winds igniting into a brilliant inner flame. The ingot glows with a soft amber warmth even in darkness.",
+      "tags": ["metal", "refined", "elemental", "fire", "light"]
+    },
+    "itemId": "fire_steel_ingot",
+    "name": "Fire Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "fire",
+        "value": 10,
+        "effect": "Items crafted with this add fire damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  },
+  {
+    "index": 300,
+    "recipe_id": "refining_frost_steel_v149",
+    "metadata": {
+      "narrative": "Frost steel smelted from flawless tin and perfect shadow cores, the crystallized darkness channeling into a deep, absolute cold. An immaculate alloy that freezes moisture from the air around it.",
+      "tags": ["metal", "refined", "elemental", "dark", "quality"]
+    },
+    "itemId": "frost_steel_ingot",
+    "name": "Frost Steel Ingot",
+    "category": "metal",
+    "type": "metal",
+    "subtype": "alloy",
+    "tier": 2,
+    "rarity": "rare",
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.6
+    },
+    "attributes": [
+      {
+        "type": "elemental",
+        "element": "frost",
+        "value": 10,
+        "effect": "Items crafted with this add frost damage"
+      }
+    ],
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": true,
+      "consumable": false,
+      "repairable": false
+    }
+  }
+]

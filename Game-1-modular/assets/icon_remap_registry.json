@@ -3,5 +3,25 @@
     "source_path": "C:\\Users\\Vincent\\PycharmProjects\\Game-1\\Game-1-modular\\assets\\icons-generated-cycle-4\\generated_icons\\items\\weapons\\composite_longbow.png",
     "remapped_at": "2025-12-09T10:08:40.257056",
     "target_id": "pine_shortbow"
+  },
+  "alchemy_table_t4": {
+    "source_path": "C:\\Users\\Vincent\\PycharmProjects\\Game-1\\Game-1-modular\\assets\\icons-generated-cycle-4\\generated_icons\\items\\stations\\alchemy_table_t2.png",
+    "remapped_at": "2026-02-05T17:42:49.495332",
+    "target_id": "alchemy_table_t4"
+  },
+  "enchanting_table_t4": {
+    "source_path": "C:\\Users\\Vincent\\PycharmProjects\\Game-1\\Game-1-modular\\assets\\icons-generated-cycle-3\\generated_icons\\items\\stations\\enchanting_table_t1.png",
+    "remapped_at": "2026-02-05T17:44:03.459366",
+    "target_id": "enchanting_table_t4"
+  },
+  "forge_t4": {
+    "source_path": "C:\\Users\\Vincent\\PycharmProjects\\Game-1\\Game-1-modular\\assets\\icons-generated-cycle-5\\generated_icons-2\\items\\stations\\refinery_t3-2.png",
+    "remapped_at": "2026-02-05T17:48:07.997413",
+    "target_id": "forge_t4"
+  },
+  "chaos_scales": {
+    "source_path": "C:\\Users\\Vincent\\PycharmProjects\\Game-1\\Game-1-modular\\assets\\icons-generated-cycle-4\\generated_icons-2\\items\\materials\\adamantine_scales-2.png",
+    "remapped_at": "2026-02-05T17:49:37.569039",
+    "target_id": "chaos_scales"
   }
 }

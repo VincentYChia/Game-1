@@ -1,0 +1,792 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "totalEnchantments": 40,
+    "indexRange": "120-159"
+  },
+  "enchantments": [
+    {
+      "index": 120,
+      "metadata": {
+        "narrative": "Harness primordial lightning to chain devastation across the battlefield. Each strike leaps between foes with crackling fury.",
+        "tags": ["weapon", "elemental", "lightning", "advanced"]
+      },
+      "recipeId": "enchanting_lightning_strike_v3",
+      "enchantmentId": "lightning_strike_v3",
+      "enchantmentName": "Lightning Strike III",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "chain_damage",
+        "element": "lightning",
+        "chainCount": 3,
+        "chainRange": 4,
+        "damagePercent": 0.6,
+        "stackable": false,
+        "conflictsWith": ["lightning_strike", "lightning_strike_v2"]
+      }
+    },
+    {
+      "index": 121,
+      "metadata": {
+        "narrative": "Infuse weapons with shadow-born toxins that linger in wounds. Enemies suffer prolonged agony from darkened fangs.",
+        "tags": ["weapon", "poison", "damage", "advanced"]
+      },
+      "recipeId": "enchanting_poison_v3",
+      "enchantmentId": "poison_v3",
+      "enchantmentName": "Poison III",
+      "applicableTo": ["weapon"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_over_time",
+        "element": "poison",
+        "damagePerSecond": 12,
+        "duration": 10,
+        "stackable": true,
+        "conflictsWith": ["poison", "poison_v2"]
+      }
+    },
+    {
+      "index": 122,
+      "metadata": {
+        "narrative": "Crystal-reinforced armor enhanced with iron scales. Creates a barrier that absorbs significant damage.",
+        "tags": ["armor", "defense", "advanced", "elemental"]
+      },
+      "recipeId": "enchanting_protection_advanced_v3",
+      "enchantmentId": "protection_advanced_v3",
+      "enchantmentName": "Protection II (Advanced)",
+      "applicableTo": ["armor"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_reduction",
+        "value": 0.25,
+        "stackable": false,
+        "conflictsWith": ["protection_1", "protection_2", "protection_3", "protection_basic_v3", "protection_master_v3"]
+      }
+    },
+    {
+      "index": 123,
+      "metadata": {
+        "narrative": "Basic earth-attuned protection using foundational materials. Reliable defense for everyday conflicts.",
+        "tags": ["armor", "defense", "basic"]
+      },
+      "recipeId": "enchanting_protection_basic_v3",
+      "enchantmentId": "protection_basic_v3",
+      "enchantmentName": "Protection I (Basic)",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_reduction",
+        "value": 0.15,
+        "stackable": false,
+        "conflictsWith": ["protection_1", "protection_2", "protection_3", "protection_advanced_v3", "protection_master_v3"]
+      }
+    },
+    {
+      "index": 124,
+      "metadata": {
+        "narrative": "Ultimate protection forged from diamond, orichalcum, and void essence. Damage dissipates into nothingness before ancient power.",
+        "tags": ["armor", "defense", "legendary", "void"]
+      },
+      "recipeId": "enchanting_protection_master_v3",
+      "enchantmentId": "protection_master_v3",
+      "enchantmentName": "Protection III (Master)",
+      "applicableTo": ["armor"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_reduction",
+        "value": 0.4,
+        "stackable": false,
+        "conflictsWith": ["protection_1", "protection_2", "protection_3", "protection_basic_v3", "protection_advanced_v3"]
+      }
+    },
+    {
+      "index": 125,
+      "metadata": {
+        "narrative": "Radiant marble and living essence grant continuous healing. Light pushes back injury as naturally as it dispels darkness.",
+        "tags": ["armor", "regeneration", "healing", "light"]
+      },
+      "recipeId": "enchanting_regeneration_v3",
+      "enchantmentId": "regeneration_v3",
+      "enchantmentName": "Regeneration (Enhanced)",
+      "applicableTo": ["armor"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "health_regeneration",
+        "value": 2,
+        "stackable": true,
+        "maxStacks": 5,
+        "conflictsWith": ["regeneration"]
+      }
+    },
+    {
+      "index": 126,
+      "metadata": {
+        "narrative": "Living ichor and golem cores remember their original forms. Items slowly reconstruct themselves over time.",
+        "tags": ["universal", "repair", "utility", "living"]
+      },
+      "recipeId": "enchanting_self_repair_v3",
+      "enchantmentId": "self_repair_v3",
+      "enchantmentName": "Self-Repair (Enhanced)",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "durability_regeneration",
+        "value": 2,
+        "perMinute": true,
+        "stackable": false,
+        "conflictsWith": ["self_repair"]
+      }
+    },
+    {
+      "index": 127,
+      "metadata": {
+        "narrative": "Lightning-tempered fangs and frost essence create edges that cut with elemental precision.",
+        "tags": ["weapon", "damage", "advanced", "elemental"]
+      },
+      "recipeId": "enchanting_sharpness_advanced_v3",
+      "enchantmentId": "sharpness_advanced_v3",
+      "enchantmentName": "Sharpness II (Advanced)",
+      "applicableTo": ["weapon"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.25,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2", "sharpness_3", "sharpness_basic_v3", "sharpness_master_v3"]
+      }
+    },
+    {
+      "index": 128,
+      "metadata": {
+        "narrative": "Fire-forged iron given a basic edge. Simple but effective enhancement for any blade.",
+        "tags": ["weapon", "damage", "basic"]
+      },
+      "recipeId": "enchanting_sharpness_basic_v3",
+      "enchantmentId": "sharpness_basic_v3",
+      "enchantmentName": "Sharpness I (Basic)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.15,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2", "sharpness_3", "sharpness_advanced_v3", "sharpness_master_v3"]
+      }
+    },
+    {
+      "index": 129,
+      "metadata": {
+        "narrative": "Diamond perfection meets phoenix fire and adamantine strength. The edge exists between states of matter itself.",
+        "tags": ["weapon", "damage", "legendary", "fire"]
+      },
+      "recipeId": "enchanting_sharpness_master_v3",
+      "enchantmentId": "sharpness_master_v3",
+      "enchantmentName": "Sharpness III (Master)",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.4,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2", "sharpness_3", "sharpness_basic_v3", "sharpness_advanced_v3"]
+      }
+    },
+    {
+      "index": 130,
+      "metadata": {
+        "narrative": "Light and spectral essence phase tools between dimensions. Harvest materials in their original untouched form.",
+        "tags": ["tool", "silk-touch", "special", "spectral"]
+      },
+      "recipeId": "enchanting_silk_touch_v3",
+      "enchantmentId": "silk_touch_v3",
+      "enchantmentName": "Silk Touch (Enhanced)",
+      "applicableTo": ["tool"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "harvest_original_form",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": ["silk_touch", "fortune_1", "fortune_2", "fortune_basic_v3", "fortune_advanced_v3"]
+      }
+    },
+    {
+      "index": 131,
+      "metadata": {
+        "narrative": "Worldtree essence bound with chaos and eternity. Items transcend death itself, forever returning to their bearer.",
+        "tags": ["universal", "soulbound", "special", "legendary"]
+      },
+      "recipeId": "enchanting_soulbound_v3",
+      "enchantmentId": "soulbound_v3",
+      "enchantmentName": "Soulbound (Eternal)",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": ["soulbound"]
+      }
+    },
+    {
+      "index": 132,
+      "metadata": {
+        "narrative": "Mithril blessed with lightning and air. Movement becomes effortless, reality blurring at the edges.",
+        "tags": ["armor", "speed", "mobility", "lightning"]
+      },
+      "recipeId": "enchanting_swiftness_v3",
+      "enchantmentId": "swiftness_v3",
+      "enchantmentName": "Swiftness (Enhanced)",
+      "applicableTo": ["armor"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "movement_speed_multiplier",
+        "value": 0.2,
+        "stackable": true,
+        "maxStacks": 3,
+        "conflictsWith": ["swiftness"]
+      }
+    },
+    {
+      "index": 133,
+      "metadata": {
+        "narrative": "Razor carapaces and iron scales turn armor into a weapon. Attackers recoil from their own aggression.",
+        "tags": ["armor", "reflect", "thorns", "physical"]
+      },
+      "recipeId": "enchanting_thorns_v3",
+      "enchantmentId": "thorns_v3",
+      "enchantmentName": "Thorns (Enhanced)",
+      "applicableTo": ["armor"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "reflect_damage",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": ["thorns"]
+      }
+    },
+    {
+      "index": 134,
+      "metadata": {
+        "narrative": "Air crystals and slime gel defy gravity's pull. Equipment becomes almost ethereal in weight.",
+        "tags": ["universal", "weight", "utility", "air"]
+      },
+      "recipeId": "enchanting_weightless_v3",
+      "enchantmentId": "weightless_v3",
+      "enchantmentName": "Weightless (Enhanced)",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "weight_multiplier",
+        "value": -0.6,
+        "stackable": false,
+        "conflictsWith": ["weightless"]
+      }
+    },
+    {
+      "index": 135,
+      "metadata": {
+        "narrative": "Storm hearts and air crystals accelerate gathering to supernatural speeds. Tools blur with velocity.",
+        "tags": ["tool", "efficiency", "advanced", "lightning"]
+      },
+      "recipeId": "enchanting_efficiency_advanced_vert_v1",
+      "enchantmentId": "efficiency_advanced_light_v1",
+      "enchantmentName": "Efficiency II (Light)",
+      "applicableTo": ["tool"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.45,
+        "stackable": false,
+        "conflictsWith": ["efficiency_1", "efficiency_2", "efficiency_basic_light_v1"]
+      }
+    },
+    {
+      "index": 136,
+      "metadata": {
+        "narrative": "Light-infused slime and air make gathering swift and effortless. Basic enhancement for productive work.",
+        "tags": ["tool", "efficiency", "basic"]
+      },
+      "recipeId": "enchanting_efficiency_basic_vert_v1",
+      "enchantmentId": "efficiency_basic_light_v1",
+      "enchantmentName": "Efficiency I (Light)",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.25,
+        "stackable": false,
+        "conflictsWith": ["efficiency_1", "efficiency_2", "efficiency_advanced_light_v1"]
+      }
+    },
+    {
+      "index": 137,
+      "metadata": {
+        "narrative": "Radiant fire crystals imbue weapons with searing flames. Strikes leave burning wounds that spread.",
+        "tags": ["weapon", "elemental", "fire", "light"]
+      },
+      "recipeId": "enchanting_fire_aspect_vert_v1",
+      "enchantmentId": "fire_aspect_light_v1",
+      "enchantmentName": "Fire Aspect (Light)",
+      "applicableTo": ["weapon"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_over_time",
+        "element": "fire",
+        "damagePerSecond": 11,
+        "duration": 6,
+        "stackable": true,
+        "conflictsWith": ["fire_aspect"]
+      }
+    },
+    {
+      "index": 138,
+      "metadata": {
+        "narrative": "Diamond and chaos essence bend probability toward abundance. Reality itself favors generous yields.",
+        "tags": ["tool", "fortune", "master", "chaos"]
+      },
+      "recipeId": "enchanting_fortune_advanced_vert_v1",
+      "enchantmentId": "fortune_advanced_light_v1",
+      "enchantmentName": "Fortune II (Light)",
+      "applicableTo": ["tool"],
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.65,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "fortune_2", "fortune_basic_light_v1", "silk_touch"]
+      }
+    },
+    {
+      "index": 139,
+      "metadata": {
+        "narrative": "Crystal quartz and light gems attract greater harvests. Fortune favors the prepared tool.",
+        "tags": ["tool", "fortune", "luck", "light"]
+      },
+      "recipeId": "enchanting_fortune_basic_vert_v1",
+      "enchantmentId": "fortune_basic_light_v1",
+      "enchantmentName": "Fortune I (Light)",
+      "applicableTo": ["tool"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "fortune_2", "fortune_advanced_light_v1", "silk_touch"]
+      }
+    },
+    {
+      "index": 140,
+      "metadata": {
+        "narrative": "Frost essence blessed by light creates slowing strikes. Enemies freeze in radiant cold.",
+        "tags": ["weapon", "elemental", "frost", "light"]
+      },
+      "recipeId": "enchanting_frost_touch_vert_v1",
+      "enchantmentId": "frost_touch_light_v1",
+      "enchantmentName": "Frost Touch (Light)",
+      "applicableTo": ["weapon"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "slow",
+        "element": "ice",
+        "slowPercent": 0.35,
+        "duration": 5,
+        "stackable": true,
+        "conflictsWith": ["frost_touch"]
+      }
+    },
+    {
+      "index": 141,
+      "metadata": {
+        "narrative": "Air crystals imbued with light grant devastating knockback. Enemies are sent flying with radiant force.",
+        "tags": ["weapon", "knockback", "utility", "air"]
+      },
+      "recipeId": "enchanting_knockback_vert_v1",
+      "enchantmentId": "knockback_light_v1",
+      "enchantmentName": "Knockback (Light)",
+      "applicableTo": ["weapon"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "knockback",
+        "value": 4,
+        "stackable": false,
+        "conflictsWith": ["knockback"]
+      }
+    },
+    {
+      "index": 142,
+      "metadata": {
+        "narrative": "Shadow-touched blood essence drains life force. Each strike feeds the wielder with stolen vitality.",
+        "tags": ["weapon", "lifesteal", "vampiric", "blood"]
+      },
+      "recipeId": "enchanting_lifesteal_vert_v1",
+      "enchantmentId": "lifesteal_light_v1",
+      "enchantmentName": "Lifesteal (Light)",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "lifesteal",
+        "value": 0.15,
+        "stackable": false,
+        "conflictsWith": ["lifesteal"]
+      }
+    },
+    {
+      "index": 143,
+      "metadata": {
+        "narrative": "Storm hearts channel lightning to chain between foes. Crackling energy leaps with devastating precision.",
+        "tags": ["weapon", "elemental", "lightning", "light"]
+      },
+      "recipeId": "enchanting_lightning_strike_vert_v1",
+      "enchantmentId": "lightning_strike_light_v1",
+      "enchantmentName": "Lightning Strike (Light)",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "chain_damage",
+        "element": "lightning",
+        "chainCount": 2,
+        "chainRange": 4,
+        "damagePercent": 0.55,
+        "stackable": false,
+        "conflictsWith": ["lightning_strike"]
+      }
+    },
+    {
+      "index": 144,
+      "metadata": {
+        "narrative": "Shadow cores and dire fangs infuse weapons with lingering toxins. Poison spreads through darkened wounds.",
+        "tags": ["weapon", "poison", "damage", "shadow"]
+      },
+      "recipeId": "enchanting_poison_vert_v1",
+      "enchantmentId": "poison_light_v1",
+      "enchantmentName": "Poison (Light)",
+      "applicableTo": ["weapon"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_over_time",
+        "element": "poison",
+        "damagePerSecond": 9,
+        "duration": 9,
+        "stackable": true,
+        "conflictsWith": ["poison"]
+      }
+    },
+    {
+      "index": 145,
+      "metadata": {
+        "narrative": "Living ichor and light-blessed golem cores grant autonomous repair. Items remember their perfect form.",
+        "tags": ["universal", "repair", "utility", "living"]
+      },
+      "recipeId": "enchanting_self_repair_vert_v1",
+      "enchantmentId": "self_repair_light_v1",
+      "enchantmentName": "Self-Repair (Light)",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "durability_regeneration",
+        "value": 1,
+        "perMinute": true,
+        "stackable": false,
+        "conflictsWith": ["self_repair"]
+      }
+    },
+    {
+      "index": 146,
+      "metadata": {
+        "narrative": "Lightning shards and frost essence forge edges of dual elements. Blades cut with crackling frost.",
+        "tags": ["weapon", "damage", "advanced", "elemental"]
+      },
+      "recipeId": "enchanting_sharpness_advanced_vert_v1",
+      "enchantmentId": "sharpness_advanced_light_v1",
+      "enchantmentName": "Sharpness II (Light)",
+      "applicableTo": ["weapon"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.22,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2", "sharpness_3", "sharpness_basic_light_v1", "sharpness_master_light_v1"]
+      }
+    },
+    {
+      "index": 147,
+      "metadata": {
+        "narrative": "Fire crystals temper iron into basic sharpness. Simple but effective edge enhancement.",
+        "tags": ["weapon", "damage", "basic", "fire"]
+      },
+      "recipeId": "enchanting_sharpness_basic_vert_v1",
+      "enchantmentId": "sharpness_basic_light_v1",
+      "enchantmentName": "Sharpness I (Light)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.12,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2", "sharpness_3", "sharpness_advanced_light_v1", "sharpness_master_light_v1"]
+      }
+    },
+    {
+      "index": 148,
+      "metadata": {
+        "narrative": "Phoenix ash and diamond perfection create transcendent edges. Blades exist between matter states.",
+        "tags": ["weapon", "damage", "legendary", "fire"]
+      },
+      "recipeId": "enchanting_sharpness_master_vert_v1",
+      "enchantmentId": "sharpness_master_light_v1",
+      "enchantmentName": "Sharpness III (Light)",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.38,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2", "sharpness_3", "sharpness_basic_light_v1", "sharpness_advanced_light_v1"]
+      }
+    },
+    {
+      "index": 149,
+      "metadata": {
+        "narrative": "Spectral threads phase tools between dimensions. Materials are harvested in pristine original form.",
+        "tags": ["tool", "silk-touch", "special", "spectral"]
+      },
+      "recipeId": "enchanting_silk_touch_vert_v1",
+      "enchantmentId": "silk_touch_light_v1",
+      "enchantmentName": "Silk Touch (Light)",
+      "applicableTo": ["tool"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "harvest_original_form",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": ["silk_touch", "fortune_1", "fortune_2"]
+      }
+    },
+    {
+      "index": 150,
+      "metadata": {
+        "narrative": "Worldtree essence bound with primordial chaos and eternal memory. Items transcend mortality itself.",
+        "tags": ["universal", "soulbound", "special", "legendary"]
+      },
+      "recipeId": "enchanting_soulbound_vert_v1",
+      "enchantmentId": "soulbound_light_v1",
+      "enchantmentName": "Soulbound (Light)",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": ["soulbound"]
+      }
+    },
+    {
+      "index": 151,
+      "metadata": {
+        "narrative": "Mithril blessed with lightning and compressed winds. Movement becomes effortless, reality blurs.",
+        "tags": ["armor", "speed", "mobility", "lightning"]
+      },
+      "recipeId": "enchanting_swiftness_hori_v1",
+      "enchantmentId": "swiftness_light_v1",
+      "enchantmentName": "Swiftness (Light)",
+      "applicableTo": ["armor"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "movement_speed_multiplier",
+        "value": 0.18,
+        "stackable": true,
+        "maxStacks": 3,
+        "conflictsWith": ["swiftness"]
+      }
+    },
+    {
+      "index": 152,
+      "metadata": {
+        "narrative": "Air and light essence defy gravity. Equipment becomes nearly weightless without losing strength.",
+        "tags": ["universal", "weight", "utility", "air"]
+      },
+      "recipeId": "enchanting_weightless_vert_v1",
+      "enchantmentId": "weightless_light_v1",
+      "enchantmentName": "Weightless (Light)",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "weight_multiplier",
+        "value": -0.55,
+        "stackable": false,
+        "conflictsWith": ["weightless"]
+      }
+    },
+    {
+      "index": 153,
+      "metadata": {
+        "narrative": "Shadow-touched storm essence accelerates gathering with dark energy. Tools move with supernatural speed.",
+        "tags": ["tool", "efficiency", "advanced", "dark"]
+      },
+      "recipeId": "enchanting_efficiency_advanced_vert_v2",
+      "enchantmentId": "efficiency_advanced_dark_v2",
+      "enchantmentName": "Efficiency II (Dark)",
+      "applicableTo": ["tool"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.42,
+        "stackable": false,
+        "conflictsWith": ["efficiency_1", "efficiency_2", "efficiency_basic_dark_v2"]
+      }
+    },
+    {
+      "index": 154,
+      "metadata": {
+        "narrative": "Shadow-infused air crystals provide basic gathering enhancement. Efficient work through dark power.",
+        "tags": ["tool", "efficiency", "basic", "shadow"]
+      },
+      "recipeId": "enchanting_efficiency_basic_vert_v2",
+      "enchantmentId": "efficiency_basic_dark_v2",
+      "enchantmentName": "Efficiency I (Dark)",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.22,
+        "stackable": false,
+        "conflictsWith": ["efficiency_1", "efficiency_2", "efficiency_advanced_dark_v2"]
+      }
+    },
+    {
+      "index": 155,
+      "metadata": {
+        "narrative": "Dark fire crystals burn with shadow flames. Strikes leave smoldering wounds infused with darkness.",
+        "tags": ["weapon", "elemental", "fire", "dark"]
+      },
+      "recipeId": "enchanting_fire_aspect_vert_v2",
+      "enchantmentId": "fire_aspect_dark_v2",
+      "enchantmentName": "Fire Aspect (Dark)",
+      "applicableTo": ["weapon"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_over_time",
+        "element": "fire",
+        "damagePerSecond": 10,
+        "duration": 6,
+        "stackable": true,
+        "conflictsWith": ["fire_aspect"]
+      }
+    },
+    {
+      "index": 156,
+      "metadata": {
+        "narrative": "Shadow-blessed diamond and chaos bend probability through darkness. Reality favors those who walk in shadow.",
+        "tags": ["tool", "fortune", "master", "dark"]
+      },
+      "recipeId": "enchanting_fortune_advanced_vert_v2",
+      "enchantmentId": "fortune_advanced_dark_v2",
+      "enchantmentName": "Fortune II (Dark)",
+      "applicableTo": ["tool"],
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.62,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "fortune_2", "fortune_basic_dark_v2", "silk_touch"]
+      }
+    },
+    {
+      "index": 157,
+      "metadata": {
+        "narrative": "Dark crystal quartz attracts fortune through shadow. Darkness rewards the prepared harvester.",
+        "tags": ["tool", "fortune", "luck", "shadow"]
+      },
+      "recipeId": "enchanting_fortune_basic_vert_v2",
+      "enchantmentId": "fortune_basic_dark_v2",
+      "enchantmentName": "Fortune I (Dark)",
+      "applicableTo": ["tool"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.32,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "fortune_2", "fortune_advanced_dark_v2", "silk_touch"]
+      }
+    },
+    {
+      "index": 158,
+      "metadata": {
+        "narrative": "Shadow-frost essence freezes with dark cold. Enemies slow in chilling darkness.",
+        "tags": ["weapon", "elemental", "frost", "dark"]
+      },
+      "recipeId": "enchanting_frost_touch_vert_v2",
+      "enchantmentId": "frost_touch_dark_v2",
+      "enchantmentName": "Frost Touch (Dark)",
+      "applicableTo": ["weapon"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "slow",
+        "element": "ice",
+        "slowPercent": 0.32,
+        "duration": 5,
+        "stackable": true,
+        "conflictsWith": ["frost_touch"]
+      }
+    },
+    {
+      "index": 159,
+      "metadata": {
+        "narrative": "Dark air essence provides powerful knockback through shadow force. Enemies scatter before darkness.",
+        "tags": ["weapon", "knockback", "utility", "shadow"]
+      },
+      "recipeId": "enchanting_knockback_vert_v2",
+      "enchantmentId": "knockback_dark_v2",
+      "enchantmentName": "Knockback (Dark)",
+      "applicableTo": ["weapon"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "knockback",
+        "value": 3,
+        "stackable": false,
+        "conflictsWith": ["knockback"]
+      }
+    }
+  ]
+}

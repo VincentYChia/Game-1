@@ -1,0 +1,1625 @@
+[
+  {
+    "index": 411,
+    "metadata": {
+      "narrative": "A simple round shield - iron face with oak backing. Protects and strikes in equal measure. The iron boss can deliver a devastating bash when opponents close distance.",
+      "tags": ["melee", "shield", "1H", "defensive", "bash"]
+    },
+    "itemId": "iron_round_shield",
+    "name": "Iron Round Shield",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "shield",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "crushing", "single"],
+    "effectParams": {
+      "baseDamage": 15
+    },
+    "stats": {
+      "damage": 6.0,
+      "durability": 500.0,
+      "weight": 4.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {
+        "STR": 8
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 412,
+    "metadata": {
+      "narrative": "A simple iron blade with a wooden handle. Every warrior's first step on the path to mastery. The weight feels right in your hand - not perfect, but yours.",
+      "tags": ["melee", "sword", "versatile", "starter"]
+    },
+    "itemId": "iron_shortsword",
+    "name": "Iron Shortsword",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 30
+    },
+    "stats": {
+      "damage": 10.0,
+      "durability": 500.0,
+      "weight": 3.0
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 413,
+    "metadata": {
+      "narrative": "Leather gloves reinforced with iron studs across the knuckles. Light enough for dexterity, strong enough to turn a blade. Your hands are tools - protect them.",
+      "tags": ["armor", "hands", "light", "flexible"]
+    },
+    "itemId": "iron_studded_gauntlets",
+    "name": "Iron-Studded Gauntlets",
+    "category": "equipment",
+    "slot": "hands",
+    "type": "armor",
+    "tier": 1,
+    "rarity": "common",
+    "statMultipliers": {
+      "defense": 1.0,
+      "durability": 1.0,
+      "weight": 0.9
+    },
+    "requirements": {
+      "level": 2,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 414,
+    "metadata": {
+      "narrative": "Heavy iron warhammer that crushes armor and bone alike. The weight demands both hands, but the devastation it delivers makes that trade worthwhile. Favored by those who prefer decisive, crushing blows.",
+      "tags": ["melee", "mace", "2H", "crushing", "armor_breaker"]
+    },
+    "itemId": "iron_warhammer",
+    "name": "Iron Warhammer",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 2,
+    "rarity": "common",
+    "range": 1.5,
+    "effectTags": ["physical", "crushing", "single"],
+    "effectParams": {
+      "baseDamage": 45
+    },
+    "stats": {
+      "damage": 20.0,
+      "durability": 1000.0,
+      "weight": 5.5
+    },
+    "requirements": {
+      "level": 10,
+      "stats": {
+        "STR": 15
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 415,
+    "metadata": {
+      "narrative": "Razor-edged steel axe with ironwood handle. Ancient trees fall before it like saplings. The keen edge maintains itself through countless swings.",
+      "tags": ["tool", "axe", "quality", "forestry"]
+    },
+    "itemId": "steel_axe",
+    "name": "Steel Axe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 2,
+    "rarity": "uncommon",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 28
+    },
+    "stats": {
+      "damage": 12.0,
+      "durability": 1000.0,
+      "forestry": 2.0,
+      "weight": 3.5
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 416,
+    "metadata": {
+      "narrative": "Steel battleaxe with brutal cleaving power and dire fang reinforcement. Grip it with both hands and watch enemies fall like timber. Equally deadly in one hand for those strong enough to wield it.",
+      "tags": ["melee", "axe", "versatile", "cleaving"]
+    },
+    "itemId": "steel_battleaxe",
+    "name": "Steel Battleaxe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 2,
+    "rarity": "uncommon",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 50
+    },
+    "stats": {
+      "damage": 22.0,
+      "durability": 1100.0,
+      "weight": 4.8
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {
+        "STR": 12
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 417,
+    "metadata": {
+      "narrative": "Balanced steel longsword that flows like water and strikes like thunder. The blade sings when it cuts through air, a testament to its quality. Dire fang accents enhance its edge.",
+      "tags": ["melee", "sword", "versatile", "quality"]
+    },
+    "itemId": "steel_longsword",
+    "name": "Steel Longsword",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 2,
+    "rarity": "uncommon",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 40
+    },
+    "stats": {
+      "damage": 18.0,
+      "durability": 1100.0,
+      "weight": 3.5
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {
+        "STR": 10
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 418,
+    "metadata": {
+      "narrative": "Steel pickaxe with perfect balance and ironwood construction throughout. Makes hard rock feel like clay. The weight distribution allows for powerful, efficient strikes.",
+      "tags": ["tool", "pickaxe", "quality", "mining"]
+    },
+    "itemId": "steel_pickaxe",
+    "name": "Steel Pickaxe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 2,
+    "rarity": "uncommon",
+    "range": 1,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 25
+    },
+    "stats": {
+      "damage": 10.0,
+      "durability": 1000.0,
+      "mining": 2.0,
+      "weight": 4.0
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 419,
+    "metadata": {
+      "narrative": "Curved steel blade designed for harvesting herbs, grains, and fibrous plants. The razor edge cuts clean without bruising delicate materials. Adequate for self-defense in a pinch.",
+      "tags": ["tool", "harvesting", "gathering", "herbs"]
+    },
+    "itemId": "steel_sickle",
+    "name": "Steel Sickle",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 2,
+    "rarity": "common",
+    "range": 0.5,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 22
+    },
+    "stats": {
+      "damage": 8.0,
+      "durability": 1000.0,
+      "weight": 2.5
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 420,
+    "metadata": {
+      "narrative": "A weapon that shouldn't exist - etherion blade wrapped in crystallized blood essence, bound with voidstone and worldtree. Reality bends around its edge. Each strike tears at the fabric of existence itself.",
+      "tags": ["melee", "sword", "2H", "legendary", "void", "blood"]
+    },
+    "itemId": "blood_reaver",
+    "name": "Blood Reaver",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 1.5,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 75
+    },
+    "stats": {
+      "damage": 85.0,
+      "durability": 4000.0,
+      "weight": 5.0
+    },
+    "attributes": [
+      {
+        "type": "lifesteal",
+        "element": "blood",
+        "value": 15,
+        "effect": "Steals 15% of damage dealt as health"
+      }
+    ],
+    "requirements": {
+      "level": 28,
+      "stats": {
+        "STR": 25
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 421,
+    "metadata": {
+      "narrative": "Voidstone warhammer infused with frost essence. Each impact releases a wave of absolute cold that freezes targets solid. The ironwood handle never cracks from the temperature extremes.",
+      "tags": ["melee", "mace", "2H", "elemental", "frost"]
+    },
+    "itemId": "frostbite_hammer",
+    "name": "Frostbite Hammer",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 3,
+    "rarity": "rare",
+    "range": 1.5,
+    "effectTags": ["physical", "crushing", "single", "freeze"],
+    "effectParams": {
+      "baseDamage": 65,
+      "freeze_duration": 5.0
+    },
+    "stats": {
+      "damage": 42.0,
+      "durability": 2000.0,
+      "weight": 5.5
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "water",
+        "value": 20,
+        "effect": "Adds frost damage and may freeze enemies"
+      }
+    ],
+    "requirements": {
+      "level": 18,
+      "stats": {
+        "STR": 20
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 422,
+    "metadata": {
+      "narrative": "Etherion longsword wreathed in eternal phoenix flames. The blade burns with fire that cannot be extinguished, fed by voidstone's hunger for reality. Worldtree wood forms a handle that defies combustion.",
+      "tags": ["melee", "sword", "2H", "legendary", "fire", "elemental"]
+    },
+    "itemId": "inferno_blade",
+    "name": "Inferno Blade",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 1.5,
+    "effectTags": ["fire", "slashing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 70,
+      "burn_duration": 8.0,
+      "burn_damage_per_second": 12.0
+    },
+    "stats": {
+      "damage": 78.0,
+      "durability": 4000.0,
+      "weight": 4.5
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 30,
+        "effect": "Engulfs enemies in eternal flames"
+      }
+    ],
+    "requirements": {
+      "level": 26,
+      "stats": {
+        "STR": 22
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 423,
+    "metadata": {
+      "narrative": "Spectral thread woven into a whip, tipped with adamantine and powered by a storm heart. Cracks with thunderous force, chains lightning between foes. The voidstone counterweight pulls at spacetime itself.",
+      "tags": ["melee", "whip", "1H", "lightning", "elemental", "chain"]
+    },
+    "itemId": "lightning_chain_whip",
+    "name": "Lightning Chain Whip",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 3,
+    "effectTags": ["lightning", "slashing", "chain"],
+    "effectParams": {
+      "baseDamage": 55,
+      "chain_count": 3,
+      "chain_range": 5
+    },
+    "stats": {
+      "damage": 38.0,
+      "durability": 2000.0,
+      "weight": 3.0
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "lightning",
+        "value": 25,
+        "effect": "Chains lightning between nearby enemies"
+      }
+    ],
+    "requirements": {
+      "level": 20,
+      "stats": {
+        "AGI": 18,
+        "INT": 12
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 424,
+    "metadata": {
+      "narrative": "Basic copper axe with pine handle. Simple but essential for any aspiring adventurer. The edge dulls quickly but sharpens easily.",
+      "tags": ["tool", "axe", "starter", "forestry"]
+    },
+    "itemId": "copper_axe",
+    "name": "Copper Axe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 18
+    },
+    "stats": {
+      "damage": 8.0,
+      "durability": 400.0,
+      "forestry": 1.0,
+      "weight": 2.8
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 425,
+    "metadata": {
+      "narrative": "Simple copper dagger, light and quick. Not much reach, but what it lacks in power it makes up for in speed. Perfect for those who value precision over brute force.",
+      "tags": ["melee", "dagger", "1H", "fast", "precision"]
+    },
+    "itemId": "copper_dagger",
+    "name": "Copper Dagger",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 1,
+    "rarity": "common",
+    "range": 0.5,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 18
+    },
+    "stats": {
+      "damage": 9.0,
+      "durability": 400.0,
+      "weight": 1.8
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {
+        "AGI": 8
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 426,
+    "metadata": {
+      "narrative": "Your first pickaxe - copper head on oak handle. The gateway to greater resources and deeper discoveries. Every mining journey starts here.",
+      "tags": ["tool", "pickaxe", "starter", "mining"]
+    },
+    "itemId": "copper_pickaxe",
+    "name": "Copper Pickaxe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 15
+    },
+    "stats": {
+      "damage": 7.0,
+      "durability": 400.0,
+      "mining": 1.0,
+      "weight": 3.0
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 427,
+    "metadata": {
+      "narrative": "Simple copper-tipped spear with ash wood shaft. The extra reach keeps danger at arm's length. Perfect for those who prefer distance over direct confrontation.",
+      "tags": ["melee", "spear", "versatile", "reach"]
+    },
+    "itemId": "copper_spear",
+    "name": "Copper Spear",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 1,
+    "rarity": "common",
+    "range": 2,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 25
+    },
+    "stats": {
+      "damage": 10.0,
+      "durability": 450.0,
+      "weight": 2.7
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 428,
+    "metadata": {
+      "narrative": "Ironwood staff capped with eight fire crystals and mithril fittings, infused with void essence. The wood never burns, the crystals never dim, and the void hungers eternally. Channel destructive forces through this corrupted focus.",
+      "tags": ["melee", "staff", "versatile", "elemental", "fire", "void"]
+    },
+    "itemId": "void_fire_staff",
+    "name": "Void Fire Staff",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 8,
+    "effectTags": ["fire", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 58,
+      "burn_duration": 5.0,
+      "burn_damage_per_second": 8.0
+    },
+    "stats": {
+      "damage": 35.0,
+      "durability": 2000.0,
+      "weight": 2.8
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 22,
+        "effect": "Elemental attacks deal bonus fire damage with void corruption"
+      }
+    ],
+    "requirements": {
+      "level": 18,
+      "stats": {
+        "INT": 22
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 429,
+    "metadata": {
+      "narrative": "Solid iron axe for serious forestry work. Bites deep and true. The birch handle absorbs shock with each swing.",
+      "tags": ["tool", "axe", "quality", "forestry"]
+    },
+    "itemId": "iron_axe",
+    "name": "Iron Axe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 22
+    },
+    "stats": {
+      "damage": 10.0,
+      "durability": 600.0,
+      "forestry": 1.5,
+      "weight": 3.2
+    },
+    "requirements": {
+      "level": 4,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 430,
+    "metadata": {
+      "narrative": "Upgraded pickaxe that can tackle tougher deposits. Iron reliability meets practical ash wood design. A workhorse tool for serious miners.",
+      "tags": ["tool", "pickaxe", "standard", "mining"]
+    },
+    "itemId": "iron_pickaxe",
+    "name": "Iron Pickaxe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 20
+    },
+    "stats": {
+      "damage": 8.0,
+      "durability": 600.0,
+      "mining": 1.5,
+      "weight": 3.5
+    },
+    "requirements": {
+      "level": 4,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 431,
+    "metadata": {
+      "narrative": "A simple round shield - iron face with oak backing. Protects and strikes in equal measure. Wolf pelt padding softens impacts.",
+      "tags": ["melee", "shield", "1H", "defensive", "bash"]
+    },
+    "itemId": "iron_round_shield",
+    "name": "Iron Round Shield",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "shield",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "crushing", "single"],
+    "effectParams": {
+      "baseDamage": 15
+    },
+    "stats": {
+      "damage": 6.0,
+      "durability": 500.0,
+      "weight": 4.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {
+        "STR": 8
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 432,
+    "metadata": {
+      "narrative": "A simple iron blade with a wooden handle. Every warrior's first step on the path to mastery. The weight feels right in your hand - not perfect, but yours.",
+      "tags": ["melee", "sword", "versatile", "starter"]
+    },
+    "itemId": "iron_shortsword",
+    "name": "Iron Shortsword",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 30
+    },
+    "stats": {
+      "damage": 10.0,
+      "durability": 500.0,
+      "weight": 3.0
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 433,
+    "metadata": {
+      "narrative": "Leather gloves reinforced with iron studs across the knuckles. Light enough for dexterity, strong enough to turn a blade. Your hands are tools - protect them.",
+      "tags": ["armor", "hands", "light", "flexible"]
+    },
+    "itemId": "iron_studded_gauntlets",
+    "name": "Iron-Studded Gauntlets",
+    "category": "equipment",
+    "slot": "hands",
+    "type": "armor",
+    "tier": 1,
+    "rarity": "common",
+    "statMultipliers": {
+      "defense": 1.0,
+      "durability": 1.0,
+      "weight": 0.9
+    },
+    "requirements": {
+      "level": 2,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 434,
+    "metadata": {
+      "narrative": "Heavy iron warhammer that crushes armor and bone alike. The weight demands both hands, but the devastation it delivers makes that trade worthwhile. Granite counterweight ensures devastating impacts.",
+      "tags": ["melee", "mace", "2H", "crushing", "armor_breaker"]
+    },
+    "itemId": "iron_warhammer",
+    "name": "Iron Warhammer",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 2,
+    "rarity": "common",
+    "range": 1.5,
+    "effectTags": ["physical", "crushing", "single"],
+    "effectParams": {
+      "baseDamage": 45
+    },
+    "stats": {
+      "damage": 20.0,
+      "durability": 1000.0,
+      "weight": 5.5
+    },
+    "requirements": {
+      "level": 10,
+      "stats": {
+        "STR": 15
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 435,
+    "metadata": {
+      "narrative": "Razor-edged steel axe with ironwood handle. Ancient trees fall before it like saplings. The superior steel holds its edge through extended use.",
+      "tags": ["tool", "axe", "quality", "forestry"]
+    },
+    "itemId": "steel_axe",
+    "name": "Steel Axe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 2,
+    "rarity": "uncommon",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 28
+    },
+    "stats": {
+      "damage": 12.0,
+      "durability": 1000.0,
+      "forestry": 2.0,
+      "weight": 3.5
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 436,
+    "metadata": {
+      "narrative": "Steel battleaxe with brutal cleaving power. Dire fang reinforcement creates devastating wounds. Grip it with both hands and watch enemies fall like timber.",
+      "tags": ["melee", "axe", "versatile", "cleaving"]
+    },
+    "itemId": "steel_battleaxe",
+    "name": "Steel Battleaxe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 2,
+    "rarity": "uncommon",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 50
+    },
+    "stats": {
+      "damage": 22.0,
+      "durability": 1100.0,
+      "weight": 4.8
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {
+        "STR": 12
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 437,
+    "metadata": {
+      "narrative": "Balanced steel longsword that flows like water and strikes like thunder. Dire fang accents enhance penetration. The blade sings when it cuts through air.",
+      "tags": ["melee", "sword", "versatile", "quality"]
+    },
+    "itemId": "steel_longsword",
+    "name": "Steel Longsword",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 2,
+    "rarity": "uncommon",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 40
+    },
+    "stats": {
+      "damage": 18.0,
+      "durability": 1100.0,
+      "weight": 3.5
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {
+        "STR": 10
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 438,
+    "metadata": {
+      "narrative": "Steel pickaxe with perfect balance. Ironwood construction throughout provides exceptional durability. Makes hard rock feel like clay under your strikes.",
+      "tags": ["tool", "pickaxe", "quality", "mining"]
+    },
+    "itemId": "steel_pickaxe",
+    "name": "Steel Pickaxe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 2,
+    "rarity": "uncommon",
+    "range": 1,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 25
+    },
+    "stats": {
+      "damage": 10.0,
+      "durability": 1000.0,
+      "mining": 2.0,
+      "weight": 4.0
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 439,
+    "metadata": {
+      "narrative": "Curved steel blade perfect for harvesting delicate plants. Clean cuts preserve quality and maximize yield. Birch handle provides excellent control.",
+      "tags": ["tool", "harvesting", "gathering", "herbs"]
+    },
+    "itemId": "steel_sickle",
+    "name": "Steel Sickle",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 2,
+    "rarity": "common",
+    "range": 0.5,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 22
+    },
+    "stats": {
+      "damage": 8.0,
+      "durability": 1000.0,
+      "weight": 2.5
+    },
+    "requirements": {
+      "level": 5,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 440,
+    "metadata": {
+      "narrative": "A weapon that shouldn't exist - etherion blade wrapped in crystallized blood essence, bound with voidstone and worldtree. Reality bends around its edge. Each strike tears at existence itself.",
+      "tags": ["melee", "sword", "2H", "legendary", "void", "blood"]
+    },
+    "itemId": "blood_reaver",
+    "name": "Blood Reaver",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 1.5,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 75
+    },
+    "stats": {
+      "damage": 85.0,
+      "durability": 4000.0,
+      "weight": 5.0
+    },
+    "attributes": [
+      {
+        "type": "lifesteal",
+        "element": "blood",
+        "value": 15,
+        "effect": "Steals 15% of damage dealt as health"
+      }
+    ],
+    "requirements": {
+      "level": 28,
+      "stats": {
+        "STR": 25
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 441,
+    "metadata": {
+      "narrative": "Voidstone warhammer infused with frost essence. Each impact releases waves of absolute cold that freeze targets solid. Ironwood handle never cracks from temperature extremes.",
+      "tags": ["melee", "mace", "2H", "elemental", "frost"]
+    },
+    "itemId": "frostbite_hammer",
+    "name": "Frostbite Hammer",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 3,
+    "rarity": "rare",
+    "range": 1.5,
+    "effectTags": ["physical", "crushing", "single", "freeze"],
+    "effectParams": {
+      "baseDamage": 65,
+      "freeze_duration": 5.0
+    },
+    "stats": {
+      "damage": 42.0,
+      "durability": 2000.0,
+      "weight": 5.5
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "water",
+        "value": 20,
+        "effect": "Adds frost damage and may freeze enemies"
+      }
+    ],
+    "requirements": {
+      "level": 18,
+      "stats": {
+        "STR": 20
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 442,
+    "metadata": {
+      "narrative": "Etherion longsword wreathed in eternal phoenix flames. The blade burns with fire that cannot be extinguished. Voidstone feeds the flames with stolen reality. Worldtree wood forms an unburnable handle.",
+      "tags": ["melee", "sword", "2H", "legendary", "fire", "elemental"]
+    },
+    "itemId": "inferno_blade",
+    "name": "Inferno Blade",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 4,
+    "rarity": "legendary",
+    "range": 1.5,
+    "effectTags": ["fire", "slashing", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 70,
+      "burn_duration": 8.0,
+      "burn_damage_per_second": 12.0
+    },
+    "stats": {
+      "damage": 78.0,
+      "durability": 4000.0,
+      "weight": 4.5
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 30,
+        "effect": "Engulfs enemies in eternal flames"
+      }
+    ],
+    "requirements": {
+      "level": 26,
+      "stats": {
+        "STR": 22
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 443,
+    "metadata": {
+      "narrative": "Spectral thread woven into a whip, tipped with adamantine and powered by a storm heart. Cracks with thunderous force, chains lightning between foes. Voidstone counterweight distorts spacetime.",
+      "tags": ["melee", "whip", "1H", "lightning", "elemental", "chain"]
+    },
+    "itemId": "lightning_chain_whip",
+    "name": "Lightning Chain Whip",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 3,
+    "effectTags": ["lightning", "slashing", "chain"],
+    "effectParams": {
+      "baseDamage": 55,
+      "chain_count": 3,
+      "chain_range": 5
+    },
+    "stats": {
+      "damage": 38.0,
+      "durability": 2000.0,
+      "weight": 3.0
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "lightning",
+        "value": 25,
+        "effect": "Chains lightning between nearby enemies"
+      }
+    ],
+    "requirements": {
+      "level": 20,
+      "stats": {
+        "AGI": 18,
+        "INT": 12
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 444,
+    "metadata": {
+      "narrative": "Basic copper axe with pine handle. Simple but essential for any aspiring adventurer. The edge dulls quickly but sharpens easily.",
+      "tags": ["tool", "axe", "starter", "forestry"]
+    },
+    "itemId": "copper_axe",
+    "name": "Copper Axe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 18
+    },
+    "stats": {
+      "damage": 8.0,
+      "durability": 400.0,
+      "forestry": 1.0,
+      "weight": 2.8
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 445,
+    "metadata": {
+      "narrative": "Simple copper dagger, light and quick. Not much reach, but what it lacks in power it makes up for in speed. Perfect for those who value precision over brute force.",
+      "tags": ["melee", "dagger", "1H", "fast", "precision"]
+    },
+    "itemId": "copper_dagger",
+    "name": "Copper Dagger",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 1,
+    "rarity": "common",
+    "range": 0.5,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 18
+    },
+    "stats": {
+      "damage": 9.0,
+      "durability": 400.0,
+      "weight": 1.8
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {
+        "AGI": 8
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 446,
+    "metadata": {
+      "narrative": "Your first pickaxe - copper head on oak handle. The gateway to greater resources and deeper discoveries. Every mining journey starts here.",
+      "tags": ["tool", "pickaxe", "starter", "mining"]
+    },
+    "itemId": "copper_pickaxe",
+    "name": "Copper Pickaxe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 15
+    },
+    "stats": {
+      "damage": 7.0,
+      "durability": 400.0,
+      "mining": 1.0,
+      "weight": 3.0
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 447,
+    "metadata": {
+      "narrative": "Simple copper-tipped spear with ash wood shaft. The extra reach keeps danger at arm's length. Perfect for those who prefer distance over direct confrontation.",
+      "tags": ["melee", "spear", "versatile", "reach"]
+    },
+    "itemId": "copper_spear",
+    "name": "Copper Spear",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 1,
+    "rarity": "common",
+    "range": 2,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 25
+    },
+    "stats": {
+      "damage": 10.0,
+      "durability": 450.0,
+      "weight": 2.7
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 448,
+    "metadata": {
+      "narrative": "Ironwood staff capped with eight fire crystals and mithril fittings, infused with void essence. The wood never burns, the crystals never dim, and the void hungers eternally. Channel destructive forces through this corrupted focus.",
+      "tags": ["melee", "staff", "versatile", "elemental", "fire", "void"]
+    },
+    "itemId": "void_fire_staff",
+    "name": "Void Fire Staff",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 3,
+    "rarity": "epic",
+    "range": 8,
+    "effectTags": ["fire", "single", "burn"],
+    "effectParams": {
+      "baseDamage": 58,
+      "burn_duration": 5.0,
+      "burn_damage_per_second": 8.0
+    },
+    "stats": {
+      "damage": 35.0,
+      "durability": 2000.0,
+      "weight": 2.8
+    },
+    "attributes": [
+      {
+        "type": "damage",
+        "element": "fire",
+        "value": 22,
+        "effect": "Elemental attacks deal bonus fire damage with void corruption"
+      }
+    ],
+    "requirements": {
+      "level": 18,
+      "stats": {
+        "INT": 22
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 449,
+    "metadata": {
+      "narrative": "Solid iron axe for serious forestry work. Bites deep and true. The birch handle absorbs shock with each swing.",
+      "tags": ["tool", "axe", "quality", "forestry"]
+    },
+    "itemId": "iron_axe",
+    "name": "Iron Axe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 22
+    },
+    "stats": {
+      "damage": 10.0,
+      "durability": 600.0,
+      "forestry": 1.5,
+      "weight": 3.2
+    },
+    "requirements": {
+      "level": 4,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 450,
+    "metadata": {
+      "narrative": "Upgraded pickaxe that can tackle tougher deposits. Iron reliability meets practical ash wood design. A workhorse tool for serious miners.",
+      "tags": ["tool", "pickaxe", "standard", "mining"]
+    },
+    "itemId": "iron_pickaxe",
+    "name": "Iron Pickaxe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "piercing", "single"],
+    "effectParams": {
+      "baseDamage": 20
+    },
+    "stats": {
+      "damage": 8.0,
+      "durability": 600.0,
+      "mining": 1.5,
+      "weight": 3.5
+    },
+    "requirements": {
+      "level": 4,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 451,
+    "metadata": {
+      "narrative": "A simple round shield - iron face with oak backing. Protects and strikes in equal measure. Wolf pelt padding softens impacts.",
+      "tags": ["melee", "shield", "1H", "defensive", "bash"]
+    },
+    "itemId": "iron_round_shield",
+    "name": "Iron Round Shield",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "shield",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "crushing", "single"],
+    "effectParams": {
+      "baseDamage": 15
+    },
+    "stats": {
+      "damage": 6.0,
+      "durability": 500.0,
+      "weight": 4.5
+    },
+    "requirements": {
+      "level": 3,
+      "stats": {
+        "STR": 8
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 452,
+    "metadata": {
+      "narrative": "A simple iron blade with a wooden handle. Every warrior's first step on the path to mastery. The weight feels right in your hand - not perfect, but yours.",
+      "tags": ["melee", "sword", "versatile", "starter"]
+    },
+    "itemId": "iron_shortsword",
+    "name": "Iron Shortsword",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 1,
+    "rarity": "common",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 30
+    },
+    "stats": {
+      "damage": 10.0,
+      "durability": 500.0,
+      "weight": 3.0
+    },
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 453,
+    "metadata": {
+      "narrative": "Leather gloves reinforced with iron studs across the knuckles. Light enough for dexterity, strong enough to turn a blade. Your hands are tools - protect them.",
+      "tags": ["armor", "hands", "light", "flexible"]
+    },
+    "itemId": "iron_studded_gauntlets",
+    "name": "Iron-Studded Gauntlets",
+    "category": "equipment",
+    "slot": "hands",
+    "type": "armor",
+    "tier": 1,
+    "rarity": "common",
+    "statMultipliers": {
+      "defense": 1.0,
+      "durability": 1.0,
+      "weight": 0.9
+    },
+    "requirements": {
+      "level": 2,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 454,
+    "metadata": {
+      "narrative": "Heavy iron warhammer that crushes armor and bone alike. The weight demands both hands, but the devastation it delivers makes that trade worthwhile. Granite counterweight ensures devastating impacts.",
+      "tags": ["melee", "mace", "2H", "crushing", "armor_breaker"]
+    },
+    "itemId": "iron_warhammer",
+    "name": "Iron Warhammer",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "weapon",
+    "tier": 2,
+    "rarity": "common",
+    "range": 1.5,
+    "effectTags": ["physical", "crushing", "single"],
+    "effectParams": {
+      "baseDamage": 45
+    },
+    "stats": {
+      "damage": 20.0,
+      "durability": 1000.0,
+      "weight": 5.5
+    },
+    "requirements": {
+      "level": 10,
+      "stats": {
+        "STR": 15
+      }
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  },
+  {
+    "index": 455,
+    "metadata": {
+      "narrative": "Razor-edged steel axe with ironwood handle. Ancient trees fall before it like saplings. The superior steel holds its edge through extended use.",
+      "tags": ["tool", "axe", "quality", "forestry"]
+    },
+    "itemId": "steel_axe",
+    "name": "Steel Axe",
+    "category": "equipment",
+    "slot": "mainHand",
+    "type": "tool",
+    "tier": 2,
+    "rarity": "uncommon",
+    "range": 1,
+    "effectTags": ["physical", "slashing", "single"],
+    "effectParams": {
+      "baseDamage": 28
+    },
+    "stats": {
+      "damage": 12.0,
+      "durability": 1000.0,
+      "forestry": 2.0,
+      "weight": 3.5
+    },
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "flags": {
+      "stackable": false,
+      "equippable": true,
+      "repairable": true
+    }
+  }
+]

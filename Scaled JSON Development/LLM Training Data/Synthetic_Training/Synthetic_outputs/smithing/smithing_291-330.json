@@ -1,0 +1,1482 @@
+[
+  {
+    "index": 291,
+    "recipe_id": "smithing_mithril_fishing_rod_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Mithril-tipped rod with enchanted silk line. The lightweight metal lets you cast further while the magical line never tangles. Senses fish before they bite.",
+        "tags": ["tool", "fishing", "rare", "precision"]
+      },
+      "itemId": "mithril_fishing_rod",
+      "name": "Mithril Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 8,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.7,
+        "gathering": 1.6,
+        "durability": 1.2,
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 292,
+    "recipe_id": "smithing_refinery_t3_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Master refinery capable of processing legendary materials. Obsidian crucibles contain temperatures that would vaporize lesser equipment. Mithril chambers prevent contamination.",
+        "tags": ["station", "refinery", "forging", "master"]
+      },
+      "itemId": "refinery_t3",
+      "name": "Master Refinery",
+      "category": "station",
+      "type": "refining",
+      "subtype": "refinery",
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 293,
+    "recipe_id": "smithing_refinery_t4_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary refinery that exists partially outside normal reality. Can process materials that shouldn't be refinable. Void essence and phoenix ash fuel its impossible fires.",
+        "tags": ["station", "refinery", "forging", "legendary"]
+      },
+      "itemId": "refinery_t4",
+      "name": "Eternal Refinery",
+      "category": "station",
+      "type": "refining",
+      "subtype": "refinery",
+      "tier": 4,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 294,
+    "recipe_id": "smithing_reinforced_fishing_rod_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Sturdy oak rod reinforced with steel fittings. The improved construction handles heavier catches without snapping. Reliable for medium-sized waters.",
+        "tags": ["tool", "fishing", "quality"]
+      },
+      "itemId": "reinforced_fishing_rod",
+      "name": "Reinforced Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 6,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.6,
+        "gathering": 1.3,
+        "durability": 1.0,
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 295,
+    "recipe_id": "smithing_worldtree_fishing_rod_v3",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary rod crafted from worldtree branches and etherion fittings. The line seems to know where fish will be before they arrive. Master anglers speak of this rod with reverence.",
+        "tags": ["tool", "fishing", "legendary"]
+      },
+      "itemId": "worldtree_fishing_rod",
+      "name": "Worldtree Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 10,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.8,
+        "gathering": 2.0,
+        "durability": 1.5,
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 296,
+    "recipe_id": "smithing_bamboo_fishing_rod_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Flexible bamboo rod with silk line and bronze hook. Patient hands pull dinner from rivers and lakes. Not much use in a fight, but starvation kills just as surely as swords.",
+        "tags": ["tool", "fishing", "starter"]
+      },
+      "itemId": "bamboo_fishing_rod",
+      "name": "Bamboo Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 1,
+      "rarity": "common",
+      "range": 5,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.5,
+        "gathering": 1.0,
+        "durability": 0.8,
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 297,
+    "recipe_id": "smithing_composite_longbow_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Composite longbow of ash wood and sinew, strung with silk-spider thread. The draw is heavy, demanding both hands and steady arms, but arrows fly true and far.",
+        "tags": ["ranged", "bow", "2H", "precision"]
+      },
+      "itemId": "composite_longbow",
+      "name": "Composite Longbow",
+      "category": "equipment",
+      "type": "bow",
+      "subtype": "longbow",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 15,
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 35
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 0.85,
+        "durability": 0.9,
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 9,
+        "stats": { "AGI": 14 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 298,
+    "recipe_id": "smithing_copper_axe_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Basic copper-headed axe on a pine handle. Bites into wood with satisfying ease. Every lumberjack's first trusted companion in the wild.",
+        "tags": ["tool", "axe", "starter"]
+      },
+      "itemId": "copper_axe",
+      "name": "Copper Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 15
+      },
+      "statMultipliers": {
+        "damage": 0.7,
+        "forestry": 1.0,
+        "durability": 0.9,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 299,
+    "recipe_id": "smithing_copper_dagger_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Simple copper dagger, light and quick. Not much reach, but what it lacks in power it makes up for in speed. Perfect for those who value precision over brute force.",
+        "tags": ["melee", "dagger", "1H", "fast", "precision"]
+      },
+      "itemId": "copper_dagger",
+      "name": "Copper Dagger",
+      "category": "equipment",
+      "type": "dagger",
+      "subtype": "dagger",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 18
+      },
+      "statMultipliers": {
+        "damage": 0.9,
+        "attackSpeed": 1.3,
+        "durability": 0.8,
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 1,
+        "stats": { "AGI": 8 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 300,
+    "recipe_id": "smithing_copper_fire_ring_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Simple copper band holding a fire crystal. Radiates gentle warmth against your skin. The crystal pulses with contained flames, never dimming, never burning.",
+        "tags": ["accessory", "ring", "fire", "elemental"]
+      },
+      "itemId": "copper_fire_ring",
+      "name": "Copper Fire Ring",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "ring",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.1
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 5,
+          "effect": "Adds fire damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 301,
+    "recipe_id": "smithing_copper_pickaxe_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Your first pickaxe. Copper head on a sturdy oak handle. The gateway to greater resources and deeper discoveries.",
+        "tags": ["tool", "pickaxe", "starter"]
+      },
+      "itemId": "copper_pickaxe",
+      "name": "Copper Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 12
+      },
+      "statMultipliers": {
+        "damage": 0.6,
+        "mining": 1.0,
+        "durability": 0.9,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 302,
+    "recipe_id": "smithing_copper_spear_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Simple copper-tipped spear with ash wood shaft. The extra reach keeps danger at arm's length. Perfect for those who prefer distance over direct confrontation.",
+        "tags": ["melee", "spear", "versatile", "reach"]
+      },
+      "itemId": "copper_spear",
+      "name": "Copper Spear",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "spear",
+      "tier": 1,
+      "rarity": "common",
+      "range": 2,
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 25
+      },
+      "statMultipliers": {
+        "damage": 1.0,
+        "attackSpeed": 1.0,
+        "durability": 1.0,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 303,
+    "recipe_id": "smithing_fire_crystal_staff_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Ironwood staff capped with a pulsing fire crystal. The wood never burns, the crystal never dims. Channel elemental forces through this focus, or wield it as a quarterstaff when enemies close distance.",
+        "tags": ["melee", "staff", "versatile", "elemental", "fire"]
+      },
+      "itemId": "fire_crystal_staff",
+      "name": "Fire Crystal Staff",
+      "category": "equipment",
+      "type": "staff",
+      "subtype": "staff",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 8,
+      "slot": "mainHand",
+      "effectTags": ["fire", "single", "burn"],
+      "effectParams": {
+        "baseDamage": 45,
+        "burn_duration": 3.0,
+        "burn_damage_per_second": 5.0
+      },
+      "statMultipliers": {
+        "damage": 0.85,
+        "attackSpeed": 1.1,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 15,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 15,
+        "stats": { "INT": 18 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 304,
+    "recipe_id": "smithing_iron_axe_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Solid iron axe head on a birch handle. Bites deep into hardwood and doesn't let go. A significant upgrade over copper for serious forestry work.",
+        "tags": ["tool", "axe", "standard"]
+      },
+      "itemId": "iron_axe",
+      "name": "Iron Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 18
+      },
+      "statMultipliers": {
+        "damage": 0.8,
+        "forestry": 1.2,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 305,
+    "recipe_id": "smithing_iron_boots_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Reinforced leather boots with iron caps. Protects your feet without slowing you down. Essential for anyone who values both mobility and survival.",
+        "tags": ["armor", "feet", "light", "starter"]
+      },
+      "itemId": "iron_boots",
+      "name": "Iron Boots",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "boots",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "feet",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 306,
+    "recipe_id": "smithing_iron_chestplate_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Iron plates protecting vital organs with beetle carapace reinforcement. Heavy but reliable. When arrows fly and blades swing, you'll appreciate every ounce of protection.",
+        "tags": ["armor", "chest", "heavy", "standard"]
+      },
+      "itemId": "iron_chestplate",
+      "name": "Iron Chestplate",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "chestplate",
+      "tier": 2,
+      "rarity": "common",
+      "slot": "chest",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 307,
+    "recipe_id": "smithing_iron_pickaxe_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Upgraded pickaxe that can tackle tougher deposits. Iron head on an ash handle absorbs shock without rattling your bones. Reliable and essential.",
+        "tags": ["tool", "pickaxe", "standard"]
+      },
+      "itemId": "iron_pickaxe",
+      "name": "Iron Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 14
+      },
+      "statMultipliers": {
+        "damage": 0.7,
+        "mining": 1.2,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 308,
+    "recipe_id": "smithing_iron_round_shield_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Round iron shield with oak backing. Not just for blocking - bash enemies with the rim or use it to create openings. Defense and offense in one hand.",
+        "tags": ["melee", "shield", "1H", "defensive", "bash"]
+      },
+      "itemId": "iron_round_shield",
+      "name": "Iron Round Shield",
+      "category": "equipment",
+      "type": "shield",
+      "subtype": "buckler",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.6,
+        "attackSpeed": 1.1,
+        "durability": 1.8,
+        "weight": 1.3
+      },
+      "requirements": {
+        "level": 3,
+        "stats": { "STR": 8 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 309,
+    "recipe_id": "smithing_iron_shortsword_v1",
+    "item": {
+      "metadata": {
+        "narrative": "A simple iron blade with a wooden handle. Every warrior's first step on the path to mastery. The weight feels right in your hand - not perfect, but yours.",
+        "tags": ["melee", "sword", "versatile", "starter"]
+      },
+      "itemId": "iron_shortsword",
+      "name": "Iron Shortsword",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "shortsword",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 30
+      },
+      "statMultipliers": {
+        "damage": 1.0,
+        "attackSpeed": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 310,
+    "recipe_id": "smithing_iron_studded_gauntlets_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Leather gloves reinforced with iron studs across the knuckles. Light enough for dexterity, strong enough to turn a blade. Your hands are tools - protect them.",
+        "tags": ["armor", "hands", "light", "flexible"]
+      },
+      "itemId": "iron_studded_gauntlets",
+      "name": "Iron-Studded Gauntlets",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "gauntlets",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "hands",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 311,
+    "recipe_id": "smithing_iron_warhammer_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Heavy iron warhammer that crushes armor and bone alike. The weight demands both hands, but the devastation it delivers makes that trade worthwhile. Favored by those who prefer decisive, crushing blows.",
+        "tags": ["melee", "mace", "2H", "crushing", "armor_breaker"]
+      },
+      "itemId": "iron_warhammer",
+      "name": "Iron Warhammer",
+      "category": "equipment",
+      "type": "mace",
+      "subtype": "warhammer",
+      "tier": 2,
+      "rarity": "common",
+      "range": 1.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 45
+      },
+      "statMultipliers": {
+        "damage": 1.3,
+        "attackSpeed": 0.75,
+        "durability": 1.3,
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 10,
+        "stats": { "STR": 15 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 312,
+    "recipe_id": "smithing_iron_water_amulet_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Iron amulet cradling water crystals. Feels cool against your skin, like a gentle stream running across your chest. The crystals shimmer with captured tides.",
+        "tags": ["accessory", "amulet", "water", "elemental"]
+      },
+      "itemId": "iron_water_amulet",
+      "name": "Iron Water Amulet",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "amulet",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "water",
+          "value": 10,
+          "effect": "Adds water damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 313,
+    "recipe_id": "smithing_mithril_axe_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Ethereal mithril axe that phases through wood fibers with minimal resistance. The golem core counterweight provides perfect balance. Ancient trees fall in whispered silence.",
+        "tags": ["tool", "axe", "precision", "legendary"]
+      },
+      "itemId": "mithril_axe",
+      "name": "Mithril Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 3,
+      "rarity": "rare",
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 28
+      },
+      "statMultipliers": {
+        "damage": 0.9,
+        "forestry": 1.6,
+        "durability": 1.4,
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 314,
+    "recipe_id": "smithing_mithril_dagger_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Mithril dagger that seems to shimmer out of existence. Wickedly sharp and impossibly light, it strikes faster than the eye can follow. The blade whispers through air and flesh alike.",
+        "tags": ["melee", "dagger", "1H", "fast", "precision"]
+      },
+      "itemId": "mithril_dagger",
+      "name": "Mithril Dagger",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "dagger",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 0.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 42
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 1.2,
+        "durability": 1.5,
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 16,
+        "stats": { "AGI": 20 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 315,
+    "recipe_id": "smithing_mithril_pickaxe_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective, it finds seams in rock that other tools would miss entirely.",
+        "tags": ["tool", "pickaxe", "precision", "legendary"]
+      },
+      "itemId": "mithril_pickaxe",
+      "name": "Mithril Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 3,
+      "rarity": "rare",
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 25
+      },
+      "statMultipliers": {
+        "damage": 0.8,
+        "mining": 1.6,
+        "durability": 1.4,
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 316,
+    "recipe_id": "smithing_pine_shortbow_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Simple pine shortbow strung with treated slime gel. Not powerful, but reliable and easy to maintain. Perfect for learning the basics of archery.",
+        "tags": ["ranged", "bow", "2H", "starter"]
+      },
+      "itemId": "pine_shortbow",
+      "name": "Pine Shortbow",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "shortbow",
+      "tier": 1,
+      "rarity": "common",
+      "range": 10,
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 20
+      },
+      "statMultipliers": {
+        "damage": 1.0,
+        "attackSpeed": 1.0,
+        "durability": 0.8,
+        "weight": 0.7
+      },
+      "requirements": {
+        "level": 1,
+        "stats": { "AGI": 6 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 317,
+    "recipe_id": "smithing_steel_axe_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Razor-edged steel axe on an ironwood handle. Ancient trees fall before it like saplings. The blade holds its edge through the hardest timber.",
+        "tags": ["tool", "axe", "quality"]
+      },
+      "itemId": "steel_axe",
+      "name": "Steel Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 22
+      },
+      "statMultipliers": {
+        "damage": 0.8,
+        "forestry": 1.3,
+        "durability": 1.1,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 318,
+    "recipe_id": "smithing_steel_battleaxe_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Steel battleaxe with brutal cleaving power. Grip it with both hands and watch enemies fall like timber. Equally deadly in one hand for those strong enough to wield it.",
+        "tags": ["melee", "axe", "versatile", "cleaving"]
+      },
+      "itemId": "steel_battleaxe",
+      "name": "Steel Battleaxe",
+      "category": "equipment",
+      "type": "axe",
+      "subtype": "battleaxe",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 1,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 50
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 0.95,
+        "durability": 1.1,
+        "weight": 1.2
+      },
+      "requirements": {
+        "level": 8,
+        "stats": { "STR": 12 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 319,
+    "recipe_id": "smithing_steel_helm_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Steel helm with full face protection and wolf pelt padding. Your head stays attached, which is nice. The padding reduces the ringing when you take a hit.",
+        "tags": ["armor", "head", "heavy", "quality"]
+      },
+      "itemId": "steel_helm",
+      "name": "Steel Helm",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "helmet",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "head",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 320,
+    "recipe_id": "smithing_steel_leggings_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Steel plate leggings with articulated joints. Heavy but protective, they guard your legs without restricting movement. Every smith's second major armor piece after the chestplate.",
+        "tags": ["armor", "legs", "metal", "heavy"]
+      },
+      "itemId": "steel_leggings",
+      "name": "Steel Leggings",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "leggings",
+      "tier": 2,
+      "rarity": "common",
+      "slot": "legs",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 321,
+    "recipe_id": "smithing_steel_lightning_bracelet_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Steel bracelet woven with lightning shards and spectral thread. Crackles with stored static electricity. Touch it and feel the power humming beneath the surface.",
+        "tags": ["accessory", "bracelet", "lightning", "elemental"]
+      },
+      "itemId": "steel_lightning_bracelet",
+      "name": "Steel Lightning Bracelet",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "bracelet",
+      "tier": 3,
+      "rarity": "rare",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "lightning",
+          "value": 20,
+          "effect": "Adds lightning damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 322,
+    "recipe_id": "smithing_steel_longsword_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Balanced steel longsword that flows like water and strikes like thunder. The blade sings when it cuts through air, a testament to its quality.",
+        "tags": ["melee", "sword", "versatile", "quality"]
+      },
+      "itemId": "steel_longsword",
+      "name": "Steel Longsword",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "longsword",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 1,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 40
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 1.0,
+        "durability": 1.1,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": { "STR": 10 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 323,
+    "recipe_id": "smithing_steel_pickaxe_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Steel pickaxe with perfect balance and an ironwood handle. Makes hard rock feel like clay. The pick point finds natural fractures with uncanny precision.",
+        "tags": ["tool", "pickaxe", "quality"]
+      },
+      "itemId": "steel_pickaxe",
+      "name": "Steel Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 20
+      },
+      "statMultipliers": {
+        "damage": 0.8,
+        "mining": 1.3,
+        "durability": 1.1,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 324,
+    "recipe_id": "smithing_steel_sickle_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Curved steel blade designed for harvesting herbs, grains, and fibrous plants. The razor edge cuts clean without bruising delicate materials. Adequate for self-defense in a pinch.",
+        "tags": ["tool", "harvesting", "quality"]
+      },
+      "itemId": "steel_sickle",
+      "name": "Steel Sickle",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "sickle",
+      "tier": 2,
+      "rarity": "common",
+      "range": 0.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 22
+      },
+      "statMultipliers": {
+        "damage": 0.7,
+        "gathering": 1.0,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 325,
+    "recipe_id": "recipe_blood_reaver_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Etherion greatsword forged in crystallized blood and obsidian shadow. The blade pulses with a heartbeat not its own, drinking deeply from every wound it inflicts. Worldtree wood keeps the wielder's soul anchored.",
+        "tags": ["melee", "sword", "2H", "heavy", "legendary"]
+      },
+      "itemId": "blood_reaver",
+      "name": "Blood Reaver",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "greatsword",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 1.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 78
+      },
+      "statMultipliers": {
+        "damage": 1.4,
+        "attackSpeed": 0.8,
+        "durability": 1.6,
+        "weight": 1.3
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 25,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 28,
+        "stats": { "STR": 28 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 326,
+    "recipe_id": "recipe_frostbite_hammer_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Crystal quartz warhammer suffused with void energy and frost essence. Each impact sends waves of biting cold through armor and bone. Rime spreads from the point of contact like creeping death.",
+        "tags": ["melee", "mace", "2H", "crushing", "elemental"]
+      },
+      "itemId": "frostbite_hammer",
+      "name": "Frostbite Hammer",
+      "category": "equipment",
+      "type": "mace",
+      "subtype": "warhammer",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 1.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 60
+      },
+      "statMultipliers": {
+        "damage": 1.3,
+        "attackSpeed": 0.7,
+        "durability": 1.4,
+        "weight": 1.4
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "water",
+          "value": 18,
+          "effect": "Elemental attacks deal bonus water damage"
+        }
+      ],
+      "requirements": {
+        "level": 18,
+        "stats": { "STR": 22 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 327,
+    "recipe_id": "recipe_inferno_blade_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Etherion longsword wreathed in phoenix flame that never dies. The voidstone pommel anchors reality while the blade tears it apart. Heat radiates in visible waves, scorching the air itself.",
+        "tags": ["melee", "sword", "2H", "elemental", "fire"]
+      },
+      "itemId": "inferno_blade",
+      "name": "Inferno Blade",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "longsword",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 1.5,
+      "slot": "mainHand",
+      "effectTags": ["fire", "slashing", "burn"],
+      "effectParams": {
+        "baseDamage": 75,
+        "burn_duration": 5.0,
+        "burn_damage_per_second": 10.0
+      },
+      "statMultipliers": {
+        "damage": 1.3,
+        "attackSpeed": 0.9,
+        "durability": 1.5,
+        "weight": 1.1
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 30,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 27,
+        "stats": { "STR": 20, "INT": 18 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 328,
+    "recipe_id": "recipe_lightning_chain_whip_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Adamantine links threaded with spectral wire and a storm heart core. Lashes out with arcing electricity that leaps between targets. The diamond focus amplifies each discharge tenfold.",
+        "tags": ["melee", "versatile", "reach", "elemental", "lightning"]
+      },
+      "itemId": "lightning_chain_whip",
+      "name": "Lightning Chain Whip",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "whip",
+      "tier": 3,
+      "rarity": "epic",
+      "range": 4,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 55
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 1.1,
+        "durability": 1.2,
+        "weight": 0.8
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "lightning",
+          "value": 22,
+          "effect": "Elemental attacks deal bonus lightning damage"
+        }
+      ],
+      "requirements": {
+        "level": 20,
+        "stats": { "AGI": 18, "INT": 14 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 329,
+    "recipe_id": "smithing_mithril_fishing_rod_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Mithril-tipped rod with enchanted silk line. The lightweight metal lets you cast further while the magical line never tangles. Senses fish before they bite.",
+        "tags": ["tool", "fishing", "rare", "precision"]
+      },
+      "itemId": "mithril_fishing_rod",
+      "name": "Mithril Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 8,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.7,
+        "gathering": 1.6,
+        "durability": 1.2,
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 330,
+    "recipe_id": "smithing_reinforced_fishing_rod_flip_v1",
+    "item": {
+      "metadata": {
+        "narrative": "Sturdy oak rod reinforced with steel fittings. The improved construction handles heavier catches without snapping. Reliable for medium-sized waters.",
+        "tags": ["tool", "fishing", "quality"]
+      },
+      "itemId": "reinforced_fishing_rod",
+      "name": "Reinforced Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 6,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.6,
+        "gathering": 1.3,
+        "durability": 1.0,
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  }
+]

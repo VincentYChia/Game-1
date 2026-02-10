@@ -1,0 +1,1838 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "discipline": "smithing",
+    "description": "Weapons, armor, tools, and equipment forged from refined materials",
+    "totalItems": 50
+  },
+
+  "items": [
+    {
+      "index": 1,
+      "metadata": {
+        "narrative": "A simple copper sword, green-tinged and eager to prove itself. Every adventurer's first real blade - not the sharpest, but it cuts well enough to keep you alive.",
+        "tags": ["sword", "melee", "1H", "starter", "metal"]
+      },
+      "itemId": "copper_sword",
+      "name": "Copper Sword",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "weapon",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1.5,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 12.0
+      },
+      "stats": {
+        "damage": 8.0,
+        "durability": 400.0,
+        "weight": 2.8
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {
+          "STR": 2
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 2,
+      "metadata": {
+        "narrative": "A copper dagger barely longer than a hunting knife. Quick in the hand, quiet in the dark. What it lacks in power it makes up for in speed.",
+        "tags": ["dagger", "melee", "1H", "fast", "starter"]
+      },
+      "itemId": "copper_dagger",
+      "name": "Copper Dagger",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "dagger",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0.8,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 10.0
+      },
+      "stats": {
+        "damage": 8.0,
+        "durability": 350.0,
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {
+          "AGI": 2
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 3,
+      "metadata": {
+        "narrative": "A copper pickaxe with a sturdy oak handle. It won't mine through granite, but it breaks soft stone and copper veins without complaint. A miner's first companion.",
+        "tags": ["pickaxe", "tool", "starter", "metal"]
+      },
+      "itemId": "copper_pickaxe",
+      "name": "Copper Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1.2,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 10.0
+      },
+      "stats": {
+        "damage": 8.0,
+        "durability": 450.0,
+        "mining": 8.0,
+        "weight": 3.2
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {
+          "STR": 2
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 4,
+      "metadata": {
+        "narrative": "A copper axe fitted to an oak haft. Bites into timber well enough and can split a skull in a pinch. The frontier tool that built every first settlement.",
+        "tags": ["axe", "tool", "1H", "starter", "metal"]
+      },
+      "itemId": "copper_axe",
+      "name": "Copper Axe",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "axe",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1.2,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 14.0
+      },
+      "stats": {
+        "damage": 9.0,
+        "durability": 450.0,
+        "forestry": 8.0,
+        "weight": 3.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {
+          "STR": 3
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 5,
+      "metadata": {
+        "narrative": "A round copper shield, dented but dependable. Won't stop a charging boar, but it'll turn aside a goblin's blade. Every defender has to start somewhere.",
+        "tags": ["shield", "defensive", "1H", "starter", "metal"]
+      },
+      "itemId": "copper_shield",
+      "name": "Copper Shield",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "shield",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0.5,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 10.0
+      },
+      "stats": {
+        "damage": 8.0,
+        "durability": 500.0,
+        "weight": 4.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {
+          "STR": 3
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 6,
+      "metadata": {
+        "narrative": "An iron longsword with a leather-wrapped grip. Reliable, balanced, and honest - the blade that guards caravans and settles disputes. No frills, all function.",
+        "tags": ["sword", "melee", "1H", "standard", "metal"]
+      },
+      "itemId": "iron_sword",
+      "name": "Iron Sword",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "weapon",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1.5,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 16.0
+      },
+      "stats": {
+        "damage": 10.0,
+        "durability": 500.0,
+        "weight": 3.0
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {
+          "STR": 3
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 7,
+      "metadata": {
+        "narrative": "A heavy iron mace with a flanged head. Doesn't care about armor - it crushes through plate, mail, and bone alike. Blunt, brutal, effective.",
+        "tags": ["mace", "melee", "1H", "crushing", "heavy"]
+      },
+      "itemId": "iron_mace",
+      "name": "Iron Mace",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "mace",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1.2,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 18.0
+      },
+      "stats": {
+        "damage": 11.0,
+        "durability": 550.0,
+        "weight": 4.0
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {
+          "STR": 4
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 8,
+      "metadata": {
+        "narrative": "An iron pickaxe with a reinforced head. Bites into stone with authority and can crack iron veins that copper tools bounce off of. The real miner's tool.",
+        "tags": ["pickaxe", "tool", "standard", "metal"]
+      },
+      "itemId": "iron_pickaxe",
+      "name": "Iron Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1.2,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 14.0
+      },
+      "stats": {
+        "damage": 9.0,
+        "durability": 550.0,
+        "mining": 10.0,
+        "weight": 3.5
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {
+          "STR": 3
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 9,
+      "metadata": {
+        "narrative": "An iron helm shaped to deflect downward blows. Not pretty, but the dent in the crown means a skull stayed intact. Function over fashion, always.",
+        "tags": ["armor", "head", "defensive", "standard", "metal"]
+      },
+      "itemId": "iron_helm",
+      "name": "Iron Helm",
+      "category": "equipment",
+      "slot": "head",
+      "type": "armor",
+      "tier": 1,
+      "rarity": "common",
+      "effectTags": ["physical"],
+      "effectParams": {},
+      "stats": {
+        "damage": 0.0,
+        "durability": 500.0,
+        "weight": 3.0
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {
+          "STR": 3
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 10,
+      "metadata": {
+        "narrative": "An iron breastplate hammered to shape. Heavy on the shoulders but heavier on an enemy's blade. The armor that turns common soldiers into survivors.",
+        "tags": ["armor", "chest", "defensive", "heavy", "metal"]
+      },
+      "itemId": "iron_chestplate",
+      "name": "Iron Chestplate",
+      "category": "equipment",
+      "slot": "chest",
+      "type": "armor",
+      "tier": 1,
+      "rarity": "common",
+      "effectTags": ["physical"],
+      "effectParams": {},
+      "stats": {
+        "damage": 0.0,
+        "durability": 550.0,
+        "weight": 5.5
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {
+          "STR": 4
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 11,
+      "metadata": {
+        "narrative": "A bronze spear with an ash wood shaft. The combination of flexible wood and hard bronze tip makes it whistle through the air. Reach keeps you alive longer than armor.",
+        "tags": ["spear", "melee", "2H", "reach", "precision"]
+      },
+      "itemId": "bronze_spear",
+      "name": "Bronze Spear",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "weapon",
+      "tier": 1,
+      "rarity": "uncommon",
+      "range": 3.0,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 15.0
+      },
+      "stats": {
+        "damage": 10.0,
+        "durability": 480.0,
+        "weight": 3.2
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {
+          "STR": 3,
+          "AGI": 2
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 12,
+      "metadata": {
+        "narrative": "A bronze sword with a leaf-shaped blade. Ancient design, proven over millennia. The alloy holds an edge better than pure copper and the weight sits perfectly in the hand.",
+        "tags": ["sword", "melee", "1H", "standard", "metal"]
+      },
+      "itemId": "bronze_sword",
+      "name": "Bronze Sword",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "weapon",
+      "tier": 1,
+      "rarity": "uncommon",
+      "range": 1.5,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 17.0
+      },
+      "stats": {
+        "damage": 11.0,
+        "durability": 520.0,
+        "weight": 2.8
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {
+          "STR": 3
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 13,
+      "metadata": {
+        "narrative": "A bronze shield rimmed with iron studs. Heavier than copper but catches blades in its surface, trapping them long enough to counterstrike. A gladiator's best friend.",
+        "tags": ["shield", "defensive", "1H", "standard", "metal"]
+      },
+      "itemId": "bronze_shield",
+      "name": "Bronze Shield",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "shield",
+      "tier": 1,
+      "rarity": "uncommon",
+      "range": 0.5,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 12.0
+      },
+      "stats": {
+        "damage": 9.0,
+        "durability": 550.0,
+        "weight": 4.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {
+          "STR": 4
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 14,
+      "metadata": {
+        "narrative": "An ash longbow, smooth and responsive. The wood remembers its flex from when it was a living tree. Arrows fly true from this bow - ash knows the path of the wind.",
+        "tags": ["bow", "ranged", "2H", "standard", "flexible"]
+      },
+      "itemId": "ash_longbow",
+      "name": "Ash Longbow",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "bow",
+      "tier": 1,
+      "rarity": "common",
+      "range": 12.0,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 14.0
+      },
+      "stats": {
+        "damage": 10.0,
+        "durability": 400.0,
+        "weight": 2.5
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {
+          "AGI": 4
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 15,
+      "metadata": {
+        "narrative": "An oak staff reinforced with iron bands. Heavy enough to crack a jaw, long enough to keep fangs at bay. The traveler's walking stick that doubles as a weapon.",
+        "tags": ["staff", "melee", "2H", "versatile", "reach"]
+      },
+      "itemId": "oak_staff",
+      "name": "Oak Staff",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "staff",
+      "tier": 1,
+      "rarity": "common",
+      "range": 2.5,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 13.0
+      },
+      "stats": {
+        "damage": 9.0,
+        "durability": 420.0,
+        "weight": 3.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {
+          "STR": 2,
+          "INT": 2
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 16,
+      "metadata": {
+        "narrative": "A steel longsword with a crossguard forged in one piece. The blade sings when drawn - a clear, cold note. This is where iron stops pretending and steel starts killing.",
+        "tags": ["sword", "melee", "1H", "quality", "metal"]
+      },
+      "itemId": "steel_longsword",
+      "name": "Steel Longsword",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "weapon",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 1.8,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 28.0
+      },
+      "stats": {
+        "damage": 17.0,
+        "durability": 950.0,
+        "weight": 3.2
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {
+          "STR": 6
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 17,
+      "metadata": {
+        "narrative": "A steel greatsword requiring both hands and serious conviction. The blade is as tall as a man and cleaves through armor like parchment. Not subtle, not sorry.",
+        "tags": ["sword", "melee", "2H", "heavy", "cleaving"]
+      },
+      "itemId": "steel_greatsword",
+      "name": "Steel Greatsword",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "weapon",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 2.5,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 35.0
+      },
+      "stats": {
+        "damage": 22.0,
+        "durability": 1050.0,
+        "weight": 5.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {
+          "STR": 10
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 18,
+      "metadata": {
+        "narrative": "A steel battleaxe with a crescent-moon head. The weight is forward-loaded for devastating chops. Trees fall in one swing; enemies don't fare much better.",
+        "tags": ["axe", "melee", "2H", "heavy", "cleaving"]
+      },
+      "itemId": "steel_battleaxe",
+      "name": "Steel Battleaxe",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "axe",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 1.8,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 34.0
+      },
+      "stats": {
+        "damage": 20.0,
+        "durability": 1000.0,
+        "forestry": 15.0,
+        "weight": 4.8
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {
+          "STR": 8
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 19,
+      "metadata": {
+        "narrative": "A steel warhammer with a flat face and a spiked backside. Choose your mood - crush or puncture. Either way, armor becomes a coffin.",
+        "tags": ["mace", "melee", "1H", "crushing", "armor_breaker"]
+      },
+      "itemId": "steel_warhammer",
+      "name": "Steel Warhammer",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "mace",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 1.3,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 32.0
+      },
+      "stats": {
+        "damage": 19.0,
+        "durability": 1100.0,
+        "weight": 4.5
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {
+          "STR": 9
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 20,
+      "metadata": {
+        "narrative": "A steel dagger with a needle-thin point. Slides between ribs, through chainmail gaps, into joints. The assassin's answer to heavy armor.",
+        "tags": ["dagger", "melee", "1H", "fast", "precision"]
+      },
+      "itemId": "steel_dagger",
+      "name": "Steel Dagger",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "dagger",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 0.8,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 24.0
+      },
+      "stats": {
+        "damage": 15.0,
+        "durability": 850.0,
+        "weight": 1.8
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {
+          "AGI": 7
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 21,
+      "metadata": {
+        "narrative": "A steel pickaxe with hardened tips that bite into deep rock. Shatters iron veins effortlessly and can crack into steel deposits with patience. The professional's choice.",
+        "tags": ["pickaxe", "tool", "quality", "metal"]
+      },
+      "itemId": "steel_pickaxe",
+      "name": "Steel Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 1.2,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 20.0
+      },
+      "stats": {
+        "damage": 15.0,
+        "durability": 1000.0,
+        "mining": 16.0,
+        "weight": 3.8
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {
+          "STR": 6
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 22,
+      "metadata": {
+        "narrative": "A steel tower shield tall enough to crouch behind. Arrows bounce off, swords skid aside, and even maces ring uselessly against its face. A walking wall.",
+        "tags": ["shield", "defensive", "1H", "heavy", "metal"]
+      },
+      "itemId": "steel_tower_shield",
+      "name": "Steel Tower Shield",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "shield",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 0.5,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 22.0
+      },
+      "stats": {
+        "damage": 16.0,
+        "durability": 1200.0,
+        "weight": 5.5
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {
+          "STR": 10
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 23,
+      "metadata": {
+        "narrative": "A steel helm with a nose guard and cheek plates. Absorbs impacts that would scramble brains in lesser headgear. The line between unconscious and combat-ready.",
+        "tags": ["armor", "head", "defensive", "quality", "metal"]
+      },
+      "itemId": "steel_helm",
+      "name": "Steel Helm",
+      "category": "equipment",
+      "slot": "head",
+      "type": "armor",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effectTags": ["physical"],
+      "effectParams": {},
+      "stats": {
+        "damage": 0.0,
+        "durability": 950.0,
+        "weight": 3.5
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {
+          "STR": 6
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 24,
+      "metadata": {
+        "narrative": "A steel cuirass with articulated plates. Moves with you instead of against you - the mark of quality smithing. Stops swords cold and shrugs off glancing arrows.",
+        "tags": ["armor", "chest", "defensive", "quality", "metal"]
+      },
+      "itemId": "steel_cuirass",
+      "name": "Steel Cuirass",
+      "category": "equipment",
+      "slot": "chest",
+      "type": "armor",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effectTags": ["physical"],
+      "effectParams": {},
+      "stats": {
+        "damage": 0.0,
+        "durability": 1100.0,
+        "weight": 5.5
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {
+          "STR": 8
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 25,
+      "metadata": {
+        "narrative": "Steel greaves that protect shins and knees without hobbling the stride. Warriors can sprint, dodge, and kick without feeling the weight. Mobility in armor.",
+        "tags": ["armor", "legs", "defensive", "quality", "metal"]
+      },
+      "itemId": "steel_greaves",
+      "name": "Steel Greaves",
+      "category": "equipment",
+      "slot": "legs",
+      "type": "armor",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effectTags": ["physical"],
+      "effectParams": {},
+      "stats": {
+        "damage": 0.0,
+        "durability": 1000.0,
+        "weight": 4.0
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {
+          "STR": 7
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 26,
+      "metadata": {
+        "narrative": "Steel gauntlets with articulated fingers. Grip a sword, throw a punch, block a dagger - all without losing dexterity. The hands that win wars.",
+        "tags": ["armor", "hands", "defensive", "quality", "metal"]
+      },
+      "itemId": "steel_gauntlets",
+      "name": "Steel Gauntlets",
+      "category": "equipment",
+      "slot": "hands",
+      "type": "armor",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effectTags": ["physical"],
+      "effectParams": {},
+      "stats": {
+        "damage": 0.0,
+        "durability": 900.0,
+        "weight": 2.8
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {
+          "STR": 5
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 27,
+      "metadata": {
+        "narrative": "Steel sabatons with reinforced toe caps. Every step rings like a small bell. They protect feet from caltrops, dropped anvils, and anything foolish enough to be underfoot.",
+        "tags": ["armor", "feet", "defensive", "heavy", "metal"]
+      },
+      "itemId": "steel_sabatons",
+      "name": "Steel Sabatons",
+      "category": "equipment",
+      "slot": "feet",
+      "type": "armor",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effectTags": ["physical"],
+      "effectParams": {},
+      "stats": {
+        "damage": 0.0,
+        "durability": 900.0,
+        "weight": 3.5
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {
+          "STR": 5
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 28,
+      "metadata": {
+        "narrative": "A fire steel blade that glows faintly at the edge. Heat shimmers rise from the fuller. Every cut sears flesh and ignites cloth - a weapon that punishes those who survive the first strike.",
+        "tags": ["sword", "melee", "1H", "fire", "elemental"]
+      },
+      "itemId": "fire_steel_sword",
+      "name": "Fire Steel Sword",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "weapon",
+      "tier": 2,
+      "rarity": "rare",
+      "range": 1.8,
+      "effectTags": ["physical", "slashing", "single", "burn"],
+      "effectParams": {
+        "baseDamage": 30.0,
+        "burn_damage_per_second": 5.0,
+        "burn_duration": 4.0
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 10,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "stats": {
+        "damage": 18.0,
+        "durability": 950.0,
+        "weight": 3.2
+      },
+      "requirements": {
+        "level": 9,
+        "stats": {
+          "STR": 7,
+          "INT": 4
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 29,
+      "metadata": {
+        "narrative": "A fire steel battleaxe that leaves smoldering gashes in everything it touches. The head glows cherry-red at all times. Forests fear this weapon more than lightning.",
+        "tags": ["axe", "melee", "2H", "fire", "elemental"]
+      },
+      "itemId": "fire_steel_battleaxe",
+      "name": "Fire Steel Battleaxe",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "axe",
+      "tier": 2,
+      "rarity": "rare",
+      "range": 1.8,
+      "effectTags": ["physical", "slashing", "single", "burn"],
+      "effectParams": {
+        "baseDamage": 38.0,
+        "burn_damage_per_second": 6.0,
+        "burn_duration": 4.0
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 10,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "stats": {
+        "damage": 21.0,
+        "durability": 1000.0,
+        "forestry": 18.0,
+        "weight": 5.0
+      },
+      "requirements": {
+        "level": 10,
+        "stats": {
+          "STR": 9,
+          "INT": 3
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 30,
+      "metadata": {
+        "narrative": "A frost steel rapier that trails wisps of frozen air. The blade numbs on contact, slowing muscles and freezing joints. Elegance meets elemental cruelty.",
+        "tags": ["sword", "melee", "1H", "fast", "elemental"]
+      },
+      "itemId": "frost_steel_rapier",
+      "name": "Frost Steel Rapier",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "weapon",
+      "tier": 2,
+      "rarity": "rare",
+      "range": 2.0,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 26.0
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "water",
+          "value": 12,
+          "effect": "Elemental attacks deal bonus water damage"
+        }
+      ],
+      "stats": {
+        "damage": 16.0,
+        "durability": 900.0,
+        "weight": 2.5
+      },
+      "requirements": {
+        "level": 9,
+        "stats": {
+          "AGI": 8,
+          "INT": 4
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 31,
+      "metadata": {
+        "narrative": "A frost steel tower shield that radiates bitter cold. Attackers striking it find their weapons frosting over, their grip weakening. Defense that punishes aggression.",
+        "tags": ["shield", "defensive", "1H", "elemental", "heavy"]
+      },
+      "itemId": "frost_steel_shield",
+      "name": "Frost Steel Shield",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "shield",
+      "tier": 2,
+      "rarity": "rare",
+      "range": 0.5,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 24.0
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "water",
+          "value": 8,
+          "effect": "Elemental attacks deal bonus water damage"
+        }
+      ],
+      "stats": {
+        "damage": 15.0,
+        "durability": 1200.0,
+        "weight": 5.5
+      },
+      "requirements": {
+        "level": 10,
+        "stats": {
+          "STR": 9,
+          "INT": 3
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 32,
+      "metadata": {
+        "narrative": "A lightning copper mace that crackles with static discharge. Every impact sends a jolt through metal armor, stunning the wearer inside. Plate knights dread this weapon.",
+        "tags": ["mace", "melee", "1H", "lightning", "elemental"]
+      },
+      "itemId": "lightning_copper_mace",
+      "name": "Lightning Copper Mace",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "mace",
+      "tier": 2,
+      "rarity": "rare",
+      "range": 1.3,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 30.0
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "lightning",
+          "value": 12,
+          "effect": "Elemental attacks deal bonus lightning damage"
+        }
+      ],
+      "stats": {
+        "damage": 18.0,
+        "durability": 900.0,
+        "weight": 3.8
+      },
+      "requirements": {
+        "level": 9,
+        "stats": {
+          "STR": 7,
+          "INT": 5
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 33,
+      "metadata": {
+        "narrative": "A lightning copper staff crowned with a conducting coil. Arcs of electricity dance between the prongs. Mages channel raw storm power through this conduit without burning their hands.",
+        "tags": ["staff", "melee", "2H", "lightning", "elemental"]
+      },
+      "itemId": "lightning_copper_staff",
+      "name": "Lightning Copper Staff",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "staff",
+      "tier": 2,
+      "rarity": "rare",
+      "range": 2.5,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 25.0
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "lightning",
+          "value": 15,
+          "effect": "Elemental attacks deal bonus lightning damage"
+        }
+      ],
+      "stats": {
+        "damage": 16.0,
+        "durability": 850.0,
+        "weight": 3.0
+      },
+      "requirements": {
+        "level": 10,
+        "stats": {
+          "INT": 10,
+          "STR": 4
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 34,
+      "metadata": {
+        "narrative": "A mithril longsword that weighs less than a wooden practice blade. The silvery-blue edge never dulls, never chips, never fails. Worth more than the castle it defends.",
+        "tags": ["sword", "melee", "1H", "light", "master"]
+      },
+      "itemId": "mithril_longsword",
+      "name": "Mithril Longsword",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "weapon",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 1.8,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 50.0
+      },
+      "stats": {
+        "damage": 35.0,
+        "durability": 2200.0,
+        "weight": 2.0
+      },
+      "requirements": {
+        "level": 18,
+        "stats": {
+          "STR": 10,
+          "AGI": 8
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 35,
+      "metadata": {
+        "narrative": "Mithril daggers that feel like extensions of the fingers. Impossibly light, impossibly sharp. The wielder moves faster because the weapon adds nothing - only takes away life.",
+        "tags": ["dagger", "melee", "1H", "fast", "light"]
+      },
+      "itemId": "mithril_dagger",
+      "name": "Mithril Dagger",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "dagger",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 0.8,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 42.0
+      },
+      "stats": {
+        "damage": 30.0,
+        "durability": 1800.0,
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 17,
+        "stats": {
+          "AGI": 14
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 36,
+      "metadata": {
+        "narrative": "A mithril pickaxe that passes through rock like a hot knife through wax. Miners weep when they first use it - a lifetime of backbreaking work rendered effortless.",
+        "tags": ["pickaxe", "tool", "master", "light"]
+      },
+      "itemId": "mithril_pickaxe",
+      "name": "Mithril Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 1.2,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 40.0
+      },
+      "stats": {
+        "damage": 32.0,
+        "durability": 2000.0,
+        "mining": 28.0,
+        "weight": 2.0
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {
+          "STR": 8
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 37,
+      "metadata": {
+        "narrative": "Mithril chainmail that flows like liquid silver. Weighs almost nothing yet turns blades that would shatter steel. Kings and generals wear this beneath their robes.",
+        "tags": ["armor", "chest", "defensive", "light", "master"]
+      },
+      "itemId": "mithril_chainmail",
+      "name": "Mithril Chainmail",
+      "category": "equipment",
+      "slot": "chest",
+      "type": "armor",
+      "tier": 3,
+      "rarity": "rare",
+      "effectTags": ["physical"],
+      "effectParams": {},
+      "stats": {
+        "damage": 0.0,
+        "durability": 2200.0,
+        "weight": 2.5
+      },
+      "requirements": {
+        "level": 18,
+        "stats": {
+          "STR": 8,
+          "AGI": 6
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 38,
+      "metadata": {
+        "narrative": "A mithril helm wrought thin as eggshell yet hard as diamond. Barely felt on the head. Warriors forget they're wearing it until an axe bounces off with a bell-clear ring.",
+        "tags": ["armor", "head", "defensive", "light", "master"]
+      },
+      "itemId": "mithril_helm",
+      "name": "Mithril Helm",
+      "category": "equipment",
+      "slot": "head",
+      "type": "armor",
+      "tier": 3,
+      "rarity": "rare",
+      "effectTags": ["physical"],
+      "effectParams": {},
+      "stats": {
+        "damage": 0.0,
+        "durability": 2000.0,
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 17,
+        "stats": {
+          "STR": 6
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 39,
+      "metadata": {
+        "narrative": "A mithril kite shield lighter than most wooden bucklers. Absorbs force without transferring it to the arm. Defenders can hold the line all day without fatigue.",
+        "tags": ["shield", "defensive", "1H", "light", "master"]
+      },
+      "itemId": "mithril_shield",
+      "name": "Mithril Shield",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "shield",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 0.5,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 38.0
+      },
+      "stats": {
+        "damage": 30.0,
+        "durability": 2400.0,
+        "weight": 2.0
+      },
+      "requirements": {
+        "level": 18,
+        "stats": {
+          "STR": 8
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 40,
+      "metadata": {
+        "narrative": "An ironwood longbow with mithril-tipped limbs. The draw weight is immense but the arrows fly like bolts of silver light. Range and power beyond any common bow.",
+        "tags": ["bow", "ranged", "2H", "precision", "master"]
+      },
+      "itemId": "ironwood_longbow",
+      "name": "Ironwood Longbow",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "bow",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 15.0,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 48.0
+      },
+      "stats": {
+        "damage": 34.0,
+        "durability": 1800.0,
+        "weight": 3.0
+      },
+      "requirements": {
+        "level": 17,
+        "stats": {
+          "AGI": 12,
+          "STR": 8
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 41,
+      "metadata": {
+        "narrative": "An ebony staff carved with spiraling glyphs that seem to shift when observed. The dark wood drinks in ambient magic and focuses it to a razor point. A sorcerer's scalpel.",
+        "tags": ["staff", "melee", "2H", "precision", "master"]
+      },
+      "itemId": "ebony_staff",
+      "name": "Ebony Staff",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "staff",
+      "tier": 3,
+      "rarity": "epic",
+      "range": 2.5,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 45.0
+      },
+      "stats": {
+        "damage": 33.0,
+        "durability": 1900.0,
+        "weight": 2.8
+      },
+      "requirements": {
+        "level": 19,
+        "stats": {
+          "INT": 16,
+          "STR": 5
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 42,
+      "metadata": {
+        "narrative": "An adamantine greatsword, pitch-black and merciless. The blade is so dense it warps the air around it. Nothing blocks it, nothing parries it - it goes through everything.",
+        "tags": ["sword", "melee", "2H", "heavy", "legendary"]
+      },
+      "itemId": "adamantine_greatsword",
+      "name": "Adamantine Greatsword",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "weapon",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 2.5,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 78.0
+      },
+      "stats": {
+        "damage": 85.0,
+        "durability": 4500.0,
+        "weight": 5.5
+      },
+      "requirements": {
+        "level": 27,
+        "stats": {
+          "STR": 25
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 43,
+      "metadata": {
+        "narrative": "An adamantine warhammer that cracks the ground where it strikes. The head is a block of black metal that refuses to chip or scratch. Castle gates open for this weapon.",
+        "tags": ["mace", "melee", "2H", "heavy", "armor_breaker"]
+      },
+      "itemId": "adamantine_warhammer",
+      "name": "Adamantine Warhammer",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "mace",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 1.5,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 80.0
+      },
+      "stats": {
+        "damage": 90.0,
+        "durability": 4800.0,
+        "weight": 5.5
+      },
+      "requirements": {
+        "level": 28,
+        "stats": {
+          "STR": 28
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 44,
+      "metadata": {
+        "narrative": "Adamantine full plate that makes the wearer nearly invincible. The black metal absorbs punishment without transmitting shock. The last suit of armor you'll ever need.",
+        "tags": ["armor", "chest", "defensive", "heavy", "legendary"]
+      },
+      "itemId": "adamantine_chestplate",
+      "name": "Adamantine Chestplate",
+      "category": "equipment",
+      "slot": "chest",
+      "type": "armor",
+      "tier": 4,
+      "rarity": "epic",
+      "effectTags": ["physical"],
+      "effectParams": {},
+      "stats": {
+        "damage": 0.0,
+        "durability": 4500.0,
+        "weight": 5.5
+      },
+      "requirements": {
+        "level": 28,
+        "stats": {
+          "STR": 24
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 45,
+      "metadata": {
+        "narrative": "An adamantine pickaxe that treats bedrock as soft clay. This tool doesn't mine - it excavates. Entire veins crack open at its touch. The ultimate miner's dream.",
+        "tags": ["pickaxe", "tool", "legendary", "heavy"]
+      },
+      "itemId": "adamantine_pickaxe",
+      "name": "Adamantine Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 1.2,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 68.0
+      },
+      "stats": {
+        "damage": 65.0,
+        "durability": 4200.0,
+        "mining": 45.0,
+        "weight": 4.5
+      },
+      "requirements": {
+        "level": 26,
+        "stats": {
+          "STR": 20
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 46,
+      "metadata": {
+        "narrative": "An orichalcum longsword that hums with the voice of three elements. Fire, frost, and lightning coil along the golden-green blade. A weapon forged for those who would challenge gods.",
+        "tags": ["sword", "melee", "1H", "legendary", "elemental"]
+      },
+      "itemId": "orichalcum_longsword",
+      "name": "Orichalcum Longsword",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "weapon",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 1.8,
+      "effectTags": ["physical", "slashing", "single", "burn"],
+      "effectParams": {
+        "baseDamage": 75.0,
+        "burn_damage_per_second": 10.0,
+        "burn_duration": 5.0
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 20,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "stats": {
+        "damage": 80.0,
+        "durability": 4000.0,
+        "weight": 3.0
+      },
+      "requirements": {
+        "level": 28,
+        "stats": {
+          "STR": 18,
+          "INT": 12
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 47,
+      "metadata": {
+        "narrative": "An orichalcum spear with a worldtree shaft. The weapon crackles with primal energy, its tip shifting between flame, frost, and spark. Thrown, it returns to the hand unbidden.",
+        "tags": ["spear", "melee", "2H", "reach", "legendary"]
+      },
+      "itemId": "orichalcum_spear",
+      "name": "Orichalcum Spear",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "weapon",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 4.0,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 72.0
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "lightning",
+          "value": 22,
+          "effect": "Elemental attacks deal bonus lightning damage"
+        }
+      ],
+      "stats": {
+        "damage": 75.0,
+        "durability": 3800.0,
+        "weight": 3.2
+      },
+      "requirements": {
+        "level": 29,
+        "stats": {
+          "STR": 16,
+          "AGI": 12,
+          "INT": 8
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 48,
+      "metadata": {
+        "narrative": "A worldtree staff crowned with an orichalcum focus crystal. The wood pulses with the heartbeat of the world itself. Spells cast through this staff reshape reality.",
+        "tags": ["staff", "melee", "2H", "legendary", "elemental"]
+      },
+      "itemId": "worldtree_staff",
+      "name": "Worldtree Staff",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "staff",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 3.0,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 70.0
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "lightning",
+          "value": 25,
+          "effect": "Elemental attacks deal bonus lightning damage"
+        }
+      ],
+      "stats": {
+        "damage": 72.0,
+        "durability": 3500.0,
+        "weight": 2.8
+      },
+      "requirements": {
+        "level": 29,
+        "stats": {
+          "INT": 25,
+          "STR": 8
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 49,
+      "metadata": {
+        "narrative": "An orichalcum shield that radiates elemental barriers. Fire, frost, and lightning flow across its surface in an ever-shifting aurora. Attacks striking it are consumed by opposing elements.",
+        "tags": ["shield", "defensive", "1H", "legendary", "elemental"]
+      },
+      "itemId": "orichalcum_shield",
+      "name": "Orichalcum Shield",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "shield",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 0.5,
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 68.0
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 15,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "stats": {
+        "damage": 65.0,
+        "durability": 4200.0,
+        "weight": 3.5
+      },
+      "requirements": {
+        "level": 28,
+        "stats": {
+          "STR": 18,
+          "INT": 10
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "index": 50,
+      "metadata": {
+        "narrative": "A worldtree bow strung with mithril wire. Arrows launched from this weapon carry the world's memory - they find their mark through wind, rain, and time itself. The last bow ever made.",
+        "tags": ["bow", "ranged", "2H", "legendary", "precision"]
+      },
+      "itemId": "worldtree_longbow",
+      "name": "Worldtree Longbow",
+      "category": "equipment",
+      "slot": "mainHand",
+      "type": "bow",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 15.0,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 70.0
+      },
+      "stats": {
+        "damage": 78.0,
+        "durability": 3800.0,
+        "weight": 2.5
+      },
+      "requirements": {
+        "level": 29,
+        "stats": {
+          "AGI": 22,
+          "STR": 12
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  ]
+}

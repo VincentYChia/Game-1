@@ -1,0 +1,808 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "totalEnchantments": 41,
+    "indexRange": "41-81"
+  },
+  "enchantments": [
+    {
+      "index": 41,
+      "metadata": {
+        "narrative": "Ancient binding that tethers an item to its wielder's soul through worldtree essence. Death cannot sever this connection.",
+        "tags": ["universal", "soulbound", "special", "legendary", "mythical"]
+      },
+      "recipeId": "enchanting_soulbound_vert_v0",
+      "enchantmentId": "soulbound",
+      "enchantmentName": "Soulbound",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 42,
+      "metadata": {
+        "narrative": "Wind-blessed enchantment that lightens the wearer's step. Movement becomes fluid and effortless.",
+        "tags": ["armor", "speed", "mobility", "air"]
+      },
+      "recipeId": "enchanting_swiftness_hori_v0",
+      "enchantmentId": "swiftness",
+      "enchantmentName": "Swiftness",
+      "applicableTo": ["armor"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "movement_speed_multiplier",
+        "value": 0.15,
+        "stackable": true,
+        "maxStacks": 3,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 43,
+      "metadata": {
+        "narrative": "Air crystal infusion that defies gravity's pull. Items float slightly, reducing burden without sacrificing strength.",
+        "tags": ["universal", "weight", "utility", "air"]
+      },
+      "recipeId": "enchanting_weightless_vert_v0",
+      "enchantmentId": "weightless",
+      "enchantmentName": "Weightless",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "weight_multiplier",
+        "value": -0.5,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 44,
+      "metadata": {
+        "narrative": "Void-touched efficiency that bends time around the tool. Gathering becomes nearly instantaneous.",
+        "tags": ["tool", "efficiency", "advanced", "void"]
+      },
+      "recipeId": "enchanting_efficiency_advanced_void_vert_v0",
+      "enchantmentId": "efficiency_2",
+      "enchantmentName": "Efficiency II",
+      "applicableTo": ["tool"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.4,
+        "stackable": false,
+        "conflictsWith": ["efficiency_1"]
+      }
+    },
+    {
+      "index": 45,
+      "metadata": {
+        "narrative": "Voidstone fortune that pulls resources from probability itself. Reality bends toward abundance at the quantum level.",
+        "tags": ["tool", "fortune", "master", "void", "legendary"]
+      },
+      "recipeId": "enchanting_fortune_advanced_voidstone_vert_v0",
+      "enchantmentId": "fortune_2",
+      "enchantmentName": "Fortune II",
+      "applicableTo": ["tool"],
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "silk_touch"]
+      }
+    },
+    {
+      "index": 46,
+      "metadata": {
+        "narrative": "Voidstone-enhanced fortune that improves resource yields. Light guides the miner's hand to richer veins.",
+        "tags": ["tool", "fortune", "luck", "void"]
+      },
+      "recipeId": "enchanting_fortune_basic_voidstone_vert_v0",
+      "enchantmentId": "fortune_1",
+      "enchantmentName": "Fortune I",
+      "applicableTo": ["tool"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.3,
+        "stackable": false,
+        "conflictsWith": ["fortune_2", "silk_touch"]
+      }
+    },
+    {
+      "index": 47,
+      "metadata": {
+        "narrative": "Frost and void combine to create absolute cold. Enemies freeze solid and shatter.",
+        "tags": ["weapon", "elemental", "frost", "void"]
+      },
+      "recipeId": "enchanting_frost_touch_voidstone_vert_v0",
+      "enchantmentId": "frost_touch",
+      "enchantmentName": "Frost Touch",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "slow",
+        "element": "ice",
+        "slowPercent": 0.3,
+        "duration": 4,
+        "stackable": true,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 48,
+      "metadata": {
+        "narrative": "Vampiric enchantment that drains life from enemies. Each strike feeds the wielder's vitality.",
+        "tags": ["weapon", "lifesteal", "vampiric", "void"]
+      },
+      "recipeId": "enchanting_lifesteal_voidstone_vert_v0",
+      "enchantmentId": "lifesteal",
+      "enchantmentName": "Lifesteal",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "lifesteal",
+        "value": 0.12,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 49,
+      "metadata": {
+        "narrative": "Void-amplified lightning that chains through enemies like living electricity. Storm and darkness unite.",
+        "tags": ["weapon", "elemental", "lightning", "void"]
+      },
+      "recipeId": "enchanting_lightning_strike_void_vert_v0",
+      "enchantmentId": "lightning_strike",
+      "enchantmentName": "Lightning Strike",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "chain_damage",
+        "element": "lightning",
+        "chainCount": 2,
+        "chainRange": 3,
+        "damagePercent": 0.5,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 50,
+      "metadata": {
+        "narrative": "Voidstone sharpening that creates edges between states of matter. Cuts through reality itself.",
+        "tags": ["weapon", "damage", "advanced", "void"]
+      },
+      "recipeId": "enchanting_sharpness_advanced_voidstone_vert_v0",
+      "enchantmentId": "sharpness_2",
+      "enchantmentName": "Sharpness II",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_3"]
+      }
+    },
+    {
+      "index": 51,
+      "metadata": {
+        "narrative": "Master sharpening using voidstone and phoenix ash. The edge transcends dimensional boundaries.",
+        "tags": ["weapon", "damage", "legendary", "void"]
+      },
+      "recipeId": "enchanting_sharpness_master_voidstone_vert_v0",
+      "enchantmentId": "sharpness_3",
+      "enchantmentName": "Sharpness III",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2"]
+      }
+    },
+    {
+      "index": 52,
+      "metadata": {
+        "narrative": "Voidstone binding that anchors items to the wielder's essence. Not even death can claim what belongs to you.",
+        "tags": ["universal", "soulbound", "special", "void", "legendary"]
+      },
+      "recipeId": "enchanting_soulbound_voidstone_vert_v0",
+      "enchantmentId": "soulbound",
+      "enchantmentName": "Soulbound",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 53,
+      "metadata": {
+        "narrative": "Diamond and voidstone fortune that manipulates probability fields. Resources multiply beyond natural limits.",
+        "tags": ["tool", "fortune", "master", "void", "legendary"]
+      },
+      "recipeId": "enchanting_fortune_advanced_voidstone_vert_v0",
+      "enchantmentId": "fortune_2",
+      "enchantmentName": "Fortune II",
+      "applicableTo": ["tool"],
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "silk_touch"]
+      }
+    },
+    {
+      "index": 54,
+      "metadata": {
+        "narrative": "Voidstone-amplified storm magic that creates devastating chain reactions. Lightning finds all nearby foes.",
+        "tags": ["weapon", "elemental", "lightning", "void"]
+      },
+      "recipeId": "enchanting_lightning_strike_voidstone_vert_v0",
+      "enchantmentId": "lightning_strike",
+      "enchantmentName": "Lightning Strike",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "chain_damage",
+        "element": "lightning",
+        "chainCount": 2,
+        "chainRange": 3,
+        "damagePercent": 0.5,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 55,
+      "metadata": {
+        "narrative": "Master sharpening through diamond and voidstone. Edges exist in superposition until they strike.",
+        "tags": ["weapon", "damage", "legendary", "void"]
+      },
+      "recipeId": "enchanting_sharpness_master_voidstone_vert_v0",
+      "enchantmentId": "sharpness_3",
+      "enchantmentName": "Sharpness III",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2"]
+      }
+    },
+    {
+      "index": 56,
+      "metadata": {
+        "narrative": "Eternal binding woven from worldtree, void, and eternity itself. Items return across death, time, and dimensions.",
+        "tags": ["universal", "soulbound", "special", "void", "legendary"]
+      },
+      "recipeId": "enchanting_soulbound_voidstone_vert_v0",
+      "enchantmentId": "soulbound",
+      "enchantmentName": "Soulbound",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 57,
+      "metadata": {
+        "narrative": "Genesis lattice fortune that rewrites probability at the source. Resources emerge from quantum foam.",
+        "tags": ["tool", "fortune", "master", "legendary", "mythical"]
+      },
+      "recipeId": "enchanting_fortune_advanced_voidstone_vert_v0",
+      "enchantmentId": "fortune_2",
+      "enchantmentName": "Fortune II",
+      "applicableTo": ["tool"],
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "silk_touch"]
+      }
+    },
+    {
+      "index": 58,
+      "metadata": {
+        "narrative": "Master sharpening using void essence and adamantine. Cuts through matter as easily as emptiness.",
+        "tags": ["weapon", "damage", "legendary", "void"]
+      },
+      "recipeId": "enchanting_sharpness_master_void_vert_v0",
+      "enchantmentId": "sharpness_3",
+      "enchantmentName": "Sharpness III",
+      "applicableTo": ["weapon"],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2"]
+      }
+    },
+    {
+      "index": 59,
+      "metadata": {
+        "narrative": "Primordial binding through voidstone and eternity stone. Items remember their owner across all possible timelines.",
+        "tags": ["universal", "soulbound", "special", "void", "legendary"]
+      },
+      "recipeId": "enchanting_soulbound_voidstone_vert_v0",
+      "enchantmentId": "soulbound",
+      "enchantmentName": "Soulbound",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 60,
+      "metadata": {
+        "narrative": "Advanced durability using golem memories and spectral threads. Items exist partially out of phase with damage.",
+        "tags": ["universal", "durability", "advanced", "spectral"]
+      },
+      "recipeId": "enchanting_durability_advanced_v1",
+      "enchantmentId": "unbreaking_2",
+      "enchantmentName": "Unbreaking II",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "durability_multiplier",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["unbreaking_1"]
+      }
+    },
+    {
+      "index": 61,
+      "metadata": {
+        "narrative": "Basic earth-infused durability. Beetle carapace and earth crystal make items last longer.",
+        "tags": ["universal", "durability", "basic", "earth"]
+      },
+      "recipeId": "enchanting_durability_basic_v1",
+      "enchantmentId": "unbreaking_1",
+      "enchantmentName": "Unbreaking I",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "durability_multiplier",
+        "value": 0.3,
+        "stackable": false,
+        "conflictsWith": ["unbreaking_2"]
+      }
+    },
+    {
+      "index": 62,
+      "metadata": {
+        "narrative": "Storm-blessed efficiency that accelerates gathering through lightning speed. Tools blur with rapid motion.",
+        "tags": ["tool", "efficiency", "advanced", "lightning"]
+      },
+      "recipeId": "enchanting_efficiency_advanced_v1",
+      "enchantmentId": "efficiency_2",
+      "enchantmentName": "Efficiency II",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.4,
+        "stackable": false,
+        "conflictsWith": ["efficiency_1"]
+      }
+    },
+    {
+      "index": 63,
+      "metadata": {
+        "narrative": "Air-light efficiency using slime gel lubrication. Gathering becomes smooth and swift.",
+        "tags": ["tool", "efficiency", "basic", "air"]
+      },
+      "recipeId": "enchanting_efficiency_basic_v1",
+      "enchantmentId": "efficiency_1",
+      "enchantmentName": "Efficiency I",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": ["efficiency_2"]
+      }
+    },
+    {
+      "index": 64,
+      "metadata": {
+        "narrative": "Fire crystal enchantment that leaves burning wounds. Steel channels eternal flames through each strike.",
+        "tags": ["weapon", "elemental", "fire"]
+      },
+      "recipeId": "enchanting_fire_aspect_v1",
+      "enchantmentId": "fire_aspect",
+      "enchantmentName": "Fire Aspect",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_over_time",
+        "element": "fire",
+        "damagePerSecond": 10,
+        "duration": 5,
+        "stackable": true,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 65,
+      "metadata": {
+        "narrative": "Genesis-enhanced fortune using chaos matrix. Reality restructures to favor abundant yields.",
+        "tags": ["tool", "fortune", "master", "chaos", "legendary"]
+      },
+      "recipeId": "enchanting_fortune_advanced_v1",
+      "enchantmentId": "fortune_2",
+      "enchantmentName": "Fortune II",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "silk_touch"]
+      }
+    },
+    {
+      "index": 66,
+      "metadata": {
+        "narrative": "Crystal quartz fortune that improves resource discovery. Light reveals hidden riches.",
+        "tags": ["tool", "fortune", "luck", "magical"]
+      },
+      "recipeId": "enchanting_fortune_basic_v1",
+      "enchantmentId": "fortune_1",
+      "enchantmentName": "Fortune I",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.3,
+        "stackable": false,
+        "conflictsWith": ["fortune_2", "silk_touch"]
+      }
+    },
+    {
+      "index": 67,
+      "metadata": {
+        "narrative": "Marble-enhanced frost that slows and freezes enemies. Cold radiates from each strike.",
+        "tags": ["weapon", "elemental", "frost", "radiant"]
+      },
+      "recipeId": "enchanting_frost_touch_v1",
+      "enchantmentId": "frost_touch",
+      "enchantmentName": "Frost Touch",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "slow",
+        "element": "ice",
+        "slowPercent": 0.3,
+        "duration": 4,
+        "stackable": true,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 68,
+      "metadata": {
+        "narrative": "Air-powered knockback that sends enemies flying. Wind crystals create explosive force.",
+        "tags": ["weapon", "knockback", "utility", "air"]
+      },
+      "recipeId": "enchanting_knockback_v1",
+      "enchantmentId": "knockback",
+      "enchantmentName": "Knockback",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "knockback",
+        "value": 3,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 69,
+      "metadata": {
+        "narrative": "Vampiric essence that drains enemy vitality. Shadow and blood combine to feed the wielder.",
+        "tags": ["weapon", "lifesteal", "vampiric", "blood"]
+      },
+      "recipeId": "enchanting_lifesteal_v1",
+      "enchantmentId": "lifesteal",
+      "enchantmentName": "Lifesteal",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "lifesteal",
+        "value": 0.12,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 70,
+      "metadata": {
+        "narrative": "Storm heart lightning that chains between foes. Thunder follows the blade's path.",
+        "tags": ["weapon", "elemental", "lightning", "legendary"]
+      },
+      "recipeId": "enchanting_lightning_strike_v1",
+      "enchantmentId": "lightning_strike",
+      "enchantmentName": "Lightning Strike",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "chain_damage",
+        "element": "lightning",
+        "chainCount": 2,
+        "chainRange": 3,
+        "damagePercent": 0.5,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 71,
+      "metadata": {
+        "narrative": "Shadow and fang poison that lingers in wounds. Toxins corrupt flesh slowly.",
+        "tags": ["weapon", "poison", "damage", "dark"]
+      },
+      "recipeId": "enchanting_poison_v1",
+      "enchantmentId": "poison",
+      "enchantmentName": "Poison",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_over_time",
+        "element": "poison",
+        "damagePerSecond": 8,
+        "duration": 8,
+        "stackable": true,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 72,
+      "metadata": {
+        "narrative": "Crystal and scale protection that deflects blows. Earth grounds incoming damage.",
+        "tags": ["armor", "defense", "advanced", "earth"]
+      },
+      "recipeId": "enchanting_protection_advanced_v1",
+      "enchantmentId": "protection_2",
+      "enchantmentName": "Protection II",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_reduction",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": ["protection_1", "protection_3"]
+      }
+    },
+    {
+      "index": 73,
+      "metadata": {
+        "narrative": "Earth and iron basic protection. Stone-like resilience against incoming strikes.",
+        "tags": ["armor", "defense", "basic", "earth"]
+      },
+      "recipeId": "enchanting_protection_basic_v1",
+      "enchantmentId": "protection_1",
+      "enchantmentName": "Protection I",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_reduction",
+        "value": 0.1,
+        "stackable": false,
+        "conflictsWith": ["protection_2", "protection_3"]
+      }
+    },
+    {
+      "index": 74,
+      "metadata": {
+        "narrative": "Master protection using void essence and orichalcum. Damage dissipates into nothingness before reaching the wearer.",
+        "tags": ["armor", "defense", "legendary", "void"]
+      },
+      "recipeId": "enchanting_protection_master_v1",
+      "enchantmentId": "protection_3",
+      "enchantmentName": "Protection III",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_reduction",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["protection_1", "protection_2"]
+      }
+    },
+    {
+      "index": 75,
+      "metadata": {
+        "narrative": "Spectral and ichor regeneration that slowly knits wounds. Life essence flows continuously.",
+        "tags": ["armor", "regeneration", "healing", "spectral"]
+      },
+      "recipeId": "enchanting_regeneration_v1",
+      "enchantmentId": "regeneration",
+      "enchantmentName": "Regeneration",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "health_regeneration",
+        "value": 1,
+        "stackable": true,
+        "maxStacks": 5,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 76,
+      "metadata": {
+        "narrative": "Golem-core self-repair using living essence. Items mend themselves like living tissue.",
+        "tags": ["universal", "repair", "utility", "ancient"]
+      },
+      "recipeId": "enchanting_self_repair_v1",
+      "enchantmentId": "self_repair",
+      "enchantmentName": "Self-Repair",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "durability_regeneration",
+        "value": 1,
+        "perMinute": true,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 77,
+      "metadata": {
+        "narrative": "Lightning-enhanced sharpness that crackles with energy. Frost preserves the perfect edge.",
+        "tags": ["weapon", "damage", "advanced", "lightning"]
+      },
+      "recipeId": "enchanting_sharpness_advanced_v1",
+      "enchantmentId": "sharpness_2",
+      "enchantmentName": "Sharpness II",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_3"]
+      }
+    },
+    {
+      "index": 78,
+      "metadata": {
+        "narrative": "Basic fire-forged sharpness. Iron and flame create a keen edge.",
+        "tags": ["weapon", "damage", "basic", "fire"]
+      },
+      "recipeId": "enchanting_sharpness_basic_v1",
+      "enchantmentId": "sharpness_1",
+      "enchantmentName": "Sharpness I",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.1,
+        "stackable": false,
+        "conflictsWith": ["sharpness_2", "sharpness_3"]
+      }
+    },
+    {
+      "index": 79,
+      "metadata": {
+        "narrative": "Master sharpening using phoenix ash and diamond. The edge burns with eternal fire.",
+        "tags": ["weapon", "damage", "legendary", "fire"]
+      },
+      "recipeId": "enchanting_sharpness_master_v1",
+      "enchantmentId": "sharpness_3",
+      "enchantmentName": "Sharpness III",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2"]
+      }
+    },
+    {
+      "index": 80,
+      "metadata": {
+        "narrative": "Spectral and void silk touch that phases through damage. Harvests blocks in their original form.",
+        "tags": ["tool", "silk-touch", "special", "spectral"]
+      },
+      "recipeId": "enchanting_silk_touch_v1",
+      "enchantmentId": "silk_touch",
+      "enchantmentName": "Silk Touch",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "harvest_original_form",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "fortune_2"]
+      }
+    },
+    {
+      "index": 81,
+      "metadata": {
+        "narrative": "Ultimate soul binding through worldtree, chaos, and eternity. Items exist across all timelines, bound to their owner's essence.",
+        "tags": ["universal", "soulbound", "special", "legendary", "mythical"]
+      },
+      "recipeId": "enchanting_soulbound_v1",
+      "enchantmentId": "soulbound",
+      "enchantmentName": "Soulbound",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    }
+  ]
+}

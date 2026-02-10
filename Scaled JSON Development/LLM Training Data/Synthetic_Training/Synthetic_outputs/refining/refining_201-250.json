@@ -1,0 +1,1550 @@
+[
+  {
+    "index": 201,
+    "recipe_id": "refining_bronze_alloy_v78",
+    "item": {
+      "metadata": {
+        "narrative": "Bronze alloy forged from crystalline copper and mithril whispers. The mithril infusion lends a faint silvery sheen to the traditional bronze, making it subtly stronger than ordinary alloys.",
+        "tags": ["metal", "refined", "standard", "versatile"]
+      },
+      "itemId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 202,
+    "recipe_id": "refining_fire_steel_v114",
+    "item": {
+      "metadata": {
+        "narrative": "Fire steel born from rough copper and crude fire crystals. The flames trapped within burn unevenly but persistently, giving the metal a mottled orange glow beneath its dark surface.",
+        "tags": ["metal", "refined", "elemental", "fire"]
+      },
+      "itemId": "fire_steel_ingot",
+      "name": "Fire Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "fire",
+          "value": 10,
+          "effect": "Items crafted with this add fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 203,
+    "recipe_id": "refining_frost_steel_v138",
+    "item": {
+      "metadata": {
+        "narrative": "Frost steel forged from crystalline copper and rare frost essence. The crystalline purity of the inputs produces an exceptionally cold alloy that weeps condensation in even the driest air.",
+        "tags": ["metal", "refined", "elemental", "light"]
+      },
+      "itemId": "frost_steel_ingot",
+      "name": "Frost Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "water",
+          "value": 10,
+          "effect": "Items crafted with this add frost damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 204,
+    "recipe_id": "refining_lightning_copper_v162",
+    "item": {
+      "metadata": {
+        "narrative": "Lightning copper forged from dusty copper and faded storm hearts. Despite the diminished inputs, the primordial lightning still courses through the alloy, crackling softly when touched.",
+        "tags": ["metal", "refined", "elemental", "lightning"]
+      },
+      "itemId": "lightning_copper_ingot",
+      "name": "Lightning Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "lightning",
+          "value": 10,
+          "effect": "Items crafted with this add lightning damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 205,
+    "recipe_id": "refining_rarity_copper_uncommon_v192",
+    "item": {
+      "metadata": {
+        "narrative": "Copper refined from dusty mithril through transmutation. The mithril's legendary properties leave trace echoes in the resulting copper, producing a slightly superior ingot.",
+        "tags": ["metal", "refined", "uncommon", "standard"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 206,
+    "recipe_id": "refining_rarity_copper_rare_v198",
+    "item": {
+      "metadata": {
+        "narrative": "Copper transmuted from crystalline mithril at an advanced refinery. The crystalline structure imparts a rare clarity to the copper, making it gleam with unusual brilliance.",
+        "tags": ["metal", "refined", "rare", "quality"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 207,
+    "recipe_id": "refining_rarity_copper_epic_v204",
+    "item": {
+      "metadata": {
+        "narrative": "Copper of exceptional quality extracted from rough mithril at a master refinery. Despite its humble name, this copper rivals steel in purity and accepts enchantments with startling eagerness.",
+        "tags": ["metal", "refined", "rare", "quality"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 208,
+    "recipe_id": "refining_rarity_copper_legendary_v210",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary copper distilled from cracked mithril at the highest tier refinery. This copper hums with residual mithril memory, producing a metal that defies its common origins entirely.",
+        "tags": ["metal", "refined", "legendary", "quality"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 209,
+    "recipe_id": "refining_rarity_iron_uncommon_v216",
+    "item": {
+      "metadata": {
+        "narrative": "Iron transmuted from faded mithril at a standard refinery. The mithril's faded essence leaves behind an iron of above-average density and resilience.",
+        "tags": ["metal", "refined", "uncommon", "standard"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 210,
+    "recipe_id": "refining_rarity_iron_rare_v222",
+    "item": {
+      "metadata": {
+        "narrative": "Rare iron extracted from dusty mithril at a master refinery. The advanced process coaxes hidden strength from the mithril, yielding iron with an unusually tight grain structure.",
+        "tags": ["metal", "refined", "rare", "strong"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 211,
+    "recipe_id": "refining_rarity_iron_epic_v228",
+    "item": {
+      "metadata": {
+        "narrative": "Epic iron refined from crystalline mithril through advanced techniques. The crystalline mithril's perfect lattice structure transfers into the iron, producing near-flawless metal.",
+        "tags": ["metal", "refined", "rare", "durable"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 212,
+    "recipe_id": "refining_rarity_iron_legendary_v234",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary iron distilled from rough mithril at the apex of refinement. This iron remembers being mithril - it holds edges impossibly well and resists corrosion as if enchanted.",
+        "tags": ["metal", "refined", "legendary", "durable"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 213,
+    "recipe_id": "refining_rarity_steel_uncommon_v240",
+    "item": {
+      "metadata": {
+        "narrative": "Steel transmuted from cracked mithril at a standard refinery. Even damaged mithril yields steel of notable quality, with improved carbon distribution throughout.",
+        "tags": ["metal", "refined", "uncommon", "strong"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 214,
+    "recipe_id": "refining_rarity_steel_rare_v246",
+    "item": {
+      "metadata": {
+        "narrative": "Rare steel refined from faded mithril through careful transmutation. The muted mithril properties leave behind steel with a distinctive bluish luster and superior hardness.",
+        "tags": ["metal", "refined", "rare", "strong"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 215,
+    "recipe_id": "refining_rarity_steel_epic_v252",
+    "item": {
+      "metadata": {
+        "narrative": "Epic steel extracted from dusty mithril at a master-tier refinery. The advanced process unlocks hidden potential, producing steel that sings when struck and never dulls.",
+        "tags": ["metal", "refined", "rare", "durable"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 216,
+    "recipe_id": "refining_rarity_steel_legendary_v258",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary steel born from crystalline mithril at the pinnacle refinery. This steel carries the ghost of mithril's starborn legacy - impossibly sharp, endlessly resilient.",
+        "tags": ["metal", "refined", "legendary", "sharp"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 217,
+    "recipe_id": "refining_rarity_mithril_epic_v264",
+    "item": {
+      "metadata": {
+        "narrative": "Epic mithril refined upward from rough steel through alchemical transmutation. The process reverses the metal's nature, coaxing starlight from mundane carbon and iron.",
+        "tags": ["metal", "refined", "legendary", "light"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 218,
+    "recipe_id": "refining_rarity_mithril_legendary_v270",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary mithril transmuted from cracked steel at the apex refinery. Despite the damaged source, the supreme refinery coaxes perfection from imperfection, yielding mithril of astonishing purity.",
+        "tags": ["metal", "refined", "legendary", "light"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 219,
+    "recipe_id": "refining_rarity_mithril_mythical_v276",
+    "item": {
+      "metadata": {
+        "narrative": "Mythical mithril born from faded steel through impossible transmutation. This mithril transcends its origins entirely - lighter than air, stronger than memory, touched by forces beyond mortal understanding.",
+        "tags": ["metal", "refined", "legendary", "mythical"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "unique",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 220,
+    "recipe_id": "refining_rarity_adamantine_epic_v282",
+    "item": {
+      "metadata": {
+        "narrative": "Epic adamantine condensed from dusty etherion at a master refinery. The temporal metal's reality-bending properties collapse into pure, unyielding adamantine of remarkable density.",
+        "tags": ["metal", "refined", "rare", "durable"]
+      },
+      "itemId": "adamantine_ingot",
+      "name": "Adamantine Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 18,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 221,
+    "recipe_id": "refining_rarity_adamantine_legendary_v288",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary adamantine forged from crystalline etherion at the supreme refinery. Time-frozen durability merges with crystalline perfection, yielding adamantine that may outlast the world itself.",
+        "tags": ["metal", "refined", "legendary", "durable"]
+      },
+      "itemId": "adamantine_ingot",
+      "name": "Adamantine Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 222,
+    "recipe_id": "refining_rarity_orichalcum_legendary_v294",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary orichalcum transmuted from rough etherion at the supreme refinery. Reality-bending metal becomes god-metal, humming with all three elemental forces in perfect, devastating harmony.",
+        "tags": ["metal", "refined", "legendary", "elemental"]
+      },
+      "itemId": "orichalcum_ingot",
+      "name": "Orichalcum Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 223,
+    "recipe_id": "refining_rarity_orichalcum_mythical_v300",
+    "item": {
+      "metadata": {
+        "narrative": "Mythical orichalcum distilled from cracked etherion through impossible transmutation. This metal exists partially outside time - its elemental forces shift between fire, ice, and lightning of their own volition.",
+        "tags": ["metal", "refined", "legendary", "elemental"]
+      },
+      "itemId": "orichalcum_ingot",
+      "name": "Orichalcum Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "unique",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 22,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 224,
+    "recipe_id": "refining_rarity_tin_rare_v309",
+    "item": {
+      "metadata": {
+        "narrative": "Rare tin refined from pure mithril through precise transmutation. The pristine mithril source produces tin of exceptional clarity, perfect for creating superior bronze alloys.",
+        "tags": ["metal", "refined", "rare", "versatile"]
+      },
+      "itemId": "tin_ingot",
+      "name": "Tin Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 225,
+    "recipe_id": "refining_rarity_tin_epic_v315",
+    "item": {
+      "metadata": {
+        "narrative": "Epic tin extracted from lightning-charged mithril at a master refinery. Residual electrical charge leaves the tin with a faint static tingle and an unusually smooth, mirror-bright finish.",
+        "tags": ["metal", "refined", "rare", "quality"]
+      },
+      "itemId": "tin_ingot",
+      "name": "Tin Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 226,
+    "recipe_id": "refining_rarity_bronze_rare_v321",
+    "item": {
+      "metadata": {
+        "narrative": "Rare bronze transmuted from cursed steel through purifying refinement. The corruption burns away in the process, leaving behind bronze with a dark golden patina and unusual hardness.",
+        "tags": ["metal", "refined", "rare", "durable"]
+      },
+      "itemId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 1,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 227,
+    "recipe_id": "refining_rarity_bronze_epic_v327",
+    "item": {
+      "metadata": {
+        "narrative": "Epic bronze refined from gleaming steel at a master refinery. The shiny steel's polished nature transfers into the bronze, producing an alloy that catches light like liquid gold.",
+        "tags": ["metal", "refined", "rare", "quality"]
+      },
+      "itemId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 1,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 4,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 228,
+    "recipe_id": "refining_limestone_to_quicklime_v337",
+    "item": {
+      "metadata": {
+        "narrative": "Quickite calcined from vivid marble in a basic kiln. The radiant marble's brilliance concentrates into a caustic white powder that generates fierce heat when wetted. Essential for mortar and flux.",
+        "tags": ["stone", "refined", "basic", "common"]
+      },
+      "itemId": "quicklime",
+      "name": "Quicklime",
+      "category": "stone",
+      "type": "stone",
+      "subtype": "ite",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 229,
+    "recipe_id": "refining_maple_log_to_plank_v346",
+    "item": {
+      "metadata": {
+        "narrative": "Maple planks sawn from earthen birch logs at a standard mill. The fine-grained wood takes well to shaping and finishing, prized by bowyers and furniture makers alike.",
+        "tags": ["wood", "refined", "fine", "versatile"]
+      },
+      "itemId": "maple_plank",
+      "name": "Maple Plank",
+      "category": "wood",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 2,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 230,
+    "recipe_id": "refining_steel_ore_to_ingot_v20",
+    "item": {
+      "metadata": {
+        "narrative": "Steel smelted from blessed adamantine ore at a standard refinery. The holy adamantine imparts a sanctified strength to the resulting steel, giving it a faint warm glow in darkness.",
+        "tags": ["metal", "refined", "strong", "quality"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 231,
+    "recipe_id": "refining_mithril_ore_to_ingot_v26",
+    "item": {
+      "metadata": {
+        "narrative": "Mithril refined from soft adamantine ore at a standard refinery. The malleable adamantine yields its secrets more readily, producing mithril with a gentle silvery-blue luminescence.",
+        "tags": ["metal", "refined", "legendary", "light"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 232,
+    "recipe_id": "refining_birch_log_to_plank_v60",
+    "item": {
+      "metadata": {
+        "narrative": "Birch planks cut from cracked ironwood logs at a standard mill. The ironwood's metallic hardness makes for slow cutting, but the resulting birch-grade planks carry unusual resilience.",
+        "tags": ["wood", "refined", "fine", "light"]
+      },
+      "itemId": "birch_plank",
+      "name": "Birch Plank",
+      "category": "wood",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 2,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 233,
+    "recipe_id": "refining_bronze_alloy_v79",
+    "item": {
+      "metadata": {
+        "narrative": "Bronze alloy forged from ancient copper and lightning-infused copper. The combination of aged patina and crackling energy produces a bronze with subtle electrical warmth and deep amber coloring.",
+        "tags": ["metal", "refined", "ancient", "versatile"]
+      },
+      "itemId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 234,
+    "recipe_id": "refining_fire_steel_v115",
+    "item": {
+      "metadata": {
+        "narrative": "Fire steel forged from tempered copper and hardened water crystals in a paradoxical fusion. The opposing elements create internal tension that radiates as persistent heat along the metal's surface.",
+        "tags": ["metal", "refined", "elemental", "fire"]
+      },
+      "itemId": "fire_steel_ingot",
+      "name": "Fire Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "fire",
+          "value": 10,
+          "effect": "Items crafted with this add fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 235,
+    "recipe_id": "refining_frost_steel_v139",
+    "item": {
+      "metadata": {
+        "narrative": "Frost steel forged from ancient copper and old lightning shards. The aged lightning crystallizes into frozen arcs within the metal, creating an alloy that numbs fingers and freezes moisture on contact.",
+        "tags": ["metal", "refined", "elemental", "ancient"]
+      },
+      "itemId": "frost_steel_ingot",
+      "name": "Frost Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "water",
+          "value": 10,
+          "effect": "Items crafted with this add frost damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 236,
+    "recipe_id": "refining_lightning_copper_v163",
+    "item": {
+      "metadata": {
+        "narrative": "Lightning copper forged from blazing iron and fire-touched lightning shards. The dual elemental infusion creates a copper alloy that arcs with golden-white sparks and hums with restless energy.",
+        "tags": ["metal", "refined", "elemental", "lightning"]
+      },
+      "itemId": "lightning_copper_ingot",
+      "name": "Lightning Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "lightning",
+          "value": 10,
+          "effect": "Items crafted with this add lightning damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 237,
+    "recipe_id": "refining_rarity_copper_uncommon_v193",
+    "item": {
+      "metadata": {
+        "narrative": "Copper reclaimed from blazing lightning copper at a basic refinery. The lightning dissipates during refinement, but leaves behind copper with unusually high conductivity and a warm tint.",
+        "tags": ["metal", "refined", "uncommon", "standard"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 238,
+    "recipe_id": "refining_rarity_copper_rare_v199",
+    "item": {
+      "metadata": {
+        "narrative": "Rare copper extracted from ancient lightning copper at a standard refinery. Centuries of elemental charge have fundamentally altered the copper's crystalline structure for the better.",
+        "tags": ["metal", "refined", "rare", "quality"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 239,
+    "recipe_id": "refining_rarity_copper_epic_v205",
+    "item": {
+      "metadata": {
+        "narrative": "Epic copper refined from tempered lightning copper at a master refinery. The hardened alloy yields copper of startling purity, with a rose-gold sheen that marks its extraordinary origin.",
+        "tags": ["metal", "refined", "rare", "precious"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 240,
+    "recipe_id": "refining_rarity_copper_legendary_v211",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary copper distilled from bright lightning copper at the supreme refinery. This copper radiates a soft inner light, as if remembering the lightning that once coursed through its veins.",
+        "tags": ["metal", "refined", "legendary", "radiant"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 241,
+    "recipe_id": "refining_rarity_iron_uncommon_v217",
+    "item": {
+      "metadata": {
+        "narrative": "Iron transmuted from vivid lightning copper at a standard refinery. The rich elemental charge leaves behind iron with a subtle magnetic quality and improved tensile strength.",
+        "tags": ["metal", "refined", "uncommon", "strong"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 242,
+    "recipe_id": "refining_rarity_iron_rare_v223",
+    "item": {
+      "metadata": {
+        "narrative": "Rare iron refined from blazing lightning copper at a master refinery. The dual elemental residue creates iron with an unusually fine grain and faint warmth that never quite fades.",
+        "tags": ["metal", "refined", "rare", "durable"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 243,
+    "recipe_id": "refining_rarity_iron_epic_v229",
+    "item": {
+      "metadata": {
+        "narrative": "Epic iron extracted from ancient lightning copper at a master refinery. Age and lightning have worked the copper's very essence, and the resulting iron carries traces of both time and storm.",
+        "tags": ["metal", "refined", "rare", "ancient"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 244,
+    "recipe_id": "refining_rarity_iron_legendary_v235",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary iron distilled from tempered lightning copper at the supreme refinery. This iron resonates with a deep harmonic tone when struck, and edges forged from it stay sharp through a hundred battles.",
+        "tags": ["metal", "refined", "legendary", "sharp"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 245,
+    "recipe_id": "refining_rarity_steel_uncommon_v241",
+    "item": {
+      "metadata": {
+        "narrative": "Steel transmuted from bright adamantine at a standard refinery. The indestructible source metal leaves traces of its resilience in the steel, producing an alloy that resists chipping and cracking.",
+        "tags": ["metal", "refined", "uncommon", "durable"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 246,
+    "recipe_id": "refining_rarity_steel_rare_v247",
+    "item": {
+      "metadata": {
+        "narrative": "Rare steel refined from vivid adamantine at a standard refinery. The rich adamantine source saturates the steel with deep blue undertones and an edge retention that surpasses ordinary alloys.",
+        "tags": ["metal", "refined", "rare", "strong"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 247,
+    "recipe_id": "refining_rarity_steel_epic_v253",
+    "item": {
+      "metadata": {
+        "narrative": "Epic steel extracted from blazing adamantine at a master refinery. Fire-touched adamantine yields steel with an inner warmth and phenomenal hardness that approaches its parent metal.",
+        "tags": ["metal", "refined", "rare", "strong"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 248,
+    "recipe_id": "refining_rarity_steel_legendary_v259",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary steel born from ancient adamantine at the supreme refinery. Millennia of geological pressure have already perfected this metal. The refinery merely reveals what time created.",
+        "tags": ["metal", "refined", "legendary", "ancient"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 249,
+    "recipe_id": "refining_rarity_mithril_epic_v265",
+    "item": {
+      "metadata": {
+        "narrative": "Epic mithril transmuted from tempered adamantine at a master refinery. The hardened adamantine resists transformation fiercely, but yields mithril of extraordinary density and starlight brilliance.",
+        "tags": ["metal", "refined", "legendary", "light"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 250,
+    "recipe_id": "refining_rarity_mithril_legendary_v271",
+    "item": {
+      "metadata": {
+        "narrative": "Legendary mithril distilled from bright adamantine at the supreme refinery. The luminous adamantine surrenders its light to the mithril, producing ingots that glow faintly even in utter darkness.",
+        "tags": ["metal", "refined", "legendary", "light"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "metal",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  }
+]

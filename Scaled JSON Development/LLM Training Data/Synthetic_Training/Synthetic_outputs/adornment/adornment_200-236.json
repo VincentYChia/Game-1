@@ -1,0 +1,805 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "totalItems": 37,
+    "indexRange": "200-236"
+  },
+  "items": [
+    {
+      "index": 200,
+      "metadata": {
+        "narrative": "Fortune's favor flows through voidstone channels, bending probability toward abundance. Dark crystals amplify the effect.",
+        "recipeId": "enchanting_fortune_basic_voidstone_vert_v2",
+        "enchantmentId": "fortune_1_dark_v2",
+        "tags": ["tool", "fortune", "luck", "dark", "void"]
+      },
+      "enchantmentName": "Fortune I (Dark)",
+      "applicableTo": ["tool"],
+      "tier": 3,
+      "rarity": "rare",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.3,
+        "stackable": false,
+        "conflictsWith": ["fortune_2", "fortune_1", "silk_touch"]
+      }
+    },
+    {
+      "index": 201,
+      "metadata": {
+        "narrative": "Frost essence bound within void channels creates weapons that freeze enemies in their tracks. Each strike slows and chills.",
+        "recipeId": "enchanting_frost_touch_voidstone_vert_v2",
+        "enchantmentId": "frost_touch_dark_v2",
+        "tags": ["weapon", "elemental", "frost", "dark", "void"]
+      },
+      "enchantmentName": "Frost Touch (Dark)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "rare",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "slow",
+        "element": "ice",
+        "slowPercent": 0.3,
+        "duration": 4,
+        "stackable": true,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 202,
+      "metadata": {
+        "narrative": "Crystallized blood and shadow essence create a vampiric weapon. Life force drains from enemies with each strike.",
+        "recipeId": "enchanting_lifesteal_voidstone_vert_v2",
+        "enchantmentId": "lifesteal_dark_v2",
+        "tags": ["weapon", "lifesteal", "vampiric", "dark", "blood"]
+      },
+      "enchantmentName": "Lifesteal (Dark)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "lifesteal",
+        "value": 0.12,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 203,
+      "metadata": {
+        "narrative": "Void essence channels primordial lightning through weapon strikes. Chain reactions devastate groups of enemies.",
+        "recipeId": "enchanting_lightning_strike_void_vert_v2",
+        "enchantmentId": "lightning_strike_void_dark_v2",
+        "tags": ["weapon", "elemental", "lightning", "dark", "void"]
+      },
+      "enchantmentName": "Lightning Strike (Dark)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "chain_damage",
+        "element": "lightning",
+        "chainCount": 2,
+        "chainRange": 3,
+        "damagePercent": 0.5,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 204,
+      "metadata": {
+        "narrative": "Enhanced sharpening using void-touched materials. Lightning and frost combine to create an unnaturally keen edge.",
+        "recipeId": "enchanting_sharpness_advanced_voidstone_vert_v2",
+        "enchantmentId": "sharpness_2_dark_v2",
+        "tags": ["weapon", "damage", "advanced", "dark", "void"]
+      },
+      "enchantmentName": "Sharpness II (Dark)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "rare",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_3"]
+      }
+    },
+    {
+      "index": 205,
+      "metadata": {
+        "narrative": "Master sharpening using phoenix ash and void essence. The blade exists in a state between matter and energy.",
+        "recipeId": "enchanting_sharpness_master_voidstone_vert_v2",
+        "enchantmentId": "sharpness_3_dark_v2",
+        "tags": ["weapon", "damage", "legendary", "dark", "void"]
+      },
+      "enchantmentName": "Sharpness III (Dark)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2"]
+      }
+    },
+    {
+      "index": 206,
+      "metadata": {
+        "narrative": "Worldtree essence and chaos matrices bind items to their owner's soul. Returns upon death through dimensional recall.",
+        "recipeId": "enchanting_soulbound_voidstone_vert_v2",
+        "enchantmentId": "soulbound_dark_v2",
+        "tags": ["universal", "soulbound", "special", "dark", "legendary"]
+      },
+      "enchantmentName": "Soulbound (Dark)",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 207,
+      "metadata": {
+        "narrative": "Air essence and void energy accelerate tool actions. Work happens at supernatural speed.",
+        "recipeId": "enchanting_efficiency_advanced_void_vert_v3",
+        "enchantmentId": "efficiency_2_brilliant_v3",
+        "tags": ["tool", "efficiency", "advanced", "brilliant", "void"]
+      },
+      "enchantmentName": "Efficiency II (Brilliant)",
+      "applicableTo": ["tool"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.4,
+        "stackable": false,
+        "conflictsWith": ["efficiency_1"]
+      }
+    },
+    {
+      "index": 208,
+      "metadata": {
+        "narrative": "Advanced fortune using chaos matrices and genesis lattices. Reality itself bends toward abundant yields.",
+        "recipeId": "enchanting_fortune_advanced_voidstone_vert_v3",
+        "enchantmentId": "fortune_2_brilliant_v3",
+        "tags": ["tool", "fortune", "master", "brilliant", "chaos"]
+      },
+      "enchantmentName": "Fortune II (Brilliant)",
+      "applicableTo": ["tool"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "silk_touch"]
+      }
+    },
+    {
+      "index": 209,
+      "metadata": {
+        "narrative": "Basic fortune using brilliant voidstone and mithril. Light-touched materials enhance natural yields.",
+        "recipeId": "enchanting_fortune_basic_voidstone_vert_v3",
+        "enchantmentId": "fortune_1_brilliant_v3",
+        "tags": ["tool", "fortune", "luck", "brilliant", "void"]
+      },
+      "enchantmentName": "Fortune I (Brilliant)",
+      "applicableTo": ["tool"],
+      "tier": 3,
+      "rarity": "rare",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.3,
+        "stackable": false,
+        "conflictsWith": ["fortune_2", "silk_touch"]
+      }
+    },
+    {
+      "index": 210,
+      "metadata": {
+        "narrative": "Frost essence in radiant channels. Brilliant frost that slows without the darkness of shadow ice.",
+        "recipeId": "enchanting_frost_touch_voidstone_vert_v3",
+        "enchantmentId": "frost_touch_brilliant_v3",
+        "tags": ["weapon", "elemental", "frost", "brilliant", "void"]
+      },
+      "enchantmentName": "Frost Touch (Brilliant)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "rare",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "slow",
+        "element": "ice",
+        "slowPercent": 0.3,
+        "duration": 4,
+        "stackable": true,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 211,
+      "metadata": {
+        "narrative": "Radiant blood essence creates purified life drain. Vampiric power without corruption.",
+        "recipeId": "enchanting_lifesteal_voidstone_vert_v3",
+        "enchantmentId": "lifesteal_brilliant_v3",
+        "tags": ["weapon", "lifesteal", "vampiric", "brilliant"]
+      },
+      "enchantmentName": "Lifesteal (Brilliant)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "lifesteal",
+        "value": 0.12,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 212,
+      "metadata": {
+        "narrative": "Brilliant storm hearts channel pure lightning. Chain attacks with radiant electrical discharge.",
+        "recipeId": "enchanting_lightning_strike_void_vert_v3",
+        "enchantmentId": "lightning_strike_brilliant_v3",
+        "tags": ["weapon", "elemental", "lightning", "brilliant"]
+      },
+      "enchantmentName": "Lightning Strike (Brilliant)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "chain_damage",
+        "element": "lightning",
+        "chainCount": 2,
+        "chainRange": 3,
+        "damagePercent": 0.5,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 213,
+      "metadata": {
+        "narrative": "Advanced sharpening with radiant materials. Lightning and frost combined with brilliant precision.",
+        "recipeId": "enchanting_sharpness_advanced_voidstone_vert_v3",
+        "enchantmentId": "sharpness_2_brilliant_v3",
+        "tags": ["weapon", "damage", "advanced", "brilliant"]
+      },
+      "enchantmentName": "Sharpness II (Brilliant)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "rare",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_3"]
+      }
+    },
+    {
+      "index": 214,
+      "metadata": {
+        "narrative": "Master sharpening using phoenix ash and brilliant essences. The blade cuts through reality itself.",
+        "recipeId": "enchanting_sharpness_master_voidstone_vert_v3",
+        "enchantmentId": "sharpness_3_brilliant_v3",
+        "tags": ["weapon", "damage", "legendary", "brilliant"]
+      },
+      "enchantmentName": "Sharpness III (Brilliant)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2"]
+      }
+    },
+    {
+      "index": 215,
+      "metadata": {
+        "narrative": "Radiant worldtree and chaos essence bind items to the soul with brilliant light. Death cannot claim what belongs to you.",
+        "recipeId": "enchanting_soulbound_voidstone_vert_v3",
+        "enchantmentId": "soulbound_brilliant_v3",
+        "tags": ["universal", "soulbound", "special", "brilliant", "legendary"]
+      },
+      "enchantmentName": "Soulbound (Brilliant)",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 216,
+      "metadata": {
+        "narrative": "Light-touched diamonds and chaos matrices bend fortune to your will. Abundance flows naturally.",
+        "recipeId": "enchanting_fortune_advanced_voidstone_vert_v1",
+        "enchantmentId": "fortune_2_light_v1",
+        "tags": ["tool", "fortune", "master", "light", "radiant"]
+      },
+      "enchantmentName": "Fortune II (Light)",
+      "applicableTo": ["tool"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "silk_touch"]
+      }
+    },
+    {
+      "index": 217,
+      "metadata": {
+        "narrative": "Storm hearts and radiant voidstone create pure lightning weapons. Chain reactions without darkness.",
+        "recipeId": "enchanting_lightning_strike_voidstone_vert_v1",
+        "enchantmentId": "lightning_strike_light_v1",
+        "tags": ["weapon", "elemental", "lightning", "light"]
+      },
+      "enchantmentName": "Lightning Strike (Light)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "chain_damage",
+        "element": "lightning",
+        "chainCount": 2,
+        "chainRange": 3,
+        "damagePercent": 0.5,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 218,
+      "metadata": {
+        "narrative": "Master sharpening with light-touched diamonds and phoenix ash. The edge exists in perfect clarity.",
+        "recipeId": "enchanting_sharpness_master_voidstone_vert_v1",
+        "enchantmentId": "sharpness_3_light_v1",
+        "tags": ["weapon", "damage", "legendary", "light"]
+      },
+      "enchantmentName": "Sharpness III (Light)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2"]
+      }
+    },
+    {
+      "index": 219,
+      "metadata": {
+        "narrative": "Light-touched worldtree and chaos create eternal bonds. Items return through radiant pathways.",
+        "recipeId": "enchanting_soulbound_voidstone_vert_v1",
+        "enchantmentId": "soulbound_light_v1",
+        "tags": ["universal", "soulbound", "special", "light", "legendary"]
+      },
+      "enchantmentName": "Soulbound (Light)",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 220,
+      "metadata": {
+        "narrative": "Dark diamonds and genesis lattices create powerful fortune effects. Shadow-blessed abundance.",
+        "recipeId": "enchanting_fortune_advanced_voidstone_vert_v2",
+        "enchantmentId": "fortune_2_dark_v2",
+        "tags": ["tool", "fortune", "master", "dark", "shadow"]
+      },
+      "enchantmentName": "Fortune II (Dark)",
+      "applicableTo": ["tool"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "silk_touch"]
+      }
+    },
+    {
+      "index": 221,
+      "metadata": {
+        "narrative": "Shadow-touched storm hearts unleash dark lightning. Chain attacks through void channels.",
+        "recipeId": "enchanting_lightning_strike_voidstone_vert_v2",
+        "enchantmentId": "lightning_strike_dark_v2_alt",
+        "tags": ["weapon", "elemental", "lightning", "dark", "shadow"]
+      },
+      "enchantmentName": "Lightning Strike (Dark Alt)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "chain_damage",
+        "element": "lightning",
+        "chainCount": 2,
+        "chainRange": 3,
+        "damagePercent": 0.5,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 222,
+      "metadata": {
+        "narrative": "Master sharpening with shadow diamonds and void essence. The blade cuts with darkness itself.",
+        "recipeId": "enchanting_sharpness_master_voidstone_vert_v2",
+        "enchantmentId": "sharpness_3_dark_v2_alt",
+        "tags": ["weapon", "damage", "legendary", "dark", "shadow"]
+      },
+      "enchantmentName": "Sharpness III (Dark Alt)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2"]
+      }
+    },
+    {
+      "index": 223,
+      "metadata": {
+        "narrative": "Shadow worldtree and eternity stones create bonds beyond death. Dark pathways recall lost items.",
+        "recipeId": "enchanting_soulbound_voidstone_vert_v2",
+        "enchantmentId": "soulbound_dark_v2_alt",
+        "tags": ["universal", "soulbound", "special", "dark", "legendary"]
+      },
+      "enchantmentName": "Soulbound (Dark Alt)",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 224,
+      "metadata": {
+        "narrative": "Brilliant diamonds and impossible geometries maximize yields. Reality reorganizes for abundance.",
+        "recipeId": "enchanting_fortune_advanced_voidstone_vert_v3",
+        "enchantmentId": "fortune_2_brilliant_v3_alt",
+        "tags": ["tool", "fortune", "master", "brilliant", "impossible"]
+      },
+      "enchantmentName": "Fortune II (Brilliant Alt)",
+      "applicableTo": ["tool"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "silk_touch"]
+      }
+    },
+    {
+      "index": 225,
+      "metadata": {
+        "narrative": "Brilliant storm hearts create pure electrical devastation. Lightning chains with radiant beauty.",
+        "recipeId": "enchanting_lightning_strike_voidstone_vert_v3",
+        "enchantmentId": "lightning_strike_brilliant_v3_alt",
+        "tags": ["weapon", "elemental", "lightning", "brilliant", "radiant"]
+      },
+      "enchantmentName": "Lightning Strike (Brilliant Alt)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "chain_damage",
+        "element": "lightning",
+        "chainCount": 2,
+        "chainRange": 3,
+        "damagePercent": 0.5,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 226,
+      "metadata": {
+        "narrative": "Master sharpening with brilliant void essence. The edge cuts through dimensional barriers.",
+        "recipeId": "enchanting_sharpness_master_voidstone_vert_v3",
+        "enchantmentId": "sharpness_3_brilliant_v3_alt",
+        "tags": ["weapon", "damage", "legendary", "brilliant"]
+      },
+      "enchantmentName": "Sharpness III (Brilliant Alt)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2"]
+      }
+    },
+    {
+      "index": 227,
+      "metadata": {
+        "narrative": "Brilliant worldtree and eternal memory create perfect soul bonds. Items remember their owner forever.",
+        "recipeId": "enchanting_soulbound_voidstone_vert_v3",
+        "enchantmentId": "soulbound_brilliant_v3_alt",
+        "tags": ["universal", "soulbound", "special", "brilliant", "memory"]
+      },
+      "enchantmentName": "Soulbound (Brilliant Alt)",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 228,
+      "metadata": {
+        "narrative": "Light diamonds maximize fortune through pure probability manipulation. No darkness, only abundance.",
+        "recipeId": "enchanting_fortune_advanced_voidstone_vert_v1",
+        "enchantmentId": "fortune_2_light_v1_alt",
+        "tags": ["tool", "fortune", "master", "light", "genesis"]
+      },
+      "enchantmentName": "Fortune II (Light Alt)",
+      "applicableTo": ["tool"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "silk_touch"]
+      }
+    },
+    {
+      "index": 229,
+      "metadata": {
+        "narrative": "Master sharpening with light void essence and marble. Pure cutting power without corruption.",
+        "recipeId": "enchanting_sharpness_master_void_vert_v1",
+        "enchantmentId": "sharpness_3_light_void_v1",
+        "tags": ["weapon", "damage", "legendary", "light", "void"]
+      },
+      "enchantmentName": "Sharpness III (Light Void)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2"]
+      }
+    },
+    {
+      "index": 230,
+      "metadata": {
+        "narrative": "Light worldtree and eternal stones create radiant soul bonds. Items return through pathways of memory.",
+        "recipeId": "enchanting_soulbound_voidstone_vert_v1",
+        "enchantmentId": "soulbound_light_v1_alt",
+        "tags": ["universal", "soulbound", "special", "light", "eternity"]
+      },
+      "enchantmentName": "Soulbound (Light Alt)",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 231,
+      "metadata": {
+        "narrative": "Dark diamonds and genesis structures create ultimate fortune. Shadow-blessed impossible abundance.",
+        "recipeId": "enchanting_fortune_advanced_voidstone_vert_v2",
+        "enchantmentId": "fortune_2_dark_genesis_v2",
+        "tags": ["tool", "fortune", "master", "dark", "genesis"]
+      },
+      "enchantmentName": "Fortune II (Dark Genesis)",
+      "applicableTo": ["tool"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "silk_touch"]
+      }
+    },
+    {
+      "index": 232,
+      "metadata": {
+        "narrative": "Master sharpening with dark void essence and blood. The blade drinks shadows and light alike.",
+        "recipeId": "enchanting_sharpness_master_void_vert_v2",
+        "enchantmentId": "sharpness_3_dark_void_v2",
+        "tags": ["weapon", "damage", "legendary", "dark", "void"]
+      },
+      "enchantmentName": "Sharpness III (Dark Void)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2"]
+      }
+    },
+    {
+      "index": 233,
+      "metadata": {
+        "narrative": "Shadow worldtree and void-touched eternities create dark soul bonds beyond comprehension.",
+        "recipeId": "enchanting_soulbound_voidstone_vert_v2",
+        "enchantmentId": "soulbound_dark_eternity_v2",
+        "tags": ["universal", "soulbound", "special", "dark", "eternity"]
+      },
+      "enchantmentName": "Soulbound (Dark Eternity)",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 234,
+      "metadata": {
+        "narrative": "Brilliant diamonds and impossible forms create maximum fortune. Reality bends to your will.",
+        "recipeId": "enchanting_fortune_advanced_voidstone_vert_v3",
+        "enchantmentId": "fortune_2_brilliant_genesis_v3",
+        "tags": ["tool", "fortune", "master", "brilliant", "genesis"]
+      },
+      "enchantmentName": "Fortune II (Brilliant Genesis)",
+      "applicableTo": ["tool"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "silk_touch"]
+      }
+    },
+    {
+      "index": 235,
+      "metadata": {
+        "narrative": "Master sharpening with brilliant void essence and marble. The edge exists in perfect enlightenment.",
+        "recipeId": "enchanting_sharpness_master_void_vert_v3",
+        "enchantmentId": "sharpness_3_brilliant_void_v3",
+        "tags": ["weapon", "damage", "legendary", "brilliant", "void"]
+      },
+      "enchantmentName": "Sharpness III (Brilliant Void)",
+      "applicableTo": ["weapon"],
+      "tier": 3,
+      "rarity": "epic",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_2"]
+      }
+    },
+    {
+      "index": 236,
+      "metadata": {
+        "narrative": "Brilliant worldtree and eternal memory create transcendent bonds. Your items exist beyond death itself.",
+        "recipeId": "enchanting_soulbound_voidstone_vert_v3",
+        "enchantmentId": "soulbound_brilliant_eternity_v3",
+        "tags": ["universal", "soulbound", "special", "brilliant", "eternity"]
+      },
+      "enchantmentName": "Soulbound (Brilliant Eternity)",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "tier": 4,
+      "rarity": "legendary",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    }
+  ]
+}

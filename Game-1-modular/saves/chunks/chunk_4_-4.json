@@ -1,7 +1,7 @@
 {
   "chunk_x": 4,
   "chunk_y": -4,
-  "chunk_type": "dangerous_quarry",
+  "chunk_type": "water_river",
   "dungeon_entrance": {
     "position": {
       "x": 75,
@@ -10,5 +10,5 @@
     },
     "rarity": "rare"
   },
-  "unload_timestamp": 2.548999999999996
+  "unload_timestamp": 83.07300000000049
 }

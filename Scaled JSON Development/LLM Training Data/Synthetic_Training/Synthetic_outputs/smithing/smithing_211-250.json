@@ -1,0 +1,1353 @@
+[
+  {
+    "index": 211,
+    "recipe_id": "smithing_steel_helm_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Dark steel helm forged from shadow-touched ingots with wolf pelt lining. The metal absorbs light, making the wearer's face vanish into darkness. Padding from dark wolf pelts muffles sound and cushions blows.",
+        "tags": ["armor", "head", "heavy", "quality"]
+      },
+      "itemId": "dark_steel_helm",
+      "name": "Dark Steel Helm",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "helmet",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "head",
+      "statMultipliers": {
+        "defense": 1.1,
+        "durability": 1.1,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 212,
+    "recipe_id": "smithing_steel_leggings_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Shadow-forged steel leggings with articulated joints lined in dark wolf hide. The plates seem to drink in light, leaving the wearer's lower half cloaked in subtle gloom. Moves silently despite the heavy construction.",
+        "tags": ["armor", "legs", "metal", "heavy"]
+      },
+      "itemId": "dark_steel_leggings",
+      "name": "Dark Steel Leggings",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "leggings",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "legs",
+      "statMultipliers": {
+        "defense": 1.1,
+        "durability": 1.1,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 213,
+    "recipe_id": "smithing_steel_lightning_bracelet_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Dark steel bracelet threaded with shadow-lightning shards and spectral weave. Static arcs dance across its surface in violet-black pulses. The spectral thread anchors the lightning between planes, amplifying its potency.",
+        "tags": ["accessory", "bracelet", "lightning", "elemental"]
+      },
+      "itemId": "dark_steel_lightning_bracelet",
+      "name": "Dark Steel Lightning Bracelet",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "bracelet",
+      "tier": 3,
+      "rarity": "rare",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "lightning",
+          "value": 20,
+          "effect": "Adds lightning damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 214,
+    "recipe_id": "smithing_steel_longsword_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Dark steel longsword with a maple grip studded with dire fangs. The shadow-touched blade hums with a low, hungry resonance. Fang fragments embedded in the crossguard give it a predatory silhouette.",
+        "tags": ["melee", "sword", "versatile", "quality"]
+      },
+      "itemId": "dark_steel_longsword",
+      "name": "Dark Steel Longsword",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "longsword",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 1,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 42
+      },
+      "statMultipliers": {
+        "damage": 1.15,
+        "attackSpeed": 1.0,
+        "durability": 1.1,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": { "STR": 10 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 215,
+    "recipe_id": "smithing_steel_pickaxe_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Dark ironwood-hafted pickaxe with shadow-tempered steel head. The metallic wood shaft is nearly indestructible, and the dark-forged pick bites into stone with unnatural ease. Ore seems drawn to its edge.",
+        "tags": ["tool", "pickaxe", "quality"]
+      },
+      "itemId": "dark_steel_pickaxe",
+      "name": "Dark Steel Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.7,
+        "mining": 1.3,
+        "durability": 1.2,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 216,
+    "recipe_id": "smithing_steel_sickle_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Curved dark steel blade set into a birch handle darkened by shadow. The razor edge cuts through plant fiber without bruising, preserving material quality. Adequate for self-defense when foraging turns dangerous.",
+        "tags": ["tool", "harvesting", "quality"]
+      },
+      "itemId": "dark_steel_sickle",
+      "name": "Dark Steel Sickle",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "sickle",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 0.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 24
+      },
+      "statMultipliers": {
+        "damage": 0.75,
+        "gathering": 1.1,
+        "durability": 1.1,
+        "weight": 0.7
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 217,
+    "recipe_id": "recipe_blood_reaver_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Massive etherion greatsword edged with obsidian shards and quenched in crystallized essence blood. The worldtree hilt pulses with dark vitality, and the blade seems to exist slightly ahead of the present moment. Wounds appear before the swing completes.",
+        "tags": ["melee", "sword", "2H", "heavy", "legendary"]
+      },
+      "itemId": "dark_blood_reaver",
+      "name": "Dark Blood Reaver",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "greatsword",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 1.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 78
+      },
+      "statMultipliers": {
+        "damage": 1.4,
+        "attackSpeed": 0.8,
+        "durability": 1.5,
+        "weight": 1.3
+      },
+      "requirements": {
+        "level": 28,
+        "stats": { "STR": 28 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 218,
+    "recipe_id": "recipe_frostbite_hammer_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Ironwood warhammer with a head of dark crystal quartz reinforced by voidstone. Frost essence courses through the haft, leaving rime on every surface it touches. Each strike freezes flesh and shatters bone in equal measure.",
+        "tags": ["melee", "mace", "2H", "crushing", "elemental"]
+      },
+      "itemId": "dark_frostbite_hammer",
+      "name": "Dark Frostbite Hammer",
+      "category": "equipment",
+      "type": "mace",
+      "subtype": "warhammer",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 1.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 60
+      },
+      "statMultipliers": {
+        "damage": 1.3,
+        "attackSpeed": 0.75,
+        "durability": 1.4,
+        "weight": 1.4
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "water",
+          "value": 18,
+          "effect": "Elemental attacks deal bonus frost damage"
+        }
+      ],
+      "requirements": {
+        "level": 18,
+        "stats": { "STR": 22 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 219,
+    "recipe_id": "recipe_inferno_blade_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Etherion longsword wreathed in phoenix flame that never dies. The worldtree grip channels shadow-fire through voidstone channels, and the blade burns with dark crimson light. Reality warps around its edge, cauterizing wounds before they fully open.",
+        "tags": ["melee", "sword", "versatile", "elemental", "fire"]
+      },
+      "itemId": "dark_inferno_blade",
+      "name": "Dark Inferno Blade",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "longsword",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 1,
+      "slot": "mainHand",
+      "effectTags": ["fire", "slashing", "burn"],
+      "effectParams": {
+        "baseDamage": 75,
+        "burn_duration": 5.0,
+        "burn_damage_per_second": 8.0
+      },
+      "statMultipliers": {
+        "damage": 1.3,
+        "attackSpeed": 1.0,
+        "durability": 1.5,
+        "weight": 0.9
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 25,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 27,
+        "stats": { "STR": 20, "INT": 18 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 220,
+    "recipe_id": "recipe_lightning_chain_whip_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Lengths of spectral chain woven around a storm heart core, anchored to an ironwood grip capped with dark diamond. Lightning leaps between links, arcing to nearby targets with each lash. The whip crackles and writhes as though alive.",
+        "tags": ["melee", "versatile", "elemental", "lightning"]
+      },
+      "itemId": "dark_lightning_chain_whip",
+      "name": "Dark Lightning Chain Whip",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "whip",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 4,
+      "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 48
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 1.15,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "lightning",
+          "value": 22,
+          "effect": "Elemental attacks deal bonus lightning damage"
+        }
+      ],
+      "requirements": {
+        "level": 18,
+        "stats": { "AGI": 20, "INT": 14 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 221,
+    "recipe_id": "recipe_void_piercer_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Etherion spear tipped with genesis lattice geometry and sheathed in condensed voidstone. The shaft of living worldtree wood bends space around itself, and the spearhead exists in multiple positions simultaneously. Strikes seem to bypass armor entirely.",
+        "tags": ["melee", "spear", "reach", "heavy", "legendary"]
+      },
+      "itemId": "dark_void_piercer",
+      "name": "Dark Void Piercer",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "spear",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 3,
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 72
+      },
+      "statMultipliers": {
+        "damage": 1.3,
+        "attackSpeed": 0.95,
+        "durability": 1.6,
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 28,
+        "stats": { "STR": 22, "INT": 20 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 222,
+    "recipe_id": "smithing_alchemy_table_t2_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Advanced alchemy station of dark steel with shadow-crystal apparatus. Fire crystals maintain precise heat while the dark steel vessels handle volatile reactions with ease. Shadows pool in the vials, deepening brews.",
+        "tags": ["station", "alchemy", "brewing", "standard"]
+      },
+      "itemId": "dark_alchemy_table_t2",
+      "name": "Dark Steel Alchemy Table",
+      "category": "station",
+      "type": "alchemy",
+      "subtype": "alchemy_table",
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 223,
+    "recipe_id": "smithing_alchemy_table_t3_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Master alchemy laboratory built from dark mithril and crystal quartz distillation chambers. Frost essence regulates temperature while a golem core powers automated stirring mechanisms. Diamonds focus ambient energy into reaction catalysts.",
+        "tags": ["station", "alchemy", "brewing", "master"]
+      },
+      "itemId": "dark_alchemy_table_t3",
+      "name": "Dark Master Alchemy Lab",
+      "category": "station",
+      "type": "alchemy",
+      "subtype": "alchemy_table",
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 224,
+    "recipe_id": "smithing_alchemy_table_t4_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Legendary alchemy apparatus of etherion and obsidian, crowned with primordial crystals and stabilized by genesis lattices. A chaos matrix at its heart bends probability, allowing impossible reactions. Void essence keeps the apparatus cold between dimensions.",
+        "tags": ["station", "alchemy", "brewing", "legendary"]
+      },
+      "itemId": "dark_alchemy_table_t4",
+      "name": "Dark Philosopher's Laboratory",
+      "category": "station",
+      "type": "alchemy",
+      "subtype": "alchemy_table",
+      "tier": 4,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 225,
+    "recipe_id": "smithing_enchanting_table_t1_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Dark marble pedestal inlaid with shadow-light gem channels on an oak base. The light gems glow with an inverted radiance, illuminating runes that only appear in darkness. Where mundane becomes touched by shadow.",
+        "tags": ["station", "enchanting", "enhancement", "starter"]
+      },
+      "itemId": "dark_enchanting_table_t1",
+      "name": "Dark Basic Enchanting Altar",
+      "category": "station",
+      "type": "adornments",
+      "subtype": "altar",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 226,
+    "recipe_id": "smithing_enchanting_table_t2_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Advanced enchanting table of dark marble surrounded by shadow-crystal matrices. Twin shadow cores anchor the magical field while crystal quartz amplifies inscribed patterns. Enchantments carved here resonate with darker frequencies.",
+        "tags": ["station", "enchanting", "enhancement", "standard"]
+      },
+      "itemId": "dark_enchanting_table_t2",
+      "name": "Dark Arcane Enchanting Table",
+      "category": "station",
+      "type": "adornments",
+      "subtype": "altar",
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 227,
+    "recipe_id": "smithing_enchanting_table_t3_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Master enchanting altar carved from dark obsidian with void essence channels. A light gem at the center creates a paradox of radiance and shadow that perfectly balances enchantment energies. The altar hums with contained power.",
+        "tags": ["station", "enchanting", "enhancement", "master"]
+      },
+      "itemId": "dark_enchanting_table_t3",
+      "name": "Dark Master Enchanting Altar",
+      "category": "station",
+      "type": "adornments",
+      "subtype": "altar",
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 228,
+    "recipe_id": "smithing_enchanting_table_t4_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Legendary enchanting nexus of dark worldtree and etherion, built upon voidstone foundations. Primordial crystals float above the surface, eternity stones record every enchantment ever performed, and chaos matrices allow reality-defying inscriptions. A genesis lattice crowns the apparatus.",
+        "tags": ["station", "enchanting", "enhancement", "legendary"]
+      },
+      "itemId": "dark_enchanting_table_t4",
+      "name": "Dark Nexus of Enchantment",
+      "category": "station",
+      "type": "adornments",
+      "subtype": "altar",
+      "tier": 4,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 229,
+    "recipe_id": "smithing_engineering_bench_t2_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Advanced engineering station of dark steel construction on an ash-wood base. Shadow-lightning crystals power precision tools while the dark steel vises grip with uncanny strength. Complex mechanisms take shape under its shadow.",
+        "tags": ["station", "engineering", "mechanical", "standard"]
+      },
+      "itemId": "dark_engineering_bench_t2",
+      "name": "Dark Steel Engineering Bench",
+      "category": "station",
+      "type": "engineering",
+      "subtype": "engineering_bench",
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 230,
+    "recipe_id": "smithing_engineering_bench_t3_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Master engineering station with dark mithril framework on ironwood planking. A storm heart powers automated assembly while shadow-lightning shards energize precision cutting tools. Intricate mechanisms and deadly devices are born here.",
+        "tags": ["station", "engineering", "mechanical", "master"]
+      },
+      "itemId": "dark_engineering_bench_t3",
+      "name": "Dark Master Engineering Station",
+      "category": "station",
+      "type": "engineering",
+      "subtype": "engineering_bench",
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 231,
+    "recipe_id": "smithing_engineering_bench_t4_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Legendary engineering workshop of orichalcum and adamantine on dark ebony planking. Storm hearts power arcane machinery around a genesis lattice computation core. Devices crafted here blur the line between shadow-technology and dark magic.",
+        "tags": ["station", "engineering", "mechanical", "legendary"]
+      },
+      "itemId": "dark_engineering_bench_t4",
+      "name": "Dark Arcane Engineering Workshop",
+      "category": "station",
+      "type": "engineering",
+      "subtype": "engineering_bench",
+      "tier": 4,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 232,
+    "recipe_id": "smithing_forge_t4_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Legendary forge of etherion and adamantine, fueled by dark phoenix ash and anchored by chaos matrices. Voidstone crucibles contain temperatures that warp reality, and a genesis lattice core ensures the flames burn with colors that devour light. Can forge metals that should not exist.",
+        "tags": ["station", "forge", "smithing", "legendary"]
+      },
+      "itemId": "dark_forge_t4",
+      "name": "Dark Eternal Forge",
+      "category": "station",
+      "type": "smithing",
+      "subtype": "forge",
+      "tier": 4,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 233,
+    "recipe_id": "smithing_mithril_fishing_rod_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Dark mithril-tipped rod of ironwood with spectral silk line and a shadow light gem lure. The lightweight metal lets you cast into waters between worlds, and the spectral line phases through obstacles. Senses fish before they exist.",
+        "tags": ["tool", "fishing", "rare"]
+      },
+      "itemId": "dark_mithril_fishing_rod",
+      "name": "Dark Mithril Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 8,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.7,
+        "gathering": 1.7,
+        "durability": 1.3,
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 234,
+    "recipe_id": "smithing_refinery_t3_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Master refinery of dark obsidian with mithril chambers and phoenix ash furnaces. Fire crystals maintain extreme temperatures within the shadow-glass crucibles. Can process legendary ores without contamination, burning impurities to nothing.",
+        "tags": ["station", "refinery", "forging", "master"]
+      },
+      "itemId": "dark_refinery_t3",
+      "name": "Dark Master Refinery",
+      "category": "station",
+      "type": "refining",
+      "subtype": "refinery",
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 235,
+    "recipe_id": "smithing_refinery_t4_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Legendary refinery of etherion and eternity stone that exists partially outside normal reality. Void essence channels draw heat from other dimensions while phoenix ash keeps reactions eternal. Can process materials that should not be refinable, remembering every alloy ever forged within it.",
+        "tags": ["station", "refinery", "forging", "legendary"]
+      },
+      "itemId": "dark_refinery_t4",
+      "name": "Dark Eternal Refinery",
+      "category": "station",
+      "type": "refining",
+      "subtype": "refinery",
+      "tier": 4,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 236,
+    "recipe_id": "smithing_reinforced_fishing_rod_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Dark maple rod reinforced with shadow-steel fittings and strung with spectral thread. The improved construction handles heavier catches without snapping, and the spectral line never tangles in darkness. Slime gel dampens vibration for a sensitive touch.",
+        "tags": ["tool", "fishing", "quality"]
+      },
+      "itemId": "dark_reinforced_fishing_rod",
+      "name": "Dark Reinforced Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 6,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.6,
+        "gathering": 1.35,
+        "durability": 1.1,
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 237,
+    "recipe_id": "smithing_worldtree_fishing_rod_v2",
+    "output": {
+      "metadata": {
+        "narrative": "Legendary rod of dark worldtree branches with etherion fittings and spectral silk line. A chaos matrix at the reel bends probability, ensuring the best catch every time. The living wood remembers every fish that ever swam, and the line knows where they will be.",
+        "tags": ["tool", "fishing", "legendary"]
+      },
+      "itemId": "dark_worldtree_fishing_rod",
+      "name": "Dark Worldtree Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 10,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.8,
+        "gathering": 2.1,
+        "durability": 1.6,
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 238,
+    "recipe_id": "smithing_alchemy_table_t1_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Radiant oak workbench on a granite base fitted with glass vials and measuring instruments. Brilliant water crystals keep reagents fresh and cool. The polished surface gleams with an inner warmth that steadies even novice hands.",
+        "tags": ["station", "alchemy", "brewing", "starter"]
+      },
+      "itemId": "brilliant_alchemy_table_t1",
+      "name": "Brilliant Basic Alchemy Table",
+      "category": "station",
+      "type": "alchemy",
+      "subtype": "alchemy_table",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 239,
+    "recipe_id": "smithing_bamboo_fishing_rod_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Radiant oak rod with a brilliant copper hook and spectral silk line. The wood shimmers faintly in sunlight, attracting curious fish. Not powerful, but the spectral thread gives it surprising sensitivity for a starter rod.",
+        "tags": ["tool", "fishing", "starter"]
+      },
+      "itemId": "brilliant_bamboo_fishing_rod",
+      "name": "Brilliant Bamboo Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 1,
+      "rarity": "common",
+      "range": 5,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.5,
+        "gathering": 1.05,
+        "durability": 0.85,
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 240,
+    "recipe_id": "smithing_composite_longbow_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Composite longbow of brilliant ash wood and spectral sinew, sealed with radiant slime gel. The draw is heavy, but arrows fly with a luminous trail that true-finds its mark. Spectral thread string never frays.",
+        "tags": ["ranged", "bow", "2H", "precision"]
+      },
+      "itemId": "brilliant_composite_longbow",
+      "name": "Brilliant Composite Longbow",
+      "category": "equipment",
+      "type": "bow",
+      "subtype": "longbow",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 15,
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 36
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 0.85,
+        "durability": 0.95,
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 9,
+        "stats": { "AGI": 14 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 241,
+    "recipe_id": "smithing_copper_axe_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Brilliant copper axe head on a pine haft that glows with warm radiance. The copper edge catches sunlight, making each swing a flash of gold. Reliable for felling trees and fending off wildlife alike.",
+        "tags": ["tool", "axe", "starter"]
+      },
+      "itemId": "brilliant_copper_axe",
+      "name": "Brilliant Copper Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.7,
+        "forestry": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 242,
+    "recipe_id": "smithing_copper_dagger_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Brilliant copper dagger with a wolf-pelt wrapped grip that shimmers with inner light. Quick and precise, the radiant blade finds gaps in armor with uncanny ease. What it lacks in power, it makes up in blinding speed.",
+        "tags": ["melee", "dagger", "1H", "fast", "precision"]
+      },
+      "itemId": "brilliant_copper_dagger",
+      "name": "Brilliant Copper Dagger",
+      "category": "equipment",
+      "type": "dagger",
+      "subtype": "dagger",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0.5,
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 19
+      },
+      "statMultipliers": {
+        "damage": 0.95,
+        "attackSpeed": 1.3,
+        "durability": 0.85,
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 1,
+        "stats": { "AGI": 8 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 243,
+    "recipe_id": "smithing_copper_fire_ring_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Radiant copper band cradling a brilliant fire crystal. The ring glows with warm golden-orange light, and flames dance just above the surface without burning the wearer. A small sun on your finger.",
+        "tags": ["accessory", "ring", "fire", "elemental"]
+      },
+      "itemId": "brilliant_copper_fire_ring",
+      "name": "Brilliant Copper Fire Ring",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "ring",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.1
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 6,
+          "effect": "Adds fire damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 244,
+    "recipe_id": "smithing_copper_pickaxe_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Brilliant copper pickaxe on an oak handle that radiates warmth. The gleaming copper head strikes stone with a satisfying ring, and veins of ore seem to glow brighter in its presence. Every miner's radiant first companion.",
+        "tags": ["tool", "pickaxe", "starter"]
+      },
+      "itemId": "brilliant_copper_pickaxe",
+      "name": "Brilliant Copper Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.6,
+        "mining": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 245,
+    "recipe_id": "smithing_copper_spear_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Brilliant copper-tipped spear with a radiant ash wood shaft. The extra reach keeps danger at arm's length while the luminous tip makes it easy to track in the chaos of combat. Shock-absorbing ash keeps your arms fresh.",
+        "tags": ["melee", "spear", "versatile", "reach"]
+      },
+      "itemId": "brilliant_copper_spear",
+      "name": "Brilliant Copper Spear",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "spear",
+      "tier": 1,
+      "rarity": "common",
+      "range": 2,
+      "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 26
+      },
+      "statMultipliers": {
+        "damage": 1.0,
+        "attackSpeed": 1.0,
+        "durability": 1.0,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 246,
+    "recipe_id": "smithing_engineering_bench_t1_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Radiant iron workbench on a birch wood base equipped with precision tools and beetle carapace reinforcement. The brilliant finish makes fine detail work easier under any lighting. Springs and gears come to life here.",
+        "tags": ["station", "engineering", "mechanical", "starter"]
+      },
+      "itemId": "brilliant_engineering_bench_t1",
+      "name": "Brilliant Basic Engineering Bench",
+      "category": "station",
+      "type": "engineering",
+      "subtype": "engineering_bench",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 247,
+    "recipe_id": "smithing_fire_crystal_staff_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Ironwood staff crowned with a cluster of brilliant fire crystals and capped with mithril fittings. Phoenix ash ensures the flames never dim, burning with radiant golden light. Channel elemental forces with blinding intensity, or wield it as a blazing quarterstaff.",
+        "tags": ["melee", "staff", "versatile", "elemental", "fire"]
+      },
+      "itemId": "brilliant_fire_crystal_staff",
+      "name": "Brilliant Fire Crystal Staff",
+      "category": "equipment",
+      "type": "staff",
+      "subtype": "staff",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 8,
+      "slot": "mainHand",
+      "effectTags": ["fire", "single", "burn"],
+      "effectParams": {
+        "baseDamage": 47,
+        "burn_duration": 3.5,
+        "burn_damage_per_second": 5.5
+      },
+      "statMultipliers": {
+        "damage": 0.9,
+        "attackSpeed": 1.1,
+        "durability": 1.05,
+        "weight": 0.7
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 17,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 15,
+        "stats": { "INT": 18 }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "index": 248,
+    "recipe_id": "smithing_forge_t1_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Radiant granite forge with brilliant iron fittings. The stone glows with inner warmth and the polished iron surfaces reflect firelight in dazzling patterns. Crude but functional, every radiant smith started here.",
+        "tags": ["station", "forge", "smithing", "starter"]
+      },
+      "itemId": "brilliant_forge_t1",
+      "name": "Brilliant Basic Stone Forge",
+      "category": "station",
+      "type": "smithing",
+      "subtype": "forge",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 249,
+    "recipe_id": "smithing_forge_t2_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Improved forge of brilliant basalt and radiant steel. A fire crystal at its heart enhances heat retention, pushing temperatures higher than mundane forges allow. The basalt construction glows with veins of captured sunlight.",
+        "tags": ["station", "forge", "smithing", "standard"]
+      },
+      "itemId": "brilliant_forge_t2",
+      "name": "Brilliant Steel Forge",
+      "category": "station",
+      "type": "smithing",
+      "subtype": "forge",
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "index": 250,
+    "recipe_id": "smithing_forge_t3_v3",
+    "output": {
+      "metadata": {
+        "narrative": "Master forge of brilliant obsidian and radiant mithril, powered by phoenix ash and a storm heart. The obsidian construction channels extreme heat while mithril chambers prevent contamination. Flames burn with blinding white-gold intensity capable of working legendary metals.",
+        "tags": ["station", "forge", "smithing", "master"]
+      },
+      "itemId": "brilliant_forge_t3",
+      "name": "Brilliant Master Forge",
+      "category": "station",
+      "type": "smithing",
+      "subtype": "forge",
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  }
+]

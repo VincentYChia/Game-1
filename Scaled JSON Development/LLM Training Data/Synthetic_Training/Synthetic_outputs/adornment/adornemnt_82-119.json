@@ -1,0 +1,748 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "totalEnchantments": 38,
+    "indexRange": "82-119"
+  },
+  "enchantments": [
+    {
+      "index": 82,
+      "metadata": {
+        "narrative": "Speed enchantment infused with light essence. Movement becomes fluid and effortless.",
+        "tags": ["armor", "speed", "mobility", "light"]
+      },
+      "recipeId": "enchanting_swiftness_v1",
+      "enchantmentId": "swiftness_light",
+      "enchantmentName": "Swiftness (Light)",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "movement_speed_multiplier",
+        "value": 0.15,
+        "stackable": true,
+        "maxStacks": 3,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 83,
+      "metadata": {
+        "narrative": "Thorns enchantment crafted from carapace and scales. Attackers suffer their own aggression.",
+        "tags": ["armor", "reflect", "thorns", "light"]
+      },
+      "recipeId": "enchanting_thorns_v1",
+      "enchantmentId": "thorns_light",
+      "enchantmentName": "Thorns (Light)",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "reflect_damage",
+        "value": 0.15,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 84,
+      "metadata": {
+        "narrative": "Weightless enchantment using air crystals and light gems. Items float with ethereal grace.",
+        "tags": ["universal", "weight", "utility", "light"]
+      },
+      "recipeId": "enchanting_weightless_v1",
+      "enchantmentId": "weightless_light",
+      "enchantmentName": "Weightless (Light)",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "weight_multiplier",
+        "value": -0.5,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 85,
+      "metadata": {
+        "narrative": "Advanced durability enchantment forged in shadow. Near-indestructible resilience.",
+        "tags": ["universal", "durability", "advanced", "dark"]
+      },
+      "recipeId": "enchanting_durability_advanced_v2",
+      "enchantmentId": "unbreaking_2_dark",
+      "enchantmentName": "Unbreaking II (Dark)",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "durability_multiplier",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["unbreaking_1", "unbreaking_1_dark", "unbreaking_1_light", "unbreaking_1_brilliant"]
+      }
+    },
+    {
+      "index": 86,
+      "metadata": {
+        "narrative": "Basic durability enchantment from earth and carapace. Items last longer before repair.",
+        "tags": ["universal", "durability", "basic", "dark"]
+      },
+      "recipeId": "enchanting_durability_basic_v2",
+      "enchantmentId": "unbreaking_1_dark",
+      "enchantmentName": "Unbreaking I (Dark)",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "durability_multiplier",
+        "value": 0.3,
+        "stackable": false,
+        "conflictsWith": ["unbreaking_2", "unbreaking_2_dark", "unbreaking_2_light", "unbreaking_2_brilliant"]
+      }
+    },
+    {
+      "index": 87,
+      "metadata": {
+        "narrative": "Advanced efficiency using storm essence and shadow wood. Tools blur with supernatural speed.",
+        "tags": ["tool", "efficiency", "advanced", "dark"]
+      },
+      "recipeId": "enchanting_efficiency_advanced_v2",
+      "enchantmentId": "efficiency_2_dark",
+      "enchantmentName": "Efficiency II (Dark)",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.4,
+        "stackable": false,
+        "conflictsWith": ["efficiency_1", "efficiency_1_dark", "efficiency_1_light", "efficiency_1_brilliant"]
+      }
+    },
+    {
+      "index": 88,
+      "metadata": {
+        "narrative": "Basic efficiency enchantment with slime gel and air. Faster resource gathering.",
+        "tags": ["tool", "efficiency", "basic", "dark"]
+      },
+      "recipeId": "enchanting_efficiency_basic_v2",
+      "enchantmentId": "efficiency_1_dark",
+      "enchantmentName": "Efficiency I (Dark)",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": ["efficiency_2", "efficiency_2_dark", "efficiency_2_light", "efficiency_2_brilliant"]
+      }
+    },
+    {
+      "index": 89,
+      "metadata": {
+        "narrative": "Fire enchantment from shadow forge. Strikes leave burning wounds that linger.",
+        "tags": ["weapon", "elemental", "fire", "dark"]
+      },
+      "recipeId": "enchanting_fire_aspect_v2",
+      "enchantmentId": "fire_aspect_dark",
+      "enchantmentName": "Fire Aspect (Dark)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_over_time",
+        "element": "fire",
+        "damagePerSecond": 10,
+        "duration": 5,
+        "stackable": true,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 90,
+      "metadata": {
+        "narrative": "Master fortune using chaos matrix and shadow diamonds. Reality bends toward abundance.",
+        "tags": ["tool", "fortune", "master", "dark"]
+      },
+      "recipeId": "enchanting_fortune_advanced_v2",
+      "enchantmentId": "fortune_2_dark",
+      "enchantmentName": "Fortune II (Dark)",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "fortune_1_dark", "fortune_1_light", "fortune_1_brilliant", "silk_touch", "silk_touch_dark", "silk_touch_light", "silk_touch_brilliant"]
+      }
+    },
+    {
+      "index": 91,
+      "metadata": {
+        "narrative": "Fortune enchantment with crystal quartz and shadow essence. Better yields from resources.",
+        "tags": ["tool", "fortune", "luck", "dark"]
+      },
+      "recipeId": "enchanting_fortune_basic_v2",
+      "enchantmentId": "fortune_1_dark",
+      "enchantmentName": "Fortune I (Dark)",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.3,
+        "stackable": false,
+        "conflictsWith": ["fortune_2", "fortune_2_dark", "fortune_2_light", "fortune_2_brilliant", "silk_touch", "silk_touch_dark", "silk_touch_light", "silk_touch_brilliant"]
+      }
+    },
+    {
+      "index": 92,
+      "metadata": {
+        "narrative": "Frost enchantment from shadow ice. Enemies slow and freeze in their tracks.",
+        "tags": ["weapon", "elemental", "frost", "dark"]
+      },
+      "recipeId": "enchanting_frost_touch_v2",
+      "enchantmentId": "frost_touch_dark",
+      "enchantmentName": "Frost Touch (Dark)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "slow",
+        "element": "ice",
+        "slowPercent": 0.3,
+        "duration": 4,
+        "stackable": true,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 93,
+      "metadata": {
+        "narrative": "Knockback enchantment using shadow air. Send enemies flying with each strike.",
+        "tags": ["weapon", "knockback", "utility", "dark"]
+      },
+      "recipeId": "enchanting_knockback_v2",
+      "enchantmentId": "knockback_dark",
+      "enchantmentName": "Knockback (Dark)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "knockback",
+        "value": 3,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 94,
+      "metadata": {
+        "narrative": "Lifesteal enchantment from blood essence and shadow. Drain life with each strike.",
+        "tags": ["weapon", "lifesteal", "vampiric", "dark"]
+      },
+      "recipeId": "enchanting_lifesteal_v2",
+      "enchantmentId": "lifesteal_dark",
+      "enchantmentName": "Lifesteal (Dark)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "lifesteal",
+        "value": 0.12,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 95,
+      "metadata": {
+        "narrative": "Lightning enchantment from primordial storms. Chain attacks to nearby enemies.",
+        "tags": ["weapon", "elemental", "lightning", "dark"]
+      },
+      "recipeId": "enchanting_lightning_strike_v2",
+      "enchantmentId": "lightning_strike_dark",
+      "enchantmentName": "Lightning Strike (Dark)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "chain_damage",
+        "element": "lightning",
+        "chainCount": 2,
+        "chainRange": 3,
+        "damagePercent": 0.5,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 96,
+      "metadata": {
+        "narrative": "Poison enchantment from shadow essence. Attacks inflict lingering toxins.",
+        "tags": ["weapon", "poison", "damage", "dark"]
+      },
+      "recipeId": "enchanting_poison_v2",
+      "enchantmentId": "poison_dark",
+      "enchantmentName": "Poison (Dark)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_over_time",
+        "element": "poison",
+        "damagePerSecond": 8,
+        "duration": 8,
+        "stackable": true,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 97,
+      "metadata": {
+        "narrative": "Advanced protection using shadow scales and quartz. Stone-like resilience.",
+        "tags": ["armor", "defense", "advanced", "dark"]
+      },
+      "recipeId": "enchanting_protection_advanced_v2",
+      "enchantmentId": "protection_2_dark",
+      "enchantmentName": "Protection II (Dark)",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_reduction",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": ["protection_1", "protection_1_dark", "protection_1_light", "protection_1_brilliant", "protection_3", "protection_3_dark", "protection_3_light", "protection_3_brilliant"]
+      }
+    },
+    {
+      "index": 98,
+      "metadata": {
+        "narrative": "Basic protection from earth and stone. Incoming damage reduced.",
+        "tags": ["armor", "defense", "basic", "dark"]
+      },
+      "recipeId": "enchanting_protection_basic_v2",
+      "enchantmentId": "protection_1_dark",
+      "enchantmentName": "Protection I (Dark)",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_reduction",
+        "value": 0.1,
+        "stackable": false,
+        "conflictsWith": ["protection_2", "protection_2_dark", "protection_2_light", "protection_2_brilliant", "protection_3", "protection_3_dark", "protection_3_light", "protection_3_brilliant"]
+      }
+    },
+    {
+      "index": 99,
+      "metadata": {
+        "narrative": "Master protection with void essence. Damage dissipates into nothing.",
+        "tags": ["armor", "defense", "legendary", "dark"]
+      },
+      "recipeId": "enchanting_protection_master_v2",
+      "enchantmentId": "protection_3_dark",
+      "enchantmentName": "Protection III (Dark)",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_reduction",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["protection_1", "protection_1_dark", "protection_1_light", "protection_1_brilliant", "protection_2", "protection_2_dark", "protection_2_light", "protection_2_brilliant"]
+      }
+    },
+    {
+      "index": 100,
+      "metadata": {
+        "narrative": "Regeneration enchantment from shadow essence. Slowly heal over time.",
+        "tags": ["armor", "regeneration", "healing", "dark"]
+      },
+      "recipeId": "enchanting_regeneration_v2",
+      "enchantmentId": "regeneration_dark",
+      "enchantmentName": "Regeneration (Dark)",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "health_regeneration",
+        "value": 1,
+        "stackable": true,
+        "maxStacks": 5,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 101,
+      "metadata": {
+        "narrative": "Self-repair enchantment using shadow living ichor. Items slowly fix themselves.",
+        "tags": ["universal", "repair", "utility", "dark"]
+      },
+      "recipeId": "enchanting_self_repair_v2",
+      "enchantmentId": "self_repair_dark",
+      "enchantmentName": "Self-Repair (Dark)",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "durability_regeneration",
+        "value": 1,
+        "perMinute": true,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 102,
+      "metadata": {
+        "narrative": "Improved sharpening using shadow lightning. The blade crackles with dark energy.",
+        "tags": ["weapon", "damage", "advanced", "dark"]
+      },
+      "recipeId": "enchanting_sharpness_advanced_v2",
+      "enchantmentId": "sharpness_2_dark",
+      "enchantmentName": "Sharpness II (Dark)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_1_dark", "sharpness_1_light", "sharpness_1_brilliant", "sharpness_3", "sharpness_3_dark", "sharpness_3_light", "sharpness_3_brilliant"]
+      }
+    },
+    {
+      "index": 103,
+      "metadata": {
+        "narrative": "Basic sharpening enchantment from shadow fire. The edge never dulls.",
+        "tags": ["weapon", "damage", "basic", "dark"]
+      },
+      "recipeId": "enchanting_sharpness_basic_v2",
+      "enchantmentId": "sharpness_1_dark",
+      "enchantmentName": "Sharpness I (Dark)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.1,
+        "stackable": false,
+        "conflictsWith": ["sharpness_2", "sharpness_2_dark", "sharpness_2_light", "sharpness_2_brilliant", "sharpness_3", "sharpness_3_dark", "sharpness_3_light", "sharpness_3_brilliant"]
+      }
+    },
+    {
+      "index": 104,
+      "metadata": {
+        "narrative": "Master sharpening using shadow phoenix ash. The edge exists beyond physical form.",
+        "tags": ["weapon", "damage", "legendary", "dark"]
+      },
+      "recipeId": "enchanting_sharpness_master_v2",
+      "enchantmentId": "sharpness_3_dark",
+      "enchantmentName": "Sharpness III (Dark)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": ["sharpness_1", "sharpness_1_dark", "sharpness_1_light", "sharpness_1_brilliant", "sharpness_2", "sharpness_2_dark", "sharpness_2_light", "sharpness_2_brilliant"]
+      }
+    },
+    {
+      "index": 105,
+      "metadata": {
+        "narrative": "Silk touch enchantment from void and spectral essence. Harvest blocks exactly as they are.",
+        "tags": ["tool", "silk-touch", "special", "dark"]
+      },
+      "recipeId": "enchanting_silk_touch_v2",
+      "enchantmentId": "silk_touch_dark",
+      "enchantmentName": "Silk Touch (Dark)",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "harvest_original_form",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "fortune_1_dark", "fortune_1_light", "fortune_1_brilliant", "fortune_2", "fortune_2_dark", "fortune_2_light", "fortune_2_brilliant"]
+      }
+    },
+    {
+      "index": 106,
+      "metadata": {
+        "narrative": "Soul bound enchantment from primordial essence. Item returns upon death.",
+        "tags": ["universal", "soulbound", "special", "dark"]
+      },
+      "recipeId": "enchanting_soulbound_v2",
+      "enchantmentId": "soulbound_dark",
+      "enchantmentName": "Soulbound (Dark)",
+      "applicableTo": ["weapon", "tool", "armor", "accessory"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 107,
+      "metadata": {
+        "narrative": "Speed enchantment infused with shadow essence. Movement becomes fluid and effortless.",
+        "tags": ["armor", "speed", "mobility", "dark"]
+      },
+      "recipeId": "enchanting_swiftness_v2",
+      "enchantmentId": "swiftness_dark",
+      "enchantmentName": "Swiftness (Dark)",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "movement_speed_multiplier",
+        "value": 0.15,
+        "stackable": true,
+        "maxStacks": 3,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 108,
+      "metadata": {
+        "narrative": "Thorns enchantment crafted from shadow carapace. Attackers suffer their own aggression.",
+        "tags": ["armor", "reflect", "thorns", "dark"]
+      },
+      "recipeId": "enchanting_thorns_v2",
+      "enchantmentId": "thorns_dark",
+      "enchantmentName": "Thorns (Dark)",
+      "applicableTo": ["armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "reflect_damage",
+        "value": 0.15,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 109,
+      "metadata": {
+        "narrative": "Weightless enchantment using shadow air crystals. Items float with ethereal grace.",
+        "tags": ["universal", "weight", "utility", "dark"]
+      },
+      "recipeId": "enchanting_weightless_v2",
+      "enchantmentId": "weightless_dark",
+      "enchantmentName": "Weightless (Dark)",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "weight_multiplier",
+        "value": -0.5,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 110,
+      "metadata": {
+        "narrative": "Advanced durability enchantment forged in brilliant light. Near-indestructible resilience.",
+        "tags": ["universal", "durability", "advanced", "brilliant"]
+      },
+      "recipeId": "enchanting_durability_advanced_v3",
+      "enchantmentId": "unbreaking_2_brilliant",
+      "enchantmentName": "Unbreaking II (Brilliant)",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "durability_multiplier",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["unbreaking_1", "unbreaking_1_dark", "unbreaking_1_light", "unbreaking_1_brilliant"]
+      }
+    },
+    {
+      "index": 111,
+      "metadata": {
+        "narrative": "Basic durability enchantment from brilliant earth. Items last longer before repair.",
+        "tags": ["universal", "durability", "basic", "brilliant"]
+      },
+      "recipeId": "enchanting_durability_basic_v3",
+      "enchantmentId": "unbreaking_1_brilliant",
+      "enchantmentName": "Unbreaking I (Brilliant)",
+      "applicableTo": ["weapon", "tool", "armor"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "durability_multiplier",
+        "value": 0.3,
+        "stackable": false,
+        "conflictsWith": ["unbreaking_2", "unbreaking_2_dark", "unbreaking_2_light", "unbreaking_2_brilliant"]
+      }
+    },
+    {
+      "index": 112,
+      "metadata": {
+        "narrative": "Advanced efficiency using brilliant storm essence. Tools blur with radiant speed.",
+        "tags": ["tool", "efficiency", "advanced", "brilliant"]
+      },
+      "recipeId": "enchanting_efficiency_advanced_v3",
+      "enchantmentId": "efficiency_2_brilliant",
+      "enchantmentName": "Efficiency II (Brilliant)",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.4,
+        "stackable": false,
+        "conflictsWith": ["efficiency_1", "efficiency_1_dark", "efficiency_1_light", "efficiency_1_brilliant"]
+      }
+    },
+    {
+      "index": 113,
+      "metadata": {
+        "narrative": "Basic efficiency enchantment with brilliant slime gel. Faster resource gathering.",
+        "tags": ["tool", "efficiency", "basic", "brilliant"]
+      },
+      "recipeId": "enchanting_efficiency_basic_v3",
+      "enchantmentId": "efficiency_1_brilliant",
+      "enchantmentName": "Efficiency I (Brilliant)",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": ["efficiency_2", "efficiency_2_dark", "efficiency_2_light", "efficiency_2_brilliant"]
+      }
+    },
+    {
+      "index": 114,
+      "metadata": {
+        "narrative": "Fire enchantment from brilliant forge. Strikes leave brilliant burning wounds.",
+        "tags": ["weapon", "elemental", "fire", "brilliant"]
+      },
+      "recipeId": "enchanting_fire_aspect_v3",
+      "enchantmentId": "fire_aspect_brilliant",
+      "enchantmentName": "Fire Aspect (Brilliant)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "damage_over_time",
+        "element": "fire",
+        "damagePerSecond": 10,
+        "duration": 5,
+        "stackable": true,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 115,
+      "metadata": {
+        "narrative": "Master fortune using brilliant chaos matrix. Reality bends toward radiant abundance.",
+        "tags": ["tool", "fortune", "master", "brilliant"]
+      },
+      "recipeId": "enchanting_fortune_advanced_v3",
+      "enchantmentId": "fortune_2_brilliant",
+      "enchantmentName": "Fortune II (Brilliant)",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": ["fortune_1", "fortune_1_dark", "fortune_1_light", "fortune_1_brilliant", "silk_touch", "silk_touch_dark", "silk_touch_light", "silk_touch_brilliant"]
+      }
+    },
+    {
+      "index": 116,
+      "metadata": {
+        "narrative": "Fortune enchantment with brilliant crystal quartz. Better yields from resources.",
+        "tags": ["tool", "fortune", "luck", "brilliant"]
+      },
+      "recipeId": "enchanting_fortune_basic_v3",
+      "enchantmentId": "fortune_1_brilliant",
+      "enchantmentName": "Fortune I (Brilliant)",
+      "applicableTo": ["tool"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.3,
+        "stackable": false,
+        "conflictsWith": ["fortune_2", "fortune_2_dark", "fortune_2_light", "fortune_2_brilliant", "silk_touch", "silk_touch_dark", "silk_touch_light", "silk_touch_brilliant"]
+      }
+    },
+    {
+      "index": 117,
+      "metadata": {
+        "narrative": "Frost enchantment from brilliant ice. Enemies slow and freeze in brilliant frost.",
+        "tags": ["weapon", "elemental", "frost", "brilliant"]
+      },
+      "recipeId": "enchanting_frost_touch_v3",
+      "enchantmentId": "frost_touch_brilliant",
+      "enchantmentName": "Frost Touch (Brilliant)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "slow",
+        "element": "ice",
+        "slowPercent": 0.3,
+        "duration": 4,
+        "stackable": true,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 118,
+      "metadata": {
+        "narrative": "Knockback enchantment using brilliant air. Send enemies flying with radiant force.",
+        "tags": ["weapon", "knockback", "utility", "brilliant"]
+      },
+      "recipeId": "enchanting_knockback_v3",
+      "enchantmentId": "knockback_brilliant",
+      "enchantmentName": "Knockback (Brilliant)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "knockback",
+        "value": 3,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    {
+      "index": 119,
+      "metadata": {
+        "narrative": "Lifesteal enchantment from brilliant blood essence. Drain life with radiant strikes.",
+        "tags": ["weapon", "lifesteal", "vampiric", "brilliant"]
+      },
+      "recipeId": "enchanting_lifesteal_v3",
+      "enchantmentId": "lifesteal_brilliant",
+      "enchantmentName": "Lifesteal (Brilliant)",
+      "applicableTo": ["weapon"],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "effect": {
+        "type": "lifesteal",
+        "value": 0.12,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    }
+  ]
+}

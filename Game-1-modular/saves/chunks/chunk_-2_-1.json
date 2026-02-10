@@ -1,7 +1,7 @@
 {
   "chunk_x": -2,
   "chunk_y": -1,
-  "chunk_type": "peaceful_cave",
+  "chunk_type": "dangerous_quarry",
   "dungeon_entrance": {
     "position": {
       "x": -26,
@@ -10,5 +10,5 @@
     },
     "rarity": "common"
   },
-  "unload_timestamp": 131.9380000000017
+  "unload_timestamp": 82.42000000000046
 }
