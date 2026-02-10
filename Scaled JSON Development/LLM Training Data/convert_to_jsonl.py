@@ -308,64 +308,83 @@ def format_recipe_as_text(recipe_data: Dict, discipline: str) -> str:
     lines.append("")
     lines.append("Materials:")
 
-    # Collect all inputs from various possible keys (each discipline uses different keys)
-    all_inputs = []
+    # Track narratives for later
+    all_narratives = []
 
-    # Standard inputs array (smithing, adornment)
-    if recipe.get('inputs'):
-        all_inputs.extend(recipe['inputs'])
-
-    # Core inputs (refining)
+    # REFINING: Core and Surrounding inputs (labeled separately)
     if recipe.get('coreInputs'):
-        all_inputs.extend(recipe['coreInputs'])
+        for inp in recipe['coreInputs']:
+            line = format_material_line(inp, label="CORE")
+            lines.append(line)
+            if inp.get('material_metadata', {}).get('narrative'):
+                all_narratives.append(inp['material_metadata']['narrative'])
 
-    # Surrounding inputs (refining)
     if recipe.get('surroundingInputs'):
-        all_inputs.extend(recipe['surroundingInputs'])
+        for inp in recipe['surroundingInputs']:
+            line = format_material_line(inp, label="SURROUNDING")
+            lines.append(line)
+            if inp.get('material_metadata', {}).get('narrative'):
+                all_narratives.append(inp['material_metadata']['narrative'])
 
-    # Ingredients (alchemy)
+    # ALCHEMY: Ingredients with slot numbers
     if recipe.get('ingredients'):
-        all_inputs.extend(recipe['ingredients'])
+        for inp in recipe['ingredients']:
+            slot = inp.get('slot', '?')
+            line = format_material_line(inp, label=f"Slot {slot}")
+            lines.append(line)
+            if inp.get('material_metadata', {}).get('narrative'):
+                all_narratives.append(inp['material_metadata']['narrative'])
 
-    # Catalyst inputs (alchemy)
-    if recipe.get('catalystInputs'):
-        all_inputs.extend(recipe['catalystInputs'])
-
-    # Slots (engineering)
+    # ENGINEERING: Slots with type (FRAME, FUNCTION, POWER)
     if recipe.get('slots'):
-        all_inputs.extend(recipe['slots'])
+        for inp in recipe['slots']:
+            slot_type = inp.get('type', 'UNKNOWN')
+            line = format_material_line(inp, label=slot_type)
+            lines.append(line)
+            if inp.get('material_metadata', {}).get('narrative'):
+                all_narratives.append(inp['material_metadata']['narrative'])
 
-    for inp in all_inputs:
-        mat_id = inp.get('materialId', 'unknown')
-        qty = inp.get('quantity', 1)
-        pos = inp.get('position', '')
-        positions = inp.get('positions', [])
-        meta = inp.get('material_metadata', {})
+    # SMITHING/ADORNMENT: Standard inputs with positions
+    if recipe.get('inputs'):
+        for inp in recipe['inputs']:
+            pos = inp.get('position', '')
+            positions = inp.get('positions', [])
+            pos_label = None
+            if pos:
+                pos_label = f"at {pos}"
+            elif positions:
+                pos_label = f"at {', '.join(positions[:3])}"
+            line = format_material_line(inp, position_info=pos_label)
+            lines.append(line)
+            if inp.get('material_metadata', {}).get('narrative'):
+                all_narratives.append(inp['material_metadata']['narrative'])
 
-        mat_name = meta.get('name', mat_id)
-        tier = meta.get('tier', 1)
-        tags = meta.get('tags', [])
-
-        line = f"  - {mat_name} x{qty} (Tier {tier})"
-        if pos:
-            line += f" at {pos}"
-        elif positions:
-            line += f" at {', '.join(positions[:3])}"
-        if tags:
-            line += f" [{', '.join(tags[:3])}]"
-        lines.append(line)
-
-    # Add narrative if present
-    narrative = None
-    if all_inputs:
-        meta = all_inputs[-1].get('material_metadata', {})
-        narrative = meta.get('narrative')
-    if not narrative:
-        narrative = recipe.get('narrative')
+    # Add narrative (use first one found, or recipe-level)
+    narrative = all_narratives[0] if all_narratives else recipe.get('narrative')
     if narrative:
-        lines.append(f"\nContext: {narrative}")
+        lines.append(f"\nNarrative: {narrative}")
 
     return "\n".join(lines)
+
+
+def format_material_line(inp: Dict, label: str = None, position_info: str = None) -> str:
+    """Format a single material input line."""
+    mat_id = inp.get('materialId', 'unknown')
+    qty = inp.get('quantity', 1)
+    meta = inp.get('material_metadata', {})
+
+    mat_name = meta.get('name', mat_id)
+    tier = meta.get('tier', 1)
+    tags = meta.get('tags', [])
+
+    line = f"  - {mat_name} x{qty} (Tier {tier})"
+    if label:
+        line += f" [{label}]"
+    if position_info:
+        line += f" {position_info}"
+    if tags:
+        line += f" {{{', '.join(tags[:3])}}}"
+    return line
 
 
 def load_custom_data(filepath: Path) -> Tuple[str, Dict[int, Dict]]:
@@ -467,6 +486,10 @@ def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str,
     """
     # Remove rarity from output unless refining
     cleaned_output = remove_rarity_recursive(output_data, discipline)
+
+    # Remove index from output (only used for matching, not for training)
+    if isinstance(cleaned_output, dict) and 'index' in cleaned_output:
+        cleaned_output = {k: v for k, v in cleaned_output.items() if k != 'index'}
 
     # Format texts
     recipe_text = format_recipe_as_text(input_data, discipline)
