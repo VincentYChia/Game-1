@@ -2,6 +2,38 @@
 
 **Purpose**: Single source of truth for all cross-phase conventions. Every phase MUST follow these rules.
 **Rule**: If a convention here conflicts with a phase document, THIS document wins.
+**Living Document**: This file grows during migration. When you discover a new pattern, naming decision, or lesson learned, ADD IT HERE. Future phases inherit all conventions from earlier phases.
+
+### How to Update This Document
+When migrating code, if you encounter a decision that affects multiple files:
+1. Make the decision
+2. Document it here under the appropriate section (or create a new section)
+3. Add a `[Phase N]` tag so readers know when it was established
+4. Reference the specific Python source that motivated the decision
+
+### Cross-References
+- **IMPROVEMENTS.md** — Architectural improvements to apply during migration (macro changes + per-file fixes)
+- **PHASE_CONTRACTS.md** — What each phase receives and delivers
+- **reference/PYTHON_TO_CSHARP.md** — Language-level conversion patterns
+- **reference/UNITY_PRIMER.md** — Unity concepts for C# developers
+
+---
+
+## 0. Improvement Philosophy
+
+This migration is a REWRITE, not a blind port. We preserve:
+- All game mechanics exactly (formulas, constants, behavior)
+- All JSON schemas and file structures (moddability)
+- All game content (items, recipes, skills, enemies)
+
+We improve:
+- Architecture (event-driven decoupling, no circular dependencies)
+- Type safety (enums replace magic strings, strong typing)
+- Efficiency (caching, pre-computation, single-source-of-truth data)
+- Testability (no side effects in constructors, injectable dependencies)
+- Robustness (save migration pipeline, proper error handling)
+
+See `IMPROVEMENTS.md` for the full list of macro architecture changes and per-file fixes.
 
 ---
 
@@ -460,7 +492,134 @@ Tests: 12/12 passing
 Before merging any phase branch:
 - [ ] All unit tests pass
 - [ ] All integration tests pass (if applicable)
-- [ ] Code follows CONVENTIONS.md
+- [ ] Code follows CONVENTIONS.md (this file)
 - [ ] File headers present on all new files
 - [ ] No `TODO` or `HACK` comments without linked issue
 - [ ] JSON files unchanged (byte-identical to Python source)
+- [ ] Any applicable improvements from IMPROVEMENTS.md applied
+- [ ] New conventions documented in this file (if any discovered)
+
+---
+
+## 11. Architecture Improvement Patterns
+
+These patterns are applied DURING migration, not after. See `IMPROVEMENTS.md` for the full list.
+
+### 11.1 Event-Driven Decoupling [MACRO-1]
+
+Components emit events instead of calling parent methods directly.
+
+```csharp
+// WRONG: Component reaches up to parent
+public void Equip(EquipmentItem item, Character character)
+{
+    _slots[slot] = item;
+    character.RecalculateStats();  // Circular dependency!
+}
+
+// RIGHT: Component emits event, parent subscribes
+public void Equip(EquipmentItem item)
+{
+    _slots[slot] = item;
+    GameEvents.RaiseEquipmentChanged(item, slot);  // Decoupled
+}
+```
+
+### 11.2 Factory Methods over Constructor Side Effects [FIX-1]
+
+Constructors take only primitive data. Database lookups happen in factory methods.
+
+```csharp
+// WRONG: Constructor has side effects
+public ItemStack(string itemId, int qty)
+{
+    var mat = MaterialDatabase.Instance.GetMaterial(itemId);  // Breaks in tests!
+    MaxStack = mat?.MaxStack ?? 99;
+}
+
+// RIGHT: Constructor is pure, factory has side effects
+public ItemStack(string itemId, int qty, int maxStack = 99) { /* pure */ }
+
+public static ItemStack CreateFromDatabase(string itemId, int qty)
+{
+    var mat = MaterialDatabase.Instance.GetMaterial(itemId);
+    return new ItemStack(itemId, qty, mat?.MaxStack ?? 99);
+}
+```
+
+### 11.3 Single Source of Truth for Derived Data [FIX-6]
+
+Never store the same value in two places. Compute from the canonical source.
+
+```csharp
+// WRONG: Rarity on both ItemStack and EquipmentItem
+public class ItemStack
+{
+    public string Rarity { get; set; }              // Stored here
+    public EquipmentItem EquipmentData { get; set; } // Also has .Rarity
+}
+
+// RIGHT: Computed from canonical source
+public class ItemStack
+{
+    public string Rarity => EquipmentData?.Rarity ?? _baseRarity;
+    private string _baseRarity;
+}
+```
+
+### 11.4 Serialization on the Model [FIX-2]
+
+Models own their serialization. SaveManager calls `ToDict()`/`FromDict()`, never accesses fields directly.
+
+```csharp
+// WRONG: SaveManager knows internal structure of EquipmentItem
+saveData["item_id"] = item.ItemId;
+saveData["name"] = item.Name;
+// ... 20 more lines repeated in 3 places
+
+// RIGHT: Model owns serialization
+saveData["equipment"] = item.ToDict();
+// ... and deserialization
+var item = EquipmentItem.FromDict(saveData["equipment"]);
+```
+
+### 11.5 Enum over Magic String [MACRO-2]
+
+Every repeated string literal that represents a fixed set of values becomes an enum.
+
+```csharp
+// WRONG: Strings everywhere
+if (item.HandType == "2H") ...
+slots["mainHand"] = item;
+
+// RIGHT: Enums with JSON compatibility
+if (item.HandType == HandType.TwoHanded) ...
+slots[EquipmentSlot.MainHand] = item;
+```
+
+### 11.6 When to Improve vs When to Port Exactly
+
+| Situation | Action |
+|-----------|--------|
+| Formula or constant | Port EXACTLY. Do not adjust, optimize, or "fix" balance. |
+| Algorithm producing game-visible results | Port EXACTLY. Same inputs must produce same outputs. |
+| Internal architecture (how code is organized) | IMPROVE. Use patterns above. |
+| Type safety (strings → enums) | IMPROVE. Compile-time safety is always better. |
+| Performance (caching, pre-computation) | IMPROVE where flagged in IMPROVEMENTS.md. |
+| Data structure (how state is stored) | IMPROVE for single-source-of-truth. |
+| ML preprocessing | Port EXACTLY. Model compatibility requires bit-identical preprocessing. |
+| JSON schemas | Do NOT change. Moddability and save compatibility depend on stability. |
+
+---
+
+## 12. Changelog (Living Document Updates)
+
+Record every convention addition or change here with date and phase.
+
+| Date | Phase | Change | Reason |
+|------|-------|--------|--------|
+| 2026-02-10 | Planning | Created CONVENTIONS.md | Centralize cross-phase rules |
+| 2026-02-11 | Planning | Added §0 Improvement Philosophy | Define improve-vs-port boundaries |
+| 2026-02-11 | Planning | Added §11 Architecture Improvement Patterns | Document reusable patterns from IMPROVEMENTS.md |
+| 2026-02-11 | Planning | Added §12 Changelog | Make this a living document |
+| | | *(Add entries as migration progresses)* | |

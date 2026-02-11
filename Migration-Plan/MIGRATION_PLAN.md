@@ -971,7 +971,8 @@ attributes. This means:
 | Document | Location | Status | Purpose |
 |----------|----------|--------|---------|
 | **MIGRATION_PLAN.md** | `Migration-Plan/MIGRATION_PLAN.md` | **Active** | This file — master overview |
-| **CONVENTIONS.md** | `Migration-Plan/CONVENTIONS.md` | **Complete** | All cross-phase rules: naming, patterns, error handling, testing |
+| **CONVENTIONS.md** | `Migration-Plan/CONVENTIONS.md` | **Living** | Cross-phase rules, naming, patterns, improvement guidelines. GROWS during migration. |
+| **IMPROVEMENTS.md** | `Migration-Plan/IMPROVEMENTS.md` | **Complete** | 5 macro architecture changes + 9 per-file fixes with code examples |
 | **PHASE_CONTRACTS.md** | `Migration-Plan/PHASE_CONTRACTS.md` | **Complete** | Inputs/outputs per phase — what you receive and deliver |
 | **MIGRATION_META_PLAN.md** | `Migration-Plan/MIGRATION_META_PLAN.md` | **Complete** | Planning methodology, validation strategy |
 
