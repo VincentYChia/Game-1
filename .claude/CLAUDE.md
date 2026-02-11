@@ -1,7 +1,7 @@
 # Claude.md - Game-1 Developer Guide
 
 **Quick Reference for AI Assistants & Developers**
-**Last Updated**: January 27, 2026
+**Last Updated**: February 11, 2026
 
 ## Project Summary
 
@@ -17,10 +17,93 @@
 - Complete save/load system preserving all game state
 - Equipment system with durability, weight, and repairs
 
-**Architecture**: Modular (136 Python files, ~62,380 lines)
+**Architecture**: Modular (149 Python files, ~75,911 LOC, 398+ JSON data files, 3,749 asset images)
 **Master Reference**: `docs/GAME_MECHANICS_V6.md` (5,089 lines)
 **Status Report**: `docs/REPOSITORY_STATUS_REPORT_2026-01-27.md`
-**Project Duration**: October 19, 2025 - Present (ongoing development)
+**Project Duration**: October 19, 2025 - Present (migrating to Unity/C#)
+**Migration Plan**: `Migration-Plan/COMPLETION_STATUS.md` (central hub) — 16,013 lines across 15 documents
+
+---
+
+## Unity/C# Migration (Active — February 2026)
+
+The project is being migrated from Python/Pygame to **Unity/C#**. A comprehensive, actionable migration plan exists in `Migration-Plan/`. This is not a blind port — it's a migration into a 3D engine with architecture improvements.
+
+### Start Here
+- **Central hub**: `Migration-Plan/COMPLETION_STATUS.md` — directs to all 15 documents
+- **Master plan**: `Migration-Plan/MIGRATION_PLAN.md` (1,229 lines)
+- **Branch**: `claude/unity-migration-plan-6KKuK`
+
+### Five Pillars
+1. **Exact Mechanical Fidelity** — Every formula, constant, and behavior preserved verbatim
+2. **JSON-Driven Architecture** — JSON files copied byte-identical to `StreamingAssets/Content/`, loaded via Newtonsoft.Json
+3. **3D-Ready Architecture** — `GamePosition` (Vector3), `TargetFinder` (2D/3D distance), `IPathfinder` (Grid→NavMesh)
+4. **Architecture Improvements** — 8 macro changes, 13 per-file fixes, `IGameItem` type hierarchy, `ItemFactory`, `BaseCraftingMinigame`
+5. **Modularity** — 7 dependency-ordered phases with explicit contracts (RECEIVES/DELIVERS)
+
+### 7-Phase Execution Order
+1. **Phase 1 — Foundation**: Data models, enums, `GamePosition`, `IGameItem`, `ItemFactory` (1,908 lines)
+2. **Phase 2 — Data Layer**: 14 database singletons, JSON loading, position deserialization (1,702 lines)
+3. **Phase 3 — Entity Layer**: Character (2,576 lines), 11 components, enemies, stat caching (1,080 lines)
+4. **Phase 4 — Game Systems**: Combat, 5 crafting minigames, world generation, save/load (1,413 lines)
+5. **Phase 5 — ML Classifiers**: CNN + LightGBM → ONNX → Unity Sentis (1,116 lines) — parallel with 3-4
+6. **Phase 6 — Unity Integration**: GameEngine → ~40 MonoBehaviour components, camera, input, UI (954 lines)
+7. **Phase 7 — Polish & LLM Stub**: `IItemGenerator` interface, E2E testing, 3D verification (1,024 lines)
+
+### Key Architecture Decisions (Migration)
+| Decision | Rationale |
+|----------|-----------|
+| Plain C# for Phases 1-5 | Testable without Unity scene |
+| MonoBehaviours only Phase 6 | Thin wrappers around ported logic |
+| `IGameItem` interface hierarchy | Type-safe items replace dict-based approach |
+| `GamePosition` wrapping `Vector3` | Python `(x,y)` → Unity `(x,0,z)`, height defaults to 0 |
+| `TargetFinder` with `DistanceMode` | Toggleable 2D/3D distance calculations |
+| `IPathfinder` interface | Grid A* now, NavMesh later — no logic changes |
+| `BaseCraftingMinigame` base class | Eliminates ~1,240 lines of duplication |
+| `ItemFactory` centralized | 6 scattered creation sites → 1 entry point |
+| Event system (`GameEvents`) | Decouples components, replaces direct references |
+| Effect dispatch table | Replaces 250-line if/elif chain |
+
+### Migration Document Map
+| Document | Lines | Purpose |
+|----------|-------|---------|
+| `COMPLETION_STATUS.md` | 163 | Central hub and holistic summary |
+| `MIGRATION_PLAN.md` | 1,229 | Master overview, risk register |
+| `IMPROVEMENTS.md` | 1,424 | All architecture improvements with quick reference |
+| `CONVENTIONS.md` | 709 | Living conventions (naming, 3D, items) |
+| `PHASE_CONTRACTS.md` | 641 | Per-phase inputs/outputs with C# types |
+| `MIGRATION_META_PLAN.md` | 1,075 | Validation strategy, testing approach |
+| `phases/PHASE_1-7` | 9,197 | Detailed per-phase instructions |
+| `reference/UNITY_PRIMER.md` | 679 | Unity crash course |
+| `reference/PYTHON_TO_CSHARP.md` | 902 | Type mappings, pattern conversions |
+
+### Critical Constants (MUST PRESERVE)
+```
+Damage: base × hand(1.1-1.2) × STR(1+STR×0.05) × skill × class(max 1.2) × crit(2x) - def(max 75%)
+EXP: 200 × 1.75^(level-1), max level 30
+Stats: STR +5%dmg, DEF +2%red, VIT +15HP, LCK +2%crit, AGI +5%forestry, INT -2%diff +20mana
+Tiers: T1=1.0x, T2=2.0x, T3=4.0x, T4=8.0x
+Durability: 0% = 50% effectiveness, never breaks
+```
+
+### Directory Layout
+```
+Game-1/
+├── Migration-Plan/          # Migration documentation (16,013 lines)
+│   ├── COMPLETION_STATUS.md # START HERE — central hub
+│   ├── MIGRATION_PLAN.md    # Master plan
+│   ├── IMPROVEMENTS.md      # Architecture improvements
+│   ├── CONVENTIONS.md       # Living conventions
+│   ├── PHASE_CONTRACTS.md   # Phase I/O contracts
+│   ├── MIGRATION_META_PLAN.md
+│   ├── phases/              # 7 phase documents
+│   └── reference/           # UNITY_PRIMER.md, PYTHON_TO_CSHARP.md
+├── Game-1-modular/          # Active Python source (read during migration)
+├── Unity/                   # Target Unity project (empty, to be populated)
+├── Python/                  # Symlink to Game-1-modular
+├── Scaled JSON Development/ # ML training data/models
+└── archive/                 # Historical docs
+```
 
 ---
 
@@ -551,7 +634,7 @@ python -m json.tool recipes.JSON/recipes-smithing-3.json > /dev/null
 
 ## When Working on This Project
 
-### DO:
+### For Python Development (bug fixes, features):
 - Check `GAME_MECHANICS_V6.md` for implementation status before assuming features exist
 - Check `REPOSITORY_STATUS_REPORT_2026-01-27.md` for current system state
 - Reference `NAMING_CONVENTIONS.md` for method names
@@ -560,39 +643,69 @@ python -m json.tool recipes.JSON/recipes-smithing-3.json > /dev/null
 - Test JSON changes by restarting the game
 - Check `llm_debug_logs/` when debugging LLM issues
 
+### For Unity/C# Migration Work:
+- **Start with** `Migration-Plan/COMPLETION_STATUS.md` — it directs to everything
+- **Read** `CONVENTIONS.md` before writing any C# code (naming, 3D, item hierarchy)
+- **Check** `PHASE_CONTRACTS.md` for your phase's exact RECEIVES/DELIVERS
+- **Use** `GamePosition` for ALL positions (never raw Vector3 in game logic)
+- **Use** `ItemFactory` for ALL item creation (never construct items directly)
+- **Use** `IGameItem` interface hierarchy (MaterialItem, EquipmentItem, ConsumableItem, PlaceableItem)
+- **Reference** `IMPROVEMENTS.md` Quick Reference for all architecture changes
+- **Reference** `PYTHON_TO_CSHARP.md` for type mappings and pattern conversions
+- **Reference** `UNITY_PRIMER.md` if new to Unity (MonoBehaviour lifecycle, etc.)
+- **Preserve** all game constants exactly (see Critical Constants above)
+- **Keep** JSON files byte-identical in `StreamingAssets/Content/`
+- Plain C# classes for Phases 1-5, MonoBehaviours only for Phase 6
+
 ### DON'T:
 - Assume design docs describe implemented features
 - Create new JSON schemas without checking existing patterns
 - Hardcode values that should be in JSON
 - Skip checking tag documentation for combat/skill work
-- Forget to add `import random` if using random functions
+- Change any game formula, constant, or balance number during migration
+- Use raw `Vector3` instead of `GamePosition` in game logic
+- Create items without going through `ItemFactory`
+- Add MonoBehaviour to Phase 1-5 code (plain C# only)
 
 ---
 
 ## Documentation Index
 
+### Migration Plan (in `Migration-Plan/`)
+| Document | Purpose |
+|----------|---------|
+| **COMPLETION_STATUS.md** | Central hub — start here for migration |
+| **MIGRATION_PLAN.md** | Master overview (1,229 lines) |
+| **IMPROVEMENTS.md** | All architecture improvements (1,424 lines) |
+| **CONVENTIONS.md** | Living conventions for C# code (709 lines) |
+| **PHASE_CONTRACTS.md** | Phase inputs/outputs with C# types (641 lines) |
+| **phases/PHASE_1-7** | Detailed per-phase instructions (9,197 lines total) |
+| **reference/UNITY_PRIMER.md** | Unity crash course (679 lines) |
+| **reference/PYTHON_TO_CSHARP.md** | Type mappings and conversions (902 lines) |
+
+### Python Source Documentation (in `Game-1-modular/`)
 | Document | Purpose |
 |----------|---------|
 | **GAME_MECHANICS_V6.md** | Master reference - all mechanics (5,089 lines) |
-| **REPOSITORY_STATUS_REPORT_2026-01-27.md** | Current system state (NEW) |
+| **REPOSITORY_STATUS_REPORT_2026-01-27.md** | Current system state |
 | **MASTER_ISSUE_TRACKER.md** | Known bugs and improvements |
 | **docs/tag-system/TAG-GUIDE.md** | Comprehensive tag system guide |
 | **docs/ARCHITECTURE.md** | System architecture overview |
 | **NAMING_CONVENTIONS.md** | API naming standards |
-| **INDEX.md** | Documentation index |
-| **Fewshot_llm/README.md** | LLM system documentation (NEW) |
-| **Fewshot_llm/MANUAL_TUNING_GUIDE.md** | LLM prompt editing guide (NEW) |
+| **Fewshot_llm/README.md** | LLM system documentation |
+| **Fewshot_llm/MANUAL_TUNING_GUIDE.md** | LLM prompt editing guide |
 
 ---
 
 ## Version History
 
+- **v4.0** (February 11, 2026): Added Unity/C# migration plan context (16,013 lines, 15 documents), updated stats, migration guidelines
 - **v3.0** (January 27, 2026): Major update for LLM integration, crafting classifiers, invented items system
 - **v2.0** (December 31, 2025): Major update for modular architecture, tag system, full combat, skills, save/load
 - **v1.0** (November 17, 2025): Initial Claude.md creation (monolithic main.py)
 
 ---
 
-**Last Updated**: 2026-01-27
-**For**: AI assistants and developers working on Game-1
+**Last Updated**: 2026-02-11
+**For**: AI assistants and developers working on Game-1 (Python source + Unity/C# migration)
 **Maintained By**: Project developers
