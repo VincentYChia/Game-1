@@ -24,6 +24,71 @@
 
 ---
 
+## 0. How to Use This Migration Plan
+
+### 0.1 Start Here
+
+This migration plan is designed so that **a single developer (even a novice Unity user) can pick up any phase and execute it** without needing to understand the entire codebase first. Here's what to read:
+
+1. **This document** (`MIGRATION_PLAN.md`) — Master overview, read sections 1-6
+2. **CONVENTIONS.md** — All cross-phase rules (naming, patterns, error handling). Read this ONCE.
+3. **PHASE_CONTRACTS.md** — Inputs/outputs for every phase. Read YOUR phase's contract.
+4. **Your phase document** (e.g., `phases/PHASE_1_FOUNDATION.md`) — Detailed instructions.
+5. **reference/UNITY_PRIMER.md** — If you're new to Unity, read this first.
+6. **reference/PYTHON_TO_CSHARP.md** — Language mapping reference, consult as needed.
+
+### 0.2 Core Principle: JSON Drives the Game
+
+**The game is JSON-driven. This MUST be preserved.**
+
+In Python, all game content (items, recipes, skills, enemies, stats, formulas) lives in JSON files that are loaded at runtime. The code reads JSON → populates data structures → uses them for gameplay. The C# code must do the SAME thing:
+
+- **JSON files are copied byte-identical to Unity's `StreamingAssets/Content/`**
+- **C# databases load JSON at runtime using `Newtonsoft.Json`**
+- **No game data is hardcoded in C#** (unless it's already hardcoded in Python)
+- **Players can mod the game by editing JSON files** (same as Python)
+
+This means: if you want to add a new sword, you edit `items-smithing-2.JSON`. If you want to rebalance damage, you edit `stats-calculations.JSON`. The C# code reads these files at startup and uses the data. The code never needs recompilation for content changes.
+
+### 0.3 What the Migrator Does NOT Need to Build
+
+This plan is designed to minimize post-migration work. The migrator's job is:
+- **Port logic 1:1** from Python to C# (formulas, algorithms, state machines)
+- **Wire up Unity** (MonoBehaviours, Tilemap, Input, UI) as thin wrappers around ported logic
+- **Verify** with tests that C# behavior matches Python exactly
+
+The migrator does NOT need to:
+- Design new game mechanics
+- Create new content (JSON files are reused)
+- Create art assets (icons are reused)
+- Balance the game (formulas are preserved exactly)
+- Implement the LLM system (stub only)
+- Build 3D graphics (2D Tilemap for now, 3D comes later)
+
+### 0.4 Document Map
+
+```
+MIGRATION_PLAN.md         ← You are here. Master overview.
+CONVENTIONS.md            ← Naming, patterns, error handling. Read ONCE.
+PHASE_CONTRACTS.md        ← Inputs/outputs per phase. Read YOUR phase.
+MIGRATION_META_PLAN.md    ← Methodology reference (validation, testing strategy).
+
+phases/
+├── PHASE_1_FOUNDATION.md      ← Data models, enums (pure C#, no Unity)
+├── PHASE_2_DATA_LAYER.md      ← Database singletons, JSON loading
+├── PHASE_3_ENTITY_LAYER.md    ← Character, components, enemies
+├── PHASE_4_GAME_SYSTEMS.md    ← Combat, crafting, world, tags, save/load
+├── PHASE_5_ML_CLASSIFIERS.md  ← CNN/LightGBM → ONNX → Sentis
+├── PHASE_6_UNITY_INTEGRATION.md ← MonoBehaviours, rendering, input, UI
+└── PHASE_7_POLISH_AND_LLM_STUB.md ← LLM stub, E2E testing, final polish
+
+reference/
+├── UNITY_PRIMER.md            ← Unity crash course for C# developers
+└── PYTHON_TO_CSHARP.md        ← Language mapping reference
+```
+
+---
+
 ## 1. Executive Summary
 
 ### 1.1 Project Overview
@@ -901,40 +966,50 @@ attributes. This means:
 
 ## 11. Document Index
 
-### 11.1 Migration Plan Documents
+### 11.1 Core Documents (Read These First)
 
 | Document | Location | Status | Purpose |
 |----------|----------|--------|---------|
-| **MIGRATION_PLAN.md** | `Migration-Plan/MIGRATION_PLAN.md` | Active | This file -- central hub |
-| **MIGRATION_META_PLAN.md** | `Migration-Plan/MIGRATION_META_PLAN.md` | Complete | Planning methodology |
+| **MIGRATION_PLAN.md** | `Migration-Plan/MIGRATION_PLAN.md` | **Active** | This file — master overview |
+| **CONVENTIONS.md** | `Migration-Plan/CONVENTIONS.md` | **Complete** | All cross-phase rules: naming, patterns, error handling, testing |
+| **PHASE_CONTRACTS.md** | `Migration-Plan/PHASE_CONTRACTS.md` | **Complete** | Inputs/outputs per phase — what you receive and deliver |
+| **MIGRATION_META_PLAN.md** | `Migration-Plan/MIGRATION_META_PLAN.md` | **Complete** | Planning methodology, validation strategy |
 
-### 11.2 Phase Documents
+### 11.2 Phase Documents (All Complete)
+
+| Document | Location | Status | Lines | Purpose |
+|----------|----------|--------|-------|---------|
+| PHASE_1_FOUNDATION.md | `Migration-Plan/phases/` | **Complete** | 1,874 | Data models, enums, JSON schemas |
+| PHASE_2_DATA_LAYER.md | `Migration-Plan/phases/` | **Complete** | 1,698 | Database singletons, config loading |
+| PHASE_3_ENTITY_LAYER.md | `Migration-Plan/phases/` | **Complete** | 1,056 | Character, components, status effects |
+| PHASE_4_GAME_SYSTEMS.md | `Migration-Plan/phases/` | **Complete** | 1,352 | Combat, crafting, world, tags, effects |
+| PHASE_5_ML_CLASSIFIERS.md | `Migration-Plan/phases/` | **Complete** | 1,112 | CNN/LightGBM to ONNX to Sentis |
+| PHASE_6_UNITY_INTEGRATION.md | `Migration-Plan/phases/` | **Complete** | 904 | Rendering, input, UI, scene setup |
+| PHASE_7_POLISH_AND_LLM_STUB.md | `Migration-Plan/phases/` | **Complete** | 1,014 | LLM stub, E2E testing, polish |
+
+### 11.3 Reference Documents
 
 | Document | Location | Status | Purpose |
 |----------|----------|--------|---------|
-| PHASE_1_FOUNDATION.md | `Migration-Plan/phases/` | Planned | Data models, enums, JSON schemas |
-| PHASE_2_DATA_LAYER.md | `Migration-Plan/phases/` | Planned | Database singletons, config loading |
-| PHASE_3_ENTITY_LAYER.md | `Migration-Plan/phases/` | Planned | Character, components, status effects |
-| PHASE_4_GAME_SYSTEMS.md | `Migration-Plan/phases/` | Planned | Combat, crafting, world, tags, effects |
-| PHASE_5_ML_CLASSIFIERS.md | `Migration-Plan/phases/` | Planned | CNN/LightGBM to ONNX to Sentis |
-| PHASE_6_UNITY_INTEGRATION.md | `Migration-Plan/phases/` | Planned | Rendering, input, UI, scene setup |
-| PHASE_7_POLISH_LLM_STUB.md | `Migration-Plan/phases/` | Planned | LLM stub, E2E testing, polish |
+| **UNITY_PRIMER.md** | `Migration-Plan/reference/` | **Complete** | Unity crash course for C# developers new to Unity |
+| **PYTHON_TO_CSHARP.md** | `Migration-Plan/reference/` | **Complete** | Language mapping, pattern conversion, gotchas |
 
-### 11.3 Specification Documents
+### 11.4 Status Documents
 
 | Document | Location | Status | Purpose |
 |----------|----------|--------|---------|
-| SPEC_DATA_LAYER.md | `Migration-Plan/specifications/` | Planned | All data structures and schemas |
+| **COMPLETION_STATUS.md** | `Migration-Plan/COMPLETION_STATUS.md` | **Complete** | What's done, what's deferred, handoff notes |
+
+### 11.5 Planned Documents (To Be Created During Execution)
+
+| Document | Location | Status | Purpose |
+|----------|----------|--------|---------|
+| SPEC_DATA_LAYER.md | `Migration-Plan/specifications/` | Planned | Formal data structures and JSON schemas |
 | SPEC_TAG_SYSTEM.md | `Migration-Plan/specifications/` | Planned | Tag definitions, behaviors, handlers |
 | SPEC_COMBAT.md | `Migration-Plan/specifications/` | Planned | Damage formulas, enchantments, status effects |
 | SPEC_CRAFTING.md | `Migration-Plan/specifications/` | Planned | All 6 disciplines, difficulty, rewards |
 | SPEC_ML_CLASSIFIERS.md | `Migration-Plan/specifications/` | Planned | Model details, preprocessing, conversion |
 | SPEC_LLM_STUB.md | `Migration-Plan/specifications/` | Planned | Interface design, stub behavior |
-
-### 11.4 Testing Documents
-
-| Document | Location | Status | Purpose |
-|----------|----------|--------|---------|
 | TEST_STRATEGY.md | `Migration-Plan/testing/` | Planned | Overall testing approach and infrastructure |
 | TEST_CASES_COMBAT.md | `Migration-Plan/testing/` | Planned | Combat system test cases |
 | TEST_CASES_CRAFTING.md | `Migration-Plan/testing/` | Planned | Crafting system test cases |
