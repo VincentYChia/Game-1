@@ -1896,7 +1896,7 @@ public struct GamePosition
 
 **CRITICAL**: Python's `y` maps to Unity's `z` (north-south). `FromXZ()` ensures Python `(x, y)` becomes `(x, 0, y)` in Unity.
 
-### IGameItem Interface + Type Hierarchy (NEW — see IMPROVEMENTS.md Part 5)
+### IGameItem Interface + Type Hierarchy (NEW — see IMPROVEMENTS.md Part 4)
 
 Phase 1 defines `IGameItem` interface and concrete types (`MaterialItem`, `EquipmentItem`, `ConsumableItem`, `PlaceableItem`, `ItemFactory`). Replaces dict-based items with type-safe polymorphism.
 

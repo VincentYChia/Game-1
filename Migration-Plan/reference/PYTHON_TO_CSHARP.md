@@ -28,7 +28,7 @@
 | `dict` | `Dictionary<TKey, TValue>` | `System.Collections.Generic.Dictionary<TKey, TValue>`. |
 | `set` | `HashSet<T>` | `System.Collections.Generic.HashSet<T>`. |
 | `tuple` | `(T1, T2)` or `Vector2Int` | C# value tuples for general use. `Vector2Int` for grid coordinates in Unity. |
-| `Position(x, y)` | `GamePosition` | **IMPORTANT**: Python `y` = Unity `z`. Use `GamePosition.FromXZ(x, y)`. Y (height) defaults to 0. See Phase 1 / IMPROVEMENTS.md Part 6. |
+| `Position(x, y)` | `GamePosition` | **IMPORTANT**: Python `y` = Unity `z`. Use `GamePosition.FromXZ(x, y)`. Y (height) defaults to 0. See Phase 1 / IMPROVEMENTS.md Part 5. |
 | `frozenset` | `ImmutableHashSet<T>` | Requires `System.Collections.Immutable`. Rarely needed. |
 | `deque` | `Queue<T>` or `LinkedList<T>` | `Queue<T>` for FIFO. `LinkedList<T>` for both ends. |
 

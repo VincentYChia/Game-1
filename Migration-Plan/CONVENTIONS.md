@@ -658,7 +658,7 @@ All positions default to `Y = 0` (ground level). Height is only set when explici
 
 ---
 
-## 13. Item Type Hierarchy Convention [MACRO — Part 5]
+## 13. Item Type Hierarchy Convention [MACRO — Part 4]
 
 ### 13.1 All Items Implement IGameItem
 

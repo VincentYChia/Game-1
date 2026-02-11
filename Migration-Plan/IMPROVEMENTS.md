@@ -8,6 +8,37 @@
 
 ---
 
+## Quick Reference: All Improvements
+
+| ID | Name | Part | Phase(s) |
+|----|------|------|----------|
+| **MACRO-1** | Event System (GameEvents) | 1 | 1,3,4,6 |
+| **MACRO-2** | EquipmentSlot/HandType Enums | 1 | 1,2,3,4 |
+| **MACRO-3** | Separate UI State from Data | 1 | 1,6 |
+| **MACRO-4** | Save Migration Pipeline | 1 | 1,4 |
+| **MACRO-5** | Effect Dispatch Table | 1 | 3,4 |
+| **MACRO-6** | GamePosition (Vector3) | 5 | 1,2,3,4 |
+| **MACRO-7** | 3D-Ready Combat Geometry | 5 | 4 |
+| **MACRO-8** | Crafting Base Class | 6 | 4 |
+| **FIX-1** | ItemStack Factory Method | 2 | 1,3 |
+| **FIX-2** | Equipment ToDict/FromDict | 2 | 1,4 |
+| **FIX-3** | Single Enemy Parser | 2 | 2 |
+| **FIX-4** | Inventory Count Cache | 2 | 3 |
+| **FIX-5** | Pre-sorted Enemy Abilities | 2 | 2 |
+| **FIX-6** | Rarity Single Source of Truth | 2 | 1 |
+| **FIX-7** | Cached Available Skills | 2 | 3 |
+| **FIX-8** | Invented Recipe UUID | 2 | 4,7 |
+| **FIX-9** | Computed Equipment Bonuses | 2 | 3,4 |
+| **FIX-10** | GameEngine Decomposition Map | 6 | 6 |
+| **FIX-11** | Stat Recalculation Caching | 6 | 3 |
+| **FIX-12** | NavMesh-Ready Pathfinder | 6 | 4 |
+| **FIX-13** | Centralized ItemFactory | 6 | 1,2,3,4 |
+| **Part 4** | IGameItem Type Hierarchy | 4 | 1,2,3,4 |
+
+**Document Structure**: Part 1 (macro changes) → Part 2 (per-file fixes) → Part 3 (what NOT to improve) → Part 4 (item hierarchy) → Part 5 (3D readiness) → Part 6 (additional fixes) → Part 7 (application schedule)
+
+---
+
 ## Part 1: Macro Architecture Changes (Decide During Planning, Implement Across All Phases)
 
 These are structural improvements that affect multiple phases and must be designed upfront.
@@ -669,21 +700,7 @@ Never mutate the source item. The bonus is computed from current class + base it
 
 ---
 
-## Part 3: Improvement Application Schedule
-
-| Phase | Macro Changes to Implement | Per-File Fixes |
-|-------|---------------------------|----------------|
-| **Phase 1** | MACRO-2 (EquipmentSlot enum, HandType enum) | FIX-1 (ItemStack factory), FIX-2 (Equipment ToDict/FromDict), FIX-6 (single rarity) |
-| **Phase 2** | — | FIX-3 (single enemy parser), FIX-5 (pre-sort abilities) |
-| **Phase 3** | MACRO-1 (GameEvents), MACRO-3 (UI state separation) | FIX-4 (inventory count cache), FIX-7 (cached skills), FIX-9 (computed bonuses) |
-| **Phase 4** | MACRO-4 (save migration pipeline), MACRO-5 (effect dispatch) | FIX-8 (invented recipe UUID) |
-| **Phase 5** | — | — |
-| **Phase 6** | MACRO-3 UI layer (InventoryDragHandler) | — |
-| **Phase 7** | — | — |
-
----
-
-## Part 4: What NOT to Improve
+## Part 3: What NOT to Improve
 
 Some things look improvable but should be left as-is during migration:
 
@@ -698,7 +715,7 @@ Some things look improvable but should be left as-is during migration:
 
 ---
 
-## Part 5: Item Pipeline Overhaul — Class Hierarchy for Items
+## Part 4: Item Pipeline Overhaul — Class Hierarchy for Items
 
 ### The Problem
 
@@ -894,7 +911,7 @@ if (stack.Item is EquipmentItem equip)
 
 ---
 
-## Part 6: 3D Migration Considerations
+## Part 5: 3D Migration Considerations
 
 **Context**: This is not just a Python-to-C# migration. It's a migration into Unity — a 3D game engine. Even if the initial visual output is 2D sprites, the underlying architecture should be **3D-ready** so that upgrading to 3D visuals later doesn't require rewriting game logic.
 
@@ -1094,7 +1111,7 @@ public static class GameConfig
 
 ---
 
-## Part 7: Additional Systemic Inefficiencies
+## Part 6: Additional Systemic Inefficiencies
 
 ### MACRO-8: Crafting Minigame Base Class (Eliminate 5-Way Duplication)
 
@@ -1393,12 +1410,12 @@ public static class ItemFactory
 
 ---
 
-## Part 8: Updated Improvement Application Schedule
+## Part 7: Improvement Application Schedule
 
 | Phase | Macro Changes | Per-File Fixes |
 |-------|--------------|----------------|
 | **Phase 1** | MACRO-2 (enums), MACRO-6 (GamePosition) | FIX-1 (ItemStack factory), FIX-2 (Equipment serialization), FIX-6 (single rarity), FIX-13 (ItemFactory) |
-| **Phase 1** | Part 5 (IGameItem hierarchy) | — |
+| **Phase 1** | Part 4 (IGameItem hierarchy) | — |
 | **Phase 2** | — | FIX-3 (single enemy parser), FIX-5 (pre-sort abilities) |
 | **Phase 3** | MACRO-1 (GameEvents), MACRO-3 (UI state separation) | FIX-4 (inventory count cache), FIX-7 (cached skills), FIX-9 (computed bonuses), FIX-11 (stat caching) |
 | **Phase 4** | MACRO-4 (save migration), MACRO-5 (effect dispatch), MACRO-7 (3D geometry), MACRO-8 (crafting base class) | FIX-8 (invented recipe UUID), FIX-12 (NavMesh-ready pathfinder) |

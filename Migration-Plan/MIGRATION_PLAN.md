@@ -768,7 +768,7 @@ Final Value = Base
 
 This migration targets Unity — a 3D engine. While initial visuals remain 2D (sprites on XZ plane), **all code architecture must be 3D-ready** so that upgrading to 3D visuals is a content/rendering change, not a logic rewrite.
 
-**Mandatory 3D-Ready Patterns** (see `IMPROVEMENTS.md` Parts 6-7 for code):
+**Mandatory 3D-Ready Patterns** (see `IMPROVEMENTS.md` Parts 5-6 for detailed C# code):
 
 | System | 2D (Initial) | 3D-Ready Architecture |
 |--------|-------------|----------------------|
@@ -1013,13 +1013,13 @@ attributes. This means:
 
 | Document | Location | Status | Lines | Purpose |
 |----------|----------|--------|-------|---------|
-| PHASE_1_FOUNDATION.md | `Migration-Plan/phases/` | **Complete** | 1,874 | Data models, enums, JSON schemas |
-| PHASE_2_DATA_LAYER.md | `Migration-Plan/phases/` | **Complete** | 1,698 | Database singletons, config loading |
-| PHASE_3_ENTITY_LAYER.md | `Migration-Plan/phases/` | **Complete** | 1,056 | Character, components, status effects |
-| PHASE_4_GAME_SYSTEMS.md | `Migration-Plan/phases/` | **Complete** | 1,352 | Combat, crafting, world, tags, effects |
-| PHASE_5_ML_CLASSIFIERS.md | `Migration-Plan/phases/` | **Complete** | 1,112 | CNN/LightGBM to ONNX to Sentis |
-| PHASE_6_UNITY_INTEGRATION.md | `Migration-Plan/phases/` | **Complete** | 904 | Rendering, input, UI, scene setup |
-| PHASE_7_POLISH_AND_LLM_STUB.md | `Migration-Plan/phases/` | **Complete** | 1,014 | LLM stub, E2E testing, polish |
+| PHASE_1_FOUNDATION.md | `Migration-Plan/phases/` | **Complete** | 1,908 | Data models, enums, JSON schemas, GamePosition, IGameItem |
+| PHASE_2_DATA_LAYER.md | `Migration-Plan/phases/` | **Complete** | 1,702 | Database singletons, config loading, 3D-ready JSON parsing |
+| PHASE_3_ENTITY_LAYER.md | `Migration-Plan/phases/` | **Complete** | 1,080 | Character, components, status effects, GamePosition movement |
+| PHASE_4_GAME_SYSTEMS.md | `Migration-Plan/phases/` | **Complete** | 1,413 | Combat, crafting, world, tags, effects, 3D geometry |
+| PHASE_5_ML_CLASSIFIERS.md | `Migration-Plan/phases/` | **Complete** | 1,116 | CNN/LightGBM to ONNX to Sentis |
+| PHASE_6_UNITY_INTEGRATION.md | `Migration-Plan/phases/` | **Complete** | 954 | Rendering, input, UI, camera, XZ-plane scene setup |
+| PHASE_7_POLISH_AND_LLM_STUB.md | `Migration-Plan/phases/` | **Complete** | 1,024 | LLM stub, E2E testing, 3D readiness verification |
 
 ### 11.3 Reference Documents
 
@@ -1226,4 +1226,4 @@ Unity/
 **Document Status**: Active
 **Next Steps**: Begin creating Phase 1 detailed specification
 **Owner**: Migration Team
-**Last Updated**: 2026-02-10
+**Last Updated**: 2026-02-11
