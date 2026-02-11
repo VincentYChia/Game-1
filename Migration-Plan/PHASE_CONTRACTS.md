@@ -49,6 +49,12 @@ Nothing. Phase 1 has zero dependencies.
 | `SkillUnlock.cs` | `SkillUnlock` | `UnlockRequirements`, `UnlockTrigger`, `UnlockCost` |
 | `StatusEffectData.cs` | `StatusEffectData` | `StatusEffectType` enum, `StackBehavior` enum |
 | `TagDefinition.cs` | `TagDefinition` | `Conflicts`, `Synergies` as `List<string>` |
+| `GamePosition.cs` | `GamePosition` | `Vector3` wrapper: `HorizontalDistanceTo()`, `DistanceTo()`, `FromXZ()`, `FromVector3()`, `ToVector3()` |
+| `IGameItem.cs` | `IGameItem` | Interface: `ItemId`, `Name`, `Category`, `Tier`, `Rarity`, `MaxStack`, `IsStackable`, `ToSaveData()` |
+| `MaterialItem.cs` | `MaterialItem : IGameItem` | Stackable materials. `MaterialCategory`, `Tags` |
+| `ConsumableItem.cs` | `ConsumableItem : IGameItem` | Potions/consumables. `EffectTags`, `EffectParams` |
+| `PlaceableItem.cs` | `PlaceableItem : IGameItem` | Placeable tools. `PlaceableType`, `StationTier` |
+| `ItemFactory.cs` | `ItemFactory` | Static: `CreateFromId(id)`, `FromSaveData(dict)`, `CreateCrafted(id, quality, stats)` |
 
 **7 Enum Files** (namespace `Game1.Data.Enums`):
 | C# File | Enum | Values |
@@ -358,8 +364,8 @@ Assert.IsNotNull(character.Equipment.GetEquipped(EquipmentSlot.MainHand));
 
 **Effect Execution** (`Game1.Systems.Effects/`):
 - `EffectExecutor.cs`: Executes tag-based effects (damage, healing, status, knockback, lifesteal, etc.)
-- `TargetFinder.cs`: Geometry patterns (single, chain, cone, circle, beam, pierce)
-- `MathUtils.cs`: Distance, angle, LOS calculations
+- `TargetFinder.cs`: 3D-ready geometry patterns (single, chain, cone, circle, beam, pierce) with `DistanceMode` toggle (Horizontal/Full3D). Initial mode: Horizontal for 2D parity.
+- `MathUtils.cs`: Distance (horizontal and 3D), angle, LOS calculations using `GamePosition`
 
 **Combat** (`Game1.Systems.Combat/`):
 - `CombatManager.cs`: Full damage pipeline, enemy spawning, death/loot handling
@@ -367,7 +373,8 @@ Assert.IsNotNull(character.Equipment.GetEquipped(EquipmentSlot.MainHand));
   - Damage pipeline must match Python exactly (see MIGRATION_PLAN.md §6.1)
 
 **Crafting** (`Game1.Systems.Crafting/`):
-- 6 minigame classes: `SmithingMinigame`, `AlchemyMinigame`, `RefiningMinigame`, `EngineeringMinigame`, `EnchantingMinigame`, `FishingMinigame`
+- `BaseCraftingMinigame` abstract class with shared lifecycle (start, update, complete, timer, performance score)
+- 6 minigame classes extending base: `SmithingMinigame`, `AlchemyMinigame`, `RefiningMinigame`, `EngineeringMinigame`, `EnchantingMinigame`, `FishingMinigame`
 - `DifficultyCalculator.cs`: Material point calculation → difficulty tier
 - `RewardCalculator.cs`: Performance score → quality tier → item stats
 - `InteractiveCrafting.cs`: Base UI factory for all disciplines
@@ -376,7 +383,7 @@ Assert.IsNotNull(character.Equipment.GetEquipped(EquipmentSlot.MainHand));
 - `WorldSystem.cs`: Chunk streaming, resource spawning, entity placement
 - `BiomeGenerator.cs`: Deterministic from seed (Szudzik pairing function)
 - `Chunk.cs`: 16×16 tile grid with resource spawning
-- `CollisionSystem.cs`: Bresenham LOS, A* pathfinding
+- `CollisionSystem.cs`: `IPathfinder` interface + `GridPathfinder` (A* on tiles, matches Python). NavMesh-ready abstraction for future 3D.
 
 **Save/Load** (`Game1.Systems.Save/`):
 - `SaveManager.cs`: Full state serialization (character, world, quests, dungeons)

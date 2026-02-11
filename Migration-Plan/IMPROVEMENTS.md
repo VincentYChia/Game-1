@@ -695,3 +695,713 @@ Some things look improvable but should be left as-is during migration:
 6. **ML preprocessing** — Must match Python EXACTLY for model compatibility. Zero improvements.
 7. **Database singleton pattern** — Already addressed in CONVENTIONS.md. The pattern itself is fine.
 8. **Game balance numbers** — ALL constants transfer verbatim. Do not rebalance.
+
+---
+
+## Part 5: Item Pipeline Overhaul — Class Hierarchy for Items
+
+### The Problem
+
+The current Python item system uses a **flat, dict-based approach** where items are fundamentally dictionaries with inconsistent type information. This creates several cascading problems:
+
+**Finding 1: Items lose identity as they move through the pipeline**
+
+- In `inventory.py:6-17`, `ItemStack` is a `@dataclass` that stores `item_id: str` and `quantity: int`. But depending on context, the same item might be represented as:
+  - A `MaterialDefinition` object (from `material_db.py`)
+  - An `EquipmentItem` object (from `equipment_db.py`)
+  - A raw `dict` (during save/load, `save_manager.py:205-318`)
+  - A string ID (in recipe inputs, `recipes.py:5-10`)
+  - An `ItemStack` with embedded `EquipmentItem` (in inventory)
+
+- There is NO common base type. A material, equipment item, potion, and tool share no common interface.
+
+**Finding 2: Type checks scattered everywhere**
+
+- `inventory.py:19-34` (`__post_init__`) — checks `EquipmentDatabase.is_equipment()` and `MaterialDatabase.get_material()` to determine behavior
+- `equipment_manager.py:41-65` — checks string-based `hand_type` field
+- `save_manager.py:196-318` — branches on whether an item has `equipment_data`
+- `character.py:426-536` — different serialization paths for equipment vs materials
+- `game_engine.py` — multiple `isinstance` and `hasattr` checks for item type
+
+**Finding 3: No polymorphism for item behaviors**
+
+Items have behaviors (can be consumed, equipped, stacked, crafted with) but these behaviors are spread across unrelated systems with no shared interface.
+
+### C# Solution: IGameItem Interface + Type Hierarchy
+
+```csharp
+namespace Game1.Data.Models
+{
+    /// <summary>
+    /// Common interface for all item types in the game.
+    /// Every item that can exist in inventory implements this.
+    /// </summary>
+    public interface IGameItem
+    {
+        string ItemId { get; }
+        string Name { get; }
+        string Category { get; }  // "material", "equipment", "consumable", "tool", "placeable"
+        int Tier { get; }
+        string Rarity { get; }
+        int MaxStack { get; }
+        bool IsStackable { get; }
+
+        // Serialization
+        Dictionary<string, object> ToSaveData();
+        static IGameItem FromSaveData(Dictionary<string, object> data); // factory
+    }
+
+    /// <summary>
+    /// Raw materials (ores, wood, stone, monster drops, gems, herbs).
+    /// Stackable, no special behavior beyond crafting input.
+    /// </summary>
+    public class MaterialItem : IGameItem
+    {
+        public string ItemId { get; set; }
+        public string Name { get; set; }
+        public string Category => "material";
+        public int Tier { get; set; }
+        public string Rarity { get; set; }
+        public int MaxStack => 99;
+        public bool IsStackable => true;
+
+        // Material-specific
+        public string MaterialCategory { get; set; } // "metal", "wood", "stone", etc.
+        public List<string> Tags { get; set; }
+    }
+
+    /// <summary>
+    /// Weapons, armor, accessories — items with durability, stats, enchantments.
+    /// Non-stackable (MaxStack = 1). Each instance is unique (can be enchanted differently).
+    /// </summary>
+    public class EquipmentItem : IGameItem
+    {
+        public string ItemId { get; set; }
+        public string Name { get; set; }
+        public string Category => "equipment";
+        public int Tier { get; set; }
+        public string Rarity { get; set; }
+        public int MaxStack => 1;
+        public bool IsStackable => false;
+
+        // Equipment-specific
+        public EquipmentSlot Slot { get; set; }
+        public HandType HandType { get; set; }
+        public DamageRange Damage { get; set; }
+        public float Defense { get; set; }
+        public float Weight { get; set; }
+        public float DurabilityCurrent { get; set; }
+        public float DurabilityMax { get; set; }
+        public List<Enchantment> Enchantments { get; set; }
+        public List<string> Tags { get; set; }
+        public List<string> EffectTags { get; set; }
+        public CraftedStats CraftedStats { get; set; }
+
+        public float GetEffectiveness()
+            => DurabilityMax <= 0 ? 0.5f : 0.5f + (DurabilityCurrent / DurabilityMax) * 0.5f;
+
+        public EquipmentItem Copy() => new EquipmentItem { /* deep copy all fields */ };
+    }
+
+    /// <summary>
+    /// Potions and consumable items.
+    /// Stackable. Consumed on use, applying effects via tags.
+    /// </summary>
+    public class ConsumableItem : IGameItem
+    {
+        public string ItemId { get; set; }
+        public string Name { get; set; }
+        public string Category => "consumable";
+        public int Tier { get; set; }
+        public string Rarity { get; set; }
+        public int MaxStack => 20;
+        public bool IsStackable => true;
+
+        // Consumable-specific
+        public List<string> EffectTags { get; set; }
+        public Dictionary<string, float> EffectParams { get; set; }
+    }
+
+    /// <summary>
+    /// Placeable tools (crafting stations, turrets, traps, bombs).
+    /// Stackable but with special placement behavior.
+    /// </summary>
+    public class PlaceableItem : IGameItem
+    {
+        public string ItemId { get; set; }
+        public string Name { get; set; }
+        public string Category => "placeable";
+        public int Tier { get; set; }
+        public string Rarity { get; set; }
+        public int MaxStack => 10;
+        public bool IsStackable => true;
+
+        // Placeable-specific
+        public string PlaceableType { get; set; } // "crafting_station", "turret", "trap", "bomb"
+        public int StationTier { get; set; }
+    }
+}
+```
+
+### How This Fixes the Pipeline
+
+**ItemStack becomes type-safe**:
+```csharp
+public class ItemStack
+{
+    public IGameItem Item { get; }       // Never null — always a typed item
+    public int Quantity { get; set; }
+
+    // Type-safe access
+    public bool IsEquipment => Item is EquipmentItem;
+    public EquipmentItem AsEquipment => Item as EquipmentItem;
+
+    // Delegates to item
+    public string Rarity => Item.Rarity;  // Single source of truth
+    public int MaxStack => Item.MaxStack;
+    public bool IsStackable => Item.IsStackable;
+}
+```
+
+**Save/load is polymorphic** (no branching on type):
+```csharp
+// Save: item knows how to serialize itself
+var saveData = stack.Item.ToSaveData();
+
+// Load: factory dispatches on "category" field
+var item = ItemFactory.FromSaveData(saveData); // returns correct concrete type
+```
+
+**Equipment checks are exhaustive** (no `hasattr`):
+```csharp
+// Instead of: if hasattr(item, 'equipment_data') and item.equipment_data is not None
+// C#:
+if (stack.Item is EquipmentItem equip)
+{
+    float effectiveness = equip.GetEffectiveness();
+    // ...
+}
+```
+
+### Application
+
+| Phase | What to Implement |
+|-------|-------------------|
+| Phase 1 | `IGameItem` interface, `MaterialItem`, `EquipmentItem`, `ConsumableItem`, `PlaceableItem` classes, `ItemFactory` |
+| Phase 2 | Databases return typed `IGameItem` (not raw dicts or mixed types) |
+| Phase 3 | `ItemStack` references `IGameItem`, `Inventory` uses `ItemStack[]` |
+| Phase 4 | Save/load uses `ToSaveData()`/`FromSaveData()`, crafting produces typed items |
+
+---
+
+## Part 6: 3D Migration Considerations
+
+**Context**: This is not just a Python-to-C# migration. It's a migration into Unity — a 3D game engine. Even if the initial visual output is 2D sprites, the underlying architecture should be **3D-ready** so that upgrading to 3D visuals later doesn't require rewriting game logic.
+
+### MACRO-6: Vector3 Position System (Replaces 2D Tuples)
+
+**Current Python State**:
+- `data/models/world.py:9-18` — `Position` is `@dataclass` with `x: float, y: float` only
+- `character.py` — All movement uses `(x, y)` tuples or `Position(x, y)`
+- `combat_manager.py` — Distance calculations use 2D Euclidean: `math.sqrt((x2-x1)**2 + (y2-y1)**2)`
+- `collision_system.py` — Bresenham line-of-sight on flat 2D grid
+- `effect_executor.py` — AoE geometry (cones, circles, beams) all 2D
+- `enemy.py` — Pathfinding and movement on 2D grid
+- `world_system.py` — Flat 100x100 tile grid with `(chunk_x, chunk_y)` addressing
+
+**C# Solution**: Use `Vector3` everywhere, with Y as height (Unity convention):
+
+```csharp
+// Position is always 3D. For initial 2D gameplay, Y = 0.
+public struct GamePosition
+{
+    public float X { get; set; }  // East-West
+    public float Y { get; set; }  // Height (0 for flat world initially)
+    public float Z { get; set; }  // North-South
+
+    // Horizontal distance (ignoring height) — used for most game logic
+    public float HorizontalDistanceTo(GamePosition other)
+        => Mathf.Sqrt((X - other.X) * (X - other.X) + (Z - other.Z) * (Z - other.Z));
+
+    // Full 3D distance — used when height matters (projectiles, flying enemies)
+    public float DistanceTo(GamePosition other)
+        => Vector3.Distance(ToVector3(), other.ToVector3());
+
+    // Unity integration
+    public Vector3 ToVector3() => new Vector3(X, Y, Z);
+    public static GamePosition FromVector3(Vector3 v) => new GamePosition { X = v.x, Y = v.y, Z = v.z };
+
+    // Backward compatibility: construct from 2D (height = 0)
+    public static GamePosition FromXZ(float x, float z) => new GamePosition { X = x, Y = 0, Z = z };
+}
+```
+
+**Decision**: The `GamePosition` struct wraps `Vector3` and provides both horizontal (XZ-plane) and full 3D distance methods. All game logic starts using `HorizontalDistanceTo()` for compatibility with 2D formulas. When height is introduced later, switching to `DistanceTo()` is a single method call change per use site.
+
+### MACRO-7: 3D-Ready Geometry for Combat and Effects
+
+**Current Python State** (2D geometry in `effect_executor.py`):
+
+| Geometry | Python Implementation | Lines |
+|----------|----------------------|-------|
+| `single` | Direct target, no geometry | — |
+| `circle` | 2D radius check: `dist <= radius` | `effect_executor.py:89-103` |
+| `cone` | 2D angle check: `angle_diff <= cone_angle/2` | `effect_executor.py:105-125` |
+| `beam` | 2D line check: point-to-line distance | `effect_executor.py:127-148` |
+| `pierce` | 2D ray through targets | `effect_executor.py:150-168` |
+| `chain` | Nearest target within range (2D) | `effect_executor.py:170-190` |
+
+**C# Solution**: Abstract geometry into 3D-ready shape types:
+
+```csharp
+namespace Game1.Systems.Effects
+{
+    /// <summary>
+    /// All AoE shapes support both 2D (XZ-plane) and 3D evaluation.
+    /// Initially use Horizontal mode for parity with Python.
+    /// Switch to Full3D when vertical gameplay is added.
+    /// </summary>
+    public enum DistanceMode { Horizontal, Full3D }
+
+    public static class TargetFinder
+    {
+        // Global setting — starts as Horizontal for 2D parity
+        public static DistanceMode Mode { get; set; } = DistanceMode.Horizontal;
+
+        public static float GetDistance(GamePosition a, GamePosition b)
+            => Mode == DistanceMode.Horizontal
+                ? a.HorizontalDistanceTo(b)
+                : a.DistanceTo(b);
+
+        /// <summary>
+        /// Circle/Sphere: All targets within radius.
+        /// 2D: circle on XZ plane. 3D: sphere.
+        /// </summary>
+        public static List<ITargetable> FindInRadius(
+            GamePosition center, float radius, List<ITargetable> candidates)
+        {
+            return candidates
+                .Where(t => GetDistance(center, t.Position) <= radius)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Cone: Targets within angle and range.
+        /// 2D: fan on XZ plane. 3D: cone frustum.
+        /// </summary>
+        public static List<ITargetable> FindInCone(
+            GamePosition origin, Vector3 direction, float range,
+            float coneAngle, List<ITargetable> candidates)
+        {
+            float halfAngle = coneAngle / 2f;
+            var flatDir = Mode == DistanceMode.Horizontal
+                ? new Vector3(direction.x, 0, direction.z).normalized
+                : direction.normalized;
+
+            return candidates.Where(t =>
+            {
+                float dist = GetDistance(origin, t.Position);
+                if (dist > range) return false;
+
+                var toTarget = (t.Position.ToVector3() - origin.ToVector3());
+                if (Mode == DistanceMode.Horizontal) toTarget.y = 0;
+                toTarget.Normalize();
+
+                float angle = Vector3.Angle(flatDir, toTarget);
+                return angle <= halfAngle;
+            }).ToList();
+        }
+
+        /// <summary>
+        /// Beam/Ray: Targets within perpendicular distance of a line.
+        /// 2D: line on XZ plane. 3D: cylinder.
+        /// </summary>
+        public static List<ITargetable> FindInBeam(
+            GamePosition origin, Vector3 direction, float range,
+            float beamWidth, List<ITargetable> candidates)
+        {
+            // Point-to-line distance calculation
+            // Works identically in 2D (y=0) or 3D
+            var end = origin.ToVector3() + direction.normalized * range;
+            return candidates.Where(t =>
+            {
+                var point = t.Position.ToVector3();
+                if (Mode == DistanceMode.Horizontal) { point.y = 0; }
+                float dist = PointToLineDistance(origin.ToVector3(), end, point);
+                float along = Vector3.Dot(point - origin.ToVector3(), direction.normalized);
+                return dist <= beamWidth / 2f && along >= 0 && along <= range;
+            }).ToList();
+        }
+    }
+}
+```
+
+### Where 3D Changes Apply per Phase
+
+| Phase | 2D Assumption | 3D Adaptation |
+|-------|--------------|---------------|
+| **Phase 1** | `Position(x, y)` dataclass | `GamePosition(x, y, z)` with `Y=0` default. `HorizontalDistanceTo()` and `DistanceTo()` |
+| **Phase 2** | JSON positions `{"x": N, "y": N}` | Deserialize with `z` field (default 0 if missing). `GamePosition.FromJson(JObject)` handles both formats |
+| **Phase 3** | `character.position = (x, y)` | `character.Position` is `GamePosition`. Movement uses XZ plane initially |
+| **Phase 3** | `enemy.position = (x, y)` | Same as character. Enemy height field for flying enemies (0 by default) |
+| **Phase 4** | `distance = sqrt((x2-x1)^2 + (y2-y1)^2)` | `TargetFinder.GetDistance()` — horizontal mode preserves Python behavior exactly |
+| **Phase 4** | Bresenham LOS on 2D grid | A* pathfinding on XZ grid, LOS can use `Physics.Raycast` in 3D later |
+| **Phase 4** | AoE shapes: circle, cone, beam (all 2D) | `TargetFinder` methods work in both modes. Default to Horizontal |
+| **Phase 4** | Tile coordinates `(tile_x, tile_y)` | `WorldPosition` converts tile coords to world space: `new Vector3(tileX * TileSize, height, tileY * TileSize)` |
+| **Phase 5** | ML preprocessing uses 2D grids | No change needed — ML preprocessing is about crafting grid images, not world positions |
+| **Phase 6** | 2D Tilemap rendering | Start with Tilemap (2D on XZ plane), architecture supports swap to 3D terrain later |
+| **Phase 6** | Camera is orthographic 2D | Start orthographic, architecture supports perspective switch |
+| **Phase 7** | E2E tests use 2D positions | Tests use `GamePosition.FromXZ()` — 3D-compatible without changes |
+
+### 3D-Ready Constants (Add to GameConfig)
+
+```csharp
+public static class GameConfig
+{
+    // World dimensions
+    public const int WorldSizeX = 100;     // tiles east-west
+    public const int WorldSizeZ = 100;     // tiles north-south
+    public const int ChunkSize = 16;       // tiles per chunk edge
+    public const float TileSize = 1.0f;    // Unity world units per tile
+
+    // Height system (unused in 2D mode, ready for 3D)
+    public const float DefaultHeight = 0f;
+    public const float MaxHeight = 50f;    // for future terrain elevation
+    public const float FloorHeight = 0f;   // ground level for dungeons
+
+    // Combat ranges (in world units, not tiles)
+    public const float MeleeRange = 1.5f;       // adjacent tiles
+    public const float ShortRange = 5f;          // ~5 tiles
+    public const float MediumRange = 10f;        // ~10 tiles
+    public const float LongRange = 20f;          // ~20 tiles
+    public const float MaxCombatRange = 30f;     // furthest possible ability
+
+    // These currently use horizontal distance.
+    // When vertical gameplay is added, some skills may use full 3D distance.
+    public static bool UseVerticalDistance = false;
+}
+```
+
+### The 3D Readiness Principle
+
+**Do NOT implement 3D features now.** Instead, structure code so that enabling 3D later is a configuration change, not an architecture change:
+
+1. Store positions as `Vector3` / `GamePosition` — costs nothing, enables everything
+2. Use `TargetFinder.GetDistance()` instead of inline distance math — one toggle switches 2D→3D
+3. Keep tile-to-world conversion centralized in `WorldSystem` — swap from Tilemap to terrain in one place
+4. Use Unity's NavMesh abstraction — works for both 2D and 3D pathfinding
+5. Camera system supports both orthographic (2D) and perspective (3D) via config
+
+---
+
+## Part 7: Additional Systemic Inefficiencies
+
+### MACRO-8: Crafting Minigame Base Class (Eliminate 5-Way Duplication)
+
+**Problem Found In**: All 5 crafting files in `Crafting-subdisciplines/`:
+- `smithing.py` (909 lines), `alchemy.py` (1,070 lines), `refining.py` (826 lines)
+- `engineering.py` (1,312 lines), `enchanting.py` (1,408 lines)
+
+**Current State**: Each minigame file independently implements:
+- Grid/canvas initialization and rendering (~80 lines each)
+- Material placement handling (~60 lines each)
+- Timer management (start, tick, end) (~40 lines each)
+- Performance score calculation (~30 lines each)
+- Result generation (quality tier → item stats) (~50 lines each)
+- Tooltip rendering (~30 lines each)
+- Keyboard shortcut handling (~20 lines each)
+
+That's ~310 lines duplicated across 5 files = ~1,240 lines of redundant code.
+
+**C# Solution**: Abstract base class with template method pattern:
+
+```csharp
+namespace Game1.Systems.Crafting.Disciplines
+{
+    public abstract class BaseCraftingMinigame
+    {
+        // Shared state
+        protected Recipe CurrentRecipe { get; private set; }
+        protected PlacementData Placement { get; private set; }
+        protected float Timer { get; private set; }
+        protected float MaxTime { get; private set; }
+        protected float PerformanceScore { get; private set; }
+        protected MinigameState State { get; private set; }
+
+        // Shared lifecycle
+        public void Start(Recipe recipe, PlacementData placement, float maxTime)
+        {
+            CurrentRecipe = recipe;
+            Placement = placement;
+            MaxTime = maxTime;
+            Timer = maxTime;
+            State = MinigameState.Active;
+            OnStart(); // subclass hook
+        }
+
+        public void Update(float deltaTime)
+        {
+            if (State != MinigameState.Active) return;
+            Timer -= deltaTime;
+            if (Timer <= 0) { Complete(); return; }
+            OnUpdate(deltaTime); // subclass hook
+        }
+
+        public MinigameResult Complete()
+        {
+            State = MinigameState.Completed;
+            PerformanceScore = CalculatePerformance(); // subclass calculates
+            var quality = RewardCalculator.GetQualityTier(PerformanceScore);
+            OnComplete(); // subclass hook
+            return new MinigameResult(CurrentRecipe, PerformanceScore, quality);
+        }
+
+        // Abstract hooks — each discipline implements its unique behavior
+        protected abstract void OnStart();
+        protected abstract void OnUpdate(float deltaTime);
+        protected abstract void OnComplete();
+        protected abstract float CalculatePerformance();
+    }
+
+    // Smithing only needs to implement its unique temperature/hammer mechanics
+    public class SmithingMinigame : BaseCraftingMinigame
+    {
+        private float _temperature;
+        private float _targetTemperature;
+        private int _hammerHits;
+
+        protected override void OnStart()
+        {
+            _targetTemperature = CalculateTargetTemp(CurrentRecipe);
+            _temperature = 0f;
+            _hammerHits = 0;
+        }
+
+        protected override float CalculatePerformance()
+        {
+            float tempAccuracy = 1f - Mathf.Abs(_temperature - _targetTemperature) / _targetTemperature;
+            float hitBonus = Mathf.Min(_hammerHits / 10f, 1f);
+            return Mathf.Clamp01(tempAccuracy * 0.7f + hitBonus * 0.3f);
+        }
+
+        // ... smithing-unique methods
+    }
+}
+```
+
+**Apply during**: Phase 4 (all crafting minigames). Each minigame becomes ~40% smaller.
+
+---
+
+### FIX-10: GameEngine Decomposition Map
+
+**Problem Found In**: `game_engine.py` (10,098 lines) — classic god object
+
+**Current State**: `GameEngine` directly manages:
+- Game state machine (menu, playing, crafting, combat, paused, dead) — ~600 lines
+- All input handling (keyboard, mouse, click routing) — ~1,200 lines
+- Inventory/equipment UI logic — ~800 lines
+- Crafting UI orchestration — ~900 lines
+- Combat turn management — ~500 lines
+- World rendering delegation — ~400 lines
+- NPC/quest dialog — ~300 lines
+- Map/waypoint interaction — ~400 lines
+- Debug overlay — ~200 lines
+- Save/load UI — ~300 lines
+- Tooltip management — ~200 lines
+- Sound effects — ~100 lines
+- And 40+ helper methods scattered throughout
+
+**C# Solution**: This decomposition was partially planned in Phase 6, but here's the explicit extraction map showing WHICH lines from `game_engine.py` go WHERE:
+
+| GameEngine Lines (approx) | Responsibility | C# Destination | Phase |
+|--------------------------|----------------|----------------|-------|
+| 1-106 | Initialization, database loading | `GameManager.cs` | Phase 6 |
+| 107-250 | State machine transitions | `GameStateManager.cs` | Phase 6 |
+| 251-500 | Keyboard/mouse input routing | `InputManager.cs` | Phase 6 |
+| 501-900 | Main update loop dispatch | `GameManager.Update()` | Phase 6 |
+| 901-1700 | Inventory UI rendering/interaction | `InventoryUI.cs` | Phase 6 |
+| 1701-2600 | Equipment UI rendering/interaction | `EquipmentUI.cs` | Phase 6 |
+| 2601-3500 | Crafting station interaction/UI | `CraftingUI.cs` | Phase 6 |
+| 3501-4000 | Minigame orchestration | `MinigameManager.cs` | Phase 6 |
+| 4001-4500 | Combat HUD | `CombatUI.cs` | Phase 6 |
+| 4501-5000 | NPC/quest dialog | `NPCDialogueUI.cs` | Phase 6 |
+| 5001-5500 | Map/waypoint rendering | `MapUI.cs` | Phase 6 |
+| 5501-6000 | Debug overlay | `DebugOverlay.cs` | Phase 6 |
+| 6001-6500 | Save/load file selection | `SaveLoadUI.cs` | Phase 6 |
+| 6501-7000 | Tooltip management | `TooltipRenderer.cs` | Phase 6 |
+| 7001-7500 | Camera/viewport | `CameraController.cs` | Phase 6 |
+| 7501-8000 | World chunk visibility | `WorldRenderer.cs` | Phase 6 |
+| 8001-8500 | Class/title selection UI | `ClassSelectionUI.cs`, `StatsUI.cs` | Phase 6 |
+| 8501-9000 | Encyclopedia/recipe browser | `EncyclopediaUI.cs` | Phase 6 |
+| 9001-9500 | Start menu/new game | `StartMenuUI.cs` | Phase 6 |
+| 9501-10098 | Audio, misc helpers | `AudioManager.cs`, various | Phase 6 |
+
+---
+
+### FIX-11: Stat Recalculation Caching
+
+**Problem Found In**: `stat_tracker.py` (1,721 lines), `character.py:200-250`
+
+**Current State**: `character.recalculate_stats()` is called:
+- On every equip/unequip (`equipment_manager.py:77`)
+- On every buff applied/removed (`buffs.py:45,67`)
+- On every level up (`leveling.py:22`)
+- On class selection (`character.py:195`)
+- On title change (`character.py:215`)
+
+Each call iterates ALL equipment slots, ALL active buffs, ALL title bonuses, ALL class bonuses. With 10 equipment slots, 6 buff types, and 6 stats, that's ~100+ calculations per call.
+
+**C# Solution**: Dirty-flag caching with event-driven invalidation:
+
+```csharp
+public class CharacterStats
+{
+    private Dictionary<string, float> _cachedBonuses;
+    private bool _dirty = true;
+
+    public CharacterStats()
+    {
+        GameEvents.OnEquipmentChanged += (_, _) => _dirty = true;
+        GameEvents.OnBuffChanged += (_, _) => _dirty = true;
+        GameEvents.OnLevelUp += (_, _) => _dirty = true;
+        GameEvents.OnClassSelected += (_, _) => _dirty = true;
+        GameEvents.OnTitleEarned += (_, _) => _dirty = true;
+    }
+
+    public float GetTotalBonus(string stat)
+    {
+        if (_dirty)
+        {
+            RecalculateAll();
+            _dirty = false;
+        }
+        return _cachedBonuses.GetValueOrDefault(stat, 0f);
+    }
+
+    private void RecalculateAll()
+    {
+        _cachedBonuses = new Dictionary<string, float>();
+        // Calculate once, cache until dirty
+        foreach (var stat in AllStats)
+        {
+            float bonus = CalculateStatBonus(stat);
+            _cachedBonuses[stat] = bonus;
+        }
+    }
+}
+```
+
+**Apply during**: Phase 3 (CharacterStats component). Requires MACRO-1 (GameEvents).
+
+---
+
+### FIX-12: Collision System — NavMesh-Ready Abstraction
+
+**Problem Found In**: `collision_system.py` (599 lines)
+
+**Current State**: Custom A* pathfinding on 2D tile grid, Bresenham line-of-sight, rectangular collision. All hardcoded to tile coordinates.
+
+**C# Solution**: Abstraction layer that can swap between grid-based and NavMesh:
+
+```csharp
+public interface IPathfinder
+{
+    List<GamePosition> FindPath(GamePosition start, GamePosition end);
+    bool HasLineOfSight(GamePosition from, GamePosition to);
+    bool IsWalkable(GamePosition position);
+}
+
+// Phase 4: Grid-based implementation (matches Python behavior)
+public class GridPathfinder : IPathfinder
+{
+    public List<GamePosition> FindPath(GamePosition start, GamePosition end)
+    {
+        // A* on tile grid, same algorithm as Python
+        // Positions converted to tile coords internally
+    }
+}
+
+// Future: NavMesh-based implementation (for 3D)
+public class NavMeshPathfinder : IPathfinder
+{
+    public List<GamePosition> FindPath(GamePosition start, GamePosition end)
+    {
+        // Unity NavMesh.CalculatePath()
+    }
+}
+```
+
+**Apply during**: Phase 4 (CollisionSystem), injected via config.
+
+---
+
+### FIX-13: Centralized Item Creation (Item Factory)
+
+**Problem Found In**: Items are created in at least 6 different places:
+- `inventory.py:19-34` — `ItemStack.__post_init__()` creates equipment instances
+- `equipment_db.py:340-390` — `create_equipment_from_definition()` builds equipment
+- `save_manager.py:270-318` — `_deserialize_equipment()` reconstructs from save
+- `character.py:475-536` — `_load_equipment_slot()` alternative deserialization
+- `game_engine.py` — Multiple places create items for debug/drops
+- `reward_calculator.py` — Creates crafted items with quality stats
+
+**C# Solution**: Single `ItemFactory` that handles all creation paths:
+
+```csharp
+public static class ItemFactory
+{
+    /// <summary>Create a new item from database definition (for loot, crafting output)</summary>
+    public static IGameItem CreateFromId(string itemId)
+    {
+        if (EquipmentDatabase.Instance.IsEquipment(itemId))
+            return EquipmentDatabase.Instance.CreateEquipmentFromId(itemId);
+
+        var mat = MaterialDatabase.Instance.GetMaterial(itemId);
+        if (mat != null) return mat.ToItem();
+
+        Debug.LogWarning($"[ItemFactory] Unknown item ID: {itemId}");
+        return null;
+    }
+
+    /// <summary>Reconstruct item from save data (for load)</summary>
+    public static IGameItem FromSaveData(Dictionary<string, object> data)
+    {
+        string category = data.GetValueOrDefault("category", "material") as string;
+        return category switch
+        {
+            "equipment" => EquipmentItem.FromDict(data),
+            "consumable" => ConsumableItem.FromDict(data),
+            "placeable" => PlaceableItem.FromDict(data),
+            _ => MaterialItem.FromDict(data),
+        };
+    }
+
+    /// <summary>Create a crafted item with quality stats (for reward calculator)</summary>
+    public static EquipmentItem CreateCrafted(string itemId, string quality, CraftedStats stats)
+    {
+        var baseItem = CreateFromId(itemId) as EquipmentItem;
+        if (baseItem == null) return null;
+        baseItem.Rarity = quality;
+        baseItem.CraftedStats = stats;
+        return baseItem;
+    }
+}
+```
+
+**Apply during**: Phase 1 (define `ItemFactory`), Phase 2 (databases use it), Phase 3 (inventory uses it), Phase 4 (save/crafting use it).
+
+---
+
+## Part 8: Updated Improvement Application Schedule
+
+| Phase | Macro Changes | Per-File Fixes |
+|-------|--------------|----------------|
+| **Phase 1** | MACRO-2 (enums), MACRO-6 (GamePosition) | FIX-1 (ItemStack factory), FIX-2 (Equipment serialization), FIX-6 (single rarity), FIX-13 (ItemFactory) |
+| **Phase 1** | Part 5 (IGameItem hierarchy) | — |
+| **Phase 2** | — | FIX-3 (single enemy parser), FIX-5 (pre-sort abilities) |
+| **Phase 3** | MACRO-1 (GameEvents), MACRO-3 (UI state separation) | FIX-4 (inventory count cache), FIX-7 (cached skills), FIX-9 (computed bonuses), FIX-11 (stat caching) |
+| **Phase 4** | MACRO-4 (save migration), MACRO-5 (effect dispatch), MACRO-7 (3D geometry), MACRO-8 (crafting base class) | FIX-8 (invented recipe UUID), FIX-12 (NavMesh-ready pathfinder) |
+| **Phase 5** | — | — |
+| **Phase 6** | MACRO-3 UI layer | FIX-10 (GameEngine decomposition map) |
+| **Phase 7** | — | —  |

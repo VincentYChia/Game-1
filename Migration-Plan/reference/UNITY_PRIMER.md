@@ -622,3 +622,58 @@ When creating the Unity project for Phase 1:
 | `math.sqrt(x)` | `Mathf.Sqrt(x)` |
 | `print(msg)` | `Debug.Log(msg)` |
 | `if __name__ == '__main__':` | No equivalent needed |
+
+---
+
+## 13. 3D Readiness for Unity
+
+Unity is fundamentally a 3D engine. Even though the initial migration uses 2D visuals, understanding Unity's coordinate system is critical.
+
+### Unity Coordinate System
+
+```
+    Y (up)
+    |
+    |    Z (forward/north)
+    |   /
+    |  /
+    | /
+    +------------ X (right/east)
+```
+
+- **X**: East-West (matches Python's x)
+- **Y**: Height/Up (NOT in Python — Python has no height)
+- **Z**: North-South (matches Python's y)
+
+**CRITICAL**: Python's `y` axis (north-south) maps to Unity's `z` axis. Unity's `y` is height (up).
+
+### GamePosition: The Bridge
+
+All game logic uses `GamePosition` (see Phase 1), not raw `Vector3`. This provides:
+- `FromXZ(x, z)`: Create from Python-style 2D coordinates (Y defaults to 0)
+- `HorizontalDistanceTo()`: XZ-plane distance (matches Python's 2D distance)
+- `DistanceTo()`: Full 3D distance (for future vertical gameplay)
+- `ToVector3()`: Convert to Unity's native type for rendering
+
+### Camera Setup for 2D-in-3D
+
+For the initial 2D migration, the camera looks straight down:
+
+```csharp
+// Orthographic top-down camera on the XZ plane
+Camera.main.orthographic = true;
+Camera.main.orthographicSize = 8f;
+Camera.main.transform.position = new Vector3(playerX, 50f, playerZ);
+Camera.main.transform.rotation = Quaternion.Euler(90f, 0f, 0f); // Look down
+```
+
+This renders the XZ plane as if it were 2D. Switching to perspective 3D later is a camera config change.
+
+### Tilemap on XZ Plane
+
+Unity's built-in Tilemap works on the XY plane by default. For XZ-plane rendering:
+- Option A: Rotate the Tilemap Grid 90 degrees on X axis
+- Option B: Use a custom mesh-based tile renderer on XZ
+- Option C: Use standard XY Tilemap and let the camera rotate
+
+Option A or B is recommended for 3D readiness.

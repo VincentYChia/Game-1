@@ -1,7 +1,7 @@
 # Migration Plan Completion Status
 
 **Last Updated**: 2026-02-11
-**Sessions**: 2 (Initial plan creation + modularity/quality audit and fixes)
+**Sessions**: 3 (Initial plan + modularity audit + 3D readiness & deeper code audit)
 **Branch**: `claude/unity-migration-plan-6KKuK`
 
 ---
@@ -11,27 +11,28 @@
 ### Core Documents (READ FIRST)
 | Document | Status | Lines | Location |
 |----------|--------|-------|----------|
-| **Master Plan** | COMPLETE | ~1,190 | `Migration-Plan/MIGRATION_PLAN.md` |
-| **Conventions** | COMPLETE | ~350 | `Migration-Plan/CONVENTIONS.md` |
-| **Phase Contracts** | COMPLETE | ~480 | `Migration-Plan/PHASE_CONTRACTS.md` |
+| **Master Plan** | COMPLETE | ~1,240 | `Migration-Plan/MIGRATION_PLAN.md` |
+| **Conventions** | LIVING | ~720 | `Migration-Plan/CONVENTIONS.md` |
+| **Improvements** | LIVING | ~1,100 | `Migration-Plan/IMPROVEMENTS.md` |
+| **Phase Contracts** | COMPLETE | ~650 | `Migration-Plan/PHASE_CONTRACTS.md` |
 | **Meta-Plan** (pre-existing) | PRESERVED | 1,076 | `Migration-Plan/MIGRATION_META_PLAN.md` |
 
-### Phase Documents (ALL COMPLETE)
+### Phase Documents (ALL COMPLETE + 3D UPDATED)
 | Document | Status | Lines | Location |
 |----------|--------|-------|----------|
-| **Phase 1: Foundation** | COMPLETE | 1,874 | `Migration-Plan/phases/PHASE_1_FOUNDATION.md` |
-| **Phase 2: Data Layer** | COMPLETE | 1,698 | `Migration-Plan/phases/PHASE_2_DATA_LAYER.md` |
-| **Phase 3: Entity Layer** | COMPLETE | 1,056 | `Migration-Plan/phases/PHASE_3_ENTITY_LAYER.md` |
-| **Phase 4: Game Systems** | COMPLETE | 1,352 | `Migration-Plan/phases/PHASE_4_GAME_SYSTEMS.md` |
-| **Phase 5: ML Classifiers** | COMPLETE | 1,112 | `Migration-Plan/phases/PHASE_5_ML_CLASSIFIERS.md` |
-| **Phase 6: Unity Integration** | COMPLETE | 904 | `Migration-Plan/phases/PHASE_6_UNITY_INTEGRATION.md` |
-| **Phase 7: Polish & LLM Stub** | COMPLETE | 1,014 | `Migration-Plan/phases/PHASE_7_POLISH_AND_LLM_STUB.md` |
+| **Phase 1: Foundation** | COMPLETE + 3D | ~1,920 | `Migration-Plan/phases/PHASE_1_FOUNDATION.md` |
+| **Phase 2: Data Layer** | COMPLETE + 3D | ~1,710 | `Migration-Plan/phases/PHASE_2_DATA_LAYER.md` |
+| **Phase 3: Entity Layer** | COMPLETE + 3D | ~1,090 | `Migration-Plan/phases/PHASE_3_ENTITY_LAYER.md` |
+| **Phase 4: Game Systems** | COMPLETE + 3D | ~1,430 | `Migration-Plan/phases/PHASE_4_GAME_SYSTEMS.md` |
+| **Phase 5: ML Classifiers** | COMPLETE | ~1,120 | `Migration-Plan/phases/PHASE_5_ML_CLASSIFIERS.md` |
+| **Phase 6: Unity Integration** | COMPLETE + 3D | ~960 | `Migration-Plan/phases/PHASE_6_UNITY_INTEGRATION.md` |
+| **Phase 7: Polish & LLM Stub** | COMPLETE + 3D | ~1,030 | `Migration-Plan/phases/PHASE_7_POLISH_AND_LLM_STUB.md` |
 
 ### Reference Documents
 | Document | Status | Lines | Location |
 |----------|--------|-------|----------|
-| **Unity Primer** | COMPLETE | ~460 | `Migration-Plan/reference/UNITY_PRIMER.md` |
-| **Python-to-C# Reference** | COMPLETE | 869 | `Migration-Plan/reference/PYTHON_TO_CSHARP.md` |
+| **Unity Primer** | COMPLETE + 3D | ~690 | `Migration-Plan/reference/UNITY_PRIMER.md` |
+| **Python-to-C# Reference** | COMPLETE + 3D | ~920 | `Migration-Plan/reference/PYTHON_TO_CSHARP.md` |
 
 ### Organizational
 | Document | Status | Location |
@@ -41,32 +42,64 @@
 | **Archive README** | COMPLETE | `archive/README.md` |
 | **Completion Status** | COMPLETE | `Migration-Plan/COMPLETION_STATUS.md` |
 
-**Total Documentation**: ~12,400+ lines across 17 documents
+**Total Documentation**: ~14,500+ lines across 18 documents
 
 ---
 
-## Session 2 Audit & Fixes (2026-02-11)
+## Session 3: 3D Readiness & Deeper Code Audit (2026-02-11)
 
-A comprehensive audit was performed against three requirements:
+### New Requirements Addressed
 
-### Requirement 1: Modularity
-**Gap found**: Cross-phase contracts (inputs/outputs) were not formally specified.
-**Fix**: Created `PHASE_CONTRACTS.md` with explicit RECEIVES/DELIVERS/INTEGRATION POINTS for every phase, including exact C# method signatures and verification code.
+1. **Find more code inefficiencies** — Especially item handling pipeline
+2. **3D migration considerations** — Architecture must be 3D-ready throughout
+3. **Update ALL documentation** — Every document now accounts for 3D
 
-### Requirement 2: Specificity with file paths, line numbers, and code elements
-**Assessment**: Already strong (8/10). Phase documents reference exact Python paths, line ranges, method names, and formulas. No changes needed.
+### Findings: Item Pipeline Overhaul (IMPROVEMENTS.md Part 5)
 
-### Requirement 3: Minimal post-migration development for novice Unity users
-**Gaps found**:
-- No Unity lifecycle explanation for developers new to Unity
-- No centralized error handling strategy
-- No unified naming/pattern conventions
-- Missing JSON-driven architecture emphasis
+**Problem**: Items lose type identity as they move through the system. Materials, equipment, consumables, and placeables share no common interface. Items are represented as dicts, string IDs, dataclasses, and mixed types depending on context. Type checks (`hasattr`, string comparisons) are scattered across 6+ files.
 
-**Fixes**:
-- Created `reference/UNITY_PRIMER.md` — Complete Unity crash course covering MonoBehaviour lifecycle, SerializeField, Canvas, Input System, Tilemap, Coroutines, Sentis, testing, and common mistakes
-- Created `CONVENTIONS.md` — Centralized naming conventions, singleton pattern, JSON loading pattern, error handling strategy, validation rules, testing conventions, file headers
-- Updated `MIGRATION_PLAN.md` Section 0 — Added "How to Use This Migration Plan", "JSON Drives the Game", "What the Migrator Does NOT Need to Build"
+**Solution**: `IGameItem` interface with concrete types (`MaterialItem`, `EquipmentItem`, `ConsumableItem`, `PlaceableItem`) and `ItemFactory` for centralized creation. See IMPROVEMENTS.md Part 5 for full C# code.
+
+### Findings: 3D Readiness Strategy (IMPROVEMENTS.md Part 6)
+
+**Problem**: All current code assumes 2D (positions are `(x, y)` tuples, distances are 2D Euclidean, AoE geometry is flat, pathfinding is grid-based). Migrating to Unity without 3D-ready architecture would require a second rewrite later.
+
+**Solution**:
+- `GamePosition` struct wrapping `Vector3` with horizontal and 3D distance methods
+- `TargetFinder` with configurable `DistanceMode` (Horizontal for 2D parity, Full3D for future)
+- `IPathfinder` interface with `GridPathfinder` (A* on tiles) and future `NavMeshPathfinder`
+- All constants centralized in `GameConfig` (ranges, tile sizes, height bounds)
+- Python `y` → Unity `z` mapping via `GamePosition.FromXZ(x, y)`
+
+### Findings: Additional Systemic Inefficiencies (IMPROVEMENTS.md Parts 7-8)
+
+| ID | Finding | Solution |
+|----|---------|----------|
+| **MACRO-8** | 5 crafting minigames share ~1,240 lines of duplicated code (grid init, timer, score, result generation) | `BaseCraftingMinigame` abstract class with template method pattern. Each discipline ~40% smaller. |
+| **FIX-10** | `game_engine.py` (10,098 lines) — god object with 20+ responsibilities | Explicit decomposition map: which lines go to which Unity component |
+| **FIX-11** | `recalculate_stats()` called on every equip/unequip/buff/level/class change, iterating all equipment+buffs each time | Dirty-flag caching with event-driven invalidation |
+| **FIX-12** | Custom A* pathfinding hardcoded to 2D tile grid | `IPathfinder` interface — `GridPathfinder` now, `NavMeshPathfinder` later |
+| **FIX-13** | Items created in 6+ different places with inconsistent logic | `ItemFactory` centralizes all item creation paths |
+
+### Documents Updated
+
+All 17 migration documents were updated with 3D considerations:
+
+| Document | Changes Made |
+|----------|-------------|
+| `IMPROVEMENTS.md` | Added Parts 5 (IGameItem hierarchy), 6 (3D readiness: MACRO-6, MACRO-7), 7 (MACRO-8, FIX-10 through FIX-13), 8 (updated schedule) |
+| `MIGRATION_PLAN.md` | Updated §0.3 (non-goals), added §6.11 (3D readiness strategy), added risks R13-R14, updated doc index |
+| `CONVENTIONS.md` | Added §12 (3D readiness conventions: position, distance, coordinate, height), §13 (item type hierarchy convention), updated changelog |
+| `PHASE_CONTRACTS.md` | Added GamePosition, IGameItem hierarchy to Phase 1 deliverables. Updated Phase 4 with 3D geometry and crafting base class |
+| `PHASE_1_FOUNDATION.md` | Added 3D Readiness section (GamePosition struct, IGameItem hierarchy) |
+| `PHASE_2_DATA_LAYER.md` | Added 3D readiness note (position deserialization with backward compat) |
+| `PHASE_3_ENTITY_LAYER.md` | Added 3D Readiness section (character positions, ItemStack types, stat caching) |
+| `PHASE_4_GAME_SYSTEMS.md` | Added §11 3D Readiness (TargetFinder geometry, IPathfinder, tile-to-world, crafting base class, effect dispatch) |
+| `PHASE_5_ML_CLASSIFIERS.md` | Confirmed no 3D impact |
+| `PHASE_6_UNITY_INTEGRATION.md` | Added 3D Readiness section (camera architecture, world rendering on XZ, entity rendering, particle effects, input system) |
+| `PHASE_7_POLISH_AND_LLM_STUB.md` | Added 3D readiness verification checklist for E2E testing |
+| `UNITY_PRIMER.md` | Added §13 (Unity coordinate system, GamePosition bridge, camera setup for 2D-in-3D, Tilemap on XZ) |
+| `PYTHON_TO_CSHARP.md` | Added Position mapping (`Python y` → `Unity z`), distance pattern, IGameItem pattern matching |
 
 ---
 
@@ -83,6 +116,12 @@ A comprehensive audit was performed against three requirements:
 | LLM system: interface + stub only | Reduces scope, API integration is separate concern | 2026-02-10 |
 | ML models: ONNX via Unity Sentis | Unity-native, no external deps, GPU acceleration | 2026-02-10 |
 | JSON files byte-identical in Unity | Backward compat, moddability, no schema changes | 2026-02-10 |
+| **IGameItem interface hierarchy** | Type-safe items replace dict-based approach; eliminates scattered type checks | 2026-02-11 |
+| **GamePosition wrapping Vector3** | 3D-ready positions cost nothing now, enable everything later | 2026-02-11 |
+| **TargetFinder with DistanceMode** | Centralized distance calculation toggleable between 2D and 3D | 2026-02-11 |
+| **IPathfinder interface** | Swap grid A* for NavMesh without changing game logic | 2026-02-11 |
+| **BaseCraftingMinigame base class** | Eliminates ~1,240 lines of duplicated code across 5 disciplines | 2026-02-11 |
+| **ItemFactory for all item creation** | Single entry point replaces 6 scattered creation sites | 2026-02-11 |
 
 ---
 
@@ -95,22 +134,23 @@ A comprehensive audit was performed against three requirements:
 4. **Generate golden files** from Python for ML validation (Phase 5 prerequisite)
 
 ### Migration Execution Order
-1. Phase 1: Foundation → Pure C# data models and enums
-2. Phase 2: Data Layer → Database singletons, JSON loading
-3. Phase 3: Entity Layer → Character, components, enemies
-4. Phase 4: Game Systems → Combat, crafting, world, tags, save/load
+1. Phase 1: Foundation → Pure C# data models, enums, GamePosition, IGameItem hierarchy
+2. Phase 2: Data Layer → Database singletons, JSON loading with 3D-compatible position parsing
+3. Phase 3: Entity Layer → Character, components, enemies (all using GamePosition)
+4. Phase 4: Game Systems → Combat (3D-ready geometry), crafting (base class), world, tags, save/load
 5. Phase 5: ML Classifiers → Can start after Phase 2 (parallel with 3-4)
-6. Phase 6: Unity Integration → MonoBehaviours, rendering, input, UI
-7. Phase 7: Polish & LLM Stub → Final integration and E2E testing
+6. Phase 6: Unity Integration → MonoBehaviours, XZ-plane rendering, camera, input
+7. Phase 7: Polish & LLM Stub → Final integration, E2E testing, 3D readiness verification
 
 ### Key Files to Read for Context
 1. `MIGRATION_PLAN.md` §0 — How to use this plan
-2. `CONVENTIONS.md` — All cross-phase rules
-3. `PHASE_CONTRACTS.md` — Your phase's inputs/outputs
-4. Your phase document — Detailed instructions
-5. `reference/UNITY_PRIMER.md` — If new to Unity
-6. `.claude/CLAUDE.md` — Python codebase developer guide
-7. `Game-1-modular/docs/GAME_MECHANICS_V6.md` — Master mechanics reference (5,089 lines)
+2. `CONVENTIONS.md` — All cross-phase rules (including 3D readiness §12, item hierarchy §13)
+3. `IMPROVEMENTS.md` — All architecture improvements (8 macro + 13 fixes)
+4. `PHASE_CONTRACTS.md` — Your phase's inputs/outputs
+5. Your phase document — Detailed instructions
+6. `reference/UNITY_PRIMER.md` — If new to Unity (including §13 3D readiness)
+7. `.claude/CLAUDE.md` — Python codebase developer guide
+8. `Game-1-modular/docs/GAME_MECHANICS_V6.md` — Master mechanics reference (5,089 lines)
 
 ---
 

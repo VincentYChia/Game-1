@@ -1011,4 +1011,14 @@ Phase 7 and the overall migration are complete when:
 9. Migration completion report is produced with all sections populated
 10. Architecture is verified ready for future LLM integration (interface swap, no structural changes needed)
 
-**This is the final phase. Upon completion, the Python-to-Unity migration is done.**
+### 3D Readiness Verification
+
+As part of E2E testing, verify these 3D readiness checks:
+- [ ] All entity positions serialize as `GamePosition` with X, Y, Z fields (Y=0 for flat world)
+- [ ] `TargetFinder.GetDistance()` is used for all combat range checks (no inline distance math)
+- [ ] `WorldSystem.TileToWorld()` is the only path from tile coords to world space
+- [ ] `IPathfinder` interface is used for all pathfinding (not direct A* calls)
+- [ ] Camera supports both orthographic and perspective mode toggle via config
+- [ ] Switching `TargetFinder.Mode` from `Horizontal` to `Full3D` doesn't crash any system
+
+**This is the final phase. Upon completion, the Python-to-Unity migration is done. The architecture is 3D-ready: upgrading to full 3D visuals is a content and rendering change, not a logic rewrite.**

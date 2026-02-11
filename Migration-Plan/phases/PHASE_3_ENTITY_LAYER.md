@@ -1051,6 +1051,30 @@ The following are explicitly excluded and belong to other phases:
 
 ---
 
-**Phase 3 Document Version**: 1.0
+## 3D Readiness (Phase 3 Responsibilities)
+
+### Character and Enemy Positions
+
+- `Character.Position` and `Enemy.Position` MUST be `GamePosition` (not `Vector2` or tuples)
+- All movement calculations use XZ plane initially: `character.Position = GamePosition.FromXZ(newX, newZ)`
+- Height field (`Y`) defaults to 0 but is stored, serialized, and loaded. Future flying enemies or elevated terrain will use it.
+- `Character.move()` and enemy pathfinding operate on XZ coordinates. Y is preserved but not modified during flat-world movement.
+
+### ItemStack Uses IGameItem
+
+- `ItemStack.Item` must be of type `IGameItem` (not a raw string ID or untyped dict)
+- The `Inventory` holds `ItemStack[]` where each stack wraps a typed item
+- Equipment operations use `stack.Item is EquipmentItem equip` pattern matching
+- Save/load uses `stack.Item.ToSaveData()` for serialization and `ItemFactory.FromSaveData()` for deserialization
+
+### Stat Caching with Events (FIX-11)
+
+- `CharacterStats` uses dirty-flag caching, invalidated via `GameEvents` (see IMPROVEMENTS.md FIX-11)
+- No per-frame stat recalculation — only recalculates when equipment, buffs, level, class, or title change
+
+---
+
+**Phase 3 Document Version**: 1.1
 **Created**: 2026-02-10
+**Updated**: 2026-02-11 (3D readiness, IGameItem, stat caching)
 **For**: AI assistants and developers performing Python-to-C# migration of Game-1

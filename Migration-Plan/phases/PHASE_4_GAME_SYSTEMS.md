@@ -1350,3 +1350,64 @@ All of the following must pass before Phase 4 is considered complete:
 ### 10.5 CombatManager Size
 **Risk**: 2,009 lines is too large for a single migration unit.
 **Mitigation**: Split into DamageCalculator, EnemySpawner, CombatManager before porting. Port and test DamageCalculator first (pure math, easy to verify).
+
+---
+
+## 11. 3D Readiness (Phase 4 Responsibilities)
+
+Phase 4 is where 3D readiness matters most — combat geometry, pathfinding, and world systems all currently assume 2D.
+
+### 11.1 Combat Geometry — TargetFinder
+
+All AoE geometry (circle, cone, beam, pierce, chain) must use the `TargetFinder` utility class with configurable `DistanceMode`:
+
+```csharp
+// TargetFinder.Mode = DistanceMode.Horizontal (default — matches Python 2D behavior)
+// TargetFinder.Mode = DistanceMode.Full3D (future — when vertical gameplay added)
+```
+
+Python's `effect_executor.py` AoE calculations (lines 89-190) port to `TargetFinder.FindInRadius()`, `FindInCone()`, `FindInBeam()`. These methods use `GetDistance()` which respects the mode toggle.
+
+**Test**: Same inputs must produce same targets in Horizontal mode as Python produces in 2D.
+
+### 11.2 Pathfinding — IPathfinder Interface
+
+`collision_system.py` (599 lines) uses A* on a 2D tile grid. Port as `GridPathfinder` implementing `IPathfinder`:
+
+```csharp
+public interface IPathfinder
+{
+    List<GamePosition> FindPath(GamePosition start, GamePosition end);
+    bool HasLineOfSight(GamePosition from, GamePosition to);
+    bool IsWalkable(GamePosition position);
+}
+```
+
+This enables swapping to `NavMeshPathfinder` later without changing any combat or AI code.
+
+### 11.3 World System — Tile-to-World Conversion
+
+Centralize all tile-to-world coordinate conversions:
+
+```csharp
+public class WorldSystem
+{
+    public Vector3 TileToWorld(int tileX, int tileZ)
+        => new Vector3(tileX * GameConfig.TileSize, GetHeight(tileX, tileZ), tileZ * GameConfig.TileSize);
+
+    // Returns 0 for flat world. Future: terrain heightmap lookup.
+    private float GetHeight(int tileX, int tileZ) => 0f;
+}
+```
+
+### 11.4 Crafting Base Class (MACRO-8)
+
+All 5 crafting minigames share ~1,240 lines of duplicated code. Port as:
+- `BaseCraftingMinigame` — abstract class with shared lifecycle (timer, state, completion, performance calculation)
+- Concrete classes (`SmithingMinigame`, `AlchemyMinigame`, etc.) implement only discipline-specific mechanics
+
+See `IMPROVEMENTS.md` MACRO-8 for full code.
+
+### 11.5 Effect Dispatch Table (MACRO-5)
+
+The 250-line if/elif chain in `skill_manager.py:315-567` becomes a `SkillEffectDispatcher` with pluggable handlers. See `IMPROVEMENTS.md` MACRO-5.

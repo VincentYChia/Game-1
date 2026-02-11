@@ -1695,4 +1695,8 @@ Phase 2 is complete when:
 9. Error handling is graceful: missing files produce warnings and fallback data, not crashes
 10. Code review confirms all 7 common pitfalls (Section 7) are addressed
 
+### 3D Readiness Note
+
+Phase 2 databases load position data from JSON (NPC locations, waypoints, resource nodes). When deserializing positions, use `GamePosition.FromJson(JObject)` which handles both 2D `{"x": N, "y": N}` and 3D `{"x": N, "y": N, "z": N}` formats — defaulting height to 0 if missing. This ensures JSON backward compatibility while being 3D-ready.
+
 **Next Phase**: Phase 3 (Tag System) depends on Phase 2 for database access to tag definitions, skill definitions, and equipment data.

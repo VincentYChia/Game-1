@@ -1868,7 +1868,41 @@ namespace Game1.Data.Models
 
 ---
 
+## 3D Readiness (Phase 1 Responsibilities)
+
+Phase 1 establishes the foundational types that ALL subsequent phases use for positions, distances, and item identity. Getting these right means 3D is a configuration change, not a rewrite.
+
+### GamePosition Struct (NEW — not in Python)
+
+Python uses `Position(x, y)`. C# must use a 3D-ready position:
+
+```csharp
+public struct GamePosition
+{
+    public float X { get; set; }  // East-West (maps to Python x)
+    public float Y { get; set; }  // Height (default 0, future: terrain elevation)
+    public float Z { get; set; }  // North-South (maps to Python y)
+
+    public float HorizontalDistanceTo(GamePosition other)
+        => Mathf.Sqrt((X - other.X) * (X - other.X) + (Z - other.Z) * (Z - other.Z));
+
+    public float DistanceTo(GamePosition other)
+        => Vector3.Distance(ToVector3(), other.ToVector3());
+
+    public Vector3 ToVector3() => new Vector3(X, Y, Z);
+    public static GamePosition FromXZ(float x, float z) => new() { X = x, Y = 0, Z = z };
+}
+```
+
+**CRITICAL**: Python's `y` maps to Unity's `z` (north-south). `FromXZ()` ensures Python `(x, y)` becomes `(x, 0, y)` in Unity.
+
+### IGameItem Interface + Type Hierarchy (NEW — see IMPROVEMENTS.md Part 5)
+
+Phase 1 defines `IGameItem` interface and concrete types (`MaterialItem`, `EquipmentItem`, `ConsumableItem`, `PlaceableItem`, `ItemFactory`). Replaces dict-based items with type-safe polymorphism.
+
+---
+
 **End of Phase 1 Foundation Plan**
-**Document version**: 1.0
+**Document version**: 1.1
 **Created**: 2026-02-10
-**Total lines in this document**: ~700
+**Updated**: 2026-02-11 (3D readiness, IGameItem hierarchy)

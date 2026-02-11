@@ -1109,4 +1109,8 @@ Phase 5 is complete when:
 9. Code review confirms no hardcoded constants deviate from Python source
 10. Integration smoke test: crafting UI triggers validation and displays correct result
 
+### 3D Readiness Note
+
+Phase 5 (ML Classifiers) has **NO 3D impact**. ML preprocessing generates images from crafting grid layouts and extracts features from material properties — these are about item composition, not world positions. No changes needed for 3D readiness.
+
 **Next Phase**: Phase 5 feeds into the crafting UI integration phase, where the ClassifierManager is wired into the interactive crafting screens to validate player-invented recipes before LLM generation.

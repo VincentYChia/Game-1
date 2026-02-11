@@ -612,7 +612,89 @@ slots[EquipmentSlot.MainHand] = item;
 
 ---
 
-## 12. Changelog (Living Document Updates)
+## 12. 3D Readiness Conventions
+
+All code MUST follow these rules to ensure the architecture supports future 3D upgrades without logic rewrites.
+
+### 12.1 Position Convention
+
+```csharp
+// ALWAYS use GamePosition or Vector3. NEVER use (float, float) tuples.
+// WRONG:
+float distance = Mathf.Sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+
+// RIGHT:
+float distance = TargetFinder.GetDistance(posA, posB);
+```
+
+### 12.2 Distance Convention
+
+```csharp
+// ALWAYS use TargetFinder.GetDistance(). It respects the current distance mode.
+// For initial 2D migration, this uses HorizontalDistanceTo() (XZ plane).
+// When 3D is enabled, it switches to full Vector3.Distance().
+
+// WRONG: Inline distance calculation
+if (Vector3.Distance(a, b) < 5f) { ... }
+
+// RIGHT: Centralized distance
+if (TargetFinder.GetDistance(a, b) < GameConfig.MeleeRange) { ... }
+```
+
+### 12.3 World Coordinate Convention
+
+```csharp
+// Tile coordinates → world coordinates conversion ALWAYS goes through WorldSystem
+// WRONG: Manual conversion
+Vector3 worldPos = new Vector3(tileX * 32, 0, tileY * 32);
+
+// RIGHT: Centralized conversion
+Vector3 worldPos = WorldSystem.Instance.TileToWorld(tileX, tileY);
+```
+
+### 12.4 Height Default
+
+All positions default to `Y = 0` (ground level). Height is only set when explicitly needed (flying enemies, terrain elevation, dungeon floors). Never assume `Y == 0` — always use `GamePosition.HorizontalDistanceTo()` when height should be ignored.
+
+---
+
+## 13. Item Type Hierarchy Convention [MACRO — Part 5]
+
+### 13.1 All Items Implement IGameItem
+
+Every item type (materials, equipment, consumables, placeables) implements `IGameItem`. This provides:
+- Unified serialization (`ToSaveData()` / `FromSaveData()`)
+- Type-safe inventory operations
+- Single `Rarity` source of truth
+- Polymorphic behavior without `hasattr` / `isinstance` checks
+
+### 13.2 Item Creation Goes Through ItemFactory
+
+```csharp
+// WRONG: Direct constructor with database lookup side effects
+var stack = new ItemStack("iron_sword", 1); // calls EquipmentDatabase in constructor
+
+// RIGHT: Factory method
+var item = ItemFactory.CreateFromId("iron_sword");
+var stack = new ItemStack(item, 1);
+```
+
+### 13.3 Type Checking Uses Pattern Matching
+
+```csharp
+// WRONG: String-based type checks
+if (item.Category == "equipment") { ... }
+
+// RIGHT: C# pattern matching
+if (stack.Item is EquipmentItem equip)
+{
+    float effectiveness = equip.GetEffectiveness();
+}
+```
+
+---
+
+## 14. Changelog (Living Document Updates)
 
 Record every convention addition or change here with date and phase.
 
@@ -622,4 +704,6 @@ Record every convention addition or change here with date and phase.
 | 2026-02-11 | Planning | Added §0 Improvement Philosophy | Define improve-vs-port boundaries |
 | 2026-02-11 | Planning | Added §11 Architecture Improvement Patterns | Document reusable patterns from IMPROVEMENTS.md |
 | 2026-02-11 | Planning | Added §12 Changelog | Make this a living document |
+| 2026-02-11 | Planning | Added §12 3D Readiness Conventions | Ensure architecture supports future 3D upgrades |
+| 2026-02-11 | Planning | Added §13 Item Type Hierarchy Convention | IGameItem interface, ItemFactory, pattern matching |
 | | | *(Add entries as migration progresses)* | |

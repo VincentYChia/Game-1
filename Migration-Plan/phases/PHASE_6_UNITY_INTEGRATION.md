@@ -901,4 +901,54 @@ Phase 6 is complete when:
 11. All debug toggles (F1-F7) function correctly
 12. All Phase 6 quality gate items checked off
 
-**Next Phase**: Phase 6 produces a fully playable Unity build matching the Python/Pygame version's functionality. Subsequent phases cover audio integration, performance optimization, 3D visual upgrades, and platform-specific builds.
+---
+
+## 3D Readiness (Phase 6 Responsibilities)
+
+Phase 6 is where 2D visuals are rendered in Unity — but the rendering layer MUST be structured to support future 3D upgrades.
+
+### Camera Architecture
+
+```csharp
+public class CameraController : MonoBehaviour
+{
+    [SerializeField] private bool _orthographic = true; // Start 2D, toggle for 3D
+    [SerializeField] private float _orthographicSize = 8f;
+    [SerializeField] private float _perspectiveFOV = 60f;
+
+    private void Start()
+    {
+        Camera.main.orthographic = _orthographic;
+        if (_orthographic)
+            Camera.main.orthographicSize = _orthographicSize;
+        else
+            Camera.main.fieldOfView = _perspectiveFOV;
+    }
+}
+```
+
+### World Rendering
+
+- Use `Tilemap` on the XZ plane (rotated 90 degrees from Unity's default XY Tilemap)
+- OR: Use a custom mesh renderer that places tiles as quads on the XZ plane
+- Either approach supports future swap to 3D terrain (heightmap, voxels, etc.)
+- All tile positions go through `WorldSystem.TileToWorld()` — never hardcoded pixel offsets
+
+### Entity Rendering
+
+- Player, enemies, and objects are `GameObjects` at `Vector3` positions
+- SpriteRenderers face the camera (billboard if needed)
+- Positions come from `GamePosition.ToVector3()` — already 3D-ready
+- Future: swap SpriteRenderer for MeshRenderer + 3D models
+
+### Particle Effects
+
+- Use Unity Particle System instead of Python pixel-based particles
+- Particles work identically in 2D and 3D — no changes needed later
+
+### Input System
+
+- Use Unity Input System with action maps (not legacy `Input.GetKey()`)
+- Mouse raycasting uses `Camera.ScreenToWorldPoint()` — works in both ortho and perspective
+
+**Next Phase**: Phase 6 produces a fully playable Unity build matching the Python/Pygame version's functionality. The 3D-ready architecture means subsequent phases can upgrade visuals to 3D models, terrain, and perspective camera by changing content and config — not logic.

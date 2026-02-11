@@ -63,7 +63,7 @@ The migrator does NOT need to:
 - Create art assets (icons are reused)
 - Balance the game (formulas are preserved exactly)
 - Implement the LLM system (stub only)
-- Build 3D graphics (2D Tilemap for now, 3D comes later)
+- Build full 3D graphics (architecture is 3D-ready, visuals start 2D, see §6.12)
 
 ### 0.4 Document Map
 
@@ -119,7 +119,7 @@ rendering, better performance, platform portability, and industry-standard tooli
 | Non-Goal | Rationale |
 |----------|-----------|
 | Full LLM integration | Stub interface only. The Claude API integration will be verified architecturally but not reimplemented. Real LLM calls are deferred to a future phase. |
-| 3D rendering | The architecture will be 3D-ready, but visual assets and full 3D rendering are out of scope. The migration focuses on logic parity, not visual fidelity. |
+| Full 3D visuals | The architecture is 3D-ready (Vector3 positions, 3D-aware geometry, NavMesh-ready pathfinding). Initial visuals use 2D sprites on XZ plane. Full 3D models, terrain, and lighting are out of scope. See §6.12 for 3D readiness strategy. |
 | Multiplayer | Single-player focus. No networking, no shared state, no server architecture. |
 | Platform-specific optimizations | Desktop-first. Mobile, console, and web builds are future work. |
 | Content expansion | No new items, skills, enemies, or mechanics. The migration ports what exists. |
@@ -764,7 +764,38 @@ Final Value = Base
     * (1 + Class Affinity)
 ```
 
-### 6.11 ML Preprocessing Constants
+### 6.11 3D Readiness Strategy
+
+This migration targets Unity — a 3D engine. While initial visuals remain 2D (sprites on XZ plane), **all code architecture must be 3D-ready** so that upgrading to 3D visuals is a content/rendering change, not a logic rewrite.
+
+**Mandatory 3D-Ready Patterns** (see `IMPROVEMENTS.md` Parts 6-7 for code):
+
+| System | 2D (Initial) | 3D-Ready Architecture |
+|--------|-------------|----------------------|
+| Positions | `Vector3(x, 0, z)` — Y always 0 | `GamePosition` struct wrapping `Vector3`, with `HorizontalDistanceTo()` and `DistanceTo()` |
+| Combat ranges | XZ-plane distance | `TargetFinder.GetDistance()` — toggleable between horizontal and full 3D |
+| AoE geometry | Circles, cones, beams on XZ plane | Shape classes that work in both 2D and 3D modes |
+| Pathfinding | A* on tile grid | `IPathfinder` interface — `GridPathfinder` now, `NavMeshPathfinder` later |
+| World | Flat 100x100 tiles | Tile-to-world conversion centralized in `WorldSystem` — swap to 3D terrain later |
+| Camera | Orthographic top-down | `CameraController` supports both orthographic and perspective |
+| Collision | 2D rectangular | Unity `Physics` or `Physics2D` — abstracted behind interface |
+
+**Key Constants** (in `GameConfig`):
+```
+DefaultHeight = 0f
+MaxHeight = 50f  (for future terrain elevation)
+TileSize = 1.0f  (Unity world units per tile)
+UseVerticalDistance = false  (toggle for 3D combat)
+```
+
+**Rules**:
+1. **Never use raw `(x, y)` tuples** — always `GamePosition` or `Vector3`
+2. **Never calculate distance inline** — always use `TargetFinder.GetDistance()`
+3. **Never hardcode 2D assumptions in game logic** — use configurable distance mode
+4. **Tile-to-world conversion** must go through one centralized method
+5. **Camera, pathfinding, collision** all behind interfaces for future swapping
+
+### 6.12 ML Preprocessing Constants (MUST MATCH PYTHON EXACTLY)
 
 **CNN Color Encoding (HSV)**:
 
@@ -961,6 +992,8 @@ attributes. This means:
 |----|------|-----------|--------|------------|
 | R11 | **Asset pipeline** issues with 3,749 files | Low | Low | Batch import scripts. Verify atlas/sprite sheet generation. Automated checks for missing references. |
 | R12 | **Third-party package** compatibility issues | Low | Low | Pin all Unity package versions. Test on target Unity LTS version. Document all package dependencies. |
+| R13 | **3D readiness adds complexity** — over-engineering for future features | Medium | Low | 3D-ready patterns (Vector3, GamePosition, IPathfinder) cost minimal extra code. The DistanceMode toggle and interface abstractions are lightweight. Do NOT implement 3D features — just structure code to not block them. |
+| R14 | **Item type hierarchy** introduces breaking changes vs Python save format | Low | Medium | `IGameItem.ToSaveData()` preserves JSON-compatible output. `ItemFactory.FromSaveData()` handles both legacy dict format and typed format. Category field enables forward migration. |
 
 ---
 
@@ -972,7 +1005,7 @@ attributes. This means:
 |----------|----------|--------|---------|
 | **MIGRATION_PLAN.md** | `Migration-Plan/MIGRATION_PLAN.md` | **Active** | This file — master overview |
 | **CONVENTIONS.md** | `Migration-Plan/CONVENTIONS.md` | **Living** | Cross-phase rules, naming, patterns, improvement guidelines. GROWS during migration. |
-| **IMPROVEMENTS.md** | `Migration-Plan/IMPROVEMENTS.md` | **Complete** | 5 macro architecture changes + 9 per-file fixes with code examples |
+| **IMPROVEMENTS.md** | `Migration-Plan/IMPROVEMENTS.md` | **Living** | 8 macro architecture changes + 13 per-file fixes + item hierarchy + 3D readiness strategy |
 | **PHASE_CONTRACTS.md** | `Migration-Plan/PHASE_CONTRACTS.md` | **Complete** | Inputs/outputs per phase — what you receive and deliver |
 | **MIGRATION_META_PLAN.md** | `Migration-Plan/MIGRATION_META_PLAN.md` | **Complete** | Planning methodology, validation strategy |
 

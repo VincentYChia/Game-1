@@ -28,6 +28,7 @@
 | `dict` | `Dictionary<TKey, TValue>` | `System.Collections.Generic.Dictionary<TKey, TValue>`. |
 | `set` | `HashSet<T>` | `System.Collections.Generic.HashSet<T>`. |
 | `tuple` | `(T1, T2)` or `Vector2Int` | C# value tuples for general use. `Vector2Int` for grid coordinates in Unity. |
+| `Position(x, y)` | `GamePosition` | **IMPORTANT**: Python `y` = Unity `z`. Use `GamePosition.FromXZ(x, y)`. Y (height) defaults to 0. See Phase 1 / IMPROVEMENTS.md Part 6. |
 | `frozenset` | `ImmutableHashSet<T>` | Requires `System.Collections.Immutable`. Rarely needed. |
 | `deque` | `Queue<T>` or `LinkedList<T>` | `Queue<T>` for FIFO. `LinkedList<T>` for both ends. |
 
@@ -866,4 +867,36 @@ public static T WeightedChoice<T>(List<T> items, List<float> weights, System.Ran
 // C#:
 float clamped = Mathf.Clamp(x, minVal, maxVal);
 int clampedInt = Mathf.Clamp(intVal, minVal, maxVal);
+```
+
+### Position & Distance Pattern (3D-Ready)
+
+```csharp
+// Python: distance = math.sqrt((x2-x1)**2 + (y2-y1)**2)
+// C# (WRONG — hardcodes 2D):
+float dist = Mathf.Sqrt((x2-x1)*(x2-x1) + (z2-z1)*(z2-z1));
+
+// C# (RIGHT — uses centralized distance, 3D-ready):
+float dist = TargetFinder.GetDistance(posA, posB);
+// In Horizontal mode: XZ-plane distance (matches Python)
+// In Full3D mode: Vector3.Distance (future)
+
+// Python: Position(x, y)
+// C#:
+var pos = GamePosition.FromXZ(x, y); // Python y → Unity z, height = 0
+```
+
+### Item Type Pattern (IGameItem)
+
+```csharp
+// Python: if hasattr(item, 'equipment_data') and item.equipment_data is not None:
+// C# (WRONG — string-based type checking):
+if (stack.Category == "equipment") { ... }
+
+// C# (RIGHT — pattern matching):
+if (stack.Item is EquipmentItem equip)
+{
+    float effectiveness = equip.GetEffectiveness();
+    // equip.Slot, equip.Enchantments, etc.
+}
 ```
