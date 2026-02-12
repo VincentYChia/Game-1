@@ -446,5 +446,16 @@ namespace Game1.Data.Models
 
             return requirements;
         }
+
+        /// <summary>
+        /// JObject overload for Phase 2 database loading.
+        /// Converts JObject to Dictionary for the main method.
+        /// </summary>
+        public static UnlockRequirements CreateRequirementsFromJson(Newtonsoft.Json.Linq.JObject jsonObj)
+        {
+            if (jsonObj == null) return new UnlockRequirements();
+            var dict = jsonObj.ToObject<Dictionary<string, object>>() ?? new Dictionary<string, object>();
+            return CreateRequirementsFromJson(dict);
+        }
     }
 }
