@@ -41,8 +41,7 @@ namespace Game1.Systems.Save
 
         private void EnsureSaveDirectory()
         {
-            if (!Directory.Exists(GamePaths.SaveDirectory))
-                Directory.CreateDirectory(GamePaths.SaveDirectory);
+            GamePaths.EnsureSaveDirectory();
         }
 
         // ====================================================================
@@ -298,10 +297,11 @@ namespace Game1.Systems.Save
         {
             var saveFiles = new List<Dictionary<string, object>>();
 
-            if (!Directory.Exists(GamePaths.SaveDirectory))
+            string saveDir = GamePaths.GetSavePath();
+            if (!Directory.Exists(saveDir))
                 return saveFiles;
 
-            foreach (var filepath in Directory.GetFiles(GamePaths.SaveDirectory, "*.json"))
+            foreach (var filepath in Directory.GetFiles(saveDir, "*.json"))
             {
                 try
                 {
@@ -371,7 +371,7 @@ namespace Game1.Systems.Save
 
         private string GetSavePath(string filename)
         {
-            return Path.Combine(GamePaths.SaveDirectory, filename);
+            return Path.Combine(GamePaths.GetSavePath(), filename);
         }
     }
 }

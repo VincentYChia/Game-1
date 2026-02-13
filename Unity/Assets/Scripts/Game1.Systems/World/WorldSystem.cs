@@ -582,7 +582,7 @@ namespace Game1.Systems.World
         public void SetChunkSaveDirectory(string saveName)
         {
             string baseName = Path.GetFileNameWithoutExtension(saveName);
-            _chunkSaveDir = Path.Combine(GamePaths.SaveDirectory, $"{baseName}_chunks");
+            _chunkSaveDir = Path.Combine(GamePaths.GetSavePath(), $"{baseName}_chunks");
             Directory.CreateDirectory(_chunkSaveDir);
         }
 
@@ -590,7 +590,7 @@ namespace Game1.Systems.World
         {
             if (string.IsNullOrEmpty(_chunkSaveDir))
             {
-                _chunkSaveDir = Path.Combine(GamePaths.SaveDirectory, "chunks");
+                _chunkSaveDir = Path.Combine(GamePaths.GetSavePath(), "chunks");
                 Directory.CreateDirectory(_chunkSaveDir);
             }
             return Path.Combine(_chunkSaveDir, $"chunk_{cx}_{cy}.json");
