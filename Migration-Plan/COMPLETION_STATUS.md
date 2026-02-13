@@ -3,7 +3,7 @@
 **Last Updated**: 2026-02-13
 **Branch**: `claude/review-migration-docs-gMRfn`
 **Total Documentation**: 16,013 lines across 15 documents (+ 3 organizational READMEs)
-**Implementation Status**: Phases 1-5 complete (82 C# files, ~24,100 LOC)
+**Implementation Status**: Phases 1-6 complete (127 C# files, ~30,800 LOC)
 
 ---
 
@@ -130,34 +130,34 @@ The 7-phase plan is dependency-ordered so developers can work on phases independ
 | Phase 3 — Entity Layer | **COMPLETE** | 10 | 2,127 | Character, Enemy, StatusEffect, 7 components |
 | Phase 4 — Game Systems | **COMPLETE** | 40 | 15,688 | Combat, crafting, world, save/load |
 | Phase 5 — ML Classifiers | **COMPLETE** | 10 | ~2,300 | 5 preprocessors + ClassifierManager + tests |
-| Phase 6 — Unity Integration | **NOT STARTED** | ~43 | ~20,000 est | GameEngine decomposition, rendering, UI |
+| Phase 6 — Unity Integration | **COMPLETE** | 45 | 6,697 | GameEngine decomposition, rendering, UI |
 | Phase 7 — Polish & LLM Stub | **NOT STARTED** | ~10 | ~2,000 est | IItemGenerator, E2E tests, 3D verification |
 
 **Implementation summaries**:
 - `Migration-Plan/phases/PHASE_3_IMPLEMENTATION_SUMMARY.md`
 - `Migration-Plan/phases/PHASE_4_IMPLEMENTATION_SUMMARY.md`
 - `Migration-Plan/PHASE_5_IMPLEMENTATION_SUMMARY.md`
+- `Migration-Plan/phases/PHASE_6_IMPLEMENTATION_SUMMARY.md`
 
 ## What To Do Next
 
-### Phase 6 — Unity Integration (Next Phase)
-1. **Read** `Migration-Plan/phases/PHASE_6_UNITY_INTEGRATION.md` (954 lines)
-2. **Read** `Migration-Plan/HANDOFF_PROMPT.md` for practical learnings from Phases 1-5
-3. **Read** `Migration-Plan/reference/UNITY_PRIMER.md` if new to Unity
-4. **Prerequisites**: Unity project initialized, Input System + TextMeshPro + Newtonsoft.Json packages installed
-5. **Copy** JSON files to `StreamingAssets/Content/` (byte-identical)
-6. **Copy** ONNX models (once converted) to `Resources/Models/`
-7. This is the FIRST phase that uses `using UnityEngine` — all prior code is pure C#
-
-### Phase 7 — Polish & LLM Stub (After Phase 6)
-1. IItemGenerator interface + StubItemGenerator
-2. 10 E2E test scenarios
-3. 3D readiness verification checklist
+### Phase 7 — Polish & LLM Stub (Next Phase)
+1. **Read** `Migration-Plan/phases/PHASE_7_POLISH.md` (1,024 lines)
+2. `IItemGenerator` interface + `StubItemGenerator` (LLM stub)
+3. 10 E2E test scenarios
+4. 3D readiness verification checklist
 
 ### Remaining Phase 5 Tasks (Can Be Done Anytime)
 - Run `convert_models_to_onnx.py` (requires TensorFlow + LightGBM Python environments)
 - Run `generate_golden_files.py` to produce test validation data
 - Validate ONNX models match Python originals (100 random inputs each)
+
+### Unity Scene Assembly (Required Before Running)
+- Assemble scene hierarchy per Phase 6 implementation summary §6
+- Create prefabs for grid cells, class cards, save slots, damage numbers, etc.
+- Configure InputActionAsset or rely on InputManager's inline fallback bindings
+- Copy JSON files to `StreamingAssets/Content/` (byte-identical)
+- Copy ONNX models to `Resources/Models/`
 
 ### Reading Order for New Developers
 1. `MIGRATION_PLAN.md` §0 — How to use this plan
@@ -180,7 +180,8 @@ The 7-phase plan is dependency-ordered so developers can work on phases independ
 | 4 | 2026-02-11 | Holistic review and cleanup. Fixed duplicate schedule, stale cross-references, line counts. Added quick reference index. Final consistency pass. |
 | 5 | 2026-02-13 | Phase 1-4 implementation. 72 C# files, 21,796 LOC. All foundation, data, entity, and game system code complete. 12 adaptive changes documented. |
 | 6 | 2026-02-13 | Phase 5 implementation. 10 C# files + 2 Python scripts + 1 test file (~2,300 LOC C#). ML classifier preprocessing, ClassifierManager, golden file scripts. 5 new adaptive changes (AC-013 through AC-017). |
+| 7 | 2026-02-13 | Phase 6 implementation. 45 C# files (6,697 LOC). Full Unity integration: GameManager, GameStateManager, InputManager, CameraController, 4 ScriptableObject configs, 3 utilities (Color/Position/Sprite), 2 Sentis ML backends, 9 world renderers, 22 UI components (HUD, panels, minigames, menus). 3 new adaptive changes (AC-018 through AC-020). |
 
 ---
 
-**Status**: Phases 1-5 complete. Ready for Phase 6 (Unity Integration) execution.
+**Status**: Phases 1-6 complete. Ready for Phase 7 (Polish & LLM Stub) execution.

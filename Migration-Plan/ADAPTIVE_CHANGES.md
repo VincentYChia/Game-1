@@ -124,6 +124,40 @@
 
 ---
 
+## Phase 6 — Unity Integration (2026-02-13)
+
+### AC-018: InputManager Inline Fallback Bindings
+**Phase**: 6
+**Change**: InputManager creates inline `InputAction` bindings as fallback when no `InputActionAsset` is assigned via Inspector — enables runtime testing without a pre-configured Unity asset.
+**Rationale**: InputActionAssets are binary Unity Editor assets that cannot be created from code. Inline bindings provide a working default for all keybindings (WASD, E, Tab, M, J, C, K, 1-5, F1-F7).
+**Impact**: When a proper InputActionAsset is assigned, it takes priority. The fallback is functionally equivalent.
+
+### AC-019: MinigameUI Abstract MonoBehaviour Base (Separate from Phase 4 Base)
+**Phase**: 6
+**Change**: Phase 6 minigame UIs use their own abstract `MinigameUI : MonoBehaviour` base class rather than directly wrapping Phase 4's `BaseCraftingMinigame`. Phase 4's base handles game logic (difficulty, performance, rewards); Phase 6's base handles Unity rendering (timer UI, result display, canvas management, quality tier text).
+**Rationale**: Phase 4's BaseCraftingMinigame is pure C# with no Unity dependencies. Phase 6 needs MonoBehaviour lifecycle, SerializeField bindings, and UI rendering — a different abstraction layer.
+**Impact**: Each minigame has two layers: Phase 4 (game logic) and Phase 6 (rendering). Phase 6 minigame UIs call into Phase 4 logic for performance scoring and reward calculation.
+
+### AC-020: ScriptableObject Configs for Visual Settings Only
+**Phase**: 6
+**Change**: Four ScriptableObject configurations created (`GameConfigAsset`, `CraftingConfigAsset`, `CombatConfigAsset`, `RenderingConfigAsset`) that store only visual/display settings (camera speed, damage number colors, tile colors, UI animation durations). No game balance values.
+**Rationale**: Game balance (damage formulas, EXP curves, stat multipliers) must stay in Phase 1's `GameConfig` static class to preserve mechanical fidelity. ScriptableObjects are for Unity Inspector-tunable display settings only.
+**Impact**: Artists/designers can adjust visual settings without touching game logic code.
+
+---
+
+## Convention Additions Discovered During Phase 6
+
+| Date | Convention | Detail |
+|------|-----------|--------|
+| 2026-02-13 | Canvas sort order | HUD=0, Panels=10, Minigames=20, Overlay=30 |
+| 2026-02-13 | Tooltip deferred rendering | TooltipRenderer renders in LateUpdate on Canvas sort order 100, fixing Python z-order bug |
+| 2026-02-13 | DamageNumber pool size | 30 pre-instantiated objects, recycled via activation/deactivation |
+| 2026-02-13 | Camera orientation | Orthographic top-down, Quaternion.Euler(90, 0, 0), XZ plane |
+| 2026-02-13 | Day/night cycle | Dawn=0.20, Day=0.30, Dusk=0.75, Night=0.85 (as fraction of cycle) |
+
+---
+
 ## Convention Additions Discovered During Phase 5
 
 | Date | Convention | Detail |
@@ -150,11 +184,12 @@
 
 | Metric | Value |
 |--------|-------|
-| Total C# files created | 82 |
-| Total lines of C# | ~24,100 |
+| Total C# files created | 127 |
+| Total lines of C# | ~30,800 |
+| Phase 6 Unity Integration files | 45 |
 | Phase 5 Classifier files | 10 |
 | Phase 4 Game System files | 40 |
 | Foundation prerequisite files | 32 |
-| Adaptive changes documented | 17 |
+| Adaptive changes documented | 20 |
 | Architecture improvements applied | 6 (MACRO-1,3,6; FIX-4; dispatch table; IPathfinder) |
 | Phase 5 test cases | 24 |
