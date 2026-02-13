@@ -90,6 +90,51 @@
 
 ---
 
+## Phase 5 — ML Classifiers (2026-02-13)
+
+### AC-013: Pure C# HSV-to-RGB Instead of Unity's Color.HSVToRGB
+**Phase**: 5
+**Change**: Implemented Python's `colorsys.hsv_to_rgb` algorithm directly in C# (`MaterialColorEncoder.HsvToRgb()`) rather than using Unity's `Color.HSVToRGB()`.
+**Rationale**: AC-002 (pure C# throughout Phases 1-5) prohibits UnityEngine imports. Additionally, Unity's HSV implementation may have normalization differences that would break pixel-perfect matching with the Python training pipeline.
+**Impact**: Phase 6 should NOT replace this with Unity's built-in — the training data was generated with Python's algorithm, so any HSV divergence would silently degrade classifier accuracy.
+
+### AC-014: IModelBackend Abstraction Instead of Direct Sentis Dependency
+**Phase**: 5
+**Change**: ClassifierManager defines `IModelBackend` and `IModelBackendFactory` interfaces rather than importing Unity Sentis directly. Phase 6 provides the concrete implementation.
+**Rationale**: Keeps Phase 5 as pure C# per AC-002. Also enables unit testing with mock backends and fallback to placeholder predictions when Sentis is unavailable.
+**Impact**: Phase 6 must implement `IModelBackendFactory` that creates Sentis-backed `IModelBackend` instances. The factory is passed to `ClassifierManager.Instance.Initialize(factory)`.
+
+### AC-015: Typed Validation Methods Instead of Single Generic Validate()
+**Phase**: 5
+**Change**: Python's single `validate(discipline, interactive_ui)` with dynamic duck typing replaced by 5 typed methods: `ValidateSmithing(grid, size)`, `ValidateAdornments(vertices, shapes)`, `ValidateAlchemy(slots, tier)`, `ValidateRefining(core, surrounding, tier)`, `ValidateEngineering(slotsDict, tier)`.
+**Rationale**: C# is statically typed — each discipline has fundamentally different input data structures. Typed methods provide compile-time safety, IDE autocomplete, and clearer API documentation.
+**Impact**: Phase 6 UI components call the specific typed method for their discipline rather than a generic validate call.
+
+### AC-016: Flat Float Arrays for Tensor Data
+**Phase**: 5
+**Change**: All preprocessor output uses flat `float[]` in row-major, channel-last layout (e.g., `float[3888]` for 36×36×3) rather than multidimensional arrays or custom tensor types.
+**Rationale**: Matches ONNX tensor layout expected by Sentis. Avoids array-of-arrays overhead and simplifies index arithmetic.
+**Impact**: Phase 6 Sentis backend can feed `float[]` directly to model input tensors without reshaping.
+
+### AC-017: Math Helpers Shared Across Feature Extractors
+**Phase**: 5
+**Change**: `Mean()`, `Max()`, and `PopulationStdDev()` implemented as `internal static` methods in `AlchemyFeatureExtractor` and reused by `RefiningFeatureExtractor` and `EngineeringFeatureExtractor`, rather than creating a separate shared utility class.
+**Rationale**: Only 3 methods needed, all within the same namespace. A separate utility file would be over-engineering for this scope.
+**Impact**: If future phases need these math utilities elsewhere, consider extracting to a shared `MathHelpers` class.
+
+---
+
+## Convention Additions Discovered During Phase 5
+
+| Date | Convention | Detail |
+|------|-----------|--------|
+| 2026-02-13 | Population std dev | All standard deviation calculations use ÷N (population), not ÷(N-1) (sample), matching numpy.std default |
+| 2026-02-13 | Tensor layout | Flat float[] in row-major, channel-last order for all ML preprocessing output |
+| 2026-02-13 | Feature order is sacred | LightGBM feature indices MUST match Python training order exactly — models silently fail otherwise |
+| 2026-02-13 | Classifier threshold | Default 0.5f for all disciplines, configurable via ClassifierManager.UpdateConfig() |
+
+---
+
 ## Convention Additions Discovered During Phase 4
 
 | Date | Convention | Detail |
@@ -105,9 +150,11 @@
 
 | Metric | Value |
 |--------|-------|
-| Total C# files created | 72 |
-| Total lines of C# | 21,796 |
+| Total C# files created | 82 |
+| Total lines of C# | ~24,100 |
+| Phase 5 Classifier files | 10 |
 | Phase 4 Game System files | 40 |
 | Foundation prerequisite files | 32 |
-| Adaptive changes documented | 12 |
+| Adaptive changes documented | 17 |
 | Architecture improvements applied | 6 (MACRO-1,3,6; FIX-4; dispatch table; IPathfinder) |
+| Phase 5 test cases | 24 |

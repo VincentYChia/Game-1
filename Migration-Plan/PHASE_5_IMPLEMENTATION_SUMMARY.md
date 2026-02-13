@@ -2,7 +2,8 @@
 
 **Date**: 2026-02-13
 **Source**: `Game-1-modular/systems/crafting_classifier.py` (1,419 lines)
-**Output**: 10 C# files + 2 Python scripts + 1 test file (~2,100 lines C#)
+**Output**: 10 C# files + 2 Python scripts + 1 test file (~2,300 lines C#)
+**Adaptive Changes**: AC-013 through AC-017 (5 new entries)
 
 ---
 
@@ -166,4 +167,110 @@ Unity/Assets/Scripts/Game1.Systems/Classifiers/
 
 Unity/Assets/Tests/EditMode/Classifiers/
 └── ClassifierPreprocessorTests.cs
+```
+
+---
+
+## Lessons Learned
+
+### 1. Python's colorsys Has No Direct C# Equivalent
+The migration plan correctly identified this risk. Python's `colorsys.hsv_to_rgb` and Unity's `Color.HSVToRGB` produce subtly different results due to normalization approach (Python uses 0.0-1.0 for all channels; Unity may have edge-case differences in the hsv-sector calculation). Since the ML models were trained with Python's exact algorithm, the C# port must replicate it bit-for-bit. This was confirmed by implementing the full HSV algorithm manually and verifying against known Python outputs.
+
+**Takeaway for Phase 6**: Do NOT "simplify" by swapping in Unity's built-in. The custom implementation exists for correctness, not for style.
+
+### 2. Population vs Sample Standard Deviation Matters
+numpy's `std()` defaults to population standard deviation (divides by N), while most C# statistics libraries default to sample standard deviation (divides by N-1). For an array like `[1,2,3,4,5]`, the difference is 1.414 (population) vs 1.581 (sample) — a 12% difference that would silently shift feature values and degrade classifier accuracy.
+
+**Takeaway**: Always check whether Python code uses `numpy.std(ddof=0)` (population, default) or `numpy.std(ddof=1)` (sample). The Python source uses the default (population).
+
+### 3. Feature Order Is a Silent Failure Mode
+LightGBM models don't validate that features arrive in the same order as during training. If you reorder features, the model happily produces predictions — just wrong ones. There's no error, no warning, just degraded accuracy. This makes it critical that feature extractors preserve the exact index-by-index ordering from Python.
+
+**Takeaway**: Each feature extractor has explicit index documentation in comments. If features are ever modified, the ONNX model must be retrained to match.
+
+### 4. Flat Arrays Are Better Than Multidimensional for ML
+The plan considered both `float[,,]` (3D array for images) and `float[]` (flat). Flat arrays won because: (a) ONNX/Sentis expect flat tensor input anyway, (b) no allocation overhead from jagged arrays, (c) explicit index arithmetic is more transparent and debuggable.
+
+### 5. Interface Abstraction Paid Off Immediately
+The `IModelBackend` interface wasn't just a theoretical clean architecture choice — it enabled writing and testing all preprocessing code without needing Unity Sentis installed at all. The test file creates mock encoders and runs all 24 tests without any ML framework dependency.
+
+---
+
+## Unplanned Changes and Deviations
+
+### From the Original Plan
+
+| Area | Plan Said | What Happened | Why |
+|------|-----------|---------------|-----|
+| File count | "5 ONNX files + C# preprocessors + orchestrator" | 10 C# files + 2 Python scripts + 1 test file | Separation of concerns: result struct, config, and 6 preprocessors each got their own file |
+| Test count | "40+ golden file tests" | 24 unit tests (golden files deferred) | Golden file generation requires running the Python models; unit tests validate preprocessing logic independently |
+| Math helpers | Separate shared utility class | Static methods in AlchemyFeatureExtractor, reused by others | Only 3 methods needed; separate file was over-engineering |
+| ClassifierManager lines | ~380 estimated | 511 actual | Added more defensive error handling, config update API, and status reporting |
+| Adornment input types | Generic "UI state" | Explicit VertexData/ShapeData structs | C# type safety needed concrete data structures |
+
+### Improvements Over the Plan
+
+1. **Typed validation methods** (AC-015): The plan described a generic `Validate(discipline, data)` interface. The implementation provides 5 typed methods with compile-time safety, better IDE support, and clearer error messages.
+
+2. **Warmup prediction in Preload()**: ClassifierManager.Preload() runs a dummy prediction through the model to ensure JIT compilation happens before gameplay. Not in the plan, but prevents first-prediction latency spikes.
+
+3. **UpdateConfig() runtime API**: The plan only described static configuration. The implementation adds `UpdateConfig(discipline, threshold, enabled, modelPath)` for runtime tuning — useful for debugging and A/B testing classifier thresholds.
+
+4. **GetStatus() diagnostic API**: Returns a dictionary of all classifier states (loaded, enabled, threshold, backend status) for debug overlay display in Phase 6.
+
+---
+
+## What Phase 6 Needs From Phase 5
+
+### Must Implement (Blocking)
+
+1. **SentisBackendFactory** implementing `IModelBackendFactory`
+   - Creates `SentisModelBackend` instances from ONNX model paths
+   - Loads models from `Resources/Models/` via `Resources.Load<ModelAsset>()`
+
+2. **SentisModelBackend** implementing `IModelBackend`
+   - Wraps Unity Sentis Worker
+   - `Predict(float[])` feeds tensor to model, returns sigmoid probability
+   - `Dispose()` releases Sentis Worker resources
+
+3. **Initialization call** in GameManager.Awake():
+   ```csharp
+   ClassifierManager.Instance.Initialize(new SentisBackendFactory());
+   ```
+
+4. **Crafting UI integration**: CraftingUI calls typed validate methods when player attempts invented recipe
+
+### Should Do (Non-Blocking)
+
+5. **Preload classifiers** during loading screen to avoid first-use lag:
+   ```csharp
+   ClassifierManager.Instance.Preload(); // All 5 models
+   ```
+
+6. **Debug overlay** showing classifier status via `ClassifierManager.Instance.GetStatus()`
+
+7. **Unload on scene change**: Call `ClassifierManager.Instance.Unload()` when leaving gameplay
+
+### ONNX Model Files (Pre-Phase 6 Task)
+
+The ONNX conversion scripts exist but haven't been run yet. Before Phase 6 can test end-to-end:
+```bash
+# Requires: pip install tensorflow tf2onnx onnx onnxruntime lightgbm onnxmltools
+python Unity/Assets/Scripts/Game1.Systems/Classifiers/Scripts/convert_models_to_onnx.py
+# Output: 5 .onnx files → copy to Assets/Resources/Models/
+```
+
+---
+
+## Cross-Phase Dependencies Summary
+
+```
+Phase 5 RECEIVES:
+  ├── Phase 1: MaterialDefinition (category, tier, tags)
+  └── Phase 2: MaterialDatabase.GetMaterial(id)
+
+Phase 5 DELIVERS TO:
+  ├── Phase 6: ClassifierManager + IModelBackend/IModelBackendFactory interfaces
+  ├── Phase 6: 5 preprocessors (callable independently for debugging)
+  └── Phase 7: ClassifierResult for E2E test validation
 ```
