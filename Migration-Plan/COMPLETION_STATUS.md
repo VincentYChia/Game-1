@@ -138,6 +138,7 @@ The 7-phase plan is dependency-ordered so developers can work on phases independ
 - `Migration-Plan/phases/PHASE_4_IMPLEMENTATION_SUMMARY.md`
 - `Migration-Plan/PHASE_5_IMPLEMENTATION_SUMMARY.md`
 - `Migration-Plan/phases/PHASE_6_IMPLEMENTATION_SUMMARY.md`
+- `Migration-Plan/phases/PHASE_7_IMPLEMENTATION_SUMMARY.md`
 
 ## Migration Complete — Next Steps
 

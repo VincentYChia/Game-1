@@ -180,16 +180,64 @@
 
 ---
 
+## Phase 7 — Polish & LLM Stub (2026-02-14)
+
+### AC-021: NotificationSystem as Pure C# Singleton (Not MonoBehaviour)
+**Phase**: 7
+**Change**: The Phase 7 plan specified `NotificationSystem : MonoBehaviour`. Implemented as a pure C# singleton instead.
+**Rationale**: AC-002 (pure C# for game logic) applies. Phase 6's `NotificationUI` MonoBehaviour already handles rendering. Adding another MonoBehaviour would create duplicate responsibility.
+**Impact**: NotificationSystem provides the typed API (NotificationType enum, queue management, filtering). Phase 6 NotificationUI handles on-screen rendering. Connected via `OnNotificationShow` event.
+
+### AC-022: NotificationSystem Decoupled from NotificationUI
+**Phase**: 7
+**Change**: Rather than replacing Phase 6's `NotificationUI`, created a parallel pure C# system with an `OnNotificationShow` event bridge.
+**Rationale**: Don't break working Phase 6 code. The existing `NotificationUI.Show(string, Color, float)` API works. Phase 7 adds typed notifications, queue management, and debug filtering on top.
+**Integration**: `NotificationUI` subscribes to `NotificationSystem.OnNotificationShow` and calls its own `Show()` method, bridging the two systems.
+
+### AC-023: LoadingState Injectable Time Provider
+**Phase**: 7
+**Change**: Added `Func<float> timeProvider` constructor parameter to `LoadingState` for deterministic testing.
+**Rationale**: Without this, animation formula tests (`GetAnimatedProgress()`) would depend on wall-clock time and be non-deterministic. Default uses `Environment.TickCount / 1000f` (pure C#, no Unity dependency).
+**Impact**: Production code passes no argument (uses default). Tests pass a controllable clock: `float time = 0; var state = new LoadingState(() => time);`.
+
+### AC-024: E2E Tests as Pure C# (Not Unity PlayMode)
+**Phase**: 7
+**Change**: The Phase 7 plan specified `[UnityTest]` coroutines with `SceneManager.LoadScene("TestScene")`. Implemented as pure C# test classes instead.
+**Rationale**: No Unity scene is assembled yet — scene assembly is a post-migration task. Pure C# tests can verify game formulas, state machines, and data flow immediately. They exercise the same Phase 1-5 game logic that Unity will render.
+**Impact**: Tests verify logic correctness. Visual correctness tests (sprite positions, UI layout) should be written during scene assembly as Unity PlayMode tests.
+
+### AC-025: Stub Categories Aligned to Python Logic
+**Phase**: 7
+**Change**: The Phase 7 plan mapped `engineering → "device"` and `enchanting → "enchantment"`. Changed to `engineering → "equipment"` and `enchanting → "equipment"`.
+**Rationale**: Python's `_add_invented_item_to_game()` (game_engine.py lines 3698-3805) produces equipment-category items for both engineering (turrets with EquipmentItem stats) and enchanting (accessories). Using `"device"` or `"enchantment"` would bypass the inventory/equipment code path that real items use.
+**Impact**: Stub items flow through the same `EquipmentDatabase`/`Inventory` pipeline as real items.
+
+---
+
+## Convention Additions Discovered During Phase 7
+
+| Date | Convention | Detail |
+|------|-----------|--------|
+| 2026-02-14 | LLM namespace | All LLM-related code in `Game1.Systems.LLM` namespace |
+| 2026-02-14 | Stub item ID format | `invented_{discipline}_{placementHash}` — deterministic, cacheable |
+| 2026-02-14 | Quality prefix thresholds | Common(≤4), Uncommon(≤10), Rare(≤20), Epic(≤40), Legendary(41+) — matches DifficultyCalculator |
+| 2026-02-14 | Debug notification prefix | `[STUB]` for stub invocations, `[NOT IMPL]` for unimplemented features |
+| 2026-02-14 | Test pattern | Simple assert-based framework (no NUnit/Unity Test Runner dependency) matching Phase 5 |
+
+---
+
 ## Summary Statistics
 
 | Metric | Value |
 |--------|-------|
-| Total C# files created | 127 |
-| Total lines of C# | ~30,800 |
+| Total C# files created | 147 |
+| Total lines of C# | ~34,700 |
+| Phase 7 LLM stub/notification files | 6 |
+| Phase 7 test files | 5 |
 | Phase 6 Unity Integration files | 45 |
 | Phase 5 Classifier files | 10 |
 | Phase 4 Game System files | 40 |
 | Foundation prerequisite files | 32 |
-| Adaptive changes documented | 20 |
-| Architecture improvements applied | 6 (MACRO-1,3,6; FIX-4; dispatch table; IPathfinder) |
-| Phase 5 test cases | 24 |
+| Adaptive changes documented | 25 |
+| Architecture improvements applied | 7 (MACRO-1,3,6; FIX-4; dispatch table; IPathfinder; IItemGenerator) |
+| Total tests (all phases) | 145+ |
