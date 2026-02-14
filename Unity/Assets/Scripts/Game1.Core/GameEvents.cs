@@ -118,6 +118,38 @@ namespace Game1.Core
             => OnBuffChanged?.Invoke(buffType, isAdded);
 
         // ====================================================================
+        // LLM / Invented Item Events (Phase 7)
+        // ====================================================================
+
+        /// <summary>Raised when an invented item is generated. Args: discipline, itemId, isStub.</summary>
+        public static event Action<string, string, bool> OnItemInvented;
+
+        /// <summary>Raised when LLM generation starts. Args: discipline.</summary>
+        public static event Action<string> OnItemGenerationStarted;
+
+        /// <summary>Raised when LLM generation completes. Args: discipline, success.</summary>
+        public static event Action<string, bool> OnItemGenerationCompleted;
+
+        public static void RaiseItemInvented(string discipline, string itemId, bool isStub)
+            => OnItemInvented?.Invoke(discipline, itemId, isStub);
+
+        public static void RaiseItemGenerationStarted(string discipline)
+            => OnItemGenerationStarted?.Invoke(discipline);
+
+        public static void RaiseItemGenerationCompleted(string discipline, bool success)
+            => OnItemGenerationCompleted?.Invoke(discipline, success);
+
+        // ====================================================================
+        // Notification Events (Phase 7)
+        // ====================================================================
+
+        /// <summary>Raised when a notification is shown. Args: message, typeString.</summary>
+        public static event Action<string, string> OnNotificationShown;
+
+        public static void RaiseNotificationShown(string message, string typeString)
+            => OnNotificationShown?.Invoke(message, typeString);
+
+        // ====================================================================
         // Testing Support
         // ====================================================================
 
@@ -139,6 +171,10 @@ namespace Game1.Core
             OnSkillLearned = null;
             OnSkillUsed = null;
             OnBuffChanged = null;
+            OnItemInvented = null;
+            OnItemGenerationStarted = null;
+            OnItemGenerationCompleted = null;
+            OnNotificationShown = null;
         }
     }
 }
