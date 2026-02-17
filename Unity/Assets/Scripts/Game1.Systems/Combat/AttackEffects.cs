@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using Game1.Data.Models;
 
 namespace Game1.Systems.Combat
 {
@@ -224,54 +225,7 @@ namespace Game1.Systems.Combat
         }
     }
 
-    /// <summary>
-    /// Pure C# struct for world position used by attack effects.
-    /// Minimal — only X, Y, Z fields needed for effect positioning.
-    /// In Phase 6, this maps to the full GamePosition struct.
-    /// </summary>
-    public struct GamePosition
-    {
-        public float X { get; set; }
-        public float Y { get; set; }
-        public float Z { get; set; }
-
-        public GamePosition(float x, float y, float z = 0f)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-        }
-
-        /// <summary>
-        /// Calculate horizontal (XZ-plane) distance to another position.
-        /// </summary>
-        public float HorizontalDistanceTo(GamePosition other)
-        {
-            float dx = X - other.X;
-            float dz = Z - other.Z;
-            return MathF.Sqrt(dx * dx + dz * dz);
-        }
-
-        /// <summary>
-        /// Calculate full 3D distance to another position.
-        /// </summary>
-        public float DistanceTo(GamePosition other)
-        {
-            float dx = X - other.X;
-            float dy = Y - other.Y;
-            float dz = Z - other.Z;
-            return MathF.Sqrt(dx * dx + dy * dy + dz * dz);
-        }
-
-        /// <summary>
-        /// Create a GamePosition from 2D coordinates (Y defaults to 0, Z = y).
-        /// Python positions are (x, y) which map to (x, 0, z) in 3D.
-        /// </summary>
-        public static GamePosition From2D(float x, float y)
-        {
-            return new GamePosition(x, 0f, y);
-        }
-    }
+    // GamePosition is defined in Game1.Data.Models — use that canonical definition.
 
     /// <summary>
     /// Manages all active attack visual effects.

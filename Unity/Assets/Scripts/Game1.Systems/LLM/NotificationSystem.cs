@@ -95,7 +95,7 @@ namespace Game1.Systems.LLM
             }
         }
 
-        private NotificationSystem() { }
+        internal NotificationSystem() { }
 
         /// <summary>Reset singleton for testing only.</summary>
         public static void ResetInstance()

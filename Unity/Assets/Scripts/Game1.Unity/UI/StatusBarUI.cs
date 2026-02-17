@@ -91,7 +91,7 @@ namespace Game1.Unity.UI
 
             // Experience
             int level = player.Leveling.Level;
-            int currentExp = player.Leveling.Experience;
+            int currentExp = player.Leveling.CurrentExp;
             int expNeeded = GameConfig.GetExpForLevel(level);
             float expPct = expNeeded > 0 ? (float)currentExp / expNeeded : 0f;
             if (_expFill != null)

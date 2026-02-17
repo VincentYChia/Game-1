@@ -87,7 +87,11 @@ namespace Game1.Unity.UI
             {
                 if (slot == null) continue;
 
-                var equipped = equipment.GetEquipped(slot.SlotName);
+                // Parse slot name string to EquipmentSlot enum
+                if (!System.Enum.TryParse<EquipmentSlot>(slot.SlotName, true, out var slotEnum))
+                    continue;
+
+                var equipped = equipment.GetEquipped(slotEnum);
 
                 if (equipped != null)
                 {
@@ -100,8 +104,8 @@ namespace Game1.Unity.UI
 
                     if (slot.DurabilityBar != null)
                     {
-                        float durPct = equipped.MaxDurability > 0
-                            ? (float)equipped.Durability / equipped.MaxDurability
+                        float durPct = equipped.DurabilityMax > 0
+                            ? (float)equipped.DurabilityCurrent / equipped.DurabilityMax
                             : 1f;
                         slot.DurabilityBar.fillAmount = durPct;
                         slot.DurabilityBar.color = durPct > 0.5f ? Color.green : (durPct > 0.25f ? Color.yellow : Color.red);

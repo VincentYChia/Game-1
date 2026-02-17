@@ -135,7 +135,11 @@ namespace Game1.Unity.World
             {
                 for (int z = 0; z < _chunkSize; z++)
                 {
-                    string tileType = chunk.GetTileType(x, z);
+                    // Look up tile from chunk's Tiles dictionary (keyed by "x,z,0")
+                    string tileKey = $"{x},{z},0";
+                    string tileType = "grass";
+                    if (chunk.Tiles.TryGetValue(tileKey, out var worldTile))
+                        tileType = worldTile.TileType.ToString().ToLowerInvariant();
                     TileBase tile = _getTileForType(tileType);
 
                     // Unity Tilemap uses Vector3Int — XZ plane mapped to XY for Tilemap

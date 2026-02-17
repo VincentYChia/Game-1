@@ -114,7 +114,7 @@ namespace Game1.Unity.UI
                     var skillDb = SkillDatabase.Instance;
                     if (skillDb != null)
                     {
-                        foreach (var skillId in skillDb.GetAllSkillIds())
+                        foreach (var skillId in skillDb.Skills.Keys)
                             gm.Player.Skills.LearnSkill(skillId);
                         NotificationUI.Instance?.Show("All skills learned!", Color.cyan);
                     }

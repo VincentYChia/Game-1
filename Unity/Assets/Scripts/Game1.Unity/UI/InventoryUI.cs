@@ -78,7 +78,7 @@ namespace Game1.Unity.UI
 
             for (int i = 0; i < _slots.Length; i++)
             {
-                if (i < allSlots.Count && allSlots[i] != null)
+                if (i < allSlots.Length && allSlots[i] != null)
                 {
                     _slots[i].SetItem(allSlots[i].ItemId, allSlots[i].Quantity);
                 }

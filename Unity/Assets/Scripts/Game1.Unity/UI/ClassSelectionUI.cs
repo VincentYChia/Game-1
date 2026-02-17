@@ -75,10 +75,10 @@ namespace Game1.Unity.UI
             var classDb = ClassDatabase.Instance;
             if (classDb == null) return;
 
-            var allClasses = classDb.GetAllClasses();
+            var allClasses = classDb.Classes;
             if (allClasses == null) return;
 
-            foreach (var classDef in allClasses)
+            foreach (var classDef in allClasses.Values)
             {
                 if (_classCardPrefab == null) continue;
 

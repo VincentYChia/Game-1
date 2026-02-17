@@ -108,7 +108,7 @@ namespace Game1.Unity.UI
             {
                 "guide" => "Welcome to the Game Encyclopedia!\n\nUse tabs to browse.",
                 "quests" => "Active Quests:\n(No active quests)",
-                "skills" => $"Learned Skills: {gm.Player.Skills.LearnedSkillCount}",
+                "skills" => $"Learned Skills: {gm.Player.Skills.KnownSkills.Count}",
                 "titles" => "Titles:\n(Browse earned titles)",
                 "stats" => $"Level: {gm.Player.Leveling.Level}\nClass: {gm.Player.ClassId}",
                 "recipes" => "Recipes:\n(Browse crafting recipes)",

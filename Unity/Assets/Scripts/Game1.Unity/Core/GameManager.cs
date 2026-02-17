@@ -10,9 +10,11 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using Game1.Core;
+using Game1.Data.Databases;
 using Game1.Data.Models;
 using Game1.Entities;
 using Game1.Systems.World;
@@ -153,8 +155,8 @@ namespace Game1.Unity.Core
             Player.Name = playerName;
             Player.SelectClass(classId);
 
-            // Initialize combat
-            CombatManager.Instance.Initialize(World);
+            // TODO: Initialize combat when Character→ICombatCharacter adapter is built
+            // CombatManager requires (CombatConfig, EnemySpawner) and Character doesn't implement ICombatCharacter yet
 
             // Update camera target
             if (_cameraController != null)
@@ -178,7 +180,7 @@ namespace Game1.Unity.Core
             try
             {
                 var saveManager = new SaveManager();
-                var saveData = saveManager.LoadGame(saveName);
+                var saveData = saveManager.LoadFromFile(saveName);
 
                 if (saveData == null)
                 {
@@ -219,7 +221,7 @@ namespace Game1.Unity.Core
                 if (saveData.TryGetValue("game_time", out object timeObj))
                     GameTime = Convert.ToSingle(timeObj);
 
-                CombatManager.Instance.Initialize(World);
+                // TODO: Initialize combat when adapter layer is built
 
                 if (_cameraController != null)
                     _cameraController.SetTarget(PositionConverter.ToVector3(Player.Position));
@@ -289,10 +291,9 @@ namespace Game1.Unity.Core
                 Player.Update(dt);
 
                 // Update world chunks around player
-                World?.UpdateChunks(Player.Position);
+                World?.EnsureChunksLoaded(Player.Position.X, Player.Position.Z);
 
-                // Update combat system
-                CombatManager.Instance.Update(dt, Player);
+                // TODO: Update combat system when adapter layer is built
 
                 // Update camera target
                 if (_cameraController != null)

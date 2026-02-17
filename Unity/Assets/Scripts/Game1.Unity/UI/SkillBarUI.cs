@@ -71,7 +71,7 @@ namespace Game1.Unity.UI
             {
                 if (_slots[i] == null) continue;
 
-                string skillId = skillManager.GetHotbarSkillId(i);
+                string skillId = skillManager.GetEquippedSkillAt(i);
 
                 if (string.IsNullOrEmpty(skillId))
                 {
@@ -98,12 +98,12 @@ namespace Game1.Unity.UI
                 // Cooldown overlay
                 if (_slots[i].CooldownOverlay != null)
                 {
-                    float cooldownRemaining = skillManager.GetCooldownRemaining(skillId);
-                    float cooldownTotal = skillManager.GetCooldownTotal(skillId);
+                    var knownSkill = skillManager.GetKnownSkill(skillId);
+                    float cooldownRemaining = knownSkill?.CurrentCooldown ?? 0f;
 
-                    if (cooldownRemaining > 0 && cooldownTotal > 0)
+                    if (cooldownRemaining > 0)
                     {
-                        _slots[i].CooldownOverlay.fillAmount = cooldownRemaining / cooldownTotal;
+                        _slots[i].CooldownOverlay.fillAmount = Mathf.Clamp01(cooldownRemaining / Mathf.Max(cooldownRemaining, 1f));
                         _slots[i].CooldownOverlay.color = _cooldownColor;
                     }
                     else
@@ -121,7 +121,7 @@ namespace Game1.Unity.UI
 
             if (slotIndex >= 0 && slotIndex < GameConfig.HotbarSlots)
             {
-                string skillId = gm.Player.Skills.GetHotbarSkillId(slotIndex);
+                string skillId = gm.Player.Skills.GetEquippedSkillAt(slotIndex);
                 if (!string.IsNullOrEmpty(skillId))
                 {
                     gm.Player.Skills.ActivateSkill(skillId);
