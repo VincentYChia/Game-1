@@ -123,6 +123,8 @@ namespace Game1.Unity.Core
 
         private void Awake()
         {
+            if (_stateManager == null)
+                _stateManager = FindFirstObjectByType<GameStateManager>();
             _setupInputActions();
         }
 

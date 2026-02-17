@@ -124,6 +124,16 @@ namespace Game1.Unity.Core
 
         private void Start()
         {
+            // Auto-discover scene references if not assigned in Inspector
+            if (_stateManager == null)
+                _stateManager = FindFirstObjectByType<GameStateManager>();
+            if (_inputManager == null)
+                _inputManager = FindFirstObjectByType<InputManager>();
+            if (_cameraController == null)
+                _cameraController = FindFirstObjectByType<CameraController>();
+            if (_audioManager == null)
+                _audioManager = FindFirstObjectByType<AudioManager>();
+
             // Systems are loaded in Awake; Start handles cross-references
             if (_stateManager != null)
             {

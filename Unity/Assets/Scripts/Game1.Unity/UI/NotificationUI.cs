@@ -46,6 +46,22 @@ namespace Game1.Unity.UI
             Instance = this;
         }
 
+        private void Start()
+        {
+            // Bridge Phase 7 NotificationSystem (pure C#) to this MonoBehaviour UI
+            try
+            {
+                Game1.Systems.LLM.NotificationSystem.Instance.OnNotificationShow += _onNotificationFromSystem;
+            }
+            catch (System.Exception) { /* NotificationSystem may not be initialized */ }
+        }
+
+        private void _onNotificationFromSystem(string message, Game1.Systems.LLM.NotificationType type, float duration)
+        {
+            var (r, g, b) = Game1.Systems.LLM.NotificationSystem.GetColor(type);
+            Show(message, new Color(r, g, b), duration);
+        }
+
         /// <summary>Show a notification message.</summary>
         public void Show(string message, float duration = -1f)
         {
@@ -152,6 +168,11 @@ namespace Game1.Unity.UI
         private void OnDestroy()
         {
             if (Instance == this) Instance = null;
+            try
+            {
+                Game1.Systems.LLM.NotificationSystem.Instance.OnNotificationShow -= _onNotificationFromSystem;
+            }
+            catch (System.Exception) { }
         }
     }
 }
