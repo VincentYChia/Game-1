@@ -27,26 +27,40 @@ public static class Game1Setup
             "Create", "Cancel"))
             return;
 
-        // Create fresh scene
-        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        // Create fresh scene with default Camera + Light (ensures proper render pipeline setup)
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
+
+        // Set up ambient lighting for sprites and tilemaps
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+        RenderSettings.ambientLight = Color.white;
 
         // ================================================================
-        // 1. Main Camera
+        // 1. Configure the existing Main Camera (created by DefaultGameObjects)
         // ================================================================
-        var cameraGO = new GameObject("Main Camera");
-        cameraGO.tag = "MainCamera";
+        var cam = Camera.main;
+        if (cam == null)
+        {
+            // Fallback: create camera if DefaultGameObjects didn't provide one
+            var newCamGO = new GameObject("Main Camera");
+            newCamGO.tag = "MainCamera";
+            cam = newCamGO.AddComponent<Camera>();
+            newCamGO.AddComponent<AudioListener>();
+        }
+
+        var cameraGO = cam.gameObject;
         cameraGO.transform.position = new Vector3(0f, 50f, 0f);
         cameraGO.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
-        var cam = cameraGO.AddComponent<Camera>();
         cam.orthographic = true;
         cam.orthographicSize = 8f;
         cam.clearFlags = CameraClearFlags.SolidColor;
         cam.backgroundColor = new Color(0.12f, 0.12f, 0.18f);
         cam.nearClipPlane = 0.1f;
         cam.farClipPlane = 200f;
+        cam.targetDisplay = 0;
+        cam.depth = 0;
+        cam.enabled = true;
 
-        cameraGO.AddComponent<AudioListener>();
         cameraGO.AddComponent<CameraController>();
 
         // ================================================================
@@ -114,10 +128,17 @@ public static class Game1Setup
 
         canvasGO.AddComponent<GraphicRaycaster>();
 
-        // Also need an EventSystem for UI clicks
+        // EventSystem for UI clicks (try new Input System module, fall back to standalone)
         var eventSystemGO = new GameObject("EventSystem");
         eventSystemGO.AddComponent<UnityEngine.EventSystems.EventSystem>();
-        eventSystemGO.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+        try
+        {
+            eventSystemGO.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+        }
+        catch
+        {
+            eventSystemGO.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+        }
 
         // ================================================================
         // 6a. Start Menu Panel
