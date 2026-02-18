@@ -1,10 +1,12 @@
 // ============================================================================
 // Game1.Unity.World.ResourceRenderer
 // Migrated from: rendering/renderer.py (resource drawing within render_world)
-// Migration phase: 6
-// Date: 2026-02-13
+// Migration phase: 6 (upgraded for 3D billboard rendering)
+// Date: 2026-02-18
 //
 // Renders resource nodes (trees, ores, herbs) with HP bars and tool icons.
+// In 3D mode, uses BillboardSprite to keep sprites camera-facing.
+// Health bars billboard to camera via world-space Canvas.
 // Spawned per chunk by WorldRenderer.
 // ============================================================================
 
@@ -15,13 +17,14 @@ using Game1.Unity.Utilities;
 namespace Game1.Unity.World
 {
     /// <summary>
-    /// Renders a single resource node — sprite, HP bar, tool requirement icon.
-    /// Attached to ResourceNode prefab.
+    /// Renders a single resource node — billboard sprite, HP bar, tool requirement icon.
+    /// Attached to ResourceNode prefab. Ensures BillboardSprite is present for 3D.
     /// </summary>
     public class ResourceRenderer : MonoBehaviour
     {
         [Header("Components")]
         [SerializeField] private SpriteRenderer _spriteRenderer;
+        [SerializeField] private Canvas _worldCanvas;
         [SerializeField] private Image _healthBarFill;
         [SerializeField] private GameObject _healthBarRoot;
         [SerializeField] private SpriteRenderer _toolIcon;
@@ -30,9 +33,22 @@ namespace Game1.Unity.World
         [SerializeField] private Color _fullColor = new Color(0f, 0.8f, 0f);
         [SerializeField] private Color _depletedColor = new Color(0.4f, 0.4f, 0.4f);
 
+        [Header("3D Settings")]
+        [Tooltip("Height offset above terrain surface")]
+        [SerializeField] private float _heightAboveTerrain = 0.5f;
+
         private string _resourceId;
         private float _healthPercent = 1f;
         private bool _isDepleted;
+        private BillboardSprite _billboard;
+
+        private void Awake()
+        {
+            // Ensure BillboardSprite exists for 3D camera compatibility
+            _billboard = GetComponent<BillboardSprite>();
+            if (_billboard == null)
+                _billboard = gameObject.AddComponent<BillboardSprite>();
+        }
 
         /// <summary>Initialize for a specific resource node.</summary>
         public void Initialize(string resourceId, string spriteId, string requiredTool = null)
@@ -40,6 +56,9 @@ namespace Game1.Unity.World
             _resourceId = resourceId;
             _isDepleted = false;
             _healthPercent = 1f;
+
+            if (_spriteRenderer == null)
+                _spriteRenderer = GetComponent<SpriteRenderer>();
 
             if (_spriteRenderer != null && SpriteDatabase.Instance != null)
             {
@@ -98,7 +117,17 @@ namespace Game1.Unity.World
         /// <summary>Set world position.</summary>
         public void SetPosition(Vector3 worldPos)
         {
+            worldPos.y = _heightAboveTerrain;
             transform.position = worldPos;
+        }
+
+        private void Update()
+        {
+            // Billboard health bar to camera (world-space canvas always faces camera)
+            if (_worldCanvas != null && Camera.main != null)
+            {
+                _worldCanvas.transform.rotation = Camera.main.transform.rotation;
+            }
         }
     }
 }

@@ -1,10 +1,11 @@
 // ============================================================================
 // Game1.Unity.World.EnemyRenderer
 // Migrated from: rendering/renderer.py (enemy drawing within render_world)
-// Migration phase: 6
-// Date: 2026-02-13
+// Migration phase: 6 (upgraded for 3D billboard rendering)
+// Date: 2026-02-18
 //
-// Renders individual enemy instances — sprite, health bar, corpse fade.
+// Renders individual enemy instances — billboard sprite, health bar, corpse fade.
+// In 3D mode, uses BillboardSprite to keep the sprite facing the camera.
 // Spawned from prefab by EnemySpawnerManager.
 // ============================================================================
 
@@ -16,8 +17,9 @@ using Game1.Unity.Utilities;
 namespace Game1.Unity.World
 {
     /// <summary>
-    /// Renders a single enemy — sprite, health bar, aggro indicator, corpse fade.
+    /// Renders a single enemy — billboard sprite, health bar, aggro indicator, corpse fade.
     /// Attached to Enemy prefab. Drives visual from Phase 3 Enemy data.
+    /// Ensures a BillboardSprite is present for 3D camera compatibility.
     /// </summary>
     public class EnemyRenderer : MonoBehaviour
     {
@@ -37,6 +39,10 @@ namespace Game1.Unity.World
         [SerializeField] private float _healthBarOffset = 0.8f;
         [SerializeField] private float _corpseFadeDuration = 2f;
 
+        [Header("3D Settings")]
+        [Tooltip("Height offset above terrain surface")]
+        [SerializeField] private float _heightAboveTerrain = 0.5f;
+
         // ====================================================================
         // State
         // ====================================================================
@@ -46,6 +52,19 @@ namespace Game1.Unity.World
         private bool _isDead;
         private float _deathTimer;
         private bool _isBoss;
+        private BillboardSprite _billboard;
+
+        // ====================================================================
+        // Initialization
+        // ====================================================================
+
+        private void Awake()
+        {
+            // Ensure BillboardSprite exists for 3D camera compatibility
+            _billboard = GetComponent<BillboardSprite>();
+            if (_billboard == null)
+                _billboard = gameObject.AddComponent<BillboardSprite>();
+        }
 
         // ====================================================================
         // Public API
@@ -58,15 +77,20 @@ namespace Game1.Unity.World
             _isBoss = isBoss;
 
             // Load enemy sprite
+            if (_spriteRenderer == null)
+                _spriteRenderer = GetComponent<SpriteRenderer>();
+
             if (_spriteRenderer != null && SpriteDatabase.Instance != null)
             {
                 _spriteRenderer.sprite = SpriteDatabase.Instance.GetEnemySprite(enemyId);
             }
 
-            // Scale boss enemies
+            // Scale boss enemies (and their shadow)
             if (isBoss)
             {
                 transform.localScale = Vector3.one * 1.5f;
+                if (_billboard != null)
+                    _billboard.SetShadowSize(0.9f);
             }
 
             _isDead = false;
@@ -103,11 +127,16 @@ namespace Game1.Unity.World
 
             if (_healthBarRoot != null)
                 _healthBarRoot.SetActive(false);
+
+            // Hide shadow on death
+            if (_billboard != null)
+                _billboard.SetShadowVisible(false);
         }
 
         /// <summary>Update enemy world position.</summary>
         public void SetPosition(Vector3 worldPos)
         {
+            worldPos.y = _heightAboveTerrain;
             transform.position = worldPos;
         }
 
@@ -137,7 +166,7 @@ namespace Game1.Unity.World
                 }
             }
 
-            // Billboard health bar to camera
+            // Billboard health bar to camera (world-space canvas always faces camera)
             if (_worldCanvas != null && Camera.main != null)
             {
                 _worldCanvas.transform.rotation = Camera.main.transform.rotation;

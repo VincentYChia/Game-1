@@ -1,10 +1,11 @@
 // ============================================================================
 // Game1.Unity.World.PlayerRenderer
 // Migrated from: rendering/renderer.py (player drawing within render_world)
-// Migration phase: 6
-// Date: 2026-02-13
+// Migration phase: 6 (upgraded for 3D billboard rendering)
+// Date: 2026-02-18
 //
 // Renders the player sprite, handles facing direction and movement.
+// In 3D mode, uses BillboardSprite to keep the sprite facing the camera.
 // Input handling drives movement via GameManager.Player.Position.
 // ============================================================================
 
@@ -19,7 +20,8 @@ namespace Game1.Unity.World
     /// <summary>
     /// Player rendering and movement controller.
     /// Reads input from InputManager and moves the Character (Phase 3).
-    /// Updates SpriteRenderer facing direction.
+    /// Updates SpriteRenderer facing direction. In 3D mode, ensures a
+    /// BillboardSprite component keeps the sprite camera-facing.
     /// </summary>
     public class PlayerRenderer : MonoBehaviour
     {
@@ -39,12 +41,17 @@ namespace Game1.Unity.World
         [Header("Movement")]
         [SerializeField] private float _moveSpeedMultiplier = 5f;
 
+        [Header("3D Settings")]
+        [Tooltip("Height offset above terrain surface")]
+        [SerializeField] private float _heightAboveTerrain = 0.5f;
+
         // ====================================================================
         // State
         // ====================================================================
 
         private InputManager _inputManager;
         private string _currentFacing = "down";
+        private BillboardSprite _billboard;
 
         // ====================================================================
         // Initialization
@@ -56,6 +63,11 @@ namespace Game1.Unity.World
 
             if (_spriteRenderer == null)
                 _spriteRenderer = GetComponent<SpriteRenderer>();
+
+            // Ensure BillboardSprite exists for 3D camera compatibility
+            _billboard = GetComponent<BillboardSprite>();
+            if (_billboard == null)
+                _billboard = gameObject.AddComponent<BillboardSprite>();
 
             if (_inputManager != null)
                 _inputManager.OnMoveInput += _onMoveInput;
@@ -106,10 +118,12 @@ namespace Game1.Unity.World
             var gm = GameManager.Instance;
             if (gm == null || gm.Player == null) return;
 
-            // Sync transform to character position
-            transform.position = PositionConverter.ToVector3(gm.Player.Position);
+            // Sync transform to character position (with height offset for 3D terrain)
+            Vector3 worldPos = PositionConverter.ToVector3(gm.Player.Position);
+            worldPos.y = _heightAboveTerrain;
+            transform.position = worldPos;
 
-            // Update sprite facing
+            // Update sprite facing (sprite selection still applies in billboard mode)
             _updateFacingSprite();
         }
 

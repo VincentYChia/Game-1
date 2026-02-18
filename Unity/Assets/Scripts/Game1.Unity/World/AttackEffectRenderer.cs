@@ -1,10 +1,12 @@
 // ============================================================================
 // Game1.Unity.World.AttackEffectRenderer
 // Migrated from: rendering/renderer.py (lines 6587-6657: _render_attack_effects)
-// Migration phase: 6
-// Date: 2026-02-13
+// Migration phase: 6 (upgraded for 3D rendering)
+// Date: 2026-02-18
 //
 // Renders attack visual effects: melee lines, ranged lines, AoE circles, beams.
+// Lines are raised above the 3D terrain for visibility from any camera angle.
+// Auto-creates a default unlit line material if none assigned.
 // ============================================================================
 
 using System.Collections.Generic;
@@ -39,6 +41,22 @@ namespace Game1.Unity.World
         private void Awake()
         {
             Instance = this;
+            _ensureLineMaterial();
+        }
+
+        private void _ensureLineMaterial()
+        {
+            if (_lineMaterial != null) return;
+
+            // Create a default unlit line material for 3D visibility
+            Shader shader = Shader.Find("Sprites/Default")
+                ?? Shader.Find("Unlit/Color")
+                ?? Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader != null)
+            {
+                _lineMaterial = new Material(shader);
+                _lineMaterial.name = "AttackEffectLine";
+            }
         }
 
         /// <summary>Draw an attack line from attacker to target.</summary>
@@ -51,8 +69,9 @@ namespace Game1.Unity.World
 
             var lr = go.AddComponent<LineRenderer>();
             lr.positionCount = 2;
-            lr.SetPosition(0, from + Vector3.up * 0.1f);
-            lr.SetPosition(1, to + Vector3.up * 0.1f);
+            // Raise lines above 3D terrain for visibility from any camera angle
+            lr.SetPosition(0, from + Vector3.up * 0.5f);
+            lr.SetPosition(1, to + Vector3.up * 0.5f);
             lr.startWidth = width;
             lr.endWidth = width * 0.5f;
             lr.startColor = color;
@@ -91,7 +110,7 @@ namespace Game1.Unity.World
             for (int i = 0; i <= _circleSegments; i++)
             {
                 float angle = (float)i / _circleSegments * Mathf.PI * 2f;
-                Vector3 pos = center + new Vector3(Mathf.Cos(angle) * radius, 0.1f, Mathf.Sin(angle) * radius);
+                Vector3 pos = center + new Vector3(Mathf.Cos(angle) * radius, 0.15f, Mathf.Sin(angle) * radius);
                 lr.SetPosition(i % (lr.positionCount), pos);
             }
 
