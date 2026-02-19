@@ -4,7 +4,7 @@
 
 ---
 
-### EXECUTIVE SUMMARY
+## Executive Summary
 
 The existing checklist accurately identifies 5 critical infrastructure gaps (GAP-INFRA-1 through GAP-INFRA-5) and 8 Category A blocking items (GAP-A-1 through GAP-A-8). This audit **CONFIRMS the checklist's assessment and adds 12 additional missed infrastructure gaps**, bringing the total from 13 to 25 infrastructure-specific items. These missed items fall into:
 
@@ -15,7 +15,7 @@ The existing checklist accurately identifies 5 critical infrastructure gaps (GAP
 
 ---
 
-### VERIFICATION OF EXISTING GAPS
+## Verification of Existing Gaps
 
 #### Confirmed: GAP-INFRA-1 (No Unity Project Structure)
 **Status**: VERIFIED
@@ -45,7 +45,7 @@ The existing checklist accurately identifies 5 critical infrastructure gaps (GAP
 
 ---
 
-### MISSED INFRASTRUCTURE GAPS
+## Missed Infrastructure Gaps
 
 #### NEW: INFRA-PACKAGE-1 — Required NuGet/UPM Package Definitions
 **Severity**: BLOCKING
@@ -613,7 +613,7 @@ Assets/SETUP_INSTRUCTIONS.md                (or Assets/Setup/)
 
 ---
 
-### SUMMARY TABLE: ALL INFRASTRUCTURE GAPS
+## Summary Table: All Infrastructure Gaps
 
 | ID | Category | Description | Severity | Files | Effort |
 |---|---|---|---|---|---|
@@ -643,7 +643,7 @@ Assets/SETUP_INSTRUCTIONS.md                (or Assets/Setup/)
 
 ---
 
-### DEPENDENCY ORDER (REVISED)
+## Dependency Order (Revised)
 
 **Phase I: Make It Runnable** (Days 1-2, 10-14 hours)
 1. GAP-A-1 / INFRA-PACKAGE-1: Create Unity project, Packages/manifest.json
@@ -668,7 +668,7 @@ Assets/SETUP_INSTRUCTIONS.md                (or Assets/Setup/)
 
 ---
 
-### RISK & MITIGATION
+## Risk & Mitigation
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
@@ -681,7 +681,7 @@ Assets/SETUP_INSTRUCTIONS.md                (or Assets/Setup/)
 
 ---
 
-### VERIFICATION CHECKLIST
+## Verification Checklist
 
 After completing all infrastructure gaps, verify:
 
@@ -704,7 +704,7 @@ After completing all infrastructure gaps, verify:
 
 ---
 
-## CONCLUSION
+## Conclusion
 
 The existing checklist accurately captures all 5 primary infrastructure gaps. This audit identifies **12 additional infrastructure-specific items** that, while referenced in the checklist, deserve explicit treatment as standalone checklist items due to their complexity and critical nature. When combined, these represent approximately **45-60 additional hours of work** beyond the estimated 73-102 hours in the original checklist--primarily in asset organization, configuration, and ML integration.
 

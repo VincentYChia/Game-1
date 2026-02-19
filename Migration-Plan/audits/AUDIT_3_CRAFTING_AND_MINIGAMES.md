@@ -4,9 +4,9 @@
 
 ---
 
-### Executive Summary
+## Executive Summary
 
-This audit evaluates the Python/Pygame crafting system (Game-1-modular) against the C# migration code (Unity/Assets/Scripts). The system comprises 6 crafting disciplines, ML classifiers, and an LLM-powered item generation system. The audit identifies implementation status across 19 major feature areas.
+This audit evaluates the Python/Pygame crafting system (Game-1-modular) against the C# migration code (Unity/Assets/Scripts). The system comprises 6 crafting disciplines, ML classifiers, and an LLM-powered item generation system. The audit identifies implementation status across 18 major feature areas.
 
 **Overall Status**: Phase 4 (Crafting minigames) and Phase 5 (ML classifiers) are substantially complete with full C# implementations. Phase 7 (LLM) has interface contracts and stub implementations. Interactive crafting UI (Phase 6) exists but wiring status requires verification.
 
@@ -230,10 +230,11 @@ This audit evaluates the Python/Pygame crafting system (Game-1-modular) against 
 - **Configuration**: JSON-driven from fishing-config.JSON
 
 **Acceptance Criteria**:
-- [ ] Fishing minigame missing entirely from C#
-- [ ] No ripple system, no clicking mechanics
-- [ ] No stat integration
-- [ ] No reward system integration
+- [ ] FishingMinigame.cs created with OSU-style ripple clicking mechanic
+- [ ] Pond surface rendering with target rings
+- [ ] Stat integration (LCK reduces ripples, STR increases click area, rod quality increases time)
+- [ ] Reward system integration (materials + XP, double durability loss on failure)
+- [ ] JSON-driven configuration from fishing-config.JSON
 
 **Note**: Fishing may be out of scope for initial low-fidelity release. Confirm with project requirements.
 
@@ -362,15 +363,24 @@ This audit evaluates the Python/Pygame crafting system (Game-1-modular) against 
 - **Result**: ClassifierResult with probability + error
 - **Python Equivalence**: Full feature extraction pipeline ported
 
+| Discipline | Model Type | Input | Status |
+|-----------|-----------|-------|--------|
+| Smithing | CNN | 36x36x3 RGB image | SmithingPreprocessor.cs |
+| Adornments | CNN | 56x56x3 RGB image | AdornmentPreprocessor.cs |
+| Alchemy | LightGBM | 34 numeric features | AlchemyFeatureExtractor.cs |
+| Refining | LightGBM | 18 numeric features | RefiningFeatureExtractor.cs |
+| Engineering | LightGBM | 28 numeric features | EngineeringFeatureExtractor.cs |
+
 **Status**: FULLY IMPLEMENTED (C# only, Phase 6 adds model loading)
 
 ### 14b. LLM Item Generation
-- **IItemGenerator**: Interface contract for async generation
+- **IItemGenerator**: Interface contract for async generation (GenerateItemAsync)
 - **StubItemGenerator**: Placeholder implementation (500ms delay, deterministic items, marked IsStub=true)
 - **GeneratedItem**: Result type with success/error, itemData, itemId, itemName, discipline
 - **ItemGenerationRequest**: Request type with discipline, materials, stationTier, placementHash
 - **LoadingState & NotificationSystem**: UI feedback during generation
 - **Python Equivalence**: Stub matches MockBackend behavior; real LLM API integration deferred to Phase 7
+- **Missing**: AnthropicItemGenerator (real Claude API calls), API key loading, background threading, LLM debug logs
 
 **Status**: PARTIALLY IMPLEMENTED (Stub complete, real API deferred)
 
@@ -391,64 +401,7 @@ This audit evaluates the Python/Pygame crafting system (Game-1-modular) against 
 
 ---
 
-## 15. ML CLASSIFIERS
-
-**Python Source**: `systems/crafting_classifier.py` (1,419 lines)
-
-**C# Implementation**: `Game1.Systems.Classifiers/` (6 files)
-
-**Status**: FULLY IMPLEMENTED (Preprocessing pipeline)
-
-### Classifier Mapping:
-| Discipline | Model Type | Input | Status |
-|-----------|-----------|-------|--------|
-| Smithing | CNN | 36x36x3 RGB image | SmithingPreprocessor.cs |
-| Adornments | CNN | 56x56x3 RGB image | AdornmentPreprocessor.cs |
-| Alchemy | LightGBM | 34 numeric features | AlchemyFeatureExtractor.cs |
-| Refining | LightGBM | 18 numeric features | RefiningFeatureExtractor.cs |
-| Engineering | LightGBM | 28 numeric features | EngineeringFeatureExtractor.cs |
-
-**Acceptance Criteria**:
-- [x] All 5 preprocessing pipelines complete
-- [x] Feature extraction matches Python calculations
-- [x] ClassifierManager orchestrates all 5
-- [ ] Model loading deferred to Phase 6 (Sentis integration)
-
----
-
-## 16. LLM ITEM GENERATOR
-
-**Python Source**: `systems/llm_item_generator.py` (1,392 lines)
-
-**C# Implementation**: `Game1.Systems.LLM/` (6 files)
-
-**Status**: PARTIALLY IMPLEMENTED (Stub only)
-
-### Interface Contract:
-- IItemGenerator with GenerateItemAsync()
-- GeneratedItem result type
-- ItemGenerationRequest input type
-
-### Stub Implementation:
-- StubItemGenerator produces deterministic items
-- 500ms simulated delay
-- Marks items IsStub=true
-- LoadingState and NotificationSystem integration
-
-### Missing:
-- AnthropicItemGenerator with real Claude API calls
-- API key loading from environment
-- Background threading (Phase 7 responsibility)
-- LLM debug logs (would go to logs/)
-
-**Acceptance Criteria** (Low-Fidelity):
-- [x] Stub generator works
-- [x] Placeholder items created
-- [ ] Real LLM deferred (Phase 7 task)
-
----
-
-## 17. CRAFTED STATS & QUALITY MODIFIERS
+## 15. CRAFTED STATS & QUALITY MODIFIERS
 
 **Python Source**: (Integrated into minigame result handling and `Crafting-subdisciplines/rarity_utils.py`)
 
@@ -468,7 +421,7 @@ This audit evaluates the Python/Pygame crafting system (Game-1-modular) against 
 
 ---
 
-## 18. RARITY SYSTEM
+## 16. RARITY SYSTEM
 
 **Python Source**: `Crafting-subdisciplines/rarity_utils.py` (259 lines)
 
@@ -488,7 +441,7 @@ This audit evaluates the Python/Pygame crafting system (Game-1-modular) against 
 
 ---
 
-## 19. MINIGAME EFFECTS & ANIMATIONS
+## 17. MINIGAME EFFECTS & ANIMATIONS
 
 **Python Source**: `core/minigame_effects.py` (~1,522 lines) - Particle effects, animations, metadata overlay
 
@@ -506,7 +459,7 @@ This audit evaluates the Python/Pygame crafting system (Game-1-modular) against 
 
 ---
 
-## 20. INVENTED RECIPES PERSISTENCE
+## 18. INVENTED RECIPES PERSISTENCE
 
 **Python Source**: `entities/character.py` - invented_recipes dictionary tracked across save/load
 
@@ -526,32 +479,32 @@ This audit evaluates the Python/Pygame crafting system (Game-1-modular) against 
 
 ## SUMMARY TABLE
 
-| Feature | Status | Python Lines | C# Implementation | Notes |
-|---------|--------|--------------|-------------------|-------|
-| 1. Crafting Station Interaction | PARTIAL | 7817 | CraftingUI.cs | UI exists, wiring incomplete |
-| 2. Recipe System | FULL | N/A (JSON) | RecipeDatabase.cs | All recipes loaded |
-| 3a. Grid Placement (Smith/Adorn) | DATA | 1179 | PlacementDatabase.cs | Data ready, UI unknown |
-| 3b. Hub-Spoke (Refining) | DATA | 1179 | PlacementDatabase.cs | Data ready, UI unknown |
-| 3c. Sequential (Alchemy) | DATA | 1179 | PlacementDatabase.cs | Data ready, UI unknown |
-| 3d. Slots (Engineering) | DATA | 1179 | PlacementDatabase.cs | Data ready, UI unknown |
-| 3e. Interactive/Free-form | PARTIAL | 1179 | CraftingUI.cs | Minimal drag-drop evidence |
-| 4. Smithing Minigame | FULL | 909 | SmithingMinigame.cs | Complete |
-| 5. Alchemy Minigame | FULL | 1070 | AlchemyMinigame.cs | Complete |
-| 6. Refining Minigame | FULL | 826 | RefiningMinigame.cs | Complete |
-| 7. Engineering Minigame | FULL | 1312 | EngineeringMinigame.cs | Complete |
-| 8. Enchanting Minigame | FULL | 1408 | EnchantingMinigame.cs | Complete |
-| 9. Fishing Minigame | NONE | 872 | (Missing) | Out of scope? |
-| 10. Difficulty Calculator | FULL | 809 | DifficultyCalculator.cs | All formulas preserved |
-| 11. Reward Calculator | FULL | 608 | RewardCalculator.cs | All formulas preserved |
-| 12. Base Minigame (MACRO-8) | FULL | N/A (new) | BaseCraftingMinigame.cs | Architecture improvement |
-| 13. Interactive Crafting | PARTIAL | 1179 | CraftingUI.cs | UI exists, drag-drop missing |
-| 14a. ML Classifiers | FULL | 1419 | ClassifierManager.cs + 5 preprocessors | C# complete, Phase 6 adds models |
-| 14b. LLM Item Generator | STUB | 1392 | StubItemGenerator.cs | Stub complete, real API deferred |
-| 14c. Invent Integration | NONE | Mixed | Not visible | Pipeline wiring missing |
-| 15. Crafted Stats & Quality | PARTIAL | N/A | RewardCalculator.cs | Multipliers calculated, rarity mods missing |
-| 16. Rarity System | PARTIAL | 259 | (Implicit) | Validation and modifiers not visible |
-| 17. Minigame Effects | NONE | 1522 | (Not examined) | Particle/visual effects unknown |
-| 18. Invented Recipe Persistence | UNKNOWN | (character.py) | (Unknown) | Character model inspection needed |
+| # | Feature | Status | Python Lines | C# Implementation | Notes |
+|---|---------|--------|--------------|-------------------|-------|
+| 1 | Crafting Station Interaction | PARTIAL | 7817 | CraftingUI.cs | UI exists, wiring incomplete |
+| 2 | Recipe System | FULL | N/A (JSON) | RecipeDatabase.cs | All recipes loaded |
+| 3a | Grid Placement (Smith/Adorn) | DATA | 1179 | PlacementDatabase.cs | Data ready, UI unknown |
+| 3b | Hub-Spoke (Refining) | DATA | 1179 | PlacementDatabase.cs | Data ready, UI unknown |
+| 3c | Sequential (Alchemy) | DATA | 1179 | PlacementDatabase.cs | Data ready, UI unknown |
+| 3d | Slots (Engineering) | DATA | 1179 | PlacementDatabase.cs | Data ready, UI unknown |
+| 3e | Interactive/Free-form | PARTIAL | 1179 | CraftingUI.cs | Minimal drag-drop evidence |
+| 4 | Smithing Minigame | FULL | 909 | SmithingMinigame.cs | Complete |
+| 5 | Alchemy Minigame | FULL | 1070 | AlchemyMinigame.cs | Complete |
+| 6 | Refining Minigame | FULL | 826 | RefiningMinigame.cs | Complete |
+| 7 | Engineering Minigame | FULL | 1312 | EngineeringMinigame.cs | Complete |
+| 8 | Enchanting Minigame | FULL | 1408 | EnchantingMinigame.cs | Complete |
+| 9 | Fishing Minigame | NONE | 872 | (Missing) | Out of scope? |
+| 10 | Difficulty Calculator | FULL | 809 | DifficultyCalculator.cs | All formulas preserved |
+| 11 | Reward Calculator | FULL | 608 | RewardCalculator.cs | All formulas preserved |
+| 12 | Base Minigame (MACRO-8) | FULL | N/A (new) | BaseCraftingMinigame.cs | Architecture improvement |
+| 13 | Interactive Crafting | PARTIAL | 1179 | CraftingUI.cs | UI exists, drag-drop missing |
+| 14a | ML Classifiers | FULL | 1419 | ClassifierManager.cs + 5 preprocessors | C# complete, Phase 6 adds models |
+| 14b | LLM Item Generator | STUB | 1392 | StubItemGenerator.cs | Stub complete, real API deferred |
+| 14c | Invent Integration | NONE | Mixed | Not visible | Pipeline wiring missing |
+| 15 | Crafted Stats & Quality | PARTIAL | N/A | RewardCalculator.cs | Multipliers calculated, rarity mods missing |
+| 16 | Rarity System | PARTIAL | 259 | (Implicit) | Validation and modifiers not visible |
+| 17 | Minigame Effects | NONE | 1522 | (Not examined) | Particle/visual effects unknown |
+| 18 | Invented Recipe Persistence | UNKNOWN | (character.py) | (Unknown) | Character model inspection needed |
 
 ---
 

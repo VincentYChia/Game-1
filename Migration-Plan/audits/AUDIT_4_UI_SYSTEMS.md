@@ -22,7 +22,12 @@ All implemented panels use **Screen Space Overlay Canvas** with dark semi-transp
 | 1 | **Start Menu** | 6257-6342 | ✅ COMPLETE | `StartMenuUI.cs` - New World, Load World, Temp World, Load Default fully implemented. Name input, state transitions working. |
 | 2 | **Class Selection** | 6344-6426 | ✅ COMPLETE | `ClassSelectionUI.cs` - 6 class cards, tag descriptions, bonuses display, click-to-select, state transition to gameplay. |
 
-**Status**: Both screens fully migrated with Game1Setup.cs integration.
+**Acceptance Criteria**:
+- [x] Start Menu renders with New World, Load World, Temp World, Load Default buttons
+- [x] Name input field accepts text and passes to character creation
+- [x] State transitions from Start Menu → Class Selection → Gameplay
+- [x] Class Selection displays all 6 classes with tag descriptions and bonuses
+- [x] Click-to-select triggers class assignment and gameplay start
 
 ---
 
@@ -36,7 +41,14 @@ All implemented panels use **Screen Space Overlay Canvas** with dark semi-transp
 | 6 | **Day/Night Overlay** | 2037-2068 | ✅ COMPLETE | Screen tint overlay on Canvas (sort order 30). Blue night, orange sunset/sunrise. Links to DayNightOverlay directional lighting system. |
 | 7 | **Damage Numbers** | 1560+, various | ✅ COMPLETE | World-space floating numbers (not UI Canvas). White (normal), Gold (crit). Rendered via DamageNumberRenderer MonoBehaviour. |
 
-**Status**: Full HUD suite implemented with proper Canvas layering.
+**Acceptance Criteria**:
+- [x] HP bar displays with green→red color lerp based on health percentage
+- [x] Mana bar (blue) and EXP bar (gold) display correctly
+- [x] Level number visible on HUD
+- [x] Buff icons render with duration timers and auto-dismiss on expiry
+- [x] Skill hotbar shows 5 slots with key labels (1-5) and cooldown overlays
+- [x] Day/Night overlay tints screen (blue night, orange sunset/sunrise)
+- [x] Damage numbers float in world-space: white (normal), gold (crit)
 
 ---
 
@@ -53,7 +65,15 @@ All implemented panels use **Screen Space Overlay Canvas** with dark semi-transp
 | 14 | **Equipment Management** | 5845-5987 | ✅ COMPLETE | Tooltip rendering in `EquipmentUI` + `TooltipRenderer.cs`. Durability display, rarity colors. |
 | 15 | **Enchantment Selection** | 6179-6257 | ⚠️ PARTIAL | Python renders scrollable enchantment list for compatible items. C# version likely needs explicit UI component (may be bundled in `CraftingUI` or missing). |
 
-**Status**: Core loops complete. Enchantment selection UI may need dedicated screen.
+**Acceptance Criteria**:
+- [x] Inventory opens/closes via Tab key with 30-slot grid (6x5)
+- [x] Drag-drop moves items within inventory and to/from equipment
+- [x] Equipment panel shows 8 slots with durability bars and total damage/defense
+- [x] Stats UI shows 6 stat rows with +/- buttons and unallocated points counter
+- [ ] Skills Menu renders learned skills, available-to-learn list, and hotbar assignment (MISSING)
+- [x] Crafting UI displays recipe sidebar, material placement grid, craft/clear/invent buttons
+- [ ] Interactive Crafting supports free-form drag-drop material placement (PARTIAL)
+- [ ] Enchantment Selection modal shows scrollable list of compatible items (NEEDS VERIFICATION)
 
 ---
 
@@ -66,7 +86,12 @@ All implemented panels use **Screen Space Overlay Canvas** with dark semi-transp
 | 18 | **NPC Dialogue** | 3173-3290 | ✅ COMPLETE | `NPCDialogueUI.cs` - Dialogue text, NPC portrait, quest list, accept/turn-in/close buttons. Opens via F key or world interaction. |
 | 19 | **Chest UI** | 1637-2022 | ✅ COMPLETE | `ChestUI.cs` - Unified for dungeon, spawn, and death chests. Item grid, take-all button, quantity handling. |
 
-**Status**: Information systems fully migrated.
+**Acceptance Criteria**:
+- [x] Encyclopedia opens via L key with 6 tabs (Guide, Quests, Skills, Titles, Stats, Recipes)
+- [x] Map opens via M key with chunk grid, player marker, fog of war, zoom/pan
+- [x] Waypoint system supports place/rename/delete
+- [x] NPC Dialogue displays text, portrait, quest list, accept/turn-in/close buttons
+- [x] Chest UI shows item grid with take-all button and quantity handling
 
 ---
 
@@ -81,7 +106,13 @@ All implemented panels use **Screen Space Overlay Canvas** with dark semi-transp
 | 24 | **Engineering Minigame** | 760-904 | ✅ COMPLETE | `EngineeringMinigameUI.cs` - Slot puzzle UI, piece placement. |
 | 25 | **Enchanting Minigame** | 1410+ lines in Python | ✅ COMPLETE | `EnchantingMinigameUI.cs` - Enchantment wheel, selection UI, application. |
 
-**Status**: All 5 discipline minigames fully migrated with base class architecture.
+**Acceptance Criteria**:
+- [x] Base minigame framework provides shared timer, performance tracking, cancel button, result panel
+- [x] Smithing UI: temperature bar, bellows button, hammer timing, perfect zone indicator
+- [x] Alchemy UI: stability bar, stage indicators, reaction chain timing
+- [x] Refining UI: furnace display, material conversion indicators
+- [x] Engineering UI: slot puzzle layout, piece placement interaction
+- [x] Enchanting UI: enchantment wheel, selection interface, application feedback
 
 ---
 
@@ -93,7 +124,11 @@ All implemented panels use **Screen Space Overlay Canvas** with dark semi-transp
 | 27 | **Notifications** | 3933-3948 | ✅ COMPLETE | `NotificationUI.cs` - Toast messages, auto-dismiss, stacking, color-coded by type (error/success/warning). Bridges `NotificationSystem` (pure C#). |
 | 28 | **Debug Overlay** | 750-850 + logs | ✅ COMPLETE | `DebugOverlay.cs` - FPS display, position/chunk info, F1-F7 debug toggles. Toggle keys fully functional. |
 
-**Status**: All visual overlays complete.
+**Acceptance Criteria**:
+- [x] Tooltips render on highest canvas (sort order 30) for items, equipment, tools
+- [ ] Skill tooltips render on hover (MISSING — no `ShowSkill()` method in TooltipRenderer)
+- [x] Notifications display as toast messages, auto-dismiss, stacking, color-coded by type
+- [x] Debug overlay shows FPS, position/chunk info, F1-F7 toggles
 
 ---
 
@@ -105,7 +140,10 @@ All implemented panels use **Screen Space Overlay Canvas** with dark semi-transp
 | 30 | **Loading Indicator** | 6657-6850 | ⚠️ PARTIAL | LLM loading overlay (`_render_loading_overlay`, `_render_loading_corner`). Loading display exists in systems but may lack full UI representation. |
 | 31 | **Fishing UI** | NO CODE FOUND | ❌ MISSING | Mentioned in CLAUDE.md design docs but no renderer methods exist. Not implemented in Python or C#. |
 
-**Status**: Dungeon wave UI missing; fishing not started; loading indicator partially complete.
+**Acceptance Criteria**:
+- [ ] Dungeon wave counter displays Wave X/Y, timer, enemy count (MISSING)
+- [ ] Loading indicator shows full-screen modal with progress for LLM generation (PARTIAL — only toasts)
+- [ ] Fishing UI renders pond surface, target rings, click timing (NOT STARTED — also missing in Python)
 
 ---
 
