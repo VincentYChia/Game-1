@@ -1,11 +1,11 @@
 # Domain 7: Testing Strategy — Comprehensive Plan
 **Date**: 2026-02-19
-**Scope**: 364+ tests across 15 game systems — unit tests, integration tests, E2E scenarios, ML golden files
-**Current Coverage**: 104/364 tests (28%) — ML and E2E complete, core systems not started
+**Scope**: 454+ tests across 16 game systems — unit tests, integration tests, E2E scenarios, ML golden files
+**Current Coverage**: 64/454 tests (14%) — ML and E2E complete, core unit tests not started
 
 ---
 
-### EXECUTIVE SUMMARY
+## Executive Summary
 
 **Current Status**:
 - 6 test files exist covering EditMode (4 files) and PlayMode (2 files)
