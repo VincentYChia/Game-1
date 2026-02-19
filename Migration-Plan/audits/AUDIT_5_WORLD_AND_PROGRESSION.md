@@ -333,7 +333,7 @@
 - [x] 6 stat fields (strength, defense, vitality, luck, agility, intelligence)
 - [x] Base 0, max 30 per stat
 - [x] Stat bonuses applied correctly in damage/defense calculations
-- [x] XML UI for allocation
+- [x] UI for stat point allocation
 
 ---
 
