@@ -1,9 +1,9 @@
 # Migration Plan — Holistic Summary & Completion Status
 
-**Last Updated**: 2026-02-14
+**Last Updated**: 2026-02-19
 **Branch**: `claude/phase-7-migration-context-eHdhR`
-**Total Documentation**: 16,013 lines across 15 documents (+ 3 organizational READMEs + completion report)
-**Implementation Status**: All 7 phases complete (147 C# files, ~34,700 LOC). Migration done.
+**Total Documentation**: 16,013 lines across 15 documents (+ 3 organizational READMEs + completion report + 7 domain audits)
+**Implementation Status**: All 7 phases complete (147 C# files, ~34,700 LOC). Migration done. **Post-migration audit identifies ~151 remaining gaps** (see checklist).
 
 ---
 
@@ -90,6 +90,19 @@ The 7-phase plan is dependency-ordered so developers can work on phases independ
 | **Phase 6: Unity Integration** | 954 | GameEngine (10,098 lines) decomposed into ~40 Unity components. Camera (ortho/perspective), XZ-plane rendering, Input System, UI. |
 | **Phase 7: Polish & LLM Stub** | 1,024 | `IItemGenerator` interface + `StubItemGenerator`, 10 E2E test scenarios, 3D readiness verification checklist |
 
+### Post-Migration Audit (2026-02-19)
+
+| Document | Focus | Key Finding |
+|----------|-------|-------------|
+| `UNITY_MIGRATION_CHECKLIST.md` | **Hub** — points to all 7 audit documents | ~151 gaps between "C# files exist" and "playable 3D game" |
+| `audits/AUDIT_1_INFRASTRUCTURE.md` | Unity project setup, packages, scenes, assets | 25 infra gaps. No Unity project exists yet. |
+| `audits/AUDIT_2_COMBAT_AND_MOVEMENT.md` | Combat, movement, skills, enemy AI | Math 100% ported, 0% wired to game loop. |
+| `audits/AUDIT_3_CRAFTING_AND_MINIGAMES.md` | 6 crafting disciplines, ML classifiers, LLM | 5/6 minigames ported. Fishing missing. |
+| `audits/AUDIT_4_UI_SYSTEMS.md` | 27+ UI panels, canvas architecture | 20/27 panels exist. Skills Menu missing. |
+| `audits/AUDIT_5_WORLD_AND_PROGRESSION.md` | World, dungeons, map, leveling, save/load | Dungeon + Map systems missing entirely. |
+| `audits/AUDIT_6_3D_REQUIREMENTS.md` | Low-fidelity 3D spec for every system | ~44 hours for 3D MVP. |
+| `audits/AUDIT_7_TESTING_STRATEGY.md` | 364+ tests, 15 systems | 104/364 done (28%). Core unit tests not started. |
+
 ### Reference Documents
 
 | Document | Lines | Purpose |
@@ -165,13 +178,18 @@ The 7-phase plan is dependency-ordered so developers can work on phases independ
 See `Migration-Plan/MIGRATION_COMPLETION_REPORT.md` for full details.
 
 ### Reading Order for New Developers
-1. `MIGRATION_PLAN.md` §0 — How to use this plan
-2. `CONVENTIONS.md` — All rules (naming, 3D, items)
-3. `IMPROVEMENTS.md` Quick Reference — See all improvements at a glance
-4. `PHASE_CONTRACTS.md` — Your phase's inputs/outputs
-5. Your phase document — Detailed instructions
+1. **This document** (`COMPLETION_STATUS.md`) — Understand the overall plan and what was built
+2. `UNITY_MIGRATION_CHECKLIST.md` — Understand what's LEFT to do (hub → 7 audit docs)
+3. The specific `audits/AUDIT_*.md` for your domain — Detailed gap analysis and acceptance criteria
+4. `CONVENTIONS.md` — All rules (naming, 3D, items)
+5. `IMPROVEMENTS.md` Quick Reference — See all improvements at a glance
 6. `UNITY_PRIMER.md` — If new to Unity
 7. `PYTHON_TO_CSHARP.md` — Language conversion reference
+
+### Reading Order for Original Migration Plan
+1. `MIGRATION_PLAN.md` §0 — How to use this plan
+2. `PHASE_CONTRACTS.md` — Your phase's inputs/outputs
+3. Your phase document — Detailed instructions
 
 ---
 
