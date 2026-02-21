@@ -19,6 +19,7 @@ using Game1.Data.Models;
 using Game1.Entities;
 using Game1.Systems.World;
 using Game1.Systems.Combat;
+using Game1.Systems.Crafting;
 using Game1.Systems.Save;
 using Game1.Systems.Classifiers;
 using Game1.Unity.ML;
@@ -74,6 +75,17 @@ namespace Game1.Unity.Core
         public const float CycleLength = 1440f;  // 24 minutes total
 
         // ====================================================================
+        // Combat & Crafting Systems
+        // ====================================================================
+
+        /// <summary>Active combat manager (null until game starts).</summary>
+        public CombatManager CombatManager { get; private set; }
+
+        private CombatConfig _combatConfig;
+        private EnemySpawner _enemySpawner;
+        private CharacterCombatAdapter _playerCombatAdapter;
+
+        // ====================================================================
         // Initialization (mirrors game_engine.py __init__)
         // ====================================================================
 
@@ -107,6 +119,17 @@ namespace Game1.Unity.Core
                 Debug.LogError($"[GameManager] Database initialization failed: {ex.Message}");
             }
 
+            // Step 2b: Load enemy database (lives in Game1.Systems.Combat)
+            try
+            {
+                EnemyDatabaseAdapter.Instance.LoadFromFile("Definitions.JSON/hostiles-1.JSON");
+                Debug.Log($"[GameManager] Enemy database loaded: {EnemyDatabaseAdapter.Instance.EnemyCount} enemies");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[GameManager] Enemy database load failed (non-fatal): {ex.Message}");
+            }
+
             // Step 3: Initialize ML classifier backend (Phase 5 → Phase 6 bridge)
             try
             {
@@ -118,7 +141,20 @@ namespace Game1.Unity.Core
                 Debug.LogWarning($"[GameManager] Classifier init failed (non-fatal): {ex.Message}");
             }
 
-            // Step 4: Apply target frame rate
+            // Step 4: Load combat configuration
+            _combatConfig = new CombatConfig();
+            string combatConfigPath = GamePaths.GetContentPath("Definitions.JSON/combat-config-1.JSON");
+            if (File.Exists(combatConfigPath))
+            {
+                _combatConfig.LoadFromFile(combatConfigPath);
+                Debug.Log("[GameManager] Combat config loaded");
+            }
+            else
+            {
+                Debug.LogWarning("[GameManager] Combat config not found, using defaults");
+            }
+
+            // Step 5: Apply target frame rate
             Application.targetFrameRate = GameConfig.FPS;
         }
 
@@ -165,8 +201,8 @@ namespace Game1.Unity.Core
             Player.Name = playerName;
             Player.SelectClass(classId);
 
-            // TODO: Initialize combat when Character→ICombatCharacter adapter is built
-            // CombatManager requires (CombatConfig, EnemySpawner) and Character doesn't implement ICombatCharacter yet
+            // Initialize combat system with adapter
+            InitializeCombatSystem();
 
             // Update camera target
             if (_cameraController != null)
@@ -231,7 +267,8 @@ namespace Game1.Unity.Core
                 if (saveData.TryGetValue("game_time", out object timeObj))
                     GameTime = Convert.ToSingle(timeObj);
 
-                // TODO: Initialize combat when adapter layer is built
+                // Initialize combat system with adapter
+                InitializeCombatSystem();
 
                 if (_cameraController != null)
                     _cameraController.SetTarget(PositionConverter.ToVector3(Player.Position));
@@ -303,7 +340,11 @@ namespace Game1.Unity.Core
                 // Update world chunks around player
                 World?.EnsureChunksLoaded(Player.Position.X, Player.Position.Z);
 
-                // TODO: Update combat system when adapter layer is built
+                // Update combat system
+                if (CombatManager != null && _playerCombatAdapter != null)
+                {
+                    CombatManager.Update(dt, _playerCombatAdapter, false, IsNight());
+                }
 
                 // Update camera target
                 if (_cameraController != null)
@@ -311,6 +352,83 @@ namespace Game1.Unity.Core
                     _cameraController.SetTarget(PositionConverter.ToVector3(Player.Position));
                 }
             }
+
+            // Update crafting minigame (runs during MinigameActive state)
+            if (_stateManager != null && _stateManager.CurrentState == GameState.MinigameActive)
+            {
+                if (InteractiveCrafting.Instance.IsActive)
+                {
+                    InteractiveCrafting.Instance.Update(dt);
+
+                    if (InteractiveCrafting.Instance.IsFinished)
+                    {
+                        var result = InteractiveCrafting.Instance.GetResult();
+                        if (result != null && result.Success)
+                        {
+                            Player?.Inventory.AddItem(result.OutputItemId, result.OutputQuantity);
+                            GameEvents.RaiseItemCrafted(
+                                InteractiveCrafting.Instance.CurrentDiscipline,
+                                result.OutputItemId);
+                        }
+
+                        _stateManager.TransitionTo(GameState.Playing);
+                    }
+                }
+            }
+        }
+
+        // ====================================================================
+        // Combat System Initialization
+        // ====================================================================
+
+        /// <summary>
+        /// Initialize the combat system with the current player character.
+        /// Called from StartNewGame() and LoadGame().
+        /// </summary>
+        private void InitializeCombatSystem()
+        {
+            if (Player == null) return;
+
+            try
+            {
+                _playerCombatAdapter = new CharacterCombatAdapter(Player);
+                _enemySpawner = new EnemySpawner(_combatConfig, EnemyDatabaseAdapter.Instance);
+                CombatManager = new CombatManager(_combatConfig, _enemySpawner);
+
+                // Load chunk templates for enemy spawning
+                string templatesPath = GamePaths.GetContentPath("Definitions.JSON/chunk-templates-1.JSON");
+                if (File.Exists(templatesPath))
+                {
+                    _enemySpawner.LoadChunkTemplates(templatesPath);
+                }
+
+                Debug.Log("[GameManager] Combat system initialized");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[GameManager] Combat init failed (non-fatal): {ex.Message}");
+                CombatManager = null;
+            }
+        }
+
+        /// <summary>
+        /// Get the enemy at a world position (for click-based combat).
+        /// </summary>
+        public ICombatEnemy GetEnemyAtPosition(float x, float z)
+        {
+            return CombatManager?.GetEnemyAtPosition(x, z);
+        }
+
+        /// <summary>
+        /// Player attacks a specific enemy.
+        /// </summary>
+        public (float Damage, bool IsCritical) PlayerAttack(ICombatEnemy enemy, string hand = "mainHand")
+        {
+            if (CombatManager == null || _playerCombatAdapter == null || enemy == null)
+                return (0, false);
+
+            var result = CombatManager.PlayerAttackEnemy(enemy, _playerCombatAdapter, hand);
+            return (result.Damage, result.IsCritical);
         }
 
         // ====================================================================

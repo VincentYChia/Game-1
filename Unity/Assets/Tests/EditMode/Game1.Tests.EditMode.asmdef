@@ -1,0 +1,27 @@
+{
+    "name": "Game1.Tests.EditMode",
+    "rootNamespace": "Game1.Tests.EditMode",
+    "references": [
+        "Game1.Core",
+        "Game1.Data",
+        "Game1.Entities",
+        "Game1.Systems",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

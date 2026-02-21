@@ -1,0 +1,472 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Master formulas for all item stats. Hierarchical multiplier system: Global × Tier × Category × Type × Subtype × Item",
+    "note": "All numerical values are PLACEHOLDERS for balance testing. Change one number here to rebalance entire categories.",
+    "calculationFormula": "FinalStat = globalBase × tierMultiplier × categoryMultiplier × typeMultiplier × subtypeMultiplier × itemMultiplier"
+  },
+
+  "globalBases": {
+    "weaponDamage": 10,
+    "armorDefense": 10,
+    "toolGathering": 10,
+    "durability": 250,
+    "weight": 1.0,
+    "attackSpeed": 1.0,
+    "_durabilityNote": "250 base × tier multiplier = T1:250, T2:500, T3:1000, T4:2000"
+  },
+
+  "tierMultipliers": {
+    "tier1": 1.0,
+    "tier2": 2.0,
+    "tier3": 4.0,
+    "tier4": 8.0
+  },
+
+  "damageSystem": {
+    "formula": "globalBases.weaponDamage × tierMultiplier × categoryMultiplier × typeMultiplier × subtypeMultiplier × itemMultiplier",
+    "varianceRange": {
+      "min": 0.85,
+      "max": 1.15,
+      "note": "Final damage is randomized within this range"
+    },
+    
+    "categoryMultipliers": {
+      "weapon": 1.0,
+      "tool": 0.6,
+      "shield": 0.4,
+      "note": "Tools and shields can be used in combat but deal reduced damage"
+    },
+    
+    "typeMultipliers": {
+      "sword": 1.0,
+      "axe": 1.1,
+      "spear": 1.05,
+      "mace": 1.15,
+      "dagger": 0.8,
+      "bow": 1.0,
+      "staff": 0.9,
+      "shield": 1.0
+    },
+    
+    "subtypeMultipliers": {
+      "shortsword": 0.9,
+      "longsword": 1.0,
+      "greatsword": 1.4,
+      "dagger": 1.0,
+      "dual_dagger": 0.85,
+      "hand_axe": 0.9,
+      "battleaxe": 1.0,
+      "greataxe": 1.3,
+      "spear": 1.0,
+      "pike": 1.2,
+      "halberd": 1.4,
+      "mace": 1.0,
+      "warhammer": 1.3,
+      "maul": 1.5,
+      "shortbow": 0.9,
+      "longbow": 1.0,
+      "crossbow": 1.2,
+      "staff": 1.0,
+      "battle_staff": 1.1,
+      "buckler": 1.0,
+      "kite_shield": 1.2,
+      "tower_shield": 1.5,
+      "pickaxe": 1.0,
+      "axe_tool": 1.0,
+      "fishing_rod": 0.5,
+      "sickle": 0.7
+    },
+
+    "exampleCalculation": {
+      "item": "Iron Shortsword (T1, common, itemMultiplier 1.0)",
+      "calculation": "10 (base) × 1.0 (T1) × 1.0 (weapon) × 1.0 (sword) × 0.9 (shortsword) × 1.0 (item) = 9",
+      "withVariance": "[7.65, 10.35] rounds to [8, 10] damage"
+    }
+  },
+
+  "defenseSystem": {
+    "formula": "globalBases.armorDefense × tierMultiplier × slotMultiplier × itemMultiplier",
+    
+    "slotMultipliers": {
+      "head": 0.8,
+      "chest": 1.5,
+      "legs": 1.2,
+      "feet": 0.7,
+      "hands": 0.6
+    },
+
+    "note": "Shields provide defense through blocking mechanic, not defense stat",
+
+    "exampleCalculation": {
+      "item": "Iron Chestplate (T2, common, itemMultiplier 1.0)",
+      "calculation": "10 (base) × 2.0 (T2) × 1.5 (chest) × 1.0 (item) = 30 defense"
+    }
+  },
+
+  "gatheringSystem": {
+    "formula": "globalBases.toolGathering × tierMultiplier × toolTypeMultiplier × itemMultiplier",
+    
+    "toolTypeMultipliers": {
+      "pickaxe": 1.0,
+      "axe": 1.0,
+      "fishing_rod": 1.0,
+      "sickle": 1.0
+    },
+
+    "note": "Gathering stat determines harvest speed and yield",
+
+    "exampleCalculation": {
+      "item": "Steel Pickaxe (T2, itemMultiplier 1.0)",
+      "calculation": "10 (base) × 2.0 (T2) × 1.0 (pickaxe) × 1.0 (item) = 20 gathering"
+    }
+  },
+
+  "attackSpeedSystem": {
+    "formula": "globalBases.attackSpeed × typeMultiplier × subtypeMultiplier × itemMultiplier",
+    "note": "Attack speed in attacks per second. Higher = faster attacks. Handedness (1H/2H) affects speed via game logic based on tags.",
+    
+    "typeMultipliers": {
+      "sword": 1.0,
+      "axe": 0.9,
+      "spear": 1.05,
+      "mace": 0.95,
+      "dagger": 1.4,
+      "bow": 0.8,
+      "staff": 1.2,
+      "shield": 1.0
+    },
+    
+    "subtypeMultipliers": {
+      "shortsword": 1.1,
+      "longsword": 1.0,
+      "greatsword": 0.7,
+      "dagger": 1.0,
+      "dual_dagger": 1.2,
+      "hand_axe": 1.0,
+      "battleaxe": 0.9,
+      "greataxe": 0.7,
+      "spear": 1.0,
+      "pike": 0.85,
+      "halberd": 0.75,
+      "mace": 1.0,
+      "warhammer": 0.8,
+      "maul": 0.65,
+      "shortbow": 1.0,
+      "longbow": 0.75,
+      "crossbow": 0.6,
+      "staff": 1.0,
+      "battle_staff": 0.9,
+      "buckler": 1.2,
+      "kite_shield": 1.0,
+      "tower_shield": 0.8
+    },
+
+    "handednessModifiers": {
+      "note": "Applied by game logic based on weapon tags, not in formula",
+      "1H": "No modifier (baseline)",
+      "2H": "15% slower (0.85x)",
+      "versatile_1H": "Base speed",
+      "versatile_2H": "Slightly slower (0.9x) but more damage"
+    },
+
+    "exampleCalculation": {
+      "item": "Copper Dagger (T1, itemMultiplier 1.3)",
+      "calculation": "1.0 (base) × 1.4 (dagger type) × 1.0 (dagger subtype) × 1.3 (item) = 1.82 attacks/sec"
+    }
+  },
+
+  "durabilitySystem": {
+    "formula": "globalBases.durability × tierMultiplier × categoryMultiplier × itemMultiplier",
+    
+    "categoryMultipliers": {
+      "weapon": 1.0,
+      "armor": 1.2,
+      "tool": 1.0,
+      "accessory": 0,
+      "shield": 1.5
+    },
+    
+    "note": "Accessories use durability: 0 to indicate infinite durability (never breaks)",
+
+    "durabilityMechanics": {
+      "100_to_50_percent": "Item functions at full stats",
+      "50_to_0_percent": "Stats gradually decline to 75% effectiveness",
+      "at_0_percent": "Item functions infinitely at 50% effectiveness (never breaks completely)",
+      "wrongToolUsage": "Drastically increases durability drain (pickaxe in combat, sword for mining)"
+    },
+
+    "exampleCalculation": {
+      "item": "Steel Longsword (T2, itemMultiplier 1.1)",
+      "calculation": "500 (base) × 2.0 (T2) × 1.0 (weapon) × 1.1 (item) = 1100 durability"
+    }
+  },
+
+  "weightSystem": {
+    "formula": "globalBases.weight × tierMultiplier × categoryMultiplier × typeMultiplier × subtypeMultiplier × itemMultiplier",
+    
+    "categoryMultipliers": {
+      "weapon": 1.0,
+      "armor": 2.0,
+      "tool": 0.8,
+      "accessory": 0.1,
+      "consumable": 0.2,
+      "device": 1.5,
+      "station": 10.0,
+      "material": 0.3
+    },
+    
+    "typeMultipliers": {
+      "sword": 1.0,
+      "axe": 1.1,
+      "spear": 0.9,
+      "mace": 1.2,
+      "dagger": 0.5,
+      "bow": 0.7,
+      "staff": 0.6,
+      "shield": 1.3,
+      "helmet": 1.0,
+      "chestplate": 1.5,
+      "leggings": 1.2,
+      "boots": 0.8,
+      "gauntlets": 0.6
+    },
+    
+    "subtypeMultipliers": {
+      "shortsword": 0.8,
+      "longsword": 1.0,
+      "greatsword": 1.6,
+      "dagger": 1.0,
+      "hand_axe": 0.9,
+      "battleaxe": 1.0,
+      "greataxe": 1.4,
+      "spear": 1.0,
+      "pike": 1.2,
+      "mace": 1.0,
+      "warhammer": 1.3,
+      "maul": 1.6,
+      "shortbow": 0.9,
+      "longbow": 1.0,
+      "crossbow": 1.2,
+      "buckler": 0.7,
+      "kite_shield": 1.0,
+      "tower_shield": 1.5
+    },
+    
+    "note": "Weight affects inventory capacity and possibly movement speed. Mithril items can have itemMultiplier < 1.0 to be lighter.",
+
+    "exampleCalculation": {
+      "item": "Steel Greatsword (T2, itemMultiplier 1.0)",
+      "calculation": "1.0 (base) × 2.0 (T2) × 1.0 (weapon) × 1.0 (sword) × 1.6 (greatsword) × 1.0 (item) = 3.2 kg",
+      "mithrilExample": "Mithril Greatsword with itemMultiplier 0.5 would be: 4.0 (T3) × 1.6 × 0.5 = 3.2 kg (same weight as T2 steel!)"
+    }
+  },
+
+  "rangeSystem": {
+    "note": "Range is NOT formula-based, defined per weapon type as flat values in items",
+    "defaultRanges": {
+      "melee_1h": 1,
+      "melee_2h": 1.5,
+      "spear": 2,
+      "pike": 3,
+      "halberd": 2.5,
+      "shortbow": 10,
+      "longbow": 15,
+      "crossbow": 12,
+      "staff": 8,
+      "shield": 1,
+      "fishing_rod": 5
+    }
+  },
+
+  "consumableSystem": {
+    "note": "Consumables use tier-based effect scaling rather than formulas",
+    "effectScaling": {
+      "tier1": {
+        "healthRestore": 50,
+        "manaRestore": 30,
+        "buffPercentage": 10,
+        "duration": 60
+      },
+      "tier2": {
+        "healthRestore": 100,
+        "manaRestore": 60,
+        "buffPercentage": 20,
+        "duration": 120
+      },
+      "tier3": {
+        "healthRestore": 200,
+        "manaRestore": 120,
+        "buffPercentage": 35,
+        "duration": 180
+      },
+      "tier4": {
+        "healthRestore": 400,
+        "manaRestore": 250,
+        "buffPercentage": 50,
+        "duration": 300
+      }
+    }
+  },
+
+  "deviceSystem": {
+    "note": "Devices scale by tier and material rarity used in recipe",
+    "turretDamage": {
+      "formula": "globalBases.weaponDamage × tierMultiplier × 0.8 × itemMultiplier",
+      "fireRate": "T1=1/sec, T2=1.5/sec, T3=2/sec, T4=3/sec"
+    },
+    "bombDamage": {
+      "formula": "globalBases.weaponDamage × tierMultiplier × 3.0 × itemMultiplier",
+      "radius": "T1=3, T2=4, T3=5, T4=6 units"
+    },
+    "trapDamage": {
+      "formula": "globalBases.weaponDamage × tierMultiplier × 2.0 × itemMultiplier",
+      "triggerRadius": "Fixed at 1.5 units"
+    }
+  },
+
+  "raritySystem": {
+    "note": "Rarity affects drop rates and visual style, NOT stats directly. Stats controlled by item multipliers and materials used.",
+    "rarityTiers": {
+      "common": "Standard items from basic materials",
+      "uncommon": "Quality materials or good mini-game performance",
+      "rare": "Excellent materials or excellent mini-game performance",
+      "epic": "Exceptional materials or near-perfect mini-game",
+      "legendary": "Master-crafted from legendary materials",
+      "mythical": "Incredibly rare, unique properties",
+      "unique": "One-of-a-kind, special quest rewards or discoveries"
+    }
+  },
+
+  "balancingGuidelines": {
+    "tierProgression": "Each tier should be roughly 2x stronger than previous tier (via tierMultiplier)",
+    "weaponVariety": "Different weapon types trade damage for speed or reach",
+    "toolCombat": "Tools at 60% weapon damage ensures they're viable but not optimal for combat",
+    "armorSlots": "Chestplate provides most defense (1.5x), extremities provide less (0.6-0.8x)",
+    "weightTradeoffs": "Heavy armor = more defense but slower movement, light armor = mobility",
+    "legendaryMaterials": "Mithril = lightweight (0.5x weight), Adamantine = indestructible (2.0x durability)",
+    "itemMultipliers": "Use to make specific items special (1.0 = baseline, 1.5 = 50% better, 0.5 = 50% lighter/weaker)"
+  },
+
+  "exampleFullCalculations": {
+    "iron_shortsword_t1": {
+      "damage": "10 × 1.0 × 1.0 × 1.0 × 0.9 × 1.0 = 9 (range: 8-10)",
+      "attackSpeed": "1.0 × 1.0 × 1.1 × 1.0 = 1.1 attacks/sec",
+      "durability": "500 × 1.0 × 1.0 × 1.0 = 500",
+      "weight": "1.0 × 1.0 × 1.0 × 1.0 × 0.8 × 1.0 = 0.8 kg"
+    },
+    "mithril_greatsword_t4_legendary": {
+      "damage": "10 × 8.0 × 1.0 × 1.0 × 1.4 × 1.5 = 168 (range: 143-193)",
+      "attackSpeed": "1.0 × 1.0 × 0.7 × 1.3 = 0.91 attacks/sec",
+      "durability": "500 × 8.0 × 1.0 × 2.0 = 8000 (mithril bonus)",
+      "weight": "1.0 × 8.0 × 1.0 × 1.0 × 1.6 × 0.5 = 6.4 kg (half normal!)"
+    },
+    "steel_chestplate_t2": {
+      "defense": "10 × 2.0 × 1.5 × 1.0 = 30 defense",
+      "durability": "500 × 2.0 × 1.2 × 1.0 = 1200",
+      "weight": "1.0 × 2.0 × 2.0 × 1.5 × 1.0 = 6.0 kg"
+    }
+  },
+
+  "characterStatModifiers": {
+    "metadata": {
+      "description": "Character stat effects on gameplay systems",
+      "note": "All values are PLACEHOLDERS for balance testing"
+    },
+
+    "intelligence": {
+      "description": "INT affects minigame difficulty - higher INT = easier crafting",
+      "reductionPerPoint": 0.02,
+      "maxEffectiveINT": 30,
+      "note": "At max INT (30), total reduction = 60%. Bounds prevent values from going too low.",
+
+      "smithing": {
+        "hammerSpeedMultiplier": {
+          "formula": "baseSpeed × (1 - INT × reductionPerPoint)",
+          "minimumMultiplier": 0.4,
+          "note": "Slower hammer = easier timing. Min 40% of base speed."
+        },
+        "tempDecayMultiplier": {
+          "formula": "baseDecay × (1 - INT × reductionPerPoint × 0.5)",
+          "minimumMultiplier": 0.5,
+          "note": "Slower decay = easier temperature management. Min 50% of base decay."
+        },
+        "timeLimitMultiplier": {
+          "formula": "baseTime × (1 + INT × reductionPerPoint)",
+          "maximumMultiplier": 1.6,
+          "note": "More time. Max 160% of base time."
+        }
+      },
+
+      "refining": {
+        "rotationSpeedMultiplier": {
+          "formula": "baseSpeed × (1 - INT × reductionPerPoint)",
+          "minimumMultiplier": 0.4,
+          "note": "Slower rotation = more reaction time. Min 40% of base speed."
+        },
+        "timeLimitMultiplier": {
+          "formula": "baseTime × (1 + INT × reductionPerPoint)",
+          "maximumMultiplier": 1.6,
+          "note": "More time. Max 160% of base time."
+        }
+      },
+
+      "alchemy": {
+        "speedBonusAddition": {
+          "formula": "baseBonus + (INT × reductionPerPoint)",
+          "maximumAddition": 0.6,
+          "note": "Longer reaction windows. Max +60% added to base bonus."
+        },
+        "timeLimitMultiplier": {
+          "formula": "baseTime × (1 + INT × reductionPerPoint)",
+          "maximumMultiplier": 1.6,
+          "note": "More time. Max 160% of base time."
+        }
+      },
+
+      "engineering": {
+        "timeLimitMultiplier": {
+          "formula": "baseTime × (1 + INT × reductionPerPoint)",
+          "maximumMultiplier": 1.6,
+          "note": "Engineering only gets time bonus from INT."
+        }
+      },
+
+      "adornments": {
+        "note": "Adornments/Enchanting is NOT affected by INT stat"
+      }
+    },
+
+    "strength": {
+      "meleeDamagePerPoint": 0.05,
+      "miningDamagePerPoint": 0.05,
+      "inventorySlotsPerPoint": 10,
+      "note": "+5% melee/mining damage, +10 inventory slots per STR"
+    },
+
+    "defense": {
+      "damageReductionPerPoint": 0.02,
+      "armorEffectivenessPerPoint": 0.03,
+      "note": "+2% damage reduction, +3% armor effectiveness per DEF"
+    },
+
+    "vitality": {
+      "maxHPPerPoint": 15,
+      "healthRegenPerPoint": 0.01,
+      "note": "+15 max HP, +1% health regen per VIT"
+    },
+
+    "luck": {
+      "critChancePerPoint": 0.02,
+      "resourceQualityPerPoint": 0.02,
+      "rareDropChancePerPoint": 0.03,
+      "note": "+2% crit, +2% resource quality, +3% rare drops per LCK"
+    },
+
+    "agility": {
+      "forestryDamagePerPoint": 0.05,
+      "attackSpeedPerPoint": 0.03,
+      "note": "+5% forestry damage, +3% attack speed per AGI"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Game1.Core",
+    "rootNamespace": "Game1.Core",
+    "references": [
+        "com.unity.nuget.newtonsoft-json"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

@@ -1,0 +1,708 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "totalNodes": 36,
+    "description": "Resource node definitions using qualitative descriptors that map to value_translation_tables.json",
+    "note": "Size (small/normal/large/huge) is rolled at spawn time, not defined here"
+  },
+
+  "nodes": [
+    {
+      "metadata": {
+        "narrative": "Ancient oak standing patient as centuries pass. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft.",
+        "tags": ["tree", "wood", "starter"]
+      },
+      "resourceId": "oak_tree",
+      "name": "Oak Tree",
+      "category": "tree",
+      "tier": 1,
+      "requiredTool": "axe",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "oak_log", "quantity": "many", "chance": "guaranteed" }
+      ],
+      "respawnTime": "quick"
+    },
+    {
+      "metadata": {
+        "narrative": "Tall conifer reaching toward the sky. Flexible wood perfect for bows and lightweight construction.",
+        "tags": ["tree", "wood", "flexible"]
+      },
+      "resourceId": "pine_tree",
+      "name": "Pine Tree",
+      "category": "tree",
+      "tier": 1,
+      "requiredTool": "axe",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "pine_log", "quantity": "many", "chance": "guaranteed" }
+      ],
+      "respawnTime": "quick"
+    },
+    {
+      "metadata": {
+        "narrative": "Pale-barked tree with wood that absorbs shock beautifully. Weapon smiths prize these for handle material.",
+        "tags": ["tree", "wood", "quality"]
+      },
+      "resourceId": "ash_tree",
+      "name": "Ash Tree",
+      "category": "tree",
+      "tier": 1,
+      "requiredTool": "axe",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "ash_log", "quantity": "several", "chance": "guaranteed" }
+      ],
+      "respawnTime": "quick"
+    },
+    {
+      "metadata": {
+        "narrative": "Elegant tree with papery white bark. Fine grain makes it ideal for detailed carving work.",
+        "tags": ["tree", "wood", "fine"]
+      },
+      "resourceId": "birch_tree",
+      "name": "Birch Tree",
+      "category": "tree",
+      "tier": 2,
+      "requiredTool": "axe",
+      "baseHealth": 200,
+      "drops": [
+        { "materialId": "birch_log", "quantity": "several", "chance": "guaranteed" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Dense hardwood tree that survives temperature extremes. The wood holds its shape through any condition.",
+        "tags": ["tree", "wood", "durable"]
+      },
+      "resourceId": "maple_tree",
+      "name": "Maple Tree",
+      "category": "tree",
+      "tier": 2,
+      "requiredTool": "axe",
+      "baseHealth": 200,
+      "drops": [
+        { "materialId": "maple_log", "quantity": "several", "chance": "high" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Rare tree whose wood rivals soft metals in hardness. Almost metallic ring when struck.",
+        "tags": ["tree", "wood", "rare", "metallic"]
+      },
+      "resourceId": "ironwood_tree",
+      "name": "Ironwood Tree",
+      "category": "tree",
+      "tier": 3,
+      "requiredTool": "axe",
+      "baseHealth": 400,
+      "drops": [
+        { "materialId": "ironwood_log", "quantity": "few", "chance": "high" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Ancient tree with jet-black wood. Seems to absorb light and magic equally.",
+        "tags": ["tree", "wood", "rare", "magical"]
+      },
+      "resourceId": "ebony_tree",
+      "name": "Ebony Tree",
+      "category": "tree",
+      "tier": 3,
+      "requiredTool": "axe",
+      "baseHealth": 400,
+      "drops": [
+        { "materialId": "ebony_log", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary tree connected to the World Tree's root network. The wood hums with accumulated magical essence.",
+        "tags": ["tree", "wood", "legendary", "living"]
+      },
+      "resourceId": "worldtree_sapling",
+      "name": "Worldtree Sapling",
+      "category": "tree",
+      "tier": 4,
+      "requiredTool": "axe",
+      "baseHealth": 800,
+      "drops": [
+        { "materialId": "worldtree_log", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "very_slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Common copper deposit showing green-blue oxidation. Perfect for learning the basics of mining.",
+        "tags": ["ore", "metal", "starter"]
+      },
+      "resourceId": "copper_vein",
+      "name": "Copper Vein",
+      "category": "ore",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "copper_ore", "quantity": "many", "chance": "guaranteed" }
+      ],
+      "respawnTime": "quick"
+    },
+    {
+      "metadata": {
+        "narrative": "Grey metallic deposits throughout the rock face. The backbone of civilization's tools and weapons.",
+        "tags": ["ore", "metal", "standard"]
+      },
+      "resourceId": "iron_deposit",
+      "name": "Iron Deposit",
+      "category": "ore",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "iron_ore", "quantity": "many", "chance": "guaranteed" }
+      ],
+      "respawnTime": "quick"
+    },
+    {
+      "metadata": {
+        "narrative": "Silvery-white ore with a faint lunar glow. Ancient texts speak of its magical properties.",
+        "tags": ["ore", "metal", "magical"]
+      },
+      "resourceId": "tin_seam",
+      "name": "Tin Seam",
+      "category": "ore",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "tin_ore", "quantity": "several", "chance": "high" }
+      ],
+      "respawnTime": "quick"
+    },
+    {
+      "metadata": {
+        "narrative": "Dense, dark ore with carbon-rich composition. Superior to plain iron in every way.",
+        "tags": ["ore", "metal", "advanced"]
+      },
+      "resourceId": "steel_node",
+      "name": "Steel Node",
+      "category": "ore",
+      "tier": 2,
+      "requiredTool": "pickaxe",
+      "baseHealth": 200,
+      "drops": [
+        { "materialId": "steel_ore", "quantity": "several", "chance": "guaranteed" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary silver-white deposits that seem to drink in moonlight. Incredibly light yet impossibly strong.",
+        "tags": ["ore", "metal", "legendary"]
+      },
+      "resourceId": "mithril_cache",
+      "name": "Mithril Cache",
+      "category": "ore",
+      "tier": 2,
+      "requiredTool": "pickaxe",
+      "baseHealth": 200,
+      "drops": [
+        { "materialId": "mithril_ore", "quantity": "few", "chance": "high" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Dark, impossibly hard ore found only in the deepest caverns. The world's exposed bones.",
+        "tags": ["ore", "metal", "rare"]
+      },
+      "resourceId": "adamantine_lode",
+      "name": "Adamantine Lode",
+      "category": "ore",
+      "tier": 3,
+      "requiredTool": "pickaxe",
+      "baseHealth": 400,
+      "drops": [
+        { "materialId": "adamantine_ore", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Gleaming golden-green ore from ancient civilizations. Entire empires were built on its discovery.",
+        "tags": ["ore", "metal", "ancient"]
+      },
+      "resourceId": "orichalcum_trove",
+      "name": "Orichalcum Trove",
+      "category": "ore",
+      "tier": 3,
+      "requiredTool": "pickaxe",
+      "baseHealth": 400,
+      "drops": [
+        { "materialId": "orichalcum_ore", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Reality-bending ore that exists in multiple states simultaneously. Defies conventional physics.",
+        "tags": ["ore", "metal", "mythical", "temporal"]
+      },
+      "resourceId": "etherion_nexus",
+      "name": "Etherion Nexus",
+      "category": "ore",
+      "tier": 4,
+      "requiredTool": "pickaxe",
+      "baseHealth": 800,
+      "drops": [
+        { "materialId": "etherion_ore", "quantity": "few", "chance": "improbable" }
+      ],
+      "respawnTime": "very_slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Pale sedimentary stone easy to work with basic tools. Foundation for simple construction.",
+        "tags": ["stone", "common"]
+      },
+      "resourceId": "limestone_outcrop",
+      "name": "Limestone Outcrop",
+      "category": "stone",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "limestone", "quantity": "abundant", "chance": "guaranteed" },
+        { "materialId": "fire_crystal", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "quick"
+    },
+    {
+      "metadata": {
+        "narrative": "Speckled igneous rock with visible crystals. Harder and more reliable than limestone.",
+        "tags": ["stone", "durable"]
+      },
+      "resourceId": "granite_formation",
+      "name": "Granite Formation",
+      "category": "stone",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "granite", "quantity": "abundant", "chance": "guaranteed" },
+        { "materialId": "water_crystal", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "quick"
+    },
+    {
+      "metadata": {
+        "narrative": "Layered sedimentary rock with fine grain. Compressed clay creates water-resistant sheets.",
+        "tags": ["stone", "layered"]
+      },
+      "resourceId": "shale_bed",
+      "name": "Shale Bed",
+      "category": "stone",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "shale", "quantity": "many", "chance": "guaranteed" },
+        { "materialId": "earth_crystal", "quantity": "few", "chance": "rare" }
+      ],
+      "respawnTime": "quick"
+    },
+    {
+      "metadata": {
+        "narrative": "Dense volcanic rock with distinctive dark banding. Exceptional compression strength.",
+        "tags": ["stone", "volcanic"]
+      },
+      "resourceId": "basalt_column",
+      "name": "Basalt Column",
+      "category": "stone",
+      "tier": 2,
+      "requiredTool": "pickaxe",
+      "baseHealth": 200,
+      "drops": [
+        { "materialId": "basalt", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "fire_crystal", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Brilliant white stone that glows faintly with captured sunlight. Prized for temples and monuments.",
+        "tags": ["stone", "radiant"]
+      },
+      "resourceId": "marble_quarry",
+      "name": "Marble Quarry",
+      "category": "stone",
+      "tier": 2,
+      "requiredTool": "pickaxe",
+      "baseHealth": 200,
+      "drops": [
+        { "materialId": "marble", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "light_gem", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Translucent crystal formation that hums near magical power sources. Amplifies energies passing through it.",
+        "tags": ["stone", "magical", "crystal"]
+      },
+      "resourceId": "quartz_cluster",
+      "name": "Quartz Cluster",
+      "category": "stone",
+      "tier": 2,
+      "requiredTool": "pickaxe",
+      "baseHealth": 200,
+      "drops": [
+        { "materialId": "crystal_quartz", "quantity": "several", "chance": "high" },
+        { "materialId": "lightning_shard", "quantity": "few", "chance": "rare" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Volcanic glass born in eruption's heart. Razor-sharp edges, incredibly brittle.",
+        "tags": ["stone", "sharp", "volcanic"]
+      },
+      "resourceId": "obsidian_flow",
+      "name": "Obsidian Flow",
+      "category": "stone",
+      "tier": 3,
+      "requiredTool": "pickaxe",
+      "baseHealth": 400,
+      "drops": [
+        { "materialId": "obsidian", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "phoenix_ash", "quantity": "few", "chance": "rare" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Pitch-black stone that pulls light into itself. Radiates subtle wrongness.",
+        "tags": ["stone", "void", "rare"]
+      },
+      "resourceId": "voidstone_shard",
+      "name": "Voidstone Shard",
+      "category": "stone",
+      "tier": 3,
+      "requiredTool": "pickaxe",
+      "baseHealth": 400,
+      "drops": [
+        { "materialId": "voidstone", "quantity": "few", "chance": "moderate" },
+        { "materialId": "void_essence", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Perfect crystalline structure that refracts reality itself. Entire fortunes built on single specimens.",
+        "tags": ["stone", "precious", "rare"]
+      },
+      "resourceId": "diamond_geode",
+      "name": "Diamond Geode",
+      "category": "stone",
+      "tier": 3,
+      "requiredTool": "pickaxe",
+      "baseHealth": 400,
+      "drops": [
+        { "materialId": "diamond", "quantity": "few", "chance": "low" },
+        { "materialId": "storm_heart", "quantity": "few", "chance": "improbable" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Stone that remembers everything it witnesses. Contains geological memory of eons.",
+        "tags": ["stone", "mythical", "memory"]
+      },
+      "resourceId": "eternity_monolith",
+      "name": "Eternity Monolith",
+      "category": "stone",
+      "tier": 4,
+      "requiredTool": "pickaxe",
+      "baseHealth": 800,
+      "drops": [
+        { "materialId": "eternity_stone", "quantity": "few", "chance": "improbable" }
+      ],
+      "respawnTime": "very_slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Crystal suspended in perpetual crystallization. Neither solid nor energy, exists in quantum superposition.",
+        "tags": ["stone", "mythical", "quantum"]
+      },
+      "resourceId": "primordial_formation",
+      "name": "Primordial Formation",
+      "category": "stone",
+      "tier": 4,
+      "requiredTool": "pickaxe",
+      "baseHealth": 800,
+      "drops": [
+        { "materialId": "primordial_crystal", "quantity": "few", "chance": "improbable" }
+      ],
+      "respawnTime": "very_slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Impossibly perfect geometric form that cannot exist in three-dimensional space, yet here it is.",
+        "tags": ["stone", "mythical", "impossible"]
+      },
+      "resourceId": "genesis_structure",
+      "name": "Genesis Structure",
+      "category": "stone",
+      "tier": 4,
+      "requiredTool": "pickaxe",
+      "baseHealth": 800,
+      "drops": [
+        { "materialId": "genesis_lattice", "quantity": "few", "chance": "improbable" },
+        { "materialId": "chaos_matrix", "quantity": "few", "chance": "improbable" }
+      ],
+      "respawnTime": "very_slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Calm shallows where bronze-scaled carp gather. Ripples on the surface betray their presence.",
+        "tags": ["fishing", "water", "starter", "carp"]
+      },
+      "resourceId": "fishing_spot_carp",
+      "name": "Carp Pool",
+      "category": "fishing",
+      "tier": 1,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 50,
+      "drops": [
+        { "materialId": "common_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "fine_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "water_crystal", "quantity": "few", "chance": "high" },
+        { "materialId": "earth_crystal", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "fast"
+    },
+    {
+      "metadata": {
+        "narrative": "Sun-warmed shallows where golden sunfish bask. Their scales flash like fire in the light.",
+        "tags": ["fishing", "water", "starter", "sunfish"]
+      },
+      "resourceId": "fishing_spot_sunfish",
+      "name": "Sunfish Shallows",
+      "category": "fishing",
+      "tier": 1,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 50,
+      "drops": [
+        { "materialId": "common_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "fine_scales", "quantity": "few", "chance": "high" },
+        { "materialId": "fire_crystal", "quantity": "few", "chance": "high" },
+        { "materialId": "air_crystal", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "fast"
+    },
+    {
+      "metadata": {
+        "narrative": "Clear waters teeming with silver minnows. Quick and abundant, perfect for novice anglers.",
+        "tags": ["fishing", "water", "starter", "minnow"]
+      },
+      "resourceId": "fishing_spot_minnow",
+      "name": "Minnow Stream",
+      "category": "fishing",
+      "tier": 1,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 50,
+      "drops": [
+        { "materialId": "common_scales", "quantity": "many", "chance": "guaranteed" },
+        { "materialId": "water_crystal", "quantity": "few", "chance": "moderate" },
+        { "materialId": "fire_crystal", "quantity": "few", "chance": "low" },
+        { "materialId": "earth_crystal", "quantity": "few", "chance": "low" },
+        { "materialId": "air_crystal", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "fast"
+    },
+    {
+      "metadata": {
+        "narrative": "Electrified waters where stormfin lurk. Static crackles across the surface during storms.",
+        "tags": ["fishing", "water", "lightning", "stormfin"]
+      },
+      "resourceId": "fishing_spot_stormfin",
+      "name": "Stormfin Pool",
+      "category": "fishing",
+      "tier": 2,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 75,
+      "drops": [
+        { "materialId": "steel_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "mithril_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "lightning_shard", "quantity": "few", "chance": "high" },
+        { "materialId": "common_scales", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Icy waters fed by glacial runoff. Frostback trout thrive in the numbing cold.",
+        "tags": ["fishing", "water", "ice", "frostback"]
+      },
+      "resourceId": "fishing_spot_frostback",
+      "name": "Frostback Pool",
+      "category": "fishing",
+      "tier": 2,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 75,
+      "drops": [
+        { "materialId": "steel_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "mithril_scales", "quantity": "few", "chance": "high" },
+        { "materialId": "frost_essence", "quantity": "few", "chance": "high" },
+        { "materialId": "water_crystal", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Luminescent waters where bioluminescent lighteye fish swim. The glow attracts them at night.",
+        "tags": ["fishing", "water", "light", "lighteye"]
+      },
+      "resourceId": "fishing_spot_lighteye",
+      "name": "Lighteye Grotto",
+      "category": "fishing",
+      "tier": 2,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 75,
+      "drops": [
+        { "materialId": "mithril_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "steel_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "light_gem", "quantity": "few", "chance": "high" },
+        { "materialId": "fine_scales", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Dark waters where shadowgill hide from the sun. They emerge only in deepest shadow.",
+        "tags": ["fishing", "water", "shadow", "shadowgill"]
+      },
+      "resourceId": "fishing_spot_shadowgill",
+      "name": "Shadowgill Depths",
+      "category": "fishing",
+      "tier": 2,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 75,
+      "drops": [
+        { "materialId": "mithril_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "steel_scales", "quantity": "few", "chance": "high" },
+        { "materialId": "shadow_core", "quantity": "few", "chance": "high" },
+        { "materialId": "fine_scales", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Volcanic hot springs where phoenix koi swim through impossibly hot water. Their scales glow like embers.",
+        "tags": ["fishing", "water", "fire", "phoenixkoi"]
+      },
+      "resourceId": "fishing_spot_phoenixkoi",
+      "name": "Phoenix Koi Spring",
+      "category": "fishing",
+      "tier": 3,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "adamantine_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "orichalcum_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "phoenix_ash", "quantity": "few", "chance": "high" },
+        { "materialId": "fire_crystal", "quantity": "few", "chance": "moderate" },
+        { "materialId": "lightning_shard", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Abyssal waters where voidswimmers phase between existence. The darkness here is absolute.",
+        "tags": ["fishing", "water", "void", "voidswimmer"]
+      },
+      "resourceId": "fishing_spot_voidswimmer",
+      "name": "Voidswimmer Abyss",
+      "category": "fishing",
+      "tier": 3,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "adamantine_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "orichalcum_scales", "quantity": "few", "chance": "high" },
+        { "materialId": "void_essence", "quantity": "few", "chance": "high" },
+        { "materialId": "shadow_core", "quantity": "few", "chance": "moderate" },
+        { "materialId": "frost_essence", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Storm-touched waters where tempest eels channel lightning through their bodies. Approach with caution.",
+        "tags": ["fishing", "water", "lightning", "tempesteel"]
+      },
+      "resourceId": "fishing_spot_tempesteel",
+      "name": "Tempest Eel Waters",
+      "category": "fishing",
+      "tier": 3,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "orichalcum_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "adamantine_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "storm_heart", "quantity": "few", "chance": "high" },
+        { "materialId": "lightning_shard", "quantity": "few", "chance": "high" },
+        { "materialId": "light_gem", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Ancient waters where primordial leviathans slumber. These fish predate civilization itself.",
+        "tags": ["fishing", "water", "mythical", "leviathan"]
+      },
+      "resourceId": "fishing_spot_leviathan",
+      "name": "Leviathan Deep",
+      "category": "fishing",
+      "tier": 4,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 150,
+      "drops": [
+        { "materialId": "primordial_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "chaos_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "phoenix_ash", "quantity": "few", "chance": "high" },
+        { "materialId": "void_essence", "quantity": "few", "chance": "high" },
+        { "materialId": "storm_heart", "quantity": "few", "chance": "moderate" },
+        { "materialId": "adamantine_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "orichalcum_scales", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "very_slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Reality-warped waters where chaosscale fish swim through dimensional rifts. Their very existence defies logic.",
+        "tags": ["fishing", "water", "mythical", "chaos"]
+      },
+      "resourceId": "fishing_spot_chaosscale",
+      "name": "Chaosscale Rift",
+      "category": "fishing",
+      "tier": 4,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 150,
+      "drops": [
+        { "materialId": "chaos_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "primordial_scales", "quantity": "few", "chance": "high" },
+        { "materialId": "chaos_matrix", "quantity": "few", "chance": "moderate" },
+        { "materialId": "void_essence", "quantity": "few", "chance": "high" },
+        { "materialId": "phoenix_ash", "quantity": "few", "chance": "moderate" },
+        { "materialId": "storm_heart", "quantity": "few", "chance": "low" },
+        { "materialId": "mithril_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "steel_scales", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "very_slow"
+    }
+  ]
+}

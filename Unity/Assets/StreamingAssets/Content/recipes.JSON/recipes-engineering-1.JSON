@@ -1,0 +1,349 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "discipline": "engineering",
+    "description": "Engineering recipes for turrets, bombs, traps, and mechanical devices",
+    "note": "Effects and stats are PLACEHOLDERS. Item definitions are in item-engineering-1.JSON",
+    "totalRecipes": 16
+  },
+
+  "recipes": [
+    {
+      "metadata": {
+        "narrative": "Basic arrow turret using simple springs and levers. Point away from face.",
+        "tags": ["turret", "basic", "projectile"]
+      },
+      "recipeId": "engineering_basic_arrow_turret",
+      "outputId": "basic_arrow_turret",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 4},
+        {"materialId": "oak_plank", "quantity": 3},
+        {"materialId": "beetle_carapace", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "easy",
+        "baseTime": 40
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense.",
+        "tags": ["turret", "fire", "elemental"]
+      },
+      "recipeId": "engineering_fire_arrow_turret",
+      "outputId": "fire_arrow_turret",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "steel_ingot", "quantity": 5},
+        {"materialId": "birch_plank", "quantity": 3},
+        {"materialId": "fire_crystal", "quantity": 4}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "moderate",
+        "baseTime": 50
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous.",
+        "tags": ["turret", "lightning", "advanced"]
+      },
+      "recipeId": "engineering_lightning_cannon",
+      "outputId": "lightning_cannon",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "mithril_ingot", "quantity": 6},
+        {"materialId": "ironwood_plank", "quantity": 4},
+        {"materialId": "lightning_shard", "quantity": 6},
+        {"materialId": "storm_heart", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "hard",
+        "baseTime": 70
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Flamethrower turret that sweeps area with fire. Excellent for crowd control.",
+        "tags": ["turret", "fire", "area"]
+      },
+      "recipeId": "engineering_flamethrower_turret",
+      "outputId": "flamethrower_turret",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "steel_ingot", "quantity": 8},
+        {"materialId": "fire_crystal", "quantity": 8},
+        {"materialId": "phoenix_ash", "quantity": 3}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "hard",
+        "baseTime": 60
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Laser turret using focused light crystals. Precise and devastating.",
+        "tags": ["turret", "light", "precision"]
+      },
+      "recipeId": "engineering_laser_turret",
+      "outputId": "laser_turret",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "mithril_ingot", "quantity": 6},
+        {"materialId": "light_gem", "quantity": 8},
+        {"materialId": "crystal_quartz", "quantity": 6}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "hard",
+        "baseTime": 65
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Simple explosive using blast powder in iron casing. Universal problem solver.",
+        "tags": ["bomb", "basic", "explosive"]
+      },
+      "recipeId": "engineering_simple_bomb",
+      "outputId": "simple_bomb",
+      "outputQty": 3,
+      "stationTier": 1,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 2},
+        {"materialId": "blast_powder", "quantity": 3}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "easy",
+        "baseTime": 25
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone.",
+        "tags": ["bomb", "fire", "elemental"]
+      },
+      "recipeId": "engineering_fire_bomb",
+      "outputId": "fire_bomb",
+      "outputQty": 2,
+      "stationTier": 2,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "steel_ingot", "quantity": 3},
+        {"materialId": "blast_powder", "quantity": 4},
+        {"materialId": "fire_crystal", "quantity": 3}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "moderate",
+        "baseTime": 40
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Cluster bomb that splits into multiple explosives. Maximum coverage.",
+        "tags": ["bomb", "area", "cluster"]
+      },
+      "recipeId": "engineering_cluster_bomb",
+      "outputId": "cluster_bomb",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "steel_ingot", "quantity": 5},
+        {"materialId": "blast_powder", "quantity": 12},
+        {"materialId": "air_crystal", "quantity": 4}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "hard",
+        "baseTime": 55
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Spike trap with spring-loaded iron spikes. Simple, brutal, effective.",
+        "tags": ["trap", "physical", "basic"]
+      },
+      "recipeId": "engineering_spike_trap",
+      "outputId": "spike_trap",
+      "outputQty": 3,
+      "stationTier": 1,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 2},
+        {"materialId": "steel_ingot", "quantity": 2},
+        {"materialId": "beetle_carapace", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "easy",
+        "baseTime": 30
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Frost mine that erupts in a blast of ice shards. The cold bites deep.",
+        "tags": ["trap", "frost", "elemental"]
+      },
+      "recipeId": "engineering_frost_mine",
+      "outputId": "frost_mine",
+      "outputQty": 2,
+      "stationTier": 2,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 3},
+        {"materialId": "blast_powder", "quantity": 2},
+        {"materialId": "frost_essence", "quantity": 3}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "moderate",
+        "baseTime": 40
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Bear trap with brutal steel jaws. Immobilizes anything that steps on it.",
+        "tags": ["trap", "physical", "immobilize"]
+      },
+      "recipeId": "engineering_bear_trap",
+      "outputId": "bear_trap",
+      "outputQty": 2,
+      "stationTier": 1,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "steel_ingot", "quantity": 4},
+        {"materialId": "dire_fang", "quantity": 6}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "moderate",
+        "baseTime": 35
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Healing beacon that emanates restorative energy. The light feels warm, comforting.",
+        "tags": ["utility", "healing", "support"]
+      },
+      "recipeId": "engineering_healing_beacon",
+      "outputId": "healing_beacon",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "steel_ingot", "quantity": 4},
+        {"materialId": "light_gem", "quantity": 5},
+        {"materialId": "living_ichor", "quantity": 3},
+        {"materialId": "water_crystal", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "hard",
+        "baseTime": 55
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Net launcher that ensnares enemies. Reduces movement speed dramatically.",
+        "tags": ["utility", "crowd-control", "projectile"]
+      },
+      "recipeId": "engineering_net_launcher",
+      "outputId": "net_launcher",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 5},
+        {"materialId": "spectral_thread", "quantity": 8},
+        {"materialId": "beetle_carapace", "quantity": 3}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "moderate",
+        "baseTime": 45
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "EMP device that disables electronic enemies and devices. Technology's worst nightmare.",
+        "tags": ["utility", "disable", "tech"]
+      },
+      "recipeId": "engineering_emp_device",
+      "outputId": "emp_device",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "orichalcum_ingot", "quantity": 4},
+        {"materialId": "lightning_shard", "quantity": 6},
+        {"materialId": "storm_heart", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "hard",
+        "baseTime": 60
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces.",
+        "tags": ["utility", "mobility", "tool"]
+      },
+      "recipeId": "engineering_grappling_hook",
+      "outputId": "grappling_hook",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 4},
+        {"materialId": "spectral_thread", "quantity": 6},
+        {"materialId": "air_crystal", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "moderate",
+        "baseTime": 40
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Jetpack for brief flight. Fuel not included (but fire crystals work great).",
+        "tags": ["utility", "flight", "mobility"]
+      },
+      "recipeId": "engineering_jetpack",
+      "outputId": "jetpack",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {"materialId": "mithril_ingot", "quantity": 8},
+        {"materialId": "fire_crystal", "quantity": 10},
+        {"materialId": "air_crystal", "quantity": 8},
+        {"materialId": "phoenix_ash", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "extreme",
+        "baseTime": 75
+      }
+    }
+  ]
+}

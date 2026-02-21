@@ -1,0 +1,266 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Tool item definitions for gathering resources",
+    "note": "Tools can be used in combat with penalties to durability"
+  },
+
+  "tools": [
+    {
+      "metadata": {
+        "narrative": "Basic copper pickaxe with a wooden handle. Your first step into the mining profession - crude but functional.",
+        "tags": ["tool", "pickaxe", "starter"]
+      },
+      "itemId": "copper_pickaxe",
+      "name": "Copper Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 10
+      },
+      "stats": {
+        "damage": [8, 12],
+        "mining": 10,
+        "durability": [500, 500],
+        "weight": 4.0
+      },
+      "requirements": {
+        "level": 1
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Reliable iron pickaxe. Durable enough to tackle tougher deposits and efficient for standard mining work.",
+        "tags": ["tool", "pickaxe", "standard"]
+      },
+      "itemId": "iron_pickaxe",
+      "name": "Iron Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 2,
+      "rarity": "common",
+      "range": 1,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 18
+      },
+      "stats": {
+        "damage": [15, 22],
+        "mining": 20,
+        "durability": [1000, 1000],
+        "weight": 5.0
+      },
+      "requirements": {
+        "level": 5
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Steel pickaxe with perfect balance. Bites into hard rock with confidence.",
+        "tags": ["tool", "pickaxe", "quality"]
+      },
+      "itemId": "steel_pickaxe",
+      "name": "Steel Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 3,
+      "rarity": "uncommon",
+      "range": 1,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 37
+      },
+      "stats": {
+        "damage": [30, 45],
+        "mining": 40,
+        "durability": [2000, 2000],
+        "weight": 5.5
+      },
+      "requirements": {
+        "level": 12
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective.",
+        "tags": ["tool", "pickaxe", "legendary"]
+      },
+      "itemId": "mithril_pickaxe",
+      "name": "Mithril Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 4,
+      "rarity": "rare",
+      "range": 1,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 75
+      },
+      "stats": {
+        "damage": [60, 90],
+        "mining": 80,
+        "durability": [4000, 4000],
+        "weight": 3.0
+      },
+      "requirements": {
+        "level": 20
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Simple copper axe with oak handle. Every woodcutter's first companion on the journey to mastery.",
+        "tags": ["tool", "axe", "starter"]
+      },
+      "itemId": "copper_axe",
+      "name": "Copper Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 10
+      },
+      "stats": {
+        "damage": [8, 12],
+        "forestry": 10,
+        "durability": [500, 500],
+        "weight": 3.5
+      },
+      "requirements": {
+        "level": 1
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Sturdy iron axe that bites deep into wood. The standard tool for serious forestry work.",
+        "tags": ["tool", "axe", "standard"]
+      },
+      "itemId": "iron_axe",
+      "name": "Iron Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 2,
+      "rarity": "common",
+      "range": 1,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 18
+      },
+      "stats": {
+        "damage": [15, 22],
+        "forestry": 20,
+        "durability": [1000, 1000],
+        "weight": 4.5
+      },
+      "requirements": {
+        "level": 5
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Well-balanced steel axe with a razor edge. Fells even ancient trees with steady, powerful strikes.",
+        "tags": ["tool", "axe", "quality"]
+      },
+      "itemId": "steel_axe",
+      "name": "Steel Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 3,
+      "rarity": "uncommon",
+      "range": 1,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 37
+      },
+      "stats": {
+        "damage": [30, 45],
+        "forestry": 40,
+        "durability": [2000, 2000],
+        "weight": 5.0
+      },
+      "requirements": {
+        "level": 12
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Ethereal mithril axe that seems to phase through wood fibers. Cuts with minimal resistance.",
+        "tags": ["tool", "axe", "legendary"]
+      },
+      "itemId": "mithril_axe",
+      "name": "Mithril Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 4,
+      "rarity": "rare",
+      "range": 1,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 75
+      },
+      "stats": {
+        "damage": [60, 90],
+        "forestry": 80,
+        "durability": [4000, 4000],
+        "weight": 2.5
+      },
+      "requirements": {
+        "level": 20
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  ]
+}

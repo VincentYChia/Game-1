@@ -1,0 +1,858 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "totalMaterials": 57,
+    "note": "3 T4 monster drops missing - to be defined",
+    "categories": ["metal", "wood", "stone", "elemental", "monster_drop"]
+  },
+
+  "materials": [
+    {
+      "metadata": {
+        "narrative": "A soft, reddish metal found in shallow veins near the surface. Easy to work with basic tools but lacks the durability needed for serious combat. The foundation of all smithing - every blacksmith's first lesson.",
+        "tags": ["basic", "metal", "starter"]
+      },
+      "materialId": "copper_ore",
+      "name": "Copper Ore",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+        "tags": ["refined", "metal", "starter"]
+      },
+      "materialId": "copper_ingot",
+      "name": "Copper Ingot",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Sturdy grey metal from common deposits throughout the land. The workhorse of civilization - reliable, abundant, and strong enough for most purposes.",
+        "tags": ["basic", "metal", "standard"]
+      },
+      "materialId": "iron_ore",
+      "name": "Iron Ore",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+        "tags": ["refined", "metal", "standard"]
+      },
+      "materialId": "iron_ingot",
+      "name": "Iron Ingot",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Soft, silvery-white metal with a mysterious sheen that glows faintly in moonlight. Ancient texts speak of its lunar affinity.",
+        "tags": ["basic", "metal", "magical"]
+      },
+      "materialId": "tin_ore",
+      "name": "Tin Ore",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Refined tin with excellent magical conductivity. Used in alloys and enchanted items.",
+        "tags": ["refined", "metal", "magical"]
+      },
+      "materialId": "tin_ingot",
+      "name": "Tin Ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Harder and more durable than pure iron. The secret of its strength lies in its carbon-rich structure. A true warrior's metal.",
+        "tags": ["basic", "metal", "advanced"]
+      },
+      "materialId": "steel_ore",
+      "name": "Steel Ore",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+        "tags": ["refined", "metal", "advanced"]
+      },
+      "materialId": "steel_ingot",
+      "name": "Steel Ingot",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary silver-white metal that seems to drink in moonlight and starshine. Impossibly light yet incredibly strong.",
+        "tags": ["basic", "metal", "legendary"]
+      },
+      "materialId": "mithril_ore",
+      "name": "Mithril Ore",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
+        "tags": ["refined", "metal", "legendary"]
+      },
+      "materialId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Dark, impossibly hard metal that absorbs light. Found only in the deepest caverns where the world's bones are exposed.",
+        "tags": ["basic", "metal", "rare"]
+      },
+      "materialId": "adamantine_ore",
+      "name": "Adamantine Ore",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.",
+        "tags": ["refined", "metal", "rare"]
+      },
+      "materialId": "adamantine_ingot",
+      "name": "Adamantine Ingot",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Gleaming golden metal with an otherworldly green-blue sheen. Ancient civilizations built empires on its discovery.",
+        "tags": ["basic", "metal", "ancient"]
+      },
+      "materialId": "orichalcum_ore",
+      "name": "Orichalcum Ore",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
+        "tags": ["refined", "metal", "ancient"]
+      },
+      "materialId": "orichalcum_ingot",
+      "name": "Orichalcum Ingot",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Metal that simultaneously exists in multiple states. Scholars argue whether it's matter or energy, present or future. It is all of these and none.",
+        "tags": ["basic", "metal", "mythical", "temporal"]
+      },
+      "materialId": "etherion_ore",
+      "name": "Etherion Ore",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Reality-bending metal that has transcended conventional physics. Durability frozen in time, effects can occur before cause.",
+        "tags": ["refined", "metal", "mythical", "temporal"]
+      },
+      "materialId": "etherion_ingot",
+      "name": "Etherion Ingot",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Reliable, sturdy timber from ancient oaks. Dense grain, strong fibers, and a warm golden-brown hue. The standard by which all other woods are measured.",
+        "tags": ["basic", "wood", "versatile"]
+      },
+      "materialId": "oak_log",
+      "name": "Oak Log",
+      "tier": 1,
+      "rarity": "common",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Refined oak planks with improved durability and quality.",
+        "tags": ["refined", "wood", "versatile"]
+      },
+      "materialId": "oak_plank",
+      "name": "Oak Plank",
+      "tier": 1,
+      "rarity": "common",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Light, flexible wood harvested from tall conifers. Works easily under a blade, bends without breaking.",
+        "tags": ["basic", "wood", "flexible"]
+      },
+      "materialId": "pine_log",
+      "name": "Pine Log",
+      "tier": 1,
+      "rarity": "common",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Refined pine planks, perfect for bows and flexible constructions.",
+        "tags": ["refined", "wood", "flexible"]
+      },
+      "materialId": "pine_plank",
+      "name": "Pine Plank",
+      "tier": 1,
+      "rarity": "common",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Pale wood with excellent shock absorption. Weapon handles made from ash feel alive in your grip.",
+        "tags": ["basic", "wood", "quality"]
+      },
+      "materialId": "ash_log",
+      "name": "Ash Log",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Refined ash planks with superior shock absorption properties.",
+        "tags": ["refined", "wood", "quality"]
+      },
+      "materialId": "ash_plank",
+      "name": "Ash Plank",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Creamy-white wood from elegant trees. Highly valued for its fine grain and excellent carving properties.",
+        "tags": ["basic", "wood", "fine"]
+      },
+      "materialId": "birch_log",
+      "name": "Birch Log",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Refined birch planks, perfect for detailed craftwork.",
+        "tags": ["refined", "wood", "fine"]
+      },
+      "materialId": "birch_plank",
+      "name": "Birch Plank",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Dense hardwood with beautiful figuring. Resists warping and holds its shape through temperature extremes.",
+        "tags": ["basic", "wood", "durable"]
+      },
+      "materialId": "maple_log",
+      "name": "Maple Log",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Refined maple planks, ideal for items requiring stability.",
+        "tags": ["refined", "wood", "durable"]
+      },
+      "materialId": "maple_plank",
+      "name": "Maple Plank",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Rare wood with metallic properties. As hard as soft metals, holds edges almost as well as iron.",
+        "tags": ["basic", "wood", "metallic"]
+      },
+      "materialId": "ironwood_log",
+      "name": "Ironwood Log",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Refined ironwood planks, nearly as strong as actual metal.",
+        "tags": ["refined", "wood", "metallic"]
+      },
+      "materialId": "ironwood_plank",
+      "name": "Ironwood Plank",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Deep black wood from ancient forests. Absorbs and nullifies magical energies.",
+        "tags": ["basic", "wood", "magical"]
+      },
+      "materialId": "ebony_log",
+      "name": "Ebony Log",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Refined ebony planks, perfect for anti-magic applications.",
+        "tags": ["refined", "wood", "magical"]
+      },
+      "materialId": "ebony_plank",
+      "name": "Ebony Plank",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Living wood from the World Tree's roots. Contains millennia of accumulated magical essence.",
+        "tags": ["basic", "wood", "legendary", "living"]
+      },
+      "materialId": "worldtree_log",
+      "name": "Worldtree Log",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Refined worldtree planks that remember their connection to the source.",
+        "tags": ["refined", "wood", "legendary", "living"]
+      },
+      "materialId": "worldtree_plank",
+      "name": "Worldtree Plank",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "wood"
+    },
+    {
+      "metadata": {
+        "narrative": "Common sedimentary rock. Soft enough to carve with basic tools yet strong enough for simple construction.",
+        "tags": ["basic", "stone", "common"]
+      },
+      "materialId": "limestone",
+      "name": "Limestone",
+      "tier": 1,
+      "rarity": "common",
+      "category": "stone"
+    },
+    {
+      "metadata": {
+        "narrative": "Speckled igneous rock with visible crystalline structure. Harder than limestone, more reliable for load-bearing structures.",
+        "tags": ["basic", "stone", "durable"]
+      },
+      "materialId": "granite",
+      "name": "Granite",
+      "tier": 1,
+      "rarity": "common",
+      "category": "stone"
+    },
+    {
+      "metadata": {
+        "narrative": "Common sedimentary rock with fine grain. Compressed clay particles form water-resistant layers.",
+        "tags": ["basic", "stone", "layered"]
+      },
+      "materialId": "shale",
+      "name": "Shale",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "stone"
+    },
+    {
+      "metadata": {
+        "narrative": "Dense metamorphic rock with distinctive banding. Exceptional compression strength.",
+        "tags": ["basic", "stone", "strong"]
+      },
+      "materialId": "basalt",
+      "name": "Basalt",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "stone"
+    },
+    {
+      "metadata": {
+        "narrative": "Brilliant white stone that glows faintly with captured sunlight. Used in temples and monuments.",
+        "tags": ["basic", "stone", "radiant"]
+      },
+      "materialId": "marble",
+      "name": "Marble",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "stone"
+    },
+    {
+      "metadata": {
+        "narrative": "Translucent crystal that amplifies magical energies passing through it. Hums softly when near power sources.",
+        "tags": ["basic", "stone", "magical"]
+      },
+      "materialId": "crystal_quartz",
+      "name": "Crystal Quartz",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "stone"
+    },
+    {
+      "metadata": {
+        "narrative": "Volcanic glass born in the heart of eruptions. Extremely sharp edges, incredibly brittle structure.",
+        "tags": ["basic", "stone", "sharp"]
+      },
+      "materialId": "obsidian",
+      "name": "Obsidian",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "stone"
+    },
+    {
+      "metadata": {
+        "narrative": "Pitch-black stone that seems to pull light into itself. Radiates subtle wrongness.",
+        "tags": ["basic", "stone", "void"]
+      },
+      "materialId": "voidstone",
+      "name": "Voidstone",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "stone"
+    },
+    {
+      "metadata": {
+        "narrative": "Perfect crystalline structure that refracts reality itself. Entire fortunes built on single specimens.",
+        "tags": ["basic", "stone", "precious"]
+      },
+      "materialId": "diamond",
+      "name": "Diamond",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "stone"
+    },
+    {
+      "metadata": {
+        "narrative": "Stone that remembers everything it witnesses. Contains geological memory of eons.",
+        "tags": ["basic", "stone", "mythical", "memory"]
+      },
+      "materialId": "eternity_stone",
+      "name": "Eternity Stone",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "stone"
+    },
+    {
+      "metadata": {
+        "narrative": "Suspended in perpetual crystallization. Neither fully solid nor energy, exists in quantum superposition.",
+        "tags": ["basic", "stone", "mythical", "quantum"]
+      },
+      "materialId": "primordial_crystal",
+      "name": "Primordial Crystal",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "stone"
+    },
+    {
+      "metadata": {
+        "narrative": "Impossibly perfect geometric form that cannot exist in three-dimensional space, yet here it is.",
+        "tags": ["basic", "stone", "mythical", "impossible"]
+      },
+      "materialId": "genesis_lattice",
+      "name": "Genesis Lattice",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "stone"
+    },
+    {
+      "metadata": {
+        "narrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
+        "tags": ["elemental", "fire", "common"]
+      },
+      "materialId": "fire_crystal",
+      "name": "Fire Crystal",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "elemental"
+    },
+    {
+      "metadata": {
+        "narrative": "Blue crystal filled with flowing liquid. Cool and calming, perpetually damp.",
+        "tags": ["elemental", "water", "common"]
+      },
+      "materialId": "water_crystal",
+      "name": "Water Crystal",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "elemental"
+    },
+    {
+      "metadata": {
+        "narrative": "Green-brown crystal with swirling sediment. Surprisingly heavy, grounds magical energies.",
+        "tags": ["elemental", "earth", "common"]
+      },
+      "materialId": "earth_crystal",
+      "name": "Earth Crystal",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "elemental"
+    },
+    {
+      "metadata": {
+        "narrative": "Pale crystal that drifts upward if not secured. Contains compressed winds.",
+        "tags": ["elemental", "air", "common"]
+      },
+      "materialId": "air_crystal",
+      "name": "Air Crystal",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "elemental"
+    },
+    {
+      "metadata": {
+        "narrative": "Crackling crystal surrounded by static discharge. Handle with insulated gloves.",
+        "tags": ["elemental", "lightning", "rare"]
+      },
+      "materialId": "lightning_shard",
+      "name": "Lightning Shard",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "elemental"
+    },
+    {
+      "metadata": {
+        "narrative": "Frost-blue crystal cold enough to burn. Creates rime patterns on nearby surfaces.",
+        "tags": ["elemental", "ice", "rare"]
+      },
+      "materialId": "frost_essence",
+      "name": "Frost Essence",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "elemental"
+    },
+    {
+      "metadata": {
+        "narrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
+        "tags": ["elemental", "light", "rare"]
+      },
+      "materialId": "light_gem",
+      "name": "Light Gem",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "elemental"
+    },
+    {
+      "metadata": {
+        "narrative": "Crystallized darkness that absorbs light. Uncomfortable to look at directly.",
+        "tags": ["elemental", "dark", "rare"]
+      },
+      "materialId": "shadow_core",
+      "name": "Shadow Core",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "elemental"
+    },
+    {
+      "metadata": {
+        "narrative": "Ash-grey substance from legendary phoenix nests. Burns eternally without being consumed.",
+        "tags": ["elemental", "fire", "legendary"]
+      },
+      "materialId": "phoenix_ash",
+      "name": "Phoenix Ash",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "elemental"
+    },
+    {
+      "metadata": {
+        "narrative": "Liquid darkness given physical form. Absorbs heat, light, and hope.",
+        "tags": ["elemental", "void", "legendary"]
+      },
+      "materialId": "void_essence",
+      "name": "Void Essence",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "elemental"
+    },
+    {
+      "metadata": {
+        "narrative": "Captured lightning from primordial storms. Contains raw creation energy.",
+        "tags": ["elemental", "lightning", "legendary"]
+      },
+      "materialId": "storm_heart",
+      "name": "Storm Heart",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "elemental"
+    },
+    {
+      "metadata": {
+        "narrative": "Solidified probability space. Can be shaped into predetermined or random outcomes.",
+        "tags": ["elemental", "chaos", "mythical"]
+      },
+      "materialId": "chaos_matrix",
+      "name": "Chaos Matrix",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "elemental"
+    },
+    {
+      "metadata": {
+        "narrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
+        "tags": ["monster", "common", "leather"]
+      },
+      "materialId": "wolf_pelt",
+      "name": "Wolf Pelt",
+      "tier": 1,
+      "rarity": "common",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Translucent gelatinous substance. Surprisingly elastic and adhesive when processed.",
+        "tags": ["monster", "common", "gel"]
+      },
+      "materialId": "slime_gel",
+      "name": "Slime Gel",
+      "tier": 1,
+      "rarity": "common",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Iridescent shell segment. Lightweight yet remarkably impact-resistant.",
+        "tags": ["monster", "common", "carapace"]
+      },
+      "materialId": "beetle_carapace",
+      "name": "Beetle Carapace",
+      "tier": 1,
+      "rarity": "common",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Razor-sharp fang from alpha predators. Still warm from the kill.",
+        "tags": ["monster", "uncommon", "fang"]
+      },
+      "materialId": "dire_fang",
+      "name": "Dire Fang",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
+        "tags": ["monster", "uncommon", "essence"]
+      },
+      "materialId": "living_ichor",
+      "name": "Living Ichor",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Metallic scales from armored creatures. Can deflect sword strikes.",
+        "tags": ["monster", "uncommon", "scales"]
+      },
+      "materialId": "iron_scales",
+      "name": "Iron Scales",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Crystallized blood from elemental beasts. Pulses with residual power.",
+        "tags": ["monster", "rare", "blood"]
+      },
+      "materialId": "essence_blood",
+      "name": "Essence Blood",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
+        "tags": ["monster", "rare", "spectral"]
+      },
+      "materialId": "spectral_thread",
+      "name": "Spectral Thread",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Petrified remains from ancient guardians. Contains geological memories.",
+        "tags": ["monster", "rare", "ancient"]
+      },
+      "materialId": "golem_core",
+      "name": "Golem Core",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+        "tags": ["metal", "refined", "lightning"]
+      },
+      "materialId": "lightning_copper_ingot",
+      "name": "Lightning Copper Ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "metal"
+    },
+        {
+     "metadata": {
+        "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+        "tags": ["metal", "refined", "ice"]
+      },
+      "materialId": "frost_steel_ingot",
+      "name": "Frost Steel Ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "metal"
+    },
+            {
+     "metadata": {
+        "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+        "tags": ["metal", "refined", "fire"]
+      },
+     "materialId": "fire_steel_ingot",
+      "name": "Fire Steel Ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "metal"
+    },
+         {
+     "metadata": {
+        "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+        "tags": ["metal", "refined", "durable"]
+      },
+      "materialId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Dull bronze-green scales from common freshwater fish. Surprisingly durable and often used in basic crafting.",
+        "tags": ["scales", "fishing", "common", "crafting"]
+      },
+      "materialId": "common_scales",
+      "name": "Common Scales",
+      "tier": 1,
+      "rarity": "common",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Silvery-white scales with a subtle iridescent sheen. Prized by craftsmen for their flexibility and beauty.",
+        "tags": ["scales", "fishing", "quality", "crafting"]
+      },
+      "materialId": "fine_scales",
+      "name": "Fine Scales",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Hard metallic scales from fish dwelling near ore deposits. Naturally infused with trace minerals.",
+        "tags": ["scales", "fishing", "metallic", "durable"]
+      },
+      "materialId": "steel_scales",
+      "name": "Steel Scales",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Luminous scales that seem to drink in moonlight. Found on fish from the deepest, purest waters.",
+        "tags": ["scales", "fishing", "magical", "rare"]
+      },
+      "materialId": "mithril_scales",
+      "name": "Mithril Scales",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Nearly indestructible scales from fish that dwell in volcanic springs. Incredibly heat-resistant.",
+        "tags": ["scales", "fishing", "fire", "legendary"]
+      },
+      "materialId": "adamantine_scales",
+      "name": "Adamantine Scales",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Golden-green scales with an otherworldly shimmer. Said to come from fish blessed by ancient water spirits.",
+        "tags": ["scales", "fishing", "ancient", "magical"]
+      },
+      "materialId": "orichalcum_scales",
+      "name": "Orichalcum Scales",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Scales that phase in and out of existence. Harvested from fish that swim between dimensions.",
+        "tags": ["scales", "fishing", "mythical", "temporal"]
+      },
+      "materialId": "primordial_scales",
+      "name": "Primordial Scales",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Reality-warping scales that shift color unpredictably. Each one contains a fragment of pure chaos.",
+        "tags": ["scales", "fishing", "mythical", "chaos"]
+      },
+      "materialId": "chaos_scales",
+      "name": "Chaos Scales",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "monster_drop"
+    }
+  ]
+}

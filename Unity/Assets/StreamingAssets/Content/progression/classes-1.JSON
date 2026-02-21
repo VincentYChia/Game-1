@@ -1,0 +1,320 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Starting class definitions for character creation",
+    "note": "All classes are selectable at character creation. Class can be switched later for a cost.",
+    "switchingCost": 1000,
+    "switchingCurrency": "gold"
+  },
+
+  "classes": [
+    {
+      "classId": "warrior",
+      "name": "Warrior",
+      "description": "Masters of combat and physical might. Warriors excel at dealing and taking damage in melee combat.",
+      "narrative": "Steel and strength. You are the immovable wall, the unstoppable force. When enemies see you, they know: their time has come.",
+      "thematicIdentity": "frontline_fighter",
+      "tags": ["warrior", "melee", "physical", "tanky", "frontline"],
+      "preferredDamageTypes": ["physical", "slashing", "crushing"],
+      "preferredArmorType": "heavy",
+      "startingBonuses": {
+        "baseHP": 30,
+        "baseMana": 0,
+        "meleeDamage": 0.10,
+        "inventorySlots": 20,
+        "carryCapacity": 0,
+        "movementSpeed": 0.0,
+        "critChance": 0.0,
+        "defense": 0.0
+      },
+      "startingSkill": {
+        "skillId": "battle_rage",
+        "skillName": "Battle Rage",
+        "initialLevel": 1,
+        "description": "Increases damage and attack speed temporarily in combat"
+      },
+      "recommendedStats": {
+        "primary": ["STR", "VIT", "DEF"],
+        "secondary": ["AGI"],
+        "avoid": ["INT", "LCK"]
+      },
+      "playstyle": "Direct combat, high survivability, straightforward gameplay",
+      "strengths": [
+        "High health pool for survivability",
+        "Bonus melee damage from the start",
+        "Extra inventory for carrying loot and supplies",
+        "Excellent for players who prefer straightforward combat"
+      ],
+      "weaknesses": [
+        "No mana for utility skills initially",
+        "Limited range options",
+        "Slower at gathering and crafting"
+      ]
+    },
+
+    {
+      "classId": "ranger",
+      "name": "Ranger",
+      "description": "Swift explorers and natural harvesters. Rangers move quickly and gather resources efficiently.",
+      "narrative": "The wilderness is your home. Trees fall faster before you, and you move like the wind. Nature bends to those who respect it.",
+      "thematicIdentity": "mobile_gatherer",
+      "tags": ["ranger", "ranged", "agile", "nature", "mobile"],
+      "preferredDamageTypes": ["physical", "piercing", "poison"],
+      "preferredArmorType": "light",
+      "startingBonuses": {
+        "baseHP": 0,
+        "baseMana": 0,
+        "meleeDamage": 0.0,
+        "inventorySlots": 0,
+        "carryCapacity": 0,
+        "movementSpeed": 0.15,
+        "critChance": 0.10,
+        "forestryBonus": 0.10
+      },
+      "startingSkill": {
+        "skillId": "forestry_frenzy",
+        "skillName": "Forestry Frenzy",
+        "initialLevel": 1,
+        "description": "Dramatically increases wood gathering speed for a short duration"
+      },
+      "recommendedStats": {
+        "primary": ["AGI", "LCK", "VIT"],
+        "secondary": ["STR"],
+        "avoid": ["INT", "DEF"]
+      },
+      "playstyle": "Fast-paced, mobility-focused, efficient gathering",
+      "strengths": [
+        "Fastest movement speed for exploration",
+        "Bonus to forestry from the start",
+        "High critical hit chance for combat",
+        "Great for players who enjoy mobility and gathering"
+      ],
+      "weaknesses": [
+        "Lower base health than warrior",
+        "Relies on evasion rather than tanking",
+        "Less focused on crafting disciplines"
+      ]
+    },
+
+    {
+      "classId": "scholar",
+      "name": "Scholar",
+      "description": "Intellectuals who master alchemy and magical arts. Scholars excel at discovery and experimentation.",
+      "narrative": "Knowledge is power, and you wield both. Potions brew faster in your hands, recipes reveal themselves, and magic bends to your will.",
+      "thematicIdentity": "magical_researcher",
+      "tags": ["scholar", "magic", "alchemy", "arcane", "caster"],
+      "preferredDamageTypes": ["arcane", "fire", "frost", "lightning"],
+      "preferredArmorType": "robes",
+      "startingBonuses": {
+        "baseHP": 0,
+        "baseMana": 100,
+        "meleeDamage": 0.0,
+        "inventorySlots": 0,
+        "carryCapacity": 0,
+        "movementSpeed": 0.0,
+        "recipeDiscovery": 0.10,
+        "skillExpGain": 0.05
+      },
+      "startingSkill": {
+        "skillId": "alchemists_touch",
+        "skillName": "Alchemist's Touch",
+        "initialLevel": 1,
+        "description": "Increases potion effectiveness and brewing speed"
+      },
+      "recommendedStats": {
+        "primary": ["INT", "LCK", "AGI"],
+        "secondary": ["VIT"],
+        "avoid": ["STR", "DEF"]
+      },
+      "playstyle": "Research-focused, crafting-heavy, magic-oriented",
+      "strengths": [
+        "Large mana pool for magical skills",
+        "Discovers recipes faster than other classes",
+        "Gains skill experience 5% faster",
+        "Perfect for players who love experimentation"
+      ],
+      "weaknesses": [
+        "Fragile in direct combat",
+        "Requires preparation and planning",
+        "Less efficient at physical gathering"
+      ]
+    },
+
+    {
+      "classId": "artisan",
+      "name": "Artisan",
+      "description": "Master crafters who excel at all creation disciplines. Artisans create better items faster.",
+      "narrative": "Your hands shape reality. What takes others hours, you complete in moments. What they craft once, you perfect instantly.",
+      "thematicIdentity": "master_crafter",
+      "tags": ["artisan", "crafting", "smithing", "engineering", "utility"],
+      "preferredDamageTypes": ["physical"],
+      "preferredArmorType": "medium",
+      "startingBonuses": {
+        "baseHP": 0,
+        "baseMana": 0,
+        "meleeDamage": 0.0,
+        "inventorySlots": 0,
+        "carryCapacity": 0,
+        "movementSpeed": 0.0,
+        "allCraftingTime": 0.10,
+        "firstTryBonus": 0.10,
+        "itemDurability": 0.05
+      },
+      "startingSkill": {
+        "skillId": "smithing_focus",
+        "skillName": "Smithing Focus",
+        "initialLevel": 1,
+        "description": "Increases smithing mini-game performance and quality"
+      },
+      "recommendedStats": {
+        "primary": ["AGI", "INT", "LCK"],
+        "secondary": ["VIT"],
+        "avoid": ["STR", "DEF"]
+      },
+      "playstyle": "Crafting-centric, quality-focused, efficient production",
+      "strengths": [
+        "All crafting 10% faster from the start",
+        "10% higher chance at first-try bonuses",
+        "Items have 5% more durability",
+        "Ideal for players who love crafting systems"
+      ],
+      "weaknesses": [
+        "No combat bonuses",
+        "No gathering bonuses",
+        "Requires access to crafting stations"
+      ]
+    },
+
+    {
+      "classId": "scavenger",
+      "name": "Scavenger",
+      "description": "Lucky opportunists who find better loot and resources. Scavengers thrive on discovery.",
+      "narrative": "Where others see rocks, you see treasures. Fortune favors the prepared, and you are always prepared.",
+      "thematicIdentity": "loot_hunter",
+      "tags": ["scavenger", "luck", "gathering", "treasure", "explorer"],
+      "preferredDamageTypes": ["physical"],
+      "preferredArmorType": "light",
+      "startingBonuses": {
+        "baseHP": 0,
+        "baseMana": 0,
+        "meleeDamage": 0.0,
+        "inventorySlots": 0,
+        "carryCapacity": 100,
+        "movementSpeed": 0.0,
+        "rareDropRate": 0.20,
+        "resourceQuality": 0.10
+      },
+      "startingSkill": {
+        "skillId": "treasure_hunters_luck",
+        "skillName": "Treasure Hunter's Luck",
+        "initialLevel": 1,
+        "description": "Temporarily increases rare drop rates and material quality"
+      },
+      "recommendedStats": {
+        "primary": ["LCK", "STR", "VIT"],
+        "secondary": ["AGI"],
+        "avoid": ["INT", "DEF"]
+      },
+      "playstyle": "Exploration-heavy, loot-focused, opportunistic",
+      "strengths": [
+        "20% better rare drop rates",
+        "10% better resource quality",
+        "100 bonus carry capacity for hoarding",
+        "Great for players who love collecting and exploring"
+      ],
+      "weaknesses": [
+        "No direct combat improvements",
+        "No crafting speed bonuses",
+        "Relies heavily on RNG"
+      ]
+    },
+
+    {
+      "classId": "adventurer",
+      "name": "Adventurer",
+      "description": "Balanced generalists who dabble in everything. Adventurers have flexibility and choice.",
+      "narrative": "You are not confined by tradition or specialty. Every path is open, every skill within reach. You are limitless.",
+      "thematicIdentity": "jack_of_all_trades",
+      "tags": ["adventurer", "balanced", "versatile", "generalist", "adaptive"],
+      "preferredDamageTypes": ["physical", "arcane"],
+      "preferredArmorType": "medium",
+      "startingBonuses": {
+        "baseHP": 50,
+        "baseMana": 50,
+        "meleeDamage": 0.0,
+        "inventorySlots": 0,
+        "carryCapacity": 0,
+        "movementSpeed": 0.0,
+        "allGathering": 0.05,
+        "allCrafting": 0.05
+      },
+      "startingSkill": {
+        "skillId": "versatile_start",
+        "skillName": "Versatile Beginning",
+        "initialLevel": 1,
+        "description": "Player chooses ANY skill from the available skill pool to start with",
+        "isChoice": true,
+        "availableChoices": "any_tier1_skill"
+      },
+      "recommendedStats": {
+        "primary": ["Balanced - player choice"],
+        "secondary": ["All stats viable"],
+        "avoid": ["None - true flexibility"]
+      },
+      "playstyle": "Flexible, self-directed, balanced progression",
+      "strengths": [
+        "Balanced HP and mana pools",
+        "5% bonus to all gathering activities",
+        "5% bonus to all crafting activities",
+        "Choice of starting skill for personalization",
+        "Perfect for players who want to explore everything"
+      ],
+      "weaknesses": [
+        "No strong specialization bonuses",
+        "Master of none until late game",
+        "Smaller individual bonuses than specialists"
+      ]
+    }
+  ],
+
+  "classSwitching": {
+    "description": "Players can switch classes at any time by paying a fixed cost",
+    "cost": 1000,
+    "currency": "gold",
+    "retainedOnSwitch": [
+      "Character level and experience",
+      "All skill levels and experience",
+      "All earned titles",
+      "All equipped gear",
+      "All inventory items",
+      "All stored materials",
+      "All unlocked recipes"
+    ],
+    "changedOnSwitch": [
+      "Active class bonuses (old removed, new applied)",
+      "Starting skill (if applicable)"
+    ],
+    "restrictions": {
+      "cooldown": 0,
+      "minimumLevel": 1,
+      "requiresNPC": false
+    },
+    "confirmationRequired": true
+  },
+
+  "statDescriptions": {
+    "STR": "Strength - Increases melee damage and carry capacity",
+    "VIT": "Vitality - Increases max health and health regeneration",
+    "DEF": "Defense - Reduces incoming damage",
+    "AGI": "Agility - Increases attack speed, crafting speed, and movement",
+    "INT": "Intelligence - Increases mana and magical effectiveness",
+    "LCK": "Luck - Improves drop rates, critical chance, and crafting outcomes"
+  },
+
+  "designNotes": {
+    "balance": "All numerical values are placeholders subject to balance testing",
+    "classDiversity": "Each class provides distinct starting advantages",
+    "switchingPhilosophy": "Simple cost-based system encourages experimentation",
+    "permanentProgression": "Most progression is retained across class switches"
+  }
+}

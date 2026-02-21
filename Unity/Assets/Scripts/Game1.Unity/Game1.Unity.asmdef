@@ -1,0 +1,21 @@
+{
+    "name": "Game1.Unity",
+    "rootNamespace": "Game1.Unity",
+    "references": [
+        "Game1.Core",
+        "Game1.Data",
+        "Game1.Entities",
+        "Game1.Systems",
+        "Unity.TextMeshPro",
+        "com.unity.nuget.newtonsoft-json"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

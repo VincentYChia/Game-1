@@ -1,0 +1,287 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Title definitions for the progression system",
+    "note": "Novice titles are hardcoded starters. Higher tiers (Apprentice through Master) are typically LLM-generated but examples provided here for reference.",
+    "structure": "Titles grouped by titleType and difficultyTier"
+  },
+
+  "titles": [
+    {
+      "titleId": "novice_miner",
+      "name": "Novice Miner",
+      "titleType": "gathering",
+      "difficultyTier": "novice",
+      "description": "Your first steps into the depths. Every mine begins with a single swing.",
+      "bonuses": {
+        "miningDamage": 0.10,
+        "miningSpeed": 0.0,
+        "rareOreChance": 0.0
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "gathering_totals.total_ores_mined", "min_value": 100}
+        ]
+      },
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "The stone remembers your first strike. Keep swinging."
+    },
+
+    {
+      "titleId": "novice_lumberjack",
+      "name": "Novice Lumberjack",
+      "titleType": "gathering",
+      "difficultyTier": "novice",
+      "description": "The forest acknowledges your presence. Trees fall before you.",
+      "bonuses": {
+        "forestryDamage": 0.10,
+        "forestrySpeed": 0.0,
+        "rareWoodChance": 0.0
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "gathering_totals.total_trees_chopped", "min_value": 100}
+        ]
+      },
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "Every great lumberjack started by felling their hundredth tree."
+    },
+
+    {
+      "titleId": "novice_smith",
+      "name": "Novice Smith",
+      "titleType": "crafting",
+      "difficultyTier": "novice",
+      "description": "The forge accepts you. Your hammer rings with purpose.",
+      "bonuses": {
+        "smithingTime": 0.10,
+        "smithingQuality": 0.0,
+        "firstTryBonus": 0.0
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "crafting_by_discipline.smithing.total_crafts", "min_value": 50}
+        ]
+      },
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "Heat, hammer, shape. The trinity of the smith begins with you."
+    },
+
+    {
+      "titleId": "novice_warrior",
+      "name": "Novice Warrior",
+      "titleType": "combat",
+      "difficultyTier": "novice",
+      "description": "First blood has been drawn. You've tasted battle and survived.",
+      "bonuses": {
+        "meleeDamage": 0.10,
+        "criticalChance": 0.0,
+        "attackSpeed": 0.0
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "combat_kills.total_kills", "min_value": 50}
+        ]
+      },
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "Fifty foes have fallen. You're no longer prey."
+    },
+
+    {
+      "titleId": "apprentice_flame_miner",
+      "name": "Apprentice Flame Miner",
+      "titleType": "gathering",
+      "difficultyTier": "apprentice",
+      "description": "Fire-veined ores call to you. The heat of the deep welcomes your touch.",
+      "bonuses": {
+        "miningDamage": 0.25,
+        "fireOreChance": 0.15,
+        "elementalAfinity": "fire"
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "gathering_totals.total_ores_mined", "min_value": 1000},
+          {"type": "stat_tracker", "stat_path": "gathering_totals.fire_resources_gathered", "min_value": 200},
+          {"type": "title", "required_title": "novice_miner"},
+          {"type": "level", "min_level": 5}
+        ]
+      },
+      "acquisitionMethod": "event_based_rng",
+      "generationChance": 0.20,
+      "isHidden": false,
+      "narrative": "The forge burns hotter with ores touched by flame. You seek them instinctively."
+    },
+
+    {
+      "titleId": "journeyman_refiner",
+      "name": "Journeyman Refiner",
+      "titleType": "crafting",
+      "difficultyTier": "journeyman",
+      "description": "Impurities flee before your knowledge. Material transformation is your domain.",
+      "bonuses": {
+        "refiningPrecision": 0.50,
+        "alloyQuality": 0.25,
+        "materialYield": 0.10
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "crafting_by_discipline.refining.total_crafts", "min_value": 500},
+          {"type": "stat_tracker", "stat_path": "crafting_by_discipline.refining.total_crafts", "min_value": 50, "comment": "alloysCreated - using total_crafts as proxy"},
+          {"type": "title", "required_title": "novice_refiner"},
+          {"type": "level", "min_level": 10}
+        ]
+      },
+      "acquisitionMethod": "event_based_rng",
+      "generationChance": 0.10,
+      "isHidden": false,
+      "narrative": "You see what others miss: the potential locked within raw matter."
+    },
+
+    {
+      "titleId": "expert_battle_sage",
+      "name": "Expert Battle Sage",
+      "titleType": "combat",
+      "difficultyTier": "expert",
+      "description": "Combat flows through you like water. Blade and mind move as one.",
+      "bonuses": {
+        "meleeDamage": 1.00,
+        "criticalChance": 0.20,
+        "combatSkillExp": 0.25,
+        "counterChance": 0.15
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "combat_kills.total_kills", "min_value": 1000},
+          {"type": "stat_tracker", "stat_path": "combat_actions.critical_hits", "min_value": 500},
+          {"type": "stat_tracker", "stat_path": "combat_survival.perfect_dodges", "min_value": 100},
+          {"type": "title", "required_title": "journeyman_warrior"},
+          {"type": "level", "min_level": 20}
+        ]
+      },
+      "acquisitionMethod": "event_based_rng",
+      "generationChance": 0.05,
+      "isHidden": false,
+      "narrative": "You don't fight. You dance. And everything around you dies beautifully."
+    },
+
+    {
+      "titleId": "master_eternal_smith",
+      "name": "Master Eternal Smith",
+      "titleType": "crafting",
+      "difficultyTier": "master",
+      "description": "Legends speak of smiths who forged the impossible. You are one of them.",
+      "bonuses": {
+        "smithingTime": 2.00,
+        "smithingQuality": 0.50,
+        "firstTryBonus": 0.10,
+        "durabilityBonus": 0.25,
+        "legendaryChance": 0.05
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "crafting_by_discipline.smithing.total_crafts", "min_value": 5000},
+          {"type": "stat_tracker", "stat_path": "crafting_by_discipline.smithing.legendary_crafts", "min_value": 10},
+          {"type": "stat_tracker", "stat_path": "crafting_by_discipline.smithing.perfect_crafts", "min_value": 500},
+          {"type": "title", "required_title": "expert_master_smith"},
+          {"type": "level", "min_level": 40}
+        ]
+      },
+      "acquisitionMethod": "special_achievement",
+      "generationChance": 0.02,
+      "isHidden": false,
+      "narrative": "When you strike the anvil, gods pause to listen. Your work transcends mortality."
+    },
+
+    {
+      "titleId": "hidden_dragons_bane",
+      "name": "Dragon's Bane",
+      "titleType": "combat",
+      "difficultyTier": "special",
+      "description": "Wyrms fear your name. The great beasts fall before you.",
+      "bonuses": {
+        "dragonDamage": 0.50,
+        "fireResistance": 0.30,
+        "legendaryDropRate": 0.10
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "combat_kills.dragons_killed", "min_value": 1},
+          {"type": "level", "min_level": 25},
+          {"type": "comment", "note": "usedFireWeapon boolean check - may need custom condition type in future"}
+        ]
+      },
+      "acquisitionMethod": "hidden_discovery",
+      "generationChance": 1.0,
+      "isHidden": true,
+      "narrative": "The dragon's roar becomes silence. You are the end of their age."
+    },
+
+    {
+      "titleId": "hidden_lucky_bastard",
+      "name": "Lucky Bastard",
+      "titleType": "utility",
+      "difficultyTier": "special",
+      "description": "Fortune herself smiles upon you. Or perhaps you've rigged the dice.",
+      "bonuses": {
+        "luckStat": 0.25,
+        "rareDropRate": 0.15,
+        "firstTryBonus": 0.10,
+        "criticalChance": 0.10
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "crafting_advanced.consecutive_first_try_bonuses", "min_value": 10},
+          {"type": "stat_tracker", "stat_path": "item_collection.rare_drops_total", "min_value": 50},
+          {"type": "level", "min_level": 15}
+        ]
+      },
+      "acquisitionMethod": "hidden_discovery",
+      "generationChance": 1.0,
+      "isHidden": true,
+      "narrative": "You don't believe in luck. You ARE luck."
+    }
+  ],
+
+  "titleCategories": {
+    "gathering": ["miner", "lumberjack", "explorer", "scavenger"],
+    "crafting": ["smith", "refiner", "alchemist", "engineer", "enchanter"],
+    "combat": ["warrior", "defender", "berserker", "duelist"],
+    "utility": ["explorer", "survivalist", "merchant", "scholar"]
+  },
+
+  "difficultyTiers": {
+    "novice": {
+      "bonusRange": "10%",
+      "acquisition": "guaranteed_milestone",
+      "threshold": 100
+    },
+    "apprentice": {
+      "bonusRange": "25%",
+      "acquisition": "event_based_rng",
+      "generationChance": 0.20,
+      "threshold": 1000
+    },
+    "journeyman": {
+      "bonusRange": "50%",
+      "acquisition": "event_based_rng",
+      "generationChance": 0.10,
+      "threshold": 5000
+    },
+    "expert": {
+      "bonusRange": "100%",
+      "acquisition": "event_based_rng",
+      "generationChance": 0.05,
+      "threshold": 20000
+    },
+    "master": {
+      "bonusRange": "200%",
+      "acquisition": "special_achievement",
+      "generationChance": 0.02,
+      "threshold": 100000
+    }
+  }
+}

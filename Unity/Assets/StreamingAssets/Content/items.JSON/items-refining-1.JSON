@@ -1,0 +1,458 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "discipline": "forging",
+    "description": "Refined materials and alloys created through forging/refining",
+    "totalItems": 16,
+    "note": "These are materials used in other crafting recipes but are technically items produced by forging"
+  },
+
+  "basic_ingots": [
+    {
+      "metadata": {
+        "narrative": "Refined copper ingot, reddish and malleable. The foundation of metallurgy - every smith's first metal. Soft enough to work easily, strong enough to be useful.",
+        "tags": ["material", "metal", "refined", "copper"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Sturdy iron ingot, grey and reliable. The workhorse of civilization - strong enough for weapons, durable enough for tools, abundant enough to be practical.",
+        "tags": ["material", "metal", "refined", "iron"]
+      },
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Silvery tin ingot with a subtle sheen. Rarely used alone, but essential for creating bronze alloys. The metal that teaches smiths about the power of combination.",
+        "tags": ["material", "metal", "refined", "tin"]
+      },
+      "itemId": "tin_ingot",
+      "name": "Tin Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Dense steel ingot, dark grey with a bluish tint. Carbon-rich iron forged under intense heat. Holds an edge far better than common iron, the mark of quality craftsmanship.",
+        "tags": ["material", "metal", "refined", "steel"]
+      },
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary mithril ingot, silvery-blue and impossibly light. The metal seems to defy natural laws - feather-light yet stronger than steel. Legends claim it fell from the stars.",
+        "tags": ["material", "metal", "refined", "mithril", "legendary"]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Black adamantine ingot, heavy as sin and harder than anything known. This material refuses to yield, laughs at damage, and never breaks. Forged in earth's deepest fires.",
+        "tags": ["material", "metal", "refined", "adamantine", "legendary"]
+      },
+      "itemId": "adamantine_ingot",
+      "name": "Adamantine Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 18,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Golden-green orichalcum ingot humming with elemental forces. Fire, ice, lightning course through its crystalline structure. The gods' preferred metal when they walked among mortals.",
+        "tags": ["material", "metal", "refined", "orichalcum", "legendary", "elemental"]
+      },
+      "itemId": "orichalcum_ingot",
+      "name": "Orichalcum Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 4,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  ],
+
+  "alloys": [
+    {
+      "metadata": {
+        "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+        "tags": ["material", "metal", "alloy", "bronze"]
+      },
+      "itemId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+        "tags": ["material", "metal", "alloy", "elemental", "fire"]
+      },
+      "itemId": "fire_steel_ingot",
+      "name": "Fire Steel Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "fire",
+          "value": 10,
+          "effect": "Items crafted with this add fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+        "tags": ["material", "metal", "alloy", "elemental", "frost"]
+      },
+      "itemId": "frost_steel_ingot",
+      "name": "Frost Steel Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "frost",
+          "value": 10,
+          "effect": "Items crafted with this add frost damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+        "tags": ["material", "metal", "alloy", "elemental", "lightning"]
+      },
+      "itemId": "lightning_copper_ingot",
+      "name": "Lightning Copper Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "alloy",
+      "tier": 2,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "attributes": [
+        {
+          "type": "elemental",
+          "element": "lightning",
+          "value": 10,
+          "effect": "Items crafted with this add lightning damage"
+        }
+      ],
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  ],
+
+  "wood_planks": [
+    {
+      "metadata": {
+        "narrative": "Sturdy oak planks, well-seasoned and straight-grained. The standard for all woodworking - reliable, abundant, and easy to work with. Handles bear this wood with pride.",
+        "tags": ["material", "wood", "plank", "oak"]
+      },
+      "itemId": "oak_plank",
+      "name": "Oak Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Flexible ash planks with excellent shock absorption. Bowyers and spearmakers favor this wood - it bends without breaking, springs back without warping. The wood of warriors.",
+        "tags": ["material", "wood", "plank", "ash"]
+      },
+      "itemId": "ash_plank",
+      "name": "Ash Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Ironwood planks, dense and metallic. Dulls saw blades quickly but the result is worth it - wood as strong as iron, light as oak. Nature's answer to steel.",
+        "tags": ["material", "wood", "plank", "ironwood", "exotic"]
+      },
+      "itemId": "ironwood_plank",
+      "name": "Ironwood Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 3,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Black ebony planks that absorb light. The wood feels cold, slightly wrong. Mages favor it for staves - it dampens unwanted magical interference while channeling intended power.",
+        "tags": ["material", "wood", "plank", "ebony", "magical"]
+      },
+      "itemId": "ebony_plank",
+      "name": "Ebony Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 3,
+      "rarity": "epic",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Worldtree planks that remember being part of something greater. The wood hums with ancient power. Items crafted from this are said to carry the world's will.",
+        "tags": ["material", "wood", "plank", "worldtree", "legendary"]
+      },
+      "itemId": "worldtree_plank",
+      "name": "Worldtree Plank",
+      "category": "material",
+      "type": "wood",
+      "subtype": "plank",
+      "tier": 4,
+      "rarity": "legendary",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  ]
+}

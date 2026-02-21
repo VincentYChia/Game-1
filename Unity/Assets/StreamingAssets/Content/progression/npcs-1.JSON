@@ -1,0 +1,43 @@
+{
+  "npcs": [
+    {
+      "npc_id": "tutorial_guide",
+      "name": "Elder Sage",
+      "position": {"x": 3.0, "y": -5.0, "z": 0.0},
+      "sprite_color": [200, 150, 255],
+      "interaction_radius": 3.0,
+      "dialogue_lines": [
+        "Welcome, traveler! I sense great potential within you.",
+        "These lands are filled with resources to gather and enemies to defeat.",
+        "I have a small task for you, if you're willing to help."
+      ],
+      "quests": ["tutorial_quest"]
+    },
+    {
+      "npc_id": "mysterious_trader",
+      "name": "Wandering Trader",
+      "position": {"x": -5.0, "y": -3.0, "z": 0.0},
+      "sprite_color": [255, 215, 0],
+      "interaction_radius": 3.0,
+      "dialogue_lines": [
+        "Greetings! I've traveled far and wide.",
+        "I seek brave adventurers to help with my research.",
+        "Perhaps you could assist me?"
+      ],
+      "quests": ["gathering_quest"]
+    },
+    {
+      "npc_id": "combat_trainer",
+      "name": "Battle Master",
+      "position": {"x": 5.0, "y": 3.0, "z": 0.0},
+      "sprite_color": [255, 100, 100],
+      "interaction_radius": 3.0,
+      "dialogue_lines": [
+        "Ho there, warrior! Ready to test your mettle?",
+        "The wilds are dangerous, but I can help you prepare.",
+        "Defeat some enemies, and I'll reward your bravery."
+      ],
+      "quests": ["combat_quest"]
+    }
+  ]
+}

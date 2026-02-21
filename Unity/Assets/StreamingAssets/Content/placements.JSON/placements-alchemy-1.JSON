@@ -1,0 +1,342 @@
+{
+  "metadata": {
+    "discipline": "alchemy",
+    "totalRecipes": 30,
+    "description": "Complete sequential placement templates for ALL alchemy recipes",
+    "note": "Order of addition is critical for reactions"
+  },
+
+  "placements": [
+    {
+      "recipeId": "alchemy_minor_health_potion",
+      "outputId": "minor_health_potion",
+      "stationTier": 1,
+      "ingredients": [
+        {"slot": 1, "materialId": "slime_gel", "quantity": 2},
+        {"slot": 2, "materialId": "wolf_pelt", "quantity": 1}
+      ],
+      "narrative": "Slime gel dissolves first, creating restorative base. Wolf pelt binds mixture second. Watch for gentle green glow - too quick and they won't merge."
+    },
+    {
+      "recipeId": "alchemy_health_potion",
+      "outputId": "health_potion",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "living_ichor", "quantity": 2},
+        {"slot": 2, "materialId": "water_crystal", "quantity": 2},
+        {"slot": 3, "materialId": "slime_gel", "quantity": 1}
+      ],
+      "narrative": "Living ichor provides life force base. Water crystals amplify properties. Slime gel completes stabilization. Each stage must settle before next."
+    },
+    {
+      "recipeId": "alchemy_greater_health_potion",
+      "outputId": "greater_health_potion",
+      "stationTier": 3,
+      "ingredients": [
+        {"slot": 1, "materialId": "essence_blood", "quantity": 3},
+        {"slot": 2, "materialId": "light_gem", "quantity": 2},
+        {"slot": 3, "materialId": "living_ichor", "quantity": 2}
+      ],
+      "narrative": "Essence blood provides foundation. Light gem illuminates and purifies. Living ichor amplifies. Miss a peak, lose potency - catch them all, wounds close rapidly."
+    },
+    {
+      "recipeId": "alchemy_strength_elixir",
+      "outputId": "strength_elixir",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "dire_fang", "quantity": 3},
+        {"slot": 2, "materialId": "fire_crystal", "quantity": 2},
+        {"slot": 3, "materialId": "beetle_carapace", "quantity": 2}
+      ],
+      "narrative": "Dire fangs dissolve first, releasing strength essence. Fire crystals amplify power. Beetle carapace adds durability to effect. Too early blocks absorption, too late makes it brief."
+    },
+    {
+      "recipeId": "alchemy_iron_skin_potion",
+      "outputId": "iron_skin_potion",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "iron_scales", "quantity": 3},
+        {"slot": 2, "materialId": "earth_crystal", "quantity": 2},
+        {"slot": 3, "materialId": "golem_core", "quantity": 1}
+      ],
+      "narrative": "Iron scales dissolve into liquid stone base. Earth crystal adds flexible protection. Golem core solidifies without rigidity. Skin hardens like metal."
+    },
+    {
+      "recipeId": "alchemy_swiftness_draught",
+      "outputId": "swiftness_draught",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "air_crystal", "quantity": 3},
+        {"slot": 2, "materialId": "spectral_thread", "quantity": 2},
+        {"slot": 3, "materialId": "slime_gel", "quantity": 2}
+      ],
+      "narrative": "Air crystals create fluid motion essence. Spectral thread lightens body, quickens reflexes. Slime gel binds to living form. World seems to slow."
+    },
+    {
+      "recipeId": "alchemy_fire_resistance_potion",
+      "outputId": "fire_resistance_potion",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "water_crystal", "quantity": 3},
+        {"slot": 2, "materialId": "frost_essence", "quantity": 2},
+        {"slot": 3, "materialId": "slime_gel", "quantity": 1}
+      ],
+      "narrative": "Water crystals create cooling base. Frost essence adds cold countering flame. Slime gel binds protection to skin. Fire cannot touch you."
+    },
+    {
+      "recipeId": "alchemy_frost_resistance_potion",
+      "outputId": "frost_resistance_potion",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "fire_crystal", "quantity": 3},
+        {"slot": 2, "materialId": "phoenix_ash", "quantity": 1},
+        {"slot": 3, "materialId": "slime_gel", "quantity": 1}
+      ],
+      "narrative": "Fire crystals generate inner warmth. Phoenix ash adds perpetual heat never fading. Slime gel spreads throughout body. Cold cannot touch you."
+    },
+    {
+      "recipeId": "alchemy_regeneration_tonic",
+      "outputId": "regeneration_tonic",
+      "stationTier": 3,
+      "ingredients": [
+        {"slot": 1, "materialId": "living_ichor", "quantity": 4},
+        {"slot": 2, "materialId": "light_gem", "quantity": 3},
+        {"slot": 3, "materialId": "essence_blood", "quantity": 2}
+      ],
+      "narrative": "Living ichor creates sustained healing potential. Light gems infuse persistent illumination. Essence blood binds regenerative effect. Body remembers how to heal continuously."
+    },
+    {
+      "recipeId": "alchemy_titans_brew",
+      "outputId": "titans_brew",
+      "stationTier": 4,
+      "ingredients": [
+        {"slot": 1, "materialId": "golem_core", "quantity": 3},
+        {"slot": 2, "materialId": "storm_heart", "quantity": 2},
+        {"slot": 3, "materialId": "phoenix_ash", "quantity": 3},
+        {"slot": 4, "materialId": "essence_blood", "quantity": 4}
+      ],
+      "narrative": "Golem core provides titan strength. Storm heart adds raw power. Phoenix ash ensures perpetual effect. Essence blood binds all. You feel unstoppable."
+    },
+    {
+      "recipeId": "alchemy_transmute_copper_tin",
+      "outputId": "tin_ingot",
+      "stationTier": 1,
+      "ingredients": [
+        {"slot": 1, "materialId": "copper_ingot", "quantity": 3},
+        {"slot": 2, "materialId": "fire_crystal", "quantity": 1}
+      ],
+      "narrative": "Copper dissolves first into base form. Fire crystal catalyzes transformation to tin. Foundation of alchemical wealth."
+    },
+    {
+      "recipeId": "alchemy_transmute_iron_steel",
+      "outputId": "steel_ingot",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "iron_ingot", "quantity": 2},
+        {"slot": 2, "materialId": "coal", "quantity": 3},
+        {"slot": 3, "materialId": "fire_crystal", "quantity": 2}
+      ],
+      "narrative": "Iron dissolves to potential. Coal provides carbon. Fire crystal bonds them into steel. Alchemy surpasses forging."
+    },
+    {
+      "recipeId": "alchemy_refine_essence_blood",
+      "outputId": "essence_blood",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "living_ichor", "quantity": 4},
+        {"slot": 2, "materialId": "light_gem", "quantity": 2}
+      ],
+      "narrative": "Living ichor provides raw life force. Light gems purify and concentrate. Pure essence emerges - no impurities, pure vitality."
+    },
+    {
+      "recipeId": "alchemy_crystallize_fire",
+      "outputId": "fire_crystal",
+      "stationTier": 1,
+      "ingredients": [
+        {"slot": 1, "materialId": "limestone", "quantity": 5},
+        {"slot": 2, "materialId": "phoenix_ash", "quantity": 1}
+      ],
+      "narrative": "Limestone dissolves, creating crystalline matrix. Phoenix ash ignites transformation. Chaos becomes order - heat solidifies into stable crystal."
+    },
+    {
+      "recipeId": "alchemy_elemental_harmony",
+      "outputId": "elemental_harmony_potion",
+      "stationTier": 3,
+      "ingredients": [
+        {"slot": 1, "materialId": "fire_crystal", "quantity": 2},
+        {"slot": 2, "materialId": "water_crystal", "quantity": 2},
+        {"slot": 3, "materialId": "earth_crystal", "quantity": 2},
+        {"slot": 4, "materialId": "air_crystal", "quantity": 2}
+      ],
+      "narrative": "Fire then water - must balance before adding earth. Air completes cycle. Balance in bottle - all elements recognize you as kin."
+    },
+    {
+      "recipeId": "alchemy_universal_solvent",
+      "outputId": "universal_solvent",
+      "stationTier": 3,
+      "ingredients": [
+        {"slot": 1, "materialId": "void_essence", "quantity": 2},
+        {"slot": 2, "materialId": "shadow_core", "quantity": 3},
+        {"slot": 3, "materialId": "voidstone", "quantity": 4}
+      ],
+      "narrative": "Void essence unmakes matter. Shadow cores channel dissolution. Voidstone stabilizes impossible. Miss timing, dissolves cauldron itself."
+    },
+    {
+      "recipeId": "alchemy_efficiency_oil",
+      "outputId": "efficiency_oil",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "slime_gel", "quantity": 3},
+        {"slot": 2, "materialId": "spectral_thread", "quantity": 2},
+        {"slot": 3, "materialId": "water_crystal", "quantity": 1}
+      ],
+      "narrative": "Slime gel creates slick base. Spectral thread adds supernatural efficiency. Water crystal prevents evaporation. Productivity soars."
+    },
+    {
+      "recipeId": "alchemy_armor_polish",
+      "outputId": "armor_polish",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "limestone", "quantity": 4},
+        {"slot": 2, "materialId": "light_gem", "quantity": 1},
+        {"slot": 3, "materialId": "slime_gel", "quantity": 2}
+      ],
+      "narrative": "Limestone grinds to powder. Light gem infuses protective shimmer. Slime gel binds into paste. Sheen turns blades."
+    },
+    {
+      "recipeId": "alchemy_invisibility_potion",
+      "outputId": "invisibility_potion",
+      "stationTier": 3,
+      "ingredients": [
+        {"slot": 1, "materialId": "shadow_core", "quantity": 2},
+        {"slot": 2, "materialId": "spectral_thread", "quantity": 4},
+        {"slot": 3, "materialId": "void_essence", "quantity": 1},
+        {"slot": 4, "materialId": "living_ichor", "quantity": 2}
+      ],
+      "narrative": "Shadow cores create concealment base. Spectral thread bends light around you. Void essence completes erasure. Living ichor binds to living form. You become absence."
+    },
+    {
+      "recipeId": "alchemy_night_vision_elixir",
+      "outputId": "night_vision_elixir",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "light_gem", "quantity": 2},
+        {"slot": 2, "materialId": "shadow_core", "quantity": 1},
+        {"slot": 3, "materialId": "living_ichor", "quantity": 2}
+      ],
+      "narrative": "Light gems infuse eyes with illumination. Shadow core teaches seeing through darkness. Living ichor carries to vision. Darkness becomes irrelevant."
+    },
+    {
+      "recipeId": "alchemy_water_breathing_potion",
+      "outputId": "water_breathing_potion",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "water_crystal", "quantity": 4},
+        {"slot": 2, "materialId": "air_crystal", "quantity": 2},
+        {"slot": 3, "materialId": "living_ichor", "quantity": 1}
+      ],
+      "narrative": "Water crystals attune body to aquatic existence. Air crystals teach lungs extracting oxygen from water. Living ichor completes transformation. Breathe liquid as air."
+    },
+    {
+      "recipeId": "alchemy_antidote",
+      "outputId": "antidote",
+      "stationTier": 1,
+      "ingredients": [
+        {"slot": 1, "materialId": "living_ichor", "quantity": 2},
+        {"slot": 2, "materialId": "light_gem", "quantity": 1}
+      ],
+      "narrative": "Living ichor purges toxins from blood. Light gem illuminates and neutralizes poison. Simple but effective - corruption burns away."
+    },
+    {
+      "recipeId": "alchemy_mana_potion",
+      "outputId": "mana_potion",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "crystal_quartz", "quantity": 3},
+        {"slot": 2, "materialId": "light_gem", "quantity": 2},
+        {"slot": 3, "materialId": "water_crystal", "quantity": 2}
+      ],
+      "narrative": "Crystal quartz creates magical base, pure potential. Light gems infuse arcane energy. Water crystals stabilize volatile magic into drinkable form. Mana floods back."
+    },
+    {
+      "recipeId": "alchemy_philosophers_stone",
+      "outputId": "philosophers_stone",
+      "stationTier": 4,
+      "ingredients": [
+        {"slot": 1, "materialId": "gold_ingot", "quantity": 5},
+        {"slot": 2, "materialId": "dragon_scale", "quantity": 3},
+        {"slot": 3, "materialId": "essence_blood", "quantity": 5},
+        {"slot": 4, "materialId": "void_essence", "quantity": 2},
+        {"slot": 5, "materialId": "phoenix_ash", "quantity": 4},
+        {"slot": 6, "materialId": "storm_heart", "quantity": 2}
+      ],
+      "narrative": "Gold base for perfection. Dragon scale adds ancient power. Essence blood provides life. Void essence enables transmutation. Phoenix ash grants rebirth. Storm heart completes opus. Magnum achievement of alchemy."
+    },
+    {
+      "recipeId": "alchemy_berserker_rage",
+      "outputId": "berserker_rage_potion",
+      "stationTier": 3,
+      "ingredients": [
+        {"slot": 1, "materialId": "dire_fang", "quantity": 5},
+        {"slot": 2, "materialId": "fire_crystal", "quantity": 3},
+        {"slot": 3, "materialId": "storm_heart", "quantity": 1},
+        {"slot": 4, "materialId": "living_ichor", "quantity": 3}
+      ],
+      "narrative": "Dire fangs release primal fury. Fire crystals ignite rage. Storm heart adds raw power. Living ichor binds controlled chaos. Unleash inner beast."
+    },
+    {
+      "recipeId": "alchemy_liquid_courage",
+      "outputId": "liquid_courage",
+      "stationTier": 1,
+      "ingredients": [
+        {"slot": 1, "materialId": "slime_gel", "quantity": 3},
+        {"slot": 2, "materialId": "fire_crystal", "quantity": 1}
+      ],
+      "narrative": "Slime gel creates base. Fire crystal adds warming confidence. Simple but effective - fear melts away."
+    },
+    {
+      "recipeId": "alchemy_levitation_elixir",
+      "outputId": "levitation_elixir",
+      "stationTier": 3,
+      "ingredients": [
+        {"slot": 1, "materialId": "air_crystal", "quantity": 5},
+        {"slot": 2, "materialId": "spectral_thread", "quantity": 3},
+        {"slot": 3, "materialId": "void_essence", "quantity": 1},
+        {"slot": 4, "materialId": "living_ichor", "quantity": 2}
+      ],
+      "narrative": "Air crystals deny gravity. Spectral thread lightens physical form. Void essence completes separation from earth. Living ichor binds to body. You float."
+    },
+    {
+      "recipeId": "alchemy_poison_vial",
+      "outputId": "poison_vial",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "dire_fang", "quantity": 2},
+        {"slot": 2, "materialId": "shadow_core", "quantity": 1},
+        {"slot": 3, "materialId": "slime_gel", "quantity": 2}
+      ],
+      "narrative": "Dire fangs release venom. Shadow core amplifies toxicity. Slime gel stabilizes for storage. Coat weapons with deadly brew."
+    },
+    {
+      "recipeId": "alchemy_crystallize_lightning",
+      "outputId": "lightning_shard",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "storm_heart", "quantity": 1},
+        {"slot": 2, "materialId": "crystal_quartz", "quantity": 3}
+      ],
+      "narrative": "Storm heart provides raw lightning. Crystal quartz captures and stabilizes. Electricity crystallizes into solid form."
+    },
+    {
+      "recipeId": "alchemy_haste_potion",
+      "outputId": "haste_potion",
+      "stationTier": 2,
+      "ingredients": [
+        {"slot": 1, "materialId": "air_crystal", "quantity": 2},
+        {"slot": 2, "materialId": "lightning_shard", "quantity": 1},
+        {"slot": 3, "materialId": "spectral_thread", "quantity": 2}
+      ],
+      "narrative": "Air crystal creates speed foundation. Lightning shard adds electric quickness. Spectral thread binds temporal acceleration. Move like lightning."
+    }
+  ]
+}

@@ -1,0 +1,259 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Legendary test weapons with advanced effect combinations",
+    "note": "These items showcase complex tag interactions and special effects"
+  },
+
+  "test_weapons": [
+    {
+      "metadata": {
+        "narrative": "Crackling with elemental fury, this whip doesn't just strike—it hunts. Each lash leaps from victim to victim, leaving a trail of shocked enemies in its wake.",
+        "tags": ["melee", "whip", "lightning", "chain", "epic"]
+      },
+      "itemId": "lightning_chain_whip",
+      "name": "Lightning Chain Whip",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "whip",
+      "tier": 3,
+      "rarity": "epic",
+      "range": 3,
+      "slot": "mainHand",
+      "effectTags": ["lightning", "chain", "shock"],
+      "effectParams": {
+        "baseDamage": 40,
+        "chain_count": 3,
+        "chain_range": 6.0,
+        "shock_duration": 4.0,
+        "shock_damage_per_tick": 5.0,
+        "shock_tick_rate": 1.0
+      },
+      "statMultipliers": {
+        "damage": 1.0,
+        "attackSpeed": 1.5,
+        "durability": 1.0,
+        "weight": 0.8
+      },
+      "attributes": [
+        {
+          "type": "critChance",
+          "value": 0.15,
+          "effect": "15% critical strike chance"
+        }
+      ],
+      "requirements": {
+        "level": 15,
+        "stats": {"AGI": 16, "INT": 12}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "The blade itself never cools. Each swing projects a wave of searing flame that engulfs all before you. The heat is so intense that victims continue burning long after the strike.",
+        "tags": ["melee", "sword", "fire", "aoe", "legendary"]
+      },
+      "itemId": "inferno_blade",
+      "name": "Inferno Blade",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "greatsword",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 1.5,
+      "slot": "mainHand",
+      "effectTags": ["fire", "cone", "burn"],
+      "effectParams": {
+        "baseDamage": 50,
+        "cone_angle": 60.0,
+        "cone_range": 8.0,
+        "burn_duration": 10.0,
+        "burn_damage_per_second": 8.0
+      },
+      "statMultipliers": {
+        "damage": 1.3,
+        "attackSpeed": 1.2,
+        "durability": 1.25,
+        "weight": 1.3
+      },
+      "attributes": [
+        {
+          "type": "critChance",
+          "value": 0.20,
+          "effect": "20% critical strike chance"
+        },
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 25,
+          "effect": "Massive fire damage bonus"
+        }
+      ],
+      "requirements": {
+        "level": 20,
+        "stats": {"STR": 18, "INT": 16}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Forged from crystallized void essence, this spear doesn't throw—it tears. A beam of pure darkness lances through your enemies, weakening each it touches as it passes through flesh and armor alike.",
+        "tags": ["melee", "spear", "shadow", "pierce", "legendary"]
+      },
+      "itemId": "void_piercer",
+      "name": "Void Piercer",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "spear",
+      "tier": 4,
+      "rarity": "legendary",
+      "range": 10,
+      "slot": "mainHand",
+      "effectTags": ["shadow", "beam", "weaken", "pierce"],
+      "effectParams": {
+        "baseDamage": 45,
+        "beam_range": 12.0,
+        "beam_width": 1.5,
+        "pierce_count": 5,
+        "weaken_percent": 0.3,
+        "weaken_duration": 8.0
+      },
+      "statMultipliers": {
+        "damage": 1.15,
+        "attackSpeed": 1.4,
+        "durability": 1.125,
+        "weight": 0.9
+      },
+      "attributes": [
+        {
+          "type": "critChance",
+          "value": 0.25,
+          "effect": "25% critical strike chance"
+        },
+        {
+          "type": "damage",
+          "element": "shadow",
+          "value": 20,
+          "effect": "Shadow damage bonus"
+        }
+      ],
+      "requirements": {
+        "level": 20,
+        "stats": {"AGI": 20, "INT": 18}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Each impact sends a shockwave of absolute zero. Enemies freeze mid-motion as they're blasted backward, turned into icy statues before they even hit the ground.",
+        "tags": ["melee", "mace", "ice", "aoe", "control"]
+      },
+      "itemId": "frostbite_hammer",
+      "name": "Frostbite Hammer",
+      "category": "equipment",
+      "type": "mace",
+      "subtype": "warhammer",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 1.5,
+      "slot": "mainHand",
+      "effectTags": ["ice", "circle", "freeze", "knockback"],
+      "effectParams": {
+        "baseDamage": 60,
+        "circle_radius": 4.0,
+        "origin": "target",
+        "freeze_duration": 3.0,
+        "knockback_distance": 3.0
+      },
+      "statMultipliers": {
+        "damage": 1.35,
+        "attackSpeed": 0.8,
+        "durability": 1.5,
+        "weight": 1.5
+      },
+      "attributes": [
+        {
+          "type": "critChance",
+          "value": 0.10,
+          "effect": "10% critical strike chance"
+        },
+        {
+          "type": "damage",
+          "element": "ice",
+          "value": 15,
+          "effect": "Ice damage bonus"
+        }
+      ],
+      "requirements": {
+        "level": 16,
+        "stats": {"STR": 20, "INT": 10}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "This weapon hungers. Each strike opens wounds that refuse to close, and as your enemies bleed, the blade drinks—and so do you. Feel their vitality flow into you with each passing second.",
+        "tags": ["melee", "sword", "cursed", "lifesteal", "bleed"]
+      },
+      "itemId": "blood_reaver",
+      "name": "Blood Reaver",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "longsword",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 1,
+      "slot": "mainHand",
+      "effectTags": ["physical", "single", "bleed", "lifesteal"],
+      "effectParams": {
+        "baseDamage": 42,
+        "bleed_duration": 10.0,
+        "bleed_damage_per_second": 6.0,
+        "lifesteal_percent": 0.25
+      },
+      "statMultipliers": {
+        "damage": 1.05,
+        "attackSpeed": 1.3,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "attributes": [
+        {
+          "type": "critChance",
+          "value": 0.18,
+          "effect": "18% critical strike chance"
+        },
+        {
+          "type": "lifesteal",
+          "value": 0.25,
+          "effect": "Steal 25% of damage dealt as health"
+        }
+      ],
+      "requirements": {
+        "level": 15,
+        "stats": {"STR": 14, "AGI": 14}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  ]
+}

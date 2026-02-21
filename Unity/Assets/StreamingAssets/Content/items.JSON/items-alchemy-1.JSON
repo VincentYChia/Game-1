@@ -1,0 +1,572 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "discipline": "alchemy",
+    "description": "Consumable items crafted through alchemy discipline",
+    "totalItems": 16,
+    "note": "All potions, elixirs, and utility consumables"
+  },
+
+  "potions_healing": [
+    {
+      "metadata": {
+        "narrative": "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation. Tastes terrible, works wonderfully. Wounds close and pain fades within moments.",
+        "tags": ["potion", "healing", "consumable", "starter"]
+      },
+      "itemId": "minor_health_potion",
+      "name": "Minor Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Restores 50 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 50
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Improved healing potion using water crystals to amplify restorative properties. The liquid shimmers with captured vitality. One swallow and you feel strength returning.",
+        "tags": ["potion", "healing", "consumable", "standard"]
+      },
+      "itemId": "health_potion",
+      "name": "Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 2,
+      "rarity": "common",
+      "effect": "Restores 100 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 100
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly, mends broken bones, restores vitality. The taste of life itself.",
+        "tags": ["potion", "healing", "consumable", "quality"]
+      },
+      "itemId": "greater_health_potion",
+      "name": "Greater Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 3,
+      "rarity": "uncommon",
+      "effect": "Restores 200 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 200
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Regeneration tonic that mends wounds over time. Light gems infused with living essence create a sustained healing effect. Your body remembers how to heal itself.",
+        "tags": ["potion", "healing", "regeneration", "advanced"]
+      },
+      "itemId": "regeneration_tonic",
+      "name": "Regeneration Tonic",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Restores 75 HP instantly and 5 HP per second",
+      "duration": 60,
+      "stackSize": 10,
+      "effectTags": ["healing", "instant", "over_time", "self"],
+      "effectParams": [
+        {
+          "heal_amount": 75
+        },
+        {
+          "heal_per_second": 5.0,
+          "duration": 60.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    }
+  ],
+
+  "potions_buff": [
+    {
+      "metadata": {
+        "narrative": "Strength-enhancing elixir using dire fangs and fire crystals. Muscles surge with power, every strike hits harder. Feel the beast's ferocity flowing through you.",
+        "tags": ["potion", "buff", "strength", "combat"]
+      },
+      "itemId": "strength_elixir",
+      "name": "Strength Elixir",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "+20% physical damage and +15% attack speed",
+      "duration": 300,
+      "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "strength",
+          "buff_value": 0.20,
+          "duration": 300.0
+        },
+        {
+          "buff_type": "attack_speed",
+          "buff_value": 0.15,
+          "duration": 300.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Defense-boosting potion using iron scales and earth crystals. Skin hardens like metal, blows that should fell you merely bruise. Stand firm, unbreakable.",
+        "tags": ["potion", "buff", "defense", "protection"]
+      },
+      "itemId": "iron_skin_potion",
+      "name": "Iron Skin Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "+20% defense",
+      "duration": 300,
+      "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": {
+        "buff_type": "defense",
+        "buff_value": 10.0,
+        "duration": 300.0
+      },
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Speed-enhancing draught using air crystals and spectral thread. Time seems to slow around you. Your movements blur, strikes land before enemies can react.",
+        "tags": ["potion", "buff", "speed", "agility"]
+      },
+      "itemId": "swiftness_draught",
+      "name": "Swiftness Draught",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "+25% movement and attack speed",
+      "duration": 240,
+      "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "speed",
+          "buff_value": 0.25,
+          "duration": 240.0
+        },
+        {
+          "buff_type": "attack_speed",
+          "buff_value": 0.25,
+          "duration": 240.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary brew combining dragon essence with phoenix ash. Maximum HP surges, strength magnifies. For a brief time, you become something more than mortal.",
+        "tags": ["potion", "buff", "legendary", "power"]
+      },
+      "itemId": "titans_brew",
+      "name": "Titan's Brew",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 4,
+      "rarity": "epic",
+      "effect": "+50% max HP and +40% physical damage",
+      "duration": 480,
+      "stackSize": 5,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "max_hp",
+          "buff_value": 0.50,
+          "duration": 480.0
+        },
+        {
+          "buff_type": "strength",
+          "buff_value": 0.40,
+          "duration": 480.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    }
+  ],
+
+  "potions_resistance": [
+    {
+      "metadata": {
+        "narrative": "Fire resistance potion using water and frost essences. Body temperature regulates perfectly. Walk through flames unscathed, fire becomes a gentle warmth.",
+        "tags": ["potion", "resistance", "fire", "protection"]
+      },
+      "itemId": "fire_resistance_potion",
+      "name": "Fire Resistance Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "resistance",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "50% fire damage reduction",
+      "duration": 360,
+      "stackSize": 10,
+      "effectTags": ["resistance", "self"],
+      "effectParams": {
+        "resistance_type": "fire",
+        "damage_reduction": 0.5,
+        "duration": 360.0
+      },
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Frost resistance potion using fire crystals to create internal warmth. Cold cannot touch you. Ice shatters against your skin, blizzards feel like spring breezes.",
+        "tags": ["potion", "resistance", "frost", "protection"]
+      },
+      "itemId": "frost_resistance_potion",
+      "name": "Frost Resistance Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "resistance",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "50% ice damage reduction",
+      "duration": 360,
+      "stackSize": 10,
+      "effectTags": ["resistance", "self"],
+      "effectParams": {
+        "resistance_type": "ice",
+        "damage_reduction": 0.5,
+        "duration": 360.0
+      },
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Combining all basic elements into a harmony potion. Balance in a bottle. All elemental forces recognize you as kin and refuse to harm their own.",
+        "tags": ["potion", "resistance", "elemental", "harmony"]
+      },
+      "itemId": "elemental_harmony_potion",
+      "name": "Elemental Harmony Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "resistance",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Grants resistance to all elements for 10 minutes",
+      "duration": 600,
+      "stackSize": 5,
+      "effectTags": ["resistance", "self"],
+      "effectParams": {
+        "resistance_type": "elemental",
+        "damage_reduction": 0.3,
+        "duration": 600.0
+      },
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    }
+  ],
+
+  "utility_consumables": [
+    {
+      "metadata": {
+        "narrative": "Oil that makes tools work faster and smoother. Craftsmen swear by this formula. Apply it before work and watch efficiency soar.",
+        "tags": ["utility", "enhancement", "tool", "crafting"]
+      },
+      "itemId": "efficiency_oil",
+      "name": "Efficiency Oil",
+      "category": "consumable",
+      "type": "oil",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Apply to tools for +15% gathering speed for 1 hour",
+      "duration": 3600,
+      "stackSize": 10,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "efficiency",
+        "utility_value": 0.15,
+        "duration": 3600.0
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Polish that makes armor gleam and deflect attacks. Knights pay fortunes for this. The sheen isn't just for show - it actually turns blades.",
+        "tags": ["utility", "enhancement", "armor", "protection"]
+      },
+      "itemId": "armor_polish",
+      "name": "Armor Polish",
+      "category": "consumable",
+      "type": "oil",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Apply to armor for +10% defense for 2 hours",
+      "duration": 7200,
+      "stackSize": 10,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "armor",
+        "utility_value": 5.0,
+        "duration": 7200.0
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Oil that makes weapons strike true. Edges stay sharp impossibly long. Warriors whisper prayers to the alchemist who made this.",
+        "tags": ["utility", "enhancement", "weapon", "combat"]
+      },
+      "itemId": "weapon_oil",
+      "name": "Weapon Oil",
+      "category": "consumable",
+      "type": "oil",
+      "subtype": "utility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Apply to weapons for +10% damage for 2 hours",
+      "duration": 7200,
+      "stackSize": 10,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "weapon",
+        "utility_value": 0.10,
+        "duration": 7200.0
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Explosive powder from concentrated elemental volatility. Handle with extreme care. Do not shake, drop, or look at funny. Used in engineering recipes for bombs and explosives.",
+        "tags": ["utility", "explosive", "dangerous", "engineering"]
+      },
+      "itemId": "blast_powder",
+      "name": "Blast Powder",
+      "category": "consumable",
+      "type": "material",
+      "subtype": "explosive",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Used in engineering recipes for bombs and explosives",
+      "duration": 0,
+      "stackSize": 50,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Creating universal solvent that can dissolve anything. Handle with extreme care. The void essence makes it unstable, the shadow core makes it hungry. It wants to unmake things.",
+        "tags": ["utility", "solvent", "dangerous", "void"]
+      },
+      "itemId": "universal_solvent",
+      "name": "Universal Solvent",
+      "category": "consumable",
+      "type": "utility",
+      "subtype": "solvent",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Can dissolve most materials, use carefully",
+      "duration": 0,
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    }
+  ]
+}

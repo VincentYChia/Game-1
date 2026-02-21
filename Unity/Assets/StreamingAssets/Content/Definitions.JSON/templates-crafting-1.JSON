@@ -1,0 +1,384 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Finalized crafting placement templates for mini-game recipes across all 5 disciplines",
+    "purpose": "These templates define HOW materials are placed/arranged for mini-game crafting. They are secondary to the main recipe JSONs and provide the pathway to mini-game interactions.",
+    "note": "Base crafting (instant, no minigame) uses only the main recipe JSON. These placements are ONLY for mini-game crafting."
+  },
+
+  "disciplines": {
+    "smithing": {
+      "description": "Grid-based placement system. Size scales with station tier.",
+      "criteria": {
+        "gridSizes": {
+          "T1": "3x3",
+          "T2": "5x5",
+          "T3": "7x7",
+          "T4": "9x9"
+        },
+        "rules": [
+          "No stacking - each cell holds exactly 1 material",
+          "Rows and columns indexed starting from 1 (not 0)",
+          "Diagonal placement preferred for simple recipes when possible",
+          "Asymmetric items (axes, etc.) should face RIGHT, not left",
+          "Empty cells are implicit (only specify occupied cells)",
+          "Pattern must not exceed tier grid size"
+        ]
+      },
+      "template": {
+        "recipeId": "smithing_iron_shortsword",
+        "outputId": "iron_shortsword",
+        "stationTier": 1,
+        "gridSize": "3x3",
+        "placementMap": {
+          "1,1": "iron_ingot",
+          "2,2": "iron_ingot",
+          "3,3": "oak_plank"
+        },
+        "narrative": "A simple shortsword crafted by stacking iron ingots for the blade and binding them to an oak handle. The most fundamental weapon - straightforward to forge, reliable in use, and strong enough for daily protection. Diagonal placement teaches the basic rhythm of the hammer."
+      },
+      "examples": {
+        "diagonal_sword": {
+          "description": "Preferred diagonal layout for simple vertical items",
+          "placementMap": {
+            "1,1": "iron_ingot",
+            "2,2": "iron_ingot",
+            "3,3": "oak_plank"
+          }
+        },
+        "right_facing_axe": {
+          "description": "Asymmetric items face right",
+          "placementMap": {
+            "1,2": "oak_plank",
+            "2,2": "iron_ingot",
+            "2,3": "iron_ingot"
+          }
+        },
+        "chestplate_5x5": {
+          "description": "Larger recipe on T2 bench",
+          "placementMap": {
+            "1,2": "iron_ingot",
+            "1,3": "iron_ingot",
+            "1,4": "iron_ingot",
+            "2,1": "iron_ingot",
+            "2,2": "iron_ingot",
+            "2,3": "iron_ingot",
+            "2,4": "iron_ingot",
+            "2,5": "iron_ingot",
+            "3,2": "iron_ingot",
+            "3,3": "wolf_pelt",
+            "3,4": "iron_ingot"
+          }
+        }
+      }
+    },
+
+    "forging_refining": {
+      "description": "Hub-and-spoke system. Core slots determine output, surrounding slots are modifiers.",
+      "criteria": {
+        "slotsByTier": {
+          "T1": "1 Core + 2 Surrounding",
+          "T2": "1 Core + 4 Surrounding",
+          "T3": "2 Core + 5 Surrounding",
+          "T4": "3 Core + 6 Surrounding"
+        },
+        "rules": [
+          "All slots stackable up to 256 items",
+          "Core slots determine output type and quantity",
+          "Surrounding slots are modifiers (position doesn't matter)",
+          "Multi-core recipes: ALL core slots MUST have equal quantities",
+          "Core quantity = output quantity (except rarity upgrades use defined ratio)",
+          "Output quantity already defined in recipe JSON - DO NOT duplicate here",
+          "Ore to ingot is 1:1 ratio (horizontal refinement)",
+          "No fuel required for basic recipes (fuelRequired: null)"
+        ]
+      },
+      "template": {
+        "recipeId": "refining_iron_ore_to_ingot",
+        "outputId": "iron_ingot",
+        "stationTier": 1,
+        "coreInputs": [
+          {
+            "materialId": "iron_ore",
+            "quantity": 1
+          }
+        ],
+        "surroundingInputs": [],
+        "narrative": "Raw iron ore is heated until impurities burn away, leaving pure metal that can be cast into ingots. The foundation of all metalworking - transforming rough stone into workable material. The lockpicking rhythm teaches patience and precision."
+      },
+      "examples": {
+        "simple_refining": {
+          "description": "Basic ore to ingot (1:1 ratio)",
+          "coreInputs": [
+            {"materialId": "copper_ore", "quantity": 1}
+          ],
+          "surroundingInputs": []
+        },
+        "alloy_creation_t3": {
+          "description": "Multi-core alloy with modifiers",
+          "coreInputs": [
+            {"materialId": "copper_ingot", "quantity": 16},
+            {"materialId": "tin_ingot", "quantity": 16}
+          ],
+          "surroundingInputs": [
+            {"materialId": "fire_crystal", "quantity": 4},
+            {"materialId": "limestone", "quantity": 8}
+          ],
+          "narrative": "Copper and tin are melted together in precise ratios, their essences combining to create bronze - stronger than either parent metal. Fire crystals maintain the forge heat while limestone flux removes impurities."
+        },
+        "elemental_fusion": {
+          "description": "Creating elemental variant",
+          "coreInputs": [
+            {"materialId": "steel_ingot", "quantity": 32}
+          ],
+          "surroundingInputs": [
+            {"materialId": "fire_crystal", "quantity": 16},
+            {"materialId": "phoenix_ash", "quantity": 4}
+          ],
+          "narrative": "Steel ingots absorb fire essence, transforming into blazing metal that never cools. Each hammer strike on the cylinders bonds elemental power deeper into the crystalline structure."
+        },
+        "rarity_upgrade": {
+          "description": "4:1 rarity upgrade (ratio in recipe JSON)",
+          "coreInputs": [
+            {"materialId": "iron_ingot", "quantity": 4, "rarity": "common"}
+          ],
+          "surroundingInputs": [],
+          "narrative": "Four common ingots refined into one of uncommon quality. Material consolidation through perfect alignment - what was scattered becomes unified."
+        }
+      }
+    },
+
+    "alchemy": {
+      "description": "Sequential slot system. Order of addition is critical for reactions.",
+      "criteria": {
+        "slotsByTier": {
+          "T1": "3 ingredient slots",
+          "T2": "5 ingredient slots",
+          "T3": "7 ingredient slots",
+          "T4": "9 ingredient slots"
+        },
+        "rules": [
+          "All slots identical (just numbered sequentially)",
+          "Order is CRITICAL - array order = chronological addition sequence",
+          "Slots stackable up to 256 items",
+          "ingredients array replaces inputs array (no duplication needed)",
+          "Volatility is OMITTED - calculated from material metadata at runtime",
+          "Slot numbers must be sequential (1, 2, 3, etc.)"
+        ]
+      },
+      "template": {
+        "recipeId": "alchemy_minor_health_potion",
+        "outputId": "minor_health_potion",
+        "stationTier": 1,
+        "ingredients": [
+          {
+            "slot": 1,
+            "materialId": "slime_gel",
+            "quantity": 2
+          },
+          {
+            "slot": 2,
+            "materialId": "wolf_pelt",
+            "quantity": 1
+          }
+        ],
+        "narrative": "Slime gel dissolves first, creating the restorative base. Wolf pelt is added second to bind the mixture and stabilize the healing essence. Watch for the gentle green glow that signals readiness - add ingredients too quickly and they won't fully merge. Each ingredient has its moment."
+      },
+      "examples": {
+        "simple_potion_t1": {
+          "description": "Basic 2-ingredient potion",
+          "ingredients": [
+            {"slot": 1, "materialId": "slime_gel", "quantity": 2},
+            {"slot": 2, "materialId": "wolf_pelt", "quantity": 1}
+          ]
+        },
+        "buff_potion_t2": {
+          "description": "4-ingredient buff potion with timing",
+          "ingredients": [
+            {"slot": 1, "materialId": "dire_fang", "quantity": 3},
+            {"slot": 2, "materialId": "fire_crystal", "quantity": 2},
+            {"slot": 3, "materialId": "beetle_carapace", "quantity": 2},
+            {"slot": 4, "materialId": "living_ichor", "quantity": 1}
+          ],
+          "narrative": "Dire fangs dissolve first, releasing raw strength. Fire crystals amplify the power. Beetle carapace adds durability to the effect. Living ichor binds it all together - add it too early and the mixture becomes inert, too late and it explodes."
+        },
+        "complex_transmutation_t3": {
+          "description": "Multi-step transmutation with precise timing",
+          "ingredients": [
+            {"slot": 1, "materialId": "limestone", "quantity": 5},
+            {"slot": 2, "materialId": "phoenix_ash", "quantity": 2},
+            {"slot": 3, "materialId": "living_ichor", "quantity": 3},
+            {"slot": 4, "materialId": "light_gem", "quantity": 1},
+            {"slot": 5, "materialId": "water_crystal", "quantity": 4},
+            {"slot": 6, "materialId": "shadow_core", "quantity": 2}
+          ],
+          "narrative": "Limestone provides the foundation. Phoenix ash ignites transformation. Ichor carries life force. Light gem illuminates hidden properties. Water crystal stabilizes the reaction. Shadow core completes the transmutation. Each ingredient must reach its peak before the next is added - miss the window and chaos erupts."
+        }
+      }
+    },
+
+    "engineering": {
+      "description": "Modular slot-type system. Materials determine device properties, FUNCTION slot determines device type.",
+      "criteria": {
+        "slotsByTier": {
+          "T1": "3 canvas slots (FRAME, POWER, FUNCTION available)",
+          "T2": "5 canvas slots (same 3 types, can use multiples)",
+          "T3": "5 canvas slots (adds MODIFIER, UTILITY types)",
+          "T4": "7 canvas slots (all types including special slots)"
+        },
+        "slotTypes": {
+          "FRAME": "Structural base (casings, plates, frameworks) - affects durability, size, weight",
+          "POWER": "Energy source (crystals, cores) - affects output strength, duration",
+          "FUNCTION": "DEVICE TYPE DETERMINANT - material attributes determine what device is created",
+          "MODIFIER": "Special effects (T3+) - adds attributes, conditional effects",
+          "UTILITY": "Secondary functions (T3+) - automation, detection, QoL features"
+        },
+        "rules": [
+          "Slot position on canvas doesn't matter (no spatial placement)",
+          "Can use same slot type multiple times (e.g., 2 POWER slots)",
+          "Slots stackable up to 256 items",
+          "FUNCTION slot material determines device category (turret/bomb/trap/utility)",
+          "Use general materials - iron_ingot, oak_plank, fire_crystal, etc.",
+          "Special materials like blast_powder are general materials, not engineering-specific",
+          "Device type derived from FUNCTION slot, no need to specify separately"
+        ]
+      },
+      "template": {
+        "recipeId": "engineering_basic_arrow_turret",
+        "outputId": "basic_arrow_turret",
+        "stationTier": 1,
+        "slots": [
+          {
+            "type": "FRAME",
+            "materialId": "iron_ingot",
+            "quantity": 4
+          },
+          {
+            "type": "POWER",
+            "materialId": "beetle_carapace",
+            "quantity": 2
+          },
+          {
+            "type": "FUNCTION",
+            "materialId": "oak_plank",
+            "quantity": 3
+          }
+        ],
+        "narrative": "Iron ingots form the sturdy turret frame that anchors to the ground. Beetle carapace provides the spring tension needed for launching projectiles with force. Oak planks shape the arrow mechanism - the FUNCTION component that makes this a turret rather than a bomb or trap. Each puzzle solved refines one aspect of the device."
+      },
+      "examples": {
+        "basic_turret_t1": {
+          "description": "Simple 3-slot turret",
+          "slots": [
+            {"type": "FRAME", "materialId": "iron_ingot", "quantity": 4},
+            {"type": "POWER", "materialId": "beetle_carapace", "quantity": 2},
+            {"type": "FUNCTION", "materialId": "oak_plank", "quantity": 3}
+          ]
+        },
+        "elemental_turret_t2": {
+          "description": "Fire turret with dual power sources",
+          "slots": [
+            {"type": "FRAME", "materialId": "steel_ingot", "quantity": 5},
+            {"type": "POWER", "materialId": "fire_crystal", "quantity": 4},
+            {"type": "POWER", "materialId": "fire_crystal", "quantity": 4},
+            {"type": "FUNCTION", "materialId": "birch_plank", "quantity": 3}
+          ],
+          "narrative": "Steel frame withstands the heat. Dual fire crystals provide overwhelming elemental power. Birch mechanism channels the flames into projectiles. More power sources mean stronger output but more complex puzzle sequences."
+        },
+        "advanced_bomb_t3": {
+          "description": "Bomb with modifiers",
+          "slots": [
+            {"type": "FRAME", "materialId": "iron_ingot", "quantity": 3},
+            {"type": "POWER", "materialId": "fire_crystal", "quantity": 5},
+            {"type": "FUNCTION", "materialId": "blast_powder", "quantity": 4},
+            {"type": "MODIFIER", "materialId": "lightning_shard", "quantity": 2},
+            {"type": "MODIFIER", "materialId": "shrapnel", "quantity": 3}
+          ],
+          "narrative": "Iron casing contains the explosion. Fire crystals amplify the blast. Blast powder makes it explosive - this FUNCTION choice creates a bomb. Lightning shards add chain damage. Shrapnel increases area effect. Five slots mean five sequential puzzles to solve."
+        },
+        "utility_device_t3": {
+          "description": "Non-combat utility device",
+          "slots": [
+            {"type": "FRAME", "materialId": "mithril_ingot", "quantity": 4},
+            {"type": "POWER", "materialId": "light_gem", "quantity": 3},
+            {"type": "FUNCTION", "materialId": "crystal_quartz", "quantity": 5},
+            {"type": "UTILITY", "materialId": "spectral_thread", "quantity": 6},
+            {"type": "UTILITY", "materialId": "air_crystal", "quantity": 4}
+          ],
+          "narrative": "Lightweight mithril frame for portability. Light gem powers the scanning function. Crystal quartz lens determines this is a scanner/detector device. Spectral thread extends detection range. Air crystals enable remote sensing. Each utility slot adds another puzzle but grants powerful features."
+        }
+      }
+    }
+  },
+
+  "IMPLEMENTATION_SUMMARY": {
+    "overview": "This document provides finalized templates for defining crafting placement across all 4 disciplines (Smithing, Forging/Refining, Alchemy, Engineering). These templates are SECONDARY to main recipe JSONs and define spatial/sequential arrangement for mini-game crafting only.",
+
+    "key_concepts": {
+      "purpose": "Placement templates define HOW materials are arranged for mini-game crafting. Base crafting (instant, no bonuses) uses only the main recipe JSON files.",
+      "relationship": "These are supplementary to smithing.json, refining.json, alchemy.json, engineering.json - they do NOT replace them.",
+      "single_source": "Avoid duplication. Output quantities, station requirements, etc. live in main recipes. Placements only define arrangement."
+    },
+
+    "discipline_quick_reference": {
+      "smithing": {
+        "system": "Grid-based (3x3 to 9x9)",
+        "key_rule": "Diagonal placement preferred, rows start at 1",
+        "data_structure": "placementMap object with 'row,col' keys"
+      },
+      "refining": {
+        "system": "Hub-and-spoke (core + surrounding)",
+        "key_rule": "Multi-core must have equal quantities, no output duplication",
+        "data_structure": "coreInputs array + surroundingInputs array"
+      },
+      "alchemy": {
+        "system": "Sequential slots (3-9 slots)",
+        "key_rule": "Order is critical, no volatility field",
+        "data_structure": "ingredients array with slot numbers"
+      },
+      "engineering": {
+        "system": "Slot-type canvas (3-7 slots)",
+        "key_rule": "FUNCTION slot determines device type, use simple material IDs",
+        "data_structure": "slots array with type designation"
+      }
+    },
+
+    "validation_workflow": {
+      "step_1": "Check tier limits (grid size, slot counts)",
+      "step_2": "Verify all materialIds exist in materials system",
+      "step_3": "Ensure no data duplication with main recipe JSON",
+      "step_4": "Validate special rules (diagonal placement, equal core quantities, etc.)",
+      "step_5": "Add narrative describing the crafting process"
+    },
+
+    "common_mistakes_to_avoid": [
+      "Starting rows/columns at 0 instead of 1 (Smithing)",
+      "Duplicating outputQuantity in refining (already in recipe)",
+      "Including volatility in alchemy (calculated from materials)",
+      "Using engineering-specific material names instead of general ones",
+      "Exceeding tier slot/grid limits",
+      "Forgetting to use empty array [] instead of null for empty surroundingInputs"
+    ],
+
+    "file_organization_options": {
+      "option_a": "Separate files: smithing-placements.json, refining-placements.json, etc.",
+      "option_b": "Embedded: Add 'placement' field to existing recipe objects",
+      "option_c": "Hybrid: Group by tier (t1-placements.json, t2-placements.json)",
+      "recommendation": "Choose based on team workflow and maintainability needs"
+    },
+
+    "narrative_guidelines": {
+      "purpose": "Narratives connect the crafting process to mini-game mechanics",
+      "content": "Describe what each material does, why order/placement matters, and what the mini-game represents",
+      "tone": "Instructive but flavorful - teach mechanics while maintaining immersion",
+      "length": "2-4 sentences typically, longer for complex recipes"
+    },
+
+    "next_steps": {
+      "immediate": "Use these templates to create placement definitions for existing recipes",
+      "validation": "Test each placement in-game to ensure it matches intended difficulty/feel",
+      "iteration": "Adjust patterns based on player feedback and gameplay testing",
+      "expansion": "Apply same template structure when creating new recipes in future tiers"
+    }
+  }
+}

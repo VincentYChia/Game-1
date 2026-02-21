@@ -1,0 +1,535 @@
+{
+  "CRITICAL_ID_MAPPING": {
+    "note": "Recipe outputId MUST match the itemId or materialId of the actual item",
+    "materials": "Use 'materialId' field",
+    "equipment": "Use 'itemId' field",
+    "refined_items": "Use 'itemId' field (ingots, planks, etc.)",
+    "example_flow": {
+      "recipe": "outputId: 'copper_sword'",
+      "must_match": "itemId: 'copper_sword' in items-smithing-2.JSON"
+    }
+  },
+
+  "RECIPE_TEMPLATE": {
+    "smithing": {
+      "metadata": {
+        "narrative": "Description of what this recipe creates",
+        "tags": ["weapon", "sword", "starter"]
+      },
+      "recipeId": "smithing_copper_sword",
+      "outputId": "copper_sword",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "oak_log",
+          "quantity": 1
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "easy",
+        "baseTime": 30
+      }
+    },
+    "refining": {
+      "recipeId": "refining_copper_ore_to_ingot",
+      "inputs": [
+        {
+          "materialId": "copper_ore",
+          "quantity": 3
+        }
+      ],
+      "outputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1,
+          "rarity": "common"
+        }
+      ],
+      "stationRequired": "refinery",
+      "stationTierRequired": 1,
+      "fuelRequired": null,
+      "metadata": {
+        "narrative": "Smelting copper ore into pure ingots",
+        "tags": ["smelting", "metal", "basic"]
+      }
+    },
+    "alchemy": {
+      "recipeId": "alchemy_health_potion_minor",
+      "outputId": "health_potion_minor",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "alchemy",
+      "sequenceLength": 3,
+      "sequenceLengthNote": "OPTIONAL - Not used by code, informational only",
+      "inputs": [
+        {
+          "materialId": "herb_vitalis",
+          "quantity": 2
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 1
+        }
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "easy",
+        "baseTime": 25
+      }
+    },
+    "engineering": {
+      "recipeId": "engineering_basic_turret",
+      "outputId": "basic_turret",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "engineering",
+      "slotCount": 3,
+      "slotCountNote": "OPTIONAL - Not used by code, informational only",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "moderate",
+        "baseTime": 40
+      }
+    },
+    "enchanting": {
+      "note": "CRITICAL: stationType must be 'enchanting' NOT 'adornments'. RecipeId should start with 'enchanting_'",
+      "metadata": {
+        "narrative": "Creates an enchantment that can be applied to equipment",
+        "tags": ["enchanting", "weapon", "fire"]
+      },
+      "recipeId": "enchanting_fire_enchant_minor",
+      "enchantmentId": "fire_enchant_minor",
+      "enchantmentName": "Minor Flame",
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "applicableTo": ["weapon", "tool"],
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.15,
+        "stackable": false,
+        "conflictsWith": ["ice_enchant_minor", "frost_enchant_minor"],
+        "note": "Effect types: damage_multiplier, defense_multiplier. Value is percentage (0.15 = 15% increase)"
+      },
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 1
+        }
+      ],
+      "miniGame": {
+        "type": "enchanting",
+        "difficulty": "easy",
+        "baseTime": 30
+      }
+    }
+  },
+
+  "EQUIPMENT_TEMPLATE": {
+    "weapons": {
+      "metadata": {
+        "narrative": "A simple copper blade. Beginners start here.",
+        "tags": ["melee", "sword", "starter"]
+      },
+      "itemId": "copper_sword",
+      "name": "Copper Sword",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "sword",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1.0,
+      "rangeNote": "MUST be float. Tactical combat distance: Melee 1.0-1.5, Spears 2.0-3.0, Bows 10.0-15.0",
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 1.0,
+        "attackSpeed": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    "armor": {
+      "metadata": {
+        "narrative": "Basic copper helmet",
+        "tags": ["armor", "head", "starter"]
+      },
+      "itemId": "copper_helmet",
+      "name": "Copper Helmet",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "helmet",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "head",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    "tools": {
+      "metadata": {
+        "narrative": "Basic copper pickaxe for mining",
+        "tags": ["tool", "pickaxe", "mining"]
+      },
+      "itemId": "copper_pickaxe",
+      "name": "Copper Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1.0,
+      "rangeNote": "Tools generally use range 1.0 unless they have special reach",
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 1.0,
+        "mining": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+
+  "MATERIAL_TEMPLATE": {
+    "raw_materials": {
+      "metadata": {
+        "narrative": "Common copper ore from surface deposits",
+        "tags": ["ore", "metal", "common"]
+      },
+      "materialId": "copper_ore",
+      "name": "Copper Ore",
+      "category": "material",
+      "type": "ore",
+      "subtype": "metal_ore",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    },
+    "alchemy_potions": {
+      "note": "NEW TAG-DRIVEN SYSTEM - Use effectTags and effectParams for modular potion effects",
+      "metadata": {
+        "narrative": "Basic healing potion from herbs. Wounds close and pain fades within moments.",
+        "tags": ["potion", "healing", "consumable", "starter"]
+      },
+      "itemId": "minor_health_potion",
+      "name": "Minor Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Restores 50 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 50
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      },
+      "tag_guide": {
+        "effect_categories": ["healing", "mana_restore", "buff", "resistance", "utility"],
+        "tag_modifiers": ["instant", "over_time", "self"],
+        "healing_params": {"heal_amount": "instant heal", "heal_per_second": "regen rate", "duration": "seconds"},
+        "buff_params": {"buff_type": "strength/defense/speed/max_hp", "buff_value": "0.0-1.0 multiplier", "duration": "seconds"},
+        "resistance_params": {"resistance_type": "fire/ice/elemental", "damage_reduction": "0.0-1.0", "duration": "seconds"},
+        "utility_params": {"utility_type": "efficiency/armor/weapon", "utility_value": "multiplier", "duration": "seconds"}
+      }
+    },
+    "processed_materials": {
+      "metadata": {
+        "narrative": "Refined copper ingot ready for crafting",
+        "tags": ["metal", "ingot", "processed"]
+      },
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
+    }
+  },
+
+  "SKILLS_TEMPLATE": {
+    "note": "NEW NUMERIC RANGES - Use numeric mana/cooldown values instead of string enums",
+    "skill_example": {
+      "skillId": "sprint",
+      "name": "Sprint",
+      "tier": 1,
+      "rarity": "common",
+      "categories": ["movement"],
+      "description": "Move significantly faster for a brief period.",
+      "narrative": "Sometimes the best strategy is running away. Fast.",
+      "tags": ["movement", "speed", "mobility"],
+      "effect": {
+        "type": "quicken",
+        "category": "movement",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "brief",
+        "additionalEffects": []
+      },
+      "cost": {
+        "mana": 20,
+        "cooldown": 20
+      },
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "wind_runner",
+        "requirement": "Reach skill level 10"
+      },
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": []
+      },
+      "iconPath": null
+    },
+    "cost_ranges": {
+      "mana": {
+        "min": 20,
+        "max": 150,
+        "guidelines": {
+          "20-50": "Low-cost utility skills (sprint, quick repair)",
+          "50-80": "Standard combat/gathering skills",
+          "90-120": "Powerful tier 2 skills",
+          "120-150": "Ultimate tier 3+ skills"
+        }
+      },
+      "cooldown": {
+        "min": 20,
+        "max": 600,
+        "guidelines": {
+          "20-60": "Quick utility skills (sprint, instant buffs)",
+          "150-240": "Standard combat/gathering skills",
+          "360-480": "Powerful defensive/buff skills",
+          "500-600": "Ultimate abilities"
+        }
+      }
+    },
+    "backward_compatibility": {
+      "note": "String enums still supported for legacy compatibility",
+      "string_enums": {
+        "mana": {"low": 30, "moderate": 60, "high": 100, "extreme": 150},
+        "cooldown": {"short": 120, "moderate": 300, "long": 600, "extreme": 1200}
+      }
+    }
+  },
+
+  "PLACEMENT_TEMPLATES": {
+    "smithing_placement": {
+      "recipeId": "smithing_copper_sword",
+      "placementMap": {
+        "1,1": {"materialId": "copper_ingot", "quantity": 1},
+        "2,1": {"materialId": "copper_ingot", "quantity": 1},
+        "2,2": {"materialId": "copper_ingot", "quantity": 1},
+        "2,3": {"materialId": "oak_log", "quantity": 1}
+      },
+      "narrative": "Place copper diagonally for blade, oak handle at bottom"
+    },
+    "refining_placement": {
+      "recipeId": "refining_bronze_alloy",
+      "coreInputs": [
+        {"materialId": "copper_ingot", "quantity": 2}
+      ],
+      "surroundingInputs": [
+        {"materialId": "tin_ingot", "quantity": 1}
+      ],
+      "narrative": "Copper core with tin surrounding for alloy"
+    },
+    "alchemy_placement": {
+      "recipeId": "alchemy_health_potion_minor",
+      "ingredients": [
+        {"slot": 1, "materialId": "herb_vitalis", "quantity": 2},
+        {"slot": 2, "materialId": "water_crystal", "quantity": 1}
+      ],
+      "narrative": "Herbs first, then water to extract essence"
+    },
+    "engineering_placement": {
+      "recipeId": "engineering_basic_turret",
+      "slots": [
+        {"type": "FRAME", "materialId": "iron_ingot", "quantity": 5},
+        {"type": "POWER", "materialId": "fire_crystal", "quantity": 2}
+      ],
+      "narrative": "Iron frame holds fire crystal power source"
+    }
+  },
+
+  "COMMON_MISTAKES": {
+    "id_mismatch": {
+      "problem": "Recipe outputId doesn't match item's itemId/materialId",
+      "example_wrong": {
+        "recipe": "outputId: 'sword_copper'",
+        "item": "itemId: 'copper_sword'"
+      },
+      "example_correct": {
+        "recipe": "outputId: 'copper_sword'",
+        "item": "itemId: 'copper_sword'"
+      }
+    },
+    "material_vs_item": {
+      "problem": "Confusion between materialId and itemId",
+      "rule": "Raw materials use materialId, processed/crafted items use itemId",
+      "examples": {
+        "materialId": ["copper_ore", "iron_ore", "oak_log"],
+        "itemId": ["copper_ingot", "iron_ingot", "oak_plank", "copper_sword"]
+      }
+    },
+    "missing_item_definition": {
+      "problem": "Recipe outputs item that doesn't exist in item database",
+      "solution": "Ensure every outputId has corresponding item definition"
+    }
+  },
+
+  "DEBUGGING_CHECKLIST": [
+    "1. Does recipe outputId exactly match item's itemId?",
+    "2. Is the item defined in the correct JSON file?",
+    "   - Weapons/Armor/Tools → items-smithing-2.JSON",
+    "   - Ingots/Planks/Alloys → items-refining-1.JSON",
+    "   - Potions → items-alchemy-1.JSON",
+    "   - Devices → items-engineering-1.JSON",
+    "3. Are input materialIds correct and exist in materials database?",
+    "4. Is stationTier requirement met?",
+    "5. Does item have all required fields (itemId, name, category, etc.)?",
+    "6. Check for typos in IDs (underscores vs hyphens, singular vs plural)"
+  ],
+
+  "STAT_REQUIREMENTS_GUIDE": {
+    "note": "Use these EXACT stat abbreviations in requirements.stats - case insensitive but AGI preferred over DEX",
+    "valid_stats": {
+      "strength": "STR or strength",
+      "defense": "DEF or defense",
+      "vitality": "VIT or vitality",
+      "luck": "LCK or luck",
+      "agility": "AGI or agility (PREFERRED - use this not DEX)",
+      "intelligence": "INT or intelligence"
+    },
+    "deprecated": {
+      "DEX": "LEGACY ONLY - Use AGI instead. DEX maps to agility for backward compatibility only",
+      "dexterity": "LEGACY ONLY - Use agility instead"
+    },
+    "example_correct": {
+      "requirements": {
+        "level": 10,
+        "stats": {
+          "AGI": 20,
+          "STR": 15
+        }
+      }
+    },
+    "example_deprecated": {
+      "note": "This still works but should not be used in new JSONs",
+      "requirements": {
+        "level": 10,
+        "stats": {
+          "DEX": 20,
+          "STR": 15
+        }
+      }
+    }
+  },
+
+  "WEAPON_RANGE_GUIDE": {
+    "note": "Range values from stats-calculations.JSON. Determines tactical combat distance.",
+    "default_ranges": {
+      "melee_1h": 1.0,
+      "melee_2h": 1.5,
+      "dagger": 0.5,
+      "shortsword": 1.0,
+      "longsword": 1.0,
+      "greatsword": 1.5,
+      "spear": 2.0,
+      "pike": 3.0,
+      "halberd": 2.5,
+      "shortbow": 10.0,
+      "longbow": 15.0,
+      "crossbow": 12.0,
+      "staff": 8.0,
+      "shield": 1.0,
+      "tools": 1.0
+    },
+    "implementation_note": "Range MUST be a float (1.0 not 1). This affects combat targeting distance."
+  }
+}

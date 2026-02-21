@@ -1,0 +1,19 @@
+{
+    "name": "Game1.Systems",
+    "rootNamespace": "Game1.Systems",
+    "references": [
+        "Game1.Core",
+        "Game1.Data",
+        "Game1.Entities",
+        "com.unity.nuget.newtonsoft-json"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

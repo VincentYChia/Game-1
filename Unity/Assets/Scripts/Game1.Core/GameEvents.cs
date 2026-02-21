@@ -140,6 +140,16 @@ namespace Game1.Core
             => OnItemGenerationCompleted?.Invoke(discipline, success);
 
         // ====================================================================
+        // Interaction Events
+        // ====================================================================
+
+        /// <summary>Raised when the player interacts with the world. Args: position, facing.</summary>
+        public static event Action<object, string> OnPlayerInteracted;
+
+        public static void RaisePlayerInteracted(object position, string facing)
+            => OnPlayerInteracted?.Invoke(position, facing);
+
+        // ====================================================================
         // Notification Events (Phase 7)
         // ====================================================================
 
@@ -174,6 +184,7 @@ namespace Game1.Core
             OnItemInvented = null;
             OnItemGenerationStarted = null;
             OnItemGenerationCompleted = null;
+            OnPlayerInteracted = null;
             OnNotificationShown = null;
         }
     }

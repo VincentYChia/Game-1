@@ -1,0 +1,387 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "discipline": "alchemy",
+    "description": "Alchemy recipes for potions, consumables, and transmutation",
+    "note": "Effects and durations are PLACEHOLDERS. Item definitions are in item-alchemy-1.JSON",
+    "totalRecipes": 18
+  },
+
+  "recipes": [
+    {
+      "metadata": {
+        "narrative": "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation.",
+        "tags": ["potion", "healing", "starter"]
+      },
+      "recipeId": "alchemy_minor_health_potion",
+      "outputId": "minor_health_potion",
+      "outputQty": 3,
+      "stationTier": 1,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "slime_gel", "quantity": 2},
+        {"materialId": "wolf_pelt", "quantity": 1}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "easy",
+        "baseTime": 20
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Improved healing potion using water crystals to amplify restorative properties.",
+        "tags": ["potion", "healing", "standard"]
+      },
+      "recipeId": "alchemy_health_potion",
+      "outputId": "health_potion",
+      "outputQty": 3,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "living_ichor", "quantity": 2},
+        {"materialId": "water_crystal", "quantity": 2},
+        {"materialId": "slime_gel", "quantity": 1}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 30
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly.",
+        "tags": ["potion", "healing", "quality"]
+      },
+      "recipeId": "alchemy_greater_health_potion",
+      "outputId": "greater_health_potion",
+      "outputQty": 3,
+      "stationTier": 3,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "essence_blood", "quantity": 3},
+        {"materialId": "light_gem", "quantity": 2},
+        {"materialId": "living_ichor", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "hard",
+        "baseTime": 45
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Strength-enhancing elixir using dire fangs and fire crystals. Muscles surge with power.",
+        "tags": ["potion", "buff", "strength"]
+      },
+      "recipeId": "alchemy_strength_elixir",
+      "outputId": "strength_elixir",
+      "outputQty": 2,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "dire_fang", "quantity": 3},
+        {"materialId": "fire_crystal", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 35
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Defense-boosting potion using iron scales and earth crystals. Skin hardens like metal.",
+        "tags": ["potion", "buff", "defense"]
+      },
+      "recipeId": "alchemy_iron_skin_potion",
+      "outputId": "iron_skin_potion",
+      "outputQty": 2,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "iron_scales", "quantity": 3},
+        {"materialId": "earth_crystal", "quantity": 2},
+        {"materialId": "golem_core", "quantity": 1}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 35
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Speed-enhancing draught using air crystals and spectral thread. Time seems to slow.",
+        "tags": ["potion", "buff", "speed"]
+      },
+      "recipeId": "alchemy_swiftness_draught",
+      "outputId": "swiftness_draught",
+      "outputQty": 2,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "air_crystal", "quantity": 3},
+        {"materialId": "spectral_thread", "quantity": 2},
+        {"materialId": "slime_gel", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 30
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Fire resistance potion using water crystals and frost essence. Flames cannot harm you.",
+        "tags": ["potion", "resistance", "fire"]
+      },
+      "recipeId": "alchemy_fire_resistance_potion",
+      "outputId": "fire_resistance_potion",
+      "outputQty": 2,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "water_crystal", "quantity": 3},
+        {"materialId": "frost_essence", "quantity": 2},
+        {"materialId": "slime_gel", "quantity": 1}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 35
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Frost resistance potion using fire crystals and phoenix ash. Cold cannot touch you.",
+        "tags": ["potion", "resistance", "frost"]
+      },
+      "recipeId": "alchemy_frost_resistance_potion",
+      "outputId": "frost_resistance_potion",
+      "outputQty": 2,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "fire_crystal", "quantity": 3},
+        {"materialId": "phoenix_ash", "quantity": 1},
+        {"materialId": "slime_gel", "quantity": 1}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 35
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Regeneration tonic that mends wounds over time. Body remembers how to heal continuously.",
+        "tags": ["potion", "healing", "regeneration"]
+      },
+      "recipeId": "alchemy_regeneration_tonic",
+      "outputId": "regeneration_tonic",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "living_ichor", "quantity": 4},
+        {"materialId": "light_gem", "quantity": 3},
+        {"materialId": "essence_blood", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "hard",
+        "baseTime": 50
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Ultimate power brew using legendary materials. You feel unstoppable.",
+        "tags": ["potion", "buff", "legendary"]
+      },
+      "recipeId": "alchemy_titans_brew",
+      "outputId": "titans_brew",
+      "outputQty": 1,
+      "stationTier": 4,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "golem_core", "quantity": 3},
+        {"materialId": "storm_heart", "quantity": 2},
+        {"materialId": "phoenix_ash", "quantity": 3},
+        {"materialId": "essence_blood", "quantity": 4}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "extreme",
+        "baseTime": 90
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Combining all basic elements into a harmony potion. Balance in bottle.",
+        "tags": ["potion", "resistance", "elemental"]
+      },
+      "recipeId": "alchemy_elemental_harmony",
+      "outputId": "elemental_harmony_potion",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "fire_crystal", "quantity": 2},
+        {"materialId": "water_crystal", "quantity": 2},
+        {"materialId": "earth_crystal", "quantity": 2},
+        {"materialId": "air_crystal", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "hard",
+        "baseTime": 60
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Oil that makes tools work faster and smoother. Efficiency soars.",
+        "tags": ["utility", "enhancement", "tool"]
+      },
+      "recipeId": "alchemy_efficiency_oil",
+      "outputId": "efficiency_oil",
+      "outputQty": 3,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "slime_gel", "quantity": 3},
+        {"materialId": "spectral_thread", "quantity": 2},
+        {"materialId": "water_crystal", "quantity": 1}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 30
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Polish that makes armor gleam and deflect attacks. Sheen turns blades.",
+        "tags": ["utility", "enhancement", "armor"]
+      },
+      "recipeId": "alchemy_armor_polish",
+      "outputId": "armor_polish",
+      "outputQty": 3,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "limestone", "quantity": 4},
+        {"materialId": "light_gem", "quantity": 1},
+        {"materialId": "slime_gel", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 30
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Universal solvent that dissolves anything. Miss timing, dissolves cauldron itself.",
+        "tags": ["utility", "transmutation", "dangerous"]
+      },
+      "recipeId": "alchemy_universal_solvent",
+      "outputId": "universal_solvent",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "void_essence", "quantity": 2},
+        {"materialId": "shadow_core", "quantity": 3},
+        {"materialId": "voidstone", "quantity": 4}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "extreme",
+        "baseTime": 75
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Transmuting basic copper into tin. Foundation of alchemical wealth.",
+        "tags": ["transmutation", "metal", "basic"]
+      },
+      "recipeId": "alchemy_transmute_copper_tin",
+      "outputId": "tin_ingot",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "copper_ingot", "quantity": 3},
+        {"materialId": "fire_crystal", "quantity": 1}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 35
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Transmuting iron into steel through alchemical process. Alchemy surpasses forging.",
+        "tags": ["transmutation", "metal", "advanced"]
+      },
+      "recipeId": "alchemy_transmute_iron_steel",
+      "outputId": "steel_ingot",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 2},
+        {"materialId": "coal", "quantity": 3},
+        {"materialId": "fire_crystal", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "hard",
+        "baseTime": 40
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Refining raw life force into pure essence blood. No impurities, pure vitality.",
+        "tags": ["transmutation", "essence", "purification"]
+      },
+      "recipeId": "alchemy_refine_essence_blood",
+      "outputId": "essence_blood",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "living_ichor", "quantity": 4},
+        {"materialId": "light_gem", "quantity": 2}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 40
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Crystallizing fire essence from raw materials. Chaos becomes order.",
+        "tags": ["transmutation", "elemental", "crystallization"]
+      },
+      "recipeId": "alchemy_crystallize_fire",
+      "outputId": "fire_crystal",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "limestone", "quantity": 5},
+        {"materialId": "phoenix_ash", "quantity": 1}
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 35
+      }
+    }
+  ]
+}

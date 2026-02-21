@@ -54,6 +54,14 @@ namespace Game1.Data.Databases
                 PlacementDatabase.Instance.LoadFromFiles();
                 TitleDatabase.Instance.LoadFromFile("progression/titles-1.JSON");
 
+                // Group 5: Additional databases
+                NPCDatabase.Instance.LoadFromFile("progression/npcs-1.JSON");
+                NPCDatabase.Instance.LoadQuestsFromFile("progression/quests-1.JSON");
+                TranslationDatabase.Instance.LoadFromFile("Definitions.JSON/translations-1.JSON");
+                var mapConfig = MapWaypointConfig.Instance; // loads defaults
+                // Note: EnemyDatabaseAdapter is loaded by GameManager (Phase 6)
+                // because it lives in Game1.Systems.Combat to avoid circular dependencies.
+
                 System.Diagnostics.Debug.WriteLine("[DatabaseInitializer] All databases initialized successfully.");
                 System.Diagnostics.Debug.WriteLine($"  Materials: {MaterialDatabase.Instance.Count}");
                 System.Diagnostics.Debug.WriteLine($"  Equipment: {EquipmentDatabase.Instance.Count}");
@@ -62,6 +70,7 @@ namespace Game1.Data.Databases
                 System.Diagnostics.Debug.WriteLine($"  Placements: {PlacementDatabase.Instance.Count}");
                 System.Diagnostics.Debug.WriteLine($"  Titles: {TitleDatabase.Instance.Count}");
                 System.Diagnostics.Debug.WriteLine($"  Classes: {ClassDatabase.Instance.Count}");
+                System.Diagnostics.Debug.WriteLine($"  NPCs: {NPCDatabase.Instance.NPCCount}");
             }
             catch (Exception ex)
             {
@@ -85,6 +94,9 @@ namespace Game1.Data.Databases
             ClassDatabase.ResetInstance();
             ResourceNodeDatabase.ResetInstance();
             WorldGenerationConfig.ResetInstance();
+            NPCDatabase.ResetInstance();
+            TranslationDatabase.ResetInstance();
+            MapWaypointConfig.ResetInstance();
         }
     }
 }

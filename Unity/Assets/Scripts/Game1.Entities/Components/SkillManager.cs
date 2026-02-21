@@ -144,6 +144,27 @@ namespace Game1.Entities.Components
         /// <summary>All known skills.</summary>
         public IReadOnlyDictionary<string, PlayerSkill> KnownSkills => _knownSkills;
 
+        /// <summary>
+        /// Unequip a skill from any hotbar slot.
+        /// </summary>
+        public bool UnequipSkill(string skillId)
+        {
+            if (string.IsNullOrEmpty(skillId)) return false;
+            if (!_knownSkills.TryGetValue(skillId, out var playerSkill)) return false;
+
+            for (int i = 0; i < _equippedSkills.Length; i++)
+            {
+                if (_equippedSkills[i] == skillId)
+                {
+                    _equippedSkills[i] = null;
+                    playerSkill.IsEquipped = false;
+                    playerSkill.HotbarSlot = null;
+                    return true;
+                }
+            }
+            return false;
+        }
+
         /// <summary>Get equipped skill IDs (hotbar, may contain nulls).</summary>
         public string[] GetEquippedSkills() => (string[])_equippedSkills.Clone();
 

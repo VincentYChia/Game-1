@@ -116,6 +116,24 @@ namespace Game1.Systems.Combat
         public int ChainCount { get; set; } = 0;
 
         /// <summary>
+        /// Attack speed multiplier from weapon tags.
+        /// Swift = +0.15, Heavy = -0.1, Light = +0.1.
+        /// </summary>
+        public float AttackSpeedMultiplier { get; set; } = 1.0f;
+
+        /// <summary>Whether this weapon has a lifesteal effect from tags.</summary>
+        public bool HasLifesteal { get; set; }
+
+        /// <summary>Lifesteal fraction from tags (0.0-1.0). Separate from enchantment LifestealPercent.</summary>
+        public float LifestealFraction { get; set; }
+
+        /// <summary>Whether this weapon has knockback from tags.</summary>
+        public bool HasKnockback { get; set; }
+
+        /// <summary>Knockback force from tags.</summary>
+        public float KnockbackForce { get; set; }
+
+        /// <summary>
         /// Populate modifiers from a list of weapon metadata tags.
         /// Mirrors Python WeaponTagModifiers static methods.
         /// </summary>

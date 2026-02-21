@@ -1,0 +1,526 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "discipline": "engineering",
+    "description": "Devices crafted through engineering discipline",
+    "totalItems": 16,
+    "note": "Turrets, bombs, traps, and utility devices - all placeable"
+  },
+
+  "turrets": [
+    {
+      "metadata": {
+        "narrative": "Basic arrow turret using simple springs and levers. Point away from face. Automated defense that never sleeps, never misses... well, rarely misses.",
+        "tags": ["device", "turret", "basic", "projectile"]
+      },
+      "itemId": "basic_arrow_turret",
+      "name": "Basic Arrow Turret",
+      "category": "device",
+      "type": "turret",
+      "subtype": "projectile",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Fires arrows at enemies, 20 damage, 5 unit range",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 20,
+        "range": 5.0
+      },
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense. Each arrow trails flames, lighting up enemies and the night.",
+        "tags": ["device", "turret", "fire", "elemental"]
+      },
+      "itemId": "fire_arrow_turret",
+      "name": "Fire Arrow Turret",
+      "category": "device",
+      "type": "turret",
+      "subtype": "projectile",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Fires flaming arrows, 35 damage + burn, 7 unit range",
+      "effectTags": ["fire", "piercing", "single", "burn"],
+      "effectParams": {
+        "baseDamage": 35,
+        "range": 7.0,
+        "burn_duration": 5.0,
+        "burn_damage_per_second": 5.0
+      },
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous. The bolts arc between enemies, chain lightning made manifest.",
+        "tags": ["device", "turret", "lightning", "advanced"]
+      },
+      "itemId": "lightning_cannon",
+      "name": "Lightning Cannon",
+      "category": "device",
+      "type": "turret",
+      "subtype": "energy",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Fires lightning bolts, 70 damage + chain, 10 unit range",
+      "effectTags": ["lightning", "chain", "shock"],
+      "effectParams": {
+        "baseDamage": 70,
+        "range": 10.0,
+        "chain_count": 2,
+        "chain_range": 5.0,
+        "shock_duration": 2.0,
+        "shock_damage": 5.0
+      },
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 2.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Flamethrower turret that sweeps area with fire. Excellent for crowd control. The roar is almost as terrifying as the flames themselves.",
+        "tags": ["device", "turret", "fire", "area"]
+      },
+      "itemId": "flamethrower_turret",
+      "name": "Flamethrower Turret",
+      "category": "device",
+      "type": "turret",
+      "subtype": "area",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Sweeps cone of fire, 60 damage + lingering burn",
+      "effectTags": ["fire", "cone", "burn"],
+      "effectParams": {
+        "baseDamage": 60,
+        "range": 8.0,
+        "cone_angle": 60.0,
+        "cone_range": 8.0,
+        "burn_duration": 5.0,
+        "burn_damage_per_second": 8.0
+      },
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 2.0
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Laser turret using focused light crystals. Precise and devastating. The beam cuts through armor like it's not even there.",
+        "tags": ["device", "turret", "light", "precision"]
+      },
+      "itemId": "laser_turret",
+      "name": "Laser Turret",
+      "category": "device",
+      "type": "turret",
+      "subtype": "energy",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Fires concentrated light beam, 80 damage, 12 unit range",
+      "effectTags": ["energy", "beam"],
+      "effectParams": {
+        "baseDamage": 80,
+        "range": 12.0,
+        "beam_range": 12.0,
+        "beam_width": 1.0
+      },
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 1.8
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  ],
+
+  "bombs": [
+    {
+      "metadata": {
+        "narrative": "Simple explosive using blast powder in iron casing. The universal problem solver. Pull pin, throw, run. In that order.",
+        "tags": ["device", "bomb", "basic", "explosive"]
+      },
+      "itemId": "simple_bomb",
+      "name": "Simple Bomb",
+      "category": "device",
+      "type": "bomb",
+      "subtype": "explosive",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Explodes for 40 damage in 3 unit radius",
+      "effectTags": ["physical", "circle"],
+      "effectParams": {
+        "baseDamage": 40,
+        "circle_radius": 3.0
+      },
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone. The explosion is just the beginning - the flames linger, hungry.",
+        "tags": ["device", "bomb", "fire", "elemental"]
+      },
+      "itemId": "fire_bomb",
+      "name": "Fire Bomb",
+      "category": "device",
+      "type": "bomb",
+      "subtype": "elemental",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Explodes for 75 fire damage + lingering flames",
+      "effectTags": ["fire", "circle", "burn"],
+      "effectParams": {
+        "baseDamage": 75,
+        "circle_radius": 4.0,
+        "burn_duration": 6.0,
+        "burn_damage_per_second": 8.0
+      },
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Cluster bomb that splits into multiple explosives. Maximum coverage. One becomes many, the sky rains destruction.",
+        "tags": ["device", "bomb", "area", "cluster"]
+      },
+      "itemId": "cluster_bomb",
+      "name": "Cluster Bomb",
+      "category": "device",
+      "type": "bomb",
+      "subtype": "explosive",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Splits into 8 smaller explosions, total 120 damage over wide area",
+      "effectTags": ["physical", "circle"],
+      "effectParams": {
+        "baseDamage": 120,
+        "circle_radius": 5.0
+      },
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  ],
+
+  "traps": [
+    {
+      "metadata": {
+        "narrative": "Spike trap with spring-loaded iron spikes. Triggers on contact. Simple, brutal, effective. The spikes punch through leather and flesh alike.",
+        "tags": ["device", "trap", "physical", "basic"]
+      },
+      "itemId": "spike_trap",
+      "name": "Spike Trap",
+      "category": "device",
+      "type": "trap",
+      "subtype": "physical",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Triggers on contact, 30 damage + bleed",
+      "effectTags": ["physical", "piercing", "circle", "bleed"],
+      "effectParams": {
+        "baseDamage": 30,
+        "circle_radius": 2.0,
+        "bleed_duration": 8.0,
+        "bleed_damage_per_second": 3.0
+      },
+      "stackSize": 15,
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Frost mine that erupts in a blast of ice shards. Triggers on proximity. The cold bites deep, slowing everything it touches.",
+        "tags": ["device", "trap", "frost", "elemental"]
+      },
+      "itemId": "frost_mine",
+      "name": "Frost Mine",
+      "category": "device",
+      "type": "trap",
+      "subtype": "elemental",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Triggers on proximity, 50 damage + slow",
+      "effectTags": ["ice", "circle", "freeze", "slow"],
+      "effectParams": {
+        "baseDamage": 50,
+        "circle_radius": 3.0,
+        "freeze_duration": 3.0,
+        "slow_factor": 0.5
+      },
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Bear trap with brutal steel jaws. Immobilizes anything that steps on it. The teeth dig deep and don't let go.",
+        "tags": ["device", "trap", "physical", "immobilize"]
+      },
+      "itemId": "bear_trap",
+      "name": "Bear Trap",
+      "category": "device",
+      "type": "trap",
+      "subtype": "physical",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Triggers on contact, 25 damage + immobilize for 5 seconds",
+      "effectTags": ["physical", "crushing", "single", "root"],
+      "effectParams": {
+        "baseDamage": 25,
+        "root_duration": 5.0
+      },
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 1.2
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  ],
+
+  "utility_devices": [
+    {
+      "metadata": {
+        "narrative": "Healing beacon that emanates restorative energy. Heals allies in radius continuously. The light feels warm, comforting, alive.",
+        "tags": ["device", "utility", "healing", "support"]
+      },
+      "itemId": "healing_beacon",
+      "name": "Healing Beacon",
+      "category": "device",
+      "type": "utility",
+      "subtype": "support",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Heals 10 HP/sec in 5 unit radius for 2 minutes",
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 13,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Net launcher that ensnares enemies. Reduces movement speed dramatically. Spectral thread nets are nearly unbreakable.",
+        "tags": ["device", "utility", "crowd-control", "projectile"]
+      },
+      "itemId": "net_launcher",
+      "name": "Net Launcher",
+      "category": "device",
+      "type": "utility",
+      "subtype": "control",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Fires net that slows enemies by 80% for 10 seconds",
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 1.3
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "EMP device that disables electronic enemies and devices. Technology's worst nightmare. Lightning contained, waiting to be unleashed.",
+        "tags": ["device", "utility", "disable", "tech"]
+      },
+      "itemId": "emp_device",
+      "name": "EMP Device",
+      "category": "device",
+      "type": "utility",
+      "subtype": "disable",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Disables all mechanical devices in 8 unit radius for 30 seconds",
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces. The spectral thread never breaks, the iron hook never fails.",
+        "tags": ["device", "utility", "mobility", "tool"]
+      },
+      "itemId": "grappling_hook",
+      "name": "Grappling Hook",
+      "category": "device",
+      "type": "utility",
+      "subtype": "mobility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Launches grappling hook up to 15 units, pulls player to location",
+      "stackSize": 1,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 9,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": false,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Jetpack for brief flight. Fuel not included (but fire crystals work great). The mithril construction keeps it lightweight while phoenix ash provides sustained thrust.",
+        "tags": ["device", "utility", "flight", "mobility"]
+      },
+      "itemId": "jetpack",
+      "name": "Jetpack",
+      "category": "device",
+      "type": "utility",
+      "subtype": "mobility",
+      "tier": 3,
+      "rarity": "epic",
+      "effect": "Enables flight for up to 30 seconds, recharge time 2 minutes",
+      "stackSize": 1,
+      "statMultipliers": {
+        "weight": 2.5
+      },
+      "requirements": {
+        "level": 18,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": false,
+        "repairable": true
+      }
+    }
+  ]
+}
