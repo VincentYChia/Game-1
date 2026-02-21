@@ -1,3 +1,8 @@
+> **SUPERSEDED (2026-02-21)**: Phase 6 is complete. This handoff prompt is no longer needed.
+> For current reading order, see `COMPLETION_STATUS.md`.
+> For what remains to be done, see `AUDIT_IMPROVEMENT_PLAN.md`.
+> Retained for historical reference only.
+
 # Handoff Prompt for Phase 6 — Unity Integration
 
 **Updated**: 2026-02-13

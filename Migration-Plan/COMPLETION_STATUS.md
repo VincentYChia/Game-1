@@ -1,9 +1,9 @@
 # Migration Plan — Holistic Summary & Completion Status
 
-**Last Updated**: 2026-02-19
-**Branch**: `claude/phase-7-migration-context-eHdhR`
-**Total Documentation**: 16,013 lines across 15 documents (+ 3 organizational READMEs + completion report + 7 domain audits)
-**Implementation Status**: All 7 phases complete (147 C# files, ~34,700 LOC). Migration done. **Post-migration audit identifies ~151 remaining gaps** (see checklist).
+**Last Updated**: 2026-02-21
+**Branch**: `claude/audit-improvement-plan-3v5TB`
+**Total Documentation**: 16,013+ lines across 15 core documents (+ 7 domain audits + meta-audit + improvement plan)
+**Implementation Status**: All 7 phases complete (**143 C# files**: 137 source + 6 test). Migration done. **Post-migration audit identifies ~151 gaps; meta-audit found 21 false positives and 22 coverage gaps in those audits.** See `AUDIT_IMPROVEMENT_PLAN.md` for corrected, comprehensive gap list.
 
 ---
 
@@ -90,18 +90,21 @@ The 7-phase plan is dependency-ordered so developers can work on phases independ
 | **Phase 6: Unity Integration** | 954 | GameEngine (10,098 lines) decomposed into ~40 Unity components. Camera (ortho/perspective), XZ-plane rendering, Input System, UI. |
 | **Phase 7: Polish & LLM Stub** | 1,024 | `IItemGenerator` interface + `StubItemGenerator`, 10 E2E test scenarios, 3D readiness verification checklist |
 
-### Post-Migration Audit (2026-02-19)
+### Post-Migration Audit (2026-02-19) and Meta-Audit Corrections (2026-02-21)
 
 | Document | Focus | Key Finding |
 |----------|-------|-------------|
 | `UNITY_MIGRATION_CHECKLIST.md` | **Hub** — points to all 7 audit documents | ~151 gaps between "C# files exist" and "playable 3D game" |
 | `audits/AUDIT_1_INFRASTRUCTURE.md` | Unity project setup, packages, scenes, assets | 25 infra gaps. No Unity project exists yet. |
-| `audits/AUDIT_2_COMBAT_AND_MOVEMENT.md` | Combat, movement, skills, enemy AI | Math 100% ported, 0% wired to game loop. |
+| `audits/AUDIT_2_COMBAT_AND_MOVEMENT.md` | Combat, movement, skills, enemy AI | Math 100% ported, 0% wired to game loop. **⚠ 6 false positives (interface vs impl confusion)** |
 | `audits/AUDIT_3_CRAFTING_AND_MINIGAMES.md` | 6 crafting disciplines, ML classifiers, LLM | 5/6 minigames ported. Fishing missing. |
-| `audits/AUDIT_4_UI_SYSTEMS.md` | 27+ UI panels, canvas architecture | 20/27 panels exist. Skills Menu missing. |
+| `audits/AUDIT_4_UI_SYSTEMS.md` | 27+ UI panels, canvas architecture | 20/27 panels exist. Skills Menu missing. **⚠ 5 false claims to fix** |
 | `audits/AUDIT_5_WORLD_AND_PROGRESSION.md` | World, dungeons, map, leveling, save/load | Dungeon + Map systems missing entirely. |
-| `audits/AUDIT_6_3D_REQUIREMENTS.md` | Low-fidelity 3D spec for every system | ~44 hours for 3D MVP. |
-| `audits/AUDIT_7_TESTING_STRATEGY.md` | 364+ tests, 15 systems | 104/364 done (28%). Core unit tests not started. |
+| `audits/AUDIT_6_3D_REQUIREMENTS.md` | Low-fidelity 3D spec for every system | ~44 hours for 3D MVP. **⚠ 4 "COMPLETE" labels should be "NOT WIRED"** |
+| `audits/AUDIT_7_TESTING_STRATEGY.md` | 119 tests (not ~180), 15 systems | 119/364 done. Core unit tests not started. **⚠ Counts inflated ~50%** |
+| `audits/META_AUDIT_REPORT.md` | **Verification of all 7 audits** | 21 false positives, 9 false negatives, 22 coverage gaps |
+| `AUDIT_IMPROVEMENT_PLAN.md` | **Corrected gap list + remediation plan** | Comprehensive, verified gap inventory with implementation roadmap |
+| `DOCUMENTATION_CLEANUP.md` | **Documentation state map** | Which docs are current, stale, or superseded + reading orders |
 
 ### Reference Documents
 
@@ -136,60 +139,67 @@ The 7-phase plan is dependency-ordered so developers can work on phases independ
 
 ## Implementation Progress
 
-| Phase | Status | Files | LOC | Summary |
-|-------|--------|-------|-----|---------|
-| Phase 1 — Foundation | **COMPLETE** | 19 | ~3,200 | Data models, enums, GamePosition, IGameItem |
-| Phase 2 — Data Layer | **COMPLETE** | 10 | ~2,300 | Database singletons, JSON loading |
-| Phase 3 — Entity Layer | **COMPLETE** | 10 | 2,127 | Character, Enemy, StatusEffect, 7 components |
-| Phase 4 — Game Systems | **COMPLETE** | 40 | 15,688 | Combat, crafting, world, save/load |
-| Phase 5 — ML Classifiers | **COMPLETE** | 10 | ~2,300 | 5 preprocessors + ClassifierManager + tests |
-| Phase 6 — Unity Integration | **COMPLETE** | 45 | 6,697 | GameEngine decomposition, rendering, UI |
-| Phase 7 — Polish & LLM Stub | **COMPLETE** | 13 | ~2,400 | IItemGenerator, StubItemGenerator, NotificationSystem, MigrationLogger, 87+ tests, completion report |
+**Verified file count (2026-02-21): 143 C# files (137 source + 6 test)**
+
+| Phase | Status | Files | LOC | Summary | Planned but NOT created |
+|-------|--------|-------|-----|---------|------------------------|
+| Phase 1 — Foundation | **COMPLETE** | 19 | ~3,200 | Data models, enums, GamePosition, IGameItem | ItemFactory, ConsumableItem, PlaceableItem |
+| Phase 2 — Data Layer | **COMPLETE** | 10 | ~2,300 | 9 database singletons, JSON loading | NPCDatabase, TranslationDB, SkillUnlockDB, MapWaypointConfig, UpdateLoader |
+| Phase 3 — Entity Layer | **COMPLETE** | 10 | 2,127 | Character, Enemy, StatusEffect, 7 components | Tool entity, DamageNumber entity, ActivityTracker, CraftedStats, WeaponTagCalculator, CharacterBuilder |
+| Phase 4 — Game Systems | **COMPLETE** | 40 | 15,688 | Combat, crafting, world, save/load | InteractiveCrafting, FishingMinigame, DungeonSystem |
+| Phase 5 — ML Classifiers | **COMPLETE** | 10 | ~2,300 | 5 preprocessors + ClassifierManager + tests | — |
+| Phase 6 — Unity Integration | **COMPLETE** | 45 | 6,697 | GameEngine decomposition, rendering, UI | PlayerController, SaveLoadUI, SkillUnlockUI, TitleUI, SkillsMenuUI |
+| Phase 7 — Polish & LLM Stub | **COMPLETE** | 13 | ~2,400 | IItemGenerator, StubItemGenerator, NotificationSystem, MigrationLogger, 119 tests, completion report | — |
+
+**Note**: "COMPLETE" means the phase's implementation session ended and was committed. It does NOT mean every planned deliverable was created. See `AUDIT_IMPROVEMENT_PLAN.md` §3 for the complete list of 22+ planned-but-missing files.
 
 **Implementation summaries**:
 - `Migration-Plan/phases/PHASE_3_IMPLEMENTATION_SUMMARY.md`
 - `Migration-Plan/phases/PHASE_4_IMPLEMENTATION_SUMMARY.md`
-- `Migration-Plan/PHASE_5_IMPLEMENTATION_SUMMARY.md`
+- `Migration-Plan/phases/PHASE_5_IMPLEMENTATION_SUMMARY.md`
 - `Migration-Plan/phases/PHASE_6_IMPLEMENTATION_SUMMARY.md`
 - `Migration-Plan/phases/PHASE_7_IMPLEMENTATION_SUMMARY.md`
 
-## Migration Complete — Next Steps
+## Current State — What To Do Next
 
-### Post-Migration Tasks
-1. **Full LLM Integration**: Implement `AnthropicItemGenerator` — swap `StubItemGenerator` via constructor injection
-2. **3D Visual Upgrade**: Replace 2D sprites with 3D models — all game logic unchanged
-3. **Audio System**: Implement sound effects/music using `AudioManager` placeholder
-4. **Content Expansion**: New items, enemies, skills, recipes (JSON-only changes)
-5. **Performance Optimization**: Profile and optimize hot paths
+### Immediate Priority: Fix Documentation + Create Missing Systems
+The 7-phase code migration is done, but **22+ planned files were never created** and the **game cannot run in Unity yet**. The comprehensive plan for addressing all gaps is in `AUDIT_IMPROVEMENT_PLAN.md`.
+
+### Roadmap (from AUDIT_IMPROVEMENT_PLAN.md §5)
+1. **Stage 0 — Documentation cleanup** (done in this PR): Fix audit false positives, update file counts, mark superseded docs
+2. **Stage 1 — Unity project bootstrap**: Create Unity project, .asmdef files, copy JSON, fix compilation (~10-17 hours). See `POST_MIGRATION_PLAN.md`.
+3. **Stage 2 — Create missing systems**: ItemFactory, InteractiveCrafting, FishingMinigame, DungeonSystem, etc. (~3,000-5,000 new LOC)
+4. **Stage 3 — Wire systems to game loop**: Combat, enemies, resources, crafting stations, skills, death/respawn
+5. **Stage 4 — Architecture verification**: GameEvents subscribers, effect dispatch, convention compliance
+6. **Stage 5 — Testing**: 260+ missing unit tests for all formulas and systems
+7. **Stage 6 — 3D and polish**: Replace 2D with 3D primitives, audio, LLM integration
 
 ### Remaining Phase 5 Tasks (Can Be Done Anytime)
 - Run `convert_models_to_onnx.py` (requires TensorFlow + LightGBM Python environments)
 - Run `generate_golden_files.py` to produce test validation data
 - Validate ONNX models match Python originals (100 random inputs each)
 
-### Unity Scene Assembly (Required Before Running)
-- Assemble scene hierarchy per Phase 6 implementation summary §6
-- Create prefabs for grid cells, class cards, save slots, damage numbers, etc.
-- Configure InputActionAsset or rely on InputManager's inline fallback bindings
-- Copy JSON files to `StreamingAssets/Content/` (byte-identical)
-- Copy ONNX models to `Resources/Models/`
-
-### Migration Completion Report
-See `Migration-Plan/MIGRATION_COMPLETION_REPORT.md` for full details.
+### Key Documents for Next Steps
+| Need | Read |
+|------|------|
+| Full gap list with corrections | `AUDIT_IMPROVEMENT_PLAN.md` |
+| How to bootstrap Unity project | `POST_MIGRATION_PLAN.md` |
+| Domain-specific gaps | `UNITY_MIGRATION_CHECKLIST.md` → `audits/AUDIT_*.md` |
+| What's wrong with the audits | `audits/META_AUDIT_REPORT.md` |
+| Documentation map | `DOCUMENTATION_CLEANUP.md` |
 
 ### Reading Order for New Developers
 1. **This document** (`COMPLETION_STATUS.md`) — Understand the overall plan and what was built
-2. `UNITY_MIGRATION_CHECKLIST.md` — Understand what's LEFT to do (hub → 7 audit docs)
-3. The specific `audits/AUDIT_*.md` for your domain — Detailed gap analysis and acceptance criteria
-4. `CONVENTIONS.md` — All rules (naming, 3D, items)
-5. `IMPROVEMENTS.md` Quick Reference — See all improvements at a glance
-6. `UNITY_PRIMER.md` — If new to Unity
-7. `PYTHON_TO_CSHARP.md` — Language conversion reference
+2. `AUDIT_IMPROVEMENT_PLAN.md` — What's actually missing and the plan to fix it
+3. `UNITY_MIGRATION_CHECKLIST.md` → `audits/AUDIT_*.md` — Domain-specific gap details
+4. `POST_MIGRATION_PLAN.md` — How to get to a playable prototype
+5. `CONVENTIONS.md` — Before writing any C# code
+6. `DOCUMENTATION_CLEANUP.md` — Which docs are current vs stale
 
-### Reading Order for Original Migration Plan
-1. `MIGRATION_PLAN.md` §0 — How to use this plan
-2. `PHASE_CONTRACTS.md` — Your phase's inputs/outputs
-3. Your phase document — Detailed instructions
+### Reading Order for Original Migration Plan (Historical)
+1. `MIGRATION_PLAN.md` §0 — How the plan was designed
+2. `PHASE_CONTRACTS.md` — Phase inputs/outputs
+3. Phase spec documents — Note: compare with implementation summaries to see what changed
 
 ---
 
@@ -204,8 +214,11 @@ See `Migration-Plan/MIGRATION_COMPLETION_REPORT.md` for full details.
 | 5 | 2026-02-13 | Phase 1-4 implementation. 72 C# files, 21,796 LOC. All foundation, data, entity, and game system code complete. 12 adaptive changes documented. |
 | 6 | 2026-02-13 | Phase 5 implementation. 10 C# files + 2 Python scripts + 1 test file (~2,300 LOC C#). ML classifier preprocessing, ClassifierManager, golden file scripts. 5 new adaptive changes (AC-013 through AC-017). |
 | 7 | 2026-02-13 | Phase 6 implementation. 45 C# files (6,697 LOC). Full Unity integration: GameManager, GameStateManager, InputManager, CameraController, 4 ScriptableObject configs, 3 utilities (Color/Position/Sprite), 2 Sentis ML backends, 9 world renderers, 22 UI components (HUD, panels, minigames, menus). 3 new adaptive changes (AC-018 through AC-020). |
-| 8 | 2026-02-14 | Phase 7 implementation. 13 C# files (~2,400 LOC). LLM stub system: IItemGenerator interface, StubItemGenerator, LoadingState, NotificationSystem, MigrationLogger. Updated GameEvents with LLM events. 87+ tests across 5 test files (unit + integration + E2E). Migration completion report produced. |
+| 8 | 2026-02-14 | Phase 7 implementation. 13 C# files (~2,400 LOC). LLM stub system: IItemGenerator interface, StubItemGenerator, LoadingState, NotificationSystem, MigrationLogger. Updated GameEvents with LLM events. 119 tests across 6 test files (unit + integration + E2E). Migration completion report produced. |
+| 9 | 2026-02-16 | First migration audit. Gap analysis identifying ~46 issues. Created POST_MIGRATION_PLAN.md. |
+| 10 | 2026-02-19 | 7-domain audit. Created 7 audit documents + META_AUDIT_REPORT. Identified ~151 gaps, 21 false positives in audits, 22 coverage gaps. |
+| 11 | 2026-02-21 | Audit improvement plan. Verified actual codebase state (143 files, not 147). Created AUDIT_IMPROVEMENT_PLAN.md, DOCUMENTATION_CLEANUP.md. Updated COMPLETION_STATUS.md with corrections. |
 
 ---
 
-**Status**: All 7 phases complete. Migration is done. See `MIGRATION_COMPLETION_REPORT.md` for full details.
+**Status**: All 7 migration phases complete (code written). **22+ planned files not yet created. Game not yet runnable in Unity.** See `AUDIT_IMPROVEMENT_PLAN.md` for the comprehensive remediation plan.

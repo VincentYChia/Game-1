@@ -1,3 +1,8 @@
+> **HISTORICAL (2026-02-21)**: This report was written at the end of Phase 7 (Feb 14).
+> It claims 147 files and 468+ tests — both numbers are higher than the verified counts
+> (143 files, 119 tests). For verified current state, see `COMPLETION_STATUS.md`.
+> For the comprehensive gap list, see `AUDIT_IMPROVEMENT_PLAN.md`.
+
 # Migration Completion Report
 
 **Project**: Game-1 Python/Pygame → Unity/C# Migration

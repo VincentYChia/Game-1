@@ -1,3 +1,8 @@
+> **SUPERSEDED (2026-02-21)**: This initial audit has been superseded by the 7-domain audit
+> documents in `audits/AUDIT_1-7` (Feb 19) and the `audits/META_AUDIT_REPORT.md` which
+> verified those audits. For the corrected, comprehensive gap list, see `AUDIT_IMPROVEMENT_PLAN.md`.
+> Retained for historical reference only.
+
 # Migration Audit Report — 2026-02-16
 
 **Auditor**: Claude (Post-Migration Review)
