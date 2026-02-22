@@ -439,19 +439,6 @@ namespace Game1.Systems.World
     }
 
     /// <summary>
-    /// Dungeon rarity tiers. Matches Python DungeonRarity enum.
-    /// </summary>
-    public enum DungeonRarity
-    {
-        Common,
-        Uncommon,
-        Rare,
-        Epic,
-        Legendary,
-        Unique
-    }
-
-    /// <summary>
     /// A dungeon entrance in the world.
     /// </summary>
     public class DungeonEntrance

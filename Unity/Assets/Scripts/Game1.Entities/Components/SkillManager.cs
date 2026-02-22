@@ -31,6 +31,9 @@ namespace Game1.Entities.Components
         private List<string> _cachedAvailableSkills;
         private bool _availableSkillsDirty = true;
 
+        /// <summary>Whether the available skills cache needs rebuilding.</summary>
+        public bool IsAvailableSkillsDirty => _availableSkillsDirty;
+
         public SkillManager()
         {
             // Invalidate cache on relevant events (FIX-7)

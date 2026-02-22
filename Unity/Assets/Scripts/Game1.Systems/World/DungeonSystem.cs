@@ -108,13 +108,6 @@ namespace Game1.Systems.World
         }
     }
 
-    /// <summary>A single loot drop entry.</summary>
-    public class LootDrop
-    {
-        public string ItemId { get; set; }
-        public int Quantity { get; set; } = 1;
-    }
-
     /// <summary>
     /// A dungeon instance with wave-based combat.
     /// Matches Python: dungeon.py DungeonInstance class.

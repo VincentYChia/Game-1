@@ -89,6 +89,7 @@ namespace Game1.Systems.World
     public class LootDrop
     {
         public string ItemId { get; set; }
+        public int Quantity { get; set; } = 1;
         public int MinQuantity { get; set; }
         public int MaxQuantity { get; set; }
         public float Chance { get; set; }
