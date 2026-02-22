@@ -88,6 +88,11 @@ namespace Game1.Systems.Crafting
         // Enchanting-specific
         public float EfficacyMultiplier = 1.0f;
         public int CurrencyChange;
+
+        // Fishing-specific
+        public string Quality = "Normal";
+        public int ExperienceReward;
+        public float BonusMultiplier = 1.0f;
     }
 
     // =========================================================================
