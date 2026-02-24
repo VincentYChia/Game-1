@@ -242,7 +242,7 @@ namespace Game1.Systems.Classifiers.Preprocessing
         /// Population standard deviation (numpy.std default, divides by N not N-1).
         /// CRITICAL: np.std uses population std, NOT sample std.
         /// </summary>
-        internal static float PopulationStdDev(List<float> values)
+        public static float PopulationStdDev(List<float> values)
         {
             if (values.Count <= 1) return 0f;
 
