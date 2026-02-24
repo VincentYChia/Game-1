@@ -133,7 +133,7 @@ namespace Game1.Systems.LLM
                          float duration = DefaultDuration)
         {
             // Filter Debug notifications in release builds
-            #if !DEBUG && !UNITY_EDITOR
+            #if !DEBUG
             if (type == NotificationType.Debug)
                 return;
             #endif

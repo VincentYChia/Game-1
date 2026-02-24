@@ -7,7 +7,6 @@
         "Game1.Entities",
         "Game1.Systems",
         "Unity.TextMeshPro",
-        "Unity.InputSystem",
         "com.unity.nuget.newtonsoft-json"
     ],
     "includePlatforms": [],
