@@ -33,7 +33,7 @@ namespace Game1.Unity.World
 
         [Header("Rendering Mode")]
         [Tooltip("Use 3D mesh terrain. Disable for legacy 2D Tilemap mode.")]
-        [SerializeField] private bool _use3DMesh = true;
+        [SerializeField] private bool _use3DMesh = false;
 
         [Header("Tilemap (Legacy 2D Mode)")]
         [SerializeField] private Tilemap _groundTilemap;

@@ -4,19 +4,19 @@
 // Migration phase: 6
 // Date: 2026-02-13
 //
-// Replaces Python's pygame event polling with Unity Input.
+// Replaces Python's pygame event polling with Unity Input System.
 // Routes input to appropriate handlers based on current GameState.
-// Uses Unity legacy Input API (always available, no package dependency).
 // ============================================================================
 
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Game1.Unity.Core
 {
     /// <summary>
     /// Central input manager. Routes keyboard/mouse input based on GameState.
-    /// Uses Unity's built-in Input API (UnityEngine.Input) for zero-dependency input.
+    /// Uses Unity's new Input System package (required in Player Settings).
     /// </summary>
     public class InputManager : MonoBehaviour
     {
@@ -25,57 +25,27 @@ namespace Game1.Unity.Core
         // ====================================================================
 
         [SerializeField] private GameStateManager _stateManager;
+        [SerializeField] private PlayerInput _playerInput;
 
         // ====================================================================
         // Events — UI components subscribe to receive input
         // ====================================================================
 
-        /// <summary>Movement input (WASD/arrows). Args: Vector2 direction.</summary>
         public event Action<Vector2> OnMoveInput;
-
-        /// <summary>Interact key pressed (E).</summary>
         public event Action OnInteract;
-
-        /// <summary>Primary attack (left click in world).</summary>
         public event Action<Vector3> OnPrimaryAttack;
-
-        /// <summary>Secondary action (right click). Args: world position.</summary>
         public event Action<Vector3> OnSecondaryAction;
-
-        /// <summary>UI click at screen position.</summary>
         public event Action<Vector2> OnUIClick;
-
-        /// <summary>Escape pressed.</summary>
         public event Action OnEscape;
-
-        /// <summary>Inventory toggle (Tab).</summary>
         public event Action OnToggleInventory;
-
-        /// <summary>Equipment toggle.</summary>
         public event Action OnToggleEquipment;
-
-        /// <summary>Map toggle (M).</summary>
         public event Action OnToggleMap;
-
-        /// <summary>Encyclopedia toggle (J).</summary>
         public event Action OnToggleEncyclopedia;
-
-        /// <summary>Stats toggle (C).</summary>
         public event Action OnToggleStats;
-
-        /// <summary>Skills toggle (K).</summary>
         public event Action OnToggleSkills;
-
-        /// <summary>Skill hotbar key pressed (1-5). Args: slot index (0-4).</summary>
         public event Action<int> OnSkillActivate;
-
-        /// <summary>Crafting action key (Spacebar in minigame).</summary>
         public event Action OnCraftAction;
-
-        /// <summary>Debug key pressed. Args: key name (F1-F7).</summary>
         public event Action<string> OnDebugKey;
-
-        /// <summary>Scroll wheel. Args: delta.</summary>
         public event Action<float> OnScroll;
 
         /// <summary>Mouse position in screen space, updated every frame.</summary>
@@ -85,6 +55,34 @@ namespace Game1.Unity.Core
         public Vector3 MouseWorldPosition { get; private set; }
 
         // ====================================================================
+        // Input Actions
+        // ====================================================================
+
+        private InputAction _moveAction;
+        private InputAction _interactAction;
+        private InputAction _attackAction;
+        private InputAction _secondaryAction;
+        private InputAction _escapeAction;
+        private InputAction _inventoryAction;
+        private InputAction _equipmentAction;
+        private InputAction _mapAction;
+        private InputAction _encyclopediaAction;
+        private InputAction _statsAction;
+        private InputAction _skillsAction;
+        private InputAction _craftAction;
+        private InputAction _scrollAction;
+        private InputAction _skill1Action;
+        private InputAction _skill2Action;
+        private InputAction _skill3Action;
+        private InputAction _skill4Action;
+        private InputAction _skill5Action;
+        private InputAction _debugF1;
+        private InputAction _debugF2;
+        private InputAction _debugF3;
+        private InputAction _debugF4;
+        private InputAction _debugF7;
+
+        // ====================================================================
         // Initialization
         // ====================================================================
 
@@ -92,159 +90,269 @@ namespace Game1.Unity.Core
         {
             if (_stateManager == null)
                 _stateManager = FindFirstObjectByType<GameStateManager>();
+            _setupInputActions();
         }
 
         private void OnEnable()
         {
+            _enableAllActions();
+            _bindActions();
             if (_stateManager != null)
                 _stateManager.OnStateChanged += _onGameStateChanged;
         }
 
         private void OnDisable()
         {
+            _unbindActions();
+            _disableAllActions();
             if (_stateManager != null)
                 _stateManager.OnStateChanged -= _onGameStateChanged;
         }
 
         // ====================================================================
-        // Frame Update — Poll all input every frame
+        // Frame Update — Continuous Input
         // ====================================================================
 
         private void Update()
         {
-            _updateMousePosition();
-            _pollMovement();
-            _pollKeyDown();
-            _pollMouseButtons();
-            _pollScrollWheel();
-        }
-
-        // ====================================================================
-        // Mouse Tracking
-        // ====================================================================
-
-        private void _updateMousePosition()
-        {
-            MousePosition = Input.mousePosition;
-
-            if (Camera.main != null)
+            // Track mouse position
+            if (Mouse.current != null)
             {
-                var ray = Camera.main.ScreenPointToRay(MousePosition);
-                var plane = new Plane(Vector3.up, Vector3.zero);
-                if (plane.Raycast(ray, out float distance))
+                MousePosition = Mouse.current.position.ReadValue();
+
+                if (Camera.main != null)
                 {
-                    MouseWorldPosition = ray.GetPoint(distance);
+                    var ray = Camera.main.ScreenPointToRay(MousePosition);
+                    var plane = new Plane(Vector3.up, Vector3.zero);
+                    if (plane.Raycast(ray, out float distance))
+                    {
+                        MouseWorldPosition = ray.GetPoint(distance);
+                    }
+                }
+            }
+
+            // Continuous movement input (polled every frame)
+            if (_moveAction != null && _stateManager != null && _stateManager.IsPlaying)
+            {
+                var moveValue = _moveAction.ReadValue<Vector2>();
+                if (moveValue.sqrMagnitude > 0.01f)
+                {
+                    OnMoveInput?.Invoke(moveValue);
                 }
             }
         }
 
         // ====================================================================
-        // Movement (continuous, polled every frame)
+        // Input Action Setup
         // ====================================================================
 
-        private void _pollMovement()
+        private void _setupInputActions()
         {
-            if (_stateManager == null || !_stateManager.IsPlaying)
+            // If PlayerInput component is assigned, use its action map
+            if (_playerInput != null && _playerInput.actions != null)
+            {
+                _moveAction = _playerInput.actions.FindAction("Move");
+                _interactAction = _playerInput.actions.FindAction("Interact");
+                _attackAction = _playerInput.actions.FindAction("Attack");
+                _secondaryAction = _playerInput.actions.FindAction("SecondaryAttack");
+                _escapeAction = _playerInput.actions.FindAction("Escape");
+                _inventoryAction = _playerInput.actions.FindAction("ToggleInventory");
+                _equipmentAction = _playerInput.actions.FindAction("ToggleEquipment");
+                _mapAction = _playerInput.actions.FindAction("ToggleMap");
+                _encyclopediaAction = _playerInput.actions.FindAction("ToggleEncyclopedia");
+                _statsAction = _playerInput.actions.FindAction("ToggleStats");
+                _skillsAction = _playerInput.actions.FindAction("ToggleSkills");
+                _craftAction = _playerInput.actions.FindAction("CraftAction");
+                _scrollAction = _playerInput.actions.FindAction("Zoom");
+                _skill1Action = _playerInput.actions.FindAction("Skill1");
+                _skill2Action = _playerInput.actions.FindAction("Skill2");
+                _skill3Action = _playerInput.actions.FindAction("Skill3");
+                _skill4Action = _playerInput.actions.FindAction("Skill4");
+                _skill5Action = _playerInput.actions.FindAction("Skill5");
+                _debugF1 = _playerInput.actions.FindAction("DebugToggle");
+                _debugF2 = _playerInput.actions.FindAction("LearnAllSkills");
+                _debugF3 = _playerInput.actions.FindAction("GrantAllTitles");
+                _debugF4 = _playerInput.actions.FindAction("MaxLevel");
+                _debugF7 = _playerInput.actions.FindAction("InfiniteDurability");
                 return;
-
-            float h = Input.GetAxisRaw("Horizontal"); // A/D or Left/Right
-            float v = Input.GetAxisRaw("Vertical");   // W/S or Up/Down
-            var move = new Vector2(h, v);
-
-            if (move.sqrMagnitude > 0.01f)
-            {
-                OnMoveInput?.Invoke(move);
             }
+
+            // Fallback: create inline actions (works without InputActionAsset)
+            _moveAction = new InputAction("Move", InputActionType.Value);
+            _moveAction.AddCompositeBinding("2DVector")
+                .With("Up", "<Keyboard>/w")
+                .With("Down", "<Keyboard>/s")
+                .With("Left", "<Keyboard>/a")
+                .With("Right", "<Keyboard>/d");
+
+            _interactAction = new InputAction("Interact", InputActionType.Button, "<Keyboard>/e");
+            _attackAction = new InputAction("Attack", InputActionType.Button, "<Mouse>/leftButton");
+            _secondaryAction = new InputAction("SecondaryAttack", InputActionType.Button, "<Mouse>/rightButton");
+            _escapeAction = new InputAction("Escape", InputActionType.Button, "<Keyboard>/escape");
+            _inventoryAction = new InputAction("ToggleInventory", InputActionType.Button, "<Keyboard>/tab");
+            _equipmentAction = new InputAction("ToggleEquipment", InputActionType.Button, "<Keyboard>/i");
+            _mapAction = new InputAction("ToggleMap", InputActionType.Button, "<Keyboard>/m");
+            _encyclopediaAction = new InputAction("ToggleEncyclopedia", InputActionType.Button, "<Keyboard>/j");
+            _statsAction = new InputAction("ToggleStats", InputActionType.Button, "<Keyboard>/c");
+            _skillsAction = new InputAction("ToggleSkills", InputActionType.Button, "<Keyboard>/k");
+            _craftAction = new InputAction("CraftAction", InputActionType.Button, "<Keyboard>/space");
+            _scrollAction = new InputAction("Scroll", InputActionType.Value, "<Mouse>/scroll/y");
+
+            _skill1Action = new InputAction("Skill1", InputActionType.Button, "<Keyboard>/1");
+            _skill2Action = new InputAction("Skill2", InputActionType.Button, "<Keyboard>/2");
+            _skill3Action = new InputAction("Skill3", InputActionType.Button, "<Keyboard>/3");
+            _skill4Action = new InputAction("Skill4", InputActionType.Button, "<Keyboard>/4");
+            _skill5Action = new InputAction("Skill5", InputActionType.Button, "<Keyboard>/5");
+
+            _debugF1 = new InputAction("DebugF1", InputActionType.Button, "<Keyboard>/f1");
+            _debugF2 = new InputAction("DebugF2", InputActionType.Button, "<Keyboard>/f2");
+            _debugF3 = new InputAction("DebugF3", InputActionType.Button, "<Keyboard>/f3");
+            _debugF4 = new InputAction("DebugF4", InputActionType.Button, "<Keyboard>/f4");
+            _debugF7 = new InputAction("DebugF7", InputActionType.Button, "<Keyboard>/f7");
         }
 
         // ====================================================================
-        // Key Down Events (fired once per press)
+        // Enable / Disable Actions
         // ====================================================================
 
-        private void _pollKeyDown()
+        private InputAction[] _allActions => new[]
         {
-            // Escape — always active
-            if (Input.GetKeyDown(KeyCode.Escape))
-            {
-                OnEscape?.Invoke();
-                _stateManager?.HandleEscape();
-            }
+            _moveAction, _interactAction, _attackAction, _secondaryAction,
+            _escapeAction, _inventoryAction, _equipmentAction, _mapAction,
+            _encyclopediaAction, _statsAction, _skillsAction, _craftAction,
+            _scrollAction, _skill1Action, _skill2Action, _skill3Action,
+            _skill4Action, _skill5Action, _debugF1, _debugF2, _debugF3,
+            _debugF4, _debugF7
+        };
 
-            // Interact (E)
-            if (Input.GetKeyDown(KeyCode.E))
-            {
-                if (_stateManager != null && _stateManager.IsPlaying)
-                    OnInteract?.Invoke();
-            }
-
-            // Panel toggles
-            if (Input.GetKeyDown(KeyCode.Tab))
-                OnToggleInventory?.Invoke();
-
-            if (Input.GetKeyDown(KeyCode.M))
-                OnToggleMap?.Invoke();
-
-            if (Input.GetKeyDown(KeyCode.J))
-                OnToggleEncyclopedia?.Invoke();
-
-            if (Input.GetKeyDown(KeyCode.C))
-                OnToggleStats?.Invoke();
-
-            if (Input.GetKeyDown(KeyCode.K))
-                OnToggleSkills?.Invoke();
-
-            // Crafting action (Spacebar)
-            if (Input.GetKeyDown(KeyCode.Space))
-                OnCraftAction?.Invoke();
-
-            // Skill hotbar (1-5)
-            if (Input.GetKeyDown(KeyCode.Alpha1)) OnSkillActivate?.Invoke(0);
-            if (Input.GetKeyDown(KeyCode.Alpha2)) OnSkillActivate?.Invoke(1);
-            if (Input.GetKeyDown(KeyCode.Alpha3)) OnSkillActivate?.Invoke(2);
-            if (Input.GetKeyDown(KeyCode.Alpha4)) OnSkillActivate?.Invoke(3);
-            if (Input.GetKeyDown(KeyCode.Alpha5)) OnSkillActivate?.Invoke(4);
-
-            // Debug keys
-            if (Input.GetKeyDown(KeyCode.F1)) OnDebugKey?.Invoke("F1");
-            if (Input.GetKeyDown(KeyCode.F2)) OnDebugKey?.Invoke("F2");
-            if (Input.GetKeyDown(KeyCode.F3)) OnDebugKey?.Invoke("F3");
-            if (Input.GetKeyDown(KeyCode.F4)) OnDebugKey?.Invoke("F4");
-            if (Input.GetKeyDown(KeyCode.F7)) OnDebugKey?.Invoke("F7");
-        }
-
-        // ====================================================================
-        // Mouse Button Events
-        // ====================================================================
-
-        private void _pollMouseButtons()
+        private void _enableAllActions()
         {
-            // Left click (button 0)
-            if (Input.GetMouseButtonDown(0))
-            {
-                if (_stateManager == null || _stateManager.IsPlaying)
-                    OnPrimaryAttack?.Invoke(MouseWorldPosition);
-                else
-                    OnUIClick?.Invoke(MousePosition);
-            }
-
-            // Right click (button 1)
-            if (Input.GetMouseButtonDown(1))
-            {
-                if (_stateManager == null || _stateManager.IsPlaying)
-                    OnSecondaryAction?.Invoke(MouseWorldPosition);
-            }
+            foreach (var action in _allActions)
+                action?.Enable();
         }
 
-        // ====================================================================
-        // Scroll Wheel
-        // ====================================================================
-
-        private void _pollScrollWheel()
+        private void _disableAllActions()
         {
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (Mathf.Abs(scroll) > 0.001f)
-                OnScroll?.Invoke(scroll);
+            foreach (var action in _allActions)
+                action?.Disable();
         }
+
+        // ====================================================================
+        // Action Bindings
+        // ====================================================================
+
+        private void _bindActions()
+        {
+            if (_interactAction != null) _interactAction.performed += _onInteract;
+            if (_attackAction != null) _attackAction.performed += _onAttack;
+            if (_secondaryAction != null) _secondaryAction.performed += _onSecondary;
+            if (_escapeAction != null) _escapeAction.performed += _onEscape;
+            if (_inventoryAction != null) _inventoryAction.performed += _onInventory;
+            if (_equipmentAction != null) _equipmentAction.performed += _onEquipment;
+            if (_mapAction != null) _mapAction.performed += _onMap;
+            if (_encyclopediaAction != null) _encyclopediaAction.performed += _onEncyclopedia;
+            if (_statsAction != null) _statsAction.performed += _onStats;
+            if (_skillsAction != null) _skillsAction.performed += _onSkills;
+            if (_craftAction != null) _craftAction.performed += _onCraftAction;
+            if (_scrollAction != null) _scrollAction.performed += _onScroll;
+
+            if (_skill1Action != null) _skill1Action.performed += _onSkill1;
+            if (_skill2Action != null) _skill2Action.performed += _onSkill2;
+            if (_skill3Action != null) _skill3Action.performed += _onSkill3;
+            if (_skill4Action != null) _skill4Action.performed += _onSkill4;
+            if (_skill5Action != null) _skill5Action.performed += _onSkill5;
+
+            if (_debugF1 != null) _debugF1.performed += _onDebugF1;
+            if (_debugF2 != null) _debugF2.performed += _onDebugF2;
+            if (_debugF3 != null) _debugF3.performed += _onDebugF3;
+            if (_debugF4 != null) _debugF4.performed += _onDebugF4;
+            if (_debugF7 != null) _debugF7.performed += _onDebugF7;
+        }
+
+        private void _unbindActions()
+        {
+            if (_interactAction != null) _interactAction.performed -= _onInteract;
+            if (_attackAction != null) _attackAction.performed -= _onAttack;
+            if (_secondaryAction != null) _secondaryAction.performed -= _onSecondary;
+            if (_escapeAction != null) _escapeAction.performed -= _onEscape;
+            if (_inventoryAction != null) _inventoryAction.performed -= _onInventory;
+            if (_equipmentAction != null) _equipmentAction.performed -= _onEquipment;
+            if (_mapAction != null) _mapAction.performed -= _onMap;
+            if (_encyclopediaAction != null) _encyclopediaAction.performed -= _onEncyclopedia;
+            if (_statsAction != null) _statsAction.performed -= _onStats;
+            if (_skillsAction != null) _skillsAction.performed -= _onSkills;
+            if (_craftAction != null) _craftAction.performed -= _onCraftAction;
+            if (_scrollAction != null) _scrollAction.performed -= _onScroll;
+
+            if (_skill1Action != null) _skill1Action.performed -= _onSkill1;
+            if (_skill2Action != null) _skill2Action.performed -= _onSkill2;
+            if (_skill3Action != null) _skill3Action.performed -= _onSkill3;
+            if (_skill4Action != null) _skill4Action.performed -= _onSkill4;
+            if (_skill5Action != null) _skill5Action.performed -= _onSkill5;
+
+            if (_debugF1 != null) _debugF1.performed -= _onDebugF1;
+            if (_debugF2 != null) _debugF2.performed -= _onDebugF2;
+            if (_debugF3 != null) _debugF3.performed -= _onDebugF3;
+            if (_debugF4 != null) _debugF4.performed -= _onDebugF4;
+            if (_debugF7 != null) _debugF7.performed -= _onDebugF7;
+        }
+
+        // ====================================================================
+        // Input Handlers (named methods for proper unsubscribe)
+        // ====================================================================
+
+        private void _onInteract(InputAction.CallbackContext ctx)
+        {
+            if (_stateManager != null && _stateManager.IsPlaying)
+                OnInteract?.Invoke();
+        }
+
+        private void _onAttack(InputAction.CallbackContext ctx)
+        {
+            if (_stateManager == null || _stateManager.IsPlaying)
+                OnPrimaryAttack?.Invoke(MouseWorldPosition);
+            else
+                OnUIClick?.Invoke(MousePosition);
+        }
+
+        private void _onSecondary(InputAction.CallbackContext ctx)
+        {
+            if (_stateManager == null || _stateManager.IsPlaying)
+                OnSecondaryAction?.Invoke(MouseWorldPosition);
+        }
+
+        private void _onEscape(InputAction.CallbackContext ctx)
+        {
+            OnEscape?.Invoke();
+            _stateManager?.HandleEscape();
+        }
+
+        private void _onInventory(InputAction.CallbackContext ctx) => OnToggleInventory?.Invoke();
+        private void _onEquipment(InputAction.CallbackContext ctx) => OnToggleEquipment?.Invoke();
+        private void _onMap(InputAction.CallbackContext ctx) => OnToggleMap?.Invoke();
+        private void _onEncyclopedia(InputAction.CallbackContext ctx) => OnToggleEncyclopedia?.Invoke();
+        private void _onStats(InputAction.CallbackContext ctx) => OnToggleStats?.Invoke();
+        private void _onSkills(InputAction.CallbackContext ctx) => OnToggleSkills?.Invoke();
+        private void _onCraftAction(InputAction.CallbackContext ctx) => OnCraftAction?.Invoke();
+
+        private void _onScroll(InputAction.CallbackContext ctx)
+        {
+            float scrollValue = ctx.ReadValue<float>();
+            if (Mathf.Abs(scrollValue) > 0.01f)
+                OnScroll?.Invoke(scrollValue);
+        }
+
+        private void _onSkill1(InputAction.CallbackContext ctx) => OnSkillActivate?.Invoke(0);
+        private void _onSkill2(InputAction.CallbackContext ctx) => OnSkillActivate?.Invoke(1);
+        private void _onSkill3(InputAction.CallbackContext ctx) => OnSkillActivate?.Invoke(2);
+        private void _onSkill4(InputAction.CallbackContext ctx) => OnSkillActivate?.Invoke(3);
+        private void _onSkill5(InputAction.CallbackContext ctx) => OnSkillActivate?.Invoke(4);
+
+        private void _onDebugF1(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F1");
+        private void _onDebugF2(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F2");
+        private void _onDebugF3(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F3");
+        private void _onDebugF4(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F4");
+        private void _onDebugF7(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F7");
 
         // ====================================================================
         // State Change Handler
@@ -252,7 +360,7 @@ namespace Game1.Unity.Core
 
         private void _onGameStateChanged(GameState oldState, GameState newState)
         {
-            // State-based input filtering happens in the poll methods above
+            // State-based input filtering happens in the individual handlers above
         }
     }
 }

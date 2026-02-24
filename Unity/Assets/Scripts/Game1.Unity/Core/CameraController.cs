@@ -25,7 +25,7 @@ namespace Game1.Unity.Core
         // ====================================================================
 
         [Header("Camera Mode")]
-        [SerializeField] private bool _orthographic = false;
+        [SerializeField] private bool _orthographic = true;
         [SerializeField] private float _orthographicSize = 8f;
         [SerializeField] private float _perspectiveFOV = 50f;
 
