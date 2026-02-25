@@ -260,15 +260,17 @@ namespace Game1.Unity.World
             if (TerrainMaterialManager.Instance != null)
                 return TerrainMaterialManager.Instance.TerrainMaterial;
 
-            // Fallback: create a simple vertex-color material
+            // Fallback: create a vertex-color material
             if (_cachedTerrainMaterial == null)
             {
-                Shader shader = Shader.Find("Universal Render Pipeline/Lit")
-                    ?? Shader.Find("Standard")
-                    ?? Shader.Find("Diffuse");
+                Shader shader = Shader.Find("Game1/VertexColorLit")
+                    ?? Shader.Find("Universal Render Pipeline/Particles/Lit")
+                    ?? Shader.Find("Particles/Standard Surface")
+                    ?? Shader.Find("Standard");
                 _cachedTerrainMaterial = new Material(shader);
                 _cachedTerrainMaterial.name = "Terrain_Fallback";
                 _cachedTerrainMaterial.enableInstancing = true;
+                _cachedTerrainMaterial.color = Color.white;
             }
             return _cachedTerrainMaterial;
         }
@@ -280,7 +282,9 @@ namespace Game1.Unity.World
 
             if (_cachedWaterMaterial == null)
             {
-                Shader shader = Shader.Find("Universal Render Pipeline/Lit")
+                Shader shader = Shader.Find("Game1/VertexColorTransparent")
+                    ?? Shader.Find("Universal Render Pipeline/Particles/Unlit")
+                    ?? Shader.Find("Particles/Standard Unlit")
                     ?? Shader.Find("Standard");
                 _cachedWaterMaterial = new Material(shader);
                 _cachedWaterMaterial.name = "Water_Fallback";
@@ -301,11 +305,14 @@ namespace Game1.Unity.World
 
             if (_cachedEdgeMaterial == null)
             {
-                Shader shader = Shader.Find("Universal Render Pipeline/Lit")
+                Shader shader = Shader.Find("Game1/VertexColorLit")
+                    ?? Shader.Find("Universal Render Pipeline/Particles/Lit")
+                    ?? Shader.Find("Particles/Standard Surface")
                     ?? Shader.Find("Standard");
                 _cachedEdgeMaterial = new Material(shader);
                 _cachedEdgeMaterial.name = "Edge_Fallback";
                 _cachedEdgeMaterial.enableInstancing = true;
+                _cachedEdgeMaterial.color = Color.white;
             }
             return _cachedEdgeMaterial;
         }

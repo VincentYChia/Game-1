@@ -92,50 +92,44 @@ namespace Game1.Unity.World
         }
 
         /// <summary>
-        /// Creates a terrain material that renders vertex colors with basic lighting.
-        /// Uses the Universal Render Pipeline Lit shader if available, otherwise
-        /// falls back to Standard shader with vertex color support.
+        /// Creates a terrain material that renders vertex colors with lighting.
+        /// Shader priority:
+        ///   1. Game1/VertexColorLit (custom Surface Shader, works in Built-in + URP compat)
+        ///   2. Universal Render Pipeline/Particles/Lit (URP — natively reads vertex colors)
+        ///   3. Particles/Standard Surface (Built-in — natively reads vertex colors)
+        ///   4. Standard (last resort — will NOT show vertex colors)
         /// </summary>
         private Material _createTerrainMaterial()
         {
-            // Try URP Lit first, then Standard
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null) shader = Shader.Find("Standard");
-            if (shader == null) shader = Shader.Find("Diffuse");
+            Shader shader = _findVertexColorShader();
 
             var mat = new Material(shader);
             mat.name = "Game1_Terrain";
             mat.enableInstancing = true;
-
-            // Enable vertex colors
             mat.SetFloat("_Smoothness", 0.1f);
             mat.SetFloat("_Metallic", 0f);
-
-            // For vertex color rendering, we need a white base texture
-            // and let vertex colors multiply
-            var whiteTex = new Texture2D(1, 1);
-            whiteTex.SetPixel(0, 0, Color.white);
-            whiteTex.Apply();
-            mat.mainTexture = whiteTex;
+            mat.color = Color.white;
 
             return mat;
         }
 
         /// <summary>
-        /// Creates a semi-transparent water material with basic wave animation support.
+        /// Creates a semi-transparent water material.
+        /// Uses the custom transparent shader, or falls back to particle shaders
+        /// which handle transparency natively.
         /// </summary>
         private Material _createWaterMaterial()
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            Shader shader = Shader.Find("Game1/VertexColorTransparent");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+            if (shader == null) shader = Shader.Find("Particles/Standard Unlit");
             if (shader == null) shader = Shader.Find("Standard");
-            if (shader == null) shader = Shader.Find("Diffuse");
 
             var mat = new Material(shader);
             mat.name = "Game1_Water";
 
-            // Configure for transparency
+            // Configure transparency for Standard/URP fallbacks
             mat.SetFloat("_Surface", 1f); // Transparent (URP)
-            mat.SetFloat("_Blend", 0f);   // Alpha blend
             mat.SetOverrideTag("RenderType", "Transparent");
             mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
             mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
@@ -152,27 +146,51 @@ namespace Game1.Unity.World
         }
 
         /// <summary>
-        /// Creates a slightly darker material for cliff edge faces.
-        /// Uses the same base as terrain but with a slight darkening tint.
+        /// Creates a material for cliff edge faces that renders vertex colors.
+        /// Uses the same shader chain as terrain (vertex-color-aware).
         /// </summary>
         private Material _createEdgeMaterial()
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null) shader = Shader.Find("Standard");
-            if (shader == null) shader = Shader.Find("Diffuse");
+            Shader shader = _findVertexColorShader();
 
             var mat = new Material(shader);
             mat.name = "Game1_TerrainEdge";
             mat.enableInstancing = true;
             mat.SetFloat("_Smoothness", 0.05f);
             mat.SetFloat("_Metallic", 0f);
-
-            var whiteTex = new Texture2D(1, 1);
-            whiteTex.SetPixel(0, 0, Color.white);
-            whiteTex.Apply();
-            mat.mainTexture = whiteTex;
+            mat.color = Color.white;
 
             return mat;
+        }
+
+        /// <summary>
+        /// Find a shader that correctly renders vertex colors with lighting.
+        /// Tries our custom shader first, then particle shaders (which natively
+        /// support vertex colors), then Standard as last resort.
+        /// </summary>
+        private static Shader _findVertexColorShader()
+        {
+            // Best: our custom vertex-color surface shader
+            Shader shader = Shader.Find("Game1/VertexColorLit");
+            if (shader != null) return shader;
+
+            // URP fallback: particle shaders read vertex colors natively
+            shader = Shader.Find("Universal Render Pipeline/Particles/Lit");
+            if (shader != null) return shader;
+
+            // Built-in fallback: particle surface shader reads vertex colors
+            shader = Shader.Find("Particles/Standard Surface");
+            if (shader != null) return shader;
+
+            // Unlit fallback (vertex colors work but no lighting)
+            shader = Shader.Find("Particles/Standard Unlit");
+            if (shader != null) return shader;
+
+            // Last resort (will NOT show vertex colors, but renders)
+            shader = Shader.Find("Standard");
+            if (shader != null) return shader;
+
+            return Shader.Find("Diffuse");
         }
 
         // ====================================================================

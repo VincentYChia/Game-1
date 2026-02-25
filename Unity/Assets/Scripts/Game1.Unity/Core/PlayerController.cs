@@ -153,8 +153,10 @@ namespace Game1.Unity.Core
             // Calculate movement direction relative to camera
             Vector3 moveDir = (forward * _pendingMove.y + right * _pendingMove.x).normalized;
 
-            // Apply speed
-            float speed = _character.MovementSpeed > 0 ? _character.MovementSpeed : _moveSpeed;
+            // Apply speed — use Unity-appropriate speed (not Python pixel-per-frame value)
+            // Character.MovementSpeed (0.15) is a Python-era value in pixels/frame.
+            // _moveSpeed (5.0) is the correct meters/second for 3D first-person.
+            float speed = _moveSpeed;
             Vector3 movement = moveDir * speed * Time.deltaTime;
 
             // Calculate new position

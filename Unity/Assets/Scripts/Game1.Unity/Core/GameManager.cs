@@ -158,6 +158,13 @@ namespace Game1.Unity.Core
             Application.targetFrameRate = GameConfig.FPS;
         }
 
+        [Header("Development")]
+        [Tooltip("Auto-start a new game on launch (skip start menu for testing).")]
+        [SerializeField] private bool _autoStart = true;
+
+        [SerializeField] private string _autoStartPlayerName = "Player";
+        [SerializeField] private string _autoStartClassId = "warrior";
+
         private void Start()
         {
             // Auto-discover scene references if not assigned in Inspector
@@ -170,13 +177,24 @@ namespace Game1.Unity.Core
             if (_audioManager == null)
                 _audioManager = FindFirstObjectByType<AudioManager>();
 
-            // Systems are loaded in Awake; Start handles cross-references
-            if (_stateManager != null)
+            IsInitialized = true;
+
+            // Auto-start bypasses start menu — immediately creates world + character
+            if (_autoStart)
             {
-                _stateManager.TransitionTo(GameState.StartMenu);
+                StartNewGame(_autoStartPlayerName, _autoStartClassId);
+
+                // Spawn at world center instead of (0,0)
+                if (Player != null)
+                    Player.Position = GamePosition.FromXZ(50f, 50f);
+
+                Debug.Log("[GameManager] Auto-started game at world center");
+            }
+            else
+            {
+                _stateManager?.TransitionTo(GameState.StartMenu);
             }
 
-            IsInitialized = true;
             Debug.Log("[GameManager] Initialization complete");
         }
 
