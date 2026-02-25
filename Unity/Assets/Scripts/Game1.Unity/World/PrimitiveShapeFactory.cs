@@ -10,6 +10,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using Game1.Unity.Utilities;
 
 namespace Game1.Unity.World
 {
@@ -523,9 +524,7 @@ namespace Game1.Unity.World
             textComp.fontSize = 24;
             textComp.color = color;
             textComp.alignment = TextAnchor.MiddleCenter;
-            textComp.font = Resources.GetBuiltinResource<Font>("LegacySRuntime.ttf");
-            if (textComp.font == null)
-                textComp.font = Font.CreateDynamicFontFromOSFont("Arial", 24);
+            textComp.font = UIHelper.GetFont();
             textComp.horizontalOverflow = HorizontalWrapMode.Overflow;
             textComp.raycastTarget = false;
 

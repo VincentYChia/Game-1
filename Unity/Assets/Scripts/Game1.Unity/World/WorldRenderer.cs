@@ -84,20 +84,11 @@ namespace Game1.Unity.World
             _chunkSize = GameConfig.ChunkSize;
             _cameraController = FindFirstObjectByType<CameraController>();
 
-            if (_use3DMesh)
-            {
-                _chunkContainer = new GameObject("ChunkContainer").transform;
-                _chunkContainer.SetParent(transform, false);
+            // Force 3D mode — overrides any serialized scene value
+            _use3DMesh = true;
 
-                // Disable tilemap objects if they exist (switching to 3D mode)
-                if (_groundTilemap != null) _groundTilemap.gameObject.SetActive(false);
-                if (_grid != null) _grid.gameObject.SetActive(false);
-            }
-            else
-            {
-                // Legacy 2D mode: create fallback tiles if not assigned
-                if (_grassTile == null) _createFallbackTiles();
-            }
+            _chunkContainer = new GameObject("ChunkContainer").transform;
+            _chunkContainer.SetParent(transform, false);
         }
 
         // ====================================================================

@@ -45,6 +45,40 @@ namespace Game1.Unity.Utilities
         public static readonly Color COLOR_COOLDOWN       = new Color(0f, 0f, 0f, 0.65f);
         public static readonly Color COLOR_TRANSPARENT    = new Color(0f, 0f, 0f, 0f);
 
+        // ====================================================================
+        // Cached Font
+        // ====================================================================
+
+        private static Font _cachedFont;
+
+        /// <summary>
+        /// Get a usable font, trying multiple builtin resource names across Unity versions.
+        /// Cached after first successful lookup.
+        /// </summary>
+        public static Font GetFont()
+        {
+            if (_cachedFont != null) return _cachedFont;
+
+            // Unity 2023+: LegacyRuntime.ttf
+            _cachedFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (_cachedFont != null) return _cachedFont;
+
+            // Unity 2019-2022: Arial.ttf
+            _cachedFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            if (_cachedFont != null) return _cachedFont;
+
+            // OS font fallback
+            _cachedFont = Font.CreateDynamicFontFromOSFont("Arial", 14);
+            if (_cachedFont != null) return _cachedFont;
+
+            // Last resort: any available OS font
+            string[] available = Font.GetOSInstalledFontNames();
+            if (available != null && available.Length > 0)
+                _cachedFont = Font.CreateDynamicFontFromOSFont(available[0], 14);
+
+            return _cachedFont;
+        }
+
         // Rarity colors
         public static readonly Color COLOR_COMMON    = new Color(0.60f, 0.60f, 0.60f, 1f);
         public static readonly Color COLOR_UNCOMMON  = new Color(0.20f, 0.80f, 0.20f, 1f);
@@ -190,9 +224,7 @@ namespace Game1.Unity.Utilities
             txt.fontSize = fontSize;
             txt.color = color;
             txt.alignment = alignment;
-            txt.font = Resources.GetBuiltinResource<Font>("LegacySRuntime.ttf");
-            if (txt.font == null)
-                txt.font = Font.CreateDynamicFontFromOSFont("Arial", fontSize);
+            txt.font = GetFont();
             txt.supportRichText = true;
             txt.raycastTarget = false;
 
@@ -282,9 +314,7 @@ namespace Game1.Unity.Utilities
             txt.fontSize = fontSize;
             txt.color = textColor;
             txt.alignment = TextAnchor.MiddleCenter;
-            txt.font = Resources.GetBuiltinResource<Font>("LegacySRuntime.ttf");
-            if (txt.font == null)
-                txt.font = Font.CreateDynamicFontFromOSFont("Arial", fontSize);
+            txt.font = GetFont();
             txt.raycastTarget = false;
 
             return btn;
@@ -468,9 +498,7 @@ namespace Game1.Unity.Utilities
             qtyTxt.fontSize = Mathf.Max(10, (int)(size * 0.22f));
             qtyTxt.color = COLOR_TEXT_PRIMARY;
             qtyTxt.alignment = TextAnchor.LowerRight;
-            qtyTxt.font = Resources.GetBuiltinResource<Font>("LegacySRuntime.ttf");
-            if (qtyTxt.font == null)
-                qtyTxt.font = Font.CreateDynamicFontFromOSFont("Arial", qtyTxt.fontSize);
+            qtyTxt.font = GetFont();
             qtyTxt.raycastTarget = false;
 
             // Border (overlay, initially invisible)
@@ -519,9 +547,7 @@ namespace Game1.Unity.Utilities
             var textComp = textGo.AddComponent<Text>();
             textComp.fontSize = fontSize;
             textComp.color = COLOR_TEXT_PRIMARY;
-            textComp.font = Resources.GetBuiltinResource<Font>("LegacySRuntime.ttf");
-            if (textComp.font == null)
-                textComp.font = Font.CreateDynamicFontFromOSFont("Arial", fontSize);
+            textComp.font = GetFont();
             textComp.supportRichText = false;
 
             // Placeholder
