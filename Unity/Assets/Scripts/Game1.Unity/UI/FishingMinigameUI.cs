@@ -254,19 +254,37 @@ namespace Game1.Unity.UI
             var state = _minigame.GetState();
 
             // Update timer
+            string timerStr = $"Time: {state.TimeRemaining:F1}s";
             if (_timerText != null)
-                _timerText.text = $"Time: {state.TimeRemaining:F1}s";
+                _timerText.text = timerStr;
+            else if (_timerTextFallback != null)
+                _timerTextFallback.text = timerStr;
+
             if (_timerBar != null && state.TotalTime > 0)
                 _timerBar.value = state.TimeRemaining / state.TotalTime;
+            else if (_timerBarFill != null && state.TotalTime > 0)
+                _timerBarFill.fillAmount = state.TimeRemaining / state.TotalTime;
 
             // Update score
             var discState = state.DisciplineState;
-            if (_scoreText != null && discState.TryGetValue("totalScore", out var score))
-                _scoreText.text = $"Score: {score}";
-            if (_hitCountText != null
-                && discState.TryGetValue("ripplesHit", out var hits)
+            if (discState.TryGetValue("totalScore", out var score))
+            {
+                string scoreStr = $"Score: {score}";
+                if (_scoreText != null)
+                    _scoreText.text = scoreStr;
+                else if (_scoreTextFallback != null)
+                    _scoreTextFallback.text = scoreStr;
+            }
+
+            if (discState.TryGetValue("ripplesHit", out var hits)
                 && discState.TryGetValue("requiredRipples", out var total))
-                _hitCountText.text = $"Hits: {hits}/{total}";
+            {
+                string hitStr = $"Hits: {hits}/{total}";
+                if (_hitCountText != null)
+                    _hitCountText.text = hitStr;
+                else if (_hitCountTextFallback != null)
+                    _hitCountTextFallback.text = hitStr;
+            }
 
             // Update ripple visuals
             UpdateRippleVisuals(discState);
@@ -310,19 +328,21 @@ namespace Game1.Unity.UI
 
             if (_resultPanel != null) _resultPanel.SetActive(true);
 
+            string titleStr = reward.Success
+                ? $"Catch! ({reward.QualityTier})"
+                : "The fish got away...";
             if (_resultTitle != null)
-            {
-                _resultTitle.text = reward.Success
-                    ? $"Catch! ({reward.QualityTier})"
-                    : "The fish got away...";
-            }
+                _resultTitle.text = titleStr;
+            else if (_resultTitleFallback != null)
+                _resultTitleFallback.text = titleStr;
 
+            string detailStr = reward.Success
+                ? $"Quality: {reward.QualityTier}\nBonus: {reward.BonusPct}%\nScore: {reward.PerformanceScore:P0}"
+                : "Better luck next time!";
             if (_resultDetails != null)
-            {
-                _resultDetails.text = reward.Success
-                    ? $"Quality: {reward.QualityTier}\nBonus: {reward.BonusPct}%\nScore: {reward.PerformanceScore:P0}"
-                    : "Better luck next time!";
-            }
+                _resultDetails.text = detailStr;
+            else if (_resultDetailsFallback != null)
+                _resultDetailsFallback.text = detailStr;
         }
 
         private void CloseResult()
