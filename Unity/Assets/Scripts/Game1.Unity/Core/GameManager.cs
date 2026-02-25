@@ -204,12 +204,6 @@ namespace Game1.Unity.Core
             // Initialize combat system with adapter
             InitializeCombatSystem();
 
-            // Update camera target
-            if (_cameraController != null)
-            {
-                _cameraController.SetTarget(PositionConverter.ToVector3(Player.Position));
-            }
-
             GameTime = 0f;
 
             // Transition to gameplay
@@ -269,9 +263,6 @@ namespace Game1.Unity.Core
 
                 // Initialize combat system with adapter
                 InitializeCombatSystem();
-
-                if (_cameraController != null)
-                    _cameraController.SetTarget(PositionConverter.ToVector3(Player.Position));
 
                 _stateManager?.TransitionTo(GameState.Playing);
                 Debug.Log($"[GameManager] Game loaded: {saveName}");
@@ -346,11 +337,6 @@ namespace Game1.Unity.Core
                     CombatManager.Update(dt, _playerCombatAdapter, false, IsNight());
                 }
 
-                // Update camera target
-                if (_cameraController != null)
-                {
-                    _cameraController.SetTarget(PositionConverter.ToVector3(Player.Position));
-                }
             }
 
             // Update crafting minigame (runs during MinigameActive state)

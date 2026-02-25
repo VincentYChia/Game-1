@@ -15,6 +15,7 @@ using Game1.Data.Models;
 using Game1.Entities;
 using Game1.Systems.World;
 using Game1.Unity.Utilities;
+using Game1.Unity.World;
 
 namespace Game1.Unity.Core
 {
@@ -213,8 +214,8 @@ namespace Game1.Unity.Core
             int tileX = Mathf.FloorToInt(x);
             int tileZ = Mathf.FloorToInt(z);
 
-            var tile = _gameManager.World.GetTileAt(tileX, tileZ);
-            if (tile != null) return tile.TileTypeName ?? "grass";
+            var tile = _gameManager.World.GetTile(GamePosition.FromXZ(tileX, tileZ));
+            if (tile != null) return tile.TileType.ToString().ToLowerInvariant();
             return "grass";
         }
 

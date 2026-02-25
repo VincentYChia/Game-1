@@ -257,8 +257,8 @@ namespace Game1.Unity.UI
             // Update level / class info (programmatic label)
             if (_levelClassLabel != null)
             {
-                string className = gm.Player.ClassName ?? "No Class";
-                _levelClassLabel.text = $"Level {leveling.CurrentLevel} | {className}";
+                string className = gm.Player.GetClassDefinition()?.Name ?? "No Class";
+                _levelClassLabel.text = $"Level {leveling.Level} | {className}";
             }
 
             foreach (var row in _statRows)
