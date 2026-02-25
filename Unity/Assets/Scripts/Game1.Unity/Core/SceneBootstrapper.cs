@@ -116,12 +116,30 @@ namespace Game1.Unity.Core
             light.shadowNormalBias = 0.4f;
             lightGO.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
 
-            // Ambient light: medium gray-blue
+            // Ambient light: warm outdoor lighting
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.45f, 0.47f, 0.55f, 1f);
+            RenderSettings.ambientLight = new Color(0.55f, 0.55f, 0.6f, 1f);
 
-            // Fog: disabled by default (DayNightOverlay can enable if desired)
-            RenderSettings.fog = false;
+            // Procedural skybox for visual depth
+            Shader skyboxShader = Shader.Find("Skybox/Procedural");
+            if (skyboxShader != null)
+            {
+                var skyMat = new Material(skyboxShader);
+                skyMat.SetFloat("_SunSize", 0.04f);
+                skyMat.SetFloat("_SunSizeConvergence", 5f);
+                skyMat.SetFloat("_AtmosphereThickness", 1.0f);
+                skyMat.SetColor("_SkyTint", new Color(0.5f, 0.55f, 0.6f));
+                skyMat.SetColor("_GroundColor", new Color(0.37f, 0.35f, 0.34f));
+                skyMat.SetFloat("_Exposure", 1.3f);
+                RenderSettings.skybox = skyMat;
+            }
+
+            // Distance fog for atmosphere and depth cues
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.Linear;
+            RenderSettings.fogColor = new Color(0.7f, 0.75f, 0.85f);
+            RenderSettings.fogStartDistance = 40f;
+            RenderSettings.fogEndDistance = 120f;
 
             Debug.Log("[SceneBootstrapper] Lighting configured.");
         }
@@ -239,6 +257,18 @@ namespace Game1.Unity.Core
             // DebugOverlay — top-left, below status bar
             _createUIPanel<DebugOverlay>(canvas.transform, "DebugOverlay",
                 new Vector2(0.01f, 0.60f), new Vector2(0.35f, 0.87f));
+
+            // Crosshair — small dot at screen center for first-person orientation
+            var crosshairGO = new GameObject("Crosshair");
+            crosshairGO.transform.SetParent(canvas.transform, false);
+            var crosshairRT = crosshairGO.AddComponent<RectTransform>();
+            crosshairRT.anchorMin = new Vector2(0.5f, 0.5f);
+            crosshairRT.anchorMax = new Vector2(0.5f, 0.5f);
+            crosshairRT.sizeDelta = new Vector2(6, 6);
+            crosshairRT.anchoredPosition = Vector2.zero;
+            var crosshairImg = crosshairGO.AddComponent<UnityEngine.UI.Image>();
+            crosshairImg.color = new Color(1f, 1f, 1f, 0.7f);
+            crosshairImg.raycastTarget = false;
 
             // DayNightOverlay — full-screen tint layer
             var dayNightGO = new GameObject("DayNightOverlay");

@@ -73,7 +73,12 @@ namespace Game1.Unity.World
             public GameObject TerrainObject;
             public GameObject WaterObject;
             public GameObject EdgeObject;
+            public GameObject ResourceContainer;
         }
+
+        // World furniture: crafting stations, spawn beacon (created once)
+        private GameObject _worldFurniture;
+        private bool _worldFurnitureSpawned;
 
         // ====================================================================
         // Initialization
@@ -99,6 +104,13 @@ namespace Game1.Unity.World
         {
             if (GameManager.Instance == null || GameManager.Instance.World == null) return;
             if (GameManager.Instance.Player == null) return;
+
+            // Spawn crafting stations and beacon once
+            if (!_worldFurnitureSpawned)
+            {
+                _spawnWorldFurniture();
+                _worldFurnitureSpawned = true;
+            }
 
             var playerPos = GameManager.Instance.Player.Position;
             var playerChunk = new Vector2Int(
@@ -214,6 +226,45 @@ namespace Game1.Unity.World
                 );
             }
 
+            // --------------------------------------------------------
+            // Spawn resource node objects (trees, ores, stones, etc.)
+            // --------------------------------------------------------
+            if (chunk.Resources != null && chunk.Resources.Count > 0)
+            {
+                var resourceContainer = new GameObject(
+                    $"Chunk_{chunkCoord.x}_{chunkCoord.y}_Resources");
+                resourceContainer.transform.SetParent(_chunkContainer, false);
+
+                foreach (var resource in chunk.Resources)
+                {
+                    if (resource == null || resource.IsDepleted) continue;
+
+                    try
+                    {
+                        var resourceGO = PrimitiveShapeFactory.CreateResource(
+                            resource.ResourceId, resource.Tier);
+
+                        // Position at resource world coordinates, on terrain surface
+                        float wx = resource.Position.X;
+                        float wz = resource.Position.Z;
+                        string tileAtResource = _getTileTypeAtWorld(
+                            wx, wz, tileTypes, chunkCoord);
+                        float terrainY = ChunkMeshGenerator.SampleTerrainHeight(
+                            wx, wz, tileAtResource);
+
+                        resourceGO.transform.position = new Vector3(wx, terrainY, wz);
+                        resourceGO.transform.SetParent(resourceContainer.transform, true);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogWarning(
+                            $"[WorldRenderer] Failed to create resource {resource.ResourceId}: {ex.Message}");
+                    }
+                }
+
+                renderData.ResourceContainer = resourceContainer;
+            }
+
             _chunkObjects[chunkCoord] = renderData;
             _loadedChunks.Add(chunkCoord);
         }
@@ -225,6 +276,7 @@ namespace Game1.Unity.World
                 if (data.TerrainObject != null) Destroy(data.TerrainObject);
                 if (data.WaterObject != null) Destroy(data.WaterObject);
                 if (data.EdgeObject != null) Destroy(data.EdgeObject);
+                if (data.ResourceContainer != null) Destroy(data.ResourceContainer);
                 _chunkObjects.Remove(chunkCoord);
             }
             _loadedChunks.Remove(chunkCoord);
@@ -381,12 +433,19 @@ namespace Game1.Unity.World
                     if (kvp.Value.TerrainObject != null) Destroy(kvp.Value.TerrainObject);
                     if (kvp.Value.WaterObject != null) Destroy(kvp.Value.WaterObject);
                     if (kvp.Value.EdgeObject != null) Destroy(kvp.Value.EdgeObject);
+                    if (kvp.Value.ResourceContainer != null) Destroy(kvp.Value.ResourceContainer);
                 }
                 _chunkObjects.Clear();
             }
             else if (_groundTilemap != null)
             {
                 _groundTilemap.ClearAllTiles();
+            }
+
+            if (_worldFurniture != null)
+            {
+                Destroy(_worldFurniture);
+                _worldFurnitureSpawned = false;
             }
 
             _loadedChunks.Clear();
@@ -474,6 +533,131 @@ namespace Game1.Unity.World
             tile.sprite = Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
             tile.color = Color.white;
             return tile;
+        }
+
+        // ====================================================================
+        // World Furniture — Stations, Spawn Beacon (created once)
+        // ====================================================================
+
+        /// <summary>
+        /// Spawns one-time world objects: crafting stations at their fixed positions
+        /// and a visible spawn beacon so the player has a landmark.
+        /// </summary>
+        private void _spawnWorldFurniture()
+        {
+            _worldFurniture = new GameObject("WorldFurniture");
+
+            _spawnCraftingStations();
+            _createSpawnBeacon();
+
+            Debug.Log("[WorldRenderer] World furniture spawned.");
+        }
+
+        private void _spawnCraftingStations()
+        {
+            var world = GameManager.Instance?.World;
+            if (world == null || world.CraftingStations == null) return;
+
+            var container = new GameObject("CraftingStations");
+            container.transform.SetParent(_worldFurniture.transform, false);
+
+            foreach (var station in world.CraftingStations)
+            {
+                try
+                {
+                    string stationType = station.StationType.ToString().ToLowerInvariant();
+                    var stationGO = PrimitiveShapeFactory.CreateStation(
+                        stationType, station.StationTier);
+
+                    float wx = station.Position.X;
+                    float wz = station.Position.Z;
+                    float terrainY = ChunkMeshGenerator.SampleTerrainHeight(wx, wz, "grass");
+
+                    stationGO.transform.position = new Vector3(wx, terrainY, wz);
+                    stationGO.transform.SetParent(container.transform, true);
+
+                    // Floating label above station
+                    string label = $"{station.StationType} T{station.StationTier}";
+                    Color labelColor = PrimitiveShapeFactory.GetStationColor(stationType);
+                    PrimitiveShapeFactory.AddWorldLabel(stationGO, label, labelColor, 2.0f);
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogWarning($"[WorldRenderer] Failed to create station: {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates a visible beacon at the player spawn point (world center)
+        /// so the player has a clear landmark for orientation and movement testing.
+        /// </summary>
+        private void _createSpawnBeacon()
+        {
+            float spawnX = 50f;
+            float spawnZ = 50f;
+            float terrainY = ChunkMeshGenerator.SampleTerrainHeight(spawnX, spawnZ, "grass");
+
+            var beacon = new GameObject("SpawnBeacon");
+            beacon.transform.SetParent(_worldFurniture.transform, false);
+            beacon.transform.position = new Vector3(spawnX, terrainY, spawnZ);
+
+            // Tall golden pillar
+            var pillar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            pillar.name = "BeaconPillar";
+            pillar.transform.SetParent(beacon.transform, false);
+            pillar.transform.localPosition = new Vector3(0f, 2.5f, 0f);
+            pillar.transform.localScale = new Vector3(0.3f, 2.5f, 0.3f);
+            _removeBuiltinCollider(pillar);
+            PrimitiveShapeFactory.SetPrimitiveColor(pillar, new Color(1f, 0.84f, 0f)); // gold
+
+            // Glowing sphere on top
+            var orb = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            orb.name = "BeaconOrb";
+            orb.transform.SetParent(beacon.transform, false);
+            orb.transform.localPosition = new Vector3(0f, 5.2f, 0f);
+            orb.transform.localScale = new Vector3(0.6f, 0.6f, 0.6f);
+            _removeBuiltinCollider(orb);
+            PrimitiveShapeFactory.SetPrimitiveColor(orb, new Color(1f, 0.95f, 0.4f)); // bright gold
+
+            // Base ring (flat cylinder on the ground)
+            var baseRing = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            baseRing.name = "BeaconBase";
+            baseRing.transform.SetParent(beacon.transform, false);
+            baseRing.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+            baseRing.transform.localScale = new Vector3(2.0f, 0.05f, 2.0f);
+            _removeBuiltinCollider(baseRing);
+            PrimitiveShapeFactory.SetPrimitiveColor(baseRing, new Color(0.8f, 0.7f, 0.2f, 0.8f));
+
+            // "SPAWN" label floating above
+            PrimitiveShapeFactory.AddWorldLabel(beacon, "SPAWN", Color.yellow, 6.5f, 0.012f);
+        }
+
+        // ====================================================================
+        // Helpers — tile type lookup for resource positioning
+        // ====================================================================
+
+        /// <summary>
+        /// Get tile type at a world position, using the tileTypes array from
+        /// the chunk currently being loaded.
+        /// </summary>
+        private string _getTileTypeAtWorld(
+            float worldX, float worldZ,
+            string[,] tileTypes, Vector2Int chunkCoord)
+        {
+            int localX = Mathf.FloorToInt(worldX) - chunkCoord.x * _chunkSize;
+            int localZ = Mathf.FloorToInt(worldZ) - chunkCoord.y * _chunkSize;
+
+            if (localX >= 0 && localX < _chunkSize && localZ >= 0 && localZ < _chunkSize)
+                return tileTypes[localX, localZ] ?? "grass";
+
+            return "grass";
+        }
+
+        private static void _removeBuiltinCollider(GameObject go)
+        {
+            var col = go.GetComponent<Collider>();
+            if (col != null) Destroy(col);
         }
     }
 }

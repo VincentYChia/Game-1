@@ -56,8 +56,11 @@ namespace Game1.Unity.UI
             if (_inputManager != null)
                 _inputManager.OnDebugKey += _onDebugKey;
 
+            // Start with debug overlay visible so position is always shown
+            _debugActive = true;
+            _debugFlags["F1"] = true;
             if (_debugPanel != null)
-                _debugPanel.SetActive(false);
+                _debugPanel.SetActive(true);
         }
 
         private void OnDestroy()
