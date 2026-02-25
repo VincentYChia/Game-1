@@ -6,6 +6,7 @@
 //
 // Renders individual enemy instances — billboard sprite, health bar, corpse fade.
 // In 3D mode, uses BillboardSprite to keep the sprite facing the camera.
+// Falls back to 3D primitives via PrimitiveShapeFactory when no sprite is available.
 // Spawned from prefab by EnemySpawnerManager.
 // ============================================================================
 
@@ -19,7 +20,8 @@ namespace Game1.Unity.World
     /// <summary>
     /// Renders a single enemy — billboard sprite, health bar, aggro indicator, corpse fade.
     /// Attached to Enemy prefab. Drives visual from Phase 3 Enemy data.
-    /// Ensures a BillboardSprite is present for 3D camera compatibility.
+    /// When a sprite is available, ensures BillboardSprite is present for 3D camera compatibility.
+    /// When no sprite is available, creates a 3D primitive fallback via PrimitiveShapeFactory.
     /// </summary>
     public class EnemyRenderer : MonoBehaviour
     {
@@ -48,11 +50,14 @@ namespace Game1.Unity.World
         // ====================================================================
 
         private string _enemyId;
+        private int _tier;
         private float _healthPercent = 1f;
         private bool _isDead;
         private float _deathTimer;
         private bool _isBoss;
+        private bool _usePrimitive;
         private BillboardSprite _billboard;
+        private GameObject _primitiveRoot;
 
         // ====================================================================
         // Initialization
@@ -60,10 +65,8 @@ namespace Game1.Unity.World
 
         private void Awake()
         {
-            // Ensure BillboardSprite exists for 3D camera compatibility
-            _billboard = GetComponent<BillboardSprite>();
-            if (_billboard == null)
-                _billboard = gameObject.AddComponent<BillboardSprite>();
+            // BillboardSprite is added on demand during Initialize —
+            // only when we have a sprite (primitives don't need billboarding).
         }
 
         // ====================================================================
@@ -71,26 +74,53 @@ namespace Game1.Unity.World
         // ====================================================================
 
         /// <summary>Initialize this renderer for a specific enemy.</summary>
-        public void Initialize(string enemyId, bool isBoss = false)
+        public void Initialize(string enemyId, bool isBoss = false, int tier = 1)
         {
             _enemyId = enemyId;
             _isBoss = isBoss;
+            _tier = tier;
+            _usePrimitive = false;
 
-            // Load enemy sprite
-            if (_spriteRenderer == null)
-                _spriteRenderer = GetComponent<SpriteRenderer>();
+            // Try to load enemy sprite
+            Sprite sprite = null;
+            if (SpriteDatabase.Instance != null)
+                sprite = SpriteDatabase.Instance.GetEnemySprite(enemyId);
 
-            if (_spriteRenderer != null && SpriteDatabase.Instance != null)
+            if (sprite != null)
             {
-                _spriteRenderer.sprite = SpriteDatabase.Instance.GetEnemySprite(enemyId);
+                // --- Sprite path ---
+                if (_spriteRenderer == null)
+                    _spriteRenderer = GetComponent<SpriteRenderer>();
+
+                if (_spriteRenderer != null)
+                    _spriteRenderer.sprite = sprite;
+
+                // Ensure BillboardSprite exists for 3D camera compatibility
+                _billboard = GetComponent<BillboardSprite>();
+                if (_billboard == null)
+                    _billboard = gameObject.AddComponent<BillboardSprite>();
+            }
+            else
+            {
+                // --- Primitive fallback path ---
+                _usePrimitive = true;
+                _buildPrimitive();
+
+                // Disable SpriteRenderer if one exists (primitive replaces it)
+                if (_spriteRenderer != null)
+                    _spriteRenderer.enabled = false;
             }
 
-            // Scale boss enemies (and their shadow)
+            // Scale boss enemies (and their shadow if using sprite mode)
             if (isBoss)
             {
-                transform.localScale = Vector3.one * 1.5f;
-                if (_billboard != null)
-                    _billboard.SetShadowSize(0.9f);
+                if (!_usePrimitive)
+                {
+                    transform.localScale = Vector3.one * 1.5f;
+                    if (_billboard != null)
+                        _billboard.SetShadowSize(0.9f);
+                }
+                // Primitive boss scaling is handled internally by PrimitiveShapeFactory
             }
 
             _isDead = false;
@@ -128,8 +158,8 @@ namespace Game1.Unity.World
             if (_healthBarRoot != null)
                 _healthBarRoot.SetActive(false);
 
-            // Hide shadow on death
-            if (_billboard != null)
+            // Hide shadow on death (sprite mode only)
+            if (!_usePrimitive && _billboard != null)
                 _billboard.SetShadowVisible(false);
         }
 
@@ -138,6 +168,25 @@ namespace Game1.Unity.World
         {
             worldPos.y = _heightAboveTerrain;
             transform.position = worldPos;
+        }
+
+        // ====================================================================
+        // Primitive Fallback
+        // ====================================================================
+
+        /// <summary>
+        /// Creates a 3D primitive shape via PrimitiveShapeFactory and parents it
+        /// under this transform. Used when no sprite is available.
+        /// </summary>
+        private void _buildPrimitive()
+        {
+            // Clean up any existing primitive
+            if (_primitiveRoot != null)
+                Destroy(_primitiveRoot);
+
+            _primitiveRoot = PrimitiveShapeFactory.CreateEnemy(_tier, _isBoss);
+            _primitiveRoot.transform.SetParent(transform, false);
+            _primitiveRoot.transform.localPosition = Vector3.zero;
         }
 
         // ====================================================================
@@ -158,11 +207,16 @@ namespace Game1.Unity.World
                     return;
                 }
 
-                if (_spriteRenderer != null)
+                if (!_usePrimitive && _spriteRenderer != null)
                 {
                     var color = _spriteRenderer.color;
                     color.a = alpha;
                     _spriteRenderer.color = color;
+                }
+                else if (_usePrimitive && _primitiveRoot != null)
+                {
+                    // Fade primitive by scaling down (primitives don't support alpha easily)
+                    _primitiveRoot.transform.localScale = Vector3.one * alpha;
                 }
             }
 

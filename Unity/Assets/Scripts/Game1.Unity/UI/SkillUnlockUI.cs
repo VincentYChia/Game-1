@@ -5,6 +5,8 @@
 // Date: 2026-02-21
 //
 // Displays skill unlock requirements and allows unlocking.
+// Self-building: if _panel is null at Start, _buildUI() constructs the full
+// UI hierarchy programmatically via UIHelper.
 // ============================================================================
 
 using System.Collections.Generic;
@@ -15,6 +17,7 @@ using Game1.Core;
 using Game1.Data.Databases;
 using Game1.Data.Models;
 using Game1.Unity.Core;
+using Game1.Unity.Utilities;
 
 namespace Game1.Unity.UI
 {
@@ -43,6 +46,14 @@ namespace Game1.Unity.UI
         [SerializeField] private TextMeshProUGUI _statusText;
 
         // ====================================================================
+        // Fallback references populated by _buildUI()
+        // ====================================================================
+
+        private Text _skillNameFallback;
+        private Text _skillDescriptionFallback;
+        private Text _statusTextFallback;
+
+        // ====================================================================
         // State
         // ====================================================================
 
@@ -55,6 +66,8 @@ namespace Game1.Unity.UI
 
         private void Start()
         {
+            if (_panel == null) _buildUI();
+
             _gameManager = GameManager.Instance;
 
             if (_unlockButton != null)
@@ -64,6 +77,72 @@ namespace Game1.Unity.UI
 
             if (_panel != null)
                 _panel.SetActive(false);
+        }
+
+        // ====================================================================
+        // Self-Building UI
+        // ====================================================================
+
+        private void _buildUI()
+        {
+            // Root panel — right side, full height, 380px wide
+            var panelRt = UIHelper.CreatePanel(transform, "SkillUnlockPanel", UIHelper.COLOR_BG_DARK,
+                new Vector2(1f, 0f), new Vector2(1f, 1f),
+                new Vector2(-380, 0), Vector2.zero);
+            _panel = panelRt.gameObject;
+
+            UIHelper.AddVerticalLayout(panelRt, spacing: 6f,
+                padding: new RectOffset(10, 10, 10, 10));
+
+            // Header: "SKILL UNLOCK"
+            var (headerRow, headerTitle, headerHint) = UIHelper.CreateHeaderRow(
+                panelRt, "SKILL UNLOCK", "[ESC]", 40f);
+
+            // --- Skill name ---
+            _skillNameFallback = UIHelper.CreateText(panelRt, "SkillName", "",
+                20, UIHelper.COLOR_TEXT_GOLD, TextAnchor.MiddleCenter);
+            UIHelper.SetPreferredHeight(_skillNameFallback.gameObject, 32);
+
+            // --- Skill description ---
+            _skillDescriptionFallback = UIHelper.CreateText(panelRt, "SkillDesc", "",
+                14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
+            UIHelper.SetPreferredHeight(_skillDescriptionFallback.gameObject, 50);
+
+            // --- Divider ---
+            UIHelper.CreateDivider(panelRt);
+
+            // --- Requirements header ---
+            var reqHeaderText = UIHelper.CreateText(panelRt, "ReqHeader", "Requirements:",
+                16, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleLeft);
+            UIHelper.SetPreferredHeight(reqHeaderText.gameObject, 24);
+
+            // --- Scrollable requirements list ---
+            var reqAreaRt = UIHelper.CreatePanel(panelRt, "ReqArea", UIHelper.COLOR_BG_PANEL,
+                Vector2.zero, Vector2.one);
+            UIHelper.SetPreferredHeight(reqAreaRt.gameObject, 200);
+
+            var (scrollRect, content) = UIHelper.CreateScrollView(reqAreaRt, "ReqScroll");
+            _requirementsContainer = content;
+
+            // --- Divider ---
+            UIHelper.CreateDivider(panelRt);
+
+            // --- Status text ---
+            _statusTextFallback = UIHelper.CreateText(panelRt, "StatusText", "",
+                15, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleCenter);
+            UIHelper.SetPreferredHeight(_statusTextFallback.gameObject, 28);
+
+            // --- Action buttons row ---
+            var actionRowRt = UIHelper.CreatePanel(panelRt, "ActionRow", UIHelper.COLOR_TRANSPARENT,
+                Vector2.zero, Vector2.one);
+            UIHelper.SetPreferredHeight(actionRowRt.gameObject, 44);
+            UIHelper.AddHorizontalLayout(actionRowRt, spacing: 8f,
+                padding: new RectOffset(8, 8, 4, 4), childForceExpand: true);
+
+            _unlockButton = UIHelper.CreateButton(actionRowRt, "UnlockButton",
+                "Unlock Skill", UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_GREEN, 16);
+            _closeButton = UIHelper.CreateButton(actionRowRt, "CloseButton",
+                "Close", UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_PRIMARY, 16);
         }
 
         // ====================================================================
@@ -103,18 +182,65 @@ namespace Game1.Unity.UI
                 return;
             }
 
-            if (_skillName != null) _skillName.text = skill.Name;
-            if (_skillDescription != null) _skillDescription.text = skill.Description ?? "";
+            string nameText = skill.Name;
+            string descText = skill.Description ?? "";
+
+            if (_skillName != null) _skillName.text = nameText;
+            else if (_skillNameFallback != null) _skillNameFallback.text = nameText;
+
+            if (_skillDescription != null) _skillDescription.text = descText;
+            else if (_skillDescriptionFallback != null) _skillDescriptionFallback.text = descText;
+
+            // Build requirements list
+            BuildRequirementsList(skill);
 
             // Check if requirements are met
             bool canUnlock = CheckRequirements(skill);
             if (_unlockButton != null) _unlockButton.interactable = canUnlock;
 
-            if (_statusText != null)
+            string statusMsg = canUnlock
+                ? "Requirements met! Click to unlock."
+                : "Requirements not met.";
+
+            if (_statusText != null) _statusText.text = statusMsg;
+            else if (_statusTextFallback != null) _statusTextFallback.text = statusMsg;
+        }
+
+        private void BuildRequirementsList(SkillDefinition skill)
+        {
+            if (_requirementsContainer == null) return;
+
+            // Clear existing entries
+            for (int i = _requirementsContainer.childCount - 1; i >= 0; i--)
+                Destroy(_requirementsContainer.GetChild(i).gameObject);
+
+            var player = _gameManager?.Player;
+            if (player == null) return;
+
+            // Level requirement
+            if (skill.Requirements.CharacterLevel > 0)
             {
-                _statusText.text = canUnlock
-                    ? "Requirements met! Click to unlock."
-                    : "Requirements not met.";
+                bool met = player.Leveling.Level >= skill.Requirements.CharacterLevel;
+                Color color = met ? UIHelper.COLOR_TEXT_GREEN : UIHelper.COLOR_TEXT_RED;
+
+                if (_requirementEntryPrefab != null)
+                {
+                    var go = Instantiate(_requirementEntryPrefab, _requirementsContainer);
+                    var text = go.GetComponentInChildren<TextMeshProUGUI>();
+                    if (text != null)
+                    {
+                        text.text = $"Level {skill.Requirements.CharacterLevel}";
+                        text.color = met ? Color.green : Color.red;
+                    }
+                }
+                else
+                {
+                    string prefix = met ? "[MET]" : "[X]";
+                    var reqText = UIHelper.CreateText(_requirementsContainer, "ReqLevel",
+                        $"{prefix} Level {skill.Requirements.CharacterLevel} (Current: {player.Leveling.Level})",
+                        14, color, TextAnchor.MiddleLeft);
+                    UIHelper.SetPreferredHeight(reqText.gameObject, 24);
+                }
             }
         }
 
@@ -134,8 +260,14 @@ namespace Game1.Unity.UI
         private void ClearDisplay()
         {
             if (_skillName != null) _skillName.text = "";
+            else if (_skillNameFallback != null) _skillNameFallback.text = "";
+
             if (_skillDescription != null) _skillDescription.text = "";
-            if (_statusText != null) _statusText.text = "";
+            else if (_skillDescriptionFallback != null) _skillDescriptionFallback.text = "";
+
+            string emptyStatus = "";
+            if (_statusText != null) _statusText.text = emptyStatus;
+            else if (_statusTextFallback != null) _statusTextFallback.text = emptyStatus;
         }
 
         private void OnUnlockClicked()
@@ -146,7 +278,10 @@ namespace Game1.Unity.UI
             _gameManager.Player.Skills.LearnSkill(_skillId);
             GameEvents.RaiseSkillLearned(_skillId);
 
-            if (_statusText != null) _statusText.text = "Skill unlocked!";
+            string unlockMsg = "Skill unlocked!";
+            if (_statusText != null) _statusText.text = unlockMsg;
+            else if (_statusTextFallback != null) _statusTextFallback.text = unlockMsg;
+
             if (_unlockButton != null) _unlockButton.interactable = false;
         }
     }

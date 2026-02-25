@@ -7,6 +7,8 @@
 //
 // Crafting station interaction: recipe selection, material placement, craft/invent.
 // Handles all 5 disciplines' placement grids.
+// Self-building: if _panel is null at startup, _buildUI() constructs the
+// entire hierarchy from code using UIHelper (no prefab/scene setup needed).
 // ============================================================================
 
 using System.Collections.Generic;
@@ -69,12 +71,21 @@ namespace Game1.Unity.UI
 
         private GameStateManager _stateManager;
 
+        // References populated by _buildUI()
+        private Text _recipeTitleLabel;
+        private Text _recipeDescLabel;
+        private Text _difficultyLabel;
+        private ScrollRect _recipeScroll;
+        private RectTransform _recipeScrollContent;
+
         // ====================================================================
         // Initialization
         // ====================================================================
 
         private void Start()
         {
+            if (_panel == null) _buildUI();
+
             _stateManager = FindFirstObjectByType<GameStateManager>();
             if (_stateManager != null)
                 _stateManager.OnStateChanged += _onStateChanged;
@@ -90,6 +101,182 @@ namespace Game1.Unity.UI
         {
             if (_stateManager != null)
                 _stateManager.OnStateChanged -= _onStateChanged;
+        }
+
+        // ====================================================================
+        // Self-Building UI
+        // ====================================================================
+
+        /// <summary>
+        /// Construct the entire crafting panel hierarchy from code.
+        /// Right-side panel with:
+        ///   Header
+        ///   Left column (40%): scrollable recipe list
+        ///   Right column (60%): material placement grid
+        ///   Bottom row: Instant Craft / Minigame / Interactive buttons
+        /// </summary>
+        private void _buildUI()
+        {
+            // -- Root panel: right side, 520 x full height
+            var panelRt = UIHelper.CreatePanel(
+                transform, "CraftingPanel", UIHelper.COLOR_BG_DARK,
+                anchorMin: new Vector2(1, 0),
+                anchorMax: new Vector2(1, 1),
+                offsetMin: new Vector2(-520, 8),
+                offsetMax: new Vector2(-8, -8));
+
+            _panel = panelRt.gameObject;
+
+            UIHelper.AddVerticalLayout(panelRt, spacing: 4f,
+                padding: new RectOffset(6, 6, 6, 6));
+
+            // -- Header
+            UIHelper.CreateHeaderRow(panelRt, "CRAFTING", "[ESC]", height: 38f);
+
+            // -- Divider
+            UIHelper.CreateDivider(panelRt, 2f);
+
+            // -- Main content: horizontal split (recipe list | grid)
+            var contentRow = UIHelper.CreatePanel(
+                panelRt, "ContentRow", UIHelper.COLOR_TRANSPARENT,
+                Vector2.zero, Vector2.one);
+            var contentImg = contentRow.GetComponent<Image>();
+            if (contentImg != null) contentImg.raycastTarget = false;
+            var contentLE = contentRow.gameObject.AddComponent<LayoutElement>();
+            contentLE.flexibleHeight = 1f;
+
+            UIHelper.AddHorizontalLayout(contentRow, spacing: 4f,
+                padding: new RectOffset(0, 0, 0, 0), childForceExpand: false);
+
+            // ---- Left column: Recipe list (40%)
+            var leftCol = UIHelper.CreatePanel(
+                contentRow, "RecipeColumn", UIHelper.COLOR_BG_PANEL,
+                Vector2.zero, Vector2.one);
+            var leftLE = leftCol.gameObject.AddComponent<LayoutElement>();
+            leftLE.flexibleWidth = 0.4f;
+            leftLE.flexibleHeight = 1f;
+
+            UIHelper.AddVerticalLayout(leftCol, spacing: 2f,
+                padding: new RectOffset(4, 4, 4, 4));
+
+            // Recipe column title
+            var recipeHeader = UIHelper.CreateText(leftCol, "RecipeHeader", "Recipes",
+                15, UIHelper.COLOR_TEXT_GOLD, TextAnchor.MiddleCenter);
+            UIHelper.SetPreferredHeight(recipeHeader.gameObject, 24f);
+
+            UIHelper.CreateDivider(leftCol, 1f);
+
+            // Scrollable recipe list
+            var recipeScrollPanel = UIHelper.CreatePanel(
+                leftCol, "RecipeScrollArea", UIHelper.COLOR_TRANSPARENT,
+                Vector2.zero, Vector2.one);
+            var recipeScrollImg = recipeScrollPanel.GetComponent<Image>();
+            if (recipeScrollImg != null) recipeScrollImg.raycastTarget = false;
+            var recipeScrollLE = recipeScrollPanel.gameObject.AddComponent<LayoutElement>();
+            recipeScrollLE.flexibleHeight = 1f;
+
+            var (recipeScroll, recipeContent) = UIHelper.CreateScrollView(
+                recipeScrollPanel, "RecipeScroll", UIHelper.COLOR_TRANSPARENT);
+            _recipeScroll = recipeScroll;
+            _recipeScrollContent = recipeContent;
+            _recipeListContainer = recipeContent;
+
+            // Selected recipe info (below recipe list)
+            UIHelper.CreateDivider(leftCol, 1f);
+
+            var selectedPanel = UIHelper.CreatePanel(
+                leftCol, "SelectedInfo", UIHelper.COLOR_BG_SLOT,
+                Vector2.zero, Vector2.one);
+            UIHelper.SetPreferredHeight(selectedPanel.gameObject, 60f);
+            UIHelper.AddVerticalLayout(selectedPanel, spacing: 2f,
+                padding: new RectOffset(6, 6, 4, 4));
+
+            _recipeTitleLabel = UIHelper.CreateText(selectedPanel, "RecipeTitle",
+                "Select a recipe", 14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.MiddleLeft);
+            UIHelper.SetPreferredHeight(_recipeTitleLabel.gameObject, 20f);
+
+            _recipeDescLabel = UIHelper.CreateText(selectedPanel, "RecipeDesc",
+                "", 12, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleLeft);
+            UIHelper.SetPreferredHeight(_recipeDescLabel.gameObject, 16f);
+
+            // ---- Right column: Grid + palette (60%)
+            var rightCol = UIHelper.CreatePanel(
+                contentRow, "GridColumn", UIHelper.COLOR_BG_PANEL,
+                Vector2.zero, Vector2.one);
+            var rightLE = rightCol.gameObject.AddComponent<LayoutElement>();
+            rightLE.flexibleWidth = 0.6f;
+            rightLE.flexibleHeight = 1f;
+
+            UIHelper.AddVerticalLayout(rightCol, spacing: 4f,
+                padding: new RectOffset(4, 4, 4, 4));
+
+            // Grid header
+            var gridHeader = UIHelper.CreateText(rightCol, "GridHeader", "Placement Grid",
+                15, UIHelper.COLOR_TEXT_GOLD, TextAnchor.MiddleCenter);
+            UIHelper.SetPreferredHeight(gridHeader.gameObject, 24f);
+
+            UIHelper.CreateDivider(rightCol, 1f);
+
+            // Grid container (where discipline-specific grids are built)
+            var gridArea = UIHelper.CreatePanel(
+                rightCol, "GridArea", UIHelper.COLOR_TRANSPARENT,
+                Vector2.zero, Vector2.one);
+            var gridAreaImg = gridArea.GetComponent<Image>();
+            if (gridAreaImg != null) gridAreaImg.raycastTarget = false;
+            var gridAreaLE = gridArea.gameObject.AddComponent<LayoutElement>();
+            gridAreaLE.flexibleHeight = 1f;
+            _gridContainer = gridArea;
+
+            // Difficulty display
+            UIHelper.CreateDivider(rightCol, 1f);
+
+            var diffRow = UIHelper.CreatePanel(
+                rightCol, "DifficultyRow", UIHelper.COLOR_BG_SLOT,
+                Vector2.zero, Vector2.one);
+            UIHelper.SetPreferredHeight(diffRow.gameObject, 24f);
+
+            _difficultyLabel = UIHelper.CreateText(diffRow, "DifficultyText",
+                "Difficulty: --", 13, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleCenter);
+
+            // -- Divider before buttons
+            UIHelper.CreateDivider(panelRt, 2f);
+
+            // -- Bottom button row
+            var buttonRow = UIHelper.CreatePanel(
+                panelRt, "ButtonRow", UIHelper.COLOR_TRANSPARENT,
+                Vector2.zero, Vector2.one);
+            var buttonRowImg = buttonRow.GetComponent<Image>();
+            if (buttonRowImg != null) buttonRowImg.raycastTarget = false;
+            UIHelper.SetPreferredHeight(buttonRow.gameObject, 44f);
+            UIHelper.AddHorizontalLayout(buttonRow, spacing: 6f,
+                padding: new RectOffset(4, 4, 4, 4), childForceExpand: true);
+
+            _craftButton = UIHelper.CreateButton(
+                buttonRow, "InstantCraftBtn", "Instant Craft",
+                UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_PRIMARY, 14,
+                _onCraftClicked);
+            var craftLE = _craftButton.gameObject.AddComponent<LayoutElement>();
+            craftLE.flexibleWidth = 1f;
+
+            var minigameBtn = UIHelper.CreateButton(
+                buttonRow, "MinigameBtn", "Minigame",
+                UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_PRIMARY, 14,
+                _onCraftClicked);
+            var mgLE = minigameBtn.gameObject.AddComponent<LayoutElement>();
+            mgLE.flexibleWidth = 1f;
+
+            _inventButton = UIHelper.CreateButton(
+                buttonRow, "InteractiveBtn", "Interactive",
+                UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_GOLD, 14,
+                _onInventClicked);
+            var invLE = _inventButton.gameObject.AddComponent<LayoutElement>();
+            invLE.flexibleWidth = 1f;
+
+            _clearButton = UIHelper.CreateButton(
+                panelRt, "ClearBtn", "Clear Grid",
+                new Color(0.5f, 0.2f, 0.2f, 1f), UIHelper.COLOR_TEXT_PRIMARY, 13,
+                _onClearClicked);
+            UIHelper.SetPreferredHeight(_clearButton.gameObject, 30f);
         }
 
         // ====================================================================
@@ -146,26 +333,47 @@ namespace Game1.Unity.UI
 
             foreach (var recipe in _availableRecipes)
             {
-                if (_recipeEntryPrefab == null || _recipeListContainer == null) continue;
+                if (_recipeEntryPrefab != null && _recipeListContainer != null)
+                {
+                    // Prefab path
+                    var entry = Instantiate(_recipeEntryPrefab, _recipeListContainer);
+                    var text = entry.GetComponentInChildren<TextMeshProUGUI>();
+                    if (text != null) text.text = recipe.OutputId;
 
-                var entry = Instantiate(_recipeEntryPrefab, _recipeListContainer);
-                var text = entry.GetComponentInChildren<TextMeshProUGUI>();
-                if (text != null) text.text = recipe.OutputId;
-
-                var button = entry.GetComponent<Button>();
-                var capturedRecipe = recipe;
-                if (button != null)
-                    button.onClick.AddListener(() => _selectRecipe(capturedRecipe));
+                    var button = entry.GetComponent<Button>();
+                    var capturedRecipe = recipe;
+                    if (button != null)
+                        button.onClick.AddListener(() => _selectRecipe(capturedRecipe));
+                }
+                else if (_recipeListContainer != null)
+                {
+                    // Programmatic path: create a button entry using UIHelper
+                    var capturedRecipe = recipe;
+                    var entryBtn = UIHelper.CreateButton(
+                        _recipeListContainer, $"Recipe_{recipe.OutputId}",
+                        recipe.OutputId,
+                        UIHelper.COLOR_BG_SLOT, UIHelper.COLOR_TEXT_PRIMARY, 13,
+                        () => _selectRecipe(capturedRecipe));
+                    UIHelper.SetPreferredHeight(entryBtn.gameObject, 30f);
+                }
             }
         }
 
         private void _selectRecipe(Recipe recipe)
         {
             _selectedRecipe = recipe;
+
+            // Update TMP labels if set via inspector
             if (_selectedRecipeTitle != null)
                 _selectedRecipeTitle.text = recipe.OutputId;
             if (_selectedRecipeDesc != null)
                 _selectedRecipeDesc.text = $"Tier: {recipe.StationTier} | Qty: {recipe.OutputQty}";
+
+            // Update programmatic labels
+            if (_recipeTitleLabel != null)
+                _recipeTitleLabel.text = recipe.OutputId;
+            if (_recipeDescLabel != null)
+                _recipeDescLabel.text = $"Tier: {recipe.StationTier} | Qty: {recipe.OutputQty}";
 
             _placedMaterials.Clear();
             _buildGrid();
@@ -266,12 +474,23 @@ namespace Game1.Unity.UI
 
         private void _createGridSlot(string slotKey)
         {
-            if (_gridSlotPrefab == null || _gridContainer == null) return;
+            if (_gridContainer == null) return;
 
-            var slot = Instantiate(_gridSlotPrefab, _gridContainer);
-            var slotComp = slot.GetComponent<CraftingGridSlot>();
-            if (slotComp == null) slotComp = slot.AddComponent<CraftingGridSlot>();
-            slotComp.Initialize(slotKey, this);
+            if (_gridSlotPrefab != null)
+            {
+                var slot = Instantiate(_gridSlotPrefab, _gridContainer);
+                var slotComp = slot.GetComponent<CraftingGridSlot>();
+                if (slotComp == null) slotComp = slot.AddComponent<CraftingGridSlot>();
+                slotComp.Initialize(slotKey, this);
+            }
+            else
+            {
+                // Programmatic: use UIHelper.CreateItemSlot
+                var (root, bg, icon, qty, border) = UIHelper.CreateItemSlot(
+                    _gridContainer, $"GridSlot_{slotKey}", 48f);
+                var slotComp = root.gameObject.AddComponent<CraftingGridSlot>();
+                slotComp.Initialize(slotKey, this);
+            }
         }
 
         // ====================================================================
@@ -304,6 +523,18 @@ namespace Game1.Unity.UI
                     var qty = item.GetComponentInChildren<TextMeshProUGUI>();
                     if (qty != null)
                         qty.text = itemSlot.Quantity.ToString();
+                }
+                else
+                {
+                    // Programmatic palette entry
+                    var (root, bg, icon, qty, border) = UIHelper.CreateItemSlot(
+                        _paletteContainer, $"Palette_{itemSlot.ItemId}", 40f);
+                    if (SpriteDatabase.Instance != null)
+                    {
+                        icon.sprite = SpriteDatabase.Instance.GetItemSprite(itemSlot.ItemId);
+                        icon.enabled = true;
+                    }
+                    qty.text = itemSlot.Quantity > 1 ? itemSlot.Quantity.ToString() : "";
                 }
             }
         }
@@ -362,8 +593,6 @@ namespace Game1.Unity.UI
 
         private void _updateDifficulty()
         {
-            if (_difficultyText == null) return;
-
             int points = _placedMaterials.Count; // Simplified
             string tier = points switch
             {
@@ -374,7 +603,15 @@ namespace Game1.Unity.UI
                 _ => "Legendary"
             };
 
-            _difficultyText.text = $"Difficulty: {tier} ({points} pts)";
+            string text = $"Difficulty: {tier} ({points} pts)";
+
+            // Update TMP label if set via inspector
+            if (_difficultyText != null)
+                _difficultyText.text = text;
+
+            // Update programmatic label
+            if (_difficultyLabel != null)
+                _difficultyLabel.text = text;
         }
 
         // ====================================================================

@@ -5,12 +5,14 @@
 // Date: 2026-02-13
 //
 // Toast notification system with fade and stacking.
-// Notifications appear at top-right and auto-dismiss.
+// Notifications appear at bottom-center and stack upward.
 // ============================================================================
 
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
+using Game1.Unity.Utilities;
 
 namespace Game1.Unity.UI
 {
@@ -21,6 +23,9 @@ namespace Game1.Unity.UI
     public class NotificationUI : MonoBehaviour
     {
         public static NotificationUI Instance { get; private set; }
+
+        [Header("Panel")]
+        [SerializeField] private RectTransform _panel;
 
         [Header("Configuration")]
         [SerializeField] private Transform _notificationContainer;
@@ -43,6 +48,8 @@ namespace Game1.Unity.UI
 
         private void Awake()
         {
+            if (_panel == null) _buildUI();
+
             Instance = this;
         }
 
@@ -160,7 +167,8 @@ namespace Game1.Unity.UI
                 var rt = _activeNotifications[i].GameObject.GetComponent<RectTransform>();
                 if (rt != null)
                 {
-                    rt.anchoredPosition = new Vector2(0, -i * _verticalSpacing);
+                    // Stack upward: newest at bottom (index 0 = oldest = highest)
+                    rt.anchoredPosition = new Vector2(0, i * _verticalSpacing);
                 }
             }
         }
@@ -173,6 +181,42 @@ namespace Game1.Unity.UI
                 Game1.Systems.LLM.NotificationSystem.Instance.OnNotificationShow -= _onNotificationFromSystem;
             }
             catch (System.Exception) { }
+        }
+
+        /// <summary>
+        /// Programmatically build the notification container when SerializeField references are null.
+        /// Creates a vertical layout container anchored to bottom-center with bottom-up stacking.
+        /// </summary>
+        private void _buildUI()
+        {
+            // Root panel — anchored to bottom-center
+            _panel = UIHelper.CreatePanel(transform, "NotificationPanel", UIHelper.COLOR_TRANSPARENT,
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f));
+            _panel.pivot = new Vector2(0.5f, 0f);
+            _panel.sizeDelta = new Vector2(420, 200);
+            _panel.anchoredPosition = new Vector2(0, 100);
+
+            // Notification container with VerticalLayoutGroup — child alignment at bottom
+            var containerRt = UIHelper.CreatePanel(_panel, "NotificationContainer",
+                UIHelper.COLOR_TRANSPARENT,
+                Vector2.zero, Vector2.one);
+            containerRt.offsetMin = Vector2.zero;
+            containerRt.offsetMax = Vector2.zero;
+
+            var vlg = containerRt.gameObject.AddComponent<VerticalLayoutGroup>();
+            vlg.spacing = 4f;
+            vlg.padding = new RectOffset(4, 4, 4, 4);
+            vlg.childAlignment = TextAnchor.LowerCenter;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = true;
+
+            // Add ContentSizeFitter so container grows with children
+            var csf = containerRt.gameObject.AddComponent<ContentSizeFitter>();
+            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            _notificationContainer = containerRt;
         }
     }
 }

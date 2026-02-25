@@ -6,6 +6,8 @@
 // Date: 2026-02-13
 //
 // 30-slot inventory grid with drag-and-drop, tooltips, and quantity display.
+// Self-building: if _panel is null at startup, _buildUI() constructs the
+// entire hierarchy from code using UIHelper (no prefab/scene setup needed).
 // ============================================================================
 
 using UnityEngine;
@@ -39,8 +41,15 @@ namespace Game1.Unity.UI
         private GameStateManager _stateManager;
         private InputManager _inputManager;
 
+        // References populated by _buildUI()
+        private ScrollRect _scrollRect;
+        private RectTransform _scrollContent;
+        private GridLayoutGroup _gridLayout;
+
         private void Start()
         {
+            if (_panel == null) _buildUI();
+
             _stateManager = FindFirstObjectByType<GameStateManager>();
             _inputManager = FindFirstObjectByType<InputManager>();
 
@@ -65,6 +74,65 @@ namespace Game1.Unity.UI
         private void OnEnable()
         {
             Refresh();
+        }
+
+        // ====================================================================
+        // Self-Building UI
+        // ====================================================================
+
+        /// <summary>
+        /// Construct the entire inventory panel hierarchy from code.
+        /// Right-side panel: header, scrollable 6x5 grid of 64x64 item slots.
+        /// </summary>
+        private void _buildUI()
+        {
+            // -- Root panel: right side of screen, 420 x full height, 8px inset
+            var panelRt = UIHelper.CreatePanel(
+                transform, "InventoryPanel", UIHelper.COLOR_BG_DARK,
+                anchorMin: new Vector2(1, 0),
+                anchorMax: new Vector2(1, 1),
+                offsetMin: new Vector2(-420, 8),
+                offsetMax: new Vector2(-8, -8));
+
+            _panel = panelRt.gameObject;
+
+            // Vertical layout for header + grid area
+            UIHelper.AddVerticalLayout(panelRt, spacing: 4f,
+                padding: new RectOffset(6, 6, 6, 6));
+
+            // -- Header row
+            UIHelper.CreateHeaderRow(panelRt, "INVENTORY", "[Tab / ESC]", height: 38f);
+
+            // -- Divider
+            UIHelper.CreateDivider(panelRt, 2f);
+
+            // -- Scroll view wrapping the slot grid
+            var scrollPanel = UIHelper.CreatePanel(
+                panelRt, "ScrollArea", UIHelper.COLOR_BG_PANEL,
+                Vector2.zero, Vector2.one);
+            // Let the layout group size this to fill remaining space
+            var scrollLE = scrollPanel.gameObject.AddComponent<LayoutElement>();
+            scrollLE.flexibleHeight = 1f;
+
+            var (scrollRect, content) = UIHelper.CreateScrollView(
+                scrollPanel, "SlotScroll", UIHelper.COLOR_TRANSPARENT);
+            _scrollRect = scrollRect;
+            _scrollContent = content;
+
+            // Replace default VerticalLayoutGroup on content with a GridLayoutGroup
+            var existingVLG = content.GetComponent<VerticalLayoutGroup>();
+            if (existingVLG != null) Object.Destroy(existingVLG);
+
+            _gridLayout = content.gameObject.AddComponent<GridLayoutGroup>();
+            _gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            _gridLayout.constraintCount = _columns;
+            _gridLayout.cellSize = new Vector2(64, 64);
+            _gridLayout.spacing = new Vector2(4, 4);
+            _gridLayout.padding = new RectOffset(4, 4, 4, 4);
+            _gridLayout.childAlignment = TextAnchor.UpperCenter;
+
+            // Store the content transform as the slot container
+            _slotContainer = content;
         }
 
         /// <summary>Refresh all slots from Character inventory.</summary>
@@ -103,11 +171,10 @@ namespace Game1.Unity.UI
                 }
                 else
                 {
-                    slotGo = new GameObject($"Slot_{i}");
-                    slotGo.transform.SetParent(_slotContainer ?? transform, false);
-                    slotGo.AddComponent<Image>().color = (Color)ColorConverter.UISlotEmpty;
-                    var rt = slotGo.GetComponent<RectTransform>();
-                    rt.sizeDelta = new Vector2(40, 40);
+                    // Use UIHelper.CreateItemSlot for programmatic slot creation
+                    var (root, bg, icon, qty, border) = UIHelper.CreateItemSlot(
+                        _slotContainer ?? transform, $"Slot_{i}", 64f);
+                    slotGo = root.gameObject;
                 }
 
                 var slot = slotGo.GetComponent<InventorySlot>();

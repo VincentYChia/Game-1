@@ -9,10 +9,12 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using Game1.Core;
 using Game1.Data.Databases;
 using Game1.Unity.Core;
+using Game1.Unity.Utilities;
 
 namespace Game1.Unity.UI
 {
@@ -26,6 +28,9 @@ namespace Game1.Unity.UI
         [Header("UI")]
         [SerializeField] private TextMeshProUGUI _debugText;
         [SerializeField] private GameObject _debugPanel;
+
+        // Text label created by _buildUI (Unity UI Text, used when TMP field is null)
+        private Text _debugLabel;
 
         private InputManager _inputManager;
         private bool _debugActive;
@@ -45,6 +50,8 @@ namespace Game1.Unity.UI
 
         private void Start()
         {
+            if (_debugPanel == null) _buildUI();
+
             _inputManager = FindFirstObjectByType<InputManager>();
             if (_inputManager != null)
                 _inputManager.OnDebugKey += _onDebugKey;
@@ -72,8 +79,10 @@ namespace Game1.Unity.UI
             }
 
             // Update debug text
-            if (_debugActive && _debugText != null)
+            if (_debugActive)
             {
+                string debugStr = null;
+
                 var gm = GameManager.Instance;
                 if (gm != null && gm.Player != null)
                 {
@@ -81,7 +90,7 @@ namespace Game1.Unity.UI
                     int chunkX = Mathf.FloorToInt(pos.X / GameConfig.ChunkSize);
                     int chunkZ = Mathf.FloorToInt(pos.Z / GameConfig.ChunkSize);
 
-                    _debugText.text = $"FPS: {_currentFps:F0}\n" +
+                    debugStr = $"FPS: {_currentFps:F0}\n" +
                         $"Pos: ({pos.X:F1}, {pos.Z:F1})\n" +
                         $"Chunk: ({chunkX}, {chunkZ})\n" +
                         $"Time: {gm.GameTime:F0}s\n" +
@@ -90,8 +99,13 @@ namespace Game1.Unity.UI
                 }
                 else
                 {
-                    _debugText.text = $"FPS: {_currentFps:F0}\nNo active game";
+                    debugStr = $"FPS: {_currentFps:F0}\nNo active game";
                 }
+
+                if (_debugText != null)
+                    _debugText.text = debugStr;
+                if (_debugLabel != null)
+                    _debugLabel.text = debugStr;
             }
         }
 
@@ -153,5 +167,35 @@ namespace Game1.Unity.UI
 
         /// <summary>Whether infinite durability is active.</summary>
         public bool IsInfiniteDurability => _debugFlags.TryGetValue("F7", out bool v) && v;
+
+        /// <summary>
+        /// Programmatically build the debug overlay when SerializeField references are null.
+        /// Creates a semi-transparent text panel in the top-left corner for FPS, position,
+        /// and chunk information. Only visible when debug mode is active (F1).
+        /// </summary>
+        private void _buildUI()
+        {
+            // Debug panel — anchored to top-left corner with semi-transparent dark background
+            var panelRt = UIHelper.CreatePanel(transform, "DebugPanel", UIHelper.COLOR_BG_DARK,
+                new Vector2(0f, 1f), new Vector2(0f, 1f));
+            panelRt.pivot = new Vector2(0f, 1f);
+            panelRt.sizeDelta = new Vector2(220, 140);
+            panelRt.anchoredPosition = new Vector2(10, -10);
+
+            _debugPanel = panelRt.gameObject;
+
+            // Multi-line debug text
+            _debugLabel = UIHelper.CreateText(panelRt, "DebugText",
+                "FPS: --\nNo active game",
+                13, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
+            var textRt = _debugLabel.rectTransform;
+            textRt.anchorMin = Vector2.zero;
+            textRt.anchorMax = Vector2.one;
+            textRt.offsetMin = new Vector2(8, 8);
+            textRt.offsetMax = new Vector2(-8, -8);
+
+            // Start hidden — only shown when F1 is pressed
+            _debugPanel.SetActive(false);
+        }
     }
 }

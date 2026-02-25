@@ -6,15 +6,19 @@
 // Date: 2026-02-21
 //
 // Unity UI for the fishing minigame: renders pond, ripples, and handles clicks.
+// Self-building: if _panel is null at Start, _buildUI() constructs the full
+// UI hierarchy programmatically via UIHelper.
 // ============================================================================
 
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using TMPro;
 using Game1.Core;
 using Game1.Systems.Crafting;
 using Game1.Unity.Core;
+using Game1.Unity.Utilities;
 
 namespace Game1.Unity.UI
 {
@@ -49,6 +53,18 @@ namespace Game1.Unity.UI
         [SerializeField] private Button _resultCloseButton;
 
         // ====================================================================
+        // Fallback references populated by _buildUI()
+        // ====================================================================
+
+        private Text _timerTextFallback;
+        private Text _scoreTextFallback;
+        private Text _hitCountTextFallback;
+        private Text _instructionTextFallback;
+        private Image _timerBarFill;
+        private Text _resultTitleFallback;
+        private Text _resultDetailsFallback;
+
+        // ====================================================================
         // State
         // ====================================================================
 
@@ -65,6 +81,8 @@ namespace Game1.Unity.UI
 
         private void Start()
         {
+            if (_panel == null) _buildUI();
+
             _gameManager = GameManager.Instance;
             _stateManager = FindFirstObjectByType<GameStateManager>();
 
@@ -85,7 +103,7 @@ namespace Game1.Unity.UI
                 UpdateDisplay();
 
                 // Handle click input
-                if (Input.GetMouseButtonDown(0) && !_showingResult)
+                if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && !_showingResult)
                 {
                     HandleClick();
                 }
@@ -94,6 +112,102 @@ namespace Game1.Unity.UI
             {
                 ShowResult();
             }
+        }
+
+        // ====================================================================
+        // Self-Building UI
+        // ====================================================================
+
+        private void _buildUI()
+        {
+            // Root panel — centered, 580x520, dark background
+            var panelRt = UIHelper.CreateSizedPanel(
+                transform, "FishingPanel", UIHelper.COLOR_BG_DARK,
+                new Vector2(580, 520), Vector2.zero);
+            panelRt.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRt.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRt.pivot = new Vector2(0.5f, 0.5f);
+            _panel = panelRt.gameObject;
+
+            // Main vertical layout
+            var vlg = UIHelper.AddVerticalLayout(panelRt, spacing: 6f,
+                padding: new RectOffset(12, 12, 10, 10));
+
+            // --- Header ---
+            var (headerRow, headerTitle, headerHint) = UIHelper.CreateHeaderRow(
+                panelRt, "FISHING", "[ESC] Close", 38f);
+
+            // --- HUD row: timer, score, hits ---
+            var hudRow = UIHelper.CreatePanel(panelRt, "HUDRow", UIHelper.COLOR_TRANSPARENT,
+                Vector2.zero, Vector2.one);
+            UIHelper.SetPreferredHeight(hudRow.gameObject, 28);
+            UIHelper.AddHorizontalLayout(hudRow, spacing: 12f,
+                padding: new RectOffset(4, 4, 2, 2), childForceExpand: true);
+
+            _timerTextFallback = UIHelper.CreateText(hudRow, "TimerText", "Time: 30.0s",
+                15, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.MiddleLeft);
+            _scoreTextFallback = UIHelper.CreateText(hudRow, "ScoreText", "Score: 0",
+                15, UIHelper.COLOR_TEXT_GOLD, TextAnchor.MiddleCenter);
+            _hitCountTextFallback = UIHelper.CreateText(hudRow, "HitCountText", "Hits: 0/0",
+                15, UIHelper.COLOR_TEXT_GREEN, TextAnchor.MiddleRight);
+
+            // --- Timer progress bar ---
+            var (timerRoot, timerBg, timerFill, timerLabel) = UIHelper.CreateProgressBar(
+                panelRt, "TimerBar",
+                UIHelper.COLOR_BG_DARK, UIHelper.COLOR_MANA,
+                new Vector2(540, 16), Vector2.zero);
+            UIHelper.SetPreferredHeight(timerRoot.gameObject, 16);
+            timerRoot.anchorMin = Vector2.zero;
+            timerRoot.anchorMax = Vector2.one;
+            _timerBarFill = timerFill;
+
+            // --- Instruction text ---
+            _instructionTextFallback = UIHelper.CreateText(panelRt, "InstructionText",
+                "Click the ripples when they reach the target ring!",
+                13, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleCenter);
+            UIHelper.SetPreferredHeight(_instructionTextFallback.gameObject, 22);
+
+            // --- Pond area (main gameplay region) ---
+            var pondPanelRt = UIHelper.CreatePanel(panelRt, "PondArea",
+                new Color(0.05f, 0.15f, 0.30f, 0.90f),
+                Vector2.zero, Vector2.one);
+            var pondLe = pondPanelRt.gameObject.AddComponent<LayoutElement>();
+            pondLe.flexibleHeight = 1f;
+            pondLe.preferredHeight = 300;
+            _pondArea = pondPanelRt;
+            _pondBackground = pondPanelRt.GetComponent<Image>();
+
+            // Ripple container inside the pond
+            var rippleContainerRt = UIHelper.CreateContainer(pondPanelRt, "RippleContainer",
+                Vector2.zero, Vector2.one);
+            _rippleContainer = rippleContainerRt;
+
+            // --- Result overlay panel (hidden by default) ---
+            var resultRt = UIHelper.CreateSizedPanel(
+                panelRt, "ResultPanel", new Color(0.06f, 0.06f, 0.10f, 0.95f),
+                new Vector2(350, 200), Vector2.zero);
+            resultRt.anchorMin = new Vector2(0.5f, 0.5f);
+            resultRt.anchorMax = new Vector2(0.5f, 0.5f);
+            resultRt.pivot = new Vector2(0.5f, 0.5f);
+            _resultPanel = resultRt.gameObject;
+
+            var resultVlg = UIHelper.AddVerticalLayout(resultRt, spacing: 8f,
+                padding: new RectOffset(16, 16, 16, 16));
+            resultVlg.childAlignment = TextAnchor.MiddleCenter;
+
+            _resultTitleFallback = UIHelper.CreateText(resultRt, "ResultTitle", "",
+                22, UIHelper.COLOR_TEXT_GOLD, TextAnchor.MiddleCenter);
+            UIHelper.SetPreferredHeight(_resultTitleFallback.gameObject, 36);
+
+            _resultDetailsFallback = UIHelper.CreateText(resultRt, "ResultDetails", "",
+                15, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.MiddleCenter);
+            UIHelper.SetPreferredHeight(_resultDetailsFallback.gameObject, 80);
+
+            _resultCloseButton = UIHelper.CreateButton(resultRt, "ResultCloseButton",
+                "Continue", UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_PRIMARY, 16);
+            UIHelper.SetPreferredHeight(_resultCloseButton.gameObject, 40);
+
+            _resultPanel.SetActive(false);
         }
 
         // ====================================================================
@@ -108,8 +222,12 @@ namespace Game1.Unity.UI
 
             if (_panel != null) _panel.SetActive(true);
             if (_resultPanel != null) _resultPanel.SetActive(false);
+
+            string instruction = "Click the ripples when they reach the target ring!";
             if (_instructionText != null)
-                _instructionText.text = "Click the ripples when they reach the target ring!";
+                _instructionText.text = instruction;
+            else if (_instructionTextFallback != null)
+                _instructionTextFallback.text = instruction;
 
             ClearRippleObjects();
         }
@@ -166,7 +284,7 @@ namespace Game1.Unity.UI
             if (_minigame == null || !_minigame.IsActive) return;
 
             // Convert screen click to pond-local coordinates
-            Vector2 clickPos = Input.mousePosition;
+            Vector2 clickPos = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
             if (_pondArea != null)
             {
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(

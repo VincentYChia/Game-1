@@ -7,11 +7,14 @@
 // Day/night cycle controller that drives both a directional light (3D mode)
 // and an optional screen overlay (2D fallback). Rotates the sun light through
 // the sky, adjusts ambient color, and provides atmospheric tinting.
+// Self-building: if _overlayImage is null at Start, _buildUI() constructs the
+// full-screen overlay and time display programmatically via UIHelper.
 // ============================================================================
 
 using UnityEngine;
 using UnityEngine.UI;
 using Game1.Unity.Core;
+using Game1.Unity.Utilities;
 
 namespace Game1.Unity.World
 {
@@ -32,6 +35,9 @@ namespace Game1.Unity.World
 
         [Header("Screen Overlay (2D fallback / atmospheric tint)")]
         [SerializeField] private Image _overlayImage;
+
+        [Header("Time Display")]
+        [SerializeField] private Text _timeText;
 
         [Header("Directional Light (3D mode)")]
         [Tooltip("The scene's directional light (sun). Created if null.")]
@@ -73,10 +79,48 @@ namespace Game1.Unity.World
 
         private void Start()
         {
+            if (_overlayImage == null) _buildUI();
+
             if (_use3DLighting && _sunLight == null)
             {
                 _createSunLight();
             }
+        }
+
+        // ====================================================================
+        // Self-Building UI
+        // ====================================================================
+
+        private void _buildUI()
+        {
+            // Full-screen overlay image — covers entire screen, raycastTarget OFF
+            // so it does not block input to gameplay elements below.
+            var overlayGo = new GameObject("DayNightOverlayImage");
+            overlayGo.transform.SetParent(transform, false);
+
+            var overlayRt = overlayGo.AddComponent<RectTransform>();
+            overlayRt.anchorMin = Vector2.zero;
+            overlayRt.anchorMax = Vector2.one;
+            overlayRt.offsetMin = Vector2.zero;
+            overlayRt.offsetMax = Vector2.zero;
+
+            _overlayImage = overlayGo.AddComponent<Image>();
+            _overlayImage.color = UIHelper.COLOR_TRANSPARENT;
+            _overlayImage.raycastTarget = false;
+
+            // Small time display text in top-left corner
+            _timeText = UIHelper.CreateSizedText(
+                transform, "TimeText", "12:00",
+                14, UIHelper.COLOR_TEXT_PRIMARY,
+                new Vector2(100, 24), Vector2.zero,
+                TextAnchor.MiddleLeft);
+
+            var timeRt = _timeText.rectTransform;
+            timeRt.anchorMin = new Vector2(0f, 1f);
+            timeRt.anchorMax = new Vector2(0f, 1f);
+            timeRt.pivot = new Vector2(0f, 1f);
+            timeRt.anchoredPosition = new Vector2(10, -4);
+            _timeText.raycastTarget = false;
         }
 
         private void _createSunLight()
@@ -122,6 +166,12 @@ namespace Game1.Unity.World
                     overlayColor.a *= 0.5f;
                 _overlayImage.color = overlayColor;
             }
+
+            // Update time display
+            if (_timeText != null)
+            {
+                _timeText.text = _getTimeString(progress);
+            }
         }
 
         // ====================================================================
@@ -130,19 +180,19 @@ namespace Game1.Unity.World
 
         private void _updateSunLight(float progress)
         {
-            // Sun rotation: from east (dawn) → overhead (noon) → west (dusk) → below (night)
+            // Sun rotation: from east (dawn) -> overhead (noon) -> west (dusk) -> below (night)
             // progress 0.0 = dawn, 0.5 = dusk start, 0.67 = night, 1.0 = next dawn
             float sunAngle;
 
             if (progress < NightStart)
             {
-                // Day arc: 0° (horizon east) → 90° (overhead) → 180° (horizon west)
+                // Day arc: 0 deg (horizon east) -> 90 deg (overhead) -> 180 deg (horizon west)
                 float dayProgress = progress / NightStart;
                 sunAngle = dayProgress * 180f;
             }
             else
             {
-                // Night arc: sun below horizon (180° → 360°)
+                // Night arc: sun below horizon (180 deg -> 360 deg)
                 float nightProgress = (progress - NightStart) / (1f - NightStart);
                 sunAngle = 180f + nightProgress * 180f;
             }
@@ -248,6 +298,21 @@ namespace Game1.Unity.World
                 float t = (progress - 0.95f) / 0.05f;
                 return Color.Lerp(_overlayNightColor, _overlayDawnColor, t);
             }
+        }
+
+        // ====================================================================
+        // Time Display
+        // ====================================================================
+
+        /// <summary>Convert day progress (0-1) to a 24-hour time string.</summary>
+        private string _getTimeString(float progress)
+        {
+            // Map progress 0.0-1.0 to 24h clock
+            // Dawn (0.0) = 6:00, Day (0.1) = 8:24, Dusk (0.55) = 19:12, Night (0.67) = 22:05
+            float hours24 = (progress * 24f + 6f) % 24f;
+            int hour = Mathf.FloorToInt(hours24);
+            int minute = Mathf.FloorToInt((hours24 - hour) * 60f);
+            return $"{hour:D2}:{minute:D2}";
         }
 
         // ====================================================================

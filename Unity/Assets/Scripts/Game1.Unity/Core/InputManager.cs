@@ -1,11 +1,11 @@
 // ============================================================================
 // Game1.Unity.Core.InputManager
 // Migrated from: core/game_engine.py (lines 488-1165: handle_events)
-// Migration phase: 6
-// Date: 2026-02-13
+// Migration phase: 6 (reworked for first-person controls 2026-02-25)
 //
 // Replaces Python's pygame event polling with Unity Input System.
 // Routes input to appropriate handlers based on current GameState.
+// Adds mouse look (delta), cursor lock/unlock on UI state transitions.
 // ============================================================================
 
 using System;
@@ -17,6 +17,7 @@ namespace Game1.Unity.Core
     /// <summary>
     /// Central input manager. Routes keyboard/mouse input based on GameState.
     /// Uses Unity's new Input System package (required in Player Settings).
+    /// Manages cursor lock state for first-person camera.
     /// </summary>
     public class InputManager : MonoBehaviour
     {
@@ -27,11 +28,16 @@ namespace Game1.Unity.Core
         [SerializeField] private GameStateManager _stateManager;
         [SerializeField] private PlayerInput _playerInput;
 
+        [Header("Mouse Look")]
+        [SerializeField] private float _mouseSensitivity = 0.15f;
+        [SerializeField] private bool _invertY = false;
+
         // ====================================================================
         // Events — UI components subscribe to receive input
         // ====================================================================
 
         public event Action<Vector2> OnMoveInput;
+        public event Action<Vector2> OnMouseLook;
         public event Action OnInteract;
         public event Action<Vector3> OnPrimaryAttack;
         public event Action<Vector3> OnSecondaryAction;
@@ -54,11 +60,29 @@ namespace Game1.Unity.Core
         /// <summary>Mouse position in world space (XZ plane).</summary>
         public Vector3 MouseWorldPosition { get; private set; }
 
+        /// <summary>Whether the cursor is currently locked (first-person mode).</summary>
+        public bool IsCursorLocked { get; private set; }
+
+        /// <summary>Mouse sensitivity for look.</summary>
+        public float MouseSensitivity
+        {
+            get => _mouseSensitivity;
+            set => _mouseSensitivity = value;
+        }
+
+        /// <summary>Whether Y axis is inverted for look.</summary>
+        public bool InvertY
+        {
+            get => _invertY;
+            set => _invertY = value;
+        }
+
         // ====================================================================
         // Input Actions
         // ====================================================================
 
         private InputAction _moveAction;
+        private InputAction _lookAction;
         private InputAction _interactAction;
         private InputAction _attackAction;
         private InputAction _secondaryAction;
@@ -80,6 +104,7 @@ namespace Game1.Unity.Core
         private InputAction _debugF2;
         private InputAction _debugF3;
         private InputAction _debugF4;
+        private InputAction _debugF5;
         private InputAction _debugF7;
 
         // ====================================================================
@@ -115,7 +140,7 @@ namespace Game1.Unity.Core
 
         private void Update()
         {
-            // Track mouse position
+            // Track mouse position (always, for UI)
             if (Mouse.current != null)
             {
                 MousePosition = Mouse.current.position.ReadValue();
@@ -140,6 +165,38 @@ namespace Game1.Unity.Core
                     OnMoveInput?.Invoke(moveValue);
                 }
             }
+
+            // Mouse look (only when cursor is locked = gameplay mode)
+            if (IsCursorLocked && _lookAction != null && _stateManager != null && _stateManager.IsPlaying)
+            {
+                var lookDelta = _lookAction.ReadValue<Vector2>();
+                if (lookDelta.sqrMagnitude > 0.001f)
+                {
+                    float deltaX = lookDelta.x * _mouseSensitivity;
+                    float deltaY = lookDelta.y * _mouseSensitivity * (_invertY ? 1f : -1f);
+                    OnMouseLook?.Invoke(new Vector2(deltaX, deltaY));
+                }
+            }
+        }
+
+        // ====================================================================
+        // Cursor Lock Management
+        // ====================================================================
+
+        /// <summary>Lock the cursor for first-person gameplay.</summary>
+        public void LockCursor()
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            IsCursorLocked = true;
+        }
+
+        /// <summary>Unlock the cursor for UI interaction.</summary>
+        public void UnlockCursor()
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            IsCursorLocked = false;
         }
 
         // ====================================================================
@@ -152,6 +209,7 @@ namespace Game1.Unity.Core
             if (_playerInput != null && _playerInput.actions != null)
             {
                 _moveAction = _playerInput.actions.FindAction("Move");
+                _lookAction = _playerInput.actions.FindAction("Look");
                 _interactAction = _playerInput.actions.FindAction("Interact");
                 _attackAction = _playerInput.actions.FindAction("Attack");
                 _secondaryAction = _playerInput.actions.FindAction("SecondaryAttack");
@@ -173,6 +231,7 @@ namespace Game1.Unity.Core
                 _debugF2 = _playerInput.actions.FindAction("LearnAllSkills");
                 _debugF3 = _playerInput.actions.FindAction("GrantAllTitles");
                 _debugF4 = _playerInput.actions.FindAction("MaxLevel");
+                _debugF5 = _playerInput.actions.FindAction("ToggleCameraMode");
                 _debugF7 = _playerInput.actions.FindAction("InfiniteDurability");
                 return;
             }
@@ -184,6 +243,8 @@ namespace Game1.Unity.Core
                 .With("Down", "<Keyboard>/s")
                 .With("Left", "<Keyboard>/a")
                 .With("Right", "<Keyboard>/d");
+
+            _lookAction = new InputAction("Look", InputActionType.Value, "<Mouse>/delta");
 
             _interactAction = new InputAction("Interact", InputActionType.Button, "<Keyboard>/e");
             _attackAction = new InputAction("Attack", InputActionType.Button, "<Mouse>/leftButton");
@@ -208,6 +269,7 @@ namespace Game1.Unity.Core
             _debugF2 = new InputAction("DebugF2", InputActionType.Button, "<Keyboard>/f2");
             _debugF3 = new InputAction("DebugF3", InputActionType.Button, "<Keyboard>/f3");
             _debugF4 = new InputAction("DebugF4", InputActionType.Button, "<Keyboard>/f4");
+            _debugF5 = new InputAction("DebugF5", InputActionType.Button, "<Keyboard>/f5");
             _debugF7 = new InputAction("DebugF7", InputActionType.Button, "<Keyboard>/f7");
         }
 
@@ -217,12 +279,12 @@ namespace Game1.Unity.Core
 
         private InputAction[] _allActions => new[]
         {
-            _moveAction, _interactAction, _attackAction, _secondaryAction,
+            _moveAction, _lookAction, _interactAction, _attackAction, _secondaryAction,
             _escapeAction, _inventoryAction, _equipmentAction, _mapAction,
             _encyclopediaAction, _statsAction, _skillsAction, _craftAction,
             _scrollAction, _skill1Action, _skill2Action, _skill3Action,
             _skill4Action, _skill5Action, _debugF1, _debugF2, _debugF3,
-            _debugF4, _debugF7
+            _debugF4, _debugF5, _debugF7
         };
 
         private void _enableAllActions()
@@ -266,6 +328,7 @@ namespace Game1.Unity.Core
             if (_debugF2 != null) _debugF2.performed += _onDebugF2;
             if (_debugF3 != null) _debugF3.performed += _onDebugF3;
             if (_debugF4 != null) _debugF4.performed += _onDebugF4;
+            if (_debugF5 != null) _debugF5.performed += _onDebugF5;
             if (_debugF7 != null) _debugF7.performed += _onDebugF7;
         }
 
@@ -294,11 +357,12 @@ namespace Game1.Unity.Core
             if (_debugF2 != null) _debugF2.performed -= _onDebugF2;
             if (_debugF3 != null) _debugF3.performed -= _onDebugF3;
             if (_debugF4 != null) _debugF4.performed -= _onDebugF4;
+            if (_debugF5 != null) _debugF5.performed -= _onDebugF5;
             if (_debugF7 != null) _debugF7.performed -= _onDebugF7;
         }
 
         // ====================================================================
-        // Input Handlers (named methods for proper unsubscribe)
+        // Input Handlers
         // ====================================================================
 
         private void _onInteract(InputAction.CallbackContext ctx)
@@ -310,9 +374,24 @@ namespace Game1.Unity.Core
         private void _onAttack(InputAction.CallbackContext ctx)
         {
             if (_stateManager == null || _stateManager.IsPlaying)
+            {
+                // First-person: attack is a forward ray from camera center
+                if (Camera.main != null)
+                {
+                    var ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0));
+                    var plane = new Plane(Vector3.up, Vector3.zero);
+                    if (plane.Raycast(ray, out float dist))
+                    {
+                        OnPrimaryAttack?.Invoke(ray.GetPoint(dist));
+                        return;
+                    }
+                }
                 OnPrimaryAttack?.Invoke(MouseWorldPosition);
+            }
             else
+            {
                 OnUIClick?.Invoke(MousePosition);
+            }
         }
 
         private void _onSecondary(InputAction.CallbackContext ctx)
@@ -352,15 +431,24 @@ namespace Game1.Unity.Core
         private void _onDebugF2(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F2");
         private void _onDebugF3(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F3");
         private void _onDebugF4(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F4");
+        private void _onDebugF5(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F5");
         private void _onDebugF7(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F7");
 
         // ====================================================================
-        // State Change Handler
+        // State Change Handler — Cursor Lock Management
         // ====================================================================
 
         private void _onGameStateChanged(GameState oldState, GameState newState)
         {
-            // State-based input filtering happens in the individual handlers above
+            // Lock cursor during gameplay, unlock for any UI
+            if (newState == GameState.Playing)
+            {
+                LockCursor();
+            }
+            else
+            {
+                UnlockCursor();
+            }
         }
     }
 }

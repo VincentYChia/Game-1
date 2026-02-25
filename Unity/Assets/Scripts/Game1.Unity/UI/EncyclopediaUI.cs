@@ -5,12 +5,15 @@
 // Date: 2026-02-13
 //
 // Tabbed encyclopedia browser: Guide, Quests, Skills, Titles, Stats, Recipes.
+// Self-building: if _panel is null at Start, _buildUI() constructs the full
+// UI hierarchy programmatically via UIHelper.
 // ============================================================================
 
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Game1.Unity.Core;
+using Game1.Unity.Utilities;
 
 namespace Game1.Unity.UI
 {
@@ -42,6 +45,17 @@ namespace Game1.Unity.UI
         [SerializeField] private TextMeshProUGUI _contentText;
         [SerializeField] private ScrollRect _contentScroll;
 
+        // ====================================================================
+        // Fallback references populated by _buildUI()
+        // ====================================================================
+
+        private Text _contentTextFallback;
+        private ScrollRect[] _tabScrollRects;
+
+        // ====================================================================
+        // State
+        // ====================================================================
+
         private string _activeTab = "guide";
         private GameStateManager _stateManager;
         private InputManager _inputManager;
@@ -49,6 +63,8 @@ namespace Game1.Unity.UI
 
         private void Start()
         {
+            if (_panel == null) _buildUI();
+
             _stateManager = FindFirstObjectByType<GameStateManager>();
             _inputManager = FindFirstObjectByType<InputManager>();
 
@@ -73,13 +89,125 @@ namespace Game1.Unity.UI
             if (_stateManager != null) _stateManager.OnStateChanged -= _onStateChanged;
         }
 
+        // ====================================================================
+        // Self-Building UI
+        // ====================================================================
+
+        private void _buildUI()
+        {
+            // Root panel — right side, full height, 500px wide
+            var panelRt = UIHelper.CreatePanel(transform, "EncyclopediaPanel", UIHelper.COLOR_BG_DARK,
+                new Vector2(1f, 0f), new Vector2(1f, 1f),
+                new Vector2(-500, 0), Vector2.zero);
+            _panel = panelRt.gameObject;
+
+            UIHelper.AddVerticalLayout(panelRt, spacing: 4f,
+                padding: new RectOffset(8, 8, 8, 8));
+
+            // Header: "ENCYCLOPEDIA"
+            var (headerRow, headerTitle, headerHint) = UIHelper.CreateHeaderRow(
+                panelRt, "ENCYCLOPEDIA", "[E/ESC]", 40f);
+
+            // --- Tab bar: Guide / Quests / Skills / Titles / Stats / Recipes ---
+            var tabNames = new[] { "Guide", "Quests", "Skills", "Titles", "Stats", "Recipes" };
+            var (tabBarRt, tabs) = UIHelper.CreateTabBar(panelRt, tabNames, 36f);
+
+            _guideTab = tabs[0];
+            _questsTab = tabs[1];
+            _skillsTab = tabs[2];
+            _titlesTab = tabs[3];
+            _statsTab = tabs[4];
+            _recipesTab = tabs[5];
+
+            // --- Content area: one scroll view per tab, stacked ---
+            var contentAreaRt = UIHelper.CreatePanel(panelRt, "ContentArea", UIHelper.COLOR_BG_PANEL,
+                Vector2.zero, Vector2.one);
+            // Let layout expand to fill remaining space
+            var contentLe = contentAreaRt.gameObject.AddComponent<LayoutElement>();
+            contentLe.flexibleHeight = 1f;
+
+            // Create a scrollable content panel for each tab
+            _tabScrollRects = new ScrollRect[6];
+
+            // Guide
+            var (guideScroll, guideContent) = UIHelper.CreateScrollView(contentAreaRt, "GuideScroll");
+            _guideContent = guideScroll.gameObject;
+            _tabScrollRects[0] = guideScroll;
+            var guideText = UIHelper.CreateText(guideContent, "GuideText",
+                "Welcome to the Game Encyclopedia!\n\nUse tabs to browse.",
+                14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
+            UIHelper.SetPreferredHeight(guideText.gameObject, 400);
+
+            // Quests
+            var (questsScroll, questsContent) = UIHelper.CreateScrollView(contentAreaRt, "QuestsScroll");
+            _questsContent = questsScroll.gameObject;
+            _tabScrollRects[1] = questsScroll;
+            var questsText = UIHelper.CreateText(questsContent, "QuestsText",
+                "Active Quests:\n(No active quests)",
+                14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
+            UIHelper.SetPreferredHeight(questsText.gameObject, 400);
+
+            // Skills
+            var (skillsScroll, skillsContent) = UIHelper.CreateScrollView(contentAreaRt, "SkillsScroll");
+            _skillsContent = skillsScroll.gameObject;
+            _tabScrollRects[2] = skillsScroll;
+            var skillsText = UIHelper.CreateText(skillsContent, "SkillsText",
+                "Learned Skills: 0",
+                14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
+            UIHelper.SetPreferredHeight(skillsText.gameObject, 400);
+
+            // Titles
+            var (titlesScroll, titlesContent) = UIHelper.CreateScrollView(contentAreaRt, "TitlesScroll");
+            _titlesContent = titlesScroll.gameObject;
+            _tabScrollRects[3] = titlesScroll;
+            var titlesText = UIHelper.CreateText(titlesContent, "TitlesText",
+                "Titles:\n(Browse earned titles)",
+                14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
+            UIHelper.SetPreferredHeight(titlesText.gameObject, 400);
+
+            // Stats
+            var (statsScroll, statsContent) = UIHelper.CreateScrollView(contentAreaRt, "StatsScroll");
+            _statsContent = statsScroll.gameObject;
+            _tabScrollRects[4] = statsScroll;
+            var statsText = UIHelper.CreateText(statsContent, "StatsText",
+                "Level: 1\nClass: None",
+                14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
+            UIHelper.SetPreferredHeight(statsText.gameObject, 400);
+
+            // Recipes
+            var (recipesScroll, recipesContentTr) = UIHelper.CreateScrollView(contentAreaRt, "RecipesScroll");
+            _recipesContent = recipesScroll.gameObject;
+            _tabScrollRects[5] = recipesScroll;
+            var recipesText = UIHelper.CreateText(recipesContentTr, "RecipesText",
+                "Recipes:\n(Browse crafting recipes)",
+                14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
+            UIHelper.SetPreferredHeight(recipesText.gameObject, 400);
+
+            // Store the guide content text as fallback for _refreshContent
+            _contentTextFallback = guideText;
+
+            // Initially show guide tab only
+            _questsContent.SetActive(false);
+            _skillsContent.SetActive(false);
+            _titlesContent.SetActive(false);
+            _statsContent.SetActive(false);
+            _recipesContent.SetActive(false);
+        }
+
+        // ====================================================================
+        // Tab Switching
+        // ====================================================================
+
         private void _switchTab(string tabName)
         {
             _activeTab = tabName;
 
             // Hide all content panels
-            foreach (var panel in _allPanels)
-                if (panel != null) panel.SetActive(false);
+            if (_allPanels != null)
+            {
+                foreach (var panel in _allPanels)
+                    if (panel != null) panel.SetActive(false);
+            }
 
             // Show selected tab
             switch (tabName)
@@ -97,14 +225,10 @@ namespace Game1.Unity.UI
 
         private void _refreshContent()
         {
-            // Content is populated by sub-components on each tab panel
-            // Or a shared content text can be used
-            if (_contentText == null) return;
-
             var gm = GameManager.Instance;
             if (gm?.Player == null) return;
 
-            _contentText.text = _activeTab switch
+            string text = _activeTab switch
             {
                 "guide" => "Welcome to the Game Encyclopedia!\n\nUse tabs to browse.",
                 "quests" => "Active Quests:\n(No active quests)",
@@ -114,6 +238,12 @@ namespace Game1.Unity.UI
                 "recipes" => "Recipes:\n(Browse crafting recipes)",
                 _ => ""
             };
+
+            // Update whichever text reference is available
+            if (_contentText != null)
+                _contentText.text = text;
+            else if (_contentTextFallback != null)
+                _contentTextFallback.text = text;
         }
 
         private void _onToggle() => _stateManager?.TogglePanel(GameState.EncyclopediaOpen);

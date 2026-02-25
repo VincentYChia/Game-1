@@ -5,6 +5,8 @@
 // Date: 2026-02-21
 //
 // Skills browsing and equipping UI panel.
+// Self-building: if _panel is null at Start, _buildUI() constructs the full
+// UI hierarchy programmatically via UIHelper.
 // ============================================================================
 
 using System.Collections.Generic;
@@ -16,6 +18,7 @@ using Game1.Core;
 using Game1.Data.Databases;
 using Game1.Data.Models;
 using Game1.Unity.Core;
+using Game1.Unity.Utilities;
 
 namespace Game1.Unity.UI
 {
@@ -53,6 +56,18 @@ namespace Game1.Unity.UI
         [SerializeField] private TMP_Dropdown _categoryFilter;
 
         // ====================================================================
+        // Fallback references populated by _buildUI()
+        // ====================================================================
+
+        private Text _skillNameFallback;
+        private Text _skillDescriptionFallback;
+        private Text _skillManaCostFallback;
+        private Text _skillCooldownFallback;
+        private Text _skillTagsFallback;
+        private Text _skillRequirementsFallback;
+        private Button[] _filterTabs;
+
+        // ====================================================================
         // State
         // ====================================================================
 
@@ -70,6 +85,8 @@ namespace Game1.Unity.UI
 
         private void Start()
         {
+            if (_panel == null) _buildUI();
+
             _gameManager = GameManager.Instance;
             _stateManager = FindFirstObjectByType<GameStateManager>();
 
@@ -84,6 +101,111 @@ namespace Game1.Unity.UI
 
             if (_panel != null)
                 _panel.SetActive(false);
+        }
+
+        // ====================================================================
+        // Self-Building UI
+        // ====================================================================
+
+        private void _buildUI()
+        {
+            // Root panel — right side, full height, 420px wide
+            var panelRt = UIHelper.CreatePanel(transform, "SkillsPanel", UIHelper.COLOR_BG_DARK,
+                new Vector2(1f, 0f), new Vector2(1f, 1f),
+                new Vector2(-420, 0), Vector2.zero);
+            _panel = panelRt.gameObject;
+
+            UIHelper.AddVerticalLayout(panelRt, spacing: 4f,
+                padding: new RectOffset(8, 8, 8, 8));
+
+            // Header: "SKILLS [K/ESC]"
+            var (headerRow, headerTitle, headerHint) = UIHelper.CreateHeaderRow(
+                panelRt, "SKILLS", "[K/ESC]", 40f);
+
+            // --- Hotbar slots row (5 slots) ---
+            var hotbarRowRt = UIHelper.CreatePanel(panelRt, "HotbarRow", UIHelper.COLOR_BG_PANEL,
+                Vector2.zero, Vector2.one);
+            UIHelper.SetPreferredHeight(hotbarRowRt.gameObject, 60);
+            UIHelper.AddHorizontalLayout(hotbarRowRt, spacing: 6f,
+                padding: new RectOffset(8, 8, 6, 6), childForceExpand: true);
+
+            _skillBarSlots = new List<Button>();
+            for (int i = 0; i < 5; i++)
+            {
+                int slotIndex = i;
+                var slotBtn = UIHelper.CreateButton(hotbarRowRt, $"HotbarSlot_{i}",
+                    $"{i + 1}", UIHelper.COLOR_BG_SLOT, UIHelper.COLOR_TEXT_SECONDARY, 14,
+                    () => { _selectedBarSlot = slotIndex; });
+                _skillBarSlots.Add(slotBtn);
+            }
+
+            // --- Filter tabs row: All / Combat / Buff / Heal / Utility ---
+            var (tabBarRt, tabs) = UIHelper.CreateTabBar(panelRt,
+                new[] { "All", "Combat", "Buff", "Heal", "Utility" }, 32f);
+            _filterTabs = tabs;
+
+            for (int i = 0; i < tabs.Length; i++)
+            {
+                int idx = i;
+                tabs[i].onClick.AddListener(() => OnFilterChanged(idx));
+            }
+
+            // --- Scrollable skill list ---
+            var listAreaRt = UIHelper.CreatePanel(panelRt, "ListArea", UIHelper.COLOR_BG_PANEL,
+                Vector2.zero, Vector2.one);
+            UIHelper.SetPreferredHeight(listAreaRt.gameObject, 300);
+
+            var (scrollRect, content) = UIHelper.CreateScrollView(listAreaRt, "SkillScroll");
+            _skillScrollRect = scrollRect;
+            _skillListContainer = content;
+
+            // --- Divider ---
+            UIHelper.CreateDivider(panelRt);
+
+            // --- Skill detail section ---
+            var detailRt = UIHelper.CreatePanel(panelRt, "DetailSection", UIHelper.COLOR_BG_PANEL,
+                Vector2.zero, Vector2.one);
+            UIHelper.SetPreferredHeight(detailRt.gameObject, 200);
+            UIHelper.AddVerticalLayout(detailRt, spacing: 4f,
+                padding: new RectOffset(10, 10, 8, 8));
+
+            _skillNameFallback = UIHelper.CreateText(detailRt, "SkillName", "",
+                18, UIHelper.COLOR_TEXT_GOLD, TextAnchor.MiddleLeft);
+            UIHelper.SetPreferredHeight(_skillNameFallback.gameObject, 26);
+
+            _skillDescriptionFallback = UIHelper.CreateText(detailRt, "SkillDesc",
+                "Select a skill to view details.", 14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
+            UIHelper.SetPreferredHeight(_skillDescriptionFallback.gameObject, 40);
+
+            _skillManaCostFallback = UIHelper.CreateText(detailRt, "ManaCost", "",
+                14, UIHelper.COLOR_MANA, TextAnchor.MiddleLeft);
+            UIHelper.SetPreferredHeight(_skillManaCostFallback.gameObject, 20);
+
+            _skillCooldownFallback = UIHelper.CreateText(detailRt, "Cooldown", "",
+                14, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleLeft);
+            UIHelper.SetPreferredHeight(_skillCooldownFallback.gameObject, 20);
+
+            _skillTagsFallback = UIHelper.CreateText(detailRt, "Tags", "",
+                13, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleLeft);
+            UIHelper.SetPreferredHeight(_skillTagsFallback.gameObject, 20);
+
+            _skillRequirementsFallback = UIHelper.CreateText(detailRt, "Requirements", "",
+                13, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleLeft);
+            UIHelper.SetPreferredHeight(_skillRequirementsFallback.gameObject, 20);
+
+            // --- Action buttons row ---
+            var actionRowRt = UIHelper.CreatePanel(panelRt, "ActionRow", UIHelper.COLOR_TRANSPARENT,
+                Vector2.zero, Vector2.one);
+            UIHelper.SetPreferredHeight(actionRowRt.gameObject, 40);
+            UIHelper.AddHorizontalLayout(actionRowRt, spacing: 8f,
+                padding: new RectOffset(8, 8, 4, 4), childForceExpand: true);
+
+            _equipButton = UIHelper.CreateButton(actionRowRt, "EquipButton",
+                "Equip", UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_GREEN, 16);
+            _unequipButton = UIHelper.CreateButton(actionRowRt, "UnequipButton",
+                "Unequip", UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_RED, 16);
+            _closeButton = UIHelper.CreateButton(actionRowRt, "CloseButton",
+                "Close", UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_PRIMARY, 16);
         }
 
         // ====================================================================
@@ -153,20 +275,30 @@ namespace Game1.Unity.UI
             // Create entries
             foreach (var skill in _displayedSkills)
             {
-                if (_skillEntryPrefab == null) continue;
-
-                var go = Instantiate(_skillEntryPrefab, _skillListContainer);
-                var text = go.GetComponentInChildren<TextMeshProUGUI>();
-                if (text != null)
+                if (_skillEntryPrefab != null)
                 {
-                    text.text = skill.Name;
+                    var go = Instantiate(_skillEntryPrefab, _skillListContainer);
+                    var text = go.GetComponentInChildren<TextMeshProUGUI>();
+                    if (text != null)
+                    {
+                        text.text = skill.Name;
+                    }
+
+                    var button = go.GetComponent<Button>();
+                    if (button != null)
+                    {
+                        string id = skill.SkillId;
+                        button.onClick.AddListener(() => SelectSkill(id));
+                    }
                 }
-
-                var button = go.GetComponent<Button>();
-                if (button != null)
+                else
                 {
+                    // Code-built fallback entry
                     string id = skill.SkillId;
-                    button.onClick.AddListener(() => SelectSkill(id));
+                    var entryBtn = UIHelper.CreateButton(_skillListContainer, "Skill_" + id,
+                        skill.Name, UIHelper.COLOR_BG_SLOT, UIHelper.COLOR_TEXT_PRIMARY, 14,
+                        () => SelectSkill(id));
+                    UIHelper.SetPreferredHeight(entryBtn.gameObject, 32);
                 }
             }
         }
@@ -193,12 +325,26 @@ namespace Game1.Unity.UI
                 return;
             }
 
-            if (_skillName != null) _skillName.text = skillDef.Name;
-            if (_skillDescription != null) _skillDescription.text = skillDef.Description ?? "";
-            if (_skillManaCost != null) _skillManaCost.text = $"Mana: {skillDef.Cost.ManaCostRaw}";
-            if (_skillCooldown != null) _skillCooldown.text = $"Cooldown: {skillDef.Cost.CooldownRaw}";
-            if (_skillTags != null && skillDef.Tags != null)
-                _skillTags.text = $"Tags: {string.Join(", ", skillDef.Tags)}";
+            string nameText = skillDef.Name;
+            string descText = skillDef.Description ?? "";
+            string manaText = $"Mana: {skillDef.Cost.ManaCostRaw}";
+            string cdText = $"Cooldown: {skillDef.Cost.CooldownRaw}";
+            string tagsText = skillDef.Tags != null ? $"Tags: {string.Join(", ", skillDef.Tags)}" : "";
+
+            if (_skillName != null) _skillName.text = nameText;
+            else if (_skillNameFallback != null) _skillNameFallback.text = nameText;
+
+            if (_skillDescription != null) _skillDescription.text = descText;
+            else if (_skillDescriptionFallback != null) _skillDescriptionFallback.text = descText;
+
+            if (_skillManaCost != null) _skillManaCost.text = manaText;
+            else if (_skillManaCostFallback != null) _skillManaCostFallback.text = manaText;
+
+            if (_skillCooldown != null) _skillCooldown.text = cdText;
+            else if (_skillCooldownFallback != null) _skillCooldownFallback.text = cdText;
+
+            if (_skillTags != null) _skillTags.text = tagsText;
+            else if (_skillTagsFallback != null) _skillTagsFallback.text = tagsText;
 
             // Show equip/unequip based on current state
             bool isEquipped = _gameManager?.Player?.Skills?.GetKnownSkill(_selectedSkillId)?.IsEquipped ?? false;
@@ -209,11 +355,23 @@ namespace Game1.Unity.UI
         private void ClearDetail()
         {
             if (_skillName != null) _skillName.text = "";
-            if (_skillDescription != null) _skillDescription.text = "Select a skill to view details.";
+            else if (_skillNameFallback != null) _skillNameFallback.text = "";
+
+            string defaultDesc = "Select a skill to view details.";
+            if (_skillDescription != null) _skillDescription.text = defaultDesc;
+            else if (_skillDescriptionFallback != null) _skillDescriptionFallback.text = defaultDesc;
+
             if (_skillManaCost != null) _skillManaCost.text = "";
+            else if (_skillManaCostFallback != null) _skillManaCostFallback.text = "";
+
             if (_skillCooldown != null) _skillCooldown.text = "";
+            else if (_skillCooldownFallback != null) _skillCooldownFallback.text = "";
+
             if (_skillTags != null) _skillTags.text = "";
+            else if (_skillTagsFallback != null) _skillTagsFallback.text = "";
+
             if (_skillRequirements != null) _skillRequirements.text = "";
+            else if (_skillRequirementsFallback != null) _skillRequirementsFallback.text = "";
         }
 
         private void OnEquipClicked()

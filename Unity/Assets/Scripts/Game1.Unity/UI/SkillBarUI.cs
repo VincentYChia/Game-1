@@ -21,6 +21,9 @@ namespace Game1.Unity.UI
     /// </summary>
     public class SkillBarUI : MonoBehaviour
     {
+        [Header("Panel")]
+        [SerializeField] private RectTransform _panel;
+
         [Header("Slot References")]
         [SerializeField] private SkillSlot[] _slots = new SkillSlot[GameConfig.HotbarSlots];
 
@@ -30,6 +33,10 @@ namespace Game1.Unity.UI
         [SerializeField] private Color _noManaColor = new Color(0.2f, 0.2f, 0.5f, 0.8f);
 
         private InputManager _inputManager;
+
+        // Labels created by _buildUI (Unity UI Text, separate from TMP fields in SkillSlot)
+        private Text[] _keyLabels;
+        private Text[] _nameLabels;
 
         [System.Serializable]
         public class SkillSlot
@@ -42,6 +49,8 @@ namespace Game1.Unity.UI
 
         private void Start()
         {
+            if (_panel == null) _buildUI();
+
             _inputManager = FindFirstObjectByType<InputManager>();
             if (_inputManager != null)
                 _inputManager.OnSkillActivate += _onSkillActivate;
@@ -84,6 +93,8 @@ namespace Game1.Unity.UI
                         _slots[i].CooldownOverlay.fillAmount = 0f;
                     if (_slots[i].SkillNameLabel != null)
                         _slots[i].SkillNameLabel.text = "";
+                    if (_nameLabels != null && _nameLabels[i] != null)
+                        _nameLabels[i].text = "";
                     continue;
                 }
 
@@ -126,6 +137,87 @@ namespace Game1.Unity.UI
                 {
                     gm.Player.Skills.ActivateSkill(skillId);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Programmatically build the skill bar UI when SerializeField references are null.
+        /// Creates 5 horizontal skill slots at bottom-center with icons, keybind labels,
+        /// cooldown overlays, and name text below each slot.
+        /// </summary>
+        private void _buildUI()
+        {
+            // Root panel — anchored to bottom-center
+            _panel = UIHelper.CreatePanel(transform, "SkillBarPanel", UIHelper.COLOR_TRANSPARENT,
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f));
+            _panel.pivot = new Vector2(0.5f, 0f);
+            // 5 slots * 60 + 4 * spacing(8) + padding(8+8) = 300 + 32 + 16 = 348
+            _panel.sizeDelta = new Vector2(348, 90);
+            _panel.anchoredPosition = new Vector2(0, 10);
+
+            // Container with horizontal layout
+            var containerRt = UIHelper.CreatePanel(_panel, "SlotContainer", UIHelper.COLOR_BG_DARK,
+                Vector2.zero, Vector2.one);
+            containerRt.offsetMin = Vector2.zero;
+            containerRt.offsetMax = Vector2.zero;
+
+            var hlg = UIHelper.AddHorizontalLayout(containerRt, 8f,
+                new RectOffset(8, 8, 4, 4), false);
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+
+            _slots = new SkillSlot[GameConfig.HotbarSlots];
+            _keyLabels = new Text[GameConfig.HotbarSlots];
+            _nameLabels = new Text[GameConfig.HotbarSlots];
+
+            for (int i = 0; i < GameConfig.HotbarSlots; i++)
+            {
+                // Create each skill slot using UIHelper.CreateItemSlot
+                var (slotRoot, slotBg, slotIcon, slotQty, slotBorder) =
+                    UIHelper.CreateItemSlot(containerRt, $"SkillSlot_{i}", 60f);
+
+                // Set layout element so HorizontalLayoutGroup sizes it correctly
+                UIHelper.SetPreferredSize(slotRoot.gameObject, 60f, 80f);
+
+                // Keybind label — top-left of the slot
+                var keyLabel = UIHelper.CreateSizedText(
+                    slotRoot, "KeyLabel", (i + 1).ToString(),
+                    12, UIHelper.COLOR_TEXT_GOLD,
+                    new Vector2(20, 16), Vector2.zero,
+                    TextAnchor.UpperLeft);
+                var keyRt = keyLabel.rectTransform;
+                keyRt.anchorMin = new Vector2(0f, 1f);
+                keyRt.anchorMax = new Vector2(0f, 1f);
+                keyRt.pivot = new Vector2(0f, 1f);
+                keyRt.anchoredPosition = new Vector2(2, -2);
+                _keyLabels[i] = keyLabel;
+
+                // Cooldown overlay — filled image covering the slot
+                var cooldownImg = UIHelper.CreateFilledImage(slotRoot, "CooldownOverlay",
+                    UIHelper.COLOR_COOLDOWN);
+                cooldownImg.fillAmount = 0f;
+                cooldownImg.raycastTarget = false;
+
+                // Skill name label — below the slot
+                var nameLabel = UIHelper.CreateSizedText(
+                    slotRoot, "SkillName", "",
+                    10, UIHelper.COLOR_TEXT_SECONDARY,
+                    new Vector2(60, 14), Vector2.zero,
+                    TextAnchor.UpperCenter);
+                var nameRt = nameLabel.rectTransform;
+                nameRt.anchorMin = new Vector2(0.5f, 0f);
+                nameRt.anchorMax = new Vector2(0.5f, 0f);
+                nameRt.pivot = new Vector2(0.5f, 1f);
+                nameRt.anchoredPosition = new Vector2(0, -2);
+                _nameLabels[i] = nameLabel;
+
+                // Build the SkillSlot data
+                _slots[i] = new SkillSlot
+                {
+                    IconImage = slotIcon,
+                    CooldownOverlay = cooldownImg,
+                    KeyLabel = null,        // TMP field — not used in code-built UI
+                    SkillNameLabel = null    // TMP field — not used in code-built UI
+                };
             }
         }
     }

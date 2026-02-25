@@ -13,6 +13,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Game1.Unity.World;
+using Game1.Unity.Utilities;
 
 namespace Game1.Unity.UI
 {
@@ -46,12 +47,153 @@ namespace Game1.Unity.UI
         private int _totalStrikes;
         private bool _isHeating;
 
+        // Fallback text (used when built programmatically)
+        private Text _hitsTextFallback;
+
         protected override void Awake()
         {
             base.Awake();
             if (_bellowsButton != null)
                 _bellowsButton.onClick.AddListener(_onBellows);
         }
+
+        // ====================================================================
+        // Programmatic UI Construction
+        // ====================================================================
+
+        /// <summary>
+        /// Build smithing-specific UI: temperature gauge (left), hammer timing
+        /// bar (center), hit counter text, fan/fuel buttons.
+        /// </summary>
+        protected override void _buildUI()
+        {
+            var parent = _contentArea != null ? _contentArea : _panel.transform;
+
+            // --- Temperature gauge (vertical bar, left side) ---
+            // Container for temperature elements
+            var tempContainerRt = UIHelper.CreatePanel(parent, "TemperatureContainer",
+                new Color(0.10f, 0.10f, 0.15f, 1f),
+                new Vector2(0.02f, 0.05f), new Vector2(0.12f, 0.85f));
+
+            // Temperature bar background (fills the container)
+            var tempBarBg = UIHelper.CreateImage(tempContainerRt, "TempBarBg",
+                new Color(0.15f, 0.15f, 0.22f, 1f));
+            var tempBarBgRt = tempBarBg.rectTransform;
+            tempBarBgRt.anchorMin = new Vector2(0.1f, 0.05f);
+            tempBarBgRt.anchorMax = new Vector2(0.9f, 0.95f);
+            tempBarBgRt.offsetMin = Vector2.zero;
+            tempBarBgRt.offsetMax = Vector2.zero;
+
+            // Temperature fill bar (vertical fill: blue cold -> red hot)
+            _temperatureBar = UIHelper.CreateFilledImage(tempBarBg.rectTransform,
+                "TempBarFill", new Color(0.2f, 0.2f, 0.8f, 1f),
+                Image.FillMethod.Vertical);
+            var tempFillRt = _temperatureBar.rectTransform;
+            tempFillRt.anchorMin = Vector2.zero;
+            tempFillRt.anchorMax = Vector2.one;
+            tempFillRt.offsetMin = new Vector2(2, 2);
+            tempFillRt.offsetMax = new Vector2(-2, -2);
+
+            // Perfect zone overlay (green band on the temperature bar)
+            _perfectZone = UIHelper.CreateImage(tempBarBg.rectTransform, "PerfectZone",
+                new Color(0f, 0.8f, 0f, 0.35f));
+            // Position will be set in OnStart based on _perfectTempMin/_perfectTempMax
+
+            // "HOT" label at top
+            var hotLabel = UIHelper.CreateText(tempContainerRt, "HotLabel", "HOT",
+                11, UIHelper.COLOR_TEXT_RED, TextAnchor.MiddleCenter);
+            var hotLabelRt = hotLabel.rectTransform;
+            hotLabelRt.anchorMin = new Vector2(0f, 0.96f);
+            hotLabelRt.anchorMax = new Vector2(1f, 1f);
+            hotLabelRt.offsetMin = Vector2.zero;
+            hotLabelRt.offsetMax = Vector2.zero;
+
+            // "COLD" label at bottom
+            var coldLabel = UIHelper.CreateText(tempContainerRt, "ColdLabel", "COLD",
+                11, UIHelper.COLOR_MANA, TextAnchor.MiddleCenter);
+            var coldLabelRt = coldLabel.rectTransform;
+            coldLabelRt.anchorMin = new Vector2(0f, 0f);
+            coldLabelRt.anchorMax = new Vector2(1f, 0.04f);
+            coldLabelRt.offsetMin = Vector2.zero;
+            coldLabelRt.offsetMax = Vector2.zero;
+
+            // --- Hammer timing bar (horizontal, center) ---
+            var hammerContainerRt = UIHelper.CreatePanel(parent, "HammerContainer",
+                new Color(0.10f, 0.10f, 0.15f, 1f),
+                new Vector2(0.18f, 0.38f), new Vector2(0.82f, 0.48f));
+
+            // Hammer bar background
+            _hammerTimingBar = UIHelper.CreateImage(hammerContainerRt, "HammerBar",
+                new Color(0.20f, 0.20f, 0.28f, 1f));
+            var hammerBarRt = _hammerTimingBar.rectTransform;
+            hammerBarRt.anchorMin = new Vector2(0.02f, 0.1f);
+            hammerBarRt.anchorMax = new Vector2(0.98f, 0.9f);
+            hammerBarRt.offsetMin = Vector2.zero;
+            hammerBarRt.offsetMax = Vector2.zero;
+
+            // Target zone (center green band on hammer bar)
+            var hammerTargetZone = UIHelper.CreateImage(hammerBarRt, "HammerTargetZone",
+                new Color(0f, 0.7f, 0f, 0.3f));
+            var hammerTargetRt = hammerTargetZone.rectTransform;
+            hammerTargetRt.anchorMin = new Vector2(0.4f, 0f);
+            hammerTargetRt.anchorMax = new Vector2(0.6f, 1f);
+            hammerTargetRt.offsetMin = Vector2.zero;
+            hammerTargetRt.offsetMax = Vector2.zero;
+
+            // Moving cursor indicator
+            _hammerCursor = UIHelper.CreateImage(hammerBarRt, "HammerCursor",
+                new Color(1f, 0.9f, 0.2f, 1f));
+            // Position set dynamically in OnUpdate via anchor manipulation
+
+            // "Strike" label above hammer bar
+            var strikeLabel = UIHelper.CreateText(parent, "StrikeLabel",
+                "Press SPACE to strike when cursor is in the green zone",
+                14, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleCenter);
+            var strikeLabelRt = strikeLabel.rectTransform;
+            strikeLabelRt.anchorMin = new Vector2(0.18f, 0.49f);
+            strikeLabelRt.anchorMax = new Vector2(0.82f, 0.54f);
+            strikeLabelRt.offsetMin = Vector2.zero;
+            strikeLabelRt.offsetMax = Vector2.zero;
+
+            // --- Hit counter text (above hammer area) ---
+            _hitsTextFallback = UIHelper.CreateText(parent, "HitsText",
+                "Hits: 0 (Perfect: 0)", 18, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.MiddleCenter);
+            var hitsTxtRt = _hitsTextFallback.rectTransform;
+            hitsTxtRt.anchorMin = new Vector2(0.18f, 0.56f);
+            hitsTxtRt.anchorMax = new Vector2(0.82f, 0.64f);
+            hitsTxtRt.offsetMin = Vector2.zero;
+            hitsTxtRt.offsetMax = Vector2.zero;
+
+            // --- Bellows / Fuel button (bottom center) ---
+            _bellowsButton = UIHelper.CreateSizedButton(parent, "BellowsButton",
+                "Bellows (Heat)",
+                new Color(0.7f, 0.35f, 0.1f, 1f), UIHelper.COLOR_TEXT_PRIMARY,
+                new Vector2(180f, 50f), new Vector2(0f, -160f),
+                16);
+            var bellowsBtnRt = _bellowsButton.GetComponent<RectTransform>();
+            bellowsBtnRt.anchorMin = new Vector2(0.5f, 0.5f);
+            bellowsBtnRt.anchorMax = new Vector2(0.5f, 0.5f);
+            _bellowsButton.onClick.AddListener(_onBellows);
+
+            // --- Fuel button (next to bellows) ---
+            var fuelButton = UIHelper.CreateSizedButton(parent, "FuelButton",
+                "Add Fuel",
+                new Color(0.5f, 0.3f, 0.1f, 1f), UIHelper.COLOR_TEXT_PRIMARY,
+                new Vector2(140f, 50f), new Vector2(180f, -160f),
+                14);
+            var fuelBtnRt = fuelButton.GetComponent<RectTransform>();
+            fuelBtnRt.anchorMin = new Vector2(0.5f, 0.5f);
+            fuelBtnRt.anchorMax = new Vector2(0.5f, 0.5f);
+            fuelButton.onClick.AddListener(() =>
+            {
+                // Fuel adds a smaller heat boost
+                _temperature = Mathf.Min(1f, _temperature + 0.05f);
+            });
+        }
+
+        // ====================================================================
+        // Minigame Logic
+        // ====================================================================
 
         protected override void OnStart()
         {
@@ -67,8 +209,10 @@ namespace Game1.Unity.UI
             {
                 var rt = _perfectZone.rectTransform;
                 // Position perfect zone on the temperature bar
-                rt.anchorMin = new Vector2(_perfectTempMin, 0f);
-                rt.anchorMax = new Vector2(_perfectTempMax, 1f);
+                rt.anchorMin = new Vector2(0f, _perfectTempMin);
+                rt.anchorMax = new Vector2(1f, _perfectTempMax);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
             }
         }
 
@@ -106,11 +250,12 @@ namespace Game1.Unity.UI
                 var rt = _hammerCursor.rectTransform;
                 rt.anchorMin = new Vector2(_hammerPosition - 0.02f, 0f);
                 rt.anchorMax = new Vector2(_hammerPosition + 0.02f, 1f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
             }
 
             // Update hit counter
-            if (_hitsText != null)
-                _hitsText.text = $"Hits: {_hitCount} (Perfect: {_perfectHits})";
+            _setHitsText($"Hits: {_hitCount} (Perfect: {_perfectHits})");
         }
 
         protected override void OnCraftAction()
@@ -140,6 +285,12 @@ namespace Game1.Unity.UI
         private void _onBellows()
         {
             _isHeating = true;
+        }
+
+        private void _setHitsText(string text)
+        {
+            if (_hitsText != null) _hitsText.text = text;
+            else if (_hitsTextFallback != null) _hitsTextFallback.text = text;
         }
     }
 }

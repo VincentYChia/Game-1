@@ -33,7 +33,7 @@ namespace Game1.Unity.World
 
         [Header("Rendering Mode")]
         [Tooltip("Use 3D mesh terrain. Disable for legacy 2D Tilemap mode.")]
-        [SerializeField] private bool _use3DMesh = false;
+        [SerializeField] private bool _use3DMesh = true;
 
         [Header("Tilemap (Legacy 2D Mode)")]
         [SerializeField] private Tilemap _groundTilemap;
@@ -188,8 +188,9 @@ namespace Game1.Unity.World
 
             var renderData = new ChunkRenderData();
 
-            // Generate and assign terrain mesh
-            Mesh terrainMesh = ChunkMeshGenerator.GenerateChunkMesh(_chunkSize, tileTypes);
+            // Generate and assign terrain mesh (pass chunk world pos for Perlin noise continuity)
+            Mesh terrainMesh = ChunkMeshGenerator.GenerateChunkMesh(
+                _chunkSize, tileTypes, 1f, chunkWorldPos.x, chunkWorldPos.z);
             renderData.TerrainObject = _createMeshObject(
                 $"Chunk_{chunkCoord.x}_{chunkCoord.y}_Terrain",
                 terrainMesh,
@@ -198,7 +199,8 @@ namespace Game1.Unity.World
             );
 
             // Generate cliff edge mesh
-            Mesh edgeMesh = ChunkMeshGenerator.GenerateEdgeMesh(_chunkSize, tileTypes);
+            Mesh edgeMesh = ChunkMeshGenerator.GenerateEdgeMesh(
+                _chunkSize, tileTypes, 1f, chunkWorldPos.x, chunkWorldPos.z);
             if (edgeMesh != null)
             {
                 renderData.EdgeObject = _createMeshObject(

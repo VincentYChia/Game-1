@@ -12,6 +12,8 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using Game1.Unity.Core;
 using Game1.Unity.Utilities;
 
 namespace Game1.Unity.UI
@@ -19,6 +21,7 @@ namespace Game1.Unity.UI
     /// <summary>
     /// Shared drag-and-drop manager for inventory, equipment, and crafting.
     /// Renders a ghost icon following the mouse during drag.
+    /// Uses Unity's new Input System and subscribes to InputManager events.
     /// </summary>
     public class DragDropManager : MonoBehaviour
     {
@@ -68,10 +71,25 @@ namespace Game1.Unity.UI
             World
         }
 
+        // ====================================================================
+        // InputManager reference
+        // ====================================================================
+
+        private InputManager _inputManager;
+
         private void Awake()
         {
             Instance = this;
             _setGhostVisible(false);
+        }
+
+        private void Start()
+        {
+            _inputManager = FindFirstObjectByType<InputManager>();
+            if (_inputManager != null)
+            {
+                _inputManager.OnEscape += _onEscapePressed;
+            }
         }
 
         /// <summary>Start a drag operation.</summary>
@@ -125,18 +143,30 @@ namespace Game1.Unity.UI
             _setGhostVisible(false);
         }
 
-        private void Update()
-        {
-            // Move ghost icon with mouse
-            if (IsDragging && _ghostTransform != null)
-            {
-                _ghostTransform.position = Input.mousePosition;
-            }
+        // ====================================================================
+        // InputManager event handler for Escape
+        // ====================================================================
 
-            // Cancel on Escape or right-click
+        private void _onEscapePressed()
+        {
             if (IsDragging)
             {
-                if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
+                CancelDrag();
+            }
+        }
+
+        private void Update()
+        {
+            // Move ghost icon with mouse using new Input System
+            if (IsDragging && _ghostTransform != null)
+            {
+                _ghostTransform.position = Mouse.current?.position.ReadValue() ?? Vector2.zero;
+            }
+
+            // Cancel on right-click using new Input System
+            if (IsDragging)
+            {
+                if (Mouse.current?.rightButton.wasPressedThisFrame == true)
                 {
                     CancelDrag();
                 }
@@ -151,6 +181,12 @@ namespace Game1.Unity.UI
 
         private void OnDestroy()
         {
+            // Unsubscribe from InputManager events
+            if (_inputManager != null)
+            {
+                _inputManager.OnEscape -= _onEscapePressed;
+            }
+
             if (Instance == this) Instance = null;
         }
     }

@@ -1,12 +1,11 @@
 // ============================================================================
 // Game1.Unity.Core.CameraController
 // Migrated from: core/camera.py + game_engine.py camera logic
-// Migration phase: 6 (upgraded for 3D rendering)
-// Date: 2026-02-18
+// Migration phase: 6 (reworked for first-person 2026-02-25)
 //
-// Perspective camera following the player on the XZ plane at a configurable
-// pitch angle. Supports smooth follow, zoom (distance), orbit rotation,
-// and seamless ortho/perspective toggle for backward compatibility.
+// First-person camera controller. Camera is a child of the player rig.
+// Mouse look rotates yaw (player body) and pitch (camera head).
+// Supports cursor lock/unlock for UI interaction.
 // ============================================================================
 
 using UnityEngine;
@@ -14,9 +13,9 @@ using UnityEngine;
 namespace Game1.Unity.Core
 {
     /// <summary>
-    /// 3D camera controller that follows the player with smooth interpolation.
-    /// Default mode: perspective at 50° pitch, orbiting the player.
-    /// Supports orthographic fallback for 2D parity testing.
+    /// First-person camera controller. Attached to the Camera GameObject
+    /// which is a child of the player rig. Mouse look rotates the player
+    /// body (yaw) and the camera (pitch). Like Minecraft's first-person view.
     /// </summary>
     public class CameraController : MonoBehaviour
     {
@@ -24,64 +23,70 @@ namespace Game1.Unity.Core
         // Inspector Configuration
         // ====================================================================
 
-        [Header("Camera Mode")]
-        [SerializeField] private bool _orthographic = true;
-        [SerializeField] private float _orthographicSize = 8f;
-        [SerializeField] private float _perspectiveFOV = 50f;
+        [Header("Camera Settings")]
+        [SerializeField] private float _fieldOfView = 70f;
+        [SerializeField] private float _nearClip = 0.1f;
+        [SerializeField] private float _farClip = 500f;
 
-        [Header("3D Camera Rig")]
-        [Tooltip("Pitch angle in degrees (0 = horizontal, 90 = top-down)")]
-        [SerializeField][Range(20f, 85f)] private float _pitch = 50f;
-        [Tooltip("Yaw rotation in degrees (0 = north, 90 = east)")]
-        [SerializeField] private float _yaw = 0f;
-        [Tooltip("Distance from the camera to the follow target")]
-        [SerializeField] private float _distance = 18f;
-        [Tooltip("Vertical offset above the target pivot")]
-        [SerializeField] private float _heightOffset = 1f;
+        [Header("Look Settings")]
+        [SerializeField] private float _minPitch = -89f;
+        [SerializeField] private float _maxPitch = 89f;
 
-        [Header("Follow")]
-        [SerializeField] private float _followSpeed = 8f;
-        [SerializeField] private float _rotationSmoothSpeed = 6f;
+        [Header("Camera Position")]
+        [Tooltip("Height of the camera above the player pivot (eye level)")]
+        [SerializeField] private float _eyeHeight = 1.6f;
 
-        [Header("Zoom")]
-        [SerializeField] private float _minDistance = 6f;
-        [SerializeField] private float _maxDistance = 40f;
-        [SerializeField] private float _zoomSpeed = 3f;
-
-        [Header("Orbit")]
-        [Tooltip("Enable right-click drag to orbit camera")]
-        [SerializeField] private bool _allowOrbit = true;
-        [SerializeField] private float _orbitSpeed = 120f;
-        [SerializeField] private float _minPitch = 20f;
-        [SerializeField] private float _maxPitch = 80f;
+        [Header("Head Bob (optional)")]
+        [SerializeField] private bool _enableHeadBob = false;
+        [SerializeField] private float _bobSpeed = 10f;
+        [SerializeField] private float _bobAmount = 0.03f;
 
         // ====================================================================
         // State
         // ====================================================================
 
         private Camera _camera;
-        private Vector3 _targetPosition;
-        private Vector3 _smoothedPosition;
-        private float _currentDistance;
+        private Transform _playerBody; // The parent that rotates on yaw
         private float _currentPitch;
         private float _currentYaw;
-        private bool _isOrbiting;
+        private float _bobTimer;
+        private InputManager _inputManager;
+        private bool _initialized;
 
         // ====================================================================
         // Properties
         // ====================================================================
 
-        /// <summary>Whether the camera is in orthographic (2D) mode.</summary>
-        public bool IsOrthographic => _orthographic;
-
-        /// <summary>Current camera distance from target.</summary>
-        public float Distance => _currentDistance;
-
-        /// <summary>Current pitch angle.</summary>
+        /// <summary>Current pitch angle (up/down).</summary>
         public float Pitch => _currentPitch;
 
-        /// <summary>Current yaw angle.</summary>
+        /// <summary>Current yaw angle (left/right).</summary>
         public float Yaw => _currentYaw;
+
+        /// <summary>The camera component.</summary>
+        public Camera Camera => _camera;
+
+        /// <summary>Forward direction on XZ plane (for movement).</summary>
+        public Vector3 ForwardXZ
+        {
+            get
+            {
+                Vector3 fwd = transform.forward;
+                fwd.y = 0;
+                return fwd.normalized;
+            }
+        }
+
+        /// <summary>Right direction on XZ plane (for movement).</summary>
+        public Vector3 RightXZ
+        {
+            get
+            {
+                Vector3 right = transform.right;
+                right.y = 0;
+                return right.normalized;
+            }
+        }
 
         // ====================================================================
         // Initialization
@@ -91,190 +96,122 @@ namespace Game1.Unity.Core
         {
             _camera = GetComponent<Camera>();
             if (_camera == null)
-                _camera = Camera.main;
-
-            _currentDistance = _distance;
-            _currentPitch = _pitch;
-            _currentYaw = _yaw;
+                _camera = gameObject.AddComponent<Camera>();
         }
 
         private void Start()
         {
-            if (_camera == null) return;
+            _inputManager = FindFirstObjectByType<InputManager>();
+            if (_inputManager != null)
+                _inputManager.OnMouseLook += _onMouseLook;
 
-            _camera.orthographic = _orthographic;
+            _playerBody = transform.parent;
 
-            if (_orthographic)
-            {
-                _camera.orthographicSize = _orthographicSize;
-                transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-            }
-            else
-            {
-                _camera.fieldOfView = _perspectiveFOV;
-                _camera.nearClipPlane = 0.3f;
-                _camera.farClipPlane = 500f;
-            }
+            _setupCamera();
+            _initialized = true;
+        }
 
-            // Initial snap
-            _smoothedPosition = _targetPosition;
-            _updateCameraTransform(instant: true);
+        private void OnDestroy()
+        {
+            if (_inputManager != null)
+                _inputManager.OnMouseLook -= _onMouseLook;
+        }
+
+        private void _setupCamera()
+        {
+            _camera.fieldOfView = _fieldOfView;
+            _camera.nearClipPlane = _nearClip;
+            _camera.farClipPlane = _farClip;
+            _camera.orthographic = false;
+
+            // Position camera at eye level relative to player
+            transform.localPosition = new Vector3(0, _eyeHeight, 0);
+            transform.localRotation = Quaternion.identity;
+
+            // Tag as MainCamera if no other exists
+            if (Camera.main == null || Camera.main == _camera)
+                gameObject.tag = "MainCamera";
         }
 
         // ====================================================================
-        // Camera Update (LateUpdate — after player moves)
+        // Mouse Look
+        // ====================================================================
+
+        private void _onMouseLook(Vector2 lookDelta)
+        {
+            // Yaw: rotate the player body (or this object's parent)
+            _currentYaw += lookDelta.x;
+
+            // Pitch: rotate the camera up/down
+            _currentPitch += lookDelta.y;
+            _currentPitch = Mathf.Clamp(_currentPitch, _minPitch, _maxPitch);
+        }
+
+        // ====================================================================
+        // Late Update — Apply Rotation
         // ====================================================================
 
         private void LateUpdate()
         {
-            if (_camera == null) return;
+            if (!_initialized) return;
 
-            if (_orthographic)
+            // Apply yaw to player body (parent)
+            if (_playerBody != null)
             {
-                _updateOrthographic();
+                _playerBody.localRotation = Quaternion.Euler(0, _currentYaw, 0);
             }
+
+            // Apply pitch to camera (this transform)
+            transform.localRotation = Quaternion.Euler(_currentPitch, 0, 0);
+
+            // Head bob while moving
+            if (_enableHeadBob)
+            {
+                var gm = GameManager.Instance;
+                if (gm != null && gm.Player != null)
+                {
+                    // Simple bob based on movement (approximated)
+                    Vector3 localPos = transform.localPosition;
+                    localPos.y = _eyeHeight + Mathf.Sin(_bobTimer) * _bobAmount;
+                    transform.localPosition = localPos;
+                }
+            }
+        }
+
+        /// <summary>Call from PlayerController when player is moving to drive head bob.</summary>
+        public void NotifyMoving(bool isMoving)
+        {
+            if (isMoving && _enableHeadBob)
+                _bobTimer += Time.deltaTime * _bobSpeed;
             else
-            {
-                _updatePerspective();
-            }
-        }
-
-        private void _updateOrthographic()
-        {
-            Vector3 desiredPosition = _targetPosition + new Vector3(0f, 50f, 0f);
-            transform.position = Vector3.Lerp(transform.position, desiredPosition, _followSpeed * Time.deltaTime);
-
-            _camera.orthographicSize = Mathf.Lerp(
-                _camera.orthographicSize,
-                _currentDistance,
-                _zoomSpeed * Time.deltaTime
-            );
-        }
-
-        private void _updatePerspective()
-        {
-            // Smooth follow position
-            _smoothedPosition = Vector3.Lerp(
-                _smoothedPosition,
-                _targetPosition,
-                _followSpeed * Time.deltaTime
-            );
-
-            // Smooth pitch/yaw interpolation
-            _currentPitch = Mathf.Lerp(_currentPitch, _pitch, _rotationSmoothSpeed * Time.deltaTime);
-            _currentYaw = Mathf.Lerp(_currentYaw, _yaw, _rotationSmoothSpeed * Time.deltaTime);
-            _currentDistance = Mathf.Lerp(_currentDistance, _distance, _zoomSpeed * Time.deltaTime);
-
-            _updateCameraTransform(instant: false);
-        }
-
-        private void _updateCameraTransform(bool instant)
-        {
-            Vector3 pivot = (instant ? _targetPosition : _smoothedPosition)
-                          + new Vector3(0f, _heightOffset, 0f);
-
-            // Spherical coordinates: distance + pitch + yaw → position offset
-            float pitchRad = _currentPitch * Mathf.Deg2Rad;
-            float yawRad = _currentYaw * Mathf.Deg2Rad;
-
-            float horizontalDist = _currentDistance * Mathf.Cos(pitchRad);
-            float verticalDist = _currentDistance * Mathf.Sin(pitchRad);
-
-            Vector3 offset = new Vector3(
-                -horizontalDist * Mathf.Sin(yawRad),
-                verticalDist,
-                -horizontalDist * Mathf.Cos(yawRad)
-            );
-
-            Vector3 desiredPos = pivot + offset;
-
-            if (instant)
-            {
-                transform.position = desiredPos;
-            }
-            else
-            {
-                transform.position = desiredPos;
-            }
-
-            // Always look at pivot
-            transform.LookAt(pivot);
+                _bobTimer = 0;
         }
 
         // ====================================================================
         // Public API
         // ====================================================================
 
-        /// <summary>Set the camera follow target position.</summary>
-        public void SetTarget(Vector3 worldPosition)
+        /// <summary>Set the camera yaw directly (e.g., for teleport).</summary>
+        public void SetYaw(float yaw)
         {
-            _targetPosition = worldPosition;
+            _currentYaw = yaw;
         }
 
-        /// <summary>Snap camera immediately to target (no interpolation).</summary>
-        public void SnapToTarget(Vector3 worldPosition)
+        /// <summary>Set the camera pitch directly.</summary>
+        public void SetPitch(float pitch)
         {
-            _targetPosition = worldPosition;
-            _smoothedPosition = worldPosition;
-            _updateCameraTransform(instant: true);
+            _currentPitch = Mathf.Clamp(pitch, _minPitch, _maxPitch);
         }
 
-        /// <summary>Adjust zoom level. Positive delta zooms in, negative zooms out.</summary>
-        public void Zoom(float delta)
+        /// <summary>Snap both yaw and pitch.</summary>
+        public void SnapOrientation(float yaw, float pitch)
         {
-            if (_orthographic)
-            {
-                _currentDistance = Mathf.Clamp(_currentDistance - delta * _zoomSpeed, _minDistance, _maxDistance);
-            }
-            else
-            {
-                _distance = Mathf.Clamp(_distance - delta * _zoomSpeed, _minDistance, _maxDistance);
-            }
-        }
+            _currentYaw = yaw;
+            _currentPitch = Mathf.Clamp(pitch, _minPitch, _maxPitch);
 
-        /// <summary>Orbit the camera around the target (horizontal rotation).</summary>
-        public void OrbitHorizontal(float delta)
-        {
-            if (!_allowOrbit) return;
-            _yaw += delta * _orbitSpeed * Time.deltaTime;
-            // Wrap yaw to 0-360
-            if (_yaw < 0f) _yaw += 360f;
-            if (_yaw >= 360f) _yaw -= 360f;
-        }
-
-        /// <summary>Orbit the camera vertically (change pitch).</summary>
-        public void OrbitVertical(float delta)
-        {
-            if (!_allowOrbit) return;
-            _pitch = Mathf.Clamp(_pitch - delta * _orbitSpeed * Time.deltaTime, _minPitch, _maxPitch);
-        }
-
-        /// <summary>Reset camera to default orientation.</summary>
-        public void ResetOrientation()
-        {
-            _yaw = 0f;
-            _pitch = 50f;
-            _distance = 18f;
-        }
-
-        /// <summary>Toggle between orthographic and perspective modes.</summary>
-        public void ToggleCameraMode()
-        {
-            _orthographic = !_orthographic;
-            if (_camera != null)
-            {
-                _camera.orthographic = _orthographic;
-                if (_orthographic)
-                {
-                    _camera.orthographicSize = _orthographicSize;
-                    transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-                }
-                else
-                {
-                    _camera.fieldOfView = _perspectiveFOV;
-                    _updateCameraTransform(instant: true);
-                }
-            }
+            if (_playerBody != null)
+                _playerBody.localRotation = Quaternion.Euler(0, _currentYaw, 0);
+            transform.localRotation = Quaternion.Euler(_currentPitch, 0, 0);
         }
 
         /// <summary>Get the current visible world bounds (for chunk culling).</summary>
@@ -282,20 +219,7 @@ namespace Game1.Unity.Core
         {
             if (_camera == null) return new Rect(0, 0, 100, 100);
 
-            if (_orthographic)
-            {
-                float halfHeight = _camera.orthographicSize;
-                float halfWidth = halfHeight * _camera.aspect;
-                return new Rect(
-                    transform.position.x - halfWidth,
-                    transform.position.z - halfHeight,
-                    halfWidth * 2f,
-                    halfHeight * 2f
-                );
-            }
-
             // Perspective: compute approximate ground-plane footprint
-            // Cast rays from the 4 screen corners to the ground plane (Y=0)
             var plane = new Plane(Vector3.up, Vector3.zero);
 
             float minX = float.MaxValue, maxX = float.MinValue;
@@ -319,10 +243,24 @@ namespace Game1.Unity.Core
                     minZ = Mathf.Min(minZ, hit.z);
                     maxZ = Mathf.Max(maxZ, hit.z);
                 }
+                else
+                {
+                    // Ray doesn't hit ground (looking up) — use a generous default
+                    Vector3 pos = transform.position;
+                    return new Rect(pos.x - 60, pos.z - 60, 120, 120);
+                }
             }
 
-            if (minX == float.MaxValue) return new Rect(0, 0, 100, 100);
-            return new Rect(minX, minZ, maxX - minX, maxZ - minZ);
+            if (minX == float.MaxValue)
+            {
+                Vector3 pos = transform.position;
+                return new Rect(pos.x - 60, pos.z - 60, 120, 120);
+            }
+
+            // Add padding
+            float padX = (maxX - minX) * 0.15f;
+            float padZ = (maxZ - minZ) * 0.15f;
+            return new Rect(minX - padX, minZ - padZ, maxX - minX + padX * 2, maxZ - minZ + padZ * 2);
         }
 
         /// <summary>Convert a screen point to world position on XZ plane (Y=0).</summary>
@@ -337,6 +275,13 @@ namespace Game1.Unity.Core
                 return ray.GetPoint(distance);
             }
             return Vector3.zero;
+        }
+
+        /// <summary>Get the forward ray from camera center (for first-person targeting).</summary>
+        public Ray GetCenterRay()
+        {
+            if (_camera == null) return new Ray(Vector3.zero, Vector3.forward);
+            return _camera.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0));
         }
     }
 }
