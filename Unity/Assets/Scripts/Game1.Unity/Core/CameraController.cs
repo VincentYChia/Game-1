@@ -1,11 +1,11 @@
 // ============================================================================
 // Game1.Unity.Core.CameraController
 // Migrated from: core/camera.py + game_engine.py camera logic
-// Migration phase: 6 (reworked for first-person 2026-02-25)
+// Migration phase: 6 (reworked for first-person 2026-02-26)
 //
 // First-person camera controller. Camera is a child of the player rig.
+// Reads InputManager.LookDelta directly each frame (no event dependency).
 // Mouse look rotates yaw (player body) and pitch (camera head).
-// Supports cursor lock/unlock for UI interaction.
 // ============================================================================
 
 using UnityEngine;
@@ -13,9 +13,9 @@ using UnityEngine;
 namespace Game1.Unity.Core
 {
     /// <summary>
-    /// First-person camera controller. Attached to the Camera GameObject
-    /// which is a child of the player rig. Mouse look rotates the player
-    /// body (yaw) and the camera (pitch). Like Minecraft's first-person view.
+    /// First-person camera controller. Reads InputManager.LookDelta property
+    /// directly each frame — no event subscription timing issues.
+    /// Yaw rotates the parent (player body), pitch rotates the camera.
     /// </summary>
     public class CameraController : MonoBehaviour
     {
@@ -46,24 +46,20 @@ namespace Game1.Unity.Core
         // ====================================================================
 
         private Camera _camera;
-        private Transform _playerBody; // The parent that rotates on yaw
+        private Transform _playerBody;
         private float _currentPitch;
         private float _currentYaw;
         private float _bobTimer;
         private InputManager _inputManager;
         private bool _initialized;
+        private bool _loggedLook;
 
         // ====================================================================
         // Properties
         // ====================================================================
 
-        /// <summary>Current pitch angle (up/down).</summary>
         public float Pitch => _currentPitch;
-
-        /// <summary>Current yaw angle (left/right).</summary>
         public float Yaw => _currentYaw;
-
-        /// <summary>The camera component.</summary>
         public Camera Camera => _camera;
 
         /// <summary>Forward direction on XZ plane (for movement).</summary>
@@ -102,19 +98,15 @@ namespace Game1.Unity.Core
         private void Start()
         {
             _inputManager = FindFirstObjectByType<InputManager>();
-            if (_inputManager != null)
-                _inputManager.OnMouseLook += _onMouseLook;
-
             _playerBody = transform.parent;
 
             _setupCamera();
             _initialized = true;
-        }
 
-        private void OnDestroy()
-        {
-            if (_inputManager != null)
-                _inputManager.OnMouseLook -= _onMouseLook;
+            Debug.Log($"[CameraController] Start() complete. " +
+                $"InputManager={_inputManager != null}, " +
+                $"PlayerBody={_playerBody != null}, " +
+                $"Camera={_camera != null}");
         }
 
         private void _setupCamera()
@@ -124,36 +116,38 @@ namespace Game1.Unity.Core
             _camera.farClipPlane = _farClip;
             _camera.orthographic = false;
 
-            // Position camera at eye level relative to player
             transform.localPosition = new Vector3(0, _eyeHeight, 0);
             transform.localRotation = Quaternion.identity;
 
-            // Tag as MainCamera if no other exists
             if (Camera.main == null || Camera.main == _camera)
                 gameObject.tag = "MainCamera";
         }
 
         // ====================================================================
-        // Mouse Look
-        // ====================================================================
-
-        private void _onMouseLook(Vector2 lookDelta)
-        {
-            // Yaw: rotate the player body (or this object's parent)
-            _currentYaw += lookDelta.x;
-
-            // Pitch: rotate the camera up/down
-            _currentPitch += lookDelta.y;
-            _currentPitch = Mathf.Clamp(_currentPitch, _minPitch, _maxPitch);
-        }
-
-        // ====================================================================
-        // Late Update — Apply Rotation
+        // Late Update — Read Look Input & Apply Rotation
         // ====================================================================
 
         private void LateUpdate()
         {
             if (!_initialized) return;
+
+            // Read look delta directly from InputManager property
+            if (_inputManager != null)
+            {
+                Vector2 lookDelta = _inputManager.LookDelta;
+                if (lookDelta.sqrMagnitude > 0.0001f)
+                {
+                    _currentYaw += lookDelta.x;
+                    _currentPitch += lookDelta.y;
+                    _currentPitch = Mathf.Clamp(_currentPitch, _minPitch, _maxPitch);
+
+                    if (!_loggedLook)
+                    {
+                        Debug.Log($"[CameraController] First look delta applied: {lookDelta}");
+                        _loggedLook = true;
+                    }
+                }
+            }
 
             // Apply yaw to player body (parent)
             if (_playerBody != null)
@@ -167,14 +161,9 @@ namespace Game1.Unity.Core
             // Head bob while moving
             if (_enableHeadBob)
             {
-                var gm = GameManager.Instance;
-                if (gm != null && gm.Player != null)
-                {
-                    // Simple bob based on movement (approximated)
-                    Vector3 localPos = transform.localPosition;
-                    localPos.y = _eyeHeight + Mathf.Sin(_bobTimer) * _bobAmount;
-                    transform.localPosition = localPos;
-                }
+                Vector3 localPos = transform.localPosition;
+                localPos.y = _eyeHeight + Mathf.Sin(_bobTimer) * _bobAmount;
+                transform.localPosition = localPos;
             }
         }
 
@@ -191,19 +180,11 @@ namespace Game1.Unity.Core
         // Public API
         // ====================================================================
 
-        /// <summary>Set the camera yaw directly (e.g., for teleport).</summary>
-        public void SetYaw(float yaw)
-        {
-            _currentYaw = yaw;
-        }
+        public void SetYaw(float yaw) => _currentYaw = yaw;
 
-        /// <summary>Set the camera pitch directly.</summary>
-        public void SetPitch(float pitch)
-        {
+        public void SetPitch(float pitch) =>
             _currentPitch = Mathf.Clamp(pitch, _minPitch, _maxPitch);
-        }
 
-        /// <summary>Snap both yaw and pitch.</summary>
         public void SnapOrientation(float yaw, float pitch)
         {
             _currentYaw = yaw;
@@ -214,12 +195,10 @@ namespace Game1.Unity.Core
             transform.localRotation = Quaternion.Euler(_currentPitch, 0, 0);
         }
 
-        /// <summary>Get the current visible world bounds (for chunk culling).</summary>
         public Rect GetVisibleBounds()
         {
             if (_camera == null) return new Rect(0, 0, 100, 100);
 
-            // Perspective: compute approximate ground-plane footprint
             var plane = new Plane(Vector3.up, Vector3.zero);
 
             float minX = float.MaxValue, maxX = float.MinValue;
@@ -245,7 +224,6 @@ namespace Game1.Unity.Core
                 }
                 else
                 {
-                    // Ray doesn't hit ground (looking up) — use a generous default
                     Vector3 pos = transform.position;
                     return new Rect(pos.x - 60, pos.z - 60, 120, 120);
                 }
@@ -257,13 +235,11 @@ namespace Game1.Unity.Core
                 return new Rect(pos.x - 60, pos.z - 60, 120, 120);
             }
 
-            // Add padding
             float padX = (maxX - minX) * 0.15f;
             float padZ = (maxZ - minZ) * 0.15f;
             return new Rect(minX - padX, minZ - padZ, maxX - minX + padX * 2, maxZ - minZ + padZ * 2);
         }
 
-        /// <summary>Convert a screen point to world position on XZ plane (Y=0).</summary>
         public Vector3 ScreenToWorldXZ(Vector2 screenPos)
         {
             if (_camera == null) return Vector3.zero;
@@ -277,7 +253,6 @@ namespace Game1.Unity.Core
             return Vector3.zero;
         }
 
-        /// <summary>Get the forward ray from camera center (for first-person targeting).</summary>
         public Ray GetCenterRay()
         {
             if (_camera == null) return new Ray(Vector3.zero, Vector3.forward);

@@ -1,10 +1,10 @@
 // ============================================================================
 // Game1.Unity.Core.PlayerController
 // Migrated from: core/game_engine.py (movement + interaction handling)
-// Migration phase: 6 (reworked for first-person 2026-02-25)
+// Migration phase: 6 (reworked for first-person 2026-02-26)
 //
 // First-person player controller. WASD movement relative to camera forward.
-// All input routed through InputManager (no legacy Input API).
+// Reads InputManager.MoveInput directly each frame (no event dependency).
 // Collision via WorldSystem bounds check.
 // ============================================================================
 
@@ -20,12 +20,8 @@ using Game1.Unity.World;
 namespace Game1.Unity.Core
 {
     /// <summary>
-    /// First-person player controller. Handles:
-    /// - WASD movement relative to camera facing direction
-    /// - World bounds collision checking
-    /// - E-key interaction with world objects
-    /// - Position sync between Character data and Transform
-    /// All input comes from InputManager events (no legacy Input API).
+    /// First-person player controller. Reads InputManager.MoveInput property
+    /// directly each frame — no event subscription timing issues.
     /// </summary>
     public class PlayerController : MonoBehaviour
     {
@@ -58,10 +54,10 @@ namespace Game1.Unity.Core
         // State
         // ====================================================================
 
-        private Vector2 _pendingMove;
         private float _verticalVelocity;
         private bool _isGrounded;
         private Character _character;
+        private bool _loggedMovement;
 
         /// <summary>Enable/disable player movement (for UI, cutscenes, etc.).</summary>
         public bool MovementEnabled { get; set; } = true;
@@ -73,22 +69,33 @@ namespace Game1.Unity.Core
         private void Start()
         {
             _gameManager = GameManager.Instance;
-            _inputManager = FindFirstObjectByType<InputManager>();
             _stateManager = FindFirstObjectByType<GameStateManager>();
             _cameraController = GetComponentInChildren<CameraController>();
 
+            // Find InputManager — search everywhere including DontDestroyOnLoad
+            _inputManager = FindFirstObjectByType<InputManager>();
+
             if (_inputManager != null)
             {
-                _inputManager.OnMoveInput += _onMoveInput;
                 _inputManager.OnInteract += _onInteract;
+                Debug.Log("[PlayerController] InputManager found, subscribed to Interact");
             }
+            else
+            {
+                Debug.LogError("[PlayerController] InputManager NOT FOUND! Movement will not work.");
+            }
+
+            Debug.Log($"[PlayerController] Start() complete. " +
+                $"GameManager={_gameManager != null}, " +
+                $"StateManager={_stateManager != null}, " +
+                $"CameraController={_cameraController != null}, " +
+                $"InputManager={_inputManager != null}");
         }
 
         private void OnDestroy()
         {
             if (_inputManager != null)
             {
-                _inputManager.OnMoveInput -= _onMoveInput;
                 _inputManager.OnInteract -= _onInteract;
             }
         }
@@ -106,13 +113,8 @@ namespace Game1.Unity.Core
         }
 
         // ====================================================================
-        // Input Handlers
+        // Input Handlers (events — for discrete actions only)
         // ====================================================================
-
-        private void _onMoveInput(Vector2 input)
-        {
-            _pendingMove = input;
-        }
 
         private void _onInteract()
         {
@@ -121,16 +123,28 @@ namespace Game1.Unity.Core
         }
 
         // ====================================================================
-        // Movement
+        // Movement — Direct polling from InputManager
         // ====================================================================
 
         private void _processMovement()
         {
-            if (_pendingMove.sqrMagnitude < 0.01f)
+            // Read movement input directly from InputManager property
+            Vector2 moveInput = Vector2.zero;
+            if (_inputManager != null)
             {
-                _pendingMove = Vector2.zero;
+                moveInput = _inputManager.MoveInput;
+            }
+
+            if (moveInput.sqrMagnitude < 0.01f)
+            {
                 if (_cameraController != null) _cameraController.NotifyMoving(false);
                 return;
+            }
+
+            if (!_loggedMovement)
+            {
+                Debug.Log($"[PlayerController] First movement processing: input={moveInput}");
+                _loggedMovement = true;
             }
 
             // Get camera-relative directions on XZ plane
@@ -151,11 +165,9 @@ namespace Game1.Unity.Core
             }
 
             // Calculate movement direction relative to camera
-            Vector3 moveDir = (forward * _pendingMove.y + right * _pendingMove.x).normalized;
+            Vector3 moveDir = (forward * moveInput.y + right * moveInput.x).normalized;
 
             // Apply speed — use Unity-appropriate speed (not Python pixel-per-frame value)
-            // Character.MovementSpeed (0.15) is a Python-era value in pixels/frame.
-            // _moveSpeed (5.0) is the correct meters/second for 3D first-person.
             float speed = _moveSpeed;
             Vector3 movement = moveDir * speed * Time.deltaTime;
 
@@ -186,23 +198,18 @@ namespace Game1.Unity.Core
             }
 
             if (_cameraController != null) _cameraController.NotifyMoving(true);
-
-            // Reset pending input (will be refreshed next frame from InputManager)
-            _pendingMove = Vector2.zero;
         }
 
         // ====================================================================
         // Transform Sync
         // ====================================================================
 
-        /// <summary>Sync Unity Transform to Character Position.</summary>
         private void _syncTransform()
         {
             if (_character == null) return;
 
             Vector3 pos = PositionConverter.ToVector3(_character.Position);
 
-            // Get terrain height at player position with Perlin noise for smooth terrain
             string tileType = _getTileTypeAtPosition(pos.x, pos.z);
             pos.y = ChunkMeshGenerator.SampleTerrainHeight(pos.x, pos.z, tileType);
 
@@ -232,12 +239,6 @@ namespace Game1.Unity.Core
             {
                 _character.Position = position;
                 _syncTransform();
-
-                // Snap camera to avoid interpolation lag
-                if (_cameraController != null)
-                {
-                    // Position is synced via parent transform
-                }
             }
         }
 

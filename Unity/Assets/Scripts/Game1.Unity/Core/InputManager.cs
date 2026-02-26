@@ -1,12 +1,15 @@
 // ============================================================================
 // Game1.Unity.Core.InputManager
 // Migrated from: core/game_engine.py (lines 488-1165: handle_events)
-// Migration phase: 6 (reworked for first-person controls 2026-02-25)
+// Migration phase: 6 (reworked for first-person controls 2026-02-26)
 //
-// Replaces Python's pygame event polling with direct device polling.
-// Uses Keyboard.current / Mouse.current (New Input System) as primary,
-// with legacy UnityEngine.Input fallback when the old backend is active.
-// NO InputAction objects — direct polling is the most reliable approach.
+// Direct device polling with dual-read architecture:
+//   - Continuous input (movement, look) → public properties polled by controllers
+//   - Discrete input (buttons, menus) → events fired to subscribers
+//
+// Backend strategy:
+//   1. Primary:  Keyboard.current / Mouse.current  (New Input System)
+//   2. Fallback: UnityEngine.Input.GetKey/GetAxis   (Legacy Input Manager)
 // ============================================================================
 
 using System;
@@ -18,15 +21,13 @@ using UnityEngine.InputSystem;
 namespace Game1.Unity.Core
 {
     /// <summary>
-    /// Central input manager. Polls keyboard/mouse every frame and fires events.
+    /// Central input manager. Dual-read architecture:
+    ///   - MoveInput / LookDelta: public properties read directly by controllers each frame
+    ///   - Button events: fired to UI panel subscribers
     ///
-    /// Input backend strategy (handles ALL Player Settings configurations):
-    ///   1. Primary:  Keyboard.current / Mouse.current  (New Input System direct device API)
-    ///   2. Fallback: UnityEngine.Input.GetKey/GetAxis   (Legacy Input Manager)
-    ///   3. Both backends are tried — first one that's available wins each frame.
-    ///
-    /// Click-to-lock cursor pattern: left-click during gameplay locks the cursor.
-    /// Escape unlocks. State transitions also manage cursor lock.
+    /// This eliminates event timing/subscription failures for continuous input.
+    /// Click-to-lock cursor pattern for Editor compatibility.
+    /// Grace period after cursor lock to suppress phantom Escape key.
     /// </summary>
     public class InputManager : MonoBehaviour
     {
@@ -41,7 +42,20 @@ namespace Game1.Unity.Core
         [SerializeField] private bool _invertY = false;
 
         // ====================================================================
-        // Events — UI components subscribe to receive input
+        // Polled Properties — Controllers read these directly each frame
+        // ====================================================================
+
+        /// <summary>WASD movement input (X = strafe, Y = forward/back). Normalized if non-zero.</summary>
+        public Vector2 MoveInput { get; private set; }
+
+        /// <summary>Mouse look delta, already scaled by sensitivity. (X = yaw, Y = pitch).</summary>
+        public Vector2 LookDelta { get; private set; }
+
+        /// <summary>Whether the game is in a playing state where movement is allowed.</summary>
+        public bool IsPlayingState { get; private set; }
+
+        // ====================================================================
+        // Events — UI panel subscribers
         // ====================================================================
 
         public event Action<Vector2> OnMoveInput;
@@ -86,11 +100,15 @@ namespace Game1.Unity.Core
         }
 
         // ====================================================================
-        // Backend Detection
+        // Internal State
         // ====================================================================
 
-        private bool _hasNewInputSystem;
-        private bool _hasLegacyInput;
+        private float _escapeGraceTimer;      // Suppress Escape for N seconds after cursor lock
+        private const float EscapeGracePeriod = 0.5f;
+        private int _frameCount;              // Track frames since start
+        private const int IgnoreInputFrames = 3; // Skip input for first N frames
+        private bool _loggedFirstInput;       // Log first successful input detection
+        private bool _wantsCursorLocked;      // True when we want cursor locked (survives Editor override)
 
         // ====================================================================
         // Initialization
@@ -118,33 +136,25 @@ namespace Game1.Unity.Core
 
         private void _detectInputBackends()
         {
-            // Detect which input backends are available at runtime
+            bool hasNew = false;
+            bool hasLegacy = false;
+
 #if ENABLE_INPUT_SYSTEM
-            try
-            {
-                // Check if New Input System devices are available
-                _hasNewInputSystem = Keyboard.current != null || Mouse.current != null;
-            }
-            catch
-            {
-                _hasNewInputSystem = false;
-            }
-#else
-            _hasNewInputSystem = false;
+            hasNew = true;
+            Debug.Log($"[InputManager] New Input System: COMPILED IN. Keyboard.current={Keyboard.current != null}, Mouse.current={Mouse.current != null}");
 #endif
 
 #if ENABLE_LEGACY_INPUT_MANAGER
-            _hasLegacyInput = true;
-#else
-            _hasLegacyInput = false;
+            hasLegacy = true;
+            Debug.Log("[InputManager] Legacy Input Manager: COMPILED IN");
 #endif
 
-            Debug.Log($"[InputManager] Backends: NewInputSystem={_hasNewInputSystem}, LegacyInput={_hasLegacyInput}");
+            Debug.Log($"[InputManager] Backends: NewInputSystem={hasNew}, LegacyInput={hasLegacy}");
 
-            if (!_hasNewInputSystem && !_hasLegacyInput)
+            if (!hasNew && !hasLegacy)
             {
                 Debug.LogError("[InputManager] NO INPUT BACKEND AVAILABLE! " +
-                    "Check Player Settings → Active Input Handling. " +
+                    "Check Player Settings > Active Input Handling. " +
                     "Set to 'Both' or 'Input System Package (New)'.");
             }
         }
@@ -155,35 +165,58 @@ namespace Game1.Unity.Core
 
         private void Update()
         {
-            // Re-check backends each frame (devices can appear after Awake)
-#if ENABLE_INPUT_SYSTEM
-            if (!_hasNewInputSystem)
+            _frameCount++;
+
+            // Skip input entirely for first few frames (devices may not be ready)
+            if (_frameCount <= IgnoreInputFrames)
             {
-                _hasNewInputSystem = Keyboard.current != null || Mouse.current != null;
-                if (_hasNewInputSystem)
-                    Debug.Log("[InputManager] New Input System devices now available");
+                MoveInput = Vector2.zero;
+                LookDelta = Vector2.zero;
+                return;
             }
-#endif
+
+            // Decrement grace timer
+            if (_escapeGraceTimer > 0f)
+                _escapeGraceTimer -= Time.unscaledDeltaTime;
 
             bool isPlaying = _stateManager == null || _stateManager.IsPlaying;
+            IsPlayingState = isPlaying;
 
             // === 1. Mouse Position (always, for UI) ===
             _pollMousePosition();
 
-            // === 2. Movement (continuous, every frame) ===
-            Vector2 moveInput = _pollMovement();
-            if (isPlaying && moveInput.sqrMagnitude > 0.01f)
+            // === 2. Movement (continuous) ===
+            Vector2 rawMove = _pollMovement();
+            if (isPlaying && rawMove.sqrMagnitude > 0.01f)
             {
-                OnMoveInput?.Invoke(moveInput.normalized);
+                Vector2 normalizedMove = rawMove.normalized;
+                MoveInput = normalizedMove;
+                OnMoveInput?.Invoke(normalizedMove); // Also fire event for backward compat
+
+                if (!_loggedFirstInput)
+                {
+                    Debug.Log($"[InputManager] First movement detected: {normalizedMove}");
+                    _loggedFirstInput = true;
+                }
+            }
+            else
+            {
+                MoveInput = Vector2.zero;
             }
 
-            // === 3. Mouse Look (when cursor locked in gameplay) ===
-            Vector2 mouseDelta = _pollMouseDelta();
-            if (IsCursorLocked && isPlaying && mouseDelta.sqrMagnitude > 0.001f)
+            // === 3. Mouse Look ===
+            Vector2 rawDelta = _pollMouseDelta();
+            if (IsCursorLocked && isPlaying && rawDelta.sqrMagnitude > 0.001f)
             {
-                float deltaX = mouseDelta.x * _mouseSensitivity;
-                float deltaY = mouseDelta.y * _mouseSensitivity * (_invertY ? 1f : -1f);
-                OnMouseLook?.Invoke(new Vector2(deltaX, deltaY));
+                float deltaX = rawDelta.x * _mouseSensitivity;
+                float deltaY = rawDelta.y * _mouseSensitivity * (_invertY ? 1f : -1f);
+                Vector2 scaledDelta = new Vector2(deltaX, deltaY);
+                LookDelta = scaledDelta;
+                OnMouseLook?.Invoke(scaledDelta); // Also fire event for backward compat
+            }
+            else
+            {
+                LookDelta = Vector2.zero;
             }
 
             // === 4. Click-to-Lock Cursor ===
@@ -213,7 +246,9 @@ namespace Game1.Unity.Core
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             IsCursorLocked = true;
-            Debug.Log("[InputManager] Cursor LOCKED");
+            _wantsCursorLocked = true;
+            _escapeGraceTimer = EscapeGracePeriod; // Suppress phantom Escape after lock
+            Debug.Log("[InputManager] Cursor LOCKED (grace timer started)");
         }
 
         /// <summary>Unlock the cursor for UI interaction.</summary>
@@ -222,7 +257,23 @@ namespace Game1.Unity.Core
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             IsCursorLocked = false;
+            _wantsCursorLocked = false;
             Debug.Log("[InputManager] Cursor UNLOCKED");
+        }
+
+        /// <summary>
+        /// Re-lock cursor when application regains focus (Editor steals focus on Escape).
+        /// This is the standard Unity workaround for Editor cursor lock issues.
+        /// </summary>
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (hasFocus && _wantsCursorLocked)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+                IsCursorLocked = true;
+                Debug.Log("[InputManager] Cursor re-locked on application focus");
+            }
         }
 
         // ====================================================================
@@ -269,7 +320,7 @@ namespace Game1.Unity.Core
 
 #if ENABLE_LEGACY_INPUT_MANAGER
             return new Vector2(
-                Input.GetAxisRaw("Mouse X") * 10f,  // Scale to match New Input System range
+                Input.GetAxisRaw("Mouse X") * 10f,
                 Input.GetAxisRaw("Mouse Y") * 10f
             );
 #endif
@@ -371,7 +422,7 @@ namespace Game1.Unity.Core
 #endif
 
 #if ENABLE_LEGACY_INPUT_MANAGER
-            return Input.GetAxis("Mouse ScrollWheel") * 120f; // Scale to match
+            return Input.GetAxis("Mouse ScrollWheel") * 120f;
 #endif
 
 #pragma warning disable CS0162
@@ -385,13 +436,20 @@ namespace Game1.Unity.Core
 
         private void _pollButtons(bool isPlaying)
         {
-            // Escape — always active (unlocks cursor, opens pause)
+            // Escape — always active, but suppressed during grace period
             if (_wasKeyPressed(KeyCode.Escape))
             {
-                if (IsCursorLocked)
-                    UnlockCursor();
-                OnEscape?.Invoke();
-                _stateManager?.HandleEscape();
+                if (_escapeGraceTimer > 0f)
+                {
+                    Debug.Log("[InputManager] Escape SUPPRESSED (grace period active)");
+                }
+                else
+                {
+                    if (IsCursorLocked)
+                        UnlockCursor();
+                    OnEscape?.Invoke();
+                    _stateManager?.HandleEscape();
+                }
             }
 
             // --- Gameplay keys (only when playing) ---
@@ -473,10 +531,6 @@ namespace Game1.Unity.Core
         // Key Press Detection (unified across backends)
         // ====================================================================
 
-        /// <summary>
-        /// Check if a key was pressed this frame. Tries New Input System first,
-        /// then falls back to legacy Input.GetKeyDown.
-        /// </summary>
         private bool _wasKeyPressed(KeyCode keyCode)
         {
 #if ENABLE_INPUT_SYSTEM
@@ -499,15 +553,10 @@ namespace Game1.Unity.Core
         }
 
 #if ENABLE_INPUT_SYSTEM
-        /// <summary>
-        /// Map UnityEngine.KeyCode to UnityEngine.InputSystem.Key.
-        /// Only maps keys we actually use.
-        /// </summary>
         private static Key _keyCodeToKey(KeyCode keyCode)
         {
             switch (keyCode)
             {
-                // Letters
                 case KeyCode.A: return Key.A;
                 case KeyCode.C: return Key.C;
                 case KeyCode.D: return Key.D;
@@ -518,27 +567,20 @@ namespace Game1.Unity.Core
                 case KeyCode.M: return Key.M;
                 case KeyCode.S: return Key.S;
                 case KeyCode.W: return Key.W;
-
-                // Numbers
                 case KeyCode.Alpha1: return Key.Digit1;
                 case KeyCode.Alpha2: return Key.Digit2;
                 case KeyCode.Alpha3: return Key.Digit3;
                 case KeyCode.Alpha4: return Key.Digit4;
                 case KeyCode.Alpha5: return Key.Digit5;
-
-                // Special
                 case KeyCode.Space: return Key.Space;
                 case KeyCode.Tab: return Key.Tab;
                 case KeyCode.Escape: return Key.Escape;
-
-                // Function keys
                 case KeyCode.F1: return Key.F1;
                 case KeyCode.F2: return Key.F2;
                 case KeyCode.F3: return Key.F3;
                 case KeyCode.F4: return Key.F4;
                 case KeyCode.F5: return Key.F5;
                 case KeyCode.F7: return Key.F7;
-
                 default: return Key.None;
             }
         }
@@ -550,7 +592,6 @@ namespace Game1.Unity.Core
 
         private void _onGameStateChanged(GameState oldState, GameState newState)
         {
-            // Lock cursor during gameplay, unlock for any UI
             if (newState == GameState.Playing)
             {
                 LockCursor();
