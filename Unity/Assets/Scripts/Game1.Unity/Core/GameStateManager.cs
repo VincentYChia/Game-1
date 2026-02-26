@@ -48,6 +48,22 @@ namespace Game1.Unity.Core
     public class GameStateManager : MonoBehaviour
     {
         // ====================================================================
+        // Singleton (reliable access from UI panels, avoids FindFirstObjectByType)
+        // ====================================================================
+
+        public static GameStateManager Instance { get; private set; }
+
+        private void Awake()
+        {
+            Instance = this;
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
+        }
+
+        // ====================================================================
         // Events
         // ====================================================================
 

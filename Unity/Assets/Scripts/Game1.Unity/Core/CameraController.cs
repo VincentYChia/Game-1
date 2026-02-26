@@ -99,7 +99,7 @@ namespace Game1.Unity.Core
         {
             Debug.Log("[DBG:CAMERA:START:01] CameraController.Start() BEGIN"); // DBG
 
-            _inputManager = FindFirstObjectByType<InputManager>();
+            _inputManager = InputManager.Instance ?? FindFirstObjectByType<InputManager>();
             Debug.Log($"[DBG:CAMERA:START:02] InputManager = {(_inputManager != null ? "FOUND on " + _inputManager.gameObject.name : "NULL")}"); // DBG
 
             // Find player body (parent transform for yaw rotation)

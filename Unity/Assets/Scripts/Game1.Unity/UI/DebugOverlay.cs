@@ -52,7 +52,7 @@ namespace Game1.Unity.UI
         {
             if (_debugPanel == null) _buildUI();
 
-            _inputManager = FindFirstObjectByType<InputManager>();
+            _inputManager = InputManager.Instance ?? FindFirstObjectByType<InputManager>();
             if (_inputManager != null)
                 _inputManager.OnDebugKey += _onDebugKey;
 

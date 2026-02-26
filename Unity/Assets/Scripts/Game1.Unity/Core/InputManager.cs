@@ -32,6 +32,12 @@ namespace Game1.Unity.Core
     public class InputManager : MonoBehaviour
     {
         // ====================================================================
+        // Singleton (reliable access from UI panels, avoids FindFirstObjectByType)
+        // ====================================================================
+
+        public static InputManager Instance { get; private set; }
+
+        // ====================================================================
         // Inspector References
         // ====================================================================
 
@@ -122,8 +128,10 @@ namespace Game1.Unity.Core
 
         private void Awake()
         {
+            Instance = this;
+
             if (_stateManager == null)
-                _stateManager = FindFirstObjectByType<GameStateManager>();
+                _stateManager = GameStateManager.Instance ?? FindFirstObjectByType<GameStateManager>();
 
             _detectInputBackends();
         }
@@ -511,18 +519,21 @@ namespace Game1.Unity.Core
 
             if (allowMenuKeys)
             {
+                // Direct TogglePanel calls ensure state transitions happen even if
+                // UI panels haven't subscribed (e.g. FindFirstObjectByType failed).
+                // Events are still fired for any additional listeners.
                 if (_wasKeyPressed(KeyCode.Tab))
-                { Debug.Log("[DBG:INPUT:KEY] Tab pressed → OnToggleInventory"); OnToggleInventory?.Invoke(); } // DBG
+                { Debug.Log("[DBG:INPUT:KEY] Tab pressed → TogglePanel(InventoryOpen)"); _stateManager?.TogglePanel(GameState.InventoryOpen); OnToggleInventory?.Invoke(); } // DBG
                 if (_wasKeyPressed(KeyCode.I))
-                { Debug.Log("[DBG:INPUT:KEY] I pressed → OnToggleEquipment"); OnToggleEquipment?.Invoke(); } // DBG
+                { Debug.Log("[DBG:INPUT:KEY] I pressed → TogglePanel(EquipmentOpen)"); _stateManager?.TogglePanel(GameState.EquipmentOpen); OnToggleEquipment?.Invoke(); } // DBG
                 if (_wasKeyPressed(KeyCode.M))
-                { Debug.Log("[DBG:INPUT:KEY] M pressed → OnToggleMap"); OnToggleMap?.Invoke(); } // DBG
+                { Debug.Log("[DBG:INPUT:KEY] M pressed → TogglePanel(MapOpen)"); _stateManager?.TogglePanel(GameState.MapOpen); OnToggleMap?.Invoke(); } // DBG
                 if (_wasKeyPressed(KeyCode.J))
-                { Debug.Log("[DBG:INPUT:KEY] J pressed → OnToggleEncyclopedia"); OnToggleEncyclopedia?.Invoke(); } // DBG
+                { Debug.Log("[DBG:INPUT:KEY] J pressed → TogglePanel(EncyclopediaOpen)"); _stateManager?.TogglePanel(GameState.EncyclopediaOpen); OnToggleEncyclopedia?.Invoke(); } // DBG
                 if (_wasKeyPressed(KeyCode.C))
-                { Debug.Log("[DBG:INPUT:KEY] C pressed → OnToggleStats"); OnToggleStats?.Invoke(); } // DBG
+                { Debug.Log("[DBG:INPUT:KEY] C pressed → TogglePanel(StatsOpen)"); _stateManager?.TogglePanel(GameState.StatsOpen); OnToggleStats?.Invoke(); } // DBG
                 if (_wasKeyPressed(KeyCode.K))
-                { Debug.Log("[DBG:INPUT:KEY] K pressed → OnToggleSkills"); OnToggleSkills?.Invoke(); } // DBG
+                { Debug.Log("[DBG:INPUT:KEY] K pressed → TogglePanel(SkillsOpen)"); _stateManager?.TogglePanel(GameState.SkillsOpen); OnToggleSkills?.Invoke(); } // DBG
             }
 
             // --- Gameplay keys (only when playing) ---

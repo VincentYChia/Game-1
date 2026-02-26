@@ -85,7 +85,7 @@ namespace Game1.Unity.UI
 
         private void Start()
         {
-            _inputManager = FindFirstObjectByType<InputManager>();
+            _inputManager = InputManager.Instance ?? FindFirstObjectByType<InputManager>();
             if (_inputManager != null)
             {
                 _inputManager.OnEscape += _onEscapePressed;

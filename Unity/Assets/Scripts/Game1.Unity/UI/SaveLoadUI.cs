@@ -69,7 +69,7 @@ namespace Game1.Unity.UI
             if (_panel == null) _buildUI();
 
             _gameManager = GameManager.Instance;
-            _stateManager = FindFirstObjectByType<GameStateManager>();
+            _stateManager = GameStateManager.Instance ?? FindFirstObjectByType<GameStateManager>();
 
             if (_saveButton != null)
                 _saveButton.onClick.AddListener(OnSaveClicked);

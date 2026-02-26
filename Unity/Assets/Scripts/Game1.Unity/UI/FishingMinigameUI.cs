@@ -84,7 +84,7 @@ namespace Game1.Unity.UI
             if (_panel == null) _buildUI();
 
             _gameManager = GameManager.Instance;
-            _stateManager = FindFirstObjectByType<GameStateManager>();
+            _stateManager = GameStateManager.Instance ?? FindFirstObjectByType<GameStateManager>();
 
             if (_resultCloseButton != null)
                 _resultCloseButton.onClick.AddListener(CloseResult);

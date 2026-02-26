@@ -294,13 +294,19 @@ namespace Game1.Systems.World
         /// </summary>
         public bool IsWalkable(GamePosition position)
         {
+            // World boundary — positions outside the tile grid are not walkable.
+            // This replaces the hard Mathf.Clamp in PlayerController; the wall-sliding
+            // code handles boundary collisions naturally via this check.
+            int tileX = (int)MathF.Floor(position.X);
+            int tileZ = (int)MathF.Floor(position.Z);
+            if (tileX < 0 || tileX >= GameConfig.WorldSizeX || tileZ < 0 || tileZ >= GameConfig.WorldSizeZ)
+                return false;
+
             var tile = GetTile(position);
-            if (tile == null) return true; // Unloaded/missing tile — don't block
+            if (tile == null) return true; // Unloaded within-bounds tile — don't block
             if (!tile.Walkable) return false;
 
             // Check for blocking resources
-            int tileX = (int)MathF.Floor(position.X);
-            int tileZ = (int)MathF.Floor(position.Z);
             var (cx, cy) = WorldToChunk(tileX, tileZ);
 
             // Resource blocking radius: 0.3 allows first-person navigation between

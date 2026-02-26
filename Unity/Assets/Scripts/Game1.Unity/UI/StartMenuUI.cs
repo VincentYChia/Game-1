@@ -58,7 +58,7 @@ namespace Game1.Unity.UI
         {
             if (_panel == null) _buildUI();
 
-            _stateManager = FindFirstObjectByType<GameStateManager>();
+            _stateManager = GameStateManager.Instance ?? FindFirstObjectByType<GameStateManager>();
             if (_stateManager != null)
                 _stateManager.OnStateChanged += _onStateChanged;
 

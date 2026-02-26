@@ -61,7 +61,7 @@ namespace Game1.Unity.UI
         {
             if (_panel == null) _buildUI();
 
-            _stateManager = FindFirstObjectByType<GameStateManager>();
+            _stateManager = GameStateManager.Instance ?? FindFirstObjectByType<GameStateManager>();
         }
 
         private void Update()

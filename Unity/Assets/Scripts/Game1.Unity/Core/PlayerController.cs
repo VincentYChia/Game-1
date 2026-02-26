@@ -83,7 +83,7 @@ namespace Game1.Unity.Core
             Debug.Log($"[DBG:PLAYER:START:02] GameManager.Instance = {(_gameManager != null ? "FOUND" : "NULL")}"); // DBG
 
             // Find GameStateManager
-            _stateManager = FindFirstObjectByType<GameStateManager>();
+            _stateManager = GameStateManager.Instance ?? FindFirstObjectByType<GameStateManager>();
             Debug.Log($"[DBG:PLAYER:START:03] GameStateManager = {(_stateManager != null ? "FOUND" : "NULL")}"); // DBG
 
             // Find CameraController — should be on a child
@@ -103,7 +103,7 @@ namespace Game1.Unity.Core
             } // DBG
 
             // Find InputManager
-            _inputManager = FindFirstObjectByType<InputManager>();
+            _inputManager = InputManager.Instance ?? FindFirstObjectByType<InputManager>();
             Debug.Log($"[DBG:PLAYER:START:05] InputManager = {(_inputManager != null ? "FOUND on " + _inputManager.gameObject.name : "NULL")}"); // DBG
 
             if (_inputManager != null)
@@ -276,9 +276,9 @@ namespace Game1.Unity.Core
             float newX = currentPos.X + movement.x;
             float newZ = currentPos.Z + movement.z;
 
-            // World bounds
-            newX = Mathf.Clamp(newX, 0.5f, GameConfig.WorldSizeX - 0.5f);
-            newZ = Mathf.Clamp(newZ, 0.5f, GameConfig.WorldSizeZ - 0.5f);
+            // World bounds are enforced by WorldSystem.IsWalkable() returning false
+            // for out-of-bounds positions. No hard clamp needed — the wall-sliding
+            // code below handles boundary collisions naturally.
 
             // Walkability check with wall-sliding (mirrors Python movement)
             var worldSystem = _gameManager.World;

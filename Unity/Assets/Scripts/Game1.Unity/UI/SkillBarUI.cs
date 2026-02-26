@@ -51,7 +51,7 @@ namespace Game1.Unity.UI
         {
             if (_panel == null) _buildUI();
 
-            _inputManager = FindFirstObjectByType<InputManager>();
+            _inputManager = InputManager.Instance ?? FindFirstObjectByType<InputManager>();
             if (_inputManager != null)
                 _inputManager.OnSkillActivate += _onSkillActivate;
 

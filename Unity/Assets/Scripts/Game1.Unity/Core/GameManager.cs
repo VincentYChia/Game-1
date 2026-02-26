@@ -169,9 +169,9 @@ namespace Game1.Unity.Core
         {
             // Auto-discover scene references if not assigned in Inspector
             if (_stateManager == null)
-                _stateManager = FindFirstObjectByType<GameStateManager>();
+                _stateManager = GameStateManager.Instance ?? FindFirstObjectByType<GameStateManager>();
             if (_inputManager == null)
-                _inputManager = FindFirstObjectByType<InputManager>();
+                _inputManager = InputManager.Instance ?? FindFirstObjectByType<InputManager>();
             if (_cameraController == null)
                 _cameraController = FindFirstObjectByType<CameraController>();
             if (_audioManager == null)
