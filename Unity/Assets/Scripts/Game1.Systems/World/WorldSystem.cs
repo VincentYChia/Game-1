@@ -295,7 +295,8 @@ namespace Game1.Systems.World
         public bool IsWalkable(GamePosition position)
         {
             var tile = GetTile(position);
-            if (tile == null || !tile.Walkable) return false;
+            if (tile == null) return true; // Unloaded/missing tile — don't block
+            if (!tile.Walkable) return false;
 
             // Check for blocking resources
             int tileX = (int)MathF.Floor(position.X);

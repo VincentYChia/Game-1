@@ -83,12 +83,21 @@ namespace Game1.Unity.UI
         // Lifecycle
         // ====================================================================
 
+        private InputManager _inputManager;
+
         private void Start()
         {
             if (_panel == null) _buildUI();
 
             _gameManager = GameManager.Instance;
             _stateManager = FindFirstObjectByType<GameStateManager>();
+            _inputManager = FindFirstObjectByType<InputManager>();
+
+            if (_inputManager != null)
+                _inputManager.OnToggleSkills += _onToggle;
+
+            if (_stateManager != null)
+                _stateManager.OnStateChanged += _onStateChanged;
 
             if (_equipButton != null)
                 _equipButton.onClick.AddListener(OnEquipClicked);
@@ -99,8 +108,32 @@ namespace Game1.Unity.UI
             if (_categoryFilter != null)
                 _categoryFilter.onValueChanged.AddListener(OnFilterChanged);
 
-            if (_panel != null)
-                _panel.SetActive(false);
+            _setVisible(false);
+        }
+
+        private void OnDestroy()
+        {
+            if (_inputManager != null)
+                _inputManager.OnToggleSkills -= _onToggle;
+            if (_stateManager != null)
+                _stateManager.OnStateChanged -= _onStateChanged;
+        }
+
+        private void _onToggle()
+        {
+            _stateManager?.TogglePanel(GameState.SkillsOpen);
+        }
+
+        private void _onStateChanged(GameState oldState, GameState newState)
+        {
+            bool show = newState == GameState.SkillsOpen;
+            _setVisible(show);
+            if (show) RefreshSkillList();
+        }
+
+        private void _setVisible(bool visible)
+        {
+            if (_panel != null) _panel.SetActive(visible);
         }
 
         // ====================================================================

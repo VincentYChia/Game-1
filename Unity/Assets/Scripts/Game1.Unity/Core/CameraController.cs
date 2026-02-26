@@ -164,6 +164,9 @@ namespace Game1.Unity.Core
             _setupCamera();
             _initialized = true;
 
+            // Ensure UI canvases exist (creates them if SceneBootstrapper didn't run)
+            UIBootstrap.EnsureUIExists();
+
             Debug.Log($"[CameraController] Start() complete. " +
                 $"InputManager={_inputManager != null}, " +
                 $"PlayerBody={_playerBody != null}, " +
