@@ -285,12 +285,17 @@ namespace Game1.Unity.UI
             // Update stats summary (programmatic labels)
             if (_totalDamageLabel != null)
             {
-                // Simplified total damage display
-                _totalDamageLabel.text = "0"; // TODO: calculate from equipped items
+                var (minDmg, maxDmg) = equipment.GetWeaponDamage(EquipmentSlot.MainHand);
+                var (offMin, offMax) = equipment.GetWeaponDamage(EquipmentSlot.OffHand);
+                if (offMax > 0)
+                    _totalDamageLabel.text = $"{minDmg}-{maxDmg} / {offMin}-{offMax}";
+                else
+                    _totalDamageLabel.text = $"{minDmg}-{maxDmg}";
             }
             if (_totalDefenseLabel != null)
             {
-                _totalDefenseLabel.text = "0"; // TODO: calculate from equipped items
+                int totalDef = equipment.GetTotalDefense();
+                _totalDefenseLabel.text = totalDef.ToString();
             }
         }
 

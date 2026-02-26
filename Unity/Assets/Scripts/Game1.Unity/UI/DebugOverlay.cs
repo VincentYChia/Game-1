@@ -155,6 +155,12 @@ namespace Game1.Unity.UI
                     NotificationUI.Instance?.Show("Max level + stats!", Color.cyan);
                     break;
 
+                case "F5":
+                    // Give 10 stat points for manual allocation
+                    gm.Player.Leveling.UnallocatedStatPoints += 10;
+                    NotificationUI.Instance?.Show($"+10 stat points! (Total: {gm.Player.Leveling.UnallocatedStatPoints})", Color.cyan);
+                    break;
+
                 case "F7":
                     _debugFlags["F7"] = !_debugFlags["F7"];
                     NotificationUI.Instance?.Show(

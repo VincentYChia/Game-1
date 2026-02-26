@@ -276,11 +276,12 @@ namespace Game1.Unity.UI
         {
             _displayedSkills.Clear();
 
+            _gameManager = GameManager.Instance;
             if (_gameManager?.Player == null) return;
 
             var skillManager = _gameManager.Player.Skills;
             var skillDb = SkillDatabase.Instance;
-            if (!skillDb.Loaded) return;
+            if (skillDb == null || !skillDb.Loaded) return;
 
             // Get learned skills
             var learnedSkillIds = skillManager.KnownSkills.Keys;
@@ -298,6 +299,39 @@ namespace Game1.Unity.UI
             }
 
             RebuildSkillList();
+            _refreshHotbar();
+        }
+
+        private void _refreshHotbar()
+        {
+            if (_skillBarSlots == null || _gameManager?.Player == null) return;
+
+            var equippedSkills = _gameManager.Player.Skills.GetEquippedSkills();
+            var skillDb = SkillDatabase.Instance;
+
+            for (int i = 0; i < _skillBarSlots.Count && i < equippedSkills.Length; i++)
+            {
+                var btn = _skillBarSlots[i];
+                if (btn == null) continue;
+
+                var slotText = btn.GetComponentInChildren<Text>();
+                if (slotText == null) continue;
+
+                string skillId = equippedSkills[i];
+                if (!string.IsNullOrEmpty(skillId) && skillDb != null)
+                {
+                    var def = skillDb.GetSkill(skillId);
+                    string name = def?.Name ?? skillId;
+                    // Abbreviate to 3 chars + slot number
+                    slotText.text = $"{i + 1}: {(name.Length > 6 ? name.Substring(0, 6) : name)}";
+                    slotText.color = (i == _selectedBarSlot) ? UIHelper.COLOR_TEXT_GOLD : Color.white;
+                }
+                else
+                {
+                    slotText.text = $"{i + 1}: ---";
+                    slotText.color = (i == _selectedBarSlot) ? UIHelper.COLOR_TEXT_GOLD : UIHelper.COLOR_TEXT_SECONDARY;
+                }
+            }
         }
 
         private void RebuildSkillList()
@@ -329,10 +363,20 @@ namespace Game1.Unity.UI
                 }
                 else
                 {
-                    // Code-built fallback entry
+                    // Code-built fallback entry with tier and equipped status
                     string id = skill.SkillId;
+                    bool isEquipped = _gameManager?.Player?.Skills?.GetKnownSkill(id)?.IsEquipped ?? false;
+
+                    string tierStr = skill.Tier > 0 ? $"T{skill.Tier} " : "";
+                    string equippedStr = isEquipped ? " [E]" : "";
+                    string manaStr = !string.IsNullOrEmpty(skill.Cost?.ManaCostRaw)
+                        ? $" ({skill.Cost.ManaCostRaw})"
+                        : "";
+                    string label = $"{tierStr}{skill.Name}{manaStr}{equippedStr}";
+
+                    Color textColor = isEquipped ? UIHelper.COLOR_TEXT_GOLD : UIHelper.COLOR_TEXT_PRIMARY;
                     var entryBtn = UIHelper.CreateButton(_skillListContainer, "Skill_" + id,
-                        skill.Name, UIHelper.COLOR_BG_SLOT, UIHelper.COLOR_TEXT_PRIMARY, 14,
+                        label, UIHelper.COLOR_BG_SLOT, textColor, 13,
                         () => SelectSkill(id));
                     UIHelper.SetPreferredHeight(entryBtn.gameObject, 32);
                 }
@@ -413,19 +457,43 @@ namespace Game1.Unity.UI
         private void OnEquipClicked()
         {
             if (string.IsNullOrEmpty(_selectedSkillId)) return;
+            _gameManager = GameManager.Instance;
             if (_gameManager?.Player == null) return;
 
-            _gameManager.Player.Skills.EquipSkill(_selectedSkillId, _selectedBarSlot >= 0 ? _selectedBarSlot : 0);
+            int slot = _selectedBarSlot >= 0 ? _selectedBarSlot : _findFirstEmptySlot();
+            _gameManager.Player.Skills.EquipSkill(_selectedSkillId, slot);
+
+            var skillDb = SkillDatabase.Instance;
+            var def = skillDb?.GetSkill(_selectedSkillId);
+            NotificationUI.Instance?.Show(
+                $"Equipped {def?.Name ?? _selectedSkillId} to slot {slot + 1}",
+                Color.green);
+
+            RefreshSkillList();
             UpdateSkillDetail();
         }
 
         private void OnUnequipClicked()
         {
             if (string.IsNullOrEmpty(_selectedSkillId)) return;
+            _gameManager = GameManager.Instance;
             if (_gameManager?.Player == null) return;
 
             _gameManager.Player.Skills.UnequipSkill(_selectedSkillId);
+            NotificationUI.Instance?.Show("Skill unequipped", Color.yellow);
+            RefreshSkillList();
             UpdateSkillDetail();
+        }
+
+        private int _findFirstEmptySlot()
+        {
+            if (_gameManager?.Player == null) return 0;
+            var equipped = _gameManager.Player.Skills.GetEquippedSkills();
+            for (int i = 0; i < equipped.Length; i++)
+            {
+                if (string.IsNullOrEmpty(equipped[i])) return i;
+            }
+            return 0; // Default to slot 0 if all full
         }
 
         private void OnFilterChanged(int index)

@@ -15,6 +15,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using Game1.Core;
+using Game1.Systems.World;
 using Game1.Unity.Core;
 using Game1.Unity.Utilities;
 
@@ -48,16 +49,18 @@ namespace Game1.Unity.UI
         [SerializeField] private Transform _waypointListContainer;
 
         [Header("Settings")]
-        [SerializeField] private float _zoomMin = 0.5f;
-        [SerializeField] private float _zoomMax = 3f;
-        [SerializeField] private float _zoomSpeed = 0.2f;
-        [SerializeField] private int _chunkPixelSize = 8;
+        [SerializeField] private float _zoomMin = 0.25f;
+        [SerializeField] private float _zoomMax = 5f;
+        [SerializeField] private float _zoomSpeed = 0.25f;
+        [SerializeField] private int _chunkPixelSize = 12;
 
         private GameStateManager _stateManager;
         private InputManager _inputManager;
         private float _currentZoom = 1f;
         private Texture2D _mapTexture;
         private HashSet<Vector2Int> _exploredChunks = new HashSet<Vector2Int>();
+        private Text _zoomLabel;
+        private Text _coordsLabel;
 
         private void Start()
         {
@@ -186,13 +189,21 @@ namespace Game1.Unity.UI
             UIHelper.AddHorizontalLayout(zoomRowRt, spacing: 8f,
                 padding: new RectOffset(8, 8, 4, 4), childForceExpand: true);
 
-            _zoomInButton = UIHelper.CreateButton(zoomRowRt, "ZoomIn",
-                "Zoom +", UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_PRIMARY, 14);
             _zoomOutButton = UIHelper.CreateButton(zoomRowRt, "ZoomOut",
                 "Zoom -", UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_PRIMARY, 14);
 
+            _zoomLabel = UIHelper.CreateText(zoomRowRt, "ZoomLabel", "1.0x",
+                13, UIHelper.COLOR_TEXT_GOLD, TextAnchor.MiddleCenter);
+
+            _zoomInButton = UIHelper.CreateButton(zoomRowRt, "ZoomIn",
+                "Zoom +", UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_PRIMARY, 14);
+
+            var centerBtn = UIHelper.CreateButton(zoomRowRt, "CenterBtn",
+                "Center", UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_PRIMARY, 13,
+                _centerOnPlayer);
+
             // Coordinates display
-            var coordText = UIHelper.CreateText(zoomRowRt, "Coords", "",
+            _coordsLabel = UIHelper.CreateText(zoomRowRt, "Coords", "",
                 12, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleCenter);
         }
 
@@ -228,7 +239,13 @@ namespace Game1.Unity.UI
             var pos = gm.Player.Position;
             float mapX = (pos.X / GameConfig.ChunkSize + 100) * _chunkPixelSize;
             float mapZ = (pos.Z / GameConfig.ChunkSize + 100) * _chunkPixelSize;
-            _playerMarker.anchoredPosition = new Vector2(mapX * _currentZoom, mapZ * _currentZoom);
+            _playerMarker.anchoredPosition = new Vector2(mapX, mapZ);
+
+            // Update coords display
+            int cx = Mathf.FloorToInt(pos.X / GameConfig.ChunkSize);
+            int cz = Mathf.FloorToInt(pos.Z / GameConfig.ChunkSize);
+            if (_coordsLabel != null)
+                _coordsLabel.text = $"Chunk ({cx}, {cz})";
         }
 
         private void _updateExploredChunks()
@@ -257,8 +274,8 @@ namespace Game1.Unity.UI
             int baseX = (chunkCoord.x + 100) * _chunkPixelSize;
             int baseZ = (chunkCoord.y + 100) * _chunkPixelSize;
 
-            // Color based on biome (simplified)
-            Color32 color = new Color32(34, 139, 34, 255); // Default grass
+            // Get biome color from chunk type
+            Color32 color = _getChunkColor(chunkCoord);
 
             for (int x = 0; x < _chunkPixelSize; x++)
             {
@@ -266,11 +283,97 @@ namespace Game1.Unity.UI
                 {
                     int px = baseX + x;
                     int pz = baseZ + z;
+
+                    // Draw grid border (1px) for visual separation
+                    bool isBorder = x == 0 || z == 0;
+
                     if (px >= 0 && px < _mapTexture.width && pz >= 0 && pz < _mapTexture.height)
-                        _mapTexture.SetPixel(px, pz, color);
+                    {
+                        if (isBorder)
+                        {
+                            // Darker border for grid lines
+                            _mapTexture.SetPixel(px, pz, new Color32(
+                                (byte)(color.r * 0.6f), (byte)(color.g * 0.6f),
+                                (byte)(color.b * 0.6f), 255));
+                        }
+                        else
+                        {
+                            _mapTexture.SetPixel(px, pz, color);
+                        }
+                    }
                 }
             }
+
+            // Highlight spawn chunk (0,0) with gold border
+            if (chunkCoord.x == 0 && chunkCoord.y == 0)
+            {
+                Color32 gold = new Color32(255, 215, 0, 255);
+                for (int i = 0; i < _chunkPixelSize; i++)
+                {
+                    _setPixelSafe(baseX + i, baseZ, gold);
+                    _setPixelSafe(baseX + i, baseZ + _chunkPixelSize - 1, gold);
+                    _setPixelSafe(baseX, baseZ + i, gold);
+                    _setPixelSafe(baseX + _chunkPixelSize - 1, baseZ + i, gold);
+                }
+            }
+
             _mapTexture.Apply();
+        }
+
+        private void _setPixelSafe(int x, int y, Color32 color)
+        {
+            if (x >= 0 && x < _mapTexture.width && y >= 0 && y < _mapTexture.height)
+                _mapTexture.SetPixel(x, y, color);
+        }
+
+        private Color32 _getChunkColor(Vector2Int chunkCoord)
+        {
+            // Try to get actual chunk type from world system
+            var gm = GameManager.Instance;
+            if (gm?.World != null)
+            {
+                var chunk = gm.World.GetChunk(chunkCoord.x, chunkCoord.y);
+                if (chunk != null)
+                {
+                    string chunkType = chunk.Type.ToJsonString();
+                    return _biomeColor(chunkType);
+                }
+            }
+
+            // Fallback: use position-based heuristic for biome variety
+            int hash = chunkCoord.x * 73856093 ^ chunkCoord.y * 19349663;
+            hash = hash < 0 ? -hash : hash;
+            int biomeIndex = hash % 6;
+
+            return biomeIndex switch
+            {
+                0 => new Color32(34, 139, 34, 255),   // Forest green
+                1 => new Color32(0, 100, 0, 255),     // Dark forest
+                2 => new Color32(105, 105, 105, 255), // Cave gray
+                3 => new Color32(160, 82, 45, 255),   // Quarry brown
+                4 => new Color32(65, 105, 225, 255),  // Water blue
+                _ => new Color32(50, 205, 50, 255),   // Light green
+            };
+        }
+
+        private static Color32 _biomeColor(string chunkType)
+        {
+            return chunkType switch
+            {
+                "peaceful_forest"     => new Color32(34, 139, 34, 255),
+                "dangerous_forest"    => new Color32(0, 100, 0, 255),
+                "rare_hidden_forest"  => new Color32(50, 205, 50, 255),
+                "peaceful_cave"       => new Color32(105, 105, 105, 255),
+                "dangerous_cave"      => new Color32(64, 64, 64, 255),
+                "rare_deep_cave"      => new Color32(138, 43, 226, 255),
+                "peaceful_quarry"     => new Color32(160, 82, 45, 255),
+                "dangerous_quarry"    => new Color32(139, 69, 19, 255),
+                "rare_ancient_quarry" => new Color32(255, 140, 0, 255),
+                "water_lake"          => new Color32(65, 105, 225, 255),
+                "water_river"         => new Color32(70, 130, 180, 255),
+                "water_cursed_swamp"  => new Color32(75, 0, 130, 255),
+                _                     => new Color32(34, 139, 34, 255),
+            };
         }
 
         // ====================================================================
@@ -282,6 +385,23 @@ namespace Game1.Unity.UI
             _currentZoom = Mathf.Clamp(_currentZoom + delta, _zoomMin, _zoomMax);
             if (_mapContainer != null)
                 _mapContainer.localScale = Vector3.one * _currentZoom;
+            if (_zoomLabel != null)
+                _zoomLabel.text = $"{_currentZoom:F1}x";
+        }
+
+        private void _centerOnPlayer()
+        {
+            if (_mapContainer == null) return;
+            var gm = GameManager.Instance;
+            if (gm?.Player == null) return;
+
+            var pos = gm.Player.Position;
+            float mapX = (pos.X / GameConfig.ChunkSize + 100) * _chunkPixelSize;
+            float mapZ = (pos.Z / GameConfig.ChunkSize + 100) * _chunkPixelSize;
+
+            // Center the map so the player marker is in the middle of the view
+            _mapContainer.anchoredPosition = new Vector2(
+                -mapX * _currentZoom, -mapZ * _currentZoom);
         }
 
         public void OnScroll(PointerEventData eventData)

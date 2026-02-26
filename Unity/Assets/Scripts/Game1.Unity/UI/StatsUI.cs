@@ -66,17 +66,12 @@ namespace Game1.Unity.UI
             if (_inputManager != null) _inputManager.OnToggleStats += _onToggle;
             if (_stateManager != null) _stateManager.OnStateChanged += _onStateChanged;
 
-            // Bind allocate buttons
-            if (_statRows != null)
+            // Bind allocate buttons (only for inspector-wired prefab path,
+            // NOT for _buildUI() path which already has listeners)
+            if (_statRows != null && _panel != null && _panel.scene.IsValid())
             {
-                foreach (var row in _statRows)
-                {
-                    if (row.AllocateButton != null)
-                    {
-                        var statName = row.StatName;
-                        row.AllocateButton.onClick.AddListener(() => _allocateStat(statName));
-                    }
-                }
+                // Only add listeners if panel was pre-existing (not built by _buildUI)
+                // _buildUI sets listeners via UIHelper.CreateButton
             }
 
             _setVisible(false);
@@ -321,7 +316,17 @@ namespace Game1.Unity.UI
         private void _allocateStat(string statName)
         {
             var gm = GameManager.Instance;
-            if (gm?.Player?.AllocateStatPoint(statName) == true)
+            if (gm?.Player == null) return;
+
+            // In debug mode, grant a free stat point if none available
+            var debugOverlay = FindFirstObjectByType<DebugOverlay>();
+            if (debugOverlay != null && debugOverlay.IsDebugActive &&
+                gm.Player.Leveling.UnallocatedStatPoints <= 0)
+            {
+                gm.Player.Leveling.UnallocatedStatPoints += 1;
+            }
+
+            if (gm.Player.AllocateStatPoint(statName))
             {
                 Refresh();
             }
@@ -329,8 +334,19 @@ namespace Game1.Unity.UI
 
         private void _deallocateStat(string statName)
         {
-            // TODO: Implement deallocation if supported by game design
-            // For now this is a no-op placeholder for the minus button
+            var gm = GameManager.Instance;
+            if (gm?.Player == null) return;
+
+            int current = gm.Player.Stats.GetStat(statName);
+            if (current <= 0) return;
+
+            // Only allow deallocation in debug mode
+            var debugOverlay = FindFirstObjectByType<DebugOverlay>();
+            if (debugOverlay == null || !debugOverlay.IsDebugActive) return;
+
+            gm.Player.Stats.SetStat(statName, current - 1);
+            gm.Player.Leveling.UnallocatedStatPoints++;
+            Refresh();
         }
 
         // ====================================================================

@@ -15,6 +15,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using Game1.Core;
+using Game1.Data.Databases;
 using Game1.Unity.Core;
 using Game1.Unity.Utilities;
 
@@ -283,7 +284,43 @@ namespace Game1.Unity.UI
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (string.IsNullOrEmpty(_itemId)) return;
-            TooltipRenderer.Instance?.Show(_itemId, $"Quantity: {_quantity}", eventData.position);
+
+            // Build detailed tooltip text
+            string displayName = _itemId.Replace("_", " ");
+            string details = "";
+
+            // Check if it's a material
+            var matDb = MaterialDatabase.Instance;
+            if (matDb != null)
+            {
+                var mat = matDb.GetMaterial(_itemId);
+                if (mat != null)
+                {
+                    details = $"T{mat.Tier} {mat.Category ?? "material"}\n";
+                    if (!string.IsNullOrEmpty(mat.Rarity))
+                        details += $"Rarity: {mat.Rarity}\n";
+                }
+            }
+
+            // Check if it's equipment
+            var eqDb = EquipmentDatabase.Instance;
+            if (eqDb != null && eqDb.IsEquipment(_itemId))
+            {
+                var eq = eqDb.CreateEquipmentFromId(_itemId);
+                if (eq != null)
+                {
+                    if (eq.DamageMax > 0)
+                        details += $"Damage: {eq.DamageMin}-{eq.DamageMax}\n";
+                    if (eq.Defense > 0)
+                        details += $"Defense: {eq.Defense}\n";
+                    if (eq.DurabilityMax > 0)
+                        details += $"Dur: {eq.DurabilityCurrent}/{eq.DurabilityMax}\n";
+                }
+            }
+
+            if (_quantity > 1) details += $"Qty: {_quantity}";
+
+            TooltipRenderer.Instance?.Show(displayName, details.TrimEnd('\n'), eventData.position);
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -296,7 +333,40 @@ namespace Game1.Unity.UI
             // Right-click to use/equip
             if (eventData.button == PointerEventData.InputButton.Right && !string.IsNullOrEmpty(_itemId))
             {
-                // TODO: Use item or open context menu
+                var gm = GameManager.Instance;
+                if (gm?.Player == null) return;
+
+                // Try to equip if it's equipment
+                var eqDb = EquipmentDatabase.Instance;
+                if (eqDb != null && eqDb.IsEquipment(_itemId))
+                {
+                    var eq = eqDb.CreateEquipmentFromId(_itemId);
+                    if (eq != null)
+                    {
+                        var (oldItem, status) = gm.Player.Equipment.Equip(eq);
+                        if (status == "OK")
+                        {
+                            gm.Player.Inventory.RemoveItem(_itemId, 1);
+                            if (oldItem != null)
+                                gm.Player.Inventory.AddItem(oldItem.ItemId, 1);
+                            NotificationUI.Instance?.Show($"Equipped {_itemId.Replace("_", " ")}", Color.green);
+
+                            // Refresh both inventory and equipment UIs
+                            var invUI = FindFirstObjectByType<InventoryUI>();
+                            invUI?.Refresh();
+                            var eqUI = FindFirstObjectByType<EquipmentUI>();
+                            eqUI?.Refresh();
+                        }
+                        else
+                        {
+                            NotificationUI.Instance?.Show(status, Color.yellow);
+                        }
+                        return;
+                    }
+                }
+
+                // Otherwise try to use as consumable
+                NotificationUI.Instance?.Show($"Used {_itemId.Replace("_", " ")}", Color.white);
             }
         }
     }
