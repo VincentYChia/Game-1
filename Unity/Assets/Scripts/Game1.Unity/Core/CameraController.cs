@@ -204,6 +204,7 @@ namespace Game1.Unity.Core
                 if (lookDelta.sqrMagnitude > 0.0001f)
                 {
                     _currentYaw += lookDelta.x;
+                    _currentYaw %= 360f; // Wrap to prevent float accumulation
                     _currentPitch += lookDelta.y;
                     _currentPitch = Mathf.Clamp(_currentPitch, _minPitch, _maxPitch);
 

@@ -78,6 +78,7 @@ namespace Game1.Unity.Core
 
         /// <summary>Whether player input should be blocked (modal UI or minigame).</summary>
         public bool IsInputBlocked => CurrentState == GameState.MinigameActive
+                                    || CurrentState == GameState.Paused
                                     || CurrentState == GameState.StartMenu
                                     || CurrentState == GameState.ClassSelection
                                     || CurrentState == GameState.Loading;
@@ -136,7 +137,11 @@ namespace Game1.Unity.Core
             switch (CurrentState)
             {
                 case GameState.Playing:
-                    // Could open pause menu in the future
+                    TransitionTo(GameState.Paused);
+                    break;
+
+                case GameState.Paused:
+                    TransitionTo(GameState.Playing);
                     break;
 
                 case GameState.MinigameActive:

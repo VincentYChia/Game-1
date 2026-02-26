@@ -256,6 +256,8 @@ namespace Game1.Unity.Core
 
             Vector3 moveDir = (forward * moveInput.y + right * moveInput.x).normalized;
             float speed = _moveSpeed;
+            if (_inputManager != null && _inputManager.IsSprinting)
+                speed *= _sprintMultiplier;
             Vector3 movement = moveDir * speed * Time.deltaTime;
 
             GamePosition currentPos = _character.Position;

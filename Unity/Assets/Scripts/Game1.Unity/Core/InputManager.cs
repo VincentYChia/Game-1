@@ -51,6 +51,9 @@ namespace Game1.Unity.Core
         /// <summary>Mouse look delta, already scaled by sensitivity. (X = yaw, Y = pitch).</summary>
         public Vector2 LookDelta { get; private set; }
 
+        /// <summary>Whether sprint (Shift) is held.</summary>
+        public bool IsSprinting { get; private set; }
+
         /// <summary>Whether the game is in a playing state where movement is allowed.</summary>
         public bool IsPlayingState { get; private set; }
 
@@ -232,6 +235,9 @@ namespace Game1.Unity.Core
             {
                 MoveInput = Vector2.zero;
             }
+
+            // === 2b. Sprint (continuous) ===
+            IsSprinting = _isKeyHeld(KeyCode.LeftShift) || _isKeyHeld(KeyCode.RightShift);
 
             // === 3. Mouse Look ===
             Vector2 rawDelta = _pollMouseDelta();
@@ -486,11 +492,36 @@ namespace Game1.Unity.Core
                 }
                 else
                 {
-                    if (IsCursorLocked)
-                        UnlockCursor();
+                    // Let state transition handle cursor lock/unlock via _onGameStateChanged.
+                    // Don't manually unlock here — HandleEscape() triggers TransitionTo()
+                    // which fires OnStateChanged → _onGameStateChanged → LockCursor/UnlockCursor.
+                    Debug.Log("[DBG:INPUT:ESCAPE] Escape pressed, delegating to HandleEscape"); // DBG
                     OnEscape?.Invoke();
                     _stateManager?.HandleEscape();
                 }
+            }
+
+            // --- Menu toggles (work during Playing OR any panel state) ---
+            // These must be checked before the isPlaying guard so players can
+            // close panels with the same key or switch between panels.
+            bool allowMenuKeys = isPlaying || (_stateManager != null && _stateManager.IsInModalUI
+                && _stateManager.CurrentState != GameState.MinigameActive
+                && _stateManager.CurrentState != GameState.Paused);
+
+            if (allowMenuKeys)
+            {
+                if (_wasKeyPressed(KeyCode.Tab))
+                { Debug.Log("[DBG:INPUT:KEY] Tab pressed → OnToggleInventory"); OnToggleInventory?.Invoke(); } // DBG
+                if (_wasKeyPressed(KeyCode.I))
+                { Debug.Log("[DBG:INPUT:KEY] I pressed → OnToggleEquipment"); OnToggleEquipment?.Invoke(); } // DBG
+                if (_wasKeyPressed(KeyCode.M))
+                { Debug.Log("[DBG:INPUT:KEY] M pressed → OnToggleMap"); OnToggleMap?.Invoke(); } // DBG
+                if (_wasKeyPressed(KeyCode.J))
+                { Debug.Log("[DBG:INPUT:KEY] J pressed → OnToggleEncyclopedia"); OnToggleEncyclopedia?.Invoke(); } // DBG
+                if (_wasKeyPressed(KeyCode.C))
+                { Debug.Log("[DBG:INPUT:KEY] C pressed → OnToggleStats"); OnToggleStats?.Invoke(); } // DBG
+                if (_wasKeyPressed(KeyCode.K))
+                { Debug.Log("[DBG:INPUT:KEY] K pressed → OnToggleSkills"); OnToggleSkills?.Invoke(); } // DBG
             }
 
             // --- Gameplay keys (only when playing) ---
@@ -527,19 +558,7 @@ namespace Game1.Unity.Core
             if (_wasKeyPressed(KeyCode.Space))
                 OnCraftAction?.Invoke();
 
-            // --- Menu toggles ---
-            if (_wasKeyPressed(KeyCode.Tab))
-            { Debug.Log("[DBG:INPUT:KEY] Tab pressed → OnToggleInventory"); OnToggleInventory?.Invoke(); } // DBG
-            if (_wasKeyPressed(KeyCode.I))
-            { Debug.Log("[DBG:INPUT:KEY] I pressed → OnToggleEquipment"); OnToggleEquipment?.Invoke(); } // DBG
-            if (_wasKeyPressed(KeyCode.M))
-            { Debug.Log("[DBG:INPUT:KEY] M pressed → OnToggleMap"); OnToggleMap?.Invoke(); } // DBG
-            if (_wasKeyPressed(KeyCode.J))
-            { Debug.Log("[DBG:INPUT:KEY] J pressed → OnToggleEncyclopedia"); OnToggleEncyclopedia?.Invoke(); } // DBG
-            if (_wasKeyPressed(KeyCode.C))
-            { Debug.Log("[DBG:INPUT:KEY] C pressed → OnToggleStats"); OnToggleStats?.Invoke(); } // DBG
-            if (_wasKeyPressed(KeyCode.K))
-            { Debug.Log("[DBG:INPUT:KEY] K pressed → OnToggleSkills"); OnToggleSkills?.Invoke(); } // DBG
+            // (Menu toggles moved above the isPlaying guard)
 
             // --- Skill bar (1-5) ---
             if (_wasKeyPressed(KeyCode.Alpha1))
@@ -566,6 +585,31 @@ namespace Game1.Unity.Core
                 OnDebugKey?.Invoke("F5");
             if (_wasKeyPressed(KeyCode.F7))
                 OnDebugKey?.Invoke("F7");
+        }
+
+        // ====================================================================
+        // Key Hold Detection (unified across backends)
+        // ====================================================================
+
+        private bool _isKeyHeld(KeyCode keyCode)
+        {
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = Keyboard.current;
+            if (keyboard != null)
+            {
+                Key key = _keyCodeToKey(keyCode);
+                if (key != Key.None)
+                    return keyboard[key].isPressed;
+            }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return Input.GetKey(keyCode);
+#endif
+
+#pragma warning disable CS0162
+            return false;
+#pragma warning restore CS0162
         }
 
         // ====================================================================
@@ -616,6 +660,8 @@ namespace Game1.Unity.Core
                 case KeyCode.Space: return Key.Space;
                 case KeyCode.Tab: return Key.Tab;
                 case KeyCode.Escape: return Key.Escape;
+                case KeyCode.LeftShift: return Key.LeftShift;
+                case KeyCode.RightShift: return Key.RightShift;
                 case KeyCode.F1: return Key.F1;
                 case KeyCode.F2: return Key.F2;
                 case KeyCode.F3: return Key.F3;
