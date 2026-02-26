@@ -76,6 +76,7 @@ namespace Game1.Unity.Core
         public event Action OnToggleSkills;
         public event Action<int> OnSkillActivate;
         public event Action OnCraftAction;
+        public event Action OnJump;
         public event Action<string> OnDebugKey;
         public event Action<float> OnScroll;
 
@@ -554,7 +555,11 @@ namespace Game1.Unity.Core
             if (_wasRightClickPressed())
                 OnSecondaryAction?.Invoke(MouseWorldPosition);
 
-            // Craft action
+            // Jump (spacebar)
+            if (_wasKeyPressed(KeyCode.Space))
+                OnJump?.Invoke();
+
+            // Craft action (also space, but subscribers decide context)
             if (_wasKeyPressed(KeyCode.Space))
                 OnCraftAction?.Invoke();
 

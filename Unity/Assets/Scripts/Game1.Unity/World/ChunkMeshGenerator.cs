@@ -249,6 +249,7 @@ namespace Game1.Unity.World
                         height = _blendBoundaryHeight(
                             tileTypes, chunkSize, vx, vz, worldX, worldZ);
                         color = _blendBoundaryColor(tileTypes, chunkSize, vx, vz);
+                        color = _varyVertexColor(color, worldX, worldZ);
                         atlasIndex = GetTileAtlasIndex(tileType);
                     }
                     else
@@ -265,6 +266,7 @@ namespace Game1.Unity.World
                         }
 
                         color = GetTileColor(tileType);
+                        color = _varyVertexColor(color, worldX, worldZ);
                         atlasIndex = GetTileAtlasIndex(tileType);
                     }
 
@@ -432,6 +434,28 @@ namespace Game1.Unity.World
             if (tileType != null && TileAtlasIndex.TryGetValue(tileType.ToLowerInvariant(), out int idx))
                 return idx;
             return 0;
+        }
+
+        // ====================================================================
+        // Private Helpers — Per-Vertex Color Variation
+        // ====================================================================
+
+        /// <summary>
+        /// Adds subtle per-vertex color variation based on world position noise.
+        /// Prevents the flat, uniform look that makes terrain feel like floating
+        /// on a solid color. Variation is ±12% of the base color.
+        /// </summary>
+        private static Color32 _varyVertexColor(Color32 baseColor, float worldX, float worldZ)
+        {
+            // Use a different noise frequency/offset than terrain height
+            float n = SampleNoise(worldX * 1.7f + 317f, worldZ * 1.7f + 529f);
+            // n is roughly -0.5..+0.5, scale to ±12% variation
+            float variation = n * 0.24f;
+
+            int r = Mathf.Clamp((int)(baseColor.r + baseColor.r * variation), 0, 255);
+            int g = Mathf.Clamp((int)(baseColor.g + baseColor.g * variation), 0, 255);
+            int b = Mathf.Clamp((int)(baseColor.b + baseColor.b * variation), 0, 255);
+            return new Color32((byte)r, (byte)g, (byte)b, baseColor.a);
         }
 
         // ====================================================================

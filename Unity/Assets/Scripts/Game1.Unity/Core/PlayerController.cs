@@ -40,6 +40,7 @@ namespace Game1.Unity.Core
 
         [Header("Physics")]
         [SerializeField] private float _gravity = -20f;
+        [SerializeField] private float _jumpForce = 8f;
         [SerializeField] private float _groundCheckDistance = 0.2f;
         [SerializeField] private float _playerHeight = 1.8f;
 
@@ -51,6 +52,7 @@ namespace Game1.Unity.Core
         // ====================================================================
 
         private float _verticalVelocity;
+        private float _jumpOffset;  // Height above terrain surface
         private bool _isGrounded;
         private Character _character;
         private bool _loggedMovement; // DBG
@@ -107,7 +109,8 @@ namespace Game1.Unity.Core
             if (_inputManager != null)
             {
                 _inputManager.OnInteract += _onInteract;
-                Debug.Log("[DBG:PLAYER:START:06] Subscribed to OnInteract"); // DBG
+                _inputManager.OnJump += _onJump;
+                Debug.Log("[DBG:PLAYER:START:06] Subscribed to OnInteract, OnJump"); // DBG
             }
             else
             {
@@ -149,6 +152,7 @@ namespace Game1.Unity.Core
             if (_inputManager != null)
             {
                 _inputManager.OnInteract -= _onInteract;
+                _inputManager.OnJump -= _onJump;
             }
         }
 
@@ -206,6 +210,14 @@ namespace Game1.Unity.Core
             if (_character == null) return;
             Debug.Log("[DBG:PLAYER:INTERACT] Interact triggered"); // DBG
             GameEvents.RaisePlayerInteracted(_character.Position, _character.Facing);
+        }
+
+        private void _onJump()
+        {
+            if (_character == null) return;
+            if (!_isGrounded) return;
+            _verticalVelocity = _jumpForce;
+            _isGrounded = false;
         }
 
         // ====================================================================
@@ -342,12 +354,29 @@ namespace Game1.Unity.Core
             }
             else
             {
-                // Lerp speed: fast enough to follow terrain, slow enough to avoid snapping
                 float lerpSpeed = 8f * Time.deltaTime;
                 _currentTerrainY = Mathf.Lerp(_currentTerrainY, targetY, Mathf.Clamp01(lerpSpeed));
             }
 
-            pos.y = _currentTerrainY;
+            // Apply gravity and jump physics
+            if (_jumpOffset > 0f || _verticalVelocity > 0f)
+            {
+                _verticalVelocity += _gravity * Time.deltaTime;
+                _jumpOffset += _verticalVelocity * Time.deltaTime;
+
+                if (_jumpOffset <= 0f)
+                {
+                    _jumpOffset = 0f;
+                    _verticalVelocity = 0f;
+                    _isGrounded = true;
+                }
+            }
+            else
+            {
+                _isGrounded = true;
+            }
+
+            pos.y = _currentTerrainY + _jumpOffset;
             transform.position = pos;
         }
 
