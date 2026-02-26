@@ -12,6 +12,11 @@
 // IDEMPOTENT: Each canvas and panel is checked individually. A stale/empty
 // Panel_Canvas (e.g. baked into the scene from a prior session) won't block
 // creation of missing child panels.
+//
+// IMPORTANT: All containers use full-stretch anchors (0,0)-(1,1). Each panel's
+// _buildUI() handles its own positioning. Do NOT set specific anchors here —
+// it creates a double-nesting problem where _buildUI positions relative to
+// the container instead of the canvas, causing offset/duplicate visuals.
 // ============================================================================
 
 using UnityEngine;
@@ -47,17 +52,10 @@ namespace Game1.Unity.Core
             // ================================================================
             var hud = _findOrCreateCanvas("HUD_Canvas", 0);
 
-            _ensurePanel<StatusBarUI>(hud.transform, "StatusBarUI",
-                new Vector2(0.01f, 0.88f), new Vector2(0.35f, 0.99f));
-
-            _ensurePanel<SkillBarUI>(hud.transform, "SkillBarUI",
-                new Vector2(0.3f, 0.01f), new Vector2(0.7f, 0.07f));
-
-            _ensurePanel<NotificationUI>(hud.transform, "NotificationUI",
-                new Vector2(0.65f, 0.01f), new Vector2(0.99f, 0.25f));
-
-            _ensurePanel<DebugOverlay>(hud.transform, "DebugOverlay",
-                new Vector2(0.01f, 0.60f), new Vector2(0.35f, 0.87f));
+            _ensurePanel<StatusBarUI>(hud.transform, "StatusBarUI");
+            _ensurePanel<SkillBarUI>(hud.transform, "SkillBarUI");
+            _ensurePanel<NotificationUI>(hud.transform, "NotificationUI");
+            _ensurePanel<DebugOverlay>(hud.transform, "DebugOverlay");
 
             // Crosshair (center dot)
             if (hud.transform.Find("Crosshair") == null)
@@ -80,59 +78,30 @@ namespace Game1.Unity.Core
             var panels = _findOrCreateCanvas("Panel_Canvas", 10);
 
             // Key-toggle panels (hotkey → GameState)
-            _ensurePanel<InventoryUI>(panels.transform, "InventoryUI",           // Tab
-                new Vector2(0.55f, 0.02f), new Vector2(0.98f, 0.98f));
-
-            _ensurePanel<EquipmentUI>(panels.transform, "EquipmentUI",           // I
-                new Vector2(0.55f, 0.02f), new Vector2(0.98f, 0.98f));
-
-            _ensurePanel<StatsUI>(panels.transform, "StatsUI",                   // C
-                new Vector2(0.55f, 0.02f), new Vector2(0.98f, 0.98f));
-
-            _ensurePanel<SkillsMenuUI>(panels.transform, "SkillsMenuUI",         // K
-                new Vector2(0.55f, 0.02f), new Vector2(0.98f, 0.98f));
-
-            _ensurePanel<MapUI>(panels.transform, "MapUI",                       // M
-                new Vector2(0.55f, 0.02f), new Vector2(0.98f, 0.98f));
-
-            _ensurePanel<EncyclopediaUI>(panels.transform, "EncyclopediaUI",     // J
-                new Vector2(0.55f, 0.02f), new Vector2(0.98f, 0.98f));
+            _ensurePanel<InventoryUI>(panels.transform, "InventoryUI");
+            _ensurePanel<EquipmentUI>(panels.transform, "EquipmentUI");
+            _ensurePanel<StatsUI>(panels.transform, "StatsUI");
+            _ensurePanel<SkillsMenuUI>(panels.transform, "SkillsMenuUI");
+            _ensurePanel<MapUI>(panels.transform, "MapUI");
+            _ensurePanel<EncyclopediaUI>(panels.transform, "EncyclopediaUI");
 
             // Non-toggle panels (opened by interaction or game flow)
-            _ensurePanel<CraftingUI>(panels.transform, "CraftingUI",
-                new Vector2(0.55f, 0.02f), new Vector2(0.98f, 0.98f));
-
-            _ensurePanel<ChestUI>(panels.transform, "ChestUI",
-                new Vector2(0.15f, 0.1f), new Vector2(0.85f, 0.9f));
-
-            _ensurePanel<NPCDialogueUI>(panels.transform, "NPCDialogueUI",
-                new Vector2(0.55f, 0.02f), new Vector2(0.98f, 0.98f));
-
-            _ensurePanel<TitleUI>(panels.transform, "TitleUI",
-                new Vector2(0.55f, 0.02f), new Vector2(0.98f, 0.98f));
-
-            _ensurePanel<SaveLoadUI>(panels.transform, "SaveLoadUI",
-                new Vector2(0.15f, 0.1f), new Vector2(0.85f, 0.9f));
-
-            _ensurePanel<StartMenuUI>(panels.transform, "StartMenuUI",
-                new Vector2(0.15f, 0.1f), new Vector2(0.85f, 0.9f));
-
-            _ensurePanel<ClassSelectionUI>(panels.transform, "ClassSelectionUI",
-                new Vector2(0.55f, 0.02f), new Vector2(0.98f, 0.98f));
-
-            _ensurePanel<SkillUnlockUI>(panels.transform, "SkillUnlockUI",
-                new Vector2(0.55f, 0.02f), new Vector2(0.98f, 0.98f));
+            _ensurePanel<CraftingUI>(panels.transform, "CraftingUI");
+            _ensurePanel<ChestUI>(panels.transform, "ChestUI");
+            _ensurePanel<NPCDialogueUI>(panels.transform, "NPCDialogueUI");
+            _ensurePanel<TitleUI>(panels.transform, "TitleUI");
+            _ensurePanel<SaveLoadUI>(panels.transform, "SaveLoadUI");
+            _ensurePanel<StartMenuUI>(panels.transform, "StartMenuUI");
+            _ensurePanel<ClassSelectionUI>(panels.transform, "ClassSelectionUI");
+            _ensurePanel<SkillUnlockUI>(panels.transform, "SkillUnlockUI");
 
             // ================================================================
             // Overlay Canvas (sortOrder 30) — always-on-top (tooltips, drag)
             // ================================================================
             var overlay = _findOrCreateCanvas("Overlay_Canvas", 30);
 
-            _ensurePanel<TooltipRenderer>(overlay.transform, "TooltipRenderer",
-                Vector2.zero, Vector2.one);
-
-            _ensurePanel<DragDropManager>(overlay.transform, "DragDropManager",
-                Vector2.zero, Vector2.one);
+            _ensurePanel<TooltipRenderer>(overlay.transform, "TooltipRenderer");
+            _ensurePanel<DragDropManager>(overlay.transform, "DragDropManager");
 
             Debug.Log("[UIBootstrap] UI hierarchy verified/created.");
         }
@@ -171,11 +140,16 @@ namespace Game1.Unity.Core
         }
 
         // ====================================================================
-        // Helper: Ensure a panel exists as a child with the correct component
+        // Helper: Ensure a panel exists as a child with the correct component.
+        //
+        // All containers use full-stretch anchors (0,0)-(1,1). Each panel's
+        // _buildUI() creates its own positioned child panel. This avoids
+        // double-nesting where _buildUI positions relative to a container
+        // instead of the canvas, causing offset/duplicate visuals.
         // ====================================================================
 
-        private static T _ensurePanel<T>(Transform parent, string name,
-            Vector2 anchorMin, Vector2 anchorMax) where T : MonoBehaviour
+        private static T _ensurePanel<T>(Transform parent, string name)
+            where T : MonoBehaviour
         {
             // Check if this panel already exists as a child
             var child = parent.Find(name);
@@ -188,13 +162,13 @@ namespace Game1.Unity.Core
                 return child.gameObject.AddComponent<T>();
             }
 
-            // Create from scratch
+            // Create from scratch — full-stretch container
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
 
             var rt = go.AddComponent<RectTransform>();
-            rt.anchorMin = anchorMin;
-            rt.anchorMax = anchorMax;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
 

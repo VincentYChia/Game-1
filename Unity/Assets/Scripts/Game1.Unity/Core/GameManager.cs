@@ -179,6 +179,11 @@ namespace Game1.Unity.Core
 
             IsInitialized = true;
 
+            // IMPORTANT: Force _autoStart off. The C# default (false) is overridden
+            // by the serialized Inspector value in the scene file. Until proper scene
+            // setup exists, always go through the StartMenu flow.
+            _autoStart = false;
+
             // Auto-start bypasses start menu — immediately creates world + character
             if (_autoStart)
             {

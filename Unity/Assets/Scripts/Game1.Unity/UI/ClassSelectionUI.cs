@@ -98,9 +98,10 @@ namespace Game1.Unity.UI
             var (scrollRect, scrollContent) = UIHelper.CreateScrollView(panelRt, "ClassGridScroll");
             UIHelper.SetPreferredHeight(scrollRect.gameObject, 340);
 
-            // Remove the default VLG from scroll content so we can add GridLayoutGroup
+            // Remove the default VLG from scroll content so we can add GridLayoutGroup.
+            // Must use DestroyImmediate — Object.Destroy is deferred to end of frame.
             var existingVlg = scrollContent.GetComponent<VerticalLayoutGroup>();
-            if (existingVlg != null) Object.Destroy(existingVlg);
+            if (existingVlg != null) Object.DestroyImmediate(existingVlg);
 
             // Grid layout (2 columns x 3 rows), cell size (200, 140), spacing 10
             var grid = scrollContent.gameObject.AddComponent<GridLayoutGroup>();

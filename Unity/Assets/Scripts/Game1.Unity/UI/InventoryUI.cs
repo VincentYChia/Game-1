@@ -119,9 +119,11 @@ namespace Game1.Unity.UI
             _scrollRect = scrollRect;
             _scrollContent = content;
 
-            // Replace default VerticalLayoutGroup on content with a GridLayoutGroup
+            // Replace default VerticalLayoutGroup on content with a GridLayoutGroup.
+            // Must use DestroyImmediate — Object.Destroy is deferred to end of frame,
+            // so AddComponent<GridLayoutGroup> would fail ("already has LayoutGroup").
             var existingVLG = content.GetComponent<VerticalLayoutGroup>();
-            if (existingVLG != null) Object.Destroy(existingVLG);
+            if (existingVLG != null) Object.DestroyImmediate(existingVLG);
 
             _gridLayout = content.gameObject.AddComponent<GridLayoutGroup>();
             _gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
