@@ -19,10 +19,6 @@ using Game1.Unity.World;
 
 namespace Game1.Unity.Core
 {
-    /// <summary>
-    /// First-person player controller. Reads InputManager.MoveInput property
-    /// directly each frame — no event subscription timing issues.
-    /// </summary>
     public class PlayerController : MonoBehaviour
     {
         // ====================================================================
@@ -57,33 +53,76 @@ namespace Game1.Unity.Core
         private float _verticalVelocity;
         private bool _isGrounded;
         private Character _character;
-        private bool _loggedMovement;
+        private bool _loggedMovement; // DBG
+        private float _dbgTimer; // DBG
+        private int _dbgMoveFrames; // DBG
+        private bool _refsLogged; // DBG
 
-        /// <summary>Enable/disable player movement (for UI, cutscenes, etc.).</summary>
         public bool MovementEnabled { get; set; } = true;
 
         // ====================================================================
         // Lifecycle
         // ====================================================================
 
+        private void Awake()
+        {
+            Debug.Log($"[DBG:PLAYER:AWAKE] PlayerController.Awake() on '{gameObject.name}', " + // DBG
+                $"parent={transform.parent?.name ?? "NULL"}, " + // DBG
+                $"childCount={transform.childCount}, " + // DBG
+                $"scene={gameObject.scene.name}"); // DBG
+        }
+
         private void Start()
         {
-            _gameManager = GameManager.Instance;
-            _stateManager = FindFirstObjectByType<GameStateManager>();
-            _cameraController = GetComponentInChildren<CameraController>();
+            Debug.Log("[DBG:PLAYER:START:01] PlayerController.Start() BEGIN"); // DBG
 
-            // Find InputManager — search everywhere including DontDestroyOnLoad
+            // Find GameManager — it's in DontDestroyOnLoad
+            _gameManager = GameManager.Instance;
+            Debug.Log($"[DBG:PLAYER:START:02] GameManager.Instance = {(_gameManager != null ? "FOUND" : "NULL")}"); // DBG
+
+            // Find GameStateManager
+            _stateManager = FindFirstObjectByType<GameStateManager>();
+            Debug.Log($"[DBG:PLAYER:START:03] GameStateManager = {(_stateManager != null ? "FOUND" : "NULL")}"); // DBG
+
+            // Find CameraController — should be on a child
+            _cameraController = GetComponentInChildren<CameraController>();
+            Debug.Log($"[DBG:PLAYER:START:04] GetComponentInChildren<CameraController> = {(_cameraController != null ? "FOUND" : "NULL")}"); // DBG
+
+            // [DBG] If not found in children, search globally as fallback
+            if (_cameraController == null) // DBG
+            { // DBG
+                Debug.LogWarning("[DBG:PLAYER:START:04b] CameraController NOT in children! Searching globally..."); // DBG
+                _cameraController = FindFirstObjectByType<CameraController>(); // DBG
+                if (_cameraController != null) // DBG
+                { // DBG
+                    Debug.LogWarning($"[DBG:PLAYER:START:04c] Found CameraController globally on '{_cameraController.gameObject.name}', " + // DBG
+                        $"parent={_cameraController.transform.parent?.name ?? "NULL"}"); // DBG
+                } // DBG
+            } // DBG
+
+            // Find InputManager
             _inputManager = FindFirstObjectByType<InputManager>();
+            Debug.Log($"[DBG:PLAYER:START:05] InputManager = {(_inputManager != null ? "FOUND on " + _inputManager.gameObject.name : "NULL")}"); // DBG
 
             if (_inputManager != null)
             {
                 _inputManager.OnInteract += _onInteract;
-                Debug.Log("[PlayerController] InputManager found, subscribed to Interact");
+                Debug.Log("[DBG:PLAYER:START:06] Subscribed to OnInteract"); // DBG
             }
             else
             {
                 Debug.LogError("[PlayerController] InputManager NOT FOUND! Movement will not work.");
             }
+
+            // [DBG] Dump hierarchy from our perspective
+            Debug.Log($"[DBG:PLAYER:START:07] My GO: '{gameObject.name}', active={gameObject.activeInHierarchy}, " + // DBG
+                $"childCount={transform.childCount}"); // DBG
+            for (int i = 0; i < transform.childCount; i++) // DBG
+            { // DBG
+                var child = transform.GetChild(i); // DBG
+                Debug.Log($"[DBG:PLAYER:START:08] Child[{i}]: '{child.name}', " + // DBG
+                    $"components=[{_getComponentNames(child.gameObject)}]"); // DBG
+            } // DBG
 
             Debug.Log($"[PlayerController] Start() complete. " +
                 $"GameManager={_gameManager != null}, " +
@@ -91,6 +130,19 @@ namespace Game1.Unity.Core
                 $"CameraController={_cameraController != null}, " +
                 $"InputManager={_inputManager != null}");
         }
+
+        private string _getComponentNames(GameObject go) // DBG
+        { // DBG
+            var comps = go.GetComponents<Component>(); // DBG
+            var names = new System.Text.StringBuilder(); // DBG
+            foreach (var c in comps) // DBG
+            { // DBG
+                if (c is Transform) continue; // DBG
+                if (names.Length > 0) names.Append(", "); // DBG
+                names.Append(c.GetType().Name); // DBG
+            } // DBG
+            return names.ToString(); // DBG
+        } // DBG
 
         private void OnDestroy()
         {
@@ -102,14 +154,47 @@ namespace Game1.Unity.Core
 
         private void Update()
         {
-            if (_gameManager == null || _gameManager.Player == null) return;
-            if (_stateManager != null && _stateManager.CurrentState != GameState.Playing) return;
+            // [DBG] Log refs once, after first full frame
+            if (!_refsLogged && Time.frameCount > 5) // DBG
+            { // DBG
+                _refsLogged = true; // DBG
+                Debug.Log($"[DBG:PLAYER:UPDATE:REFS] GM={_gameManager != null}, " + // DBG
+                    $"Player={_gameManager?.Player != null}, " + // DBG
+                    $"State={(_stateManager != null ? _stateManager.CurrentState.ToString() : "NULL")}, " + // DBG
+                    $"MovementEnabled={MovementEnabled}, " + // DBG
+                    $"InputMgr={_inputManager != null}"); // DBG
+            } // DBG
+
+            if (_gameManager == null || _gameManager.Player == null)
+            {
+                if (Time.frameCount % 120 == 0) // DBG
+                    Debug.Log($"[DBG:PLAYER:SKIP] GM={_gameManager != null}, Player={_gameManager?.Player != null}"); // DBG
+                return;
+            }
+            if (_stateManager != null && _stateManager.CurrentState != GameState.Playing)
+            {
+                if (Time.frameCount % 120 == 0) // DBG
+                    Debug.Log($"[DBG:PLAYER:SKIP] State={_stateManager.CurrentState} (not Playing)"); // DBG
+                return;
+            }
             if (!MovementEnabled) return;
 
             _character = _gameManager.Player;
 
             _processMovement();
             _syncTransform();
+
+            // [DBG] Periodic position log every 2 seconds
+            _dbgTimer += Time.deltaTime; // DBG
+            if (_dbgTimer >= 2.0f) // DBG
+            { // DBG
+                _dbgTimer = 0f; // DBG
+                Debug.Log($"[DBG:PLAYER:POS] pos={_character.Position} " + // DBG
+                    $"transform={transform.position} " + // DBG
+                    $"moveInput={(_inputManager != null ? _inputManager.MoveInput.ToString() : "no_input_mgr")} " + // DBG
+                    $"moveFrames={_dbgMoveFrames}"); // DBG
+                _dbgMoveFrames = 0; // DBG
+            } // DBG
         }
 
         // ====================================================================
@@ -119,6 +204,7 @@ namespace Game1.Unity.Core
         private void _onInteract()
         {
             if (_character == null) return;
+            Debug.Log("[DBG:PLAYER:INTERACT] Interact triggered"); // DBG
             GameEvents.RaisePlayerInteracted(_character.Position, _character.Facing);
         }
 
@@ -141,11 +227,15 @@ namespace Game1.Unity.Core
                 return;
             }
 
-            if (!_loggedMovement)
-            {
-                Debug.Log($"[PlayerController] First movement processing: input={moveInput}");
-                _loggedMovement = true;
-            }
+            _dbgMoveFrames++; // DBG
+
+            if (!_loggedMovement) // DBG
+            { // DBG
+                Debug.Log($"[DBG:PLAYER:FIRST_MOVE] input={moveInput} speed={_moveSpeed} " + // DBG
+                    $"camCtrl={_cameraController != null} " + // DBG
+                    $"charPos={_character?.Position}"); // DBG
+                _loggedMovement = true; // DBG
+            } // DBG
 
             // Get camera-relative directions on XZ plane
             Vector3 forward, right;
@@ -164,19 +254,14 @@ namespace Game1.Unity.Core
                 right.Normalize();
             }
 
-            // Calculate movement direction relative to camera
             Vector3 moveDir = (forward * moveInput.y + right * moveInput.x).normalized;
-
-            // Apply speed — use Unity-appropriate speed (not Python pixel-per-frame value)
             float speed = _moveSpeed;
             Vector3 movement = moveDir * speed * Time.deltaTime;
 
-            // Calculate new position
             GamePosition currentPos = _character.Position;
             float newX = currentPos.X + movement.x;
             float newZ = currentPos.Z + movement.z;
 
-            // World bounds collision check
             var worldSystem = _gameManager.World;
             if (worldSystem != null)
             {
@@ -184,10 +269,8 @@ namespace Game1.Unity.Core
                 newZ = Mathf.Clamp(newZ, 0.5f, GameConfig.WorldSizeZ - 0.5f);
             }
 
-            // Apply position to character data
             _character.Position = new GamePosition(newX, currentPos.Y, newZ);
 
-            // Update facing based on dominant movement axis
             if (Mathf.Abs(movement.x) > Mathf.Abs(movement.z))
             {
                 _character.Facing = movement.x > 0 ? "right" : "left";
@@ -209,20 +292,16 @@ namespace Game1.Unity.Core
             if (_character == null) return;
 
             Vector3 pos = PositionConverter.ToVector3(_character.Position);
-
             string tileType = _getTileTypeAtPosition(pos.x, pos.z);
             pos.y = ChunkMeshGenerator.SampleTerrainHeight(pos.x, pos.z, tileType);
-
             transform.position = pos;
         }
 
         private string _getTileTypeAtPosition(float x, float z)
         {
             if (_gameManager.World == null) return "grass";
-
             int tileX = Mathf.FloorToInt(x);
             int tileZ = Mathf.FloorToInt(z);
-
             var tile = _gameManager.World.GetTile(GamePosition.FromXZ(tileX, tileZ));
             if (tile != null) return tile.TileType.ToString().ToLowerInvariant();
             return "grass";
@@ -232,7 +311,6 @@ namespace Game1.Unity.Core
         // Public API
         // ====================================================================
 
-        /// <summary>Teleport the player to a position.</summary>
         public void TeleportTo(GamePosition position)
         {
             if (_character != null)
@@ -242,14 +320,11 @@ namespace Game1.Unity.Core
             }
         }
 
-        /// <summary>Get the interaction raycast from the camera center.</summary>
         public bool TryGetInteractionTarget(out Vector3 hitPoint, out GameObject hitObject)
         {
             hitPoint = Vector3.zero;
             hitObject = null;
-
             if (_cameraController == null) return false;
-
             Ray ray = _cameraController.GetCenterRay();
             if (Physics.Raycast(ray, out RaycastHit hit, _interactionRange))
             {

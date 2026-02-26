@@ -108,7 +108,9 @@ namespace Game1.Unity.Core
         private int _frameCount;              // Track frames since start
         private const int IgnoreInputFrames = 3; // Skip input for first N frames
         private bool _loggedFirstInput;       // Log first successful input detection
+        private bool _loggedFirstLook;        // Log first mouse look detection // DBG
         private bool _wantsCursorLocked;      // True when we want cursor locked (survives Editor override)
+        private float _dbgLogTimer;           // Throttle periodic debug logs // DBG
 
         // ====================================================================
         // Initialization
@@ -172,8 +174,21 @@ namespace Game1.Unity.Core
             {
                 MoveInput = Vector2.zero;
                 LookDelta = Vector2.zero;
+                if (_frameCount == 1) Debug.Log("[DBG:INPUT:01] Skipping input frame 1 (device init)"); // DBG
                 return;
             }
+
+            // [DBG] Periodic state dump every 2 seconds
+            _dbgLogTimer += Time.unscaledDeltaTime; // DBG
+            bool dbgPeriodicLog = _dbgLogTimer >= 2.0f; // DBG
+            if (dbgPeriodicLog) // DBG
+            { // DBG
+                _dbgLogTimer = 0f; // DBG
+                Debug.Log($"[DBG:INPUT:TICK] frame={_frameCount} isPlaying={(_stateManager == null ? "null" : _stateManager.IsPlaying.ToString())} " + // DBG
+                    $"cursorLocked={IsCursorLocked} wantLocked={_wantsCursorLocked} " + // DBG
+                    $"actualLockState={Cursor.lockState} graceTimer={_escapeGraceTimer:F2} " + // DBG
+                    $"stateManager={((_stateManager != null) ? _stateManager.CurrentState.ToString() : "NULL")}"); // DBG
+            } // DBG
 
             // Decrement grace timer
             if (_escapeGraceTimer > 0f)
@@ -181,6 +196,19 @@ namespace Game1.Unity.Core
 
             bool isPlaying = _stateManager == null || _stateManager.IsPlaying;
             IsPlayingState = isPlaying;
+
+            // [DBG] Detect cursor state mismatch (Editor externally unlocked)
+            if (IsCursorLocked && Cursor.lockState != CursorLockMode.Locked) // DBG
+            { // DBG
+                Debug.LogWarning($"[DBG:INPUT:MISMATCH] IsCursorLocked=true but Cursor.lockState={Cursor.lockState}! Editor may have unlocked."); // DBG
+                // Re-lock if we still want it locked // DBG
+                if (_wantsCursorLocked) // DBG
+                { // DBG
+                    Cursor.lockState = CursorLockMode.Locked; // DBG
+                    Cursor.visible = false; // DBG
+                    Debug.Log("[DBG:INPUT:RELOCK] Re-locked cursor after external unlock"); // DBG
+                } // DBG
+            } // DBG
 
             // === 1. Mouse Position (always, for UI) ===
             _pollMousePosition();
@@ -191,11 +219,12 @@ namespace Game1.Unity.Core
             {
                 Vector2 normalizedMove = rawMove.normalized;
                 MoveInput = normalizedMove;
-                OnMoveInput?.Invoke(normalizedMove); // Also fire event for backward compat
+                OnMoveInput?.Invoke(normalizedMove);
 
                 if (!_loggedFirstInput)
                 {
                     Debug.Log($"[InputManager] First movement detected: {normalizedMove}");
+                    Debug.Log($"[DBG:INPUT:MOVE] rawMove={rawMove} normalized={normalizedMove} isPlaying={isPlaying}"); // DBG
                     _loggedFirstInput = true;
                 }
             }
@@ -212,16 +241,28 @@ namespace Game1.Unity.Core
                 float deltaY = rawDelta.y * _mouseSensitivity * (_invertY ? 1f : -1f);
                 Vector2 scaledDelta = new Vector2(deltaX, deltaY);
                 LookDelta = scaledDelta;
-                OnMouseLook?.Invoke(scaledDelta); // Also fire event for backward compat
+                OnMouseLook?.Invoke(scaledDelta);
+
+                if (!_loggedFirstLook) // DBG
+                { // DBG
+                    Debug.Log($"[DBG:INPUT:LOOK] First look: raw={rawDelta} scaled={scaledDelta} sensitivity={_mouseSensitivity}"); // DBG
+                    _loggedFirstLook = true; // DBG
+                } // DBG
             }
             else
             {
                 LookDelta = Vector2.zero;
+                // [DBG] Log why look was rejected (first few times only)
+                if (rawDelta.sqrMagnitude > 0.001f && _frameCount < 30) // DBG
+                { // DBG
+                    Debug.Log($"[DBG:INPUT:LOOK_REJECTED] rawDelta={rawDelta} but cursorLocked={IsCursorLocked} isPlaying={isPlaying}"); // DBG
+                } // DBG
             }
 
             // === 4. Click-to-Lock Cursor ===
             if (!IsCursorLocked && isPlaying && _wasLeftClickPressed())
             {
+                Debug.Log("[DBG:INPUT:CLICK_LOCK] Left click while unlocked+playing → locking cursor"); // DBG
                 LockCursor();
             }
 
@@ -488,17 +529,17 @@ namespace Game1.Unity.Core
 
             // --- Menu toggles ---
             if (_wasKeyPressed(KeyCode.Tab))
-                OnToggleInventory?.Invoke();
+            { Debug.Log("[DBG:INPUT:KEY] Tab pressed → OnToggleInventory"); OnToggleInventory?.Invoke(); } // DBG
             if (_wasKeyPressed(KeyCode.I))
-                OnToggleEquipment?.Invoke();
+            { Debug.Log("[DBG:INPUT:KEY] I pressed → OnToggleEquipment"); OnToggleEquipment?.Invoke(); } // DBG
             if (_wasKeyPressed(KeyCode.M))
-                OnToggleMap?.Invoke();
+            { Debug.Log("[DBG:INPUT:KEY] M pressed → OnToggleMap"); OnToggleMap?.Invoke(); } // DBG
             if (_wasKeyPressed(KeyCode.J))
-                OnToggleEncyclopedia?.Invoke();
+            { Debug.Log("[DBG:INPUT:KEY] J pressed → OnToggleEncyclopedia"); OnToggleEncyclopedia?.Invoke(); } // DBG
             if (_wasKeyPressed(KeyCode.C))
-                OnToggleStats?.Invoke();
+            { Debug.Log("[DBG:INPUT:KEY] C pressed → OnToggleStats"); OnToggleStats?.Invoke(); } // DBG
             if (_wasKeyPressed(KeyCode.K))
-                OnToggleSkills?.Invoke();
+            { Debug.Log("[DBG:INPUT:KEY] K pressed → OnToggleSkills"); OnToggleSkills?.Invoke(); } // DBG
 
             // --- Skill bar (1-5) ---
             if (_wasKeyPressed(KeyCode.Alpha1))

@@ -12,11 +12,6 @@ using UnityEngine;
 
 namespace Game1.Unity.Core
 {
-    /// <summary>
-    /// First-person camera controller. Reads InputManager.LookDelta property
-    /// directly each frame — no event subscription timing issues.
-    /// Yaw rotates the parent (player body), pitch rotates the camera.
-    /// </summary>
     public class CameraController : MonoBehaviour
     {
         // ====================================================================
@@ -52,7 +47,8 @@ namespace Game1.Unity.Core
         private float _bobTimer;
         private InputManager _inputManager;
         private bool _initialized;
-        private bool _loggedLook;
+        private bool _loggedLook; // DBG
+        private float _dbgTimer; // DBG
 
         // ====================================================================
         // Properties
@@ -62,7 +58,6 @@ namespace Game1.Unity.Core
         public float Yaw => _currentYaw;
         public Camera Camera => _camera;
 
-        /// <summary>Forward direction on XZ plane (for movement).</summary>
         public Vector3 ForwardXZ
         {
             get
@@ -73,7 +68,6 @@ namespace Game1.Unity.Core
             }
         }
 
-        /// <summary>Right direction on XZ plane (for movement).</summary>
         public Vector3 RightXZ
         {
             get
@@ -90,15 +84,65 @@ namespace Game1.Unity.Core
 
         private void Awake()
         {
+            Debug.Log($"[DBG:CAMERA:AWAKE] CameraController.Awake() on '{gameObject.name}', " + // DBG
+                $"parent={transform.parent?.name ?? "NULL"}, " + // DBG
+                $"scene={gameObject.scene.name}"); // DBG
+
             _camera = GetComponent<Camera>();
             if (_camera == null)
                 _camera = gameObject.AddComponent<Camera>();
+
+            Debug.Log($"[DBG:CAMERA:AWAKE:02] Camera component: {_camera != null}"); // DBG
         }
 
         private void Start()
         {
+            Debug.Log("[DBG:CAMERA:START:01] CameraController.Start() BEGIN"); // DBG
+
             _inputManager = FindFirstObjectByType<InputManager>();
+            Debug.Log($"[DBG:CAMERA:START:02] InputManager = {(_inputManager != null ? "FOUND on " + _inputManager.gameObject.name : "NULL")}"); // DBG
+
+            // Find player body (parent transform for yaw rotation)
             _playerBody = transform.parent;
+            Debug.Log($"[DBG:CAMERA:START:03] transform.parent = {(_playerBody != null ? "'" + _playerBody.name + "'" : "NULL")}"); // DBG
+
+            // [DBG] Robust fallback: if parent is null, search for PlayerController
+            if (_playerBody == null)
+            {
+                Debug.LogWarning("[DBG:CAMERA:START:03b] Parent is NULL! Attempting fallback search..."); // DBG
+
+                // Try finding PlayerController and using its transform
+                var playerCtrl = FindFirstObjectByType<PlayerController>();
+                if (playerCtrl != null)
+                {
+                    _playerBody = playerCtrl.transform;
+                    Debug.LogWarning($"[DBG:CAMERA:START:03c] Found PlayerController on '{playerCtrl.gameObject.name}' — using as playerBody"); // DBG
+
+                    // Also reparent ourselves if we're not already a child
+                    if (transform.parent != _playerBody)
+                    {
+                        Debug.LogWarning("[DBG:CAMERA:START:03d] Reparenting camera under PlayerController"); // DBG
+                        transform.SetParent(_playerBody, true);
+                        transform.localPosition = new Vector3(0, _eyeHeight, 0);
+                    }
+                }
+                else
+                {
+                    Debug.LogError("[CameraController] PlayerBody is NULL and no PlayerController found! Yaw rotation will not work.");
+                }
+            }
+
+            // [DBG] Dump full transform chain
+            { // DBG
+                Transform t = transform; // DBG
+                string chain = t.name; // DBG
+                while (t.parent != null) // DBG
+                { // DBG
+                    t = t.parent; // DBG
+                    chain = t.name + " > " + chain; // DBG
+                } // DBG
+                Debug.Log($"[DBG:CAMERA:START:04] Transform chain: {chain}"); // DBG
+            } // DBG
 
             _setupCamera();
             _initialized = true;
@@ -107,6 +151,11 @@ namespace Game1.Unity.Core
                 $"InputManager={_inputManager != null}, " +
                 $"PlayerBody={_playerBody != null}, " +
                 $"Camera={_camera != null}");
+
+            Debug.Log($"[DBG:CAMERA:START:05] Initialized. " + // DBG
+                $"eyeHeight={_eyeHeight}, fov={_fieldOfView}, " + // DBG
+                $"localPos={transform.localPosition}, " + // DBG
+                $"localRot={transform.localRotation.eulerAngles}"); // DBG
         }
 
         private void _setupCamera()
@@ -141,11 +190,13 @@ namespace Game1.Unity.Core
                     _currentPitch += lookDelta.y;
                     _currentPitch = Mathf.Clamp(_currentPitch, _minPitch, _maxPitch);
 
-                    if (!_loggedLook)
-                    {
-                        Debug.Log($"[CameraController] First look delta applied: {lookDelta}");
-                        _loggedLook = true;
-                    }
+                    if (!_loggedLook) // DBG
+                    { // DBG
+                        Debug.Log($"[DBG:CAMERA:LOOK] First look applied: delta={lookDelta} " + // DBG
+                            $"yaw={_currentYaw:F1} pitch={_currentPitch:F1} " + // DBG
+                            $"playerBody={_playerBody != null}"); // DBG
+                        _loggedLook = true; // DBG
+                    } // DBG
                 }
             }
 
@@ -165,9 +216,19 @@ namespace Game1.Unity.Core
                 localPos.y = _eyeHeight + Mathf.Sin(_bobTimer) * _bobAmount;
                 transform.localPosition = localPos;
             }
+
+            // [DBG] Periodic state dump
+            _dbgTimer += Time.deltaTime; // DBG
+            if (_dbgTimer >= 2.0f) // DBG
+            { // DBG
+                _dbgTimer = 0f; // DBG
+                Debug.Log($"[DBG:CAMERA:TICK] yaw={_currentYaw:F1} pitch={_currentPitch:F1} " + // DBG
+                    $"fwd={ForwardXZ} right={RightXZ} " + // DBG
+                    $"playerBody={(_playerBody != null ? _playerBody.position.ToString() : "NULL")} " + // DBG
+                    $"lookDelta={(_inputManager != null ? _inputManager.LookDelta.ToString() : "no_mgr")}"); // DBG
+            } // DBG
         }
 
-        /// <summary>Call from PlayerController when player is moving to drive head bob.</summary>
         public void NotifyMoving(bool isMoving)
         {
             if (isMoving && _enableHeadBob)
@@ -189,7 +250,6 @@ namespace Game1.Unity.Core
         {
             _currentYaw = yaw;
             _currentPitch = Mathf.Clamp(pitch, _minPitch, _maxPitch);
-
             if (_playerBody != null)
                 _playerBody.localRotation = Quaternion.Euler(0, _currentYaw, 0);
             transform.localRotation = Quaternion.Euler(_currentPitch, 0, 0);
@@ -200,7 +260,6 @@ namespace Game1.Unity.Core
             if (_camera == null) return new Rect(0, 0, 100, 100);
 
             var plane = new Plane(Vector3.up, Vector3.zero);
-
             float minX = float.MaxValue, maxX = float.MinValue;
             float minZ = float.MaxValue, maxZ = float.MinValue;
 
@@ -243,13 +302,10 @@ namespace Game1.Unity.Core
         public Vector3 ScreenToWorldXZ(Vector2 screenPos)
         {
             if (_camera == null) return Vector3.zero;
-
             Ray ray = _camera.ScreenPointToRay(screenPos);
             var plane = new Plane(Vector3.up, Vector3.zero);
             if (plane.Raycast(ray, out float distance))
-            {
                 return ray.GetPoint(distance);
-            }
             return Vector3.zero;
         }
 

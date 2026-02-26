@@ -85,7 +85,75 @@ namespace Game1.Unity.Core
             _wireReferences();
 
             Debug.Log("[SceneBootstrapper] Scene hierarchy complete.");
+
+            // [DBG] Dump full hierarchy for debugging
+            _dumpHierarchy(); // DBG
         }
+
+        // ====================================================================
+        // [DBG] Hierarchy Dump
+        // ====================================================================
+
+        private void _dumpHierarchy() // DBG
+        { // DBG
+            Debug.Log("[DBG:BOOT:HIERARCHY] === Full Scene Hierarchy ==="); // DBG
+            foreach (var root in gameObject.scene.GetRootGameObjects()) // DBG
+            { // DBG
+                _dumpGameObject(root, 0); // DBG
+            } // DBG
+            // Also dump DontDestroyOnLoad objects // DBG
+            Debug.Log("[DBG:BOOT:HIERARCHY] === DontDestroyOnLoad Objects ==="); // DBG
+            var ddolScene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(0); // DBG
+            // We can't easily enumerate DDOL, but we know Managers is there // DBG
+            if (_gameManager != null) // DBG
+            { // DBG
+                Debug.Log($"[DBG:BOOT:HIERARCHY] Managers GO scene: {_gameManager.gameObject.scene.name}"); // DBG
+                Debug.Log($"[DBG:BOOT:HIERARCHY] Managers GO active: {_gameManager.gameObject.activeInHierarchy}"); // DBG
+            } // DBG
+            if (_playerController != null) // DBG
+            { // DBG
+                Debug.Log($"[DBG:BOOT:HIERARCHY] PlayerRig GO scene: {_playerController.gameObject.scene.name}"); // DBG
+                Debug.Log($"[DBG:BOOT:HIERARCHY] PlayerRig GO active: {_playerController.gameObject.activeInHierarchy}"); // DBG
+                Debug.Log($"[DBG:BOOT:HIERARCHY] PlayerRig childCount: {_playerController.transform.childCount}"); // DBG
+                for (int i = 0; i < _playerController.transform.childCount; i++) // DBG
+                { // DBG
+                    var child = _playerController.transform.GetChild(i); // DBG
+                    Debug.Log($"[DBG:BOOT:HIERARCHY]   Child[{i}]: {child.name} (components: {_getComponentNames(child.gameObject)})"); // DBG
+                    Debug.Log($"[DBG:BOOT:HIERARCHY]     parent={child.parent?.name}, localPos={child.localPosition}"); // DBG
+                } // DBG
+            } // DBG
+            if (_cameraController != null) // DBG
+            { // DBG
+                Debug.Log($"[DBG:BOOT:HIERARCHY] Camera GO: {_cameraController.gameObject.name}"); // DBG
+                Debug.Log($"[DBG:BOOT:HIERARCHY] Camera parent: {_cameraController.transform.parent?.name ?? "NULL"}"); // DBG
+                Debug.Log($"[DBG:BOOT:HIERARCHY] Camera scene: {_cameraController.gameObject.scene.name}"); // DBG
+                Debug.Log($"[DBG:BOOT:HIERARCHY] Camera active: {_cameraController.gameObject.activeInHierarchy}"); // DBG
+            } // DBG
+        } // DBG
+
+        private void _dumpGameObject(GameObject go, int depth) // DBG
+        { // DBG
+            string indent = new string(' ', depth * 2); // DBG
+            string components = _getComponentNames(go); // DBG
+            Debug.Log($"[DBG:BOOT:HIERARCHY] {indent}{go.name} [{components}] active={go.activeSelf}"); // DBG
+            for (int i = 0; i < go.transform.childCount; i++) // DBG
+            { // DBG
+                _dumpGameObject(go.transform.GetChild(i).gameObject, depth + 1); // DBG
+            } // DBG
+        } // DBG
+
+        private string _getComponentNames(GameObject go) // DBG
+        { // DBG
+            var comps = go.GetComponents<Component>(); // DBG
+            var names = new System.Text.StringBuilder(); // DBG
+            foreach (var c in comps) // DBG
+            { // DBG
+                if (c is Transform) continue; // DBG
+                if (names.Length > 0) names.Append(", "); // DBG
+                names.Append(c.GetType().Name); // DBG
+            } // DBG
+            return names.ToString(); // DBG
+        } // DBG
 
         // ====================================================================
         // Step 1: EventSystem
@@ -93,7 +161,6 @@ namespace Game1.Unity.Core
 
         private void _createEventSystem()
         {
-            // Use UIHelper's built-in method which checks for existing EventSystem
             UIHelper.EnsureEventSystem();
             Debug.Log("[SceneBootstrapper] EventSystem created.");
         }
@@ -104,11 +171,10 @@ namespace Game1.Unity.Core
 
         private void _createLighting()
         {
-            // Directional light (sun)
             var lightGO = new GameObject("DirectionalLight");
             var light = lightGO.AddComponent<Light>();
             light.type = LightType.Directional;
-            light.color = new Color(1f, 0.96f, 0.92f, 1f); // warm white
+            light.color = new Color(1f, 0.96f, 0.92f, 1f);
             light.intensity = 1.0f;
             light.shadows = LightShadows.Soft;
             light.shadowStrength = 0.6f;
@@ -116,11 +182,9 @@ namespace Game1.Unity.Core
             light.shadowNormalBias = 0.4f;
             lightGO.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
 
-            // Ambient light: warm outdoor lighting
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
             RenderSettings.ambientLight = new Color(0.55f, 0.55f, 0.6f, 1f);
 
-            // Procedural skybox for visual depth
             Shader skyboxShader = Shader.Find("Skybox/Procedural");
             if (skyboxShader != null)
             {
@@ -134,7 +198,6 @@ namespace Game1.Unity.Core
                 RenderSettings.skybox = skyMat;
             }
 
-            // Distance fog for atmosphere and depth cues
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = new Color(0.7f, 0.75f, 0.85f);
@@ -152,9 +215,19 @@ namespace Game1.Unity.Core
         {
             var managersGO = new GameObject("Managers");
 
+            Debug.Log("[DBG:BOOT:01] Creating Managers GO..."); // DBG
+
             _stateManager = managersGO.AddComponent<GameStateManager>();
+            Debug.Log("[DBG:BOOT:02] GameStateManager added."); // DBG
+
             _inputManager = managersGO.AddComponent<InputManager>();
+            Debug.Log("[DBG:BOOT:03] InputManager added."); // DBG
+
+            // NOTE: AddComponent<GameManager>() triggers GameManager.Awake() INLINE,
+            // which calls DontDestroyOnLoad(gameObject) — moves Managers to DDOL scene.
             _gameManager = managersGO.AddComponent<GameManager>();
+            Debug.Log($"[DBG:BOOT:04] GameManager added. Managers scene now: {managersGO.scene.name}"); // DBG
+            Debug.Log($"[DBG:BOOT:05] Managers GO active: {managersGO.activeInHierarchy}, path: {managersGO.transform.GetSiblingIndex()}"); // DBG
 
             Debug.Log("[SceneBootstrapper] Managers created.");
         }
@@ -165,21 +238,29 @@ namespace Game1.Unity.Core
 
         private void _createPlayerRig()
         {
-            // Player rig at center of 100x100 world
+            Debug.Log("[DBG:BOOT:10] Creating PlayerRig..."); // DBG
+
             var playerRigGO = new GameObject("PlayerRig");
             playerRigGO.transform.position = new Vector3(50f, 0f, 50f);
-            _playerController = playerRigGO.AddComponent<PlayerController>();
 
-            // Child camera
+            Debug.Log($"[DBG:BOOT:11] PlayerRig created, scene: {playerRigGO.scene.name}"); // DBG
+
+            _playerController = playerRigGO.AddComponent<PlayerController>();
+            Debug.Log($"[DBG:BOOT:12] PlayerController added to PlayerRig"); // DBG
+
+            // Child camera — SetParent BEFORE AddComponent so Awake sees correct parent
             var cameraGO = new GameObject("MainCamera");
+            Debug.Log($"[DBG:BOOT:13] MainCamera created, parent BEFORE SetParent: {cameraGO.transform.parent?.name ?? "NULL"}"); // DBG
+
             cameraGO.transform.SetParent(playerRigGO.transform, false);
-            cameraGO.transform.localPosition = new Vector3(0f, 1.6f, 0f); // eye height
+            Debug.Log($"[DBG:BOOT:14] MainCamera parent AFTER SetParent: {cameraGO.transform.parent?.name ?? "NULL"}"); // DBG
+
+            cameraGO.transform.localPosition = new Vector3(0f, 1.6f, 0f);
             cameraGO.tag = "MainCamera";
 
             _cameraController = cameraGO.AddComponent<CameraController>();
+            Debug.Log($"[DBG:BOOT:15] CameraController added. Camera parent: {cameraGO.transform.parent?.name ?? "NULL"}"); // DBG
 
-            // Camera component (CameraController.Awake will add one if missing,
-            // but we create it explicitly for clarity and AudioListener attachment)
             var camera = cameraGO.GetComponent<Camera>();
             if (camera == null)
                 camera = cameraGO.AddComponent<Camera>();
@@ -188,8 +269,11 @@ namespace Game1.Unity.Core
             camera.farClipPlane = 500f;
             camera.orthographic = false;
 
-            // AudioListener must be on the camera
             cameraGO.AddComponent<AudioListener>();
+
+            Debug.Log($"[DBG:BOOT:16] PlayerRig setup complete. Children: {playerRigGO.transform.childCount}"); // DBG
+            Debug.Log($"[DBG:BOOT:17] Camera GO components: {_getComponentNames(cameraGO)}"); // DBG
+            Debug.Log($"[DBG:BOOT:18] PlayerRig GO components: {_getComponentNames(playerRigGO)}"); // DBG
 
             Debug.Log("[SceneBootstrapper] Player rig created at (50, 0, 50).");
         }
@@ -216,17 +300,14 @@ namespace Game1.Unity.Core
             var utilitiesGO = new GameObject("Utilities");
             utilitiesGO.AddComponent<SpriteDatabase>();
 
-            // DamageNumbers child
             var damageGO = new GameObject("DamageNumbers");
             damageGO.transform.SetParent(utilitiesGO.transform, false);
             damageGO.AddComponent<DamageNumberRenderer>();
 
-            // AttackEffects child
             var attackGO = new GameObject("AttackEffects");
             attackGO.transform.SetParent(utilitiesGO.transform, false);
             attackGO.AddComponent<AttackEffectRenderer>();
 
-            // ParticleEffects child
             var particleGO = new GameObject("ParticleEffects");
             particleGO.transform.SetParent(utilitiesGO.transform, false);
             particleGO.AddComponent<ParticleEffects>();
@@ -242,23 +323,19 @@ namespace Game1.Unity.Core
         {
             var canvas = UIHelper.CreateCanvas("HUD_Canvas", 0);
 
-            // StatusBarUI — top-left
             _createUIPanel<StatusBarUI>(canvas.transform, "StatusBarUI",
                 new Vector2(0.01f, 0.88f), new Vector2(0.35f, 0.99f));
 
-            // SkillBarUI — bottom-center
             _createUIPanel<SkillBarUI>(canvas.transform, "SkillBarUI",
                 new Vector2(0.3f, 0.01f), new Vector2(0.7f, 0.07f));
 
-            // NotificationUI — bottom-right
             _createUIPanel<NotificationUI>(canvas.transform, "NotificationUI",
                 new Vector2(0.65f, 0.01f), new Vector2(0.99f, 0.25f));
 
-            // DebugOverlay — top-left, below status bar
             _createUIPanel<DebugOverlay>(canvas.transform, "DebugOverlay",
                 new Vector2(0.01f, 0.60f), new Vector2(0.35f, 0.87f));
 
-            // Crosshair — small dot at screen center for first-person orientation
+            // Crosshair
             var crosshairGO = new GameObject("Crosshair");
             crosshairGO.transform.SetParent(canvas.transform, false);
             var crosshairRT = crosshairGO.AddComponent<RectTransform>();
@@ -270,7 +347,7 @@ namespace Game1.Unity.Core
             crosshairImg.color = new Color(1f, 1f, 1f, 0.7f);
             crosshairImg.raycastTarget = false;
 
-            // DayNightOverlay — full-screen tint layer
+            // DayNightOverlay
             var dayNightGO = new GameObject("DayNightOverlay");
             dayNightGO.transform.SetParent(canvas.transform, false);
             var dayNightRT = dayNightGO.AddComponent<RectTransform>();
@@ -278,11 +355,9 @@ namespace Game1.Unity.Core
             dayNightRT.anchorMax = Vector2.one;
             dayNightRT.offsetMin = Vector2.zero;
             dayNightRT.offsetMax = Vector2.zero;
-            // Add Image for the overlay tint
             var overlayImage = dayNightGO.AddComponent<UnityEngine.UI.Image>();
             overlayImage.color = new Color(0f, 0f, 0f, 0f);
             overlayImage.raycastTarget = false;
-            // Add the DayNightOverlay component
             dayNightGO.AddComponent<DayNightOverlay>();
 
             Debug.Log("[SceneBootstrapper] HUD Canvas created.");
@@ -296,9 +371,6 @@ namespace Game1.Unity.Core
         {
             var canvas = UIHelper.CreateCanvas("Panel_Canvas", 10);
 
-            // --- Centered panels ---
-            // anchorMin(0.15, 0.1), anchorMax(0.85, 0.9)
-
             _createUIPanel<StartMenuUI>(canvas.transform, "StartMenuUI",
                 new Vector2(0.15f, 0.1f), new Vector2(0.85f, 0.9f));
 
@@ -307,9 +379,6 @@ namespace Game1.Unity.Core
 
             _createUIPanel<ChestUI>(canvas.transform, "ChestUI",
                 new Vector2(0.15f, 0.1f), new Vector2(0.85f, 0.9f));
-
-            // --- Right-side panels ---
-            // anchorMin(0.55, 0.02), anchorMax(0.98, 0.98)
 
             _createUIPanel<ClassSelectionUI>(canvas.transform, "ClassSelectionUI",
                 new Vector2(0.55f, 0.02f), new Vector2(0.98f, 0.98f));
@@ -355,11 +424,9 @@ namespace Game1.Unity.Core
         {
             var canvas = UIHelper.CreateCanvas("Minigame_Canvas", 20);
 
-            // MinigameUI container — full-screen so minigames can position freely
             var containerRT = UIHelper.CreateContainer(canvas.transform, "MinigameUI",
                 Vector2.zero, Vector2.one);
 
-            // Individual minigame UIs — each gets a centered panel
             _createUIPanel<SmithingMinigameUI>(containerRT, "SmithingMinigameUI",
                 new Vector2(0.1f, 0.05f), new Vector2(0.9f, 0.95f));
 
@@ -389,11 +456,9 @@ namespace Game1.Unity.Core
         {
             var canvas = UIHelper.CreateCanvas("Overlay_Canvas", 30);
 
-            // TooltipRenderer — full-screen container (tooltip positions itself)
             _createUIPanel<TooltipRenderer>(canvas.transform, "TooltipRenderer",
                 Vector2.zero, Vector2.one);
 
-            // DragDropManager — full-screen container (drag ghost positions itself)
             _createUIPanel<DragDropManager>(canvas.transform, "DragDropManager",
                 Vector2.zero, Vector2.one);
 
@@ -406,15 +471,6 @@ namespace Game1.Unity.Core
 
         private void _wireReferences()
         {
-            // Wire GameManager's serialized references via reflection or
-            // let its Start() auto-discover via FindFirstObjectByType.
-            // GameManager.Start() already does auto-discovery for all four
-            // references (_stateManager, _inputManager, _cameraController,
-            // _audioManager), so we only need to wire fields that are
-            // checked during Awake() — which is none.
-
-            // Wire InputManager._stateManager so it can respond to state
-            // changes immediately when OnEnable fires.
             _setSerializedField(_inputManager, "_stateManager", _stateManager);
 
             Debug.Log("[SceneBootstrapper] Cross-references wired.");
@@ -424,11 +480,6 @@ namespace Game1.Unity.Core
         // Helper: Create a UI Panel with a MonoBehaviour Component
         // ====================================================================
 
-        /// <summary>
-        /// Creates a child GameObject with a RectTransform anchored at the
-        /// specified position, then adds the given MonoBehaviour component.
-        /// The component's own Awake() can build its internal UI hierarchy.
-        /// </summary>
         private T _createUIPanel<T>(Transform parent, string name,
             Vector2 anchorMin, Vector2 anchorMax) where T : MonoBehaviour
         {
@@ -449,11 +500,6 @@ namespace Game1.Unity.Core
         // Helper: Set a SerializeField via Reflection
         // ====================================================================
 
-        /// <summary>
-        /// Sets a private [SerializeField] on a MonoBehaviour at runtime.
-        /// Used to wire cross-references that would normally be set in the
-        /// Unity Inspector. Falls back gracefully if the field doesn't exist.
-        /// </summary>
         private void _setSerializedField(MonoBehaviour target, string fieldName, object value)
         {
             if (target == null) return;
