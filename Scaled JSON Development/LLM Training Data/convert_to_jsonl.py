@@ -1,49 +1,62 @@
 """
-Convert Training Data to JSONL Format
+Convert Training Data to JSONL Format for Together.ai Fine-tuning
 
 Matches indexed recipe inputs (custom_data.json) with synthetic outputs
-(Synthetic_outputs/*.json) and creates JSONL for fine-tuning.
+(Synthetic_outputs/*.json) and creates JSONL for fine-tuning chat models.
+
+Supports two output modes based on discipline type:
+- VLM (Vision Language Model): smithing, adornment — multimodal with images
+- Text-only (LLM): alchemy, refining, engineering — no images
+
+Format: Together.ai CONVERSATION format ({"messages": [...]})
+- VLM: all message content fields use list format [{"type":"text",...}, {"type":"image_url",...}]
+- Text-only: all message content fields are plain strings
+
+Together.ai's file checker treats ANY list-format content as multimodal,
+so text-only disciplines MUST use plain strings to avoid:
+  "The dataset is malformed, the example must contain at least one image if it is multimodal"
 
 Features:
-- Reads custom_data files for indexed recipe inputs
-- Reads all Synthetic_outputs files for generated item outputs
-- ROBUST PARSING: Handles multiple JSON format variations:
-  * Raw arrays, objects with various array keys
-  * Truncated files, missing array brackets
-  * Various item wrapper formats (output, item, direct)
-  * Subfolders per discipline
-- Matches by index, handles gaps/missing indices
-- Removes rarity field from all disciplines EXCEPT refining
-- Loads system prompts from external text files
-- Creates 80/20 train/validation split with random shuffling
-- ALL disciplines use INSTRUCTION format (prompt/completion arrays)
-- VLM (Smithing, Adornment): prompt includes image_url for vision training
-- LLM (Alchemy, Refining, Engineering): text-only prompts
-- Creates Together.ai/OpenAI-compatible JSONL
+- Robust JSON parsing with multiple fallback strategies
+- Auto-detects VLM vs text-only from data (image_base64 presence)
+- Creates per-discipline files + separate VLM/text-only combined files
+- 80/20 train/validation split with reproducible shuffling
+- Integrated validation via Together.ai SDK (together files check)
+- CLI arguments or interactive mode
 
-Output files (18 total for 5 disciplines):
-- all_combined.jsonl, all_train.jsonl, all_validation.jsonl (all disciplines)
-- {discipline}.jsonl (combined, for Together auto-split)
-- {discipline}_train.jsonl, {discipline}_validation.jsonl (pre-split)
+Output files per discipline:
+  {discipline}.jsonl, {discipline}_train.jsonl, {discipline}_validation.jsonl
+Combined files:
+  vlm_combined.jsonl (smithing + adornment with images)
+  text_combined.jsonl (alchemy + refining + engineering text-only)
+  + train/validation splits for each
+
+Target models:
+  VLM:       google/gemma-3-4b-it (vision) or similar VLM
+  Text-only: google/gemma-3-4b-it or similar chat model
 
 Usage:
-    python convert_to_jsonl.py
-    (Follow the prompts)
+    python convert_to_jsonl.py                    # interactive mode
+    python convert_to_jsonl.py --all              # process all disciplines
+    python convert_to_jsonl.py --all --validate   # process + validate output
+    python convert_to_jsonl.py --discipline alchemy --validate
 
 Author: Claude
 Created: 2026-02-05
-Updated: 2026-02-10 (All disciplines use instruction format)
+Updated: 2026-02-26 (Conversation format, VLM/text-only split, validation)
 """
 
 import json
 import random
+import argparse
+import sys
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 # =============================================================================
-# ROBUST JSON PARSING
+# ROBUST JSON PARSING (unchanged — works well)
 # =============================================================================
 
 @dataclass
@@ -59,10 +72,11 @@ def robust_json_load(filepath: Path) -> ParseResult:
     """
     Load JSON file with multiple fallback strategies for malformed files.
 
-    Strategies:
+    Strategies tried in order:
     1. Direct parse
     2. Wrap in array brackets (for missing [ ])
     3. Fix truncated files (add ]})
+    4. Fix truncated arrays (add ])
     """
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -117,18 +131,15 @@ def extract_items_array(data: Any) -> Tuple[List[Dict], str]:
         return data, "raw_array"
 
     if isinstance(data, dict):
-        # Try various array keys in order of likelihood
         array_keys = ['training_outputs', 'items', 'enchantments', 'recipes']
 
         for key in array_keys:
             if key in data and isinstance(data[key], list):
                 items = data[key]
-                # Check for final_item special case (alchemy_450-500)
                 if 'final_item' in data and isinstance(data['final_item'], dict):
                     items = items + [data['final_item']]
                 return items, f"dict[{key}]"
 
-        # If it's a single item dict (might be wrapped)
         if 'index' in data:
             return [data], "single_item"
 
@@ -145,37 +156,27 @@ def extract_item_content(item: Dict) -> Tuple[Optional[Dict], str]:
     - Direct content (most files)
     - Input data detection (has 'recipe', 'image_base64' = NOT output)
     """
-    # Check if this is INPUT data accidentally in outputs folder
     if 'recipe' in item and 'image_base64' in item:
         return None, "input_data_not_output"
 
-    # Check for wrappers
     if 'output' in item and isinstance(item['output'], dict):
         return item['output'], "output_wrapper"
 
     if 'item' in item and isinstance(item['item'], dict):
         return item['item'], "item_wrapper"
 
-    # Direct content - check for item indicators
     item_indicators = ['itemId', 'enchantmentId', 'name', 'category', 'tier']
     if any(key in item for key in item_indicators):
         return item, "direct"
 
-    # Unknown format but return anyway
     return item, "unknown"
 
 
 def parse_synthetic_file(filepath: Path) -> Tuple[Dict[int, Dict], List[str]]:
-    """
-    Parse a synthetic output file and return indexed items.
-
-    Returns:
-        Tuple of (indexed_items, warnings)
-    """
+    """Parse a synthetic output file and return indexed items."""
     warnings = []
     indexed = {}
 
-    # Load file
     result = robust_json_load(filepath)
     if not result.success:
         warnings.append(f"Parse failed ({result.strategy}): {result.error}")
@@ -184,12 +185,9 @@ def parse_synthetic_file(filepath: Path) -> Tuple[Dict[int, Dict], List[str]]:
     if result.strategy != "direct":
         warnings.append(f"Used fallback strategy: {result.strategy}")
 
-    # Extract items array from the parsed data
-    # Handle case where robust_json_load returns a list (from wrapped_array strategy)
     if isinstance(result.items, list) and len(result.items) == 1 and isinstance(result.items[0], dict):
         items, array_format = extract_items_array(result.items[0])
     elif isinstance(result.items, list) and len(result.items) > 1:
-        # Already a list of items from wrapped_array
         items = result.items
         array_format = "raw_array"
     else:
@@ -200,18 +198,15 @@ def parse_synthetic_file(filepath: Path) -> Tuple[Dict[int, Dict], List[str]]:
         warnings.append(f"No items found (format: {array_format})")
         return indexed, warnings
 
-    # Process each item
     input_data_count = 0
     for item in items:
         if not isinstance(item, dict):
             continue
 
-        # Get index
         idx = item.get('index')
         if idx is None:
             continue
 
-        # Extract actual content
         content, wrapper_format = extract_item_content(item)
 
         if content is None:
@@ -231,43 +226,35 @@ def parse_synthetic_file(filepath: Path) -> Tuple[Dict[int, Dict], List[str]]:
 # SYSTEM PROMPTS
 # =============================================================================
 
-# Default prompts (used if external file not found)
 DEFAULT_SYSTEM_PROMPTS = {
-    'smithing': """You are a crafting assistant for a fantasy RPG. Given a smithing recipe with materials and grid positions, generate the resulting item as JSON. Consider material tiers (T1-T4), tags, and properties.""",
-    'adorment': """You are a crafting assistant for a fantasy RPG. Given an adornment recipe with materials, generate the resulting enchantment as JSON. Consider magical properties and tiers.""",
-    'refining': """You are a crafting assistant for a fantasy RPG. Given a refining recipe, generate the resulting refined material as JSON. Rarity depends on input quality and process.""",
-    'alchemy': """You are a crafting assistant for a fantasy RPG. Given an alchemy recipe with ingredients, generate the resulting potion/consumable as JSON. Consider ingredient properties and tiers.""",
-    'engineering': """You are a crafting assistant for a fantasy RPG. Given an engineering recipe with components, generate the resulting device as JSON. Consider component types and tiers.""",
+    'smithing': "You are a crafting assistant for a fantasy RPG. Given a smithing recipe with materials and grid positions, generate the resulting item as JSON. Consider material tiers (T1-T4), tags, and properties.",
+    'adornment': "You are a crafting assistant for a fantasy RPG. Given an adornment recipe with materials, generate the resulting enchantment as JSON. Consider magical properties and tiers.",
+    'refining': "You are a crafting assistant for a fantasy RPG. Given a refining recipe, generate the resulting refined material as JSON. Rarity depends on input quality and process.",
+    'alchemy': "You are a crafting assistant for a fantasy RPG. Given an alchemy recipe with ingredients, generate the resulting potion/consumable as JSON. Consider ingredient properties and tiers.",
+    'engineering': "You are a crafting assistant for a fantasy RPG. Given an engineering recipe with components, generate the resulting device as JSON. Consider component types and tiers.",
 }
 
-# Cache for loaded prompts
 _loaded_prompts: Dict[str, str] = {}
 
 
 def load_system_prompt(discipline: str, prompts_dir: Optional[Path] = None) -> str:
-    """
-    Load system prompt from external file or use default.
-
-    Looks for: {prompts_dir}/{discipline}.txt
-    Falls back to DEFAULT_SYSTEM_PROMPTS if file not found.
-    """
-    # Check cache first
+    """Load system prompt from external file or use default."""
     cache_key = f"{prompts_dir}:{discipline}" if prompts_dir else discipline
     if cache_key in _loaded_prompts:
         return _loaded_prompts[cache_key]
 
     prompt = None
-
-    # Try loading from file
     if prompts_dir:
-        prompt_file = prompts_dir / f"{discipline}.txt"
-        if prompt_file.exists():
-            try:
-                prompt = prompt_file.read_text(encoding='utf-8').strip()
-            except Exception:
-                pass
+        # Try exact name first, then common variants
+        for name in [discipline, discipline.replace('adornment', 'adorment')]:
+            prompt_file = prompts_dir / f"{name}.txt"
+            if prompt_file.exists():
+                try:
+                    prompt = prompt_file.read_text(encoding='utf-8').strip()
+                    break
+                except Exception:
+                    pass
 
-    # Fall back to default
     if not prompt:
         prompt = DEFAULT_SYSTEM_PROMPTS.get(discipline, DEFAULT_SYSTEM_PROMPTS['smithing'])
 
@@ -308,21 +295,18 @@ def format_recipe_as_text(recipe_data: Dict, discipline: str) -> str:
     lines.append("")
     lines.append("Materials:")
 
-    # Track narratives for later
     all_narratives = []
 
-    # REFINING: Core and Surrounding inputs (labeled separately)
+    # REFINING: Core and Surrounding inputs
     if recipe.get('coreInputs'):
         for inp in recipe['coreInputs']:
-            line = format_material_line(inp, label="CORE")
-            lines.append(line)
+            lines.append(format_material_line(inp, label="CORE"))
             if inp.get('material_metadata', {}).get('narrative'):
                 all_narratives.append(inp['material_metadata']['narrative'])
 
     if recipe.get('surroundingInputs'):
         for inp in recipe['surroundingInputs']:
-            line = format_material_line(inp, label="SURROUNDING")
-            lines.append(line)
+            lines.append(format_material_line(inp, label="SURROUNDING"))
             if inp.get('material_metadata', {}).get('narrative'):
                 all_narratives.append(inp['material_metadata']['narrative'])
 
@@ -330,8 +314,7 @@ def format_recipe_as_text(recipe_data: Dict, discipline: str) -> str:
     if recipe.get('ingredients'):
         for inp in recipe['ingredients']:
             slot = inp.get('slot', '?')
-            line = format_material_line(inp, label=f"Slot {slot}")
-            lines.append(line)
+            lines.append(format_material_line(inp, label=f"Slot {slot}"))
             if inp.get('material_metadata', {}).get('narrative'):
                 all_narratives.append(inp['material_metadata']['narrative'])
 
@@ -339,8 +322,7 @@ def format_recipe_as_text(recipe_data: Dict, discipline: str) -> str:
     if recipe.get('slots'):
         for inp in recipe['slots']:
             slot_type = inp.get('type', 'UNKNOWN')
-            line = format_material_line(inp, label=slot_type)
-            lines.append(line)
+            lines.append(format_material_line(inp, label=slot_type))
             if inp.get('material_metadata', {}).get('narrative'):
                 all_narratives.append(inp['material_metadata']['narrative'])
 
@@ -354,12 +336,10 @@ def format_recipe_as_text(recipe_data: Dict, discipline: str) -> str:
                 pos_label = f"at {pos}"
             elif positions:
                 pos_label = f"at {', '.join(positions[:3])}"
-            line = format_material_line(inp, position_info=pos_label)
-            lines.append(line)
+            lines.append(format_material_line(inp, position_info=pos_label))
             if inp.get('material_metadata', {}).get('narrative'):
                 all_narratives.append(inp['material_metadata']['narrative'])
 
-    # Add narrative (use first one found, or recipe-level)
     narrative = all_narratives[0] if all_narratives else recipe.get('narrative')
     if narrative:
         lines.append(f"\nNarrative: {narrative}")
@@ -387,6 +367,10 @@ def format_material_line(inp: Dict, label: str = None, position_info: str = None
     return line
 
 
+# =============================================================================
+# DATA LOADING
+# =============================================================================
+
 def load_custom_data(filepath: Path) -> Tuple[str, Dict[int, Dict]]:
     """Load custom_data.json and return discipline and indexed entries."""
     with open(filepath, 'r', encoding='utf-8') as f:
@@ -394,7 +378,6 @@ def load_custom_data(filepath: Path) -> Tuple[str, Dict[int, Dict]]:
 
     discipline = data.get('metadata', {}).get('discipline', 'unknown')
 
-    # Build index -> entry map
     indexed = {}
     for entry in data.get('training_data', []):
         idx = entry.get('index')
@@ -405,36 +388,22 @@ def load_custom_data(filepath: Path) -> Tuple[str, Dict[int, Dict]]:
 
 
 def load_synthetic_outputs(synthetic_dir: Path, discipline: str) -> Tuple[Dict[int, Dict], List[str]]:
-    """
-    Load all synthetic output files for a discipline and return indexed outputs.
-
-    Searches in:
-    - synthetic_dir/{discipline}_*.json
-    - synthetic_dir/{discipline}/{discipline}_*.json (subfolder)
-    - synthetic_dir/{discipline}/*.json (any file in subfolder)
-
-    Returns:
-        Tuple of (indexed_outputs, all_warnings)
-    """
+    """Load all synthetic output files for a discipline and return indexed outputs."""
     indexed = {}
     all_warnings = []
 
-    # Collect all potential files
     files = []
 
     # Pattern 1: Direct files in synthetic_dir
-    pattern1 = f"{discipline}_*.json"
-    files.extend(synthetic_dir.glob(pattern1))
+    files.extend(synthetic_dir.glob(f"{discipline}_*.json"))
 
     # Pattern 2: Files in discipline subfolder
     subfolder = synthetic_dir / discipline
     if subfolder.exists():
-        # Match both {discipline}_*.json and *.json in subfolder
         files.extend(subfolder.glob(f"{discipline}_*.json"))
-        # Also match files with typos (like "adornemnt_82-119.json")
         files.extend(subfolder.glob("*.json"))
 
-    # Remove duplicates while preserving order
+    # Deduplicate preserving order
     seen = set()
     unique_files = []
     for f in files:
@@ -445,406 +414,678 @@ def load_synthetic_outputs(synthetic_dir: Path, discipline: str) -> Tuple[Dict[i
     if not unique_files:
         return indexed, [f"No files found for {discipline}"]
 
-    # Process each file
     for filepath in sorted(unique_files):
         file_items, warnings = parse_synthetic_file(filepath)
-
-        # Add file context to warnings
-        if warnings:
-            for w in warnings:
-                all_warnings.append(f"{filepath.name}: {w}")
-
-        # Merge items (later files can override earlier)
+        for w in warnings:
+            all_warnings.append(f"{filepath.name}: {w}")
         for idx, content in file_items.items():
             indexed[idx] = content
 
     return indexed, all_warnings
 
 
-# Disciplines that use VLM (Vision Language Model) format with images
+# =============================================================================
+# JSONL ENTRY CREATION — FORMAT-AWARE
+# =============================================================================
+
+# Disciplines that have image data and should use VLM multimodal format
 VLM_DISCIPLINES = {'smithing', 'adornment'}
+
+
+def is_vlm_discipline(discipline: str) -> bool:
+    """Check if a discipline uses VLM (vision) format with images."""
+    return discipline in VLM_DISCIPLINES
+
+
+def create_conversation_entry_text(system_text: str, user_text: str, assistant_text: str) -> Dict:
+    """
+    Create a conversation-format JSONL entry for TEXT-ONLY disciplines.
+
+    All content fields are plain strings — Together.ai treats strings as
+    non-multimodal, so no image requirement is triggered.
+
+    Format:
+    {"messages": [
+        {"role": "system", "content": "..."},
+        {"role": "user", "content": "..."},
+        {"role": "assistant", "content": "..."}
+    ]}
+    """
+    return {
+        "messages": [
+            {"role": "system", "content": system_text},
+            {"role": "user", "content": user_text},
+            {"role": "assistant", "content": assistant_text},
+        ]
+    }
+
+
+def create_conversation_entry_vlm(system_text: str, user_text: str, assistant_text: str,
+                                   image_base64: str) -> Dict:
+    """
+    Create a conversation-format JSONL entry for VLM (multimodal) disciplines.
+
+    All content fields use list format for consistency — Together.ai requires
+    that within a single example, ALL messages are either multimodal or text-only.
+
+    Format:
+    {"messages": [
+        {"role": "system", "content": [{"type": "text", "text": "..."}]},
+        {"role": "user", "content": [
+            {"type": "text", "text": "..."},
+            {"type": "image_url", "image_url": {"url": "data:image/png;base64,..."}}
+        ]},
+        {"role": "assistant", "content": [{"type": "text", "text": "..."}]}
+    ]}
+    """
+    # Ensure proper data URI format
+    if not image_base64.startswith('data:'):
+        image_url = f"data:image/png;base64,{image_base64}"
+    else:
+        image_url = image_base64
+
+    return {
+        "messages": [
+            {"role": "system", "content": [{"type": "text", "text": system_text}]},
+            {"role": "user", "content": [
+                {"type": "text", "text": user_text},
+                {"type": "image_url", "image_url": {"url": image_url}},
+            ]},
+            {"role": "assistant", "content": [{"type": "text", "text": assistant_text}]},
+        ]
+    }
 
 
 def create_jsonl_entry(input_data: Dict, output_data: Dict, discipline: str,
                        prompts_dir: Optional[Path] = None) -> Dict:
     """
-    Create a single JSONL entry using INSTRUCTION FORMAT for all disciplines.
+    Create a single JSONL entry using the correct format for the discipline.
 
-    Together.ai instruction format:
-    {
-        "prompt": [
-            {"type": "text", "text": "system prompt + recipe text"},
-            {"type": "image_url", "image_url": {"url": "data:..."}}  // VLM only
-        ],
-        "completion": [
-            {"type": "text", "text": "output json"}
-        ]
-    }
-
-    VLM disciplines (smithing, adornment) include images in the prompt.
-    LLM disciplines (alchemy, refining, engineering) are text-only.
+    Automatically selects VLM (multimodal) or text-only conversation format
+    based on discipline type and data availability.
     """
-    # Remove rarity from output unless refining
+    # Clean output
     cleaned_output = remove_rarity_recursive(output_data, discipline)
-
-    # Remove index from output (only used for matching, not for training)
     if isinstance(cleaned_output, dict) and 'index' in cleaned_output:
         cleaned_output = {k: v for k, v in cleaned_output.items() if k != 'index'}
 
-    # Format texts
+    # Build text content
     recipe_text = format_recipe_as_text(input_data, discipline)
     output_text = json.dumps(cleaned_output, indent=2)
     system_text = load_system_prompt(discipline, prompts_dir)
 
-    # Combine system prompt with recipe text
-    combined_prompt = f"{system_text}\n\n{recipe_text}"
-
-    # Build prompt array (text always, image for VLM only)
-    prompt_content = [{"type": "text", "text": combined_prompt}]
-
-    # Add image for VLM disciplines if available
-    if discipline in VLM_DISCIPLINES:
+    # VLM: multimodal with image
+    if is_vlm_discipline(discipline):
         image_base64 = input_data.get('image_base64')
         if image_base64:
-            if not image_base64.startswith('data:'):
-                image_url = f"data:image/png;base64,{image_base64}"
-            else:
-                image_url = image_base64
-            prompt_content.append({"type": "image_url", "image_url": {"url": image_url}})
+            return create_conversation_entry_vlm(system_text, recipe_text, output_text, image_base64)
+        # Fallback: VLM discipline but no image — use text-only format
+        # (This entry won't have vision data, but at least it won't error)
 
-    return {
-        "prompt": prompt_content,
-        "completion": [{"type": "text", "text": output_text}]
-    }
+    # Text-only: plain string content
+    return create_conversation_entry_text(system_text, recipe_text, output_text)
+
+
+# =============================================================================
+# DISCIPLINE PROCESSING
+# =============================================================================
+
+@dataclass
+class DisciplineResult:
+    """Result of processing a single discipline."""
+    discipline: str
+    entries: List[Dict] = field(default_factory=list)
+    missing_count: int = 0
+    vlm_count: int = 0
+    text_count: int = 0
+    skipped_no_image: int = 0
+    total_inputs: int = 0
+    total_outputs: int = 0
 
 
 def process_discipline(input_file: Path, synthetic_dir: Path,
                        prompts_dir: Optional[Path] = None,
-                       verbose: bool = True) -> Tuple[str, List[Dict], int, int]:
-    """
-    Process a single discipline, matching inputs with outputs.
-
-    Returns:
-        Tuple of (discipline_name, matched_entries, missing_count, vlm_count)
-    """
-    # Load input data
+                       verbose: bool = True) -> DisciplineResult:
+    """Process a single discipline, matching inputs with outputs."""
     discipline, inputs = load_custom_data(input_file)
+    result = DisciplineResult(discipline=discipline, total_inputs=len(inputs))
+
     print(f"\n{discipline.upper()}:")
     print(f"  Loaded {len(inputs)} indexed inputs from {input_file.name}")
 
-    # Count entries with images (for VLM stats)
-    entries_with_images = sum(1 for entry in inputs.values() if entry.get('image_base64'))
-    if discipline in VLM_DISCIPLINES:
+    # Report image availability for VLM disciplines
+    if is_vlm_discipline(discipline):
+        entries_with_images = sum(1 for entry in inputs.values() if entry.get('image_base64'))
         print(f"  Entries with images: {entries_with_images}/{len(inputs)}")
 
-    # Load synthetic outputs (now returns warnings too)
+    # Load synthetic outputs
     outputs, warnings = load_synthetic_outputs(synthetic_dir, discipline)
+    result.total_outputs = len(outputs)
     print(f"  Loaded {len(outputs)} synthetic outputs")
 
-    # Show warnings if verbose
     if verbose and warnings:
         print(f"  Parsing notes ({len(warnings)}):")
-        for w in warnings[:10]:  # Limit to first 10
+        for w in warnings[:10]:
             print(f"    - {w}")
         if len(warnings) > 10:
             print(f"    ... and {len(warnings) - 10} more")
 
     if not outputs:
         print(f"  No synthetic outputs found for {discipline}")
-        return discipline, [], len(inputs), 0
+        result.missing_count = len(inputs)
+        return result
 
     # Match and create JSONL entries
-    matched = []
     missing_outputs = []
-    skipped_no_image = 0
 
     for idx in sorted(inputs.keys()):
-        if idx in outputs:
-            input_entry = inputs[idx]
-
-            # For VLM disciplines, SKIP entries without images
-            if discipline in VLM_DISCIPLINES:
-                if not input_entry.get('image_base64'):
-                    skipped_no_image += 1
-                    continue
-
-            entry = create_jsonl_entry(input_entry, outputs[idx], discipline, prompts_dir)
-            matched.append(entry)
-        else:
+        if idx not in outputs:
             missing_outputs.append(idx)
+            continue
 
-    print(f"  Matched: {len(matched)} entries")
-    if discipline in VLM_DISCIPLINES and skipped_no_image > 0:
-        print(f"  Skipped (no image): {skipped_no_image} entries")
+        input_entry = inputs[idx]
+
+        # For VLM disciplines, skip entries without images
+        if is_vlm_discipline(discipline) and not input_entry.get('image_base64'):
+            result.skipped_no_image += 1
+            continue
+
+        entry = create_jsonl_entry(input_entry, outputs[idx], discipline, prompts_dir)
+        result.entries.append(entry)
+
+        if is_vlm_discipline(discipline) and input_entry.get('image_base64'):
+            result.vlm_count += 1
+        else:
+            result.text_count += 1
+
+    result.missing_count = len(missing_outputs)
+
+    print(f"  Matched: {len(result.entries)} entries", end="")
+    if is_vlm_discipline(discipline):
+        print(f" (VLM: {result.vlm_count})", end="")
+    else:
+        print(f" (text-only: {result.text_count})", end="")
+    print()
+
+    if result.skipped_no_image > 0:
+        print(f"  Skipped (no image): {result.skipped_no_image} entries")
 
     if missing_outputs:
-        # Show ranges of missing indices
-        ranges = []
-        start = missing_outputs[0]
-        end = start
-        for idx in missing_outputs[1:]:
-            if idx == end + 1:
-                end = idx
-            else:
-                ranges.append(f"{start}-{end}" if start != end else str(start))
-                start = end = idx
-        ranges.append(f"{start}-{end}" if start != end else str(start))
+        _print_missing_ranges(missing_outputs)
 
-        if len(ranges) <= 5:
-            print(f"  Missing outputs for indices: {', '.join(ranges)}")
+    return result
+
+
+def _print_missing_ranges(missing: List[int]) -> None:
+    """Print missing index ranges in compact format."""
+    ranges = []
+    start = missing[0]
+    end = start
+    for idx in missing[1:]:
+        if idx == end + 1:
+            end = idx
         else:
-            print(f"  Missing outputs for {len(missing_outputs)} indices ({ranges[0]} ... {ranges[-1]})")
+            ranges.append(f"{start}-{end}" if start != end else str(start))
+            start = end = idx
+    ranges.append(f"{start}-{end}" if start != end else str(start))
 
-    # For VLM disciplines, all matched entries have images (we skipped ones without)
-    vlm_count = len(matched) if discipline in VLM_DISCIPLINES else 0
-    return discipline, matched, len(missing_outputs), vlm_count
+    if len(ranges) <= 5:
+        print(f"  Missing outputs for indices: {', '.join(ranges)}")
+    else:
+        print(f"  Missing outputs for {len(missing)} indices ({ranges[0]} ... {ranges[-1]})")
 
+
+# =============================================================================
+# TRAIN/VALIDATION SPLIT
+# =============================================================================
 
 def train_validation_split(entries: List[Dict], train_ratio: float = 0.8,
                            seed: Optional[int] = None) -> Tuple[List[Dict], List[Dict]]:
-    """
-    Split entries into train and validation sets with random shuffling.
+    """Split entries into train and validation sets with random shuffling."""
+    if not entries:
+        return [], []
 
-    Args:
-        entries: List of JSONL entries
-        train_ratio: Fraction for training (default 0.8 = 80%)
-        seed: Random seed for reproducibility (None for random)
-
-    Returns:
-        Tuple of (train_entries, validation_entries)
-    """
     if seed is not None:
         random.seed(seed)
 
-    # Shuffle a copy
     shuffled = entries.copy()
     random.shuffle(shuffled)
 
-    # Split
     split_idx = int(len(shuffled) * train_ratio)
-    train_entries = shuffled[:split_idx]
-    val_entries = shuffled[split_idx:]
-
-    return train_entries, val_entries
+    return shuffled[:split_idx], shuffled[split_idx:]
 
 
-def write_jsonl(entries: List[Dict], filepath: Path) -> None:
-    """Write entries to JSONL file."""
+# =============================================================================
+# FILE I/O
+# =============================================================================
+
+def write_jsonl(entries: List[Dict], filepath: Path) -> int:
+    """Write entries to JSONL file. Returns number of entries written."""
     with open(filepath, 'w', encoding='utf-8') as f:
         for entry in entries:
-            f.write(json.dumps(entry) + '\n')
+            f.write(json.dumps(entry, ensure_ascii=False) + '\n')
+    return len(entries)
 
 
-def main():
-    """Interactive main with train/validation split."""
-    print("=" * 60)
-    print("JSONL CONVERTER - Match Inputs with Synthetic Outputs")
-    print("=" * 60)
+# =============================================================================
+# VALIDATION via Together.ai SDK
+# =============================================================================
 
-    # Find directories
+def validate_jsonl_file(filepath: Path) -> Dict[str, Any]:
+    """
+    Validate a JSONL file using Together.ai's built-in file checker.
+
+    Returns the validation report dict with 'is_check_passed' key.
+    """
+    try:
+        from together.lib.utils import check_file
+        return check_file(filepath)
+    except ImportError:
+        return {
+            "is_check_passed": None,
+            "message": "together package not installed. Install with: pip install together"
+        }
+    except Exception as e:
+        return {
+            "is_check_passed": False,
+            "message": f"Validation error: {e}"
+        }
+
+
+def validate_all_outputs(output_dir: Path, files_written: List[Tuple[str, int, str]]) -> bool:
+    """Validate all written JSONL files. Returns True if all pass."""
+    print("\n" + "-" * 60)
+    print("VALIDATING OUTPUT FILES (together files check)")
+    print("-" * 60)
+
+    all_passed = True
+    for fname, count, desc in files_written:
+        filepath = output_dir / fname
+        if count == 0:
+            print(f"  {fname}: SKIP (0 entries)")
+            continue
+
+        report = validate_jsonl_file(filepath)
+        passed = report.get('is_check_passed')
+
+        if passed is True:
+            num = report.get('num_samples', '?')
+            print(f"  {fname}: PASS ({num} samples)")
+        elif passed is None:
+            print(f"  {fname}: SKIP ({report.get('message', 'unknown')})")
+        else:
+            all_passed = False
+            msg = report.get('message', 'unknown error')
+            line = report.get('line_number', '?')
+            print(f"  {fname}: FAIL — {msg}")
+            if line != '?':
+                print(f"    (line {line})")
+
+    return all_passed
+
+
+# =============================================================================
+# MAIN
+# =============================================================================
+
+def find_directories() -> Tuple[Path, Path, Path, Optional[Path]]:
+    """Locate script directory, training dir, synthetic dir, prompts dir."""
     script_dir = Path(__file__).parent
     training_dir = script_dir / "Synthetic_Training"
     synthetic_dir = training_dir / "Synthetic_outputs"
     prompts_dir = training_dir / "system_prompts"
 
+    if not prompts_dir.exists():
+        prompts_dir = None
+
+    return script_dir, training_dir, synthetic_dir, prompts_dir
+
+
+def discover_custom_files(training_dir: Path) -> List[Path]:
+    """Find all *_custom_data.json files."""
+    return sorted(training_dir.glob("*_custom_data.json"))
+
+
+def print_discovery_info(training_dir: Path, synthetic_dir: Path,
+                         prompts_dir: Optional[Path], custom_files: List[Path]) -> None:
+    """Print discovered files and directories."""
     print(f"\nLooking in: {training_dir}")
-
-    if not training_dir.exists():
-        print(f"\nError: Synthetic_Training directory not found")
-        input("\nPress Enter to exit...")
-        return
-
-    # Find custom_data files
-    custom_files = list(training_dir.glob("*_custom_data.json"))
-
-    if not custom_files:
-        print(f"\nNo *_custom_data.json files found")
-        input("\nPress Enter to exit...")
-        return
-
-    # Show available files
     print(f"\nFound {len(custom_files)} input file(s):")
     print("-" * 50)
-    for i, f in enumerate(sorted(custom_files), 1):
+
+    for i, f in enumerate(custom_files, 1):
         try:
             with open(f, 'r') as fp:
                 data = json.load(fp)
                 count = len(data.get('training_data', []))
-                discipline = data.get('metadata', {}).get('discipline', '?')
-        except:
-            count = '?'
-            discipline = '?'
-        print(f"  {i}. {f.name} [{discipline}] ({count} entries)")
-    print(f"  {len(custom_files) + 1}. All files (recommended)")
+                disc = data.get('metadata', {}).get('discipline', '?')
+                has_images = any(e.get('image_base64') for e in data.get('training_data', []))
+                mode = "VLM" if has_images else "text"
+        except Exception:
+            count, disc, mode = '?', '?', '?'
+        print(f"  {i}. {f.name} [{disc}] ({count} entries, {mode})")
 
-    # Check for synthetic outputs
-    if not synthetic_dir.exists():
-        print(f"\nWarning: Synthetic_outputs folder not found at {synthetic_dir}")
-        print("No outputs to match with.")
-        input("\nPress Enter to exit...")
-        return
-
-    # Count all synthetic files including subfolders
-    synthetic_files = list(synthetic_dir.glob("*.json"))
-    synthetic_files.extend(synthetic_dir.glob("*/*.json"))
-    print(f"\nFound {len(synthetic_files)} synthetic output file(s) in Synthetic_outputs/")
-
-    # Show breakdown by subfolder
-    subfolders = [d for d in synthetic_dir.iterdir() if d.is_dir()]
-    if subfolders:
-        print("  Subfolders:")
-        for sf in sorted(subfolders):
+    # Synthetic outputs
+    if synthetic_dir.exists():
+        syn_files = list(synthetic_dir.glob("*.json")) + list(synthetic_dir.glob("*/*.json"))
+        print(f"\nSynthetic outputs: {len(syn_files)} file(s)")
+        for sf in sorted(d for d in synthetic_dir.iterdir() if d.is_dir()):
             sf_count = len(list(sf.glob("*.json")))
-            print(f"    - {sf.name}/: {sf_count} files")
+            print(f"  - {sf.name}/: {sf_count} files")
 
-    # Check for system prompts
-    if prompts_dir.exists():
-        prompt_files = list(prompts_dir.glob("*.txt"))
-        print(f"\nSystem prompts: {prompts_dir}")
-        for pf in sorted(prompt_files):
+    # System prompts
+    if prompts_dir and prompts_dir.exists():
+        prompt_files = sorted(prompts_dir.glob("*.txt"))
+        print(f"\nSystem prompts: {len(prompt_files)} file(s)")
+        for pf in prompt_files:
             print(f"  - {pf.name}")
     else:
-        print(f"\nNote: No system_prompts folder found, using defaults")
-        prompts_dir = None
+        print("\nSystem prompts: using defaults")
 
-    # Select file(s)
+
+def interactive_select(custom_files: List[Path]) -> List[Path]:
+    """Interactive file selection. Returns list of files to process."""
+    print(f"\n  {len(custom_files) + 1}. All files (recommended)")
     print()
-    selection = input(f"Select input file (1-{len(custom_files) + 1}): ").strip()
 
     try:
+        selection = input(f"Select input file (1-{len(custom_files) + 1}): ").strip()
         sel_num = int(selection)
-    except ValueError:
+    except (ValueError, EOFError):
         print("Invalid selection.")
-        input("\nPress Enter to exit...")
-        return
+        return []
 
     if sel_num < 1 or sel_num > len(custom_files) + 1:
         print("Invalid selection.")
-        input("\nPress Enter to exit...")
-        return
-
-    # Output directory
-    output_dir = script_dir / "jsonl_outputs"
-    output_dir.mkdir(exist_ok=True)
-
-    # Process all selected files and collect entries BY DISCIPLINE
-    all_entries = []
-    total_missing = 0
-    total_vlm = 0
-    discipline_entries = {}  # discipline -> list of entries
-    discipline_vlm_counts = {}  # discipline -> vlm count
+        return []
 
     if sel_num == len(custom_files) + 1:
-        files_to_process = sorted(custom_files)
-    else:
-        files_to_process = [sorted(custom_files)[sel_num - 1]]
+        return custom_files
+    return [custom_files[sel_num - 1]]
 
+
+def process_all(files_to_process: List[Path], synthetic_dir: Path,
+                prompts_dir: Optional[Path]) -> Dict[str, DisciplineResult]:
+    """Process all selected files. Returns discipline -> result mapping."""
     print("\n" + "-" * 60)
     print("PROCESSING")
     print("-" * 60)
 
+    results = {}
     for input_file in files_to_process:
-        discipline, matched, missing, vlm_count = process_discipline(
-            input_file, synthetic_dir, prompts_dir, verbose=True
-        )
-        all_entries.extend(matched)
-        total_missing += missing
-        total_vlm += vlm_count
-        discipline_entries[discipline] = matched
-        discipline_vlm_counts[discipline] = vlm_count
+        result = process_discipline(input_file, synthetic_dir, prompts_dir, verbose=True)
+        results[result.discipline] = result
 
-    # Train/Validation split
+    return results
+
+
+def write_all_outputs(results: Dict[str, DisciplineResult], output_dir: Path,
+                      train_ratio: float = 0.8, seed: int = 42) -> List[Tuple[str, int, str]]:
+    """
+    Write all output JSONL files.
+
+    Creates:
+    - Per-discipline files (combined + train + val)
+    - Separate VLM combined and text-only combined files (not mixed)
+
+    Returns list of (filename, count, description) tuples.
+    """
+    output_dir.mkdir(exist_ok=True)
+    files_written = []
+
+    # Separate VLM and text-only entries
+    vlm_entries = []
+    text_entries = []
+
+    for discipline, result in results.items():
+        if is_vlm_discipline(discipline):
+            vlm_entries.extend(result.entries)
+        else:
+            text_entries.extend(result.entries)
+
     print("\n" + "-" * 60)
     print("TRAIN/VALIDATION SPLIT (80/20)")
     print("-" * 60)
 
-    train_ratio = 0.8
-    seed = 42  # Fixed seed for reproducibility
-
-    # Split combined dataset
-    train_all, val_all = train_validation_split(all_entries, train_ratio, seed)
-
-    print(f"\nCombined (all disciplines):")
-    print(f"  Total: {len(all_entries)}")
-    print(f"  Train: {len(train_all)} ({train_ratio*100:.0f}%)")
-    print(f"  Validation: {len(val_all)} ({(1-train_ratio)*100:.0f}%)")
-
-    # Split each discipline separately
+    # --- Per-discipline files ---
     discipline_splits = {}
-    for discipline, entries in discipline_entries.items():
-        train_disc, val_disc = train_validation_split(entries, train_ratio, seed)
+    for discipline, result in results.items():
+        train_disc, val_disc = train_validation_split(result.entries, train_ratio, seed)
         discipline_splits[discipline] = (train_disc, val_disc)
-        print(f"\n{discipline.capitalize()}:")
-        print(f"  Total: {len(entries)}")
+
+        mode = "VLM" if is_vlm_discipline(discipline) else "text"
+        print(f"\n{discipline.capitalize()} ({mode}):")
+        print(f"  Total: {len(result.entries)}")
         print(f"  Train: {len(train_disc)}")
         print(f"  Validation: {len(val_disc)}")
 
-    # Write output files
+    # --- Combined splits (separated by format) ---
+    if vlm_entries:
+        vlm_train, vlm_val = train_validation_split(vlm_entries, train_ratio, seed)
+        print(f"\nVLM Combined (smithing + adornment):")
+        print(f"  Total: {len(vlm_entries)}")
+        print(f"  Train: {len(vlm_train)}")
+        print(f"  Validation: {len(vlm_val)}")
+    else:
+        vlm_train, vlm_val = [], []
+
+    if text_entries:
+        text_train, text_val = train_validation_split(text_entries, train_ratio, seed)
+        print(f"\nText Combined (alchemy + refining + engineering):")
+        print(f"  Total: {len(text_entries)}")
+        print(f"  Train: {len(text_train)}")
+        print(f"  Validation: {len(text_val)}")
+    else:
+        text_train, text_val = [], []
+
+    # --- Write files ---
     print("\n" + "-" * 60)
     print("WRITING OUTPUT FILES")
     print("-" * 60)
 
-    files_written = []
+    # VLM combined files
+    if vlm_entries:
+        for name, data, desc in [
+            ("vlm_combined.jsonl", vlm_entries, "VLM combined"),
+            ("vlm_train.jsonl", vlm_train, "VLM train"),
+            ("vlm_validation.jsonl", vlm_val, "VLM validation"),
+        ]:
+            write_jsonl(data, output_dir / name)
+            files_written.append((name, len(data), desc))
 
-    # Combined files (all disciplines)
-    combined_file = output_dir / "all_combined.jsonl"
-    train_file = output_dir / "all_train.jsonl"
-    val_file = output_dir / "all_validation.jsonl"
-    write_jsonl(all_entries, combined_file)
-    write_jsonl(train_all, train_file)
-    write_jsonl(val_all, val_file)
-    files_written.append((combined_file.name, len(all_entries), "all combined"))
-    files_written.append((train_file.name, len(train_all), "all train"))
-    files_written.append((val_file.name, len(val_all), "all validation"))
+    # Text-only combined files
+    if text_entries:
+        for name, data, desc in [
+            ("text_combined.jsonl", text_entries, "text combined"),
+            ("text_train.jsonl", text_train, "text train"),
+            ("text_validation.jsonl", text_val, "text validation"),
+        ]:
+            write_jsonl(data, output_dir / name)
+            files_written.append((name, len(data), desc))
 
-    # Per-discipline files (combined + train + validation = 3 per discipline)
-    for discipline, entries in discipline_entries.items():
+    # Per-discipline files
+    for discipline, result in results.items():
         train_disc, val_disc = discipline_splits[discipline]
 
-        # Combined (unsplit) - for Together's auto-split
-        combined_disc_file = output_dir / f"{discipline}.jsonl"
-        write_jsonl(entries, combined_disc_file)
-        files_written.append((combined_disc_file.name, len(entries), f"{discipline} combined"))
+        for name, data, desc in [
+            (f"{discipline}.jsonl", result.entries, f"{discipline} combined"),
+            (f"{discipline}_train.jsonl", train_disc, f"{discipline} train"),
+            (f"{discipline}_validation.jsonl", val_disc, f"{discipline} validation"),
+        ]:
+            write_jsonl(data, output_dir / name)
+            files_written.append((name, len(data), desc))
 
-        # Train/validation split
-        train_disc_file = output_dir / f"{discipline}_train.jsonl"
-        val_disc_file = output_dir / f"{discipline}_validation.jsonl"
-        write_jsonl(train_disc, train_disc_file)
-        write_jsonl(val_disc, val_disc_file)
-        files_written.append((train_disc_file.name, len(train_disc), f"{discipline} train"))
-        files_written.append((val_disc_file.name, len(val_disc), f"{discipline} validation"))
+    return files_written
 
-    total_files = 3 + (len(discipline_entries) * 3)  # 3 combined + 3 per discipline
+
+def print_summary(results: Dict[str, DisciplineResult],
+                  files_written: List[Tuple[str, int, str]],
+                  output_dir: Path, seed: int) -> None:
+    """Print final summary."""
+    total_entries = sum(r.vlm_count + r.text_count for r in results.values())
+    total_vlm = sum(r.vlm_count for r in results.values())
+    total_text = sum(r.text_count for r in results.values())
+    total_missing = sum(r.missing_count for r in results.values())
+    total_skipped = sum(r.skipped_no_image for r in results.values())
+
     print("\n" + "=" * 60)
-    print(f"COMPLETE - {total_files} FILES GENERATED")
+    print(f"COMPLETE - {len(files_written)} FILES GENERATED")
     print("=" * 60)
 
-    print(f"\nOutput files ({len(files_written)} total):")
-    print("-" * 50)
-    print("All disciplines:")
-    for fname, count, desc in files_written[:3]:
+    # Combined files
+    combined_files = [(f, c, d) for f, c, d in files_written if 'combined' in d or 'train' in d or 'validation' in d]
+    vlm_files = [(f, c, d) for f, c, d in files_written if d.startswith('VLM')]
+    text_files = [(f, c, d) for f, c, d in files_written if d.startswith('text')]
+    disc_files = [(f, c, d) for f, c, d in files_written if d not in [x[2] for x in vlm_files + text_files]]
+
+    if vlm_files:
+        print("\nVLM files (for vision model fine-tuning):")
+        for fname, count, desc in vlm_files:
+            print(f"  {fname}: {count} entries")
+
+    if text_files:
+        print("\nText files (for text model fine-tuning):")
+        for fname, count, desc in text_files:
+            print(f"  {fname}: {count} entries")
+
+    print("\nPer-discipline files:")
+    for fname, count, desc in disc_files:
         print(f"  {fname}: {count} entries")
 
-    print("\nPer-discipline (combined + train + validation each):")
-    for fname, count, desc in files_written[3:]:
-        print(f"  {fname}: {count} entries")
-
-    print(f"\nTotal matched: {len(all_entries)}")
-    print(f"  VLM entries (with images): {total_vlm}")
-    print(f"  LLM entries (text-only): {len(all_entries) - total_vlm}")
+    print(f"\nTotal matched: {total_entries}")
+    print(f"  VLM entries (multimodal): {total_vlm}")
+    print(f"  Text entries (text-only): {total_text}")
+    if total_skipped:
+        print(f"  Skipped (VLM without image): {total_skipped}")
     print(f"Total missing outputs: {total_missing}")
     print(f"Output folder: {output_dir}")
     print(f"Random seed: {seed}")
 
-    # Show format info per Together.ai spec
     print("\n" + "-" * 50)
-    print("FORMAT INFO (Together.ai compatible - INSTRUCTION format for all):")
-    print('  {"prompt": [{type: text}, ...], "completion": [{type: text}]}')
-    print("  VLM disciplines (smithing, adornment): prompt includes image_url")
-    print("  LLM disciplines (alchemy, refining, engineering): text-only prompt")
+    print("FORMAT INFO:")
+    print("  All files use Together.ai CONVERSATION format:")
+    print('  {"messages": [{"role": "system", ...}, {"role": "user", ...}, {"role": "assistant", ...}]}')
+    print()
+    print("  VLM (smithing, adornment):")
+    print("    content = [{type: text}, {type: image_url}]  (multimodal list)")
+    print("    Target: google/gemma-3-4b-it VLM or similar vision model")
+    print()
+    print("  Text (alchemy, refining, engineering):")
+    print("    content = \"plain string\"  (NOT a list — avoids multimodal detection)")
+    print("    Target: google/gemma-3-4b-it or similar chat model")
     print("=" * 60)
 
-    input("\nPress Enter to exit...")
+
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Convert training data to Together.ai JSONL format for fine-tuning",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python convert_to_jsonl.py                         # interactive mode
+  python convert_to_jsonl.py --all                   # all disciplines
+  python convert_to_jsonl.py --all --validate        # all + validate
+  python convert_to_jsonl.py --discipline alchemy    # single discipline
+  python convert_to_jsonl.py --discipline smithing --discipline alchemy
+        """,
+    )
+    parser.add_argument('--all', action='store_true',
+                        help='Process all disciplines (no interactive prompt)')
+    parser.add_argument('--discipline', '-d', action='append', dest='disciplines',
+                        help='Process specific discipline(s). Can be repeated.')
+    parser.add_argument('--validate', '-v', action='store_true',
+                        help='Validate output files using Together.ai SDK')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='Random seed for train/val split (default: 42)')
+    parser.add_argument('--train-ratio', type=float, default=0.8,
+                        help='Train split ratio (default: 0.8)')
+    parser.add_argument('--output-dir', type=str, default=None,
+                        help='Output directory (default: jsonl_outputs/ next to this script)')
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    print("=" * 60)
+    print("JSONL CONVERTER — Together.ai Conversation Format")
+    print("  VLM: multimodal (smithing, adornment)")
+    print("  Text: plain string (alchemy, refining, engineering)")
+    print("=" * 60)
+
+    # Find directories
+    script_dir, training_dir, synthetic_dir, prompts_dir = find_directories()
+
+    if not training_dir.exists():
+        print(f"\nError: Synthetic_Training directory not found at {training_dir}")
+        sys.exit(1)
+
+    if not synthetic_dir.exists():
+        print(f"\nError: Synthetic_outputs not found at {synthetic_dir}")
+        sys.exit(1)
+
+    custom_files = discover_custom_files(training_dir)
+    if not custom_files:
+        print("\nNo *_custom_data.json files found")
+        sys.exit(1)
+
+    print_discovery_info(training_dir, synthetic_dir, prompts_dir, custom_files)
+
+    # Select files to process
+    if args.all:
+        files_to_process = custom_files
+    elif args.disciplines:
+        # Filter to requested disciplines
+        files_to_process = []
+        for f in custom_files:
+            try:
+                with open(f, 'r') as fp:
+                    data = json.load(fp)
+                    disc = data.get('metadata', {}).get('discipline', '')
+                if disc in args.disciplines:
+                    files_to_process.append(f)
+            except Exception:
+                pass
+        if not files_to_process:
+            print(f"\nNo matching files for disciplines: {args.disciplines}")
+            sys.exit(1)
+    else:
+        files_to_process = interactive_select(custom_files)
+        if not files_to_process:
+            sys.exit(1)
+
+    # Output directory
+    if args.output_dir:
+        output_dir = Path(args.output_dir)
+    else:
+        output_dir = script_dir / "jsonl_outputs"
+
+    # Process
+    results = process_all(files_to_process, synthetic_dir, prompts_dir)
+
+    if not any(r.entries for r in results.values()):
+        print("\nNo entries matched. Nothing to write.")
+        sys.exit(1)
+
+    # Write outputs
+    files_written = write_all_outputs(results, output_dir, args.train_ratio, args.seed)
+
+    # Summary
+    print_summary(results, files_written, output_dir, args.seed)
+
+    # Validation
+    if args.validate:
+        all_passed = validate_all_outputs(output_dir, files_written)
+        if all_passed:
+            print("\nAll files passed validation.")
+        else:
+            print("\nSome files FAILED validation. Check errors above.")
+            sys.exit(1)
+
+    # Interactive mode: wait for keypress
+    if not args.all and not args.disciplines:
+        input("\nPress Enter to exit...")
 
 
 if __name__ == "__main__":
