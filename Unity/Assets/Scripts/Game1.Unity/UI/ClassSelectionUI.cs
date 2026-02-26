@@ -75,10 +75,13 @@ namespace Game1.Unity.UI
 
         private void _buildUI()
         {
-            // Root panel — right-side, dark background
-            var panelRt = UIHelper.CreatePanel(
+            // Root panel — centered on screen, 500 x 650
+            var panelRt = UIHelper.CreateSizedPanel(
                 transform, "ClassSelectionPanel", UIHelper.COLOR_BG_DARK,
-                new Vector2(0.55f, 0.05f), new Vector2(0.95f, 0.95f));
+                new Vector2(500, 650), Vector2.zero);
+            panelRt.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRt.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRt.pivot = new Vector2(0.5f, 0.5f);
             _panel = panelRt.gameObject;
 
             // Main vertical layout

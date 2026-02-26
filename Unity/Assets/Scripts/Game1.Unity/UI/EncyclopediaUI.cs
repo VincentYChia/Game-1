@@ -50,6 +50,7 @@ namespace Game1.Unity.UI
         // ====================================================================
 
         private Text _contentTextFallback;
+        private Text[] _tabTexts;
         private ScrollRect[] _tabScrollRects;
 
         // ====================================================================
@@ -95,10 +96,13 @@ namespace Game1.Unity.UI
 
         private void _buildUI()
         {
-            // Root panel — right side, full height, 500px wide
-            var panelRt = UIHelper.CreatePanel(transform, "EncyclopediaPanel", UIHelper.COLOR_BG_DARK,
-                new Vector2(1f, 0f), new Vector2(1f, 1f),
-                new Vector2(-500, 0), Vector2.zero);
+            // Root panel — centered on screen, 600 x 550
+            var panelRt = UIHelper.CreateSizedPanel(
+                transform, "EncyclopediaPanel", UIHelper.COLOR_BG_DARK,
+                new Vector2(600, 550), Vector2.zero);
+            panelRt.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRt.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRt.pivot = new Vector2(0.5f, 0.5f);
             _panel = panelRt.gameObject;
 
             UIHelper.AddVerticalLayout(panelRt, spacing: 4f,
@@ -128,63 +132,64 @@ namespace Game1.Unity.UI
 
             // Create a scrollable content panel for each tab
             _tabScrollRects = new ScrollRect[6];
+            _tabTexts = new Text[6];
 
             // Guide
             var (guideScroll, guideContent) = UIHelper.CreateScrollView(contentAreaRt, "GuideScroll");
             _guideContent = guideScroll.gameObject;
             _tabScrollRects[0] = guideScroll;
-            var guideText = UIHelper.CreateText(guideContent, "GuideText",
+            _tabTexts[0] = UIHelper.CreateText(guideContent, "GuideText",
                 "Welcome to the Game Encyclopedia!\n\nUse tabs to browse.",
                 14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
-            UIHelper.SetPreferredHeight(guideText.gameObject, 400);
+            UIHelper.SetPreferredHeight(_tabTexts[0].gameObject, 400);
 
             // Quests
             var (questsScroll, questsContent) = UIHelper.CreateScrollView(contentAreaRt, "QuestsScroll");
             _questsContent = questsScroll.gameObject;
             _tabScrollRects[1] = questsScroll;
-            var questsText = UIHelper.CreateText(questsContent, "QuestsText",
+            _tabTexts[1] = UIHelper.CreateText(questsContent, "QuestsText",
                 "Active Quests:\n(No active quests)",
                 14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
-            UIHelper.SetPreferredHeight(questsText.gameObject, 400);
+            UIHelper.SetPreferredHeight(_tabTexts[1].gameObject, 400);
 
             // Skills
             var (skillsScroll, skillsContent) = UIHelper.CreateScrollView(contentAreaRt, "SkillsScroll");
             _skillsContent = skillsScroll.gameObject;
             _tabScrollRects[2] = skillsScroll;
-            var skillsText = UIHelper.CreateText(skillsContent, "SkillsText",
+            _tabTexts[2] = UIHelper.CreateText(skillsContent, "SkillsText",
                 "Learned Skills: 0",
                 14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
-            UIHelper.SetPreferredHeight(skillsText.gameObject, 400);
+            UIHelper.SetPreferredHeight(_tabTexts[2].gameObject, 400);
 
             // Titles
             var (titlesScroll, titlesContent) = UIHelper.CreateScrollView(contentAreaRt, "TitlesScroll");
             _titlesContent = titlesScroll.gameObject;
             _tabScrollRects[3] = titlesScroll;
-            var titlesText = UIHelper.CreateText(titlesContent, "TitlesText",
+            _tabTexts[3] = UIHelper.CreateText(titlesContent, "TitlesText",
                 "Titles:\n(Browse earned titles)",
                 14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
-            UIHelper.SetPreferredHeight(titlesText.gameObject, 400);
+            UIHelper.SetPreferredHeight(_tabTexts[3].gameObject, 400);
 
             // Stats
             var (statsScroll, statsContent) = UIHelper.CreateScrollView(contentAreaRt, "StatsScroll");
             _statsContent = statsScroll.gameObject;
             _tabScrollRects[4] = statsScroll;
-            var statsText = UIHelper.CreateText(statsContent, "StatsText",
+            _tabTexts[4] = UIHelper.CreateText(statsContent, "StatsText",
                 "Level: 1\nClass: None",
                 14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
-            UIHelper.SetPreferredHeight(statsText.gameObject, 400);
+            UIHelper.SetPreferredHeight(_tabTexts[4].gameObject, 400);
 
             // Recipes
             var (recipesScroll, recipesContentTr) = UIHelper.CreateScrollView(contentAreaRt, "RecipesScroll");
             _recipesContent = recipesScroll.gameObject;
             _tabScrollRects[5] = recipesScroll;
-            var recipesText = UIHelper.CreateText(recipesContentTr, "RecipesText",
+            _tabTexts[5] = UIHelper.CreateText(recipesContentTr, "RecipesText",
                 "Recipes:\n(Browse crafting recipes)",
                 14, UIHelper.COLOR_TEXT_PRIMARY, TextAnchor.UpperLeft);
-            UIHelper.SetPreferredHeight(recipesText.gameObject, 400);
+            UIHelper.SetPreferredHeight(_tabTexts[5].gameObject, 400);
 
             // Store the guide content text as fallback for _refreshContent
-            _contentTextFallback = guideText;
+            _contentTextFallback = _tabTexts[0];
 
             // Initially show guide tab only
             _questsContent.SetActive(false);
@@ -226,24 +231,40 @@ namespace Game1.Unity.UI
         private void _refreshContent()
         {
             var gm = GameManager.Instance;
-            if (gm?.Player == null) return;
+
+            // Build tab-specific content
+            int tabIndex = _activeTab switch
+            {
+                "guide" => 0,
+                "quests" => 1,
+                "skills" => 2,
+                "titles" => 3,
+                "stats" => 4,
+                "recipes" => 5,
+                _ => 0
+            };
 
             string text = _activeTab switch
             {
-                "guide" => "Welcome to the Game Encyclopedia!\n\nUse tabs to browse.",
+                "guide" => "Welcome to the Game Encyclopedia!\n\nUse tabs to browse.\n\nControls:\n  WASD - Move\n  Mouse - Look\n  Tab - Inventory\n  I - Equipment\n  C - Stats\n  K - Skills\n  M - Map\n  E - Encyclopedia / Interact\n  ESC - Close menu\n  1-5 - Skill hotbar\n  F1 - Debug mode",
                 "quests" => "Active Quests:\n(No active quests)",
-                "skills" => $"Learned Skills: {gm.Player.Skills.KnownSkills.Count}",
+                "skills" => gm?.Player != null ? $"Learned Skills: {gm.Player.Skills.KnownSkills.Count}\n\nUse the Skills menu (K) to view and equip skills." : "Learned Skills: 0",
                 "titles" => "Titles:\n(Browse earned titles)",
-                "stats" => $"Level: {gm.Player.Leveling.Level}\nClass: {gm.Player.ClassId}",
-                "recipes" => "Recipes:\n(Browse crafting recipes)",
+                "stats" => gm?.Player != null ? $"Level: {gm.Player.Leveling.Level}\nClass: {gm.Player.ClassId ?? "None"}\n\nUse the Stats menu (C) to allocate stat points." : "Level: 1\nClass: None",
+                "recipes" => "Recipes:\n(Browse crafting recipes)\n\nInteract (E) with a crafting station to craft items.",
                 _ => ""
             };
 
-            // Update whichever text reference is available
+            // Update TMP label (inspector path)
             if (_contentText != null)
+            {
                 _contentText.text = text;
-            else if (_contentTextFallback != null)
-                _contentTextFallback.text = text;
+                return;
+            }
+
+            // Update the specific tab's text
+            if (_tabTexts != null && tabIndex < _tabTexts.Length && _tabTexts[tabIndex] != null)
+                _tabTexts[tabIndex].text = text;
         }
 
         private void _onToggle() => _stateManager?.TogglePanel(GameState.EncyclopediaOpen);

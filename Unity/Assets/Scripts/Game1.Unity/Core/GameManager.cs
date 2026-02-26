@@ -23,6 +23,7 @@ using Game1.Systems.Crafting;
 using Game1.Systems.Save;
 using Game1.Systems.Classifiers;
 using Game1.Unity.ML;
+using Game1.Unity.UI;
 using Game1.Unity.Utilities;
 
 namespace Game1.Unity.Core
@@ -178,6 +179,9 @@ namespace Game1.Unity.Core
                 _audioManager = FindFirstObjectByType<AudioManager>();
 
             IsInitialized = true;
+
+            // Subscribe to player interaction events (E key near crafting stations, NPCs, etc.)
+            GameEvents.OnPlayerInteracted += _onPlayerInteracted;
 
             // IMPORTANT: Force _autoStart off. The C# default (false) is overridden
             // by the serialized Inspector value in the scene file. Until proper scene
@@ -474,10 +478,50 @@ namespace Game1.Unity.Core
 
         private void OnDestroy()
         {
+            GameEvents.OnPlayerInteracted -= _onPlayerInteracted;
+
             if (Instance == this)
             {
                 Instance = null;
             }
+        }
+
+        // ====================================================================
+        // Player Interaction (E key)
+        // ====================================================================
+
+        /// <summary>
+        /// Handle player interaction — check for nearby crafting stations, NPCs, etc.
+        /// Called from GameEvents.OnPlayerInteracted raised by PlayerController.
+        /// </summary>
+        private void _onPlayerInteracted(object positionObj, string facing)
+        {
+            if (Player == null || World == null) return;
+
+            var position = Player.Position;
+
+            // Check for crafting station
+            var station = World.GetStationAt(position, 2.5f);
+            if (station != null)
+            {
+                string discipline = station.StationType.ToJsonString();
+                int tier = station.StationTier;
+
+                Debug.Log($"[GameManager] Interacted with {discipline} station (Tier {tier})");
+
+                var craftingUI = FindFirstObjectByType<CraftingUI>();
+                if (craftingUI != null)
+                {
+                    craftingUI.Open(discipline, tier);
+                }
+                else
+                {
+                    Debug.LogWarning("[GameManager] CraftingUI not found in scene");
+                }
+                return;
+            }
+
+            Debug.Log("[GameManager] Interact: no interactable found nearby");
         }
     }
 }

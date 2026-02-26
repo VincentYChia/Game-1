@@ -91,10 +91,13 @@ namespace Game1.Unity.UI
 
         private void _buildUI()
         {
-            // Root panel — right side, full height, 400px wide
-            var panelRt = UIHelper.CreatePanel(transform, "TitlePanel", UIHelper.COLOR_BG_DARK,
-                new Vector2(1f, 0f), new Vector2(1f, 1f),
-                new Vector2(-400, 0), Vector2.zero);
+            // Root panel — centered on screen, 420 x 550
+            var panelRt = UIHelper.CreateSizedPanel(
+                transform, "TitlePanel", UIHelper.COLOR_BG_DARK,
+                new Vector2(420, 550), Vector2.zero);
+            panelRt.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRt.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRt.pivot = new Vector2(0.5f, 0.5f);
             _panel = panelRt.gameObject;
 
             UIHelper.AddVerticalLayout(panelRt, spacing: 4f,

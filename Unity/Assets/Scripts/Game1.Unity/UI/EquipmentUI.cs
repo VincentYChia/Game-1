@@ -108,13 +108,13 @@ namespace Game1.Unity.UI
             const float slotSpacing = 8f;
             const float labelHeight = 18f;
 
-            // -- Root panel: right side, 340 x full height
-            var panelRt = UIHelper.CreatePanel(
+            // -- Root panel: centered on screen, 340 x 580
+            var panelRt = UIHelper.CreateSizedPanel(
                 transform, "EquipmentPanel", UIHelper.COLOR_BG_DARK,
-                anchorMin: new Vector2(1, 0),
-                anchorMax: new Vector2(1, 1),
-                offsetMin: new Vector2(-340, 8),
-                offsetMax: new Vector2(-8, -8));
+                new Vector2(340, 580), Vector2.zero);
+            panelRt.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRt.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRt.pivot = new Vector2(0.5f, 0.5f);
 
             _panel = panelRt.gameObject;
 

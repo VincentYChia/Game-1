@@ -86,13 +86,13 @@ namespace Game1.Unity.UI
         /// </summary>
         private void _buildUI()
         {
-            // -- Root panel: right side of screen, 420 x full height, 8px inset
-            var panelRt = UIHelper.CreatePanel(
+            // -- Root panel: centered on screen, 420 x 600
+            var panelRt = UIHelper.CreateSizedPanel(
                 transform, "InventoryPanel", UIHelper.COLOR_BG_DARK,
-                anchorMin: new Vector2(1, 0),
-                anchorMax: new Vector2(1, 1),
-                offsetMin: new Vector2(-420, 8),
-                offsetMax: new Vector2(-8, -8));
+                new Vector2(420, 600), Vector2.zero);
+            panelRt.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRt.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRt.pivot = new Vector2(0.5f, 0.5f);
 
             _panel = panelRt.gameObject;
 

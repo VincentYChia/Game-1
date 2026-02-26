@@ -117,13 +117,13 @@ namespace Game1.Unity.UI
         /// </summary>
         private void _buildUI()
         {
-            // -- Root panel: right side, 520 x full height
-            var panelRt = UIHelper.CreatePanel(
+            // -- Root panel: centered on screen, 600 x 650
+            var panelRt = UIHelper.CreateSizedPanel(
                 transform, "CraftingPanel", UIHelper.COLOR_BG_DARK,
-                anchorMin: new Vector2(1, 0),
-                anchorMax: new Vector2(1, 1),
-                offsetMin: new Vector2(-520, 8),
-                offsetMax: new Vector2(-8, -8));
+                new Vector2(600, 650), Vector2.zero);
+            panelRt.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRt.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRt.pivot = new Vector2(0.5f, 0.5f);
 
             _panel = panelRt.gameObject;
 
@@ -392,6 +392,10 @@ namespace Game1.Unity.UI
             foreach (Transform child in _gridContainer)
                 Destroy(child.gameObject);
 
+            // Remove old layout group before adding new one
+            var existingLayout = _gridContainer.GetComponent<LayoutGroup>();
+            if (existingLayout != null) Object.DestroyImmediate(existingLayout);
+
             // Build grid based on discipline
             switch (_currentDiscipline?.ToLowerInvariant())
             {
@@ -419,6 +423,14 @@ namespace Game1.Unity.UI
             int gridSize = 3 + (_stationTier - 1) * 2;
             gridSize = Mathf.Clamp(gridSize, 3, 9);
 
+            var grid = _gridContainer.gameObject.AddComponent<GridLayoutGroup>();
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = gridSize;
+            grid.cellSize = new Vector2(48, 48);
+            grid.spacing = new Vector2(4, 4);
+            grid.padding = new RectOffset(4, 4, 4, 4);
+            grid.childAlignment = TextAnchor.MiddleCenter;
+
             for (int z = 0; z < gridSize; z++)
             {
                 for (int x = 0; x < gridSize; x++)
@@ -430,7 +442,14 @@ namespace Game1.Unity.UI
 
         private void _buildAlchemySequence()
         {
-            // Sequential ingredient slots
+            // Sequential ingredient slots — horizontal row
+            var hlg = _gridContainer.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 8f;
+            hlg.padding = new RectOffset(8, 8, 8, 8);
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childForceExpandWidth = false;
+            hlg.childForceExpandHeight = false;
+
             int slots = 3 + _stationTier;
             for (int i = 0; i < slots; i++)
             {
@@ -440,9 +459,17 @@ namespace Game1.Unity.UI
 
         private void _buildRefiningHub()
         {
-            // Hub-spoke layout: 1 core + surrounding slots
-            _createGridSlot("core");
+            // Hub-spoke layout: grid arrangement (core in center row)
+            var grid = _gridContainer.gameObject.AddComponent<GridLayoutGroup>();
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             int surrounding = 4 + _stationTier;
+            grid.constraintCount = Mathf.Min(surrounding, 4);
+            grid.cellSize = new Vector2(48, 48);
+            grid.spacing = new Vector2(6, 6);
+            grid.padding = new RectOffset(4, 4, 4, 4);
+            grid.childAlignment = TextAnchor.MiddleCenter;
+
+            _createGridSlot("core");
             for (int i = 0; i < surrounding; i++)
             {
                 _createGridSlot($"surround_{i}");
@@ -451,7 +478,14 @@ namespace Game1.Unity.UI
 
         private void _buildEngineeringSlots()
         {
-            // Named slot types
+            // Named slot types — vertical list
+            var vlg = _gridContainer.gameObject.AddComponent<VerticalLayoutGroup>();
+            vlg.spacing = 6f;
+            vlg.padding = new RectOffset(8, 8, 8, 8);
+            vlg.childAlignment = TextAnchor.MiddleCenter;
+            vlg.childForceExpandWidth = false;
+            vlg.childForceExpandHeight = false;
+
             string[] slotTypes = { "frame", "core", "mechanism", "power", "output" };
             foreach (string slot in slotTypes)
             {
@@ -463,6 +497,15 @@ namespace Game1.Unity.UI
         {
             // Cartesian grid for adornment patterns
             int gridSize = 4 + _stationTier;
+
+            var grid = _gridContainer.gameObject.AddComponent<GridLayoutGroup>();
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = gridSize;
+            grid.cellSize = new Vector2(48, 48);
+            grid.spacing = new Vector2(4, 4);
+            grid.padding = new RectOffset(4, 4, 4, 4);
+            grid.childAlignment = TextAnchor.MiddleCenter;
+
             for (int z = 0; z < gridSize; z++)
             {
                 for (int x = 0; x < gridSize; x++)
