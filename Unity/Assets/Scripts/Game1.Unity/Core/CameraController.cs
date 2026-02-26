@@ -106,29 +106,46 @@ namespace Game1.Unity.Core
             _playerBody = transform.parent;
             Debug.Log($"[DBG:CAMERA:START:03] transform.parent = {(_playerBody != null ? "'" + _playerBody.name + "'" : "NULL")}"); // DBG
 
-            // [DBG] Robust fallback: if parent is null, search for PlayerController
+            // Robust fallback: if parent is null, find or CREATE the PlayerRig.
+            // This handles scenes where SceneBootstrapper didn't run (e.g. the default
+            // Unity scene has a root "Main Camera" with no parent PlayerRig).
             if (_playerBody == null)
             {
                 Debug.LogWarning("[DBG:CAMERA:START:03b] Parent is NULL! Attempting fallback search..."); // DBG
 
-                // Try finding PlayerController and using its transform
+                // Try finding an existing PlayerController first
                 var playerCtrl = FindFirstObjectByType<PlayerController>();
                 if (playerCtrl != null)
                 {
                     _playerBody = playerCtrl.transform;
-                    Debug.LogWarning($"[DBG:CAMERA:START:03c] Found PlayerController on '{playerCtrl.gameObject.name}' — using as playerBody"); // DBG
-
-                    // Also reparent ourselves if we're not already a child
-                    if (transform.parent != _playerBody)
-                    {
-                        Debug.LogWarning("[DBG:CAMERA:START:03d] Reparenting camera under PlayerController"); // DBG
-                        transform.SetParent(_playerBody, true);
-                        transform.localPosition = new Vector3(0, _eyeHeight, 0);
-                    }
+                    Debug.LogWarning($"[DBG:CAMERA:START:03c] Found PlayerController on '{playerCtrl.gameObject.name}' — reparenting under it"); // DBG
+                    transform.SetParent(_playerBody, false);
+                    transform.localPosition = new Vector3(0, _eyeHeight, 0);
+                    transform.localRotation = Quaternion.identity;
                 }
                 else
                 {
-                    Debug.LogError("[CameraController] PlayerBody is NULL and no PlayerController found! Yaw rotation will not work.");
+                    // No PlayerRig exists at all — create one dynamically.
+                    // This is the self-bootstrap path for scenes without SceneBootstrapper.
+                    Debug.LogWarning("[DBG:CAMERA:START:03d] No PlayerController found — creating PlayerRig dynamically"); // DBG
+
+                    var rigGO = new GameObject("PlayerRig");
+                    // Place at world center (50,0,50) — matches GameManager auto-start position.
+                    // PlayerController._syncTransform() will snap to Player.Position each frame.
+                    rigGO.transform.position = new Vector3(50f, 0f, 50f);
+                    Debug.Log($"[DBG:CAMERA:START:03e] PlayerRig created at {rigGO.transform.position}"); // DBG
+
+                    // Add PlayerController (its Awake runs inline, Start runs next frame)
+                    var pc = rigGO.AddComponent<PlayerController>();
+                    Debug.Log($"[DBG:CAMERA:START:03f] PlayerController added to PlayerRig"); // DBG
+
+                    // Reparent camera under the rig
+                    transform.SetParent(rigGO.transform, false);
+                    transform.localPosition = new Vector3(0, _eyeHeight, 0);
+                    transform.localRotation = Quaternion.identity;
+                    _playerBody = rigGO.transform;
+
+                    Debug.Log($"[DBG:CAMERA:START:03g] Camera reparented. parent={transform.parent?.name}, localPos={transform.localPosition}"); // DBG
                 }
             }
 
