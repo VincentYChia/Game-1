@@ -369,8 +369,9 @@ namespace Game1.Unity.UI
 
                     string tierStr = skill.Tier > 0 ? $"T{skill.Tier} " : "";
                     string equippedStr = isEquipped ? " [E]" : "";
-                    string manaStr = !string.IsNullOrEmpty(skill.Cost?.ManaCostRaw)
-                        ? $" ({skill.Cost.ManaCostRaw})"
+                    var manaRaw = skill.Cost?.ManaCostRaw?.ToString();
+                    string manaStr = !string.IsNullOrEmpty(manaRaw)
+                        ? $" ({manaRaw})"
                         : "";
                     string label = $"{tierStr}{skill.Name}{manaStr}{equippedStr}";
 
