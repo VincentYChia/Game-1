@@ -264,11 +264,45 @@ namespace Game1.Unity.Core
             float newX = currentPos.X + movement.x;
             float newZ = currentPos.Z + movement.z;
 
+            // World bounds
+            newX = Mathf.Clamp(newX, 0.5f, GameConfig.WorldSizeX - 0.5f);
+            newZ = Mathf.Clamp(newZ, 0.5f, GameConfig.WorldSizeZ - 0.5f);
+
+            // Walkability check with wall-sliding (mirrors Python movement)
             var worldSystem = _gameManager.World;
             if (worldSystem != null)
             {
-                newX = Mathf.Clamp(newX, 0.5f, GameConfig.WorldSizeX - 0.5f);
-                newZ = Mathf.Clamp(newZ, 0.5f, GameConfig.WorldSizeZ - 0.5f);
+                var targetPos = GamePosition.FromXZ(newX, newZ);
+                if (!worldSystem.IsWalkable(targetPos))
+                {
+                    // Wall-slide: try X-only movement
+                    var slideX = GamePosition.FromXZ(newX, currentPos.Z);
+                    // Wall-slide: try Z-only movement
+                    var slideZ = GamePosition.FromXZ(currentPos.X, newZ);
+
+                    bool canSlideX = worldSystem.IsWalkable(slideX);
+                    bool canSlideZ = worldSystem.IsWalkable(slideZ);
+
+                    if (canSlideX)
+                    {
+                        newZ = currentPos.Z; // Keep Z, slide along X
+                    }
+                    else if (canSlideZ)
+                    {
+                        newX = currentPos.X; // Keep X, slide along Z
+                    }
+                    else
+                    {
+                        // Completely blocked
+                        newX = currentPos.X;
+                        newZ = currentPos.Z;
+                        if (_dbgMoveFrames % 60 == 0) // DBG — log every ~1 sec when blocked
+                        { // DBG
+                            string tileInfo = _getTileTypeAtPosition(newX, newZ); // DBG
+                            Debug.Log($"[DBG:PLAYER:BLOCKED] at ({newX:F1},{newZ:F1}) tile={tileInfo}"); // DBG
+                        } // DBG
+                    }
+                }
             }
 
             _character.Position = new GamePosition(newX, currentPos.Y, newZ);
@@ -286,8 +320,11 @@ namespace Game1.Unity.Core
         }
 
         // ====================================================================
-        // Transform Sync
+        // Transform Sync (smooth terrain following)
         // ====================================================================
+
+        private float _currentTerrainY; // Smoothed Y position
+        private bool _terrainYInitialized;
 
         private void _syncTransform()
         {
@@ -295,7 +332,22 @@ namespace Game1.Unity.Core
 
             Vector3 pos = PositionConverter.ToVector3(_character.Position);
             string tileType = _getTileTypeAtPosition(pos.x, pos.z);
-            pos.y = ChunkMeshGenerator.SampleTerrainHeight(pos.x, pos.z, tileType);
+            float targetY = ChunkMeshGenerator.SampleTerrainHeight(pos.x, pos.z, tileType);
+
+            // Smooth terrain height transitions to avoid jarring camera jumps
+            if (!_terrainYInitialized)
+            {
+                _currentTerrainY = targetY;
+                _terrainYInitialized = true;
+            }
+            else
+            {
+                // Lerp speed: fast enough to follow terrain, slow enough to avoid snapping
+                float lerpSpeed = 8f * Time.deltaTime;
+                _currentTerrainY = Mathf.Lerp(_currentTerrainY, targetY, Mathf.Clamp01(lerpSpeed));
+            }
+
+            pos.y = _currentTerrainY;
             transform.position = pos;
         }
 
