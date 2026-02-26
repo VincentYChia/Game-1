@@ -311,7 +311,8 @@ namespace Game1.Unity.Core
                         if (_dbgMoveFrames % 60 == 0) // DBG — log every ~1 sec when blocked
                         { // DBG
                             string tileInfo = _getTileTypeAtPosition(newX, newZ); // DBG
-                            Debug.Log($"[DBG:PLAYER:BLOCKED] at ({newX:F1},{newZ:F1}) tile={tileInfo}"); // DBG
+                            string blockReason = _getBlockReason(newX, newZ); // DBG
+                            Debug.Log($"[DBG:PLAYER:BLOCKED] at ({newX:F1},{newZ:F1}) tile={tileInfo} reason={blockReason}"); // DBG
                         } // DBG
                     }
                 }
@@ -389,6 +390,20 @@ namespace Game1.Unity.Core
             if (tile != null) return tile.TileType.ToString().ToLowerInvariant();
             return "grass";
         }
+
+        private string _getBlockReason(float x, float z) // DBG
+        { // DBG
+            if (_gameManager.World == null) return "no_world"; // DBG
+            var pos = GamePosition.FromXZ(x, z); // DBG
+            var tile = _gameManager.World.GetTile(pos); // DBG
+            if (tile == null) return "null_tile"; // DBG
+            if (!tile.Walkable) return "tile_unwalkable"; // DBG
+            // Check resources // DBG
+            var resource = _gameManager.World.GetResourceAt(pos, 0.5f); // DBG
+            if (resource != null && !resource.IsDepleted) // DBG
+                return $"resource({resource.ResourceId} at {resource.Position.X:F1},{resource.Position.Z:F1})"; // DBG
+            return "barrier_or_unknown"; // DBG
+        } // DBG
 
         // ====================================================================
         // Public API

@@ -303,6 +303,10 @@ namespace Game1.Systems.World
             int tileZ = (int)MathF.Floor(position.Z);
             var (cx, cy) = WorldToChunk(tileX, tileZ);
 
+            // Resource blocking radius: 0.3 allows first-person navigation between
+            // adjacent resources while still preventing walking through them.
+            // (Python used 0.5 for tile-based movement; first-person needs smaller.)
+            const float resourceBlockRadius = 0.3f;
             if (_loadedChunks.TryGetValue((cx, cy), out var chunk))
             {
                 foreach (var resource in chunk.Resources)
@@ -311,7 +315,7 @@ namespace Game1.Systems.World
                     {
                         float dx = MathF.Abs(resource.Position.X - position.X);
                         float dz = MathF.Abs(resource.Position.Z - position.Z);
-                        if (dx < 0.5f && dz < 0.5f)
+                        if (dx < resourceBlockRadius && dz < resourceBlockRadius)
                             return false;
                     }
                 }

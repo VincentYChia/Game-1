@@ -23,7 +23,9 @@ namespace Game1.Unity.Core
     /// </summary>
     public static class UIBootstrap
     {
-        private static bool _initialized;
+        // NOTE: Do NOT use static bool for initialization tracking — static fields
+        // persist across Editor Play sessions in Unity and cause the bootstrap
+        // to be skipped on second run. Always check scene state directly.
 
         /// <summary>
         /// Ensure all UI canvases and panel components exist.
@@ -31,10 +33,9 @@ namespace Game1.Unity.Core
         /// </summary>
         public static void EnsureUIExists()
         {
-            if (_initialized) return;
             if (GameObject.Find("Panel_Canvas") != null)
             {
-                _initialized = true;
+                Debug.Log("[UIBootstrap] Panel_Canvas already exists — skipping");
                 return;
             }
 
@@ -123,7 +124,6 @@ namespace Game1.Unity.Core
             _addPanel<DragDropManager>(overlay.transform, "DragDropManager",
                 Vector2.zero, Vector2.one);
 
-            _initialized = true;
             Debug.Log("[UIBootstrap] UI hierarchy created (HUD + Panels + Overlay)");
         }
 
