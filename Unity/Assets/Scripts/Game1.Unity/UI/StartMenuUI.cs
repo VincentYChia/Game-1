@@ -74,6 +74,9 @@ namespace Game1.Unity.UI
 
             if (_namePanel != null) _namePanel.SetActive(false);
             if (_loadPanel != null) _loadPanel.SetActive(false);
+
+            // Start hidden — RefreshState() will show us if we're in StartMenu
+            _setVisible(false);
         }
 
         private void OnDestroy()
@@ -219,6 +222,10 @@ namespace Game1.Unity.UI
             if (string.IsNullOrWhiteSpace(name)) name = "Player";
 
             if (_namePanel != null) _namePanel.SetActive(false);
+
+            // Pass name to ClassSelectionUI before transitioning
+            var classUI = FindFirstObjectByType<ClassSelectionUI>();
+            if (classUI != null) classUI.SetPlayerName(name);
 
             // Transition to class selection
             _stateManager?.TransitionTo(GameState.ClassSelection);

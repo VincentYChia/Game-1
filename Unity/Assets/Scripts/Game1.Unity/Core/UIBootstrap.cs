@@ -146,15 +146,24 @@ namespace Game1.Unity.Core
             var existing = GameObject.Find(name);
             if (existing != null)
             {
-                // Ensure it has Canvas component (might be a bare GameObject)
+                // Ensure all required Canvas components exist (stale scene objects
+                // may have a Canvas but lack CanvasScaler or GraphicRaycaster)
                 if (existing.GetComponent<Canvas>() == null)
                 {
                     var canvas = existing.AddComponent<Canvas>();
                     canvas.renderMode = RenderMode.ScreenSpaceOverlay;
                     canvas.sortingOrder = sortOrder;
-                    existing.AddComponent<CanvasScaler>();
-                    existing.AddComponent<GraphicRaycaster>();
                 }
+                if (existing.GetComponent<CanvasScaler>() == null)
+                {
+                    var scaler = existing.AddComponent<CanvasScaler>();
+                    scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                    scaler.referenceResolution = new Vector2(1920, 1080);
+                    scaler.matchWidthOrHeight = 0.5f;
+                }
+                if (existing.GetComponent<GraphicRaycaster>() == null)
+                    existing.AddComponent<GraphicRaycaster>();
+
                 return existing.transform;
             }
 

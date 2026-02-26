@@ -160,7 +160,7 @@ namespace Game1.Unity.Core
 
         [Header("Development")]
         [Tooltip("Auto-start a new game on launch (skip start menu for testing).")]
-        [SerializeField] private bool _autoStart = true;
+        [SerializeField] private bool _autoStart = false;
 
         [SerializeField] private string _autoStartPlayerName = "Player";
         [SerializeField] private string _autoStartClassId = "warrior";
@@ -190,12 +190,18 @@ namespace Game1.Unity.Core
 
                 Debug.Log("[GameManager] Auto-started game at world center");
             }
-            else
-            {
-                _stateManager?.TransitionTo(GameState.StartMenu);
-            }
 
             Debug.Log("[GameManager] Initialization complete");
+
+            // After all Start() methods run, fire a state refresh so panels
+            // created by UIBootstrap sync their visibility to the current state.
+            StartCoroutine(_refreshStateNextFrame());
+        }
+
+        private IEnumerator _refreshStateNextFrame()
+        {
+            yield return null; // Wait one frame for all panel Start() to run
+            _stateManager?.RefreshState();
         }
 
         // ====================================================================

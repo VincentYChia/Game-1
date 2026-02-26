@@ -47,10 +47,13 @@ namespace Game1.Unity.UI
             public TextMeshProUGUI SkillNameLabel;
         }
 
+        private GameStateManager _stateManager;
+
         private void Start()
         {
             if (_panel == null) _buildUI();
 
+            _stateManager = GameStateManager.Instance ?? FindFirstObjectByType<GameStateManager>();
             _inputManager = InputManager.Instance ?? FindFirstObjectByType<InputManager>();
             if (_inputManager != null)
                 _inputManager.OnSkillActivate += _onSkillActivate;
@@ -72,7 +75,21 @@ namespace Game1.Unity.UI
         private void Update()
         {
             var gm = GameManager.Instance;
-            if (gm == null || gm.Player == null) return;
+            if (gm == null || gm.Player == null)
+            {
+                // Hide during StartMenu/ClassSelection when there's no player
+                foreach (Transform child in transform)
+                    child.gameObject.SetActive(false);
+                return;
+            }
+
+            // Only show during gameplay (Playing or modal UI panels)
+            bool visible = _stateManager == null
+                || _stateManager.CurrentState == GameState.Playing
+                || _stateManager.IsInModalUI;
+            foreach (Transform child in transform)
+                child.gameObject.SetActive(visible);
+            if (!visible) return;
 
             var skillManager = gm.Player.Skills;
 

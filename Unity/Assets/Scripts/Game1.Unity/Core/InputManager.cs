@@ -136,6 +136,17 @@ namespace Game1.Unity.Core
             _detectInputBackends();
         }
 
+        private void Start()
+        {
+            // Set initial cursor state based on current game state.
+            // At startup (StartMenu), cursor should be unlocked so the user
+            // can click menu buttons. During auto-start (Playing), cursor locks.
+            if (_stateManager != null && _stateManager.CurrentState != GameState.Playing)
+                UnlockCursor();
+            else if (_stateManager != null && _stateManager.CurrentState == GameState.Playing)
+                LockCursor();
+        }
+
         private void OnEnable()
         {
             if (_stateManager != null)

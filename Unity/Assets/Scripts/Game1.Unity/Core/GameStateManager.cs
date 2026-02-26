@@ -181,6 +181,17 @@ namespace Game1.Unity.Core
         // Query Methods
         // ====================================================================
 
+        /// <summary>
+        /// Re-fire OnStateChanged with the current state.
+        /// Called after late-created panels (UIBootstrap) have subscribed,
+        /// so they can sync their visibility to the current state.
+        /// </summary>
+        public void RefreshState()
+        {
+            Debug.Log($"[GameStateManager] RefreshState → {CurrentState}");
+            OnStateChanged?.Invoke(CurrentState, CurrentState);
+        }
+
         /// <summary>Whether a specific panel is currently open.</summary>
         public bool IsPanelOpen(GameState panelState)
         {
