@@ -3,21 +3,30 @@
 // Migrated from: core/game_engine.py (lines 488-1165: handle_events)
 // Migration phase: 6 (reworked for first-person controls 2026-02-25)
 //
-// Replaces Python's pygame event polling with Unity Input System.
-// Routes input to appropriate handlers based on current GameState.
-// Adds mouse look (delta), cursor lock/unlock on UI state transitions.
+// Replaces Python's pygame event polling with direct device polling.
+// Uses Keyboard.current / Mouse.current (New Input System) as primary,
+// with legacy UnityEngine.Input fallback when the old backend is active.
+// NO InputAction objects — direct polling is the most reliable approach.
 // ============================================================================
 
 using System;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+#endif
 
 namespace Game1.Unity.Core
 {
     /// <summary>
-    /// Central input manager. Routes keyboard/mouse input based on GameState.
-    /// Uses Unity's new Input System package (required in Player Settings).
-    /// Manages cursor lock state for first-person camera.
+    /// Central input manager. Polls keyboard/mouse every frame and fires events.
+    ///
+    /// Input backend strategy (handles ALL Player Settings configurations):
+    ///   1. Primary:  Keyboard.current / Mouse.current  (New Input System direct device API)
+    ///   2. Fallback: UnityEngine.Input.GetKey/GetAxis   (Legacy Input Manager)
+    ///   3. Both backends are tried — first one that's available wins each frame.
+    ///
+    /// Click-to-lock cursor pattern: left-click during gameplay locks the cursor.
+    /// Escape unlocks. State transitions also manage cursor lock.
     /// </summary>
     public class InputManager : MonoBehaviour
     {
@@ -26,7 +35,6 @@ namespace Game1.Unity.Core
         // ====================================================================
 
         [SerializeField] private GameStateManager _stateManager;
-        [SerializeField] private PlayerInput _playerInput;
 
         [Header("Mouse Look")]
         [SerializeField] private float _mouseSensitivity = 0.15f;
@@ -78,34 +86,11 @@ namespace Game1.Unity.Core
         }
 
         // ====================================================================
-        // Input Actions
+        // Backend Detection
         // ====================================================================
 
-        private InputAction _moveAction;
-        private InputAction _lookAction;
-        private InputAction _interactAction;
-        private InputAction _attackAction;
-        private InputAction _secondaryAction;
-        private InputAction _escapeAction;
-        private InputAction _inventoryAction;
-        private InputAction _equipmentAction;
-        private InputAction _mapAction;
-        private InputAction _encyclopediaAction;
-        private InputAction _statsAction;
-        private InputAction _skillsAction;
-        private InputAction _craftAction;
-        private InputAction _scrollAction;
-        private InputAction _skill1Action;
-        private InputAction _skill2Action;
-        private InputAction _skill3Action;
-        private InputAction _skill4Action;
-        private InputAction _skill5Action;
-        private InputAction _debugF1;
-        private InputAction _debugF2;
-        private InputAction _debugF3;
-        private InputAction _debugF4;
-        private InputAction _debugF5;
-        private InputAction _debugF7;
+        private bool _hasNewInputSystem;
+        private bool _hasLegacyInput;
 
         // ====================================================================
         // Initialization
@@ -115,67 +100,106 @@ namespace Game1.Unity.Core
         {
             if (_stateManager == null)
                 _stateManager = FindFirstObjectByType<GameStateManager>();
-            _setupInputActions();
+
+            _detectInputBackends();
         }
 
         private void OnEnable()
         {
-            _enableAllActions();
-            _bindActions();
             if (_stateManager != null)
                 _stateManager.OnStateChanged += _onGameStateChanged;
         }
 
         private void OnDisable()
         {
-            _unbindActions();
-            _disableAllActions();
             if (_stateManager != null)
                 _stateManager.OnStateChanged -= _onGameStateChanged;
         }
 
+        private void _detectInputBackends()
+        {
+            // Detect which input backends are available at runtime
+#if ENABLE_INPUT_SYSTEM
+            try
+            {
+                // Check if New Input System devices are available
+                _hasNewInputSystem = Keyboard.current != null || Mouse.current != null;
+            }
+            catch
+            {
+                _hasNewInputSystem = false;
+            }
+#else
+            _hasNewInputSystem = false;
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            _hasLegacyInput = true;
+#else
+            _hasLegacyInput = false;
+#endif
+
+            Debug.Log($"[InputManager] Backends: NewInputSystem={_hasNewInputSystem}, LegacyInput={_hasLegacyInput}");
+
+            if (!_hasNewInputSystem && !_hasLegacyInput)
+            {
+                Debug.LogError("[InputManager] NO INPUT BACKEND AVAILABLE! " +
+                    "Check Player Settings → Active Input Handling. " +
+                    "Set to 'Both' or 'Input System Package (New)'.");
+            }
+        }
+
         // ====================================================================
-        // Frame Update — Continuous Input
+        // Frame Update — All Input Polling
         // ====================================================================
 
         private void Update()
         {
-            // Track mouse position (always, for UI)
-            if (Mouse.current != null)
+            // Re-check backends each frame (devices can appear after Awake)
+#if ENABLE_INPUT_SYSTEM
+            if (!_hasNewInputSystem)
             {
-                MousePosition = Mouse.current.position.ReadValue();
+                _hasNewInputSystem = Keyboard.current != null || Mouse.current != null;
+                if (_hasNewInputSystem)
+                    Debug.Log("[InputManager] New Input System devices now available");
+            }
+#endif
 
-                if (Camera.main != null)
-                {
-                    var ray = Camera.main.ScreenPointToRay(MousePosition);
-                    var plane = new Plane(Vector3.up, Vector3.zero);
-                    if (plane.Raycast(ray, out float distance))
-                    {
-                        MouseWorldPosition = ray.GetPoint(distance);
-                    }
-                }
+            bool isPlaying = _stateManager == null || _stateManager.IsPlaying;
+
+            // === 1. Mouse Position (always, for UI) ===
+            _pollMousePosition();
+
+            // === 2. Movement (continuous, every frame) ===
+            Vector2 moveInput = _pollMovement();
+            if (isPlaying && moveInput.sqrMagnitude > 0.01f)
+            {
+                OnMoveInput?.Invoke(moveInput.normalized);
             }
 
-            // Continuous movement input (polled every frame)
-            if (_moveAction != null && _stateManager != null && _stateManager.IsPlaying)
+            // === 3. Mouse Look (when cursor locked in gameplay) ===
+            Vector2 mouseDelta = _pollMouseDelta();
+            if (IsCursorLocked && isPlaying && mouseDelta.sqrMagnitude > 0.001f)
             {
-                var moveValue = _moveAction.ReadValue<Vector2>();
-                if (moveValue.sqrMagnitude > 0.01f)
-                {
-                    OnMoveInput?.Invoke(moveValue);
-                }
+                float deltaX = mouseDelta.x * _mouseSensitivity;
+                float deltaY = mouseDelta.y * _mouseSensitivity * (_invertY ? 1f : -1f);
+                OnMouseLook?.Invoke(new Vector2(deltaX, deltaY));
             }
 
-            // Mouse look (only when cursor is locked = gameplay mode)
-            if (IsCursorLocked && _lookAction != null && _stateManager != null && _stateManager.IsPlaying)
+            // === 4. Click-to-Lock Cursor ===
+            if (!IsCursorLocked && isPlaying && _wasLeftClickPressed())
             {
-                var lookDelta = _lookAction.ReadValue<Vector2>();
-                if (lookDelta.sqrMagnitude > 0.001f)
-                {
-                    float deltaX = lookDelta.x * _mouseSensitivity;
-                    float deltaY = lookDelta.y * _mouseSensitivity * (_invertY ? 1f : -1f);
-                    OnMouseLook?.Invoke(new Vector2(deltaX, deltaY));
-                }
+                LockCursor();
+            }
+
+            // === 5. Button Presses (single-frame) ===
+            _pollButtons(isPlaying);
+
+            // === 6. Scroll Wheel ===
+            float scroll = _pollScroll();
+            if (Mathf.Abs(scroll) > 0.01f)
+            {
+                OnScroll?.Invoke(scroll);
             }
         }
 
@@ -189,6 +213,7 @@ namespace Game1.Unity.Core
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             IsCursorLocked = true;
+            Debug.Log("[InputManager] Cursor LOCKED");
         }
 
         /// <summary>Unlock the cursor for UI interaction.</summary>
@@ -197,242 +222,327 @@ namespace Game1.Unity.Core
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             IsCursorLocked = false;
+            Debug.Log("[InputManager] Cursor UNLOCKED");
         }
 
         // ====================================================================
-        // Input Action Setup
+        // Input Polling — Movement (WASD)
         // ====================================================================
 
-        private void _setupInputActions()
+        private Vector2 _pollMovement()
         {
-            // If PlayerInput component is assigned, use its action map
-            if (_playerInput != null && _playerInput.actions != null)
+            Vector2 move = Vector2.zero;
+
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = Keyboard.current;
+            if (keyboard != null)
             {
-                _moveAction = _playerInput.actions.FindAction("Move");
-                _lookAction = _playerInput.actions.FindAction("Look");
-                _interactAction = _playerInput.actions.FindAction("Interact");
-                _attackAction = _playerInput.actions.FindAction("Attack");
-                _secondaryAction = _playerInput.actions.FindAction("SecondaryAttack");
-                _escapeAction = _playerInput.actions.FindAction("Escape");
-                _inventoryAction = _playerInput.actions.FindAction("ToggleInventory");
-                _equipmentAction = _playerInput.actions.FindAction("ToggleEquipment");
-                _mapAction = _playerInput.actions.FindAction("ToggleMap");
-                _encyclopediaAction = _playerInput.actions.FindAction("ToggleEncyclopedia");
-                _statsAction = _playerInput.actions.FindAction("ToggleStats");
-                _skillsAction = _playerInput.actions.FindAction("ToggleSkills");
-                _craftAction = _playerInput.actions.FindAction("CraftAction");
-                _scrollAction = _playerInput.actions.FindAction("Zoom");
-                _skill1Action = _playerInput.actions.FindAction("Skill1");
-                _skill2Action = _playerInput.actions.FindAction("Skill2");
-                _skill3Action = _playerInput.actions.FindAction("Skill3");
-                _skill4Action = _playerInput.actions.FindAction("Skill4");
-                _skill5Action = _playerInput.actions.FindAction("Skill5");
-                _debugF1 = _playerInput.actions.FindAction("DebugToggle");
-                _debugF2 = _playerInput.actions.FindAction("LearnAllSkills");
-                _debugF3 = _playerInput.actions.FindAction("GrantAllTitles");
-                _debugF4 = _playerInput.actions.FindAction("MaxLevel");
-                _debugF5 = _playerInput.actions.FindAction("ToggleCameraMode");
-                _debugF7 = _playerInput.actions.FindAction("InfiniteDurability");
+                if (keyboard.wKey.isPressed) move.y += 1f;
+                if (keyboard.sKey.isPressed) move.y -= 1f;
+                if (keyboard.aKey.isPressed) move.x -= 1f;
+                if (keyboard.dKey.isPressed) move.x += 1f;
+                return move;
+            }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            move.x = Input.GetAxisRaw("Horizontal");
+            move.y = Input.GetAxisRaw("Vertical");
+#endif
+
+            return move;
+        }
+
+        // ====================================================================
+        // Input Polling — Mouse Delta
+        // ====================================================================
+
+        private Vector2 _pollMouseDelta()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var mouse = Mouse.current;
+            if (mouse != null)
+            {
+                return mouse.delta.ReadValue();
+            }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return new Vector2(
+                Input.GetAxisRaw("Mouse X") * 10f,  // Scale to match New Input System range
+                Input.GetAxisRaw("Mouse Y") * 10f
+            );
+#endif
+
+#pragma warning disable CS0162
+            return Vector2.zero;
+#pragma warning restore CS0162
+        }
+
+        // ====================================================================
+        // Input Polling — Mouse Position
+        // ====================================================================
+
+        private void _pollMousePosition()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var mouse = Mouse.current;
+            if (mouse != null)
+            {
+                MousePosition = mouse.position.ReadValue();
+                _updateMouseWorldPosition();
                 return;
             }
+#endif
 
-            // Fallback: create inline actions (works without InputActionAsset)
-            _moveAction = new InputAction("Move", InputActionType.Value);
-            _moveAction.AddCompositeBinding("2DVector")
-                .With("Up", "<Keyboard>/w")
-                .With("Down", "<Keyboard>/s")
-                .With("Left", "<Keyboard>/a")
-                .With("Right", "<Keyboard>/d");
-
-            _lookAction = new InputAction("Look", InputActionType.Value, "<Mouse>/delta");
-
-            _interactAction = new InputAction("Interact", InputActionType.Button, "<Keyboard>/e");
-            _attackAction = new InputAction("Attack", InputActionType.Button, "<Mouse>/leftButton");
-            _secondaryAction = new InputAction("SecondaryAttack", InputActionType.Button, "<Mouse>/rightButton");
-            _escapeAction = new InputAction("Escape", InputActionType.Button, "<Keyboard>/escape");
-            _inventoryAction = new InputAction("ToggleInventory", InputActionType.Button, "<Keyboard>/tab");
-            _equipmentAction = new InputAction("ToggleEquipment", InputActionType.Button, "<Keyboard>/i");
-            _mapAction = new InputAction("ToggleMap", InputActionType.Button, "<Keyboard>/m");
-            _encyclopediaAction = new InputAction("ToggleEncyclopedia", InputActionType.Button, "<Keyboard>/j");
-            _statsAction = new InputAction("ToggleStats", InputActionType.Button, "<Keyboard>/c");
-            _skillsAction = new InputAction("ToggleSkills", InputActionType.Button, "<Keyboard>/k");
-            _craftAction = new InputAction("CraftAction", InputActionType.Button, "<Keyboard>/space");
-            _scrollAction = new InputAction("Scroll", InputActionType.Value, "<Mouse>/scroll/y");
-
-            _skill1Action = new InputAction("Skill1", InputActionType.Button, "<Keyboard>/1");
-            _skill2Action = new InputAction("Skill2", InputActionType.Button, "<Keyboard>/2");
-            _skill3Action = new InputAction("Skill3", InputActionType.Button, "<Keyboard>/3");
-            _skill4Action = new InputAction("Skill4", InputActionType.Button, "<Keyboard>/4");
-            _skill5Action = new InputAction("Skill5", InputActionType.Button, "<Keyboard>/5");
-
-            _debugF1 = new InputAction("DebugF1", InputActionType.Button, "<Keyboard>/f1");
-            _debugF2 = new InputAction("DebugF2", InputActionType.Button, "<Keyboard>/f2");
-            _debugF3 = new InputAction("DebugF3", InputActionType.Button, "<Keyboard>/f3");
-            _debugF4 = new InputAction("DebugF4", InputActionType.Button, "<Keyboard>/f4");
-            _debugF5 = new InputAction("DebugF5", InputActionType.Button, "<Keyboard>/f5");
-            _debugF7 = new InputAction("DebugF7", InputActionType.Button, "<Keyboard>/f7");
+#if ENABLE_LEGACY_INPUT_MANAGER
+            MousePosition = Input.mousePosition;
+            _updateMouseWorldPosition();
+#endif
         }
 
-        // ====================================================================
-        // Enable / Disable Actions
-        // ====================================================================
-
-        private InputAction[] _allActions => new[]
+        private void _updateMouseWorldPosition()
         {
-            _moveAction, _lookAction, _interactAction, _attackAction, _secondaryAction,
-            _escapeAction, _inventoryAction, _equipmentAction, _mapAction,
-            _encyclopediaAction, _statsAction, _skillsAction, _craftAction,
-            _scrollAction, _skill1Action, _skill2Action, _skill3Action,
-            _skill4Action, _skill5Action, _debugF1, _debugF2, _debugF3,
-            _debugF4, _debugF5, _debugF7
-        };
-
-        private void _enableAllActions()
-        {
-            foreach (var action in _allActions)
-                action?.Enable();
-        }
-
-        private void _disableAllActions()
-        {
-            foreach (var action in _allActions)
-                action?.Disable();
-        }
-
-        // ====================================================================
-        // Action Bindings
-        // ====================================================================
-
-        private void _bindActions()
-        {
-            if (_interactAction != null) _interactAction.performed += _onInteract;
-            if (_attackAction != null) _attackAction.performed += _onAttack;
-            if (_secondaryAction != null) _secondaryAction.performed += _onSecondary;
-            if (_escapeAction != null) _escapeAction.performed += _onEscape;
-            if (_inventoryAction != null) _inventoryAction.performed += _onInventory;
-            if (_equipmentAction != null) _equipmentAction.performed += _onEquipment;
-            if (_mapAction != null) _mapAction.performed += _onMap;
-            if (_encyclopediaAction != null) _encyclopediaAction.performed += _onEncyclopedia;
-            if (_statsAction != null) _statsAction.performed += _onStats;
-            if (_skillsAction != null) _skillsAction.performed += _onSkills;
-            if (_craftAction != null) _craftAction.performed += _onCraftAction;
-            if (_scrollAction != null) _scrollAction.performed += _onScroll;
-
-            if (_skill1Action != null) _skill1Action.performed += _onSkill1;
-            if (_skill2Action != null) _skill2Action.performed += _onSkill2;
-            if (_skill3Action != null) _skill3Action.performed += _onSkill3;
-            if (_skill4Action != null) _skill4Action.performed += _onSkill4;
-            if (_skill5Action != null) _skill5Action.performed += _onSkill5;
-
-            if (_debugF1 != null) _debugF1.performed += _onDebugF1;
-            if (_debugF2 != null) _debugF2.performed += _onDebugF2;
-            if (_debugF3 != null) _debugF3.performed += _onDebugF3;
-            if (_debugF4 != null) _debugF4.performed += _onDebugF4;
-            if (_debugF5 != null) _debugF5.performed += _onDebugF5;
-            if (_debugF7 != null) _debugF7.performed += _onDebugF7;
-        }
-
-        private void _unbindActions()
-        {
-            if (_interactAction != null) _interactAction.performed -= _onInteract;
-            if (_attackAction != null) _attackAction.performed -= _onAttack;
-            if (_secondaryAction != null) _secondaryAction.performed -= _onSecondary;
-            if (_escapeAction != null) _escapeAction.performed -= _onEscape;
-            if (_inventoryAction != null) _inventoryAction.performed -= _onInventory;
-            if (_equipmentAction != null) _equipmentAction.performed -= _onEquipment;
-            if (_mapAction != null) _mapAction.performed -= _onMap;
-            if (_encyclopediaAction != null) _encyclopediaAction.performed -= _onEncyclopedia;
-            if (_statsAction != null) _statsAction.performed -= _onStats;
-            if (_skillsAction != null) _skillsAction.performed -= _onSkills;
-            if (_craftAction != null) _craftAction.performed -= _onCraftAction;
-            if (_scrollAction != null) _scrollAction.performed -= _onScroll;
-
-            if (_skill1Action != null) _skill1Action.performed -= _onSkill1;
-            if (_skill2Action != null) _skill2Action.performed -= _onSkill2;
-            if (_skill3Action != null) _skill3Action.performed -= _onSkill3;
-            if (_skill4Action != null) _skill4Action.performed -= _onSkill4;
-            if (_skill5Action != null) _skill5Action.performed -= _onSkill5;
-
-            if (_debugF1 != null) _debugF1.performed -= _onDebugF1;
-            if (_debugF2 != null) _debugF2.performed -= _onDebugF2;
-            if (_debugF3 != null) _debugF3.performed -= _onDebugF3;
-            if (_debugF4 != null) _debugF4.performed -= _onDebugF4;
-            if (_debugF5 != null) _debugF5.performed -= _onDebugF5;
-            if (_debugF7 != null) _debugF7.performed -= _onDebugF7;
-        }
-
-        // ====================================================================
-        // Input Handlers
-        // ====================================================================
-
-        private void _onInteract(InputAction.CallbackContext ctx)
-        {
-            if (_stateManager != null && _stateManager.IsPlaying)
-                OnInteract?.Invoke();
-        }
-
-        private void _onAttack(InputAction.CallbackContext ctx)
-        {
-            if (_stateManager == null || _stateManager.IsPlaying)
+            if (Camera.main != null)
             {
-                // First-person: attack is a forward ray from camera center
+                var ray = Camera.main.ScreenPointToRay(MousePosition);
+                var plane = new Plane(Vector3.up, Vector3.zero);
+                if (plane.Raycast(ray, out float distance))
+                {
+                    MouseWorldPosition = ray.GetPoint(distance);
+                }
+            }
+        }
+
+        // ====================================================================
+        // Input Polling — Mouse Clicks
+        // ====================================================================
+
+        private bool _wasLeftClickPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var mouse = Mouse.current;
+            if (mouse != null)
+            {
+                return mouse.leftButton.wasPressedThisFrame;
+            }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return Input.GetMouseButtonDown(0);
+#endif
+
+#pragma warning disable CS0162
+            return false;
+#pragma warning restore CS0162
+        }
+
+        private bool _wasRightClickPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var mouse = Mouse.current;
+            if (mouse != null)
+            {
+                return mouse.rightButton.wasPressedThisFrame;
+            }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return Input.GetMouseButtonDown(1);
+#endif
+
+#pragma warning disable CS0162
+            return false;
+#pragma warning restore CS0162
+        }
+
+        // ====================================================================
+        // Input Polling — Scroll Wheel
+        // ====================================================================
+
+        private float _pollScroll()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var mouse = Mouse.current;
+            if (mouse != null)
+            {
+                return mouse.scroll.ReadValue().y;
+            }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return Input.GetAxis("Mouse ScrollWheel") * 120f; // Scale to match
+#endif
+
+#pragma warning disable CS0162
+            return 0f;
+#pragma warning restore CS0162
+        }
+
+        // ====================================================================
+        // Input Polling — Keyboard Buttons (single-frame press detection)
+        // ====================================================================
+
+        private void _pollButtons(bool isPlaying)
+        {
+            // Escape — always active (unlocks cursor, opens pause)
+            if (_wasKeyPressed(KeyCode.Escape))
+            {
+                if (IsCursorLocked)
+                    UnlockCursor();
+                OnEscape?.Invoke();
+                _stateManager?.HandleEscape();
+            }
+
+            // --- Gameplay keys (only when playing) ---
+            if (!isPlaying) return;
+
+            // Interact
+            if (_wasKeyPressed(KeyCode.E))
+                OnInteract?.Invoke();
+
+            // Attack (left click while cursor is locked)
+            if (IsCursorLocked && _wasLeftClickPressed())
+            {
                 if (Camera.main != null)
                 {
-                    var ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0));
+                    var ray = Camera.main.ScreenPointToRay(
+                        new Vector3(Screen.width / 2f, Screen.height / 2f, 0));
                     var plane = new Plane(Vector3.up, Vector3.zero);
                     if (plane.Raycast(ray, out float dist))
                     {
                         OnPrimaryAttack?.Invoke(ray.GetPoint(dist));
-                        return;
+                    }
+                    else
+                    {
+                        OnPrimaryAttack?.Invoke(MouseWorldPosition);
                     }
                 }
-                OnPrimaryAttack?.Invoke(MouseWorldPosition);
             }
-            else
-            {
-                OnUIClick?.Invoke(MousePosition);
-            }
-        }
 
-        private void _onSecondary(InputAction.CallbackContext ctx)
-        {
-            if (_stateManager == null || _stateManager.IsPlaying)
+            // Secondary action (right click)
+            if (_wasRightClickPressed())
                 OnSecondaryAction?.Invoke(MouseWorldPosition);
+
+            // Craft action
+            if (_wasKeyPressed(KeyCode.Space))
+                OnCraftAction?.Invoke();
+
+            // --- Menu toggles ---
+            if (_wasKeyPressed(KeyCode.Tab))
+                OnToggleInventory?.Invoke();
+            if (_wasKeyPressed(KeyCode.I))
+                OnToggleEquipment?.Invoke();
+            if (_wasKeyPressed(KeyCode.M))
+                OnToggleMap?.Invoke();
+            if (_wasKeyPressed(KeyCode.J))
+                OnToggleEncyclopedia?.Invoke();
+            if (_wasKeyPressed(KeyCode.C))
+                OnToggleStats?.Invoke();
+            if (_wasKeyPressed(KeyCode.K))
+                OnToggleSkills?.Invoke();
+
+            // --- Skill bar (1-5) ---
+            if (_wasKeyPressed(KeyCode.Alpha1))
+                OnSkillActivate?.Invoke(0);
+            if (_wasKeyPressed(KeyCode.Alpha2))
+                OnSkillActivate?.Invoke(1);
+            if (_wasKeyPressed(KeyCode.Alpha3))
+                OnSkillActivate?.Invoke(2);
+            if (_wasKeyPressed(KeyCode.Alpha4))
+                OnSkillActivate?.Invoke(3);
+            if (_wasKeyPressed(KeyCode.Alpha5))
+                OnSkillActivate?.Invoke(4);
+
+            // --- Debug keys ---
+            if (_wasKeyPressed(KeyCode.F1))
+                OnDebugKey?.Invoke("F1");
+            if (_wasKeyPressed(KeyCode.F2))
+                OnDebugKey?.Invoke("F2");
+            if (_wasKeyPressed(KeyCode.F3))
+                OnDebugKey?.Invoke("F3");
+            if (_wasKeyPressed(KeyCode.F4))
+                OnDebugKey?.Invoke("F4");
+            if (_wasKeyPressed(KeyCode.F5))
+                OnDebugKey?.Invoke("F5");
+            if (_wasKeyPressed(KeyCode.F7))
+                OnDebugKey?.Invoke("F7");
         }
 
-        private void _onEscape(InputAction.CallbackContext ctx)
+        // ====================================================================
+        // Key Press Detection (unified across backends)
+        // ====================================================================
+
+        /// <summary>
+        /// Check if a key was pressed this frame. Tries New Input System first,
+        /// then falls back to legacy Input.GetKeyDown.
+        /// </summary>
+        private bool _wasKeyPressed(KeyCode keyCode)
         {
-            OnEscape?.Invoke();
-            _stateManager?.HandleEscape();
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = Keyboard.current;
+            if (keyboard != null)
+            {
+                Key key = _keyCodeToKey(keyCode);
+                if (key != Key.None)
+                    return keyboard[key].wasPressedThisFrame;
+            }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return Input.GetKeyDown(keyCode);
+#endif
+
+#pragma warning disable CS0162
+            return false;
+#pragma warning restore CS0162
         }
 
-        private void _onInventory(InputAction.CallbackContext ctx) => OnToggleInventory?.Invoke();
-        private void _onEquipment(InputAction.CallbackContext ctx) => OnToggleEquipment?.Invoke();
-        private void _onMap(InputAction.CallbackContext ctx) => OnToggleMap?.Invoke();
-        private void _onEncyclopedia(InputAction.CallbackContext ctx) => OnToggleEncyclopedia?.Invoke();
-        private void _onStats(InputAction.CallbackContext ctx) => OnToggleStats?.Invoke();
-        private void _onSkills(InputAction.CallbackContext ctx) => OnToggleSkills?.Invoke();
-        private void _onCraftAction(InputAction.CallbackContext ctx) => OnCraftAction?.Invoke();
-
-        private void _onScroll(InputAction.CallbackContext ctx)
+#if ENABLE_INPUT_SYSTEM
+        /// <summary>
+        /// Map UnityEngine.KeyCode to UnityEngine.InputSystem.Key.
+        /// Only maps keys we actually use.
+        /// </summary>
+        private static Key _keyCodeToKey(KeyCode keyCode)
         {
-            float scrollValue = ctx.ReadValue<float>();
-            if (Mathf.Abs(scrollValue) > 0.01f)
-                OnScroll?.Invoke(scrollValue);
+            switch (keyCode)
+            {
+                // Letters
+                case KeyCode.A: return Key.A;
+                case KeyCode.C: return Key.C;
+                case KeyCode.D: return Key.D;
+                case KeyCode.E: return Key.E;
+                case KeyCode.I: return Key.I;
+                case KeyCode.J: return Key.J;
+                case KeyCode.K: return Key.K;
+                case KeyCode.M: return Key.M;
+                case KeyCode.S: return Key.S;
+                case KeyCode.W: return Key.W;
+
+                // Numbers
+                case KeyCode.Alpha1: return Key.Digit1;
+                case KeyCode.Alpha2: return Key.Digit2;
+                case KeyCode.Alpha3: return Key.Digit3;
+                case KeyCode.Alpha4: return Key.Digit4;
+                case KeyCode.Alpha5: return Key.Digit5;
+
+                // Special
+                case KeyCode.Space: return Key.Space;
+                case KeyCode.Tab: return Key.Tab;
+                case KeyCode.Escape: return Key.Escape;
+
+                // Function keys
+                case KeyCode.F1: return Key.F1;
+                case KeyCode.F2: return Key.F2;
+                case KeyCode.F3: return Key.F3;
+                case KeyCode.F4: return Key.F4;
+                case KeyCode.F5: return Key.F5;
+                case KeyCode.F7: return Key.F7;
+
+                default: return Key.None;
+            }
         }
-
-        private void _onSkill1(InputAction.CallbackContext ctx) => OnSkillActivate?.Invoke(0);
-        private void _onSkill2(InputAction.CallbackContext ctx) => OnSkillActivate?.Invoke(1);
-        private void _onSkill3(InputAction.CallbackContext ctx) => OnSkillActivate?.Invoke(2);
-        private void _onSkill4(InputAction.CallbackContext ctx) => OnSkillActivate?.Invoke(3);
-        private void _onSkill5(InputAction.CallbackContext ctx) => OnSkillActivate?.Invoke(4);
-
-        private void _onDebugF1(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F1");
-        private void _onDebugF2(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F2");
-        private void _onDebugF3(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F3");
-        private void _onDebugF4(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F4");
-        private void _onDebugF5(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F5");
-        private void _onDebugF7(InputAction.CallbackContext ctx) => OnDebugKey?.Invoke("F7");
+#endif
 
         // ====================================================================
         // State Change Handler — Cursor Lock Management
