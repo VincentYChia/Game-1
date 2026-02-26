@@ -321,18 +321,28 @@ These Python systems have NOT been ported to Unity and are required by multiple 
 
 ---
 
-## What You Should Expect (Current State)
+## What You Should Expect (Post-Fix State — 2026-02-26)
 
 ### Works Now
 - All panels **open and close** with correct keybindings
 - All panels **display headers, layout, and structure** correctly
-- **Stats allocation** works with +/- buttons (debug mode grants free points, F5 gives 10)
-- **Equipment** shows equipped items with icons, durability bars, and real damage/defense stats
+- **Stats allocation** works with +/- buttons, deallocation clamps HP/Mana properly
+- **Equipment** shows equipped items with icons, durability, damage/defense, stat bonuses
+- **Equipment unequip** via right-click or Shift+click on slots (returns to inventory)
 - **Inventory** shows items with icons and quantities, tooltips work
-- **Crafting** loads and displays recipes, palette shows materials (debug=all, normal=inventory)
-- **Crafting grid** can be populated via click-to-place
-- **Skills menu** shows learned skills, can equip/unequip to hotbar
-- **Map** shows explored chunks with biome colors, zoom/pan works
+- **Inventory drag-drop** swaps slots correctly, drag-to-equip works
+- **Inventory right-click** equips equipment items
+- **Crafting** loads recipes, palette shows materials, click-to-place on grid
+- **Crafting grids** correct per discipline: smithing 3-9, alchemy 2-6, refining hub+spoke, engineering named slots
+- **Material borrowing** deducts on placement, returns on clear/close
+- **Skills menu** shows learned skills, equip/unequip to hotbar with mana cost
+- **Skill bar** cooldown display uses correct max cooldown, shows mana status
+- **Map** biome-colored chunks, auto-centers on open, zoom 0.25-4.0x, 1x1 exploration
+- **Encyclopedia** populates real data: guide, skills list, titles browser, stats summary, recipe catalog
+- **Titles** check requirements via activityType+acquisitionThreshold (F3 = show all)
+- **Debug overlay** starts OFF (F1 to activate), F3 toggles all titles
+- **Drag-drop** has ghost icon that follows cursor
+- No `UnityEngine.InputSystem` dependency (removed)
 
 ### Does Not Work Yet
 - **Cannot actually craft items** (craft button doesn't start minigame with materials)

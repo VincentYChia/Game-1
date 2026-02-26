@@ -333,9 +333,20 @@ namespace Game1.Unity.UI
             _stateManager?.TransitionTo(GameState.CraftingOpen);
         }
 
-        /// <summary>Close the crafting UI.</summary>
+        /// <summary>Close the crafting UI, returning any borrowed materials.</summary>
         public void Close()
         {
+            // Return any placed materials to inventory before closing
+            if (!_isDebugMode() && _placedMaterials.Count > 0)
+            {
+                var gm = GameManager.Instance;
+                if (gm?.Player != null)
+                {
+                    foreach (var matId in _placedMaterials.Values)
+                        gm.Player.Inventory.AddItem(matId, 1);
+                }
+            }
+            _placedMaterials.Clear();
             _stateManager?.TransitionTo(GameState.Playing);
         }
 
@@ -484,11 +495,23 @@ namespace Game1.Unity.UI
             }
         }
 
+        // Python-exact grid/slot configs per discipline and tier
+        private static readonly Dictionary<int, int> SMITHING_GRID = new() { {1,3},{2,5},{3,7},{4,9} };
+        private static readonly Dictionary<int, int> ALCHEMY_SLOTS = new() { {1,2},{2,3},{3,4},{4,6} };
+        private static readonly Dictionary<int, (int cores, int surrounding)> REFINING_SLOTS = new()
+            { {1,(1,2)},{2,(1,4)},{3,(2,5)},{4,(3,6)} };
+        private static readonly Dictionary<int, string[]> ENGINEERING_SLOTS = new()
+        {
+            {1, new[]{"FRAME","FUNCTION","POWER"}},
+            {2, new[]{"FRAME","FUNCTION","POWER"}},
+            {3, new[]{"FRAME","FUNCTION","POWER","MODIFIER","UTILITY"}},
+            {4, new[]{"FRAME","FUNCTION","POWER","MODIFIER","UTILITY"}},
+        };
+        private static readonly Dictionary<int, int> ENCHANTING_GRID = new() { {1,8},{2,10},{3,12},{4,14} };
+
         private void _buildSmithingGrid()
         {
-            // Grid size based on station tier: T1=3x3, T2=5x5, T3=7x7, T4=9x9
-            int gridSize = 3 + (_stationTier - 1) * 2;
-            gridSize = Mathf.Clamp(gridSize, 3, 9);
+            int gridSize = SMITHING_GRID.TryGetValue(_stationTier, out int gs) ? gs : 3;
 
             var grid = _gridContainer.gameObject.AddComponent<GridLayoutGroup>();
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
@@ -510,6 +533,7 @@ namespace Game1.Unity.UI
         private void _buildAlchemySequence()
         {
             // Sequential ingredient slots — horizontal row
+            // Python: T1=2, T2=3, T3=4, T4=6
             var hlg = _gridContainer.gameObject.AddComponent<HorizontalLayoutGroup>();
             hlg.spacing = 8f;
             hlg.padding = new RectOffset(8, 8, 8, 8);
@@ -517,7 +541,7 @@ namespace Game1.Unity.UI
             hlg.childForceExpandWidth = false;
             hlg.childForceExpandHeight = false;
 
-            int slots = 3 + _stationTier;
+            int slots = ALCHEMY_SLOTS.TryGetValue(_stationTier, out int s) ? s : 2;
             for (int i = 0; i < slots; i++)
             {
                 _createGridSlot($"seq_{i}");
@@ -526,26 +550,29 @@ namespace Game1.Unity.UI
 
         private void _buildRefiningHub()
         {
-            // Hub-spoke layout: grid arrangement (core in center row)
+            // Hub-spoke layout: cores + surrounding
+            // Python: T1=(1c,2s) T2=(1c,4s) T3=(2c,5s) T4=(3c,6s)
+            var (cores, surrounding) = REFINING_SLOTS.TryGetValue(_stationTier, out var cfg) ? cfg : (1, 2);
+            int total = cores + surrounding;
+
             var grid = _gridContainer.gameObject.AddComponent<GridLayoutGroup>();
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            int surrounding = 4 + _stationTier;
-            grid.constraintCount = Mathf.Min(surrounding, 4);
+            grid.constraintCount = Mathf.Min(total, 4);
             grid.cellSize = new Vector2(48, 48);
             grid.spacing = new Vector2(6, 6);
             grid.padding = new RectOffset(4, 4, 4, 4);
             grid.childAlignment = TextAnchor.MiddleCenter;
 
-            _createGridSlot("core");
+            for (int i = 0; i < cores; i++)
+                _createGridSlot($"core_{i}");
             for (int i = 0; i < surrounding; i++)
-            {
                 _createGridSlot($"surround_{i}");
-            }
         }
 
         private void _buildEngineeringSlots()
         {
             // Named slot types — vertical list
+            // Python: T1-T2: FRAME,FUNCTION,POWER; T3-T4: +MODIFIER,UTILITY
             var vlg = _gridContainer.gameObject.AddComponent<VerticalLayoutGroup>();
             vlg.spacing = 6f;
             vlg.padding = new RectOffset(8, 8, 8, 8);
@@ -553,7 +580,8 @@ namespace Game1.Unity.UI
             vlg.childForceExpandWidth = false;
             vlg.childForceExpandHeight = false;
 
-            string[] slotTypes = { "frame", "core", "mechanism", "power", "output" };
+            string[] slotTypes = ENGINEERING_SLOTS.TryGetValue(_stationTier, out var slots)
+                ? slots : new[] { "FRAME", "FUNCTION", "POWER" };
             foreach (string slot in slotTypes)
             {
                 _createGridSlot(slot);
@@ -563,7 +591,8 @@ namespace Game1.Unity.UI
         private void _buildEnchantingGrid()
         {
             // Cartesian grid for adornment patterns
-            int gridSize = 4 + _stationTier;
+            // Python: T1=8, T2=10, T3=12, T4=14
+            int gridSize = ENCHANTING_GRID.TryGetValue(_stationTier, out int eg) ? eg : 8;
 
             var grid = _gridContainer.gameObject.AddComponent<GridLayoutGroup>();
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
@@ -728,14 +757,38 @@ namespace Game1.Unity.UI
 
         public void PlaceMaterial(string slotKey, string materialId)
         {
+            // In non-debug mode, borrow material from inventory
+            if (!_isDebugMode())
+            {
+                var gm = GameManager.Instance;
+                if (gm?.Player != null && !gm.Player.Inventory.HasItem(materialId, 1))
+                {
+                    NotificationUI.Instance?.Show("Not enough materials!", Color.red);
+                    return;
+                }
+                gm?.Player?.Inventory?.RemoveItem(materialId, 1);
+            }
+
             _placedMaterials[slotKey] = materialId;
             _updateDifficulty();
         }
 
         public void RemoveMaterial(string slotKey)
         {
+            // Return borrowed material to inventory
+            if (_placedMaterials.TryGetValue(slotKey, out string matId) && !_isDebugMode())
+            {
+                GameManager.Instance?.Player?.Inventory?.AddItem(matId, 1);
+            }
+
             _placedMaterials.Remove(slotKey);
             _updateDifficulty();
+        }
+
+        private bool _isDebugMode()
+        {
+            var debug = FindFirstObjectByType<DebugOverlay>();
+            return debug != null && debug.IsDebugActive;
         }
 
         // ====================================================================
@@ -756,8 +809,19 @@ namespace Game1.Unity.UI
 
         private void _onClearClicked()
         {
+            // Return all borrowed materials to inventory
+            if (!_isDebugMode())
+            {
+                var gm = GameManager.Instance;
+                if (gm?.Player != null)
+                {
+                    foreach (var matId in _placedMaterials.Values)
+                        gm.Player.Inventory.AddItem(matId, 1);
+                }
+            }
             _placedMaterials.Clear();
             _buildGrid();
+            _buildPalette();
             _updateDifficulty();
         }
 

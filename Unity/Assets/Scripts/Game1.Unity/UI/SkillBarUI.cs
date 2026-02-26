@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Game1.Core;
+using Game1.Data.Databases;
 using Game1.Unity.Core;
 using Game1.Unity.Utilities;
 
@@ -123,20 +124,41 @@ namespace Game1.Unity.UI
                         _slots[i].IconImage.sprite = SpriteDatabase.Instance.GetItemSprite(skillId);
                 }
 
-                // Cooldown overlay
+                // Cooldown overlay + mana cost display
+                var knownSkill = skillManager.GetKnownSkill(skillId);
+                float cooldownRemaining = knownSkill?.CurrentCooldown ?? 0f;
+                var skillDb = SkillDatabase.Instance;
+                var skillDef = skillDb?.GetSkill(skillId);
+
                 if (_slots[i].CooldownOverlay != null)
                 {
-                    var knownSkill = skillManager.GetKnownSkill(skillId);
-                    float cooldownRemaining = knownSkill?.CurrentCooldown ?? 0f;
-
                     if (cooldownRemaining > 0)
                     {
-                        _slots[i].CooldownOverlay.fillAmount = Mathf.Clamp01(cooldownRemaining / Mathf.Max(cooldownRemaining, 1f));
+                        // Divide by max cooldown (from skill definition) for proper fill
+                        float maxCooldown = skillDef != null
+                            ? skillDb.GetCooldownSeconds(skillDef.Cost.CooldownRaw) : 300f;
+                        _slots[i].CooldownOverlay.fillAmount = Mathf.Clamp01(cooldownRemaining / Mathf.Max(maxCooldown, 1f));
                         _slots[i].CooldownOverlay.color = _cooldownColor;
                     }
                     else
                     {
                         _slots[i].CooldownOverlay.fillAmount = 0f;
+                    }
+                }
+
+                // Skill name label (code-built path)
+                if (_nameLabels != null && i < _nameLabels.Length && _nameLabels[i] != null)
+                {
+                    string skillName = skillDef?.Name ?? skillId;
+                    _nameLabels[i].text = skillName.Length > 8 ? skillName.Substring(0, 8) : skillName;
+
+                    // Show mana cost color: blue if enough mana, red if not
+                    if (skillDef != null)
+                    {
+                        int manaCost = skillDb.GetManaCost(skillDef.Cost.ManaCostRaw);
+                        float playerMana = gm.Player.Stats?.CurrentMana ?? 0f;
+                        _nameLabels[i].color = playerMana >= manaCost
+                            ? UIHelper.COLOR_TEXT_SECONDARY : new Color(1f, 0.3f, 0.3f);
                     }
                 }
             }

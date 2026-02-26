@@ -12,7 +12,6 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using Game1.Unity.Core;
 using Game1.Unity.Utilities;
 
@@ -80,7 +79,33 @@ namespace Game1.Unity.UI
         private void Awake()
         {
             Instance = this;
+            if (_ghostIcon == null) _buildGhostIcon();
             _setGhostVisible(false);
+        }
+
+        /// <summary>Create a ghost icon that follows the cursor during drag operations.</summary>
+        private void _buildGhostIcon()
+        {
+            // Find or create an overlay canvas (needs to render on top of everything)
+            var canvasGo = new GameObject("DragGhostCanvas");
+            canvasGo.transform.SetParent(transform, false);
+            var canvas = canvasGo.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 9999;
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasGo.AddComponent<GraphicRaycaster>();
+
+            var ghostGo = new GameObject("GhostIcon");
+            ghostGo.transform.SetParent(canvasGo.transform, false);
+            _ghostTransform = ghostGo.AddComponent<RectTransform>();
+            _ghostTransform.sizeDelta = new Vector2(48, 48);
+
+            _ghostIcon = ghostGo.AddComponent<Image>();
+            _ghostIcon.raycastTarget = false;
+
+            _ghostCanvasGroup = ghostGo.AddComponent<CanvasGroup>();
+            _ghostCanvasGroup.blocksRaycasts = false;
+            _ghostCanvasGroup.alpha = 0f;
         }
 
         private void Start()
@@ -157,19 +182,16 @@ namespace Game1.Unity.UI
 
         private void Update()
         {
-            // Move ghost icon with mouse using new Input System
+            // Move ghost icon with mouse
             if (IsDragging && _ghostTransform != null)
             {
-                _ghostTransform.position = Mouse.current?.position.ReadValue() ?? Vector2.zero;
+                _ghostTransform.position = (Vector2)Input.mousePosition;
             }
 
-            // Cancel on right-click using new Input System
-            if (IsDragging)
+            // Cancel on right-click
+            if (IsDragging && Input.GetMouseButtonDown(1))
             {
-                if (Mouse.current?.rightButton.wasPressedThisFrame == true)
-                {
-                    CancelDrag();
-                }
+                CancelDrag();
             }
         }
 

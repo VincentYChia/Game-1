@@ -9,9 +9,12 @@
 // UI hierarchy programmatically via UIHelper.
 // ============================================================================
 
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Game1.Core;
+using Game1.Data.Databases;
 using Game1.Unity.Core;
 using Game1.Unity.Utilities;
 
@@ -232,39 +235,158 @@ namespace Game1.Unity.UI
         {
             var gm = GameManager.Instance;
 
-            // Build tab-specific content
             int tabIndex = _activeTab switch
             {
-                "guide" => 0,
-                "quests" => 1,
-                "skills" => 2,
-                "titles" => 3,
-                "stats" => 4,
-                "recipes" => 5,
-                _ => 0
+                "guide" => 0, "quests" => 1, "skills" => 2,
+                "titles" => 3, "stats" => 4, "recipes" => 5, _ => 0
             };
 
             string text = _activeTab switch
             {
-                "guide" => "Welcome to the Game Encyclopedia!\n\nUse tabs to browse.\n\nControls:\n  WASD - Move\n  Mouse - Look\n  Tab - Inventory\n  I - Equipment\n  C - Stats\n  K - Skills\n  M - Map\n  E - Encyclopedia / Interact\n  ESC - Close menu\n  1-5 - Skill hotbar\n  F1 - Debug mode",
+                "guide" => _buildGuideText(),
                 "quests" => "Active Quests:\n(No active quests)",
-                "skills" => gm?.Player != null ? $"Learned Skills: {gm.Player.Skills.KnownSkills.Count}\n\nUse the Skills menu (K) to view and equip skills." : "Learned Skills: 0",
-                "titles" => "Titles:\n(Browse earned titles)",
-                "stats" => gm?.Player != null ? $"Level: {gm.Player.Leveling.Level}\nClass: {gm.Player.ClassId ?? "None"}\n\nUse the Stats menu (C) to allocate stat points." : "Level: 1\nClass: None",
-                "recipes" => "Recipes:\n(Browse crafting recipes)\n\nInteract (E) with a crafting station to craft items.",
+                "skills" => _buildSkillsText(gm),
+                "titles" => _buildTitlesText(gm),
+                "stats" => _buildStatsText(gm),
+                "recipes" => _buildRecipesText(),
                 _ => ""
             };
 
-            // Update TMP label (inspector path)
-            if (_contentText != null)
-            {
-                _contentText.text = text;
-                return;
-            }
-
-            // Update the specific tab's text
+            if (_contentText != null) { _contentText.text = text; return; }
             if (_tabTexts != null && tabIndex < _tabTexts.Length && _tabTexts[tabIndex] != null)
                 _tabTexts[tabIndex].text = text;
+        }
+
+        private string _buildGuideText()
+        {
+            return "=== GAME ENCYCLOPEDIA ===\n\n" +
+                "Controls:\n" +
+                "  WASD - Move\n  Mouse - Look\n  Tab - Inventory\n  I - Equipment\n" +
+                "  C - Stats\n  K - Skills\n  M - Map\n  J - Encyclopedia\n" +
+                "  E - Interact\n  ESC - Close menu\n  1-5 - Skill hotbar\n\n" +
+                "Debug Keys:\n" +
+                "  F1 - Toggle Debug Mode\n  F2 - Learn All Skills\n" +
+                "  F3 - Show All Titles\n  F4 - Max Level + Stats\n" +
+                "  F5 - +10 Stat Points\n  F7 - Infinite Durability\n\n" +
+                "Crafting:\n" +
+                "  Interact (E) with a crafting station to begin\n" +
+                "  5 disciplines: Smithing, Alchemy, Refining, Engineering, Enchanting\n\n" +
+                "Tier System:\n" +
+                "  T1 (1.0x) - Common\n  T2 (2.0x) - Uncommon\n" +
+                "  T3 (4.0x) - Rare\n  T4 (8.0x) - Legendary";
+        }
+
+        private string _buildSkillsText(GameManager gm)
+        {
+            var sb = new StringBuilder();
+            var skillDb = SkillDatabase.Instance;
+            if (gm?.Player == null || skillDb == null)
+            {
+                sb.AppendLine("Learned Skills: 0");
+                return sb.ToString();
+            }
+
+            var known = gm.Player.Skills.KnownSkills;
+            sb.AppendLine($"Learned Skills: {known.Count}");
+            sb.AppendLine();
+
+            foreach (var kvp in known)
+            {
+                var def = skillDb.GetSkill(kvp.Key);
+                if (def == null) continue;
+                string tags = def.Tags != null ? string.Join(", ", def.Tags) : "";
+                string mana = def.Cost?.ManaCostRaw?.ToString() ?? "?";
+                sb.AppendLine($"  {def.Name} (Mana: {mana}) [{tags}]");
+            }
+
+            return sb.ToString();
+        }
+
+        private string _buildTitlesText(GameManager gm)
+        {
+            var sb = new StringBuilder();
+            var titleDb = TitleDatabase.Instance;
+            if (titleDb == null || !titleDb.Loaded)
+            {
+                sb.AppendLine("Titles: (none loaded)");
+                return sb.ToString();
+            }
+
+            int total = titleDb.Titles.Count;
+            sb.AppendLine($"Titles Database: {total} titles\n");
+
+            foreach (var kvp in titleDb.Titles)
+            {
+                var t = kvp.Value;
+                string bonusDesc = !string.IsNullOrEmpty(t.BonusDescription) ? $" - {t.BonusDescription}" : "";
+                sb.AppendLine($"  [{t.Tier}] {t.Name}{bonusDesc}");
+            }
+
+            return sb.ToString();
+        }
+
+        private string _buildStatsText(GameManager gm)
+        {
+            var sb = new StringBuilder();
+            if (gm?.Player == null)
+            {
+                sb.AppendLine("Level: 1\nClass: None");
+                return sb.ToString();
+            }
+
+            var p = gm.Player;
+            var s = p.Stats;
+            var l = p.Leveling;
+
+            sb.AppendLine($"Level: {l.Level} | Class: {p.ClassId ?? "None"}");
+            sb.AppendLine($"HP: {s.CurrentHealth:F0}/{s.MaxHealth:F0}");
+            sb.AppendLine($"Mana: {s.CurrentMana:F0}/{s.MaxMana:F0}");
+            sb.AppendLine($"Unallocated Points: {l.UnallocatedStatPoints}");
+            sb.AppendLine();
+            sb.AppendLine($"STR: {s.Strength}  (+{s.Strength * GameConfig.StrDamagePerPoint * 100:F0}% dmg)");
+            sb.AppendLine($"DEF: {s.Defense}  (+{s.Defense * GameConfig.DefReductionPerPoint * 100:F0}% red)");
+            sb.AppendLine($"VIT: {s.Vitality}  (+{s.Vitality * GameConfig.VitHpPerPoint} HP)");
+            sb.AppendLine($"LCK: {s.Luck}  (+{s.Luck * GameConfig.LckCritPerPoint * 100:F0}% crit)");
+            sb.AppendLine($"AGI: {s.Agility}  (+{s.Agility * GameConfig.AgiForestryPerPoint * 100:F0}% forestry)");
+            sb.AppendLine($"INT: {s.Intelligence}  (-{s.Intelligence * GameConfig.IntDifficultyPerPoint * 100:F0}% diff)");
+
+            return sb.ToString();
+        }
+
+        private string _buildRecipesText()
+        {
+            var sb = new StringBuilder();
+            var recipeDb = RecipeDatabase.Instance;
+            if (recipeDb == null)
+            {
+                sb.AppendLine("Recipes: (none loaded)");
+                return sb.ToString();
+            }
+
+            string[] disciplines = { "smithing", "alchemy", "refining", "engineering", "enchanting" };
+            foreach (string disc in disciplines)
+            {
+                sb.AppendLine($"\n=== {disc.ToUpper()} ===");
+                for (int tier = 1; tier <= 4; tier++)
+                {
+                    var recipes = recipeDb.GetRecipesForStation(disc, tier);
+                    if (recipes == null || recipes.Count == 0) continue;
+                    foreach (var r in recipes)
+                    {
+                        string inputStr = "";
+                        if (r.Inputs != null)
+                        {
+                            var parts = new System.Collections.Generic.List<string>();
+                            foreach (var inp in r.Inputs)
+                                parts.Add($"{inp.MaterialId} x{inp.Qty}");
+                            inputStr = string.Join(", ", parts);
+                        }
+                        sb.AppendLine($"  T{tier}: {r.OutputId} x{r.OutputQty} [{inputStr}]");
+                    }
+                }
+            }
+
+            return sb.ToString();
         }
 
         private void _onToggle() => _stateManager?.TogglePanel(GameState.EncyclopediaOpen);

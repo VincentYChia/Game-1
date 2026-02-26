@@ -346,6 +346,14 @@ namespace Game1.Unity.UI
 
             gm.Player.Stats.SetStat(statName, current - 1);
             gm.Player.Leveling.UnallocatedStatPoints++;
+
+            // Clamp HP/Mana to new max after stat decrease
+            var stats = gm.Player.Stats;
+            if (stats.CurrentHealth > stats.MaxHealth)
+                stats.CurrentHealth = stats.MaxHealth;
+            if (stats.CurrentMana > stats.MaxMana)
+                stats.CurrentMana = stats.MaxMana;
+
             Refresh();
         }
 

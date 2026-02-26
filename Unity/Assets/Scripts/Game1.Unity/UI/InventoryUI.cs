@@ -60,6 +60,10 @@ namespace Game1.Unity.UI
             if (_stateManager != null)
                 _stateManager.OnStateChanged += _onStateChanged;
 
+            // Subscribe to drag-drop completions for inventory slot swaps
+            if (DragDropManager.Instance != null)
+                DragDropManager.Instance.OnDropCompleted += _onDropCompleted;
+
             _createSlots();
             _setVisible(false);
         }
@@ -70,6 +74,56 @@ namespace Game1.Unity.UI
                 _inputManager.OnToggleInventory -= _onToggle;
             if (_stateManager != null)
                 _stateManager.OnStateChanged -= _onStateChanged;
+            if (DragDropManager.Instance != null)
+                DragDropManager.Instance.OnDropCompleted -= _onDropCompleted;
+        }
+
+        /// <summary>Handle drag-drop completions: swap inventory slots or equip from inventory.</summary>
+        private void _onDropCompleted(DragDropManager.DragSource source, int sourceSlot,
+            DragDropManager.DragSource target, int targetSlot)
+        {
+            var gm = GameManager.Instance;
+            if (gm?.Player == null) return;
+
+            // Inventory-to-Inventory swap
+            if (source == DragDropManager.DragSource.Inventory && target == DragDropManager.DragSource.Inventory)
+            {
+                gm.Player.Inventory.SwapSlots(sourceSlot, targetSlot);
+                Refresh();
+            }
+            // Inventory-to-Equipment (drag to equip)
+            else if (source == DragDropManager.DragSource.Inventory && target == DragDropManager.DragSource.Equipment)
+            {
+                var slot = gm.Player.Inventory.GetSlot(sourceSlot);
+                if (slot == null) return;
+                var eqDb = EquipmentDatabase.Instance;
+                if (eqDb != null && eqDb.IsEquipment(slot.ItemId))
+                {
+                    var eq = eqDb.CreateEquipmentFromId(slot.ItemId);
+                    if (eq != null)
+                    {
+                        var (oldItem, status) = gm.Player.Equipment.Equip(eq);
+                        if (status == "OK")
+                        {
+                            gm.Player.Inventory.RemoveItem(slot.ItemId, 1);
+                            if (oldItem != null) gm.Player.Inventory.AddItem(oldItem.ItemId, 1);
+                            Refresh();
+                            FindFirstObjectByType<EquipmentUI>()?.Refresh();
+                        }
+                    }
+                }
+            }
+            // Drop to world (remove from inventory)
+            else if (source == DragDropManager.DragSource.Inventory && target == DragDropManager.DragSource.World)
+            {
+                var slot = gm.Player.Inventory.GetSlot(sourceSlot);
+                if (slot != null)
+                {
+                    gm.Player.Inventory.RemoveItem(slot.ItemId, slot.Quantity);
+                    NotificationUI.Instance?.Show($"Dropped {slot.ItemId.Replace("_", " ")}", Color.yellow);
+                    Refresh();
+                }
+            }
         }
 
         private void OnEnable()

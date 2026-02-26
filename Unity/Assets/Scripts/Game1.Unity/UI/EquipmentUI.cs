@@ -43,6 +43,7 @@ namespace Game1.Unity.UI
         // Stats summary references populated by _buildUI()
         private Text _totalDamageLabel;
         private Text _totalDefenseLabel;
+        private Text _statBonusesLabel;
 
         [System.Serializable]
         public class EquipmentSlotUI
@@ -191,6 +192,11 @@ namespace Game1.Unity.UI
                     new Vector2(x, y - slotSize * 0.5f - labelHeight * 0.5f - 2),
                     TextAnchor.UpperCenter);
 
+                // Add click handler for unequipping
+                var clickHandler = root.gameObject.AddComponent<EquipmentSlotClickHandler>();
+                clickHandler.SlotName = slotName;
+                clickHandler.EquipmentUI = this;
+
                 // Build slot data
                 var slotUI = new EquipmentSlotUI
                 {
@@ -235,6 +241,10 @@ namespace Game1.Unity.UI
             var (defLabel, defValue) = UIHelper.CreateLabeledRow(
                 statsPanel, "Total Defense:", "0", 14);
             _totalDefenseLabel = defValue;
+
+            _statBonusesLabel = UIHelper.CreateText(statsPanel, "StatBonuses", "",
+                12, UIHelper.COLOR_TEXT_GREEN, TextAnchor.UpperLeft);
+            UIHelper.SetPreferredHeight(_statBonusesLabel.gameObject, 30f);
         }
 
         /// <summary>Refresh all slots from Character equipment.</summary>
@@ -282,20 +292,35 @@ namespace Game1.Unity.UI
                 }
             }
 
-            // Update stats summary (programmatic labels)
-            if (_totalDamageLabel != null)
+            // Update stats summary
+            var (minDmg, maxDmg) = equipment.GetWeaponDamage(EquipmentSlot.MainHand);
+            var (offMin, offMax) = equipment.GetWeaponDamage(EquipmentSlot.OffHand);
+            string dmgText = offMax > 0 ? $"{minDmg}-{maxDmg} / {offMin}-{offMax}" : $"{minDmg}-{maxDmg}";
+            int totalDef = equipment.GetTotalDefense();
+
+            // Programmatic labels
+            if (_totalDamageLabel != null) _totalDamageLabel.text = dmgText;
+            if (_totalDefenseLabel != null) _totalDefenseLabel.text = totalDef.ToString();
+
+            // TMP labels (inspector path)
+            if (_totalDamageText != null) _totalDamageText.text = dmgText;
+            if (_totalDefenseText != null) _totalDefenseText.text = totalDef.ToString();
+
+            // Stat bonuses display
+            if (_statBonusesLabel != null)
             {
-                var (minDmg, maxDmg) = equipment.GetWeaponDamage(EquipmentSlot.MainHand);
-                var (offMin, offMax) = equipment.GetWeaponDamage(EquipmentSlot.OffHand);
-                if (offMax > 0)
-                    _totalDamageLabel.text = $"{minDmg}-{maxDmg} / {offMin}-{offMax}";
+                var bonuses = equipment.GetStatBonuses();
+                if (bonuses != null && bonuses.Count > 0)
+                {
+                    var parts = new System.Collections.Generic.List<string>();
+                    foreach (var kvp in bonuses)
+                        parts.Add($"+{kvp.Value:F1}% {kvp.Key}");
+                    _statBonusesLabel.text = string.Join("  ", parts);
+                }
                 else
-                    _totalDamageLabel.text = $"{minDmg}-{maxDmg}";
-            }
-            if (_totalDefenseLabel != null)
-            {
-                int totalDef = equipment.GetTotalDefense();
-                _totalDefenseLabel.text = totalDef.ToString();
+                {
+                    _statBonusesLabel.text = "";
+                }
             }
         }
 
@@ -313,10 +338,44 @@ namespace Game1.Unity.UI
         private void _onEquipmentChanged(object item, int slot) => Refresh();
         private void _onEquipmentRemoved(object item, int slot) => Refresh();
 
+        /// <summary>Unequip an item from a slot and return it to inventory.</summary>
+        public void UnequipSlot(string slotName)
+        {
+            var gm = GameManager.Instance;
+            if (gm?.Player == null) return;
+
+            if (!System.Enum.TryParse<EquipmentSlot>(slotName, true, out var slotEnum)) return;
+
+            var item = gm.Player.Equipment.Unequip(slotEnum);
+            if (item != null)
+            {
+                gm.Player.Inventory.AddItem(item.ItemId, 1);
+                NotificationUI.Instance?.Show($"Unequipped {item.ItemId.Replace("_", " ")}", Color.yellow);
+                Refresh();
+                FindFirstObjectByType<InventoryUI>()?.Refresh();
+            }
+        }
+
         private void _setVisible(bool visible)
         {
             if (_panel != null) _panel.SetActive(visible);
             else gameObject.SetActive(visible);
+        }
+    }
+
+    /// <summary>Click handler for equipment slot — right-click or shift-click to unequip.</summary>
+    public class EquipmentSlotClickHandler : MonoBehaviour, IPointerClickHandler
+    {
+        public string SlotName;
+        public EquipmentUI EquipmentUI;
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Right ||
+                (eventData.button == PointerEventData.InputButton.Left && Input.GetKey(KeyCode.LeftShift)))
+            {
+                EquipmentUI?.UnequipSlot(SlotName);
+            }
         }
     }
 }

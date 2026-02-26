@@ -205,19 +205,41 @@ namespace Game1.Unity.UI
         {
             _earnedTitles.Clear();
 
+            _gameManager = GameManager.Instance;
             if (_gameManager?.Player == null) return;
 
             var titleDb = TitleDatabase.Instance;
             if (!titleDb.Loaded) return;
 
-            // Get earned title IDs from StatTracker
+            // Check debug mode for showing all titles
+            var debugOverlay = FindFirstObjectByType<DebugOverlay>();
+            bool showAll = debugOverlay != null && debugOverlay.ShowAllTitles;
+
             var tracker = _gameManager.Player.StatTracker;
             var allTitles = titleDb.Titles;
 
             foreach (var kvp in allTitles)
             {
-                // Check if title requirements are met
-                _earnedTitles.Add(kvp.Value);
+                var title = kvp.Value;
+
+                if (showAll)
+                {
+                    _earnedTitles.Add(title);
+                    continue;
+                }
+
+                // Check legacy requirement: activityType + acquisitionThreshold
+                if (title.AcquisitionThreshold > 0 && !string.IsNullOrEmpty(title.ActivityType))
+                {
+                    int count = tracker.GetActivityCount(title.ActivityType);
+                    if (count >= title.AcquisitionThreshold)
+                        _earnedTitles.Add(title);
+                }
+                else if (title.AcquisitionThreshold <= 0)
+                {
+                    // Titles with no threshold are starter/free titles
+                    _earnedTitles.Add(title);
+                }
             }
 
             RebuildTitleList();

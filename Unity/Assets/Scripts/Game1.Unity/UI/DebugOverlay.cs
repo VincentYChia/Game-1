@@ -56,11 +56,11 @@ namespace Game1.Unity.UI
             if (_inputManager != null)
                 _inputManager.OnDebugKey += _onDebugKey;
 
-            // Start with debug overlay visible so position is always shown
-            _debugActive = true;
-            _debugFlags["F1"] = true;
+            // Start with debug OFF - user activates with F1
+            _debugActive = false;
+            _debugFlags["F1"] = false;
             if (_debugPanel != null)
-                _debugPanel.SetActive(true);
+                _debugPanel.SetActive(false);
         }
 
         private void OnDestroy()
@@ -138,8 +138,11 @@ namespace Game1.Unity.UI
                     break;
 
                 case "F3":
-                    // Grant all titles
-                    NotificationUI.Instance?.Show("All titles granted!", Color.cyan);
+                    // Grant all titles — flag for TitleUI to show all as earned
+                    _debugFlags["F3"] = !_debugFlags.GetValueOrDefault("F3");
+                    NotificationUI.Instance?.Show(
+                        _debugFlags["F3"] ? "All Titles Visible (Debug)" : "Titles: Normal Mode",
+                        Color.cyan);
                     break;
 
                 case "F4":
@@ -176,6 +179,9 @@ namespace Game1.Unity.UI
 
         /// <summary>Whether infinite durability is active.</summary>
         public bool IsInfiniteDurability => _debugFlags.TryGetValue("F7", out bool v) && v;
+
+        /// <summary>Whether all titles should be shown as earned (debug mode).</summary>
+        public bool ShowAllTitles => _debugFlags.TryGetValue("F3", out bool v) && v;
 
         /// <summary>
         /// Programmatically build the debug overlay when SerializeField references are null.

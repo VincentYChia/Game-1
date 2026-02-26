@@ -50,7 +50,7 @@ namespace Game1.Unity.UI
 
         [Header("Settings")]
         [SerializeField] private float _zoomMin = 0.25f;
-        [SerializeField] private float _zoomMax = 5f;
+        [SerializeField] private float _zoomMax = 4f;
         [SerializeField] private float _zoomSpeed = 0.25f;
         [SerializeField] private int _chunkPixelSize = 12;
 
@@ -256,16 +256,11 @@ namespace Game1.Unity.UI
             int cx = Mathf.FloorToInt(gm.Player.Position.X / GameConfig.ChunkSize);
             int cz = Mathf.FloorToInt(gm.Player.Position.Z / GameConfig.ChunkSize);
 
-            for (int dx = -1; dx <= 1; dx++)
+            // Python reveals only the chunk the player is standing in (1x1)
+            var coord = new Vector2Int(cx, cz);
+            if (_exploredChunks.Add(coord))
             {
-                for (int dz = -1; dz <= 1; dz++)
-                {
-                    var coord = new Vector2Int(cx + dx, cz + dz);
-                    if (_exploredChunks.Add(coord))
-                    {
-                        _revealChunk(coord);
-                    }
-                }
+                _revealChunk(coord);
             }
         }
 
@@ -416,7 +411,13 @@ namespace Game1.Unity.UI
         }
 
         private void _onToggle() => _stateManager?.TogglePanel(GameState.MapOpen);
-        private void _onStateChanged(GameState old, GameState next) => _setVisible(next == GameState.MapOpen);
+        private void _onStateChanged(GameState old, GameState next)
+        {
+            bool show = next == GameState.MapOpen;
+            _setVisible(show);
+            // Auto-center on player when map opens (matches Python behavior)
+            if (show) _centerOnPlayer();
+        }
         private void _setVisible(bool v) { if (_panel != null) _panel.SetActive(v); }
     }
 }
