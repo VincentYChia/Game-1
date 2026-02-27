@@ -995,12 +995,33 @@ namespace Game1.Unity.UI
                 return;
             }
 
+            // Aggregate placed materials by ID → count
+            var materialCounts = new Dictionary<string, int>();
+            foreach (var kvp in _placedMaterials)
+                materialCounts[kvp.Value] = materialCounts.TryGetValue(kvp.Value, out int c) ? c + 1 : 1;
+
+            // Convert to List<RecipeInput> expected by InteractiveCrafting.StartCrafting
+            // Uses Game1.Systems.Crafting.RecipeInput (not Game1.Data.Models.RecipeInput)
+            var inputs = new List<Game1.Systems.Crafting.RecipeInput>();
+            var matDb = MaterialDatabase.Instance;
+            foreach (var kvp in materialCounts)
+            {
+                int tier = 1;
+                if (matDb != null)
+                {
+                    var mat = matDb.GetMaterial(kvp.Key);
+                    if (mat != null) tier = mat.Tier;
+                }
+                inputs.Add(new Game1.Systems.Crafting.RecipeInput
+                {
+                    MaterialId = kvp.Key,
+                    Quantity = kvp.Value,
+                    Tier = tier,
+                });
+            }
+
             // Start the interactive minigame for this discipline
             var ic = InteractiveCrafting.Instance;
-            var inputs = new Dictionary<string, int>(_placedMaterials.Count);
-            foreach (var kvp in _placedMaterials)
-                inputs[kvp.Value] = inputs.TryGetValue(kvp.Value, out int c) ? c + 1 : 1;
-
             var minigame = ic.StartCrafting(
                 _currentDiscipline, _stationTier, _selectedRecipe, inputs);
 
