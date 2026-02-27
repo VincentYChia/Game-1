@@ -45,6 +45,7 @@ namespace Game1.Unity.UI
             ["F2"] = false,
             ["F3"] = false,
             ["F4"] = false,
+            ["F6"] = false,
             ["F7"] = false,
         };
 
@@ -164,6 +165,11 @@ namespace Game1.Unity.UI
                     NotificationUI.Instance?.Show($"+10 stat points! (Total: {gm.Player.Leveling.UnallocatedStatPoints})", Color.cyan);
                     break;
 
+                case "F6":
+                    // Grant crafting materials to inventory for testing
+                    _grantDebugMaterials(gm);
+                    break;
+
                 case "F7":
                     _debugFlags["F7"] = !_debugFlags["F7"];
                     NotificationUI.Instance?.Show(
@@ -172,6 +178,33 @@ namespace Game1.Unity.UI
                     );
                     break;
             }
+        }
+
+        private void _grantDebugMaterials(GameManager gm)
+        {
+            if (gm?.Player == null) return;
+
+            var matDb = MaterialDatabase.Instance;
+            if (matDb == null || !matDb.Loaded) return;
+
+            int count = 0;
+            foreach (var mat in matDb.Materials.Values)
+            {
+                if (mat == null || string.IsNullOrEmpty(mat.MaterialId)) continue;
+                // Grant 20 of each T1-T2 material, 10 of T3, 5 of T4
+                int qty = mat.Tier switch
+                {
+                    1 => 20,
+                    2 => 20,
+                    3 => 10,
+                    _ => 5,
+                };
+                gm.Player.Inventory.AddItem(mat.MaterialId, qty);
+                count++;
+            }
+
+            NotificationUI.Instance?.Show($"Granted {count} material types to inventory!", Color.cyan);
+            FindFirstObjectByType<InventoryUI>()?.Refresh();
         }
 
         /// <summary>Whether infinite resources debug mode is active.</summary>

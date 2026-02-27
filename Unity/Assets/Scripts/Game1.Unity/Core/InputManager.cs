@@ -610,6 +610,8 @@ namespace Game1.Unity.Core
                 OnDebugKey?.Invoke("F4");
             if (_wasKeyPressed(KeyCode.F5))
                 OnDebugKey?.Invoke("F5");
+            if (_wasKeyPressed(KeyCode.F6))
+                OnDebugKey?.Invoke("F6");
             if (_wasKeyPressed(KeyCode.F7))
                 OnDebugKey?.Invoke("F7");
         }
@@ -694,6 +696,7 @@ namespace Game1.Unity.Core
                 case KeyCode.F3: return Key.F3;
                 case KeyCode.F4: return Key.F4;
                 case KeyCode.F5: return Key.F5;
+                case KeyCode.F6: return Key.F6;
                 case KeyCode.F7: return Key.F7;
                 default: return Key.None;
             }

@@ -76,6 +76,7 @@ namespace Game1.Unity.UI
         private Text _recipeTitleLabel;
         private Text _recipeDescLabel;
         private Text _difficultyLabel;
+        private Text _headerLabel;
         private ScrollRect _recipeScroll;
         private RectTransform _recipeScrollContent;
 
@@ -131,8 +132,9 @@ namespace Game1.Unity.UI
             UIHelper.AddVerticalLayout(panelRt, spacing: 4f,
                 padding: new RectOffset(6, 6, 6, 6));
 
-            // -- Header
-            UIHelper.CreateHeaderRow(panelRt, "CRAFTING", "[ESC]", height: 38f);
+            // -- Header (updated dynamically when station is opened)
+            var (_, headerTitle, _) = UIHelper.CreateHeaderRow(panelRt, "CRAFTING", "[ESC]", height: 38f);
+            _headerLabel = headerTitle;
 
             // -- Divider
             UIHelper.CreateDivider(panelRt, 2f);
@@ -323,7 +325,13 @@ namespace Game1.Unity.UI
             _currentDiscipline = discipline;
             _stationTier = stationTier;
             _selectedRecipe = null;
+            _selectedMaterialId = null;
             _placedMaterials.Clear();
+
+            // Update header to show discipline + tier
+            string discTitle = (discipline ?? "crafting").ToUpperInvariant();
+            if (_headerLabel != null)
+                _headerLabel.text = $"{discTitle} (T{stationTier})";
 
             _loadRecipes();
             _buildGrid();
@@ -423,15 +431,21 @@ namespace Game1.Unity.UI
             string displayName = recipe.OutputId.Replace("_", " ");
             string title = $"{displayName} (x{recipe.OutputQty})";
 
-            // Build material requirements description
+            // Build material requirements description with availability coloring
             string desc = $"T{recipe.StationTier} | ";
+            bool debug = _isDebugMode();
+            var gm = GameManager.Instance;
+
             if (recipe.Inputs != null && recipe.Inputs.Count > 0)
             {
                 var parts = new List<string>();
                 foreach (var input in recipe.Inputs)
                 {
                     string matName = input.MaterialId?.Replace("_", " ") ?? "?";
-                    parts.Add($"{matName} x{input.Quantity}");
+                    bool hasEnough = debug || (gm?.Player?.Inventory?.HasItem(input.MaterialId, input.Quantity) ?? false);
+                    int have = debug ? 99 : (gm?.Player?.Inventory?.GetItemCount(input.MaterialId) ?? 0);
+                    string status = hasEnough ? "✓" : $"({have}/{input.Quantity})";
+                    parts.Add($"{matName} x{input.Quantity} {status}");
                 }
                 desc += string.Join(", ", parts);
             }
@@ -748,8 +762,34 @@ namespace Game1.Unity.UI
         private void _selectPaletteMaterial(string materialId)
         {
             _selectedMaterialId = materialId;
+            _highlightSelectedPalette();
             string displayName = materialId.Replace("_", " ");
             NotificationUI.Instance?.Show($"Selected: {displayName}", Color.white);
+        }
+
+        private void _highlightSelectedPalette()
+        {
+            if (_paletteContainer == null) return;
+
+            foreach (Transform child in _paletteContainer)
+            {
+                var bg = child.GetComponent<Image>();
+                if (bg == null) continue;
+
+                bool isSelected = child.name == $"Palette_{_selectedMaterialId}";
+                bg.color = isSelected
+                    ? new Color(0.35f, 0.45f, 0.35f, 1f)
+                    : UIHelper.COLOR_BG_SLOT;
+
+                // Update border (Outline component on the border child)
+                var border = child.Find("Border");
+                if (border != null)
+                {
+                    var outline = border.GetComponent<Outline>();
+                    if (outline != null)
+                        outline.effectColor = isSelected ? new Color(1f, 0.84f, 0f) : UIHelper.COLOR_BORDER;
+                }
+            }
         }
 
         /// <summary>Get the currently selected palette material (for grid slot click placement).</summary>
@@ -803,8 +843,117 @@ namespace Game1.Unity.UI
                 return;
             }
 
-            // Start minigame for this recipe
-            _stateManager?.TransitionTo(GameState.MinigameActive);
+            bool debug = _isDebugMode();
+            var gm = GameManager.Instance;
+
+            // Validate materials
+            if (!debug)
+            {
+                if (gm?.Player == null)
+                {
+                    NotificationUI.Instance?.Show("No active player!", Color.red);
+                    return;
+                }
+
+                // Check all required inputs are available
+                if (_selectedRecipe.Inputs != null)
+                {
+                    foreach (var input in _selectedRecipe.Inputs)
+                    {
+                        if (!gm.Player.Inventory.HasItem(input.MaterialId, input.Quantity))
+                        {
+                            string matName = input.MaterialId?.Replace("_", " ") ?? "?";
+                            NotificationUI.Instance?.Show($"Missing: {matName} x{input.Quantity}", Color.red);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // Consume materials (non-debug only)
+            if (!debug && _selectedRecipe.Inputs != null)
+            {
+                foreach (var input in _selectedRecipe.Inputs)
+                    gm.Player.Inventory.RemoveItem(input.MaterialId, input.Quantity);
+            }
+
+            // Calculate difficulty points from recipe inputs
+            int diffPoints = 0;
+            var matDb = MaterialDatabase.Instance;
+            if (_selectedRecipe.Inputs != null)
+            {
+                foreach (var input in _selectedRecipe.Inputs)
+                {
+                    int tier = 1;
+                    if (matDb != null)
+                    {
+                        var mat = matDb.GetMaterial(input.MaterialId);
+                        if (mat != null) tier = mat.Tier;
+                    }
+                    diffPoints += tier * input.Quantity;
+                }
+            }
+
+            // Calculate reward using Instant Craft performance (80% base — no minigame)
+            float instantPerformance = 0.80f;
+            float maxMult = RewardCalculator.CalculateMaxRewardMultiplier(diffPoints);
+            string qualityTier = RewardCalculator.GetQualityTier(instantPerformance);
+            int bonusPct = RewardCalculator.CalculateBonusPct(instantPerformance, maxMult);
+
+            // Create output item and add to inventory
+            string outputId = _selectedRecipe.OutputId;
+            int outputQty = _selectedRecipe.OutputQty;
+
+            // Build crafted stats for equipment items
+            var equipDb = EquipmentDatabase.Instance;
+            bool isEquipment = equipDb != null && equipDb.Loaded && equipDb.IsEquipment(outputId);
+
+            if (isEquipment)
+            {
+                var craftedStats = new CraftedStats
+                {
+                    Quality = qualityTier.ToLowerInvariant(),
+                    PerformanceScore = instantPerformance,
+                    Discipline = _currentDiscipline ?? "",
+                    CraftedBy = gm?.Player?.Name ?? "Player",
+                    BonusDamage = bonusPct > 0 ? bonusPct / 2 : 0,
+                    BonusDefense = bonusPct > 0 ? bonusPct / 3 : 0,
+                    BonusDurability = bonusPct > 0 ? bonusPct * 2 : 0,
+                };
+                var equip = ItemFactory.CreateCrafted(outputId, craftedStats);
+                if (equip != null)
+                {
+                    gm?.Player?.Inventory.AddItem(equip.ItemId, 1, equip, equip.Rarity, craftedStats.ToDict());
+                }
+                else
+                {
+                    gm?.Player?.Inventory.AddItem(outputId, outputQty);
+                }
+            }
+            else
+            {
+                gm?.Player?.Inventory.AddItem(outputId, outputQty);
+            }
+
+            // Raise crafted event
+            GameEvents.RaiseItemCrafted(_currentDiscipline, outputId);
+
+            // Show success notification
+            string displayName = outputId.Replace("_", " ");
+            Color qualityColor = qualityTier switch
+            {
+                "Legendary" => new Color(1f, 0.5f, 0f),
+                "Masterwork" => new Color(0.64f, 0.21f, 0.93f),
+                "Superior" => new Color(0f, 0.44f, 0.87f),
+                "Fine" => new Color(0.12f, 1f, 0f),
+                _ => Color.white,
+            };
+            NotificationUI.Instance?.Show(
+                $"Crafted {qualityTier} {displayName} x{outputQty}! (+{bonusPct}%)", qualityColor);
+
+            // Refresh palette and inventory
+            _buildPalette();
+            FindFirstObjectByType<InventoryUI>()?.Refresh();
         }
 
         private void _onClearClicked()
@@ -820,22 +969,50 @@ namespace Game1.Unity.UI
                 }
             }
             _placedMaterials.Clear();
-            _buildGrid();
+
+            // Clear all slot visuals
+            if (_gridContainer != null)
+            {
+                foreach (var slot in _gridContainer.GetComponentsInChildren<CraftingGridSlot>())
+                    slot.ClearSlot();
+            }
+
             _buildPalette();
             _updateDifficulty();
         }
 
         private void _onInventClicked()
         {
-            if (_placedMaterials.Count == 0)
+            if (_selectedRecipe == null)
             {
-                NotificationUI.Instance?.Show("Place materials first!", Color.yellow);
+                NotificationUI.Instance?.Show("Select a recipe first!", Color.yellow);
                 return;
             }
 
-            // Validate via classifier (Phase 5)
-            NotificationUI.Instance?.Show("Validating placement...", Color.cyan);
-            // ClassifierManager.Instance.Validate(_currentDiscipline, ...) would be called here
+            if (_placedMaterials.Count == 0)
+            {
+                NotificationUI.Instance?.Show("Place materials on the grid first!", Color.yellow);
+                return;
+            }
+
+            // Start the interactive minigame for this discipline
+            var ic = InteractiveCrafting.Instance;
+            var inputs = new Dictionary<string, int>(_placedMaterials.Count);
+            foreach (var kvp in _placedMaterials)
+                inputs[kvp.Value] = inputs.TryGetValue(kvp.Value, out int c) ? c + 1 : 1;
+
+            var minigame = ic.StartCrafting(
+                _currentDiscipline, _stationTier, _selectedRecipe, inputs);
+
+            if (minigame != null)
+            {
+                _stateManager?.TransitionTo(GameState.MinigameActive);
+                NotificationUI.Instance?.Show($"Starting {_currentDiscipline} minigame...", Color.cyan);
+            }
+            else
+            {
+                NotificationUI.Instance?.Show("Minigame not available yet — use Instant Craft", Color.yellow);
+            }
         }
 
         private void _updateDifficulty()
@@ -912,18 +1089,121 @@ namespace Game1.Unity.UI
     }
 
     /// <summary>Single slot in the crafting placement grid.</summary>
-    public class CraftingGridSlot : MonoBehaviour, IDropHandler, IPointerClickHandler
+    public class CraftingGridSlot : MonoBehaviour, IDropHandler, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         private string _slotKey;
         private CraftingUI _craftingUI;
         private string _placedMaterialId;
         private Image _iconImage;
+        private Image _bgImage;
+        private Text _labelText;
+
+        private static readonly Color COLOR_EMPTY = new Color(0.18f, 0.20f, 0.24f);
+        private static readonly Color COLOR_HOVER = new Color(0.28f, 0.32f, 0.38f);
+        private static readonly Color COLOR_FILLED_T1 = new Color(0.24f, 0.24f, 0.28f);
+        private static readonly Color COLOR_FILLED_T2 = new Color(0.24f, 0.32f, 0.24f);
+        private static readonly Color COLOR_FILLED_T3 = new Color(0.24f, 0.28f, 0.36f);
+        private static readonly Color COLOR_FILLED_T4 = new Color(0.36f, 0.24f, 0.36f);
 
         public void Initialize(string slotKey, CraftingUI craftingUI)
         {
             _slotKey = slotKey;
             _craftingUI = craftingUI;
-            _iconImage = GetComponentInChildren<Image>();
+
+            // Find child components
+            var images = GetComponentsInChildren<Image>();
+            _bgImage = GetComponent<Image>();
+            foreach (var img in images)
+            {
+                if (img.gameObject != gameObject && img.gameObject.name == "Icon")
+                    _iconImage = img;
+            }
+            if (_iconImage == null && images.Length > 1)
+                _iconImage = images[1]; // Fallback to second image
+
+            // Set initial style
+            if (_bgImage != null)
+                _bgImage.color = COLOR_EMPTY;
+
+            // Add slot label for engineering slots and refining core/surround
+            if (_slotKey.StartsWith("core_") || _slotKey.StartsWith("surround_") ||
+                _slotKey == "FRAME" || _slotKey == "FUNCTION" || _slotKey == "POWER" ||
+                _slotKey == "MODIFIER" || _slotKey == "UTILITY")
+            {
+                string label = _slotKey.StartsWith("core_") ? "CORE" :
+                               _slotKey.StartsWith("surround_") ? "SURR" :
+                               _slotKey;
+                _addLabel(label);
+            }
+        }
+
+        private void _addLabel(string text)
+        {
+            var lblGo = new GameObject("SlotLabel");
+            lblGo.transform.SetParent(transform, false);
+            var lblRt = lblGo.AddComponent<RectTransform>();
+            lblRt.anchorMin = new Vector2(0, 1);
+            lblRt.anchorMax = new Vector2(1, 1);
+            lblRt.pivot = new Vector2(0.5f, 1f);
+            lblRt.sizeDelta = new Vector2(0, 14);
+            lblRt.anchoredPosition = new Vector2(0, -1);
+            _labelText = lblGo.AddComponent<Text>();
+            _labelText.text = text;
+            _labelText.fontSize = 9;
+            _labelText.color = new Color(0.7f, 0.7f, 0.8f);
+            _labelText.alignment = TextAnchor.UpperCenter;
+            _labelText.font = UIHelper.GetFont();
+            _labelText.raycastTarget = false;
+        }
+
+        private Color _getTierColor(string materialId)
+        {
+            var matDb = MaterialDatabase.Instance;
+            if (matDb == null) return COLOR_FILLED_T1;
+            var mat = matDb.GetMaterial(materialId);
+            if (mat == null) return COLOR_FILLED_T1;
+            return mat.Tier switch
+            {
+                2 => COLOR_FILLED_T2,
+                3 => COLOR_FILLED_T3,
+                4 => COLOR_FILLED_T4,
+                _ => COLOR_FILLED_T1,
+            };
+        }
+
+        private void _updateVisual()
+        {
+            if (_placedMaterialId != null)
+            {
+                if (_bgImage != null)
+                    _bgImage.color = _getTierColor(_placedMaterialId);
+
+                if (_iconImage != null && SpriteDatabase.Instance != null)
+                {
+                    _iconImage.sprite = SpriteDatabase.Instance.GetItemSprite(_placedMaterialId);
+                    _iconImage.enabled = true;
+                }
+
+                // Update label to show material name
+                if (_labelText != null)
+                {
+                    string displayName = _placedMaterialId.Replace("_", " ");
+                    if (displayName.Length > 8) displayName = displayName.Substring(0, 7) + "…";
+                    _labelText.text = displayName;
+                    _labelText.color = new Color(0.9f, 0.9f, 0.7f);
+                }
+            }
+            else
+            {
+                if (_bgImage != null)
+                    _bgImage.color = COLOR_EMPTY;
+
+                if (_iconImage != null)
+                {
+                    _iconImage.sprite = null;
+                    _iconImage.enabled = false;
+                }
+            }
         }
 
         public void OnDrop(PointerEventData eventData)
@@ -933,10 +1213,7 @@ namespace Game1.Unity.UI
 
             _placedMaterialId = ddm.DraggedItemId;
             _craftingUI?.PlaceMaterial(_slotKey, _placedMaterialId);
-
-            if (_iconImage != null && SpriteDatabase.Instance != null)
-                _iconImage.sprite = SpriteDatabase.Instance.GetItemSprite(_placedMaterialId);
-
+            _updateVisual();
             ddm.CompleteDrop(DragDropManager.DragSource.CraftingGrid, 0);
         }
 
@@ -947,11 +1224,7 @@ namespace Game1.Unity.UI
                 // Right-click to remove placed material
                 _placedMaterialId = null;
                 _craftingUI?.RemoveMaterial(_slotKey);
-                if (_iconImage != null)
-                {
-                    _iconImage.sprite = null;
-                    _iconImage.enabled = false;
-                }
+                _updateVisual();
             }
             else if (eventData.button == PointerEventData.InputButton.Left && _placedMaterialId == null)
             {
@@ -961,14 +1234,39 @@ namespace Game1.Unity.UI
                 {
                     _placedMaterialId = selectedMat;
                     _craftingUI?.PlaceMaterial(_slotKey, _placedMaterialId);
-
-                    if (_iconImage != null && SpriteDatabase.Instance != null)
-                    {
-                        _iconImage.sprite = SpriteDatabase.Instance.GetItemSprite(_placedMaterialId);
-                        _iconImage.enabled = true;
-                    }
+                    _updateVisual();
                 }
             }
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (_placedMaterialId == null && _bgImage != null)
+                _bgImage.color = COLOR_HOVER;
+
+            // Show tooltip for placed material
+            if (_placedMaterialId != null)
+            {
+                var matDb = MaterialDatabase.Instance;
+                var mat = matDb?.GetMaterial(_placedMaterialId);
+                string name = mat?.Name ?? _placedMaterialId.Replace("_", " ");
+                int tier = mat?.Tier ?? 1;
+                TooltipRenderer.Instance?.Show(_placedMaterialId, $"{name} (T{tier})", eventData.position);
+            }
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (_placedMaterialId == null && _bgImage != null)
+                _bgImage.color = COLOR_EMPTY;
+            TooltipRenderer.Instance?.Hide();
+        }
+
+        /// <summary>Clear this slot's placed material (used by Clear Grid).</summary>
+        public void ClearSlot()
+        {
+            _placedMaterialId = null;
+            _updateVisual();
         }
     }
 }

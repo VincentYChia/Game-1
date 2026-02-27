@@ -13,6 +13,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using TMPro;
 using Game1.Core;
 using Game1.Data.Enums;
@@ -371,8 +372,9 @@ namespace Game1.Unity.UI
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            bool shiftHeld = Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed;
             if (eventData.button == PointerEventData.InputButton.Right ||
-                (eventData.button == PointerEventData.InputButton.Left && Input.GetKey(KeyCode.LeftShift)))
+                (eventData.button == PointerEventData.InputButton.Left && shiftHeld))
             {
                 EquipmentUI?.UnequipSlot(SlotName);
             }
