@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using Game1.Core;
 using Game1.Data.Enums;
 using Game1.Data.Models;
+using Game1.Entities;
+using Game1.Systems.Combat;
 
 namespace Game1.Systems.World
 {
@@ -471,6 +473,9 @@ namespace Game1.Systems.World
         /// <summary>Natural resources in this chunk.</summary>
         public List<NaturalResourceInstance> Resources { get; } = new();
 
+        /// <summary>Enemies spawned in this chunk.</summary>
+        public List<Enemy> Enemies { get; } = new();
+
         /// <summary>Optional dungeon entrance in this chunk.</summary>
         public DungeonEntrance DungeonEntrance { get; set; }
 
@@ -544,6 +549,12 @@ namespace Game1.Systems.World
             {
                 GenerateLandTiles(startX, startZ, size);
             }
+
+            // Spawn natural resources after tiles (matches Python chunk.py)
+            GenerateResources();
+
+            // Spawn enemies based on chunk danger level (matches Python combat_manager.py)
+            GenerateEnemies();
         }
 
         private void GenerateLandTiles(int startX, int startZ, int size)
@@ -613,6 +624,302 @@ namespace Game1.Systems.World
                     Tiles[key] = new WorldTile(pos, tileType, walkable);
                 }
             }
+        }
+
+        // ====================================================================
+        // Resource Spawning (matches Python chunk.py spawn_resources)
+        // ====================================================================
+
+        /// <summary>
+        /// Spawn natural resources in this chunk based on chunk type and danger level.
+        /// Peaceful: 3-5 T1 resources. Dangerous: 4-7 T1-T2. Rare: 3-5 T1-T3.
+        /// Safe zone (~3 chunk radius from origin) has fewer resources.
+        /// </summary>
+        public void GenerateResources()
+        {
+            Resources.Clear();
+
+            int size = GameConfig.ChunkSize;
+            int startX = ChunkX * size;
+            int startZ = ChunkY * size;
+
+            // Skip water chunks (they get fishing spots instead)
+            if (Type.IsWater()) return;
+
+            // Determine resource count and tier range based on chunk type
+            int minResources, maxResources, maxTier;
+
+            if (Type.IsDangerous())
+            {
+                minResources = 4; maxResources = 7; maxTier = 2;
+            }
+            else if (Type.IsRare())
+            {
+                minResources = 3; maxResources = 5; maxTier = 3;
+            }
+            else // Peaceful
+            {
+                minResources = 3; maxResources = 5; maxTier = 1;
+            }
+
+            // Safe zone around origin — reduce resources near spawn
+            float distToOrigin = MathF.Sqrt(ChunkX * ChunkX + ChunkY * ChunkY);
+            if (distToOrigin < 2f)
+            {
+                minResources = 2;
+                maxResources = 3;
+            }
+
+            int resourceCount = _rng.Next(minResources, maxResources + 1);
+            var occupied = new HashSet<string>();
+
+            // Try ResourceNodeDatabase first, fall back to hardcoded
+            var resDb = Game1.Data.Databases.ResourceNodeDatabase.Instance;
+            bool dbLoaded = resDb != null && resDb.Loaded;
+
+            for (int i = 0; i < resourceCount; i++)
+            {
+                // Find valid position (up to 10 attempts)
+                GamePosition pos = null;
+                for (int attempt = 0; attempt < 10; attempt++)
+                {
+                    int localX = _rng.Next(1, size - 1);
+                    int localZ = _rng.Next(1, size - 1);
+                    int worldX = startX + localX;
+                    int worldZ = startZ + localZ;
+                    string key = $"{worldX},{worldZ}";
+
+                    if (occupied.Contains(key)) continue;
+                    occupied.Add(key);
+                    pos = GamePosition.FromXZ(worldX, worldZ);
+                    break;
+                }
+
+                if (pos == null) continue;
+
+                // Determine resource tier (weighted toward lower tiers)
+                int tier = _rng.Next(1, maxTier + 1);
+                if (tier > 1 && _rng.NextDouble() < 0.5) tier--; // Bias toward lower tiers
+
+                // Create resource instance
+                NaturalResourceInstance resource = _createResource(pos, tier, dbLoaded, resDb);
+                if (resource != null)
+                    Resources.Add(resource);
+            }
+        }
+
+        private NaturalResourceInstance _createResource(GamePosition pos, int tier,
+            bool dbLoaded, Game1.Data.Databases.ResourceNodeDatabase resDb)
+        {
+            // Determine category based on chunk type
+            string category;
+            if (Type.IsQuarry() || Type.IsCave())
+                category = _rng.NextDouble() < 0.7 ? "ore" : "stone";
+            else
+                category = _rng.NextDouble() < 0.6 ? "tree" : "ore";
+
+            if (dbLoaded)
+            {
+                var candidates = resDb.GetResourcesForCategory(category, 1, tier);
+                if (candidates.Count > 0)
+                {
+                    var nodeDef = candidates[_rng.Next(candidates.Count)];
+                    // Create from database definition with proper loot table
+                    var resource = new NaturalResourceInstance(pos, nodeDef.NodeId, nodeDef.Tier);
+                    resource.MaxHp = nodeDef.Health;
+                    resource.CurrentHp = nodeDef.Health;
+                    resource.RequiredTool = nodeDef.ToolRequired ?? "pickaxe";
+                    resource.Respawns = true;
+                    resource.RespawnTimer = nodeDef.RespawnTime > 0 ? nodeDef.RespawnTime : 60f;
+
+                    // Build loot table from database drops
+                    foreach (var drop in nodeDef.Drops)
+                    {
+                        resource.LootTable.Add(new LootDrop(
+                            drop.MaterialId,
+                            drop.QuantityMin,
+                            drop.QuantityMax,
+                            drop.Chance));
+                    }
+                    return resource;
+                }
+            }
+
+            // Fallback: hardcoded resources
+            return _createFallbackResource(pos, tier, category);
+        }
+
+        private NaturalResourceInstance _createFallbackResource(GamePosition pos, int tier, string category)
+        {
+            string resourceId;
+            string tool;
+            string dropId;
+
+            switch (category)
+            {
+                case "tree":
+                    resourceId = tier switch { 1 => "oak_tree", 2 => "ash_tree", 3 => "ironwood_tree", _ => "oak_tree" };
+                    tool = "axe";
+                    dropId = tier switch { 1 => "oak_log", 2 => "ash_log", 3 => "ironwood_log", _ => "oak_log" };
+                    break;
+                case "ore":
+                    resourceId = tier switch { 1 => "copper_vein", 2 => "iron_vein", 3 => "mithril_vein", _ => "copper_vein" };
+                    tool = "pickaxe";
+                    dropId = tier switch { 1 => "copper_ore", 2 => "iron_ore", 3 => "mithril_ore", _ => "copper_ore" };
+                    break;
+                default: // stone
+                    resourceId = tier switch { 1 => "limestone_deposit", 2 => "granite_deposit", 3 => "obsidian_deposit", _ => "limestone_deposit" };
+                    tool = "pickaxe";
+                    dropId = tier switch { 1 => "limestone", 2 => "granite", 3 => "obsidian", _ => "limestone" };
+                    break;
+            }
+
+            var resource = new NaturalResourceInstance(pos, resourceId, tier);
+            resource.RequiredTool = tool;
+            resource.Respawns = category == "tree";
+            resource.RespawnTimer = 60f;
+
+            // Add hardcoded loot drop
+            resource.LootTable.Add(new LootDrop(dropId, 2, 5, 1.0f));
+            return resource;
+        }
+
+        // ====================================================================
+        // Enemy Spawning (matches Python combat_manager.py spawn_enemies_in_chunk)
+        // ====================================================================
+
+        /// <summary>
+        /// Spawn enemies in this chunk based on chunk type and danger level.
+        /// Peaceful: 0-1 T1 (low chance). Dangerous: 1-3 T1-T2. Rare: 1-2 T2-T3.
+        /// Safe zone (~2 chunks from origin) = no enemies.
+        /// Max 3 per chunk (matches Python MaxEnemiesPerChunk).
+        /// </summary>
+        public void GenerateEnemies()
+        {
+            Enemies.Clear();
+
+            int size = GameConfig.ChunkSize;
+            int startX = ChunkX * size;
+            int startZ = ChunkY * size;
+
+            // No enemies in water chunks
+            if (Type.IsWater()) return;
+
+            // Safe zone: no enemies near origin (radius ~2 chunks)
+            float distToOrigin = MathF.Sqrt(ChunkX * ChunkX + ChunkY * ChunkY);
+            if (distToOrigin < 2f) return;
+
+            // Determine enemy count and tier range based on chunk danger level
+            int minEnemies, maxEnemies, maxTier;
+
+            if (Type.IsDangerous())
+            {
+                minEnemies = 1; maxEnemies = 3; maxTier = 2;
+            }
+            else if (Type.IsRare())
+            {
+                minEnemies = 1; maxEnemies = 2; maxTier = 3;
+            }
+            else // Peaceful
+            {
+                // Low chance of a single T1 enemy in peaceful chunks
+                if (_rng.NextDouble() > 0.4) return; // 60% chance of no enemies
+                minEnemies = 0; maxEnemies = 1; maxTier = 1;
+            }
+
+            int enemyCount = _rng.Next(minEnemies, maxEnemies + 1);
+            if (enemyCount <= 0) return;
+
+            // Cap at 3 per chunk
+            enemyCount = Math.Min(enemyCount, 3);
+
+            var enemyDb = EnemyDatabaseAdapter.Instance;
+            bool dbLoaded = enemyDb != null && enemyDb.Loaded;
+
+            var occupied = new HashSet<string>();
+
+            for (int i = 0; i < enemyCount; i++)
+            {
+                // Find valid spawn position (avoid edges, 2 tile buffer)
+                GamePosition pos = null;
+                for (int attempt = 0; attempt < 10; attempt++)
+                {
+                    int localX = _rng.Next(2, size - 2);
+                    int localZ = _rng.Next(2, size - 2);
+                    int worldX = startX + localX;
+                    int worldZ = startZ + localZ;
+                    string key = $"{worldX},{worldZ}";
+
+                    if (occupied.Contains(key)) continue;
+                    occupied.Add(key);
+                    pos = GamePosition.FromXZ(worldX, worldZ);
+                    break;
+                }
+
+                if (pos == null) continue;
+
+                // Pick tier (weighted toward lower)
+                int tier = _rng.Next(1, maxTier + 1);
+                if (tier > 1 && _rng.NextDouble() < 0.5) tier--;
+
+                // Create enemy from database or fallback
+                Enemy enemy = _createEnemy(pos, tier, dbLoaded, enemyDb);
+                if (enemy != null)
+                    Enemies.Add(enemy);
+            }
+        }
+
+        private Enemy _createEnemy(GamePosition pos, int tier,
+            bool dbLoaded, EnemyDatabaseAdapter enemyDb)
+        {
+            if (dbLoaded)
+            {
+                // Try to get a random enemy of this tier from the database
+                var spawnDef = enemyDb.GetRandomEnemy(tier, _rng);
+                if (spawnDef != null)
+                {
+                    var fullDef = enemyDb.GetEnemyDefinition(spawnDef.EnemyId);
+                    if (fullDef != null)
+                    {
+                        return new Enemy(fullDef, pos);
+                    }
+                }
+            }
+
+            // Fallback: create a basic enemy definition if database not loaded
+            var fallbackDef = new EnemyDefinition
+            {
+                EnemyId = $"wild_beast_t{tier}",
+                Name = tier switch
+                {
+                    1 => "Wild Beast",
+                    2 => "Dire Beast",
+                    3 => "Elder Beast",
+                    _ => "Wild Beast"
+                },
+                Tier = tier,
+                Category = "beast",
+                Behavior = "passive_patrol",
+                MaxHealth = tier switch { 1 => 50f, 2 => 120f, 3 => 250f, _ => 50f },
+                DamageMin = tier switch { 1 => 5f, 2 => 12f, 3 => 25f, _ => 5f },
+                DamageMax = tier switch { 1 => 10f, 2 => 20f, 3 => 40f, _ => 10f },
+                Defense = tier switch { 1 => 2f, 2 => 5f, 3 => 10f, _ => 2f },
+                Speed = 2.0f,
+                AggroRange = 5f,
+                AttackSpeed = 1.0f,
+                Drops = new System.Collections.Generic.List<DropDefinition>
+                {
+                    new DropDefinition
+                    {
+                        MaterialId = "beast_hide",
+                        QuantityMin = 1,
+                        QuantityMax = tier + 1,
+                        Chance = 0.75f
+                    }
+                }
+            };
+
+            return new Enemy(fallbackDef, pos);
         }
 
         // ====================================================================

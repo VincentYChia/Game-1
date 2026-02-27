@@ -265,12 +265,17 @@ namespace Game1.Unity.UI
                 "  C - Stats\n  K - Skills\n  M - Map\n  J - Encyclopedia\n" +
                 "  E - Interact\n  ESC - Close menu\n  1-5 - Skill hotbar\n\n" +
                 "Debug Keys:\n" +
-                "  F1 - Toggle Debug Mode\n  F2 - Learn All Skills\n" +
+                "  F1 - Debug Mode (infinite resources + materials)\n" +
+                "  F2 - Learn All Skills\n" +
                 "  F3 - Show All Titles\n  F4 - Max Level + Stats\n" +
-                "  F5 - +10 Stat Points\n  F7 - Infinite Durability\n\n" +
+                "  F7 - Infinite Durability\n\n" +
                 "Crafting:\n" +
                 "  Interact (E) with a crafting station to begin\n" +
                 "  5 disciplines: Smithing, Alchemy, Refining, Engineering, Enchanting\n\n" +
+                "Progression:\n" +
+                "  Gather resources to gain materials and XP\n" +
+                "  Level up to earn stat points (STR/DEF/VIT/LCK/AGI/INT)\n" +
+                "  Learn skills, earn titles, craft equipment\n\n" +
                 "Tier System:\n" +
                 "  T1 (1.0x) - Common\n  T2 (2.0x) - Uncommon\n" +
                 "  T3 (4.0x) - Rare\n  T4 (8.0x) - Legendary";
@@ -280,23 +285,41 @@ namespace Game1.Unity.UI
         {
             var sb = new StringBuilder();
             var skillDb = SkillDatabase.Instance;
-            if (gm?.Player == null || skillDb == null)
+            if (skillDb == null || !skillDb.Loaded)
             {
-                sb.AppendLine("Learned Skills: 0");
+                sb.AppendLine("Skills: (database not loaded)");
                 return sb.ToString();
             }
 
-            var known = gm.Player.Skills.KnownSkills;
-            sb.AppendLine($"Learned Skills: {known.Count}");
+            var known = gm?.Player?.Skills?.KnownSkills;
+            int knownCount = known?.Count ?? 0;
+            sb.AppendLine($"=== SKILLS REFERENCE ({skillDb.Skills.Count} total, {knownCount} learned) ===");
             sb.AppendLine();
 
-            foreach (var kvp in known)
+            // Group by tier (matches Python renderer.py _render_skills_content)
+            for (int tier = 1; tier <= 4; tier++)
             {
-                var def = skillDb.GetSkill(kvp.Key);
-                if (def == null) continue;
-                string tags = def.Tags != null ? string.Join(", ", def.Tags) : "";
-                string mana = def.Cost?.ManaCostRaw?.ToString() ?? "?";
-                sb.AppendLine($"  {def.Name} (Mana: {mana}) [{tags}]");
+                bool headerShown = false;
+                foreach (var kvp in skillDb.Skills)
+                {
+                    var def = kvp.Value;
+                    if (def == null || def.Tier != tier) continue;
+
+                    if (!headerShown)
+                    {
+                        sb.AppendLine($"--- TIER {tier} ---");
+                        headerShown = true;
+                    }
+
+                    bool isKnown = known != null && known.ContainsKey(kvp.Key);
+                    string status = isKnown ? "[KNOWN]" : "";
+                    string tags = def.Tags != null ? string.Join(", ", def.Tags) : "";
+                    string mana = def.Cost?.ManaCostRaw?.ToString() ?? "?";
+                    sb.AppendLine($"  {def.Name} {status} (Mana: {mana}) [{tags}]");
+                    if (!string.IsNullOrEmpty(def.Description))
+                        sb.AppendLine($"    {def.Description}");
+                }
+                if (headerShown) sb.AppendLine();
             }
 
             return sb.ToString();

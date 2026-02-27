@@ -73,7 +73,6 @@ namespace Game1.Data.Databases
                 "recipes.JSON/recipes-alchemy-1.JSON",
                 "recipes.JSON/recipes-refining-1.JSON",
                 "recipes.JSON/recipes-engineering-1.JSON",
-                "recipes.JSON/recipes-enchanting-1.JSON",
                 "recipes.JSON/recipes-adornments-1.json",
             };
 
@@ -104,7 +103,7 @@ namespace Game1.Data.Databases
                 JArray recipes = wrapper["recipes"] as JArray;
                 if (recipes == null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] No 'recipes' array in {relativePath}");
+                    UnityEngine.Debug.LogWarning($"[RecipeDatabase] No 'recipes' array in {relativePath}");
                     return;
                 }
 
@@ -112,19 +111,59 @@ namespace Game1.Data.Databases
                 foreach (var token in recipes)
                 {
                     var recipe = token.ToObject<Recipe>();
-                    if (recipe != null && !string.IsNullOrEmpty(recipe.RecipeId))
+                    if (recipe == null || string.IsNullOrEmpty(recipe.RecipeId))
+                        continue;
+
+                    // Handle refining format: "stationRequired" → stationType,
+                    // "stationTierRequired" → stationTier
+                    if (string.IsNullOrEmpty(recipe.StationType))
                     {
-                        _recipes[recipe.RecipeId] = recipe;
-                        _addToStationIndex(recipe);
-                        count++;
+                        var stReq = token["stationRequired"]?.ToString();
+                        if (!string.IsNullOrEmpty(stReq))
+                        {
+                            // Map "refinery" → "refining" to match discipline name
+                            recipe.StationType = stReq.ToLowerInvariant() switch
+                            {
+                                "refinery" => "refining",
+                                _ => stReq.ToLowerInvariant()
+                            };
+                        }
+                        var tierReq = token["stationTierRequired"];
+                        if (tierReq != null) recipe.StationTier = tierReq.Value<int>();
                     }
+
+                    // Handle refining "outputs" array → outputId/outputQty
+                    if (string.IsNullOrEmpty(recipe.OutputId))
+                    {
+                        var outputs = token["outputs"] as JArray;
+                        if (outputs != null && outputs.Count > 0)
+                        {
+                            recipe.OutputId = outputs[0]["materialId"]?.ToString() ?? "";
+                            recipe.OutputQty = outputs[0]["quantity"]?.Value<int>() ?? 1;
+                        }
+                    }
+
+                    // Handle enchanting: enchantmentId → OutputId for display
+                    if (string.IsNullOrEmpty(recipe.OutputId))
+                    {
+                        var enchId = token["enchantmentId"]?.ToString();
+                        if (!string.IsNullOrEmpty(enchId))
+                        {
+                            recipe.OutputId = enchId;
+                            recipe.IsEnchantment = true;
+                        }
+                    }
+
+                    _recipes[recipe.RecipeId] = recipe;
+                    _addToStationIndex(recipe);
+                    count++;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] Loaded {count} recipes from {relativePath}");
+                UnityEngine.Debug.Log($"[RecipeDatabase] Loaded {count} recipes from {relativePath}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] Error loading {relativePath}: {ex.Message}");
+                UnityEngine.Debug.LogError($"[RecipeDatabase] Error loading {relativePath}: {ex.Message}");
             }
         }
 

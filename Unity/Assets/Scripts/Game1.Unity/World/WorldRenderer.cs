@@ -14,6 +14,8 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 using Game1.Core;
 using Game1.Data.Enums;
+using Game1.Entities;
+using Game1.Systems.Combat;
 using Game1.Systems.World;
 using Game1.Unity.Core;
 using Game1.Unity.Utilities;
@@ -64,6 +66,9 @@ namespace Game1.Unity.World
         // Container for chunk GameObjects (keeps hierarchy clean)
         private Transform _chunkContainer;
 
+        // Enemy tracking: maps Enemy instances to their 3D GameObjects for position sync
+        private Dictionary<Enemy, GameObject> _enemyGameObjects = new Dictionary<Enemy, GameObject>();
+
         // ====================================================================
         // Chunk Render Data
         // ====================================================================
@@ -74,6 +79,7 @@ namespace Game1.Unity.World
             public GameObject WaterObject;
             public GameObject EdgeObject;
             public GameObject ResourceContainer;
+            public GameObject EnemyContainer;
         }
 
         // World furniture: crafting stations, spawn beacon (created once)
@@ -155,6 +161,59 @@ namespace Game1.Unity.World
                 else
                     _unloadChunkTilemap(coord);
             }
+
+            // Update enemy 3D positions to match AI movement
+            _updateEnemyPositions();
+        }
+
+        /// <summary>
+        /// Sync enemy 3D GameObject positions with their game-logic positions.
+        /// Handles death (hide/fade), chase movement, etc.
+        /// </summary>
+        private void _updateEnemyPositions()
+        {
+            var toRemove = new List<Enemy>();
+
+            foreach (var kvp in _enemyGameObjects)
+            {
+                var enemy = kvp.Key;
+                var go = kvp.Value;
+
+                if (go == null)
+                {
+                    toRemove.Add(enemy);
+                    continue;
+                }
+
+                if (!enemy.IsAlive)
+                {
+                    // Enemy died — disable its GameObject
+                    if (go.activeSelf) go.SetActive(false);
+                    continue;
+                }
+
+                // Update world position from game logic
+                float wx = enemy.Position.X;
+                float wz = enemy.Position.Z;
+                float terrainY = ChunkMeshGenerator.SampleTerrainHeight(wx, wz, "grass");
+                go.transform.position = new Vector3(wx, terrainY, wz);
+
+                // Update health bar if damaged
+                var healthBarCanvas = go.GetComponentInChildren<Canvas>(true);
+                if (healthBarCanvas != null && enemy.HealthPercent < 1f)
+                {
+                    healthBarCanvas.gameObject.SetActive(true);
+                    var fill = healthBarCanvas.GetComponentInChildren<UnityEngine.UI.Image>();
+                    if (fill != null && fill.name == "Fill")
+                    {
+                        fill.fillAmount = enemy.HealthPercent;
+                        fill.color = Color.Lerp(Color.red, Color.green, enemy.HealthPercent);
+                    }
+                }
+            }
+
+            foreach (var dead in toRemove)
+                _enemyGameObjects.Remove(dead);
         }
 
         // ====================================================================
@@ -265,6 +324,66 @@ namespace Game1.Unity.World
                 renderData.ResourceContainer = resourceContainer;
             }
 
+            // --------------------------------------------------------
+            // Spawn enemy objects (hostile mobs in dangerous/rare chunks)
+            // --------------------------------------------------------
+            if (chunk.Enemies != null && chunk.Enemies.Count > 0)
+            {
+                var enemyContainer = new GameObject(
+                    $"Chunk_{chunkCoord.x}_{chunkCoord.y}_Enemies");
+                enemyContainer.transform.SetParent(_chunkContainer, false);
+
+                var combatManager = GameManager.Instance?.CombatManager;
+
+                foreach (var enemy in chunk.Enemies)
+                {
+                    if (enemy == null || !enemy.IsAlive) continue;
+
+                    try
+                    {
+                        bool isBoss = enemy.Definition.Category == "boss";
+                        var enemyGO = PrimitiveShapeFactory.CreateEnemy(enemy.Tier, isBoss);
+                        enemyGO.name = $"Enemy_{enemy.EnemyId}_{enemy.Name}";
+
+                        // Position at enemy's world coordinates, on terrain surface
+                        float wx = enemy.Position.X;
+                        float wz = enemy.Position.Z;
+                        string tileAtEnemy = _getTileTypeAtWorld(
+                            wx, wz, tileTypes, chunkCoord);
+                        float terrainY = ChunkMeshGenerator.SampleTerrainHeight(
+                            wx, wz, tileAtEnemy);
+
+                        enemyGO.transform.position = new Vector3(wx, terrainY, wz);
+                        enemyGO.transform.SetParent(enemyContainer.transform, true);
+
+                        // Add name label
+                        string label = $"{enemy.Name} (T{enemy.Tier})";
+                        Color labelColor = PrimitiveShapeFactory.GetEnemyTierColor(enemy.Tier);
+                        PrimitiveShapeFactory.AddWorldLabel(enemyGO, label, labelColor, 1.8f);
+
+                        // Add health bar
+                        PrimitiveShapeFactory.AddWorldHealthBar(enemyGO, 1.5f);
+
+                        // Track enemy-to-GameObject mapping for position updates
+                        _enemyGameObjects[enemy] = enemyGO;
+
+                        // Register with CombatManager for AI + combat
+                        if (combatManager != null)
+                        {
+                            var adapter = new EnemyCombatAdapter(enemy);
+                            combatManager.AddEnemy(adapter);
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogWarning(
+                            $"[WorldRenderer] Failed to create enemy {enemy.EnemyId}: {ex.Message}");
+                    }
+                }
+
+                renderData.EnemyContainer = enemyContainer;
+            }
+
             _chunkObjects[chunkCoord] = renderData;
             _loadedChunks.Add(chunkCoord);
         }
@@ -277,6 +396,21 @@ namespace Game1.Unity.World
                 if (data.WaterObject != null) Destroy(data.WaterObject);
                 if (data.EdgeObject != null) Destroy(data.EdgeObject);
                 if (data.ResourceContainer != null) Destroy(data.ResourceContainer);
+
+                // Clean up enemy tracking when chunk unloads
+                if (data.EnemyContainer != null)
+                {
+                    // Remove enemy→GO mappings for enemies in this chunk
+                    var world = GameManager.Instance?.World;
+                    var chunk = world?.GetChunk(chunkCoord.x, chunkCoord.y);
+                    if (chunk?.Enemies != null)
+                    {
+                        foreach (var enemy in chunk.Enemies)
+                            _enemyGameObjects.Remove(enemy);
+                    }
+                    Destroy(data.EnemyContainer);
+                }
+
                 _chunkObjects.Remove(chunkCoord);
             }
             _loadedChunks.Remove(chunkCoord);
@@ -434,8 +568,10 @@ namespace Game1.Unity.World
                     if (kvp.Value.WaterObject != null) Destroy(kvp.Value.WaterObject);
                     if (kvp.Value.EdgeObject != null) Destroy(kvp.Value.EdgeObject);
                     if (kvp.Value.ResourceContainer != null) Destroy(kvp.Value.ResourceContainer);
+                    if (kvp.Value.EnemyContainer != null) Destroy(kvp.Value.EnemyContainer);
                 }
                 _chunkObjects.Clear();
+                _enemyGameObjects.Clear();
             }
             else if (_groundTilemap != null)
             {

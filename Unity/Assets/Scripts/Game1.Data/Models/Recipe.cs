@@ -18,7 +18,7 @@ namespace Game1.Data.Models
         [JsonProperty("materialId")]
         public string MaterialId { get; set; }
 
-        [JsonProperty("qty")]
+        [JsonProperty("quantity")]
         public int Quantity { get; set; }
 
         [JsonProperty("slot")]

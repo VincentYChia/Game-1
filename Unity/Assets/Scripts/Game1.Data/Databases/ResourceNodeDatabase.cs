@@ -16,28 +16,82 @@ namespace Game1.Data.Databases
 {
     /// <summary>
     /// Resource drop definition for a node.
+    /// Handles both numeric and qualitative (string) quantity/chance from JSON.
     /// </summary>
     public class ResourceDrop
     {
         [JsonProperty("materialId")]
         public string MaterialId { get; set; }
 
-        [JsonProperty("quantityMin")]
         public int QuantityMin { get; set; } = 1;
-
-        [JsonProperty("quantityMax")]
-        public int QuantityMax { get; set; } = 1;
-
-        [JsonProperty("chance")]
+        public int QuantityMax { get; set; } = 3;
         public float Chance { get; set; } = 1.0f;
+
+        /// <summary>
+        /// Custom quantity property: handles "many", "several", "few", "abundant" strings
+        /// or numeric values from JSON.
+        /// </summary>
+        [JsonProperty("quantity")]
+        public object QuantityRaw
+        {
+            set
+            {
+                if (value is string qs)
+                {
+                    (QuantityMin, QuantityMax) = qs.ToLowerInvariant() switch
+                    {
+                        "abundant" => (8, 12),
+                        "many" => (5, 8),
+                        "several" => (3, 5),
+                        "few" => (1, 3),
+                        _ => (1, 3),
+                    };
+                }
+                else if (value is long lv)
+                {
+                    QuantityMin = (int)lv;
+                    QuantityMax = (int)lv;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Custom chance property: handles "guaranteed", "high", "moderate", etc.
+        /// or numeric values from JSON.
+        /// </summary>
+        [JsonProperty("chance")]
+        public object ChanceRaw
+        {
+            set
+            {
+                if (value is string cs)
+                {
+                    Chance = cs.ToLowerInvariant() switch
+                    {
+                        "guaranteed" => 1.0f,
+                        "high" => 0.75f,
+                        "moderate" => 0.5f,
+                        "low" => 0.25f,
+                        "rare" => 0.10f,
+                        "improbable" => 0.05f,
+                        _ => 1.0f,
+                    };
+                }
+                else if (value is double dv)
+                {
+                    Chance = (float)dv;
+                }
+            }
+        }
     }
 
     /// <summary>
     /// Definition for a resource node that can be harvested.
+    /// JSON properties match resource-node-1.JSON format.
     /// </summary>
     public class ResourceNodeDefinition
     {
-        [JsonProperty("nodeId")]
+        [JsonProperty("resourceId")]
         public string NodeId { get; set; }
 
         [JsonProperty("name")]
@@ -49,10 +103,10 @@ namespace Game1.Data.Databases
         [JsonProperty("category")]
         public string Category { get; set; }
 
-        [JsonProperty("toolRequired")]
+        [JsonProperty("requiredTool")]
         public string ToolRequired { get; set; }
 
-        [JsonProperty("health")]
+        [JsonProperty("baseHealth")]
         public int Health { get; set; } = 100;
 
         [JsonProperty("respawnTime")]

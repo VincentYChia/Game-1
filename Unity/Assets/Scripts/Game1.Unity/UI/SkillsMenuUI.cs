@@ -281,22 +281,43 @@ namespace Game1.Unity.UI
 
             var skillManager = _gameManager.Player.Skills;
             var skillDb = SkillDatabase.Instance;
-            if (skillDb == null || !skillDb.Loaded) return;
-
-            // Get learned skills
-            var learnedSkillIds = skillManager.KnownSkills.Keys;
-            foreach (var skillId in learnedSkillIds)
+            if (skillDb == null || !skillDb.Loaded)
             {
-                var skillDef = skillDb.GetSkill(skillId);
-                if (skillDef != null)
-                {
-                    // Apply filter
-                    if (_currentFilter != "all" && !MatchesFilter(skillDef, _currentFilter))
-                        continue;
-
-                    _displayedSkills.Add(skillDef);
-                }
+                Debug.LogWarning("[SkillsMenuUI] SkillDatabase not loaded");
+                return;
             }
+
+            var known = skillManager.KnownSkills;
+
+            // Show ALL skills from database — learned ones first, then available
+            // This matches Python renderer.py skill panel (lines 2475-2608)
+            var learnedSkills = new List<SkillDefinition>();
+            var availableSkills = new List<SkillDefinition>();
+
+            foreach (var kvp in skillDb.Skills)
+            {
+                var skillDef = kvp.Value;
+                if (skillDef == null) continue;
+
+                // Apply filter
+                if (_currentFilter != "all" && !MatchesFilter(skillDef, _currentFilter))
+                    continue;
+
+                if (known.ContainsKey(kvp.Key))
+                    learnedSkills.Add(skillDef);
+                else
+                    availableSkills.Add(skillDef);
+            }
+
+            // Sort by tier then name
+            learnedSkills.Sort((a, b) => a.Tier != b.Tier ? a.Tier.CompareTo(b.Tier) : string.Compare(a.Name, b.Name, System.StringComparison.Ordinal));
+            availableSkills.Sort((a, b) => a.Tier != b.Tier ? a.Tier.CompareTo(b.Tier) : string.Compare(a.Name, b.Name, System.StringComparison.Ordinal));
+
+            // Learned first, then available
+            _displayedSkills.AddRange(learnedSkills);
+            _displayedSkills.AddRange(availableSkills);
+
+            Debug.Log($"[SkillsMenuUI] Showing {learnedSkills.Count} learned + {availableSkills.Count} available skills");
 
             RebuildSkillList();
             _refreshHotbar();
@@ -342,42 +363,65 @@ namespace Game1.Unity.UI
             for (int i = _skillListContainer.childCount - 1; i >= 0; i--)
                 Destroy(_skillListContainer.GetChild(i).gameObject);
 
-            // Create entries
+            if (_displayedSkills.Count == 0)
+            {
+                UIHelper.CreateText(_skillListContainer, "NoSkills",
+                    "No skills available.\nPress F2 to learn all skills (debug).",
+                    14, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleCenter);
+                return;
+            }
+
+            var known = _gameManager?.Player?.Skills?.KnownSkills;
+            bool hadLearned = false;
+            bool hadAvailable = false;
+
             foreach (var skill in _displayedSkills)
             {
+                string id = skill.SkillId;
+                bool isKnown = known != null && known.ContainsKey(id);
+                bool isEquipped = isKnown && (known[id]?.IsEquipped ?? false);
+
+                // Section headers
+                if (isKnown && !hadLearned)
+                {
+                    hadLearned = true;
+                    var headerLabel = UIHelper.CreateText(_skillListContainer, "LearnedHeader",
+                        "LEARNED SKILLS", 15, UIHelper.COLOR_TEXT_GOLD, TextAnchor.MiddleLeft);
+                    UIHelper.SetPreferredHeight(headerLabel.gameObject, 28);
+                }
+                else if (!isKnown && !hadAvailable)
+                {
+                    hadAvailable = true;
+                    var headerLabel = UIHelper.CreateText(_skillListContainer, "AvailableHeader",
+                        "AVAILABLE SKILLS", 15, new Color(0.4f, 0.8f, 1f), TextAnchor.MiddleLeft);
+                    UIHelper.SetPreferredHeight(headerLabel.gameObject, 28);
+                }
+
                 if (_skillEntryPrefab != null)
                 {
                     var go = Instantiate(_skillEntryPrefab, _skillListContainer);
                     var text = go.GetComponentInChildren<TextMeshProUGUI>();
-                    if (text != null)
-                    {
-                        text.text = skill.Name;
-                    }
-
+                    if (text != null) text.text = skill.Name;
                     var button = go.GetComponent<Button>();
                     if (button != null)
-                    {
-                        string id = skill.SkillId;
                         button.onClick.AddListener(() => SelectSkill(id));
-                    }
                 }
                 else
                 {
-                    // Code-built fallback entry with tier and equipped status
-                    string id = skill.SkillId;
-                    bool isEquipped = _gameManager?.Player?.Skills?.GetKnownSkill(id)?.IsEquipped ?? false;
-
                     string tierStr = skill.Tier > 0 ? $"T{skill.Tier} " : "";
-                    string equippedStr = isEquipped ? " [E]" : "";
+                    string statusStr = isEquipped ? " [E]" : (isKnown ? " [K]" : "");
                     var manaRaw = skill.Cost?.ManaCostRaw?.ToString();
-                    string manaStr = !string.IsNullOrEmpty(manaRaw)
-                        ? $" ({manaRaw})"
-                        : "";
-                    string label = $"{tierStr}{skill.Name}{manaStr}{equippedStr}";
+                    string manaStr = !string.IsNullOrEmpty(manaRaw) ? $" ({manaRaw})" : "";
+                    string label = $"{tierStr}{skill.Name}{manaStr}{statusStr}";
 
-                    Color textColor = isEquipped ? UIHelper.COLOR_TEXT_GOLD : UIHelper.COLOR_TEXT_PRIMARY;
+                    Color textColor = isEquipped ? UIHelper.COLOR_TEXT_GOLD
+                        : isKnown ? UIHelper.COLOR_TEXT_GREEN
+                        : UIHelper.COLOR_TEXT_PRIMARY;
+                    Color bgColor = isKnown ? UIHelper.COLOR_BG_SLOT
+                        : new Color(0.15f, 0.15f, 0.2f, 1f);
+
                     var entryBtn = UIHelper.CreateButton(_skillListContainer, "Skill_" + id,
-                        label, UIHelper.COLOR_BG_SLOT, textColor, 13,
+                        label, bgColor, textColor, 13,
                         () => SelectSkill(id));
                     UIHelper.SetPreferredHeight(entryBtn.gameObject, 32);
                 }
@@ -427,10 +471,37 @@ namespace Game1.Unity.UI
             if (_skillTags != null) _skillTags.text = tagsText;
             else if (_skillTagsFallback != null) _skillTagsFallback.text = tagsText;
 
-            // Show equip/unequip based on current state
-            bool isEquipped = _gameManager?.Player?.Skills?.GetKnownSkill(_selectedSkillId)?.IsEquipped ?? false;
-            if (_equipButton != null) _equipButton.gameObject.SetActive(!isEquipped);
+            // Show equip/learn/unequip based on current state
+            bool isKnown = _gameManager?.Player?.Skills?.KnownSkills?.ContainsKey(_selectedSkillId) ?? false;
+            bool isEquipped = isKnown && (_gameManager?.Player?.Skills?.GetKnownSkill(_selectedSkillId)?.IsEquipped ?? false);
+
+            // Update equip button text: "Learn" if not known, "Equip" if known but not equipped
+            if (_equipButton != null)
+            {
+                _equipButton.gameObject.SetActive(!isEquipped);
+                var btnText = _equipButton.GetComponentInChildren<Text>();
+                if (btnText != null)
+                    btnText.text = isKnown ? "Equip" : "Learn & Equip";
+            }
             if (_unequipButton != null) _unequipButton.gameObject.SetActive(isEquipped);
+
+            // Show requirements for unlearned skills
+            string reqText = "";
+            if (!isKnown && skillDef.Requirements != null)
+            {
+                var parts = new System.Collections.Generic.List<string>();
+                if (skillDef.Requirements.CharacterLevel > 1)
+                    parts.Add($"Level {skillDef.Requirements.CharacterLevel}");
+                if (skillDef.Requirements.Stats != null)
+                {
+                    foreach (var kvp in skillDef.Requirements.Stats)
+                        parts.Add($"{kvp.Key} {kvp.Value}");
+                }
+                if (parts.Count > 0)
+                    reqText = $"Requires: {string.Join(", ", parts)}";
+            }
+            if (_skillRequirements != null) _skillRequirements.text = reqText;
+            else if (_skillRequirementsFallback != null) _skillRequirementsFallback.text = reqText;
         }
 
         private void ClearDetail()
@@ -461,11 +532,30 @@ namespace Game1.Unity.UI
             _gameManager = GameManager.Instance;
             if (_gameManager?.Player == null) return;
 
-            int slot = _selectedBarSlot >= 0 ? _selectedBarSlot : _findFirstEmptySlot();
-            _gameManager.Player.Skills.EquipSkill(_selectedSkillId, slot);
-
+            var skillManager = _gameManager.Player.Skills;
             var skillDb = SkillDatabase.Instance;
             var def = skillDb?.GetSkill(_selectedSkillId);
+
+            // If not learned yet, learn it first
+            if (!skillManager.KnownSkills.ContainsKey(_selectedSkillId))
+            {
+                bool learned = skillManager.LearnSkill(_selectedSkillId);
+                if (!learned)
+                {
+                    NotificationUI.Instance?.Show(
+                        $"Cannot learn {def?.Name ?? _selectedSkillId} — check requirements",
+                        Color.red);
+                    return;
+                }
+                NotificationUI.Instance?.Show(
+                    $"Learned {def?.Name ?? _selectedSkillId}!",
+                    Color.green);
+            }
+
+            // Now equip to hotbar
+            int slot = _selectedBarSlot >= 0 ? _selectedBarSlot : _findFirstEmptySlot();
+            skillManager.EquipSkill(_selectedSkillId, slot);
+
             NotificationUI.Instance?.Show(
                 $"Equipped {def?.Name ?? _selectedSkillId} to slot {slot + 1}",
                 Color.green);
