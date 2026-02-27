@@ -805,20 +805,23 @@ namespace Game1.Systems.World
             // No enemies in water chunks
             if (Type.IsWater()) return;
 
-            // Safe zone: no enemies near origin (radius ~2 chunks)
-            float distToOrigin = MathF.Sqrt(ChunkX * ChunkX + ChunkY * ChunkY);
-            if (distToOrigin < 2f) return;
+            // Safe zone: no enemies within 15 tiles of origin (matches Python safe_zone_radius=15)
+            float centerX = ChunkX * size + size / 2f;
+            float centerZ = ChunkY * size + size / 2f;
+            float distToOrigin = MathF.Sqrt(centerX * centerX + centerZ * centerZ);
+            if (distToOrigin <= 15f) return;
 
             // Determine enemy count and tier range based on chunk danger level
+            // Matches Python: peaceful→T1 only, dangerous→T1-T3, rare→T1-T4
             int minEnemies, maxEnemies, maxTier;
 
             if (Type.IsDangerous())
             {
-                minEnemies = 1; maxEnemies = 3; maxTier = 2;
+                minEnemies = 1; maxEnemies = 3; maxTier = 3;
             }
             else if (Type.IsRare())
             {
-                minEnemies = 1; maxEnemies = 2; maxTier = 3;
+                minEnemies = 1; maxEnemies = 2; maxTier = 4;
             }
             else // Peaceful
             {
