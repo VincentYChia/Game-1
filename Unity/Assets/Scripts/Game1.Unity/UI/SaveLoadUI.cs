@@ -50,7 +50,6 @@ namespace Game1.Unity.UI
         // ====================================================================
 
         private string _selectedSaveName;
-        private bool _isSaveMode;
         private List<SaveFileInfo> _saveFiles = new();
 
         private GameManager _gameManager;
@@ -177,7 +176,6 @@ namespace Game1.Unity.UI
         /// <summary>Open the save UI.</summary>
         public void OpenForSave()
         {
-            _isSaveMode = true;
             Open();
             if (_saveButton != null) _saveButton.gameObject.SetActive(true);
             if (_loadButton != null) _loadButton.gameObject.SetActive(false);
@@ -186,7 +184,6 @@ namespace Game1.Unity.UI
         /// <summary>Open the load UI.</summary>
         public void OpenForLoad()
         {
-            _isSaveMode = false;
             Open();
             if (_saveButton != null) _saveButton.gameObject.SetActive(false);
             if (_loadButton != null) _loadButton.gameObject.SetActive(true);

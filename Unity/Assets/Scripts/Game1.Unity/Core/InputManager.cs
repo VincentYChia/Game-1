@@ -72,7 +72,6 @@ namespace Game1.Unity.Core
         public event Action OnInteract;
         public event Action<Vector3> OnPrimaryAttack;
         public event Action<Vector3> OnSecondaryAction;
-        public event Action<Vector2> OnUIClick;
         public event Action OnEscape;
         public event Action OnToggleInventory;
         public event Action OnToggleEquipment;

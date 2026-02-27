@@ -378,7 +378,7 @@ namespace Game1.Unity.UI
                         {
                             var parts = new System.Collections.Generic.List<string>();
                             foreach (var inp in r.Inputs)
-                                parts.Add($"{inp.MaterialId} x{inp.Qty}");
+                                parts.Add($"{inp.MaterialId} x{inp.Quantity}");
                             inputStr = string.Join(", ", parts);
                         }
                         sb.AppendLine($"  T{tier}: {r.OutputId} x{r.OutputQty} [{inputStr}]");

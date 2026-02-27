@@ -41,8 +41,6 @@ namespace Game1.Unity.Core
         [Header("Physics")]
         [SerializeField] private float _gravity = -20f;
         [SerializeField] private float _jumpForce = 8f;
-        [SerializeField] private float _groundCheckDistance = 0.2f;
-        [SerializeField] private float _playerHeight = 1.8f;
 
         [Header("Interaction")]
         [SerializeField] private float _interactionRange = 3.5f;

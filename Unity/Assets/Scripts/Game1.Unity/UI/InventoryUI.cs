@@ -29,7 +29,6 @@ namespace Game1.Unity.UI
     {
         [Header("Configuration")]
         [SerializeField] private int _columns = 6;
-        [SerializeField] private int _rows = 5;
 
         [Header("Slot Prefab")]
         [SerializeField] private GameObject _slotPrefab;
