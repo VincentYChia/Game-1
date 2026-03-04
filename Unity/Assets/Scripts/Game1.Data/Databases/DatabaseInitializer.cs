@@ -30,7 +30,7 @@ namespace Game1.Data.Databases
         {
             try
             {
-                UnityEngine.Debug.Log("[DatabaseInitializer] Starting database initialization...");
+                System.Diagnostics.Debug.WriteLine("[DatabaseInitializer] Starting database initialization...");
 
                 // Group 1: No dependencies
                 var worldConfig = WorldGenerationConfig.Instance; // loads in constructor
@@ -62,20 +62,20 @@ namespace Game1.Data.Databases
                 // Note: EnemyDatabaseAdapter is loaded by GameManager (Phase 6)
                 // because it lives in Game1.Systems.Combat to avoid circular dependencies.
 
-                UnityEngine.Debug.Log("[DatabaseInitializer] All databases initialized successfully.");
-                UnityEngine.Debug.Log($"  Materials: {MaterialDatabase.Instance.Count}");
-                UnityEngine.Debug.Log($"  Equipment: {EquipmentDatabase.Instance.Count}");
-                UnityEngine.Debug.Log($"  Skills: {SkillDatabase.Instance.Count}");
-                UnityEngine.Debug.Log($"  Recipes: {RecipeDatabase.Instance.Count}");
-                UnityEngine.Debug.Log($"  Placements: {PlacementDatabase.Instance.Count}");
-                UnityEngine.Debug.Log($"  Titles: {TitleDatabase.Instance.Count}");
-                UnityEngine.Debug.Log($"  Classes: {ClassDatabase.Instance.Count}");
-                UnityEngine.Debug.Log($"  NPCs: {NPCDatabase.Instance.NPCCount}");
+                System.Diagnostics.Debug.WriteLine("[DatabaseInitializer] All databases initialized successfully.");
+                System.Diagnostics.Debug.WriteLine($"  Materials: {MaterialDatabase.Instance.Count}");
+                System.Diagnostics.Debug.WriteLine($"  Equipment: {EquipmentDatabase.Instance.Count}");
+                System.Diagnostics.Debug.WriteLine($"  Skills: {SkillDatabase.Instance.Count}");
+                System.Diagnostics.Debug.WriteLine($"  Recipes: {RecipeDatabase.Instance.Count}");
+                System.Diagnostics.Debug.WriteLine($"  Placements: {PlacementDatabase.Instance.Count}");
+                System.Diagnostics.Debug.WriteLine($"  Titles: {TitleDatabase.Instance.Count}");
+                System.Diagnostics.Debug.WriteLine($"  Classes: {ClassDatabase.Instance.Count}");
+                System.Diagnostics.Debug.WriteLine($"  NPCs: {NPCDatabase.Instance.NPCCount}");
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.Log($"[DatabaseInitializer] CRITICAL: Initialization failed: {ex.Message}");
-                UnityEngine.Debug.Log(ex.StackTrace);
+                System.Diagnostics.Debug.WriteLine($"[DatabaseInitializer] CRITICAL: Initialization failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine(ex.StackTrace);
             }
         }
 

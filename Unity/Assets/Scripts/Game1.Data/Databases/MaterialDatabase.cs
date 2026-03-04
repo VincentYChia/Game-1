@@ -70,7 +70,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                UnityEngine.Debug.Log($"[MaterialDatabase] File not found: {fullPath}");
+                System.Diagnostics.Debug.WriteLine($"[MaterialDatabase] File not found: {fullPath}");
                 return;
             }
 
@@ -82,7 +82,7 @@ namespace Game1.Data.Databases
                 var materialsArray = wrapper["materials"] as JArray;
                 if (materialsArray == null)
                 {
-                    UnityEngine.Debug.Log($"[MaterialDatabase] No 'materials' array in {relativePath}");
+                    System.Diagnostics.Debug.WriteLine($"[MaterialDatabase] No 'materials' array in {relativePath}");
                     return;
                 }
 
@@ -96,11 +96,11 @@ namespace Game1.Data.Databases
                 }
 
                 Loaded = true;
-                UnityEngine.Debug.Log($"[MaterialDatabase] Loaded {_materials.Count} materials from {relativePath}");
+                System.Diagnostics.Debug.WriteLine($"[MaterialDatabase] Loaded {_materials.Count} materials from {relativePath}");
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.Log($"[MaterialDatabase] Error loading {relativePath}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[MaterialDatabase] Error loading {relativePath}: {ex.Message}");
             }
         }
 
@@ -113,7 +113,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                UnityEngine.Debug.Log($"[MaterialDatabase] File not found: {fullPath}");
+                System.Diagnostics.Debug.WriteLine($"[MaterialDatabase] File not found: {fullPath}");
                 return;
             }
 
@@ -134,7 +134,7 @@ namespace Game1.Data.Databases
 
                 if (allTokens.Count == 0)
                 {
-                    UnityEngine.Debug.Log($"[MaterialDatabase] No recognized array in {relativePath}");
+                    System.Diagnostics.Debug.WriteLine($"[MaterialDatabase] No recognized array in {relativePath}");
                     return;
                 }
 
@@ -159,11 +159,11 @@ namespace Game1.Data.Databases
                     }
                 }
 
-                UnityEngine.Debug.Log($"[MaterialDatabase] Loaded {count} additional items from {relativePath}");
+                System.Diagnostics.Debug.WriteLine($"[MaterialDatabase] Loaded {count} additional items from {relativePath}");
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.Log($"[MaterialDatabase] Error loading {relativePath}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[MaterialDatabase] Error loading {relativePath}: {ex.Message}");
             }
         }
 
@@ -181,7 +181,7 @@ namespace Game1.Data.Databases
         {
             if (string.IsNullOrEmpty(materialId))
             {
-                UnityEngine.Debug.Log("[MaterialDatabase] GetMaterial called with null/empty ID");
+                System.Diagnostics.Debug.WriteLine("[MaterialDatabase] GetMaterial called with null/empty ID");
                 return null;
             }
 

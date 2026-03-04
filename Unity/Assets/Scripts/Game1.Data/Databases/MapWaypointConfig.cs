@@ -108,7 +108,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                UnityEngine.Debug.Log($"[MapWaypointConfig] File not found: {fullPath}");
+                System.Diagnostics.Debug.WriteLine($"[MapWaypointConfig] File not found: {fullPath}");
                 return;
             }
 
@@ -143,11 +143,11 @@ namespace Game1.Data.Databases
                 }
 
                 Loaded = true;
-                UnityEngine.Debug.Log($"[MapWaypointConfig] Loaded config from {relativePath}");
+                System.Diagnostics.Debug.WriteLine($"[MapWaypointConfig] Loaded config from {relativePath}");
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.Log($"[MapWaypointConfig] Error loading {relativePath}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[MapWaypointConfig] Error loading {relativePath}: {ex.Message}");
             }
         }
 

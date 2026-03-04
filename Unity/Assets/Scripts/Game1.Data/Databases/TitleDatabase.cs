@@ -65,7 +65,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                UnityEngine.Debug.Log($"[TitleDatabase] File not found: {fullPath}");
+                System.Diagnostics.Debug.WriteLine($"[TitleDatabase] File not found: {fullPath}");
                 return;
             }
 
@@ -77,7 +77,7 @@ namespace Game1.Data.Databases
                 JArray titles = wrapper["titles"] as JArray;
                 if (titles == null)
                 {
-                    UnityEngine.Debug.Log($"[TitleDatabase] No 'titles' array in {relativePath}");
+                    System.Diagnostics.Debug.WriteLine($"[TitleDatabase] No 'titles' array in {relativePath}");
                     return;
                 }
 
@@ -91,11 +91,11 @@ namespace Game1.Data.Databases
                 }
 
                 Loaded = true;
-                UnityEngine.Debug.Log($"[TitleDatabase] Loaded {_titles.Count} titles from {relativePath}");
+                System.Diagnostics.Debug.WriteLine($"[TitleDatabase] Loaded {_titles.Count} titles from {relativePath}");
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.Log($"[TitleDatabase] Error loading {relativePath}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[TitleDatabase] Error loading {relativePath}: {ex.Message}");
             }
         }
 

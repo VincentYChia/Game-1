@@ -82,7 +82,7 @@ namespace Game1.Data.Databases
             }
 
             Loaded = true;
-            UnityEngine.Debug.Log($"[RecipeDatabase] Total recipes loaded: {_recipes.Count}");
+            System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] Total recipes loaded: {_recipes.Count}");
         }
 
         /// <summary>Load recipes from a single JSON file.</summary>
@@ -91,7 +91,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                UnityEngine.Debug.Log($"[RecipeDatabase] File not found: {fullPath}");
+                System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] File not found: {fullPath}");
                 return;
             }
 
@@ -103,7 +103,7 @@ namespace Game1.Data.Databases
                 JArray recipes = wrapper["recipes"] as JArray;
                 if (recipes == null)
                 {
-                    UnityEngine.Debug.Log($"[RecipeDatabase] WARNING: No 'recipes' array in {relativePath}");
+                    System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] WARNING: No 'recipes' array in {relativePath}");
                     return;
                 }
 
@@ -159,11 +159,11 @@ namespace Game1.Data.Databases
                     count++;
                 }
 
-                UnityEngine.Debug.Log($"[RecipeDatabase] Loaded {count} recipes from {relativePath}");
+                System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] Loaded {count} recipes from {relativePath}");
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.Log($"[RecipeDatabase] ERROR loading {relativePath}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] ERROR loading {relativePath}: {ex.Message}");
             }
         }
 

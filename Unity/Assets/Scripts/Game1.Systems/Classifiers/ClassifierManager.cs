@@ -206,7 +206,7 @@ namespace Game1.Systems.Classifiers
 
             Initialized = true;
 
-            UnityEngine.Debug.Log(
+            System.Diagnostics.Debug.WriteLine(
                 $"[ClassifierManager] Initialized with {_configs.Count} disciplines" +
                 $", backend factory: {(_backendFactory != null ? "provided" : "null")}");
         }
@@ -350,13 +350,13 @@ namespace Game1.Systems.Classifiers
                         int size = config.ImgSize;
                         float[] dummy = new float[size * size * 3];
                         backend.Predict(dummy); // Warmup — result discarded
-                        UnityEngine.Debug.Log(
+                        System.Diagnostics.Debug.WriteLine(
                             $"[ClassifierManager] Warmup complete for {disc}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    UnityEngine.Debug.Log(
+                    System.Diagnostics.Debug.WriteLine(
                         $"[ClassifierManager] Preload failed for {disc}: {ex.Message}");
                 }
             }
@@ -415,7 +415,7 @@ namespace Game1.Systems.Classifiers
         {
             if (!_configs.TryGetValue(discipline, out var config))
             {
-                UnityEngine.Debug.Log(
+                System.Diagnostics.Debug.WriteLine(
                     $"[ClassifierManager] Unknown discipline: {discipline}");
                 return;
             }
@@ -490,7 +490,7 @@ namespace Game1.Systems.Classifiers
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.Log(
+                System.Diagnostics.Debug.WriteLine(
                     $"[ClassifierManager] Failed to create backend for {discipline}: {ex.Message}");
                 return null;
             }

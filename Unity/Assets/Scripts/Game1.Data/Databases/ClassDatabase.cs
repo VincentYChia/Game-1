@@ -65,7 +65,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                UnityEngine.Debug.LogError($"[ClassDatabase] File not found: {fullPath}");
+                System.Diagnostics.Debug.WriteLine($"[ClassDatabase] File not found: {fullPath}");
                 return;
             }
 
@@ -77,7 +77,7 @@ namespace Game1.Data.Databases
                 JArray classes = wrapper["classes"] as JArray;
                 if (classes == null)
                 {
-                    UnityEngine.Debug.LogError($"[ClassDatabase] No 'classes' array in {relativePath}");
+                    System.Diagnostics.Debug.WriteLine($"[ClassDatabase] No 'classes' array in {relativePath}");
                     return;
                 }
 
@@ -94,16 +94,16 @@ namespace Game1.Data.Databases
                     catch (Exception perClassEx)
                     {
                         string classId = token["classId"]?.ToString() ?? "unknown";
-                        UnityEngine.Debug.LogWarning($"[ClassDatabase] Failed to deserialize class '{classId}': {perClassEx.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[ClassDatabase] Failed to deserialize class '{classId}': {perClassEx.Message}");
                     }
                 }
 
                 Loaded = _classes.Count > 0;
-                UnityEngine.Debug.Log($"[ClassDatabase] Loaded {_classes.Count} classes from {relativePath}");
+                System.Diagnostics.Debug.WriteLine($"[ClassDatabase] Loaded {_classes.Count} classes from {relativePath}");
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.LogError($"[ClassDatabase] Error loading {relativePath}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ClassDatabase] Error loading {relativePath}: {ex.Message}");
             }
         }
 

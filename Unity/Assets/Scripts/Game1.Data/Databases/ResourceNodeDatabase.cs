@@ -201,7 +201,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                UnityEngine.Debug.Log($"[ResourceNodeDatabase] File not found: {fullPath}");
+                System.Diagnostics.Debug.WriteLine($"[ResourceNodeDatabase] File not found: {fullPath}");
                 return;
             }
 
@@ -216,7 +216,7 @@ namespace Game1.Data.Databases
 
                 if (nodes == null)
                 {
-                    UnityEngine.Debug.Log($"[ResourceNodeDatabase] No recognized array in {relativePath}");
+                    System.Diagnostics.Debug.WriteLine($"[ResourceNodeDatabase] No recognized array in {relativePath}");
                     return;
                 }
 
@@ -230,11 +230,11 @@ namespace Game1.Data.Databases
                 }
 
                 Loaded = true;
-                UnityEngine.Debug.Log($"[ResourceNodeDatabase] Loaded {_nodes.Count} resource nodes from {relativePath}");
+                System.Diagnostics.Debug.WriteLine($"[ResourceNodeDatabase] Loaded {_nodes.Count} resource nodes from {relativePath}");
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.Log($"[ResourceNodeDatabase] Error loading {relativePath}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ResourceNodeDatabase] Error loading {relativePath}: {ex.Message}");
             }
         }
 

@@ -139,14 +139,14 @@ namespace Game1.Systems.Crafting
 
             if (ActiveMinigame == null)
             {
-                UnityEngine.Debug.Log(
+                System.Diagnostics.Debug.WriteLine(
                     $"[InteractiveCrafting] Unknown discipline: {discipline}");
                 return null;
             }
 
             ActiveMinigame.Start();
 
-            UnityEngine.Debug.Log(
+            System.Diagnostics.Debug.WriteLine(
                 $"[InteractiveCrafting] Started {discipline} minigame (T{stationTier})");
             return ActiveMinigame;
         }
@@ -199,7 +199,7 @@ namespace Game1.Systems.Crafting
             CurrentDiscipline = null;
             CurrentRecipe = null;
 
-            UnityEngine.Debug.Log("[InteractiveCrafting] Cancelled active minigame");
+            System.Diagnostics.Debug.WriteLine("[InteractiveCrafting] Cancelled active minigame");
         }
 
         /// <summary>

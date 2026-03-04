@@ -96,7 +96,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath("Definitions.JSON/world_generation.JSON");
             if (!File.Exists(fullPath))
             {
-                UnityEngine.Debug.Log("[WorldGenerationConfig] Config file not found, using defaults");
+                System.Diagnostics.Debug.WriteLine("[WorldGenerationConfig] Config file not found, using defaults");
                 Loaded = true;
                 return;
             }
@@ -119,11 +119,11 @@ namespace Game1.Data.Databases
                 WorldSeed = _rawConfig["worldSeed"]?.Value<int>() ?? 0;
 
                 Loaded = true;
-                UnityEngine.Debug.Log("[WorldGenerationConfig] Loaded world generation config");
+                System.Diagnostics.Debug.WriteLine("[WorldGenerationConfig] Loaded world generation config");
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.Log($"[WorldGenerationConfig] Error loading config: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[WorldGenerationConfig] Error loading config: {ex.Message}");
                 Loaded = true; // Still mark as loaded with defaults
             }
         }

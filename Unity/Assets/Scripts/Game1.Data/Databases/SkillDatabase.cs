@@ -94,7 +94,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                UnityEngine.Debug.Log($"[SkillDatabase] File not found: {fullPath}");
+                System.Diagnostics.Debug.WriteLine($"[SkillDatabase] File not found: {fullPath}");
                 return;
             }
 
@@ -106,7 +106,7 @@ namespace Game1.Data.Databases
 
                 if (skillsArray == null)
                 {
-                    UnityEngine.Debug.Log($"[SkillDatabase] No 'skills' array in {relativePath}");
+                    System.Diagnostics.Debug.WriteLine($"[SkillDatabase] No 'skills' array in {relativePath}");
                     return;
                 }
 
@@ -122,16 +122,16 @@ namespace Game1.Data.Databases
                     }
                     catch (Exception ex)
                     {
-                        UnityEngine.Debug.Log($"[SkillDatabase] Error parsing skill: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[SkillDatabase] Error parsing skill: {ex.Message}");
                     }
                 }
 
                 Loaded = true;
-                UnityEngine.Debug.Log($"[SkillDatabase] Loaded {_skills.Count} skills from {relativePath}");
+                System.Diagnostics.Debug.WriteLine($"[SkillDatabase] Loaded {_skills.Count} skills from {relativePath}");
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.Log($"[SkillDatabase] Error loading {relativePath}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[SkillDatabase] Error loading {relativePath}: {ex.Message}");
             }
         }
 

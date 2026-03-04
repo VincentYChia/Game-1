@@ -52,7 +52,7 @@ namespace Game1.Entities.Components
                 // 2H weapon: auto-warn if offhand occupied (caller should handle unequip)
                 if (_slots[EquipmentSlot.OffHand] != null)
                 {
-                    UnityEngine.Debug.Log("[EquipmentManager] Warning: 2H weapon with offhand occupied");
+                    System.Diagnostics.Debug.WriteLine("[EquipmentManager] Warning: 2H weapon with offhand occupied");
                 }
             }
             else if (slot == EquipmentSlot.OffHand)

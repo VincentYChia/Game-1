@@ -34,7 +34,7 @@ namespace Game1.Core
         [Conditional("MIGRATION_VALIDATION")]
         public static void Log(string component, string message)
         {
-            UnityEngine.Debug.Log(
+            System.Diagnostics.Debug.WriteLine(
                 $"[MIGRATION] [{component}] {message}");
         }
 
@@ -58,7 +58,7 @@ namespace Game1.Core
                 dataStr = " {" + string.Join(", ", parts) + "}";
             }
 
-            UnityEngine.Debug.Log(
+            System.Diagnostics.Debug.WriteLine(
                 $"[MIGRATION] [{component}] {message}{dataStr}");
         }
 
@@ -67,7 +67,7 @@ namespace Game1.Core
         /// </summary>
         public static void LogWarning(string component, string message)
         {
-            UnityEngine.Debug.Log(
+            System.Diagnostics.Debug.WriteLine(
                 $"[MIGRATION WARNING] [{component}] {message}");
         }
 
@@ -76,7 +76,7 @@ namespace Game1.Core
         /// </summary>
         public static void LogError(string component, string message)
         {
-            UnityEngine.Debug.Log(
+            System.Diagnostics.Debug.WriteLine(
                 $"[MIGRATION ERROR] [{component}] {message}");
         }
     }
