@@ -66,8 +66,14 @@ namespace Game1.Unity.World
         // Container for chunk GameObjects (keeps hierarchy clean)
         private Transform _chunkContainer;
 
-        // Enemy tracking: maps Enemy instances to their 3D GameObjects for position sync
-        private Dictionary<Enemy, GameObject> _enemyGameObjects = new Dictionary<Enemy, GameObject>();
+        // Enemy tracking: maps Enemy instances to their 3D GameObjects + health bar fill for position sync
+        private struct EnemyRenderData
+        {
+            public GameObject Go;
+            public Canvas HealthCanvas;
+            public UnityEngine.UI.Image HealthFill;
+        }
+        private Dictionary<Enemy, EnemyRenderData> _enemyRenderData = new Dictionary<Enemy, EnemyRenderData>();
 
         // ====================================================================
         // Chunk Render Data
@@ -174,12 +180,12 @@ namespace Game1.Unity.World
         {
             var toRemove = new List<Enemy>();
 
-            foreach (var kvp in _enemyGameObjects)
+            foreach (var kvp in _enemyRenderData)
             {
                 var enemy = kvp.Key;
-                var go = kvp.Value;
+                var data = kvp.Value;
 
-                if (go == null)
+                if (data.Go == null)
                 {
                     toRemove.Add(enemy);
                     continue;
@@ -187,8 +193,7 @@ namespace Game1.Unity.World
 
                 if (!enemy.IsAlive)
                 {
-                    // Enemy died — disable its GameObject
-                    if (go.activeSelf) go.SetActive(false);
+                    if (data.Go.activeSelf) data.Go.SetActive(false);
                     continue;
                 }
 
@@ -196,24 +201,22 @@ namespace Game1.Unity.World
                 float wx = enemy.Position.X;
                 float wz = enemy.Position.Z;
                 float terrainY = ChunkMeshGenerator.SampleTerrainHeight(wx, wz, "grass");
-                go.transform.position = new Vector3(wx, terrainY, wz);
+                data.Go.transform.position = new Vector3(wx, terrainY, wz);
 
                 // Update health bar if damaged
-                var healthBarCanvas = go.GetComponentInChildren<Canvas>(true);
-                if (healthBarCanvas != null && enemy.HealthPercent < 1f)
+                if (data.HealthCanvas != null && enemy.HealthPercent < 1f)
                 {
-                    healthBarCanvas.gameObject.SetActive(true);
-                    var fill = healthBarCanvas.GetComponentInChildren<UnityEngine.UI.Image>();
-                    if (fill != null && fill.name == "Fill")
+                    data.HealthCanvas.gameObject.SetActive(true);
+                    if (data.HealthFill != null)
                     {
-                        fill.fillAmount = enemy.HealthPercent;
-                        fill.color = Color.Lerp(Color.red, Color.green, enemy.HealthPercent);
+                        data.HealthFill.fillAmount = enemy.HealthPercent;
+                        data.HealthFill.color = Color.Lerp(Color.red, Color.green, enemy.HealthPercent);
                     }
                 }
             }
 
             foreach (var dead in toRemove)
-                _enemyGameObjects.Remove(dead);
+                _enemyRenderData.Remove(dead);
         }
 
         // ====================================================================
@@ -361,11 +364,17 @@ namespace Game1.Unity.World
                         Color labelColor = PrimitiveShapeFactory.GetEnemyTierColor(enemy.Tier);
                         PrimitiveShapeFactory.AddWorldLabel(enemyGO, label, labelColor, 1.8f);
 
-                        // Add health bar
-                        PrimitiveShapeFactory.AddWorldHealthBar(enemyGO, 1.5f);
+                        // Add health bar and store reference for updates
+                        var (healthCanvas, healthFill) =
+                            PrimitiveShapeFactory.AddWorldHealthBar(enemyGO, 1.5f);
 
-                        // Track enemy-to-GameObject mapping for position updates
-                        _enemyGameObjects[enemy] = enemyGO;
+                        // Track enemy render data for position + health bar updates
+                        _enemyRenderData[enemy] = new EnemyRenderData
+                        {
+                            Go = enemyGO,
+                            HealthCanvas = healthCanvas,
+                            HealthFill = healthFill
+                        };
 
                         // Register with CombatManager for AI + combat
                         if (combatManager != null)
@@ -400,13 +409,13 @@ namespace Game1.Unity.World
                 // Clean up enemy tracking when chunk unloads
                 if (data.EnemyContainer != null)
                 {
-                    // Remove enemy→GO mappings for enemies in this chunk
+                    // Remove enemy render data for enemies in this chunk
                     var world = GameManager.Instance?.World;
                     var chunk = world?.GetChunk(chunkCoord.x, chunkCoord.y);
                     if (chunk?.Enemies != null)
                     {
                         foreach (var enemy in chunk.Enemies)
-                            _enemyGameObjects.Remove(enemy);
+                            _enemyRenderData.Remove(enemy);
                     }
                     Destroy(data.EnemyContainer);
                 }
@@ -571,7 +580,7 @@ namespace Game1.Unity.World
                     if (kvp.Value.EnemyContainer != null) Destroy(kvp.Value.EnemyContainer);
                 }
                 _chunkObjects.Clear();
-                _enemyGameObjects.Clear();
+                _enemyRenderData.Clear();
             }
             else if (_groundTilemap != null)
             {

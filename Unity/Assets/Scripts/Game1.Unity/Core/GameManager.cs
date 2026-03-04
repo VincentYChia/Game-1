@@ -418,11 +418,11 @@ namespace Game1.Unity.Core
 
             try
             {
-                // Create copper axe and equip
+                // Create copper axe and equip (SlotRaw is the writable string, Slot is computed)
                 var copperAxe = ItemFactory.CreateFromId("copper_axe") as EquipmentItem;
                 if (copperAxe != null)
                 {
-                    copperAxe.Slot = EquipmentSlot.Axe;
+                    copperAxe.SlotRaw = "axe";
                     Player.Equipment.Equip(copperAxe);
                     Debug.Log("[GameManager] Equipped starting copper axe");
                 }
@@ -435,7 +435,7 @@ namespace Game1.Unity.Core
                 var copperPickaxe = ItemFactory.CreateFromId("copper_pickaxe") as EquipmentItem;
                 if (copperPickaxe != null)
                 {
-                    copperPickaxe.Slot = EquipmentSlot.Pickaxe;
+                    copperPickaxe.SlotRaw = "pickaxe";
                     Player.Equipment.Equip(copperPickaxe);
                     Debug.Log("[GameManager] Equipped starting copper pickaxe");
                 }
