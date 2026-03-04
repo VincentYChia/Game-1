@@ -304,6 +304,10 @@ namespace Game1.Unity.Core
             damageGO.transform.SetParent(utilitiesGO.transform, false);
             damageGO.AddComponent<DamageNumberRenderer>();
 
+            var feedbackGO = new GameObject("GameFeedback");
+            feedbackGO.transform.SetParent(utilitiesGO.transform, false);
+            feedbackGO.AddComponent<GameFeedbackManager>();
+
             var attackGO = new GameObject("AttackEffects");
             attackGO.transform.SetParent(utilitiesGO.transform, false);
             attackGO.AddComponent<AttackEffectRenderer>();

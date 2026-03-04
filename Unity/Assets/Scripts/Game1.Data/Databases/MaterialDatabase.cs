@@ -122,21 +122,33 @@ namespace Game1.Data.Databases
                 string json = File.ReadAllText(fullPath);
                 var wrapper = JObject.Parse(json);
 
-                // Try various array names
-                JArray items = wrapper["materials"] as JArray
-                            ?? wrapper["items"] as JArray
-                            ?? wrapper["consumables"] as JArray;
+                // Try various array names (including discipline-specific keys)
+                string[] arrayKeys = { "materials", "items", "consumables",
+                    "turrets", "bombs", "traps", "utility", "devices" };
+                var allTokens = new List<JToken>();
+                foreach (var key in arrayKeys)
+                {
+                    if (wrapper[key] is JArray arr)
+                        allTokens.AddRange(arr);
+                }
 
-                if (items == null)
+                if (allTokens.Count == 0)
                 {
                     System.Diagnostics.Debug.WriteLine($"[MaterialDatabase] No recognized array in {relativePath}");
                     return;
                 }
 
                 int count = 0;
-                foreach (var token in items)
+                foreach (var token in allTokens)
                 {
                     var mat = token.ToObject<MaterialDefinition>();
+                    // Handle JSON files that use "itemId" instead of "materialId"
+                    if (mat != null && string.IsNullOrEmpty(mat.MaterialId))
+                    {
+                        var itemId = token["itemId"]?.ToString();
+                        if (!string.IsNullOrEmpty(itemId))
+                            mat.MaterialId = itemId;
+                    }
                     if (mat != null && !string.IsNullOrEmpty(mat.MaterialId))
                     {
                         if (!_materials.ContainsKey(mat.MaterialId))

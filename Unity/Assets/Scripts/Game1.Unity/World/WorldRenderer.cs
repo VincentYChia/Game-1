@@ -75,6 +75,10 @@ namespace Game1.Unity.World
         }
         private Dictionary<Enemy, EnemyRenderData> _enemyRenderData = new Dictionary<Enemy, EnemyRenderData>();
 
+        // Resource tracking: maps resource instances to their GameObjects for depletion removal
+        private Dictionary<NaturalResourceInstance, GameObject> _resourceRenderData =
+            new Dictionary<NaturalResourceInstance, GameObject>();
+
         // ====================================================================
         // Chunk Render Data
         // ====================================================================
@@ -106,6 +110,14 @@ namespace Game1.Unity.World
 
             _chunkContainer = new GameObject("ChunkContainer").transform;
             _chunkContainer.SetParent(transform, false);
+
+            // Subscribe to resource depletion events
+            GameEvents.OnResourceDepleted += _onResourceDepleted;
+        }
+
+        private void OnDestroy()
+        {
+            GameEvents.OnResourceDepleted -= _onResourceDepleted;
         }
 
         // ====================================================================
@@ -219,6 +231,31 @@ namespace Game1.Unity.World
                 _enemyRenderData.Remove(dead);
         }
 
+        /// <summary>
+        /// Handle resource depletion: find and destroy the resource's visual GameObject.
+        /// </summary>
+        private void _onResourceDepleted(string resourceId)
+        {
+            // Find the resource instance by ID and remove its visual
+            NaturalResourceInstance toRemoveRes = null;
+            foreach (var kvp in _resourceRenderData)
+            {
+                if (kvp.Key.ResourceId == resourceId && kvp.Key.IsDepleted)
+                {
+                    if (kvp.Value != null)
+                    {
+                        Destroy(kvp.Value);
+                    }
+                    toRemoveRes = kvp.Key;
+                    break;
+                }
+            }
+            if (toRemoveRes != null)
+            {
+                _resourceRenderData.Remove(toRemoveRes);
+            }
+        }
+
         // ====================================================================
         // 3D Mesh Chunk Loading
         // ====================================================================
@@ -232,12 +269,15 @@ namespace Game1.Unity.World
             if (chunk == null) return;
 
             // Extract tile types into a 2D array for the mesh generator
+            // Chunk tiles are keyed by WORLD coordinates (e.g. "48,32,0"), not local
+            int startX = chunkCoord.x * _chunkSize;
+            int startZ = chunkCoord.y * _chunkSize;
             string[,] tileTypes = new string[_chunkSize, _chunkSize];
             for (int x = 0; x < _chunkSize; x++)
             {
                 for (int z = 0; z < _chunkSize; z++)
                 {
-                    string tileKey = $"{x},{z},0";
+                    string tileKey = $"{startX + x},{startZ + z},0";
                     string tileType = "grass";
                     if (chunk.Tiles.TryGetValue(tileKey, out var worldTile))
                         tileType = worldTile.TileType.ToString().ToLowerInvariant();
@@ -316,6 +356,9 @@ namespace Game1.Unity.World
 
                         resourceGO.transform.position = new Vector3(wx, terrainY, wz);
                         resourceGO.transform.SetParent(resourceContainer.transform, true);
+
+                        // Track resource → GameObject for depletion removal
+                        _resourceRenderData[resource] = resourceGO;
                     }
                     catch (System.Exception ex)
                     {
@@ -404,7 +447,18 @@ namespace Game1.Unity.World
                 if (data.TerrainObject != null) Destroy(data.TerrainObject);
                 if (data.WaterObject != null) Destroy(data.WaterObject);
                 if (data.EdgeObject != null) Destroy(data.EdgeObject);
-                if (data.ResourceContainer != null) Destroy(data.ResourceContainer);
+                // Clean up resource tracking for this chunk
+                if (data.ResourceContainer != null)
+                {
+                    var world2 = GameManager.Instance?.World;
+                    var chunk2 = world2?.GetChunk(chunkCoord.x, chunkCoord.y);
+                    if (chunk2?.Resources != null)
+                    {
+                        foreach (var resource in chunk2.Resources)
+                            _resourceRenderData.Remove(resource);
+                    }
+                    Destroy(data.ResourceContainer);
+                }
 
                 // Clean up enemy tracking when chunk unloads
                 if (data.EnemyContainer != null)

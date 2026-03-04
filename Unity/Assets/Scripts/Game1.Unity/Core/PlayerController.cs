@@ -16,6 +16,7 @@ using Game1.Data.Enums;
 using Game1.Data.Models;
 using Game1.Entities;
 using Game1.Systems.World;
+using Game1.Unity.UI;
 using Game1.Unity.Utilities;
 using Game1.Unity.World;
 
@@ -287,6 +288,8 @@ namespace Game1.Unity.Core
             if (toolItem == null)
             {
                 Debug.Log($"[Player] No tool equipped in {_activeToolSlot} slot");
+                if (NotificationUI.Instance != null)
+                    NotificationUI.Instance.Show($"No tool in {_activeToolSlot} slot (Q to swap)", new Color(1f, 0.6f, 0.3f), 2f);
                 return;
             }
 
@@ -298,6 +301,8 @@ namespace Game1.Unity.Core
             if (!string.Equals(tool.ToolType, requiredToolType, StringComparison.OrdinalIgnoreCase))
             {
                 Debug.Log($"[Player] Wrong tool: using {tool.ToolType}, need {requiredToolType}. Press Q to cycle tools.");
+                if (NotificationUI.Instance != null)
+                    NotificationUI.Instance.Show($"Need {requiredToolType} — press Q to swap tools", new Color(1f, 0.6f, 0.3f), 2f);
                 return;
             }
 
@@ -305,6 +310,8 @@ namespace Game1.Unity.Core
             if (!tool.CanHarvestTier(resource.Tier))
             {
                 Debug.Log($"[Player] Tool tier {tool.ToolTier} too low for T{resource.Tier} resource");
+                if (NotificationUI.Instance != null)
+                    NotificationUI.Instance.Show($"Tool tier too low for T{resource.Tier} resource", new Color(1f, 0.4f, 0.4f), 2f);
                 return;
             }
 
@@ -319,6 +326,19 @@ namespace Game1.Unity.Core
 
             string critStr = isCrit ? " (CRIT)" : "";
             Debug.Log($"[Player] Harvested {resource.ResourceId}: {actualDamage} dmg{critStr} ({resource.CurrentHp}/{resource.MaxHp} HP)");
+
+            // Show on-screen feedback for every harvest hit
+            if (GameFeedbackManager.Instance != null)
+            {
+                GameFeedbackManager.Instance.ShowHarvestDamage(
+                    new Vector3(resource.Position.X,
+                        ChunkMeshGenerator.SampleTerrainHeight(resource.Position.X, resource.Position.Z, "grass"),
+                        resource.Position.Z),
+                    actualDamage, isCrit);
+                GameFeedbackManager.Instance.ShowHarvestHit(
+                    resource.ResourceId, resource.CurrentHp, resource.MaxHp,
+                    actualDamage, isCrit);
+            }
 
             if (destroyed)
             {

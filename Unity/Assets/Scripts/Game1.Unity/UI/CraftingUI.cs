@@ -69,6 +69,7 @@ namespace Game1.Unity.UI
         private List<Recipe> _availableRecipes = new List<Recipe>();
         private Dictionary<string, string> _placedMaterials = new Dictionary<string, string>();
         private string _selectedMaterialId; // Currently selected palette material for placement
+        private bool _builtProgrammatically; // True if _buildUI() created the panel (buttons already wired)
 
         private GameStateManager _stateManager;
 
@@ -92,9 +93,21 @@ namespace Game1.Unity.UI
             if (_stateManager != null)
                 _stateManager.OnStateChanged += _onStateChanged;
 
-            if (_craftButton != null) _craftButton.onClick.AddListener(_onCraftClicked);
-            if (_clearButton != null) _clearButton.onClick.AddListener(_onClearClicked);
-            if (_inventButton != null) _inventButton.onClick.AddListener(_onInventClicked);
+            // Only wire buttons if they were set via inspector (not _buildUI).
+            // _buildUI() already registers onClick callbacks via UIHelper.CreateButton,
+            // so adding listeners again would double-fire.
+            if (_panel != null && _craftButton != null && !_builtProgrammatically)
+            {
+                _craftButton.onClick.AddListener(_onCraftClicked);
+            }
+            if (_panel != null && _clearButton != null && !_builtProgrammatically)
+            {
+                _clearButton.onClick.AddListener(_onClearClicked);
+            }
+            if (_panel != null && _inventButton != null && !_builtProgrammatically)
+            {
+                _inventButton.onClick.AddListener(_onInventClicked);
+            }
 
             _setVisible(false);
         }
@@ -119,6 +132,8 @@ namespace Game1.Unity.UI
         /// </summary>
         private void _buildUI()
         {
+            _builtProgrammatically = true;
+
             // -- Root panel: centered on screen, 600 x 650
             var panelRt = UIHelper.CreateSizedPanel(
                 transform, "CraftingPanel", UIHelper.COLOR_BG_DARK,
@@ -297,7 +312,7 @@ namespace Game1.Unity.UI
             var minigameBtn = UIHelper.CreateButton(
                 buttonRow, "MinigameBtn", "Minigame",
                 UIHelper.COLOR_BG_BUTTON, UIHelper.COLOR_TEXT_PRIMARY, 14,
-                _onCraftClicked);
+                _onInventClicked);
             var mgLE = minigameBtn.gameObject.AddComponent<LayoutElement>();
             mgLE.flexibleWidth = 1f;
 
@@ -355,17 +370,7 @@ namespace Game1.Unity.UI
         /// <summary>Close the crafting UI, returning any borrowed materials.</summary>
         public void Close()
         {
-            // Return any placed materials to inventory before closing
-            if (!_isDebugMode() && _placedMaterials.Count > 0)
-            {
-                var gm = GameManager.Instance;
-                if (gm?.Player != null)
-                {
-                    foreach (var matId in _placedMaterials.Values)
-                        gm.Player.Inventory.AddItem(matId, 1);
-                }
-            }
-            _placedMaterials.Clear();
+            _returnBorrowedMaterials();
             _stateManager?.TransitionTo(GameState.Playing);
         }
 
@@ -477,7 +482,8 @@ namespace Game1.Unity.UI
             if (_recipeDescLabel != null)
                 _recipeDescLabel.text = desc;
 
-            _placedMaterials.Clear();
+            // Return any borrowed materials before switching recipes
+            _returnBorrowedMaterials();
             _buildGrid();
             _buildPalette();
             _updateDifficulty();
@@ -857,16 +863,21 @@ namespace Game1.Unity.UI
             bool debug = _isDebugMode();
             var gm = GameManager.Instance;
 
-            // Validate materials
-            if (!debug)
+            // Always check for active player, regardless of debug mode
+            if (gm?.Player == null)
             {
-                if (gm?.Player == null)
-                {
-                    NotificationUI.Instance?.Show("No active player!", Color.red);
-                    return;
-                }
+                NotificationUI.Instance?.Show("No active player!", Color.red);
+                return;
+            }
 
-                // Check all required inputs are available
+            // Materials are borrowed from inventory when placed on the grid.
+            // For Instant Craft, if grid has placed materials, those are already consumed.
+            // If grid is empty, check inventory and consume from there.
+            bool gridHasMaterials = _placedMaterials.Count > 0;
+
+            if (!debug && !gridHasMaterials)
+            {
+                // No materials on grid — validate and consume from inventory directly
                 if (_selectedRecipe.Inputs != null)
                 {
                     foreach (var input in _selectedRecipe.Inputs)
@@ -878,14 +889,16 @@ namespace Game1.Unity.UI
                             return;
                         }
                     }
+                    // Consume from inventory
+                    foreach (var input in _selectedRecipe.Inputs)
+                        gm.Player.Inventory.RemoveItem(input.MaterialId, input.Quantity);
                 }
             }
-
-            // Consume materials (non-debug only)
-            if (!debug && _selectedRecipe.Inputs != null)
+            else if (!debug && gridHasMaterials)
             {
-                foreach (var input in _selectedRecipe.Inputs)
-                    gm.Player.Inventory.RemoveItem(input.MaterialId, input.Quantity);
+                // Materials were already borrowed from inventory during PlaceMaterial().
+                // Just clear the placed tracking — they're consumed now.
+                _placedMaterials.Clear();
             }
 
             // Calculate difficulty points from recipe inputs
@@ -969,17 +982,7 @@ namespace Game1.Unity.UI
 
         private void _onClearClicked()
         {
-            // Return all borrowed materials to inventory
-            if (!_isDebugMode())
-            {
-                var gm = GameManager.Instance;
-                if (gm?.Player != null)
-                {
-                    foreach (var matId in _placedMaterials.Values)
-                        gm.Player.Inventory.AddItem(matId, 1);
-                }
-            }
-            _placedMaterials.Clear();
+            _returnBorrowedMaterials();
 
             // Clear all slot visuals
             if (_gridContainer != null)
@@ -1092,7 +1095,29 @@ namespace Game1.Unity.UI
 
         private void _onStateChanged(GameState oldState, GameState newState)
         {
-            _setVisible(newState == GameState.CraftingOpen);
+            bool shouldBeVisible = newState == GameState.CraftingOpen;
+            _setVisible(shouldBeVisible);
+
+            // If we were in CraftingOpen and leaving, return any borrowed materials
+            if (oldState == GameState.CraftingOpen && !shouldBeVisible)
+            {
+                _returnBorrowedMaterials();
+            }
+        }
+
+        /// <summary>Return any materials placed on the grid back to inventory.</summary>
+        private void _returnBorrowedMaterials()
+        {
+            if (_placedMaterials.Count == 0) return;
+            if (_isDebugMode()) { _placedMaterials.Clear(); return; }
+
+            var gm = GameManager.Instance;
+            if (gm?.Player != null)
+            {
+                foreach (var matId in _placedMaterials.Values)
+                    gm.Player.Inventory.AddItem(matId, 1);
+            }
+            _placedMaterials.Clear();
         }
 
         private void _setVisible(bool visible)
