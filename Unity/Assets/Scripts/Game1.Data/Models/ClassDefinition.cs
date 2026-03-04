@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Game1.Data.Models
 {
@@ -16,6 +17,11 @@ namespace Game1.Data.Models
     /// Definition for a character class with tag-driven identity.
     /// Tags define class identity for skill affinity bonuses.
     /// Loaded from classes-1.JSON.
+    ///
+    /// JSON schema notes:
+    ///   - "startingBonuses" is a dict of bonus_name -> float (not "bonuses")
+    ///   - "startingSkill" is a complex object { skillId, skillName, ... } (not a plain string)
+    ///   - "recommendedStats" is a complex object { primary: [...], secondary: [...], avoid: [...] }
     /// </summary>
     public class ClassDefinition
     {
@@ -28,14 +34,53 @@ namespace Game1.Data.Models
         [JsonProperty("description")]
         public string Description { get; set; } = "";
 
-        [JsonProperty("bonuses")]
+        // JSON key is "startingBonuses", mapped to Bonuses for internal use
+        [JsonProperty("startingBonuses")]
         public Dictionary<string, float> Bonuses { get; set; } = new();
 
-        [JsonProperty("startingSkill")]
+        // JSON has startingSkill as { "skillId": "...", "skillName": "...", ... }
+        // We extract just the skillId string
+        [JsonIgnore]
         public string StartingSkill { get; set; } = "";
 
-        [JsonProperty("recommendedStats")]
+        [JsonProperty("startingSkill")]
+        private JToken StartingSkillRaw
+        {
+            set
+            {
+                if (value == null) return;
+                if (value.Type == JTokenType.String)
+                    StartingSkill = value.ToString();
+                else if (value.Type == JTokenType.Object)
+                    StartingSkill = value["skillId"]?.ToString() ?? "";
+            }
+        }
+
+        // JSON has recommendedStats as { "primary": [...], "secondary": [...], "avoid": [...] }
+        // We flatten primary + secondary into a single list
+        [JsonIgnore]
         public List<string> RecommendedStats { get; set; } = new();
+
+        [JsonProperty("recommendedStats")]
+        private JToken RecommendedStatsRaw
+        {
+            set
+            {
+                RecommendedStats = new List<string>();
+                if (value == null) return;
+                if (value.Type == JTokenType.Array)
+                {
+                    RecommendedStats = value.ToObject<List<string>>() ?? new List<string>();
+                }
+                else if (value.Type == JTokenType.Object)
+                {
+                    var primary = value["primary"]?.ToObject<List<string>>();
+                    var secondary = value["secondary"]?.ToObject<List<string>>();
+                    if (primary != null) RecommendedStats.AddRange(primary);
+                    if (secondary != null) RecommendedStats.AddRange(secondary);
+                }
+            }
+        }
 
         [JsonProperty("tags")]
         public List<string> Tags { get; set; } = new();

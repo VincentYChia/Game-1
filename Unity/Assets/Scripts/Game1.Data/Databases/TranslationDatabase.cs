@@ -115,7 +115,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                System.Diagnostics.Debug.WriteLine($"[TranslationDatabase] File not found: {fullPath}");
+                UnityEngine.Debug.Log($"[TranslationDatabase] File not found: {fullPath}");
                 return;
             }
 
@@ -134,12 +134,12 @@ namespace Game1.Data.Databases
                 }
 
                 Loaded = true;
-                System.Diagnostics.Debug.WriteLine(
+                UnityEngine.Debug.Log(
                     $"[TranslationDatabase] Loaded {_translations.Count} translations from {relativePath}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(
+                UnityEngine.Debug.Log(
                     $"[TranslationDatabase] Error loading {relativePath}: {ex.Message}");
             }
         }

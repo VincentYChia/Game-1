@@ -79,7 +79,7 @@ namespace Game1.Data.Databases
             }
 
             Loaded = true;
-            System.Diagnostics.Debug.WriteLine($"[PlacementDatabase] Total placements loaded: {_placements.Count}");
+            UnityEngine.Debug.Log($"[PlacementDatabase] Total placements loaded: {_placements.Count}");
             return total;
         }
 
@@ -89,7 +89,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                System.Diagnostics.Debug.WriteLine($"[PlacementDatabase] File not found: {fullPath}");
+                UnityEngine.Debug.Log($"[PlacementDatabase] File not found: {fullPath}");
                 return 0;
             }
 
@@ -101,7 +101,7 @@ namespace Game1.Data.Databases
                 JArray placements = wrapper["placements"] as JArray;
                 if (placements == null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[PlacementDatabase] No 'placements' array in {relativePath}");
+                    UnityEngine.Debug.Log($"[PlacementDatabase] No 'placements' array in {relativePath}");
                     return 0;
                 }
 
@@ -116,12 +116,12 @@ namespace Game1.Data.Databases
                     }
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[PlacementDatabase] Loaded {count} placements from {relativePath}");
+                UnityEngine.Debug.Log($"[PlacementDatabase] Loaded {count} placements from {relativePath}");
                 return count;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PlacementDatabase] Error loading {relativePath}: {ex.Message}");
+                UnityEngine.Debug.Log($"[PlacementDatabase] Error loading {relativePath}: {ex.Message}");
                 return 0;
             }
         }

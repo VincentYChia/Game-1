@@ -69,7 +69,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                System.Diagnostics.Debug.WriteLine($"[NPCDatabase] File not found: {fullPath}");
+                UnityEngine.Debug.Log($"[NPCDatabase] File not found: {fullPath}");
                 return;
             }
 
@@ -92,11 +92,11 @@ namespace Game1.Data.Databases
                 }
 
                 Loaded = true;
-                System.Diagnostics.Debug.WriteLine($"[NPCDatabase] Loaded {_npcs.Count} NPCs from {relativePath}");
+                UnityEngine.Debug.Log($"[NPCDatabase] Loaded {_npcs.Count} NPCs from {relativePath}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[NPCDatabase] Error loading {relativePath}: {ex.Message}");
+                UnityEngine.Debug.Log($"[NPCDatabase] Error loading {relativePath}: {ex.Message}");
             }
         }
 
@@ -109,7 +109,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                System.Diagnostics.Debug.WriteLine($"[NPCDatabase] Quest file not found: {fullPath}");
+                UnityEngine.Debug.Log($"[NPCDatabase] Quest file not found: {fullPath}");
                 return;
             }
 
@@ -131,11 +131,11 @@ namespace Game1.Data.Databases
                     }
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[NPCDatabase] Loaded {_quests.Count} quests from {relativePath}");
+                UnityEngine.Debug.Log($"[NPCDatabase] Loaded {_quests.Count} quests from {relativePath}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[NPCDatabase] Error loading quests {relativePath}: {ex.Message}");
+                UnityEngine.Debug.Log($"[NPCDatabase] Error loading quests {relativePath}: {ex.Message}");
             }
         }
 

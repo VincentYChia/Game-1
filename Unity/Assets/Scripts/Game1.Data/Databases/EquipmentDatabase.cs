@@ -73,7 +73,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                System.Diagnostics.Debug.WriteLine($"[EquipmentDatabase] File not found: {fullPath}");
+                UnityEngine.Debug.Log($"[EquipmentDatabase] File not found: {fullPath}");
                 return;
             }
 
@@ -90,7 +90,7 @@ namespace Game1.Data.Databases
 
                 if (items == null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[EquipmentDatabase] No equipment array in {relativePath}");
+                    UnityEngine.Debug.Log($"[EquipmentDatabase] No equipment array in {relativePath}");
                     return;
                 }
 
@@ -111,11 +111,11 @@ namespace Game1.Data.Databases
                 }
 
                 Loaded = true;
-                System.Diagnostics.Debug.WriteLine($"[EquipmentDatabase] Loaded {count} equipment from {relativePath}");
+                UnityEngine.Debug.Log($"[EquipmentDatabase] Loaded {count} equipment from {relativePath}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[EquipmentDatabase] Error loading {relativePath}: {ex.Message}");
+                UnityEngine.Debug.Log($"[EquipmentDatabase] Error loading {relativePath}: {ex.Message}");
             }
         }
 
@@ -140,13 +140,13 @@ namespace Game1.Data.Databases
         {
             if (string.IsNullOrEmpty(itemId))
             {
-                System.Diagnostics.Debug.WriteLine("[EquipmentDatabase] CreateEquipmentFromId called with null/empty ID");
+                UnityEngine.Debug.Log("[EquipmentDatabase] CreateEquipmentFromId called with null/empty ID");
                 return null;
             }
 
             if (!_definitions.TryGetValue(itemId, out var definition))
             {
-                System.Diagnostics.Debug.WriteLine($"[EquipmentDatabase] Equipment not found: {itemId}");
+                UnityEngine.Debug.Log($"[EquipmentDatabase] Equipment not found: {itemId}");
                 return null;
             }
 
@@ -157,7 +157,7 @@ namespace Game1.Data.Databases
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[EquipmentDatabase] Error creating equipment {itemId}: {ex.Message}");
+                UnityEngine.Debug.Log($"[EquipmentDatabase] Error creating equipment {itemId}: {ex.Message}");
                 return null;
             }
         }

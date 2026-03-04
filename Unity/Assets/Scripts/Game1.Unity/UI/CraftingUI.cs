@@ -426,16 +426,39 @@ namespace Game1.Unity.UI
                 {
                     // Programmatic path: create a button entry using UIHelper
                     var capturedRecipe = recipe;
-                    string displayName = recipe.OutputId.Replace("_", " ");
-                    int inputCount = recipe.Inputs?.Count ?? 0;
-                    string label = $"{displayName} ({inputCount} mats)";
+                    string displayName = recipe.OutputId?.Replace("_", " ") ?? "?";
+                    // Capitalize first letter of each word
+                    var words = displayName.Split(' ');
+                    for (int i = 0; i < words.Length; i++)
+                        if (words[i].Length > 0)
+                            words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1);
+                    displayName = string.Join(" ", words);
+
+                    // Show material requirements next to the name
+                    string matInfo = "";
+                    if (recipe.Inputs != null && recipe.Inputs.Count > 0)
+                    {
+                        var player = GameManager.Instance?.Player;
+                        var parts = new List<string>();
+                        foreach (var input in recipe.Inputs)
+                        {
+                            int have = player?.Inventory?.GetItemCount(input.MaterialId) ?? 0;
+                            string mName = input.MaterialId?.Replace("_", " ") ?? "?";
+                            string color = have >= input.Quantity ? "green" : "red";
+                            parts.Add($"{have}/{input.Quantity} {mName}");
+                        }
+                        matInfo = $"\n  {string.Join(", ", parts)}";
+                    }
+
+                    string label = $"{displayName} x{recipe.OutputQty}{matInfo}";
 
                     var entryBtn = UIHelper.CreateButton(
-                        _recipeListContainer, $"Recipe_{recipe.OutputId}",
+                        _recipeListContainer, $"Recipe_{recipe.RecipeId}",
                         label,
-                        UIHelper.COLOR_BG_SLOT, UIHelper.COLOR_TEXT_PRIMARY, 12,
+                        UIHelper.COLOR_BG_SLOT, UIHelper.COLOR_TEXT_PRIMARY, 11,
                         () => _selectRecipe(capturedRecipe));
-                    UIHelper.SetPreferredHeight(entryBtn.gameObject, 32f);
+                    var le = UIHelper.SetPreferredHeight(entryBtn.gameObject, matInfo.Length > 0 ? 42f : 28f);
+                    le.minHeight = matInfo.Length > 0 ? 42f : 28f;
                 }
             }
         }

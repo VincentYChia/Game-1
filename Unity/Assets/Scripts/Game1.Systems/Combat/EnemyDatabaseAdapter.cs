@@ -74,7 +74,7 @@ namespace Game1.Systems.Combat
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                System.Diagnostics.Debug.WriteLine($"[EnemyDatabaseAdapter] File not found: {fullPath}");
+                UnityEngine.Debug.Log($"[EnemyDatabaseAdapter] File not found: {fullPath}");
                 return;
             }
 
@@ -86,7 +86,7 @@ namespace Game1.Systems.Combat
                 var enemiesArray = data["enemies"] as JArray;
                 if (enemiesArray == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("[EnemyDatabaseAdapter] No 'enemies' array found in JSON");
+                    UnityEngine.Debug.Log("[EnemyDatabaseAdapter] No 'enemies' array found in JSON");
                     return;
                 }
 
@@ -104,12 +104,12 @@ namespace Game1.Systems.Combat
                 }
 
                 Loaded = true;
-                System.Diagnostics.Debug.WriteLine(
+                UnityEngine.Debug.Log(
                     $"[EnemyDatabaseAdapter] Loaded {_enemies.Count} enemies from {relativePath}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(
+                UnityEngine.Debug.Log(
                     $"[EnemyDatabaseAdapter] Error loading {relativePath}: {ex.Message}");
             }
         }
@@ -251,7 +251,7 @@ namespace Game1.Systems.Combat
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(
+                UnityEngine.Debug.Log(
                     $"[EnemyDatabaseAdapter] Error parsing enemy: {ex.Message}");
                 return null;
             }

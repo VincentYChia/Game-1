@@ -63,8 +63,27 @@ namespace Game1.Unity.UI
             if (DragDropManager.Instance != null)
                 DragDropManager.Instance.OnDropCompleted += _onDropCompleted;
 
+            // Subscribe to inventory data changes so we refresh when items are added/removed
+            // during gameplay (e.g. harvesting), not just when panel opens
+            _subscribeToInventoryChanges();
+
             _createSlots();
             _setVisible(false);
+        }
+
+        /// <summary>Subscribe to the current player's inventory change event.</summary>
+        private void _subscribeToInventoryChanges()
+        {
+            var gm = GameManager.Instance;
+            if (gm?.Player?.Inventory != null)
+                gm.Player.Inventory.OnInventoryChanged += _onInventoryDataChanged;
+        }
+
+        private void _onInventoryDataChanged()
+        {
+            // Only refresh if the panel is currently visible
+            if (_panel != null && _panel.activeSelf)
+                Refresh();
         }
 
         private void OnDestroy()
@@ -75,6 +94,10 @@ namespace Game1.Unity.UI
                 _stateManager.OnStateChanged -= _onStateChanged;
             if (DragDropManager.Instance != null)
                 DragDropManager.Instance.OnDropCompleted -= _onDropCompleted;
+            // Unsubscribe from inventory data changes
+            var gm = GameManager.Instance;
+            if (gm?.Player?.Inventory != null)
+                gm.Player.Inventory.OnInventoryChanged -= _onInventoryDataChanged;
         }
 
         /// <summary>Handle drag-drop completions: swap inventory slots or equip from inventory.</summary>
@@ -249,7 +272,11 @@ namespace Game1.Unity.UI
         {
             _setVisible(newState == GameState.InventoryOpen);
             if (newState == GameState.InventoryOpen)
+            {
+                // Re-subscribe in case player was created after Start()
+                _subscribeToInventoryChanges();
                 Refresh();
+            }
         }
 
         private void _setVisible(bool visible)

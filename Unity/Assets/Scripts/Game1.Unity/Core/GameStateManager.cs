@@ -166,8 +166,12 @@ namespace Game1.Unity.Core
                     break;
 
                 case GameState.StartMenu:
+                    // Can't escape from start menu
+                    break;
+
                 case GameState.ClassSelection:
-                    // Can't escape from start menu or class selection
+                    // Allow returning to start menu from class selection
+                    TransitionTo(GameState.StartMenu);
                     break;
 
                 default:

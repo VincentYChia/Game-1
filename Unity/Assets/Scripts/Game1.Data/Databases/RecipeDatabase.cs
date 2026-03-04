@@ -82,7 +82,7 @@ namespace Game1.Data.Databases
             }
 
             Loaded = true;
-            System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] Total recipes loaded: {_recipes.Count}");
+            UnityEngine.Debug.Log($"[RecipeDatabase] Total recipes loaded: {_recipes.Count}");
         }
 
         /// <summary>Load recipes from a single JSON file.</summary>
@@ -91,7 +91,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] File not found: {fullPath}");
+                UnityEngine.Debug.Log($"[RecipeDatabase] File not found: {fullPath}");
                 return;
             }
 
@@ -103,7 +103,7 @@ namespace Game1.Data.Databases
                 JArray recipes = wrapper["recipes"] as JArray;
                 if (recipes == null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] WARNING: No 'recipes' array in {relativePath}");
+                    UnityEngine.Debug.Log($"[RecipeDatabase] WARNING: No 'recipes' array in {relativePath}");
                     return;
                 }
 
@@ -159,11 +159,11 @@ namespace Game1.Data.Databases
                     count++;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] Loaded {count} recipes from {relativePath}");
+                UnityEngine.Debug.Log($"[RecipeDatabase] Loaded {count} recipes from {relativePath}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] ERROR loading {relativePath}: {ex.Message}");
+                UnityEngine.Debug.Log($"[RecipeDatabase] ERROR loading {relativePath}: {ex.Message}");
             }
         }
 
@@ -175,9 +175,33 @@ namespace Game1.Data.Databases
             _addToStationIndex(recipe);
         }
 
+        /// <summary>
+        /// Station type alias map. JSON files use inconsistent names for the same discipline.
+        /// This maps all aliases to a canonical key so lookups work regardless of which name is used.
+        /// </summary>
+        private static readonly Dictionary<string, string> _stationAliases = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["enchanting"] = "enchanting",
+            ["adornments"] = "enchanting",
+            ["refinery"] = "refining",
+            ["refining"] = "refining",
+            ["smithing"] = "smithing",
+            ["alchemy"] = "alchemy",
+            ["engineering"] = "engineering",
+        };
+
+        private static string _normalizeStationType(string stationType)
+        {
+            if (string.IsNullOrEmpty(stationType)) return "";
+            return _stationAliases.TryGetValue(stationType, out var canonical)
+                ? canonical
+                : stationType.ToLowerInvariant();
+        }
+
         private void _addToStationIndex(Recipe recipe)
         {
-            string key = recipe.StationType ?? "";
+            string key = _normalizeStationType(recipe.StationType);
+            recipe.StationType = key; // Normalize the recipe's own station type
             if (!_byStation.ContainsKey(key))
                 _byStation[key] = new List<Recipe>();
             _byStation[key].Add(recipe);
@@ -202,7 +226,8 @@ namespace Game1.Data.Databases
         {
             if (string.IsNullOrEmpty(stationType)) return new List<Recipe>();
 
-            if (!_byStation.TryGetValue(stationType, out var recipes))
+            string normalized = _normalizeStationType(stationType);
+            if (!_byStation.TryGetValue(normalized, out var recipes))
                 return new List<Recipe>();
 
             return recipes.Where(r => r.StationTier <= tier).ToList();

@@ -267,7 +267,10 @@ namespace Game1.Unity.Core
         }
 
         /// <summary>
-        /// Try to harvest a resource at the given world position using the active tool.
+        /// Try to harvest a resource at the given world position.
+        /// Matches Python behavior: auto-selects the correct tool from equipment
+        /// based on resource.RequiredTool (no manual cycling needed).
+        /// Falls back to mainHand weapon with 0.25x effectiveness if no matching tool.
         /// </summary>
         private void _tryHarvest(Vector3 worldPoint)
         {
@@ -283,27 +286,44 @@ namespace Game1.Unity.Core
             float dist = Mathf.Sqrt(dx * dx + dz * dz);
             if (dist > _harvestRange) return;
 
-            // Get the active tool
-            var toolItem = _character.Equipment.GetEquipped(_activeToolSlot);
-            if (toolItem == null)
-            {
-                Debug.Log($"[Player] No tool equipped in {_activeToolSlot} slot");
-                if (NotificationUI.Instance != null)
-                    NotificationUI.Instance.Show($"No tool in {_activeToolSlot} slot (Q to swap)", new Color(1f, 0.6f, 0.3f), 2f);
-                return;
-            }
-
-            var tool = new Tool(toolItem);
-
-            // Determine resource category from RequiredTool field
-            // Resource RequiredTool tells us what tool TYPE it needs (axe, pickaxe, etc.)
+            // Auto-select the correct tool based on resource.RequiredTool
+            // This matches Python: character.get_equipped_tool(resource.required_tool)
             string requiredToolType = resource.RequiredTool ?? "";
-            if (!string.Equals(tool.ToolType, requiredToolType, StringComparison.OrdinalIgnoreCase))
+            EquipmentItem toolItem = null;
+            Tool tool = null;
+
+            // Map required tool type to equipment slot
+            EquipmentSlot toolSlot = requiredToolType.ToLowerInvariant() switch
             {
-                Debug.Log($"[Player] Wrong tool: using {tool.ToolType}, need {requiredToolType}. Press Q to cycle tools.");
-                if (NotificationUI.Instance != null)
-                    NotificationUI.Instance.Show($"Need {requiredToolType} — press Q to swap tools", new Color(1f, 0.6f, 0.3f), 2f);
-                return;
+                "axe" => EquipmentSlot.Axe,
+                "pickaxe" => EquipmentSlot.Pickaxe,
+                _ => EquipmentSlot.Axe // default fallback
+            };
+
+            toolItem = _character.Equipment.GetEquipped(toolSlot);
+            if (toolItem != null)
+            {
+                tool = new Tool(toolItem);
+            }
+            else
+            {
+                // Fallback: try mainHand weapon (Python uses 0.25x effectiveness)
+                var mainHand = _character.Equipment.GetEquipped(EquipmentSlot.MainHand);
+                if (mainHand != null)
+                {
+                    tool = new Tool(mainHand);
+                    toolItem = mainHand;
+                    Debug.Log($"[Player] No {requiredToolType} equipped, using mainHand weapon at reduced effectiveness");
+                    if (NotificationUI.Instance != null)
+                        NotificationUI.Instance.Show($"No {requiredToolType} — using weapon (reduced)", new Color(1f, 0.8f, 0.4f), 2f);
+                }
+                else
+                {
+                    Debug.Log($"[Player] No {requiredToolType} or weapon equipped");
+                    if (NotificationUI.Instance != null)
+                        NotificationUI.Instance.Show($"Need a {requiredToolType} to harvest this", new Color(1f, 0.6f, 0.3f), 2f);
+                    return;
+                }
             }
 
             // Check tier
@@ -316,7 +336,10 @@ namespace Game1.Unity.Core
             }
 
             // Calculate damage based on tool
-            int baseDamage = Mathf.Max(1, (int)(10 * tool.GatherSpeed));
+            // If using mainHand fallback (not a proper tool), apply 0.25x effectiveness (Python behavior)
+            bool isProperTool = string.Equals(tool.ToolType, requiredToolType, StringComparison.OrdinalIgnoreCase);
+            float effectiveness = isProperTool ? 1.0f : 0.25f;
+            int baseDamage = Mathf.Max(1, (int)(10 * tool.GatherSpeed * effectiveness));
             float critChance = _character.Stats != null ? _character.Stats.GetStatBonus("LCK") : 0.02f;
             bool isCrit = UnityEngine.Random.value < critChance;
             var (actualDamage, destroyed) = resource.TakeDamage(baseDamage, isCrit);

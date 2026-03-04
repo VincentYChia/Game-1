@@ -35,7 +35,7 @@ namespace Game1.Data.Models
         {
             if (string.IsNullOrEmpty(itemId))
             {
-                System.Diagnostics.Debug.WriteLine("[ItemFactory] CreateFromId called with null/empty ID");
+                UnityEngine.Debug.Log("[ItemFactory] CreateFromId called with null/empty ID");
                 return null;
             }
 
@@ -72,7 +72,7 @@ namespace Game1.Data.Models
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine($"[ItemFactory] Unknown item ID: {itemId}");
+            UnityEngine.Debug.Log($"[ItemFactory] Unknown item ID: {itemId}");
             return null;
         }
 
@@ -106,7 +106,7 @@ namespace Game1.Data.Models
         {
             if (data == null)
             {
-                System.Diagnostics.Debug.WriteLine("[ItemFactory] FromSaveData called with null data");
+                UnityEngine.Debug.Log("[ItemFactory] FromSaveData called with null data");
                 return null;
             }
 
@@ -128,7 +128,7 @@ namespace Game1.Data.Models
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ItemFactory] Error reconstructing {category} item from save data: {ex.Message}");
+                UnityEngine.Debug.Log($"[ItemFactory] Error reconstructing {category} item from save data: {ex.Message}");
                 return null;
             }
         }
@@ -175,7 +175,7 @@ namespace Game1.Data.Models
             var baseItem = CreateFromId(itemId) as EquipmentItem;
             if (baseItem == null)
             {
-                System.Diagnostics.Debug.WriteLine($"[ItemFactory] CreateCrafted: {itemId} is not equipment");
+                UnityEngine.Debug.Log($"[ItemFactory] CreateCrafted: {itemId} is not equipment");
                 return null;
             }
 

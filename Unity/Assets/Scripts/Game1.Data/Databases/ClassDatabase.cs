@@ -65,7 +65,7 @@ namespace Game1.Data.Databases
             string fullPath = GamePaths.GetContentPath(relativePath);
             if (!File.Exists(fullPath))
             {
-                System.Diagnostics.Debug.WriteLine($"[ClassDatabase] File not found: {fullPath}");
+                UnityEngine.Debug.LogError($"[ClassDatabase] File not found: {fullPath}");
                 return;
             }
 
@@ -77,25 +77,33 @@ namespace Game1.Data.Databases
                 JArray classes = wrapper["classes"] as JArray;
                 if (classes == null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ClassDatabase] No 'classes' array in {relativePath}");
+                    UnityEngine.Debug.LogError($"[ClassDatabase] No 'classes' array in {relativePath}");
                     return;
                 }
 
                 foreach (var token in classes)
                 {
-                    var classDef = token.ToObject<ClassDefinition>();
-                    if (classDef != null && !string.IsNullOrEmpty(classDef.ClassId))
+                    try
                     {
-                        _classes[classDef.ClassId] = classDef;
+                        var classDef = token.ToObject<ClassDefinition>();
+                        if (classDef != null && !string.IsNullOrEmpty(classDef.ClassId))
+                        {
+                            _classes[classDef.ClassId] = classDef;
+                        }
+                    }
+                    catch (Exception perClassEx)
+                    {
+                        string classId = token["classId"]?.ToString() ?? "unknown";
+                        UnityEngine.Debug.LogWarning($"[ClassDatabase] Failed to deserialize class '{classId}': {perClassEx.Message}");
                     }
                 }
 
-                Loaded = true;
-                System.Diagnostics.Debug.WriteLine($"[ClassDatabase] Loaded {_classes.Count} classes from {relativePath}");
+                Loaded = _classes.Count > 0;
+                UnityEngine.Debug.Log($"[ClassDatabase] Loaded {_classes.Count} classes from {relativePath}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ClassDatabase] Error loading {relativePath}: {ex.Message}");
+                UnityEngine.Debug.LogError($"[ClassDatabase] Error loading {relativePath}: {ex.Message}");
             }
         }
 
