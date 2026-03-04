@@ -114,7 +114,16 @@ namespace Game1.Unity.Core
             try
             {
                 DatabaseInitializer.InitializeAll();
-                Debug.Log("[GameManager] All databases loaded successfully");
+                // Log counts with UnityEngine.Debug.Log (visible in Console)
+                // since DatabaseInitializer uses System.Diagnostics which is invisible
+                Debug.Log($"[GameManager] Databases loaded — " +
+                    $"Materials:{MaterialDatabase.Instance.Count}, " +
+                    $"Equipment:{EquipmentDatabase.Instance.Count}, " +
+                    $"Recipes:{RecipeDatabase.Instance.Count}, " +
+                    $"Skills:{SkillDatabase.Instance.Count}, " +
+                    $"Classes:{ClassDatabase.Instance.Count}, " +
+                    $"Titles:{TitleDatabase.Instance.Count}, " +
+                    $"Placements:{PlacementDatabase.Instance.Count}");
             }
             catch (Exception ex)
             {

@@ -408,59 +408,189 @@ namespace Game1.Unity.UI
                     Destroy(child.gameObject);
             }
 
+            if (_availableRecipes.Count == 0)
+            {
+                Debug.LogWarning($"[CraftingUI] No recipes to display for {_currentDiscipline} T{_stationTier}");
+                if (_recipeListContainer != null)
+                {
+                    var noRecipeText = UIHelper.CreateText(_recipeListContainer, "NoRecipes",
+                        $"No recipes found for {_currentDiscipline} T{_stationTier}",
+                        13, Color.yellow, TextAnchor.MiddleCenter);
+                    UIHelper.SetPreferredHeight(noRecipeText.gameObject, 40f);
+                }
+                return;
+            }
+
+            // Group recipes by type (from metadata tags: weapon, armor, tool, etc.)
+            // This matches Python renderer.py _group_recipes_by_type()
+            var grouped = new Dictionary<string, List<Recipe>>();
+            var equipDb = EquipmentDatabase.Instance;
+
             foreach (var recipe in _availableRecipes)
             {
-                if (_recipeEntryPrefab != null && _recipeListContainer != null)
-                {
-                    // Prefab path
-                    var entry = Instantiate(_recipeEntryPrefab, _recipeListContainer);
-                    var text = entry.GetComponentInChildren<TextMeshProUGUI>();
-                    if (text != null) text.text = recipe.OutputId;
+                string group = _classifyRecipe(recipe, equipDb);
+                if (!grouped.ContainsKey(group))
+                    grouped[group] = new List<Recipe>();
+                grouped[group].Add(recipe);
+            }
 
-                    var button = entry.GetComponent<Button>();
-                    var capturedRecipe = recipe;
-                    if (button != null)
-                        button.onClick.AddListener(() => _selectRecipe(capturedRecipe));
+            // Render groups with headers
+            foreach (var kvp in grouped)
+            {
+                string groupName = kvp.Key;
+                var recipes = kvp.Value;
+
+                // Group header
+                if (grouped.Count > 1)
+                {
+                    var header = UIHelper.CreateText(_recipeListContainer, $"Header_{groupName}",
+                        groupName.ToUpper(), 13, UIHelper.COLOR_TEXT_GOLD, TextAnchor.MiddleLeft);
+                    var headerLE = UIHelper.SetPreferredHeight(header.gameObject, 22f);
+                    headerLE.minHeight = 22f;
                 }
-                else if (_recipeListContainer != null)
+
+                foreach (var recipe in recipes)
                 {
-                    // Programmatic path: create a button entry using UIHelper
-                    var capturedRecipe = recipe;
-                    string displayName = recipe.OutputId?.Replace("_", " ") ?? "?";
-                    // Capitalize first letter of each word
-                    var words = displayName.Split(' ');
-                    for (int i = 0; i < words.Length; i++)
-                        if (words[i].Length > 0)
-                            words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1);
-                    displayName = string.Join(" ", words);
-
-                    // Show material requirements next to the name
-                    string matInfo = "";
-                    if (recipe.Inputs != null && recipe.Inputs.Count > 0)
-                    {
-                        var player = GameManager.Instance?.Player;
-                        var parts = new List<string>();
-                        foreach (var input in recipe.Inputs)
-                        {
-                            int have = player?.Inventory?.GetItemCount(input.MaterialId) ?? 0;
-                            string mName = input.MaterialId?.Replace("_", " ") ?? "?";
-                            string color = have >= input.Quantity ? "green" : "red";
-                            parts.Add($"{have}/{input.Quantity} {mName}");
-                        }
-                        matInfo = $"\n  {string.Join(", ", parts)}";
-                    }
-
-                    string label = $"{displayName} x{recipe.OutputQty}{matInfo}";
-
-                    var entryBtn = UIHelper.CreateButton(
-                        _recipeListContainer, $"Recipe_{recipe.RecipeId}",
-                        label,
-                        UIHelper.COLOR_BG_SLOT, UIHelper.COLOR_TEXT_PRIMARY, 11,
-                        () => _selectRecipe(capturedRecipe));
-                    var le = UIHelper.SetPreferredHeight(entryBtn.gameObject, matInfo.Length > 0 ? 42f : 28f);
-                    le.minHeight = matInfo.Length > 0 ? 42f : 28f;
+                    _createRecipeEntry(recipe);
                 }
             }
+        }
+
+        /// <summary>Classify a recipe into a display group based on output type and tags.</summary>
+        private string _classifyRecipe(Recipe recipe, EquipmentDatabase equipDb)
+        {
+            // Check metadata tags first
+            if (recipe.Tags != null && recipe.Tags.Count > 0)
+            {
+                foreach (var tag in recipe.Tags)
+                {
+                    string t = tag.ToLowerInvariant();
+                    if (t == "weapon" || t == "sword" || t == "mace" || t == "bow" || t == "staff" || t == "dagger" || t == "spear")
+                        return "Weapons";
+                    if (t == "armor" || t == "chest" || t == "helmet" || t == "legs" || t == "boots" || t == "gauntlets")
+                        return "Armor";
+                    if (t == "tool" || t == "pickaxe" || t == "axe" || t == "fishing_rod")
+                        return "Tools";
+                    if (t == "shield")
+                        return "Shields";
+                    if (t == "accessory" || t == "ring" || t == "amulet")
+                        return "Accessories";
+                    if (t == "potion" || t == "consumable" || t == "elixir")
+                        return "Consumables";
+                }
+            }
+
+            // Check recipe metadata (nested metadata object)
+            if (recipe.Metadata != null)
+            {
+                if (recipe.Metadata.TryGetValue("tags", out var tagsObj) && tagsObj is Newtonsoft.Json.Linq.JArray metaTags)
+                {
+                    foreach (var t in metaTags)
+                    {
+                        string tagStr = t.ToString().ToLowerInvariant();
+                        if (tagStr == "weapon" || tagStr == "sword") return "Weapons";
+                        if (tagStr == "armor") return "Armor";
+                        if (tagStr == "tool") return "Tools";
+                        if (tagStr == "shield") return "Shields";
+                        if (tagStr == "accessory") return "Accessories";
+                        if (tagStr == "potion") return "Consumables";
+                    }
+                }
+            }
+
+            // Check if equipment database knows this item
+            if (equipDb != null && equipDb.Loaded && equipDb.IsEquipment(recipe.OutputId))
+                return "Equipment";
+
+            // Check by output ID naming convention
+            string outputLower = recipe.OutputId?.ToLowerInvariant() ?? "";
+            if (outputLower.Contains("sword") || outputLower.Contains("dagger") || outputLower.Contains("mace") ||
+                outputLower.Contains("bow") || outputLower.Contains("staff") || outputLower.Contains("spear"))
+                return "Weapons";
+            if (outputLower.Contains("helmet") || outputLower.Contains("chestplate") || outputLower.Contains("greaves") ||
+                outputLower.Contains("boots") || outputLower.Contains("gauntlets"))
+                return "Armor";
+            if (outputLower.Contains("axe") || outputLower.Contains("pickaxe") || outputLower.Contains("fishing"))
+                return "Tools";
+            if (outputLower.Contains("shield"))
+                return "Shields";
+            if (outputLower.Contains("potion") || outputLower.Contains("elixir"))
+                return "Consumables";
+            if (outputLower.Contains("ingot") || outputLower.Contains("plank") || outputLower.Contains("bar"))
+                return "Refined Materials";
+            if (recipe.IsEnchantment)
+                return "Enchantments";
+
+            return "Other";
+        }
+
+        private void _createRecipeEntry(Recipe recipe)
+        {
+            if (_recipeListContainer == null) return;
+
+            if (_recipeEntryPrefab != null)
+            {
+                // Prefab path
+                var entry = Instantiate(_recipeEntryPrefab, _recipeListContainer);
+                var text = entry.GetComponentInChildren<TextMeshProUGUI>();
+                if (text != null) text.text = recipe.OutputId;
+
+                var button = entry.GetComponent<Button>();
+                var capturedRecipe = recipe;
+                if (button != null)
+                    button.onClick.AddListener(() => _selectRecipe(capturedRecipe));
+            }
+            else
+            {
+                // Programmatic path: create a button entry using UIHelper
+                var capturedRecipe = recipe;
+                string displayName = _formatDisplayName(recipe.OutputId);
+
+                // Check if player can craft this recipe
+                var player = GameManager.Instance?.Player;
+                bool canCraft = true;
+                string matSummary = "";
+
+                if (recipe.Inputs != null && recipe.Inputs.Count > 0)
+                {
+                    var parts = new List<string>();
+                    foreach (var input in recipe.Inputs)
+                    {
+                        int have = player?.Inventory?.GetItemCount(input.MaterialId) ?? 0;
+                        if (have < input.Quantity) canCraft = false;
+                        string mName = _formatDisplayName(input.MaterialId);
+                        parts.Add($"{have}/{input.Quantity}");
+                    }
+                    matSummary = $" [{string.Join(", ", parts)}]";
+                }
+
+                string label = $"{displayName} x{recipe.OutputQty}{matSummary}";
+
+                // Green-ish if craftable, dark if not
+                Color bgColor = canCraft
+                    ? new Color(0.22f, 0.32f, 0.22f)
+                    : UIHelper.COLOR_BG_SLOT;
+
+                var entryBtn = UIHelper.CreateButton(
+                    _recipeListContainer, $"Recipe_{recipe.RecipeId}",
+                    label, bgColor, UIHelper.COLOR_TEXT_PRIMARY, 11,
+                    () => _selectRecipe(capturedRecipe));
+                var le = UIHelper.SetPreferredHeight(entryBtn.gameObject, 30f);
+                le.minHeight = 30f;
+            }
+            }
+        }
+
+        /// <summary>Format an item ID into a human-readable display name.</summary>
+        private static string _formatDisplayName(string itemId)
+        {
+            if (string.IsNullOrEmpty(itemId)) return "?";
+            string name = itemId.Replace("_", " ");
+            var words = name.Split(' ');
+            for (int i = 0; i < words.Length; i++)
+                if (words[i].Length > 0)
+                    words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1);
+            return string.Join(" ", words);
         }
 
         private void _selectRecipe(Recipe recipe)

@@ -171,10 +171,25 @@ namespace Game1.Unity.UI
                 Destroy(child.gameObject);
 
             var classDb = ClassDatabase.Instance;
-            if (classDb == null) return;
+            if (classDb == null || !classDb.Loaded)
+            {
+                Debug.LogError("[ClassSelectionUI] ClassDatabase not loaded! Check progression/classes-1.JSON");
+                return;
+            }
 
             var allClasses = classDb.Classes;
-            if (allClasses == null) return;
+            if (allClasses == null || allClasses.Count == 0)
+            {
+                Debug.LogError($"[ClassSelectionUI] No classes loaded (count={classDb.Count})");
+                // Show error text to user so they know what happened
+                var errText = UIHelper.CreateText(_classCardContainer, "ErrorMsg",
+                    "ERROR: No classes loaded.\nCheck Unity Console for details.",
+                    16, Color.red, TextAnchor.MiddleCenter);
+                UIHelper.SetPreferredHeight(errText.gameObject, 60);
+                return;
+            }
+
+            Debug.Log($"[ClassSelectionUI] Populating {allClasses.Count} classes");
 
             foreach (var classDef in allClasses.Values)
             {
