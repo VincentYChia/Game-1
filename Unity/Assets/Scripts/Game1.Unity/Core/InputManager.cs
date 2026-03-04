@@ -73,6 +73,7 @@ namespace Game1.Unity.Core
         public event Action<Vector3> OnPrimaryAttack;
         public event Action<Vector3> OnSecondaryAction;
         public event Action OnEscape;
+        public event Action OnCycleTool;
         public event Action OnToggleInventory;
         public event Action OnToggleEquipment;
         public event Action OnToggleMap;
@@ -537,6 +538,8 @@ namespace Game1.Unity.Core
                 { Debug.Log("[DBG:INPUT:KEY] Tab pressed → OnToggleInventory"); OnToggleInventory?.Invoke(); } // DBG
                 if (_wasKeyPressed(KeyCode.I))
                 { Debug.Log("[DBG:INPUT:KEY] I pressed → OnToggleEquipment"); OnToggleEquipment?.Invoke(); } // DBG
+                if (_wasKeyPressed(KeyCode.Q) && isPlaying)
+                { Debug.Log("[DBG:INPUT:KEY] Q pressed → OnCycleTool"); OnCycleTool?.Invoke(); } // DBG
                 if (_wasKeyPressed(KeyCode.M))
                 { Debug.Log("[DBG:INPUT:KEY] M pressed → OnToggleMap"); OnToggleMap?.Invoke(); } // DBG
                 if (_wasKeyPressed(KeyCode.J))

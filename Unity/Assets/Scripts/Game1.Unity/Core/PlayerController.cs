@@ -9,8 +9,10 @@
 // ============================================================================
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Game1.Core;
+using Game1.Data.Enums;
 using Game1.Data.Models;
 using Game1.Entities;
 using Game1.Systems.World;
@@ -45,6 +47,11 @@ namespace Game1.Unity.Core
         [Header("Interaction")]
         [SerializeField] private float _interactionRange = 3.5f;
 
+        [Header("Combat & Harvest")]
+        [SerializeField] private float _attackRange = 3.0f;
+        [SerializeField] private float _harvestRange = 3.5f;
+        [SerializeField] private float _attackCooldown = 0.5f;
+
         // ====================================================================
         // State
         // ====================================================================
@@ -53,6 +60,8 @@ namespace Game1.Unity.Core
         private float _jumpOffset;  // Height above terrain surface
         private bool _isGrounded;
         private Character _character;
+        private float _lastAttackTime;
+        private EquipmentSlot _activeToolSlot = EquipmentSlot.Axe;
         private bool _loggedMovement; // DBG
         private float _dbgTimer; // DBG
         private int _dbgMoveFrames; // DBG
@@ -108,7 +117,9 @@ namespace Game1.Unity.Core
             {
                 _inputManager.OnInteract += _onInteract;
                 _inputManager.OnJump += _onJump;
-                Debug.Log("[DBG:PLAYER:START:06] Subscribed to OnInteract, OnJump"); // DBG
+                _inputManager.OnPrimaryAttack += _onPrimaryAttack;
+                _inputManager.OnCycleTool += _onCycleTool;
+                Debug.Log("[DBG:PLAYER:START:06] Subscribed to OnInteract, OnJump, OnPrimaryAttack, OnCycleTool"); // DBG
             }
             else
             {
@@ -151,6 +162,8 @@ namespace Game1.Unity.Core
             {
                 _inputManager.OnInteract -= _onInteract;
                 _inputManager.OnJump -= _onJump;
+                _inputManager.OnPrimaryAttack -= _onPrimaryAttack;
+                _inputManager.OnCycleTool -= _onCycleTool;
             }
         }
 
@@ -216,6 +229,127 @@ namespace Game1.Unity.Core
             if (!_isGrounded) return;
             _verticalVelocity = _jumpForce;
             _isGrounded = false;
+        }
+
+        /// <summary>
+        /// Left click: try to attack an enemy first, then try to harvest a resource.
+        /// Uses center-screen raycast for aiming direction.
+        /// </summary>
+        private void _onPrimaryAttack(Vector3 worldPoint)
+        {
+            if (_character == null || _gameManager == null) return;
+            if (Time.time - _lastAttackTime < _attackCooldown) return;
+
+            _lastAttackTime = Time.time;
+
+            // 1) Try combat: find enemy near the aimed world position
+            var enemy = _gameManager.GetEnemyAtPosition(worldPoint.x, worldPoint.z);
+            if (enemy != null)
+            {
+                // Check range from player to enemy
+                float dx = worldPoint.x - _character.Position.X;
+                float dz = worldPoint.z - _character.Position.Z;
+                float dist = Mathf.Sqrt(dx * dx + dz * dz);
+
+                if (dist <= _attackRange)
+                {
+                    var result = _gameManager.PlayerAttack(enemy);
+                    string critStr = result.IsCritical ? " CRIT!" : "";
+                    Debug.Log($"[Player] Attack hit for {result.Damage:F0} damage{critStr}");
+                    GameEvents.RaiseDamageDealt(_character, enemy, result.Damage);
+                    return;
+                }
+            }
+
+            // 2) Try harvest: find resource near the aimed world position
+            _tryHarvest(worldPoint);
+        }
+
+        /// <summary>
+        /// Try to harvest a resource at the given world position using the active tool.
+        /// </summary>
+        private void _tryHarvest(Vector3 worldPoint)
+        {
+            if (_gameManager.World == null) return;
+
+            var resource = _gameManager.World.GetResourceAt(
+                GamePosition.FromXZ(worldPoint.x, worldPoint.z), 1.5f);
+            if (resource == null || resource.IsDepleted) return;
+
+            // Check range from player
+            float dx = worldPoint.x - _character.Position.X;
+            float dz = worldPoint.z - _character.Position.Z;
+            float dist = Mathf.Sqrt(dx * dx + dz * dz);
+            if (dist > _harvestRange) return;
+
+            // Get the active tool
+            var toolItem = _character.Equipment.GetEquipped(_activeToolSlot);
+            if (toolItem == null)
+            {
+                Debug.Log($"[Player] No tool equipped in {_activeToolSlot} slot");
+                return;
+            }
+
+            var tool = new Tool(toolItem);
+
+            // Determine resource category from RequiredTool field
+            // Resource RequiredTool tells us what tool TYPE it needs (axe, pickaxe, etc.)
+            string requiredToolType = resource.RequiredTool ?? "";
+            if (!string.Equals(tool.ToolType, requiredToolType, StringComparison.OrdinalIgnoreCase))
+            {
+                Debug.Log($"[Player] Wrong tool: using {tool.ToolType}, need {requiredToolType}. Press Q to cycle tools.");
+                return;
+            }
+
+            // Check tier
+            if (!tool.CanHarvestTier(resource.Tier))
+            {
+                Debug.Log($"[Player] Tool tier {tool.ToolTier} too low for T{resource.Tier} resource");
+                return;
+            }
+
+            // Calculate damage based on tool
+            int baseDamage = Mathf.Max(1, (int)(10 * tool.GatherSpeed));
+            float critChance = _character.Stats != null ? _character.Stats.GetStatBonus("LCK") : 0.02f;
+            bool isCrit = UnityEngine.Random.value < critChance;
+            var (actualDamage, destroyed) = resource.TakeDamage(baseDamage, isCrit);
+
+            // Apply durability wear to tool
+            tool.ApplyGatheringWear();
+
+            string critStr = isCrit ? " (CRIT)" : "";
+            Debug.Log($"[Player] Harvested {resource.ResourceId}: {actualDamage} dmg{critStr} ({resource.CurrentHp}/{resource.MaxHp} HP)");
+
+            if (destroyed)
+            {
+                // Roll loot
+                var loot = resource.GetLoot();
+                foreach (var (itemId, qty) in loot)
+                {
+                    _character.Inventory.AddItem(itemId, qty);
+                    GameEvents.RaiseResourceHarvested(resource.ResourceId, itemId, qty);
+                    Debug.Log($"[Player] Gathered {qty}x {itemId}");
+                }
+                GameEvents.RaiseResourceDepleted(resource.ResourceId);
+            }
+        }
+
+        /// <summary>
+        /// Cycle active tool between Axe and Pickaxe slots (Q key).
+        /// </summary>
+        private void _onCycleTool()
+        {
+            if (_character == null) return;
+
+            // Toggle between Axe and Pickaxe
+            _activeToolSlot = _activeToolSlot == EquipmentSlot.Axe
+                ? EquipmentSlot.Pickaxe
+                : EquipmentSlot.Axe;
+
+            var equipped = _character.Equipment.GetEquipped(_activeToolSlot);
+            string toolName = equipped?.Name ?? "(empty)";
+            Debug.Log($"[Player] Active tool: {_activeToolSlot} — {toolName}");
+            GameEvents.RaiseActiveToolChanged((int)_activeToolSlot);
         }
 
         // ====================================================================

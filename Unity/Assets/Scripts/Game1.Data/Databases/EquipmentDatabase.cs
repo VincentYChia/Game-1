@@ -85,7 +85,8 @@ namespace Game1.Data.Databases
                 JArray items = wrapper["equipment"] as JArray
                             ?? wrapper["items"] as JArray
                             ?? wrapper["weapons"] as JArray
-                            ?? wrapper["armor"] as JArray;
+                            ?? wrapper["armor"] as JArray
+                            ?? wrapper["tools"] as JArray;
 
                 if (items == null)
                 {

@@ -140,6 +140,32 @@ namespace Game1.Core
             => OnItemGenerationCompleted?.Invoke(discipline, success);
 
         // ====================================================================
+        // Harvest Events
+        // ====================================================================
+
+        /// <summary>Raised when a resource is harvested. Args: resourceId, itemId, quantity.</summary>
+        public static event Action<string, string, int> OnResourceHarvested;
+
+        /// <summary>Raised when a resource node is depleted. Args: resourceId.</summary>
+        public static event Action<string> OnResourceDepleted;
+
+        public static void RaiseResourceHarvested(string resourceId, string itemId, int quantity)
+            => OnResourceHarvested?.Invoke(resourceId, itemId, quantity);
+
+        public static void RaiseResourceDepleted(string resourceId)
+            => OnResourceDepleted?.Invoke(resourceId);
+
+        // ====================================================================
+        // Tool Events
+        // ====================================================================
+
+        /// <summary>Raised when the active tool changes. Args: toolSlot (EquipmentSlot int).</summary>
+        public static event Action<int> OnActiveToolChanged;
+
+        public static void RaiseActiveToolChanged(int toolSlot)
+            => OnActiveToolChanged?.Invoke(toolSlot);
+
+        // ====================================================================
         // Interaction Events
         // ====================================================================
 
@@ -186,6 +212,9 @@ namespace Game1.Core
             OnItemGenerationCompleted = null;
             OnPlayerInteracted = null;
             OnNotificationShown = null;
+            OnResourceHarvested = null;
+            OnResourceDepleted = null;
+            OnActiveToolChanged = null;
         }
     }
 }

@@ -339,6 +339,17 @@ namespace Game1.Unity.UI
             _updateDifficulty();
 
             _stateManager?.TransitionTo(GameState.CraftingOpen);
+
+            // Force layout recalculation — recipe list buttons were created while
+            // the panel was inactive, so ContentSizeFitter may not have calculated yet
+            if (_recipeListContainer != null)
+            {
+                Canvas.ForceUpdateCanvases();
+                var rt = _recipeListContainer as RectTransform
+                    ?? _recipeListContainer.GetComponent<RectTransform>();
+                if (rt != null)
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
+            }
         }
 
         /// <summary>Close the crafting UI, returning any borrowed materials.</summary>
@@ -1088,6 +1099,15 @@ namespace Game1.Unity.UI
         {
             if (_panel != null) _panel.SetActive(visible);
             else gameObject.SetActive(visible);
+
+            // Force layout recalculation after panel becomes visible.
+            // Buttons created while the panel was inactive may have zero size
+            // because VerticalLayoutGroup/ContentSizeFitter skip inactive content.
+            if (visible && _recipeListContainer != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(
+                    _recipeListContainer as RectTransform ?? _recipeListContainer.GetComponent<RectTransform>());
+            }
         }
     }
 
