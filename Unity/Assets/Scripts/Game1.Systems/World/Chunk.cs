@@ -680,7 +680,8 @@ namespace Game1.Systems.World
             for (int i = 0; i < resourceCount; i++)
             {
                 // Find valid position (up to 10 attempts)
-                GamePosition pos = null;
+                GamePosition pos = default;
+                bool foundPos = false;
                 for (int attempt = 0; attempt < 10; attempt++)
                 {
                     int localX = _rng.Next(1, size - 1);
@@ -692,10 +693,11 @@ namespace Game1.Systems.World
                     if (occupied.Contains(key)) continue;
                     occupied.Add(key);
                     pos = GamePosition.FromXZ(worldX, worldZ);
+                    foundPos = true;
                     break;
                 }
 
-                if (pos == null) continue;
+                if (!foundPos) continue;
 
                 // Determine resource tier (weighted toward lower tiers)
                 int tier = _rng.Next(1, maxTier + 1);
@@ -844,7 +846,8 @@ namespace Game1.Systems.World
             for (int i = 0; i < enemyCount; i++)
             {
                 // Find valid spawn position (avoid edges, 2 tile buffer)
-                GamePosition pos = null;
+                GamePosition pos = default;
+                bool foundPos = false;
                 for (int attempt = 0; attempt < 10; attempt++)
                 {
                     int localX = _rng.Next(2, size - 2);
@@ -856,10 +859,11 @@ namespace Game1.Systems.World
                     if (occupied.Contains(key)) continue;
                     occupied.Add(key);
                     pos = GamePosition.FromXZ(worldX, worldZ);
+                    foundPos = true;
                     break;
                 }
 
-                if (pos == null) continue;
+                if (!foundPos) continue;
 
                 // Pick tier (weighted toward lower)
                 int tier = _rng.Next(1, maxTier + 1);
