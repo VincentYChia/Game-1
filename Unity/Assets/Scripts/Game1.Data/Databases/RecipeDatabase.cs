@@ -103,7 +103,7 @@ namespace Game1.Data.Databases
                 JArray recipes = wrapper["recipes"] as JArray;
                 if (recipes == null)
                 {
-                    UnityEngine.Debug.LogWarning($"[RecipeDatabase] No 'recipes' array in {relativePath}");
+                    System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] WARNING: No 'recipes' array in {relativePath}");
                     return;
                 }
 
@@ -159,11 +159,11 @@ namespace Game1.Data.Databases
                     count++;
                 }
 
-                UnityEngine.Debug.Log($"[RecipeDatabase] Loaded {count} recipes from {relativePath}");
+                System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] Loaded {count} recipes from {relativePath}");
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.LogError($"[RecipeDatabase] Error loading {relativePath}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] ERROR loading {relativePath}: {ex.Message}");
             }
         }
 
