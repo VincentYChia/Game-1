@@ -83,14 +83,22 @@ namespace Game1.Data.Databases
 
                 foreach (var token in classes)
                 {
-                    var classDef = token.ToObject<ClassDefinition>();
-                    if (classDef != null && !string.IsNullOrEmpty(classDef.ClassId))
+                    try
                     {
-                        _classes[classDef.ClassId] = classDef;
+                        var classDef = token.ToObject<ClassDefinition>();
+                        if (classDef != null && !string.IsNullOrEmpty(classDef.ClassId))
+                        {
+                            _classes[classDef.ClassId] = classDef;
+                        }
+                    }
+                    catch (Exception perClassEx)
+                    {
+                        string classId = token["classId"]?.ToString() ?? "unknown";
+                        System.Diagnostics.Debug.WriteLine($"[ClassDatabase] Failed to deserialize class '{classId}': {perClassEx.Message}");
                     }
                 }
 
-                Loaded = true;
+                Loaded = _classes.Count > 0;
                 System.Diagnostics.Debug.WriteLine($"[ClassDatabase] Loaded {_classes.Count} classes from {relativePath}");
             }
             catch (Exception ex)

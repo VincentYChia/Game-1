@@ -73,7 +73,6 @@ namespace Game1.Data.Databases
                 "recipes.JSON/recipes-alchemy-1.JSON",
                 "recipes.JSON/recipes-refining-1.JSON",
                 "recipes.JSON/recipes-engineering-1.JSON",
-                "recipes.JSON/recipes-enchanting-1.JSON",
                 "recipes.JSON/recipes-adornments-1.json",
             };
 
@@ -104,7 +103,7 @@ namespace Game1.Data.Databases
                 JArray recipes = wrapper["recipes"] as JArray;
                 if (recipes == null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] No 'recipes' array in {relativePath}");
+                    System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] WARNING: No 'recipes' array in {relativePath}");
                     return;
                 }
 
@@ -112,19 +111,59 @@ namespace Game1.Data.Databases
                 foreach (var token in recipes)
                 {
                     var recipe = token.ToObject<Recipe>();
-                    if (recipe != null && !string.IsNullOrEmpty(recipe.RecipeId))
+                    if (recipe == null || string.IsNullOrEmpty(recipe.RecipeId))
+                        continue;
+
+                    // Handle refining format: "stationRequired" → stationType,
+                    // "stationTierRequired" → stationTier
+                    if (string.IsNullOrEmpty(recipe.StationType))
                     {
-                        _recipes[recipe.RecipeId] = recipe;
-                        _addToStationIndex(recipe);
-                        count++;
+                        var stReq = token["stationRequired"]?.ToString();
+                        if (!string.IsNullOrEmpty(stReq))
+                        {
+                            // Map "refinery" → "refining" to match discipline name
+                            recipe.StationType = stReq.ToLowerInvariant() switch
+                            {
+                                "refinery" => "refining",
+                                _ => stReq.ToLowerInvariant()
+                            };
+                        }
+                        var tierReq = token["stationTierRequired"];
+                        if (tierReq != null) recipe.StationTier = tierReq.Value<int>();
                     }
+
+                    // Handle refining "outputs" array → outputId/outputQty
+                    if (string.IsNullOrEmpty(recipe.OutputId))
+                    {
+                        var outputs = token["outputs"] as JArray;
+                        if (outputs != null && outputs.Count > 0)
+                        {
+                            recipe.OutputId = outputs[0]["materialId"]?.ToString() ?? "";
+                            recipe.OutputQty = outputs[0]["quantity"]?.Value<int>() ?? 1;
+                        }
+                    }
+
+                    // Handle enchanting: enchantmentId → OutputId for display
+                    if (string.IsNullOrEmpty(recipe.OutputId))
+                    {
+                        var enchId = token["enchantmentId"]?.ToString();
+                        if (!string.IsNullOrEmpty(enchId))
+                        {
+                            recipe.OutputId = enchId;
+                            recipe.IsEnchantment = true;
+                        }
+                    }
+
+                    _recipes[recipe.RecipeId] = recipe;
+                    _addToStationIndex(recipe);
+                    count++;
                 }
 
                 System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] Loaded {count} recipes from {relativePath}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] Error loading {relativePath}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[RecipeDatabase] ERROR loading {relativePath}: {ex.Message}");
             }
         }
 
@@ -136,9 +175,33 @@ namespace Game1.Data.Databases
             _addToStationIndex(recipe);
         }
 
+        /// <summary>
+        /// Station type alias map. JSON files use inconsistent names for the same discipline.
+        /// This maps all aliases to a canonical key so lookups work regardless of which name is used.
+        /// </summary>
+        private static readonly Dictionary<string, string> _stationAliases = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["enchanting"] = "enchanting",
+            ["adornments"] = "enchanting",
+            ["refinery"] = "refining",
+            ["refining"] = "refining",
+            ["smithing"] = "smithing",
+            ["alchemy"] = "alchemy",
+            ["engineering"] = "engineering",
+        };
+
+        private static string _normalizeStationType(string stationType)
+        {
+            if (string.IsNullOrEmpty(stationType)) return "";
+            return _stationAliases.TryGetValue(stationType, out var canonical)
+                ? canonical
+                : stationType.ToLowerInvariant();
+        }
+
         private void _addToStationIndex(Recipe recipe)
         {
-            string key = recipe.StationType ?? "";
+            string key = _normalizeStationType(recipe.StationType);
+            recipe.StationType = key; // Normalize the recipe's own station type
             if (!_byStation.ContainsKey(key))
                 _byStation[key] = new List<Recipe>();
             _byStation[key].Add(recipe);
@@ -163,7 +226,8 @@ namespace Game1.Data.Databases
         {
             if (string.IsNullOrEmpty(stationType)) return new List<Recipe>();
 
-            if (!_byStation.TryGetValue(stationType, out var recipes))
+            string normalized = _normalizeStationType(stationType);
+            if (!_byStation.TryGetValue(normalized, out var recipes))
                 return new List<Recipe>();
 
             return recipes.Where(r => r.StationTier <= tier).ToList();

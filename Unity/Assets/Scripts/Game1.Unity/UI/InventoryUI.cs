@@ -16,6 +16,7 @@ using UnityEngine.EventSystems;
 using TMPro;
 using Game1.Core;
 using Game1.Data.Databases;
+using Game1.Data.Enums;
 using Game1.Unity.Core;
 using Game1.Unity.Utilities;
 
@@ -29,7 +30,6 @@ namespace Game1.Unity.UI
     {
         [Header("Configuration")]
         [SerializeField] private int _columns = 6;
-        [SerializeField] private int _rows = 5;
 
         [Header("Slot Prefab")]
         [SerializeField] private GameObject _slotPrefab;
@@ -46,6 +46,12 @@ namespace Game1.Unity.UI
         private ScrollRect _scrollRect;
         private RectTransform _scrollContent;
         private GridLayoutGroup _gridLayout;
+
+        // Tool slot references (axe + pickaxe, shown above inventory grid like Python)
+        private Image _axeIcon;
+        private Image _pickaxeIcon;
+        private Text _axeLabel;
+        private Text _pickaxeLabel;
 
         private void Start()
         {
@@ -64,8 +70,27 @@ namespace Game1.Unity.UI
             if (DragDropManager.Instance != null)
                 DragDropManager.Instance.OnDropCompleted += _onDropCompleted;
 
+            // Subscribe to inventory data changes so we refresh when items are added/removed
+            // during gameplay (e.g. harvesting), not just when panel opens
+            _subscribeToInventoryChanges();
+
             _createSlots();
             _setVisible(false);
+        }
+
+        /// <summary>Subscribe to the current player's inventory change event.</summary>
+        private void _subscribeToInventoryChanges()
+        {
+            var gm = GameManager.Instance;
+            if (gm?.Player?.Inventory != null)
+                gm.Player.Inventory.OnInventoryChanged += _onInventoryDataChanged;
+        }
+
+        private void _onInventoryDataChanged()
+        {
+            // Only refresh if the panel is currently visible
+            if (_panel != null && _panel.activeSelf)
+                Refresh();
         }
 
         private void OnDestroy()
@@ -76,6 +101,10 @@ namespace Game1.Unity.UI
                 _stateManager.OnStateChanged -= _onStateChanged;
             if (DragDropManager.Instance != null)
                 DragDropManager.Instance.OnDropCompleted -= _onDropCompleted;
+            // Unsubscribe from inventory data changes
+            var gm = GameManager.Instance;
+            if (gm?.Player?.Inventory != null)
+                gm.Player.Inventory.OnInventoryChanged -= _onInventoryDataChanged;
         }
 
         /// <summary>Handle drag-drop completions: swap inventory slots or equip from inventory.</summary>
@@ -161,6 +190,32 @@ namespace Game1.Unity.UI
             // -- Divider
             UIHelper.CreateDivider(panelRt, 2f);
 
+            // -- Equipped Tools row (axe + pickaxe, matches Python inventory panel)
+            var toolRow = UIHelper.CreatePanel(panelRt, "ToolRow", UIHelper.COLOR_BG_PANEL,
+                Vector2.zero, Vector2.one);
+            UIHelper.SetPreferredHeight(toolRow.gameObject, 64f);
+            var toolHlg = UIHelper.AddHorizontalLayout(toolRow, spacing: 8f,
+                padding: new RectOffset(8, 8, 4, 4));
+            toolHlg.childAlignment = TextAnchor.MiddleLeft;
+
+            var toolLabel = UIHelper.CreateText(toolRow, "ToolsLabel", "Tools:",
+                13, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleLeft);
+            UIHelper.SetPreferredSize(toolLabel.gameObject, 50, 50);
+
+            // Axe slot
+            var (axeRoot, axeBg, axeIcon, axeQty, axeBorder) = UIHelper.CreateItemSlot(toolRow, "ToolSlot_Axe", 50f);
+            _axeIcon = axeIcon;
+            _axeLabel = UIHelper.CreateText(toolRow, "AxeLabel", "Axe", 11, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleLeft);
+            UIHelper.SetPreferredSize(_axeLabel.gameObject, 40, 50);
+
+            // Pickaxe slot
+            var (pickRoot, pickBg, pickIcon, pickQty, pickBorder) = UIHelper.CreateItemSlot(toolRow, "ToolSlot_Pickaxe", 50f);
+            _pickaxeIcon = pickIcon;
+            _pickaxeLabel = UIHelper.CreateText(toolRow, "PickaxeLabel", "Pickaxe", 11, UIHelper.COLOR_TEXT_SECONDARY, TextAnchor.MiddleLeft);
+            UIHelper.SetPreferredSize(_pickaxeLabel.gameObject, 55, 50);
+
+            UIHelper.CreateDivider(panelRt, 1f);
+
             // -- Scroll view wrapping the slot grid
             var scrollPanel = UIHelper.CreatePanel(
                 panelRt, "ScrollArea", UIHelper.COLOR_BG_PANEL,
@@ -212,6 +267,52 @@ namespace Game1.Unity.UI
                     _slots[i].Clear();
                 }
             }
+
+            // Update equipped tool slots (axe + pickaxe)
+            _refreshToolSlots(gm);
+        }
+
+        private void _refreshToolSlots(GameManager gm)
+        {
+            if (gm?.Player?.Equipment == null) return;
+
+            var equipment = gm.Player.Equipment;
+
+            // Axe
+            var axe = equipment.GetEquipped(EquipmentSlot.Axe);
+            if (_axeIcon != null)
+            {
+                if (axe != null)
+                {
+                    if (SpriteDatabase.Instance != null)
+                        _axeIcon.sprite = SpriteDatabase.Instance.GetItemSprite(axe.ItemId);
+                    _axeIcon.enabled = true;
+                }
+                else
+                {
+                    _axeIcon.enabled = false;
+                }
+            }
+            if (_axeLabel != null)
+                _axeLabel.text = axe != null ? $"T{axe.Tier} Axe" : "Axe";
+
+            // Pickaxe
+            var pickaxe = equipment.GetEquipped(EquipmentSlot.Pickaxe);
+            if (_pickaxeIcon != null)
+            {
+                if (pickaxe != null)
+                {
+                    if (SpriteDatabase.Instance != null)
+                        _pickaxeIcon.sprite = SpriteDatabase.Instance.GetItemSprite(pickaxe.ItemId);
+                    _pickaxeIcon.enabled = true;
+                }
+                else
+                {
+                    _pickaxeIcon.enabled = false;
+                }
+            }
+            if (_pickaxeLabel != null)
+                _pickaxeLabel.text = pickaxe != null ? $"T{pickaxe.Tier} Pick" : "Pickaxe";
         }
 
         private void _createSlots()
@@ -250,7 +351,11 @@ namespace Game1.Unity.UI
         {
             _setVisible(newState == GameState.InventoryOpen);
             if (newState == GameState.InventoryOpen)
+            {
+                // Re-subscribe in case player was created after Start()
+                _subscribeToInventoryChanges();
                 Refresh();
+            }
         }
 
         private void _setVisible(bool visible)
@@ -270,6 +375,9 @@ namespace Game1.Unity.UI
         [SerializeField] private TextMeshProUGUI _quantityText;
         [SerializeField] private Image _backgroundImage;
 
+        // Fallback text for programmatic slots (UIHelper uses legacy Text, not TMP)
+        private Text _quantityTextLegacy;
+
         private int _slotIndex;
         private string _itemId;
         private int _quantity;
@@ -280,8 +388,28 @@ namespace Game1.Unity.UI
             _slotIndex = index;
             _sourceType = sourceType;
 
-            if (_iconImage == null) _iconImage = GetComponentInChildren<Image>();
-            if (_quantityText == null) _quantityText = GetComponentInChildren<TextMeshProUGUI>();
+            // When created by UIHelper.CreateItemSlot, the hierarchy is:
+            //   Root (Image = background) > Icon (Image) + Quantity (Text) + Border (Image)
+            // GetComponentInChildren<Image>() returns the root's own background Image,
+            // so we must find the child named "Icon" explicitly.
+            if (_iconImage == null)
+            {
+                var iconChild = transform.Find("Icon");
+                if (iconChild != null)
+                    _iconImage = iconChild.GetComponent<Image>();
+            }
+
+            // TMP text (prefab path)
+            if (_quantityText == null)
+                _quantityText = GetComponentInChildren<TextMeshProUGUI>();
+
+            // Legacy Text (programmatic path — UIHelper.CreateItemSlot uses Text, not TMP)
+            if (_quantityText == null && _quantityTextLegacy == null)
+            {
+                var qtyChild = transform.Find("Quantity");
+                if (qtyChild != null)
+                    _quantityTextLegacy = qtyChild.GetComponent<Text>();
+            }
         }
 
         public void SetItem(string itemId, int quantity)
@@ -296,10 +424,16 @@ namespace Game1.Unity.UI
                 _iconImage.enabled = true;
             }
 
+            string qtyStr = quantity > 1 ? quantity.ToString() : "";
             if (_quantityText != null)
             {
-                _quantityText.text = quantity > 1 ? quantity.ToString() : "";
+                _quantityText.text = qtyStr;
                 _quantityText.enabled = quantity > 1;
+            }
+            else if (_quantityTextLegacy != null)
+            {
+                _quantityTextLegacy.text = qtyStr;
+                _quantityTextLegacy.enabled = quantity > 1;
             }
         }
 
@@ -309,6 +443,7 @@ namespace Game1.Unity.UI
             _quantity = 0;
             if (_iconImage != null) _iconImage.enabled = false;
             if (_quantityText != null) _quantityText.enabled = false;
+            if (_quantityTextLegacy != null) _quantityTextLegacy.enabled = false;
         }
 
         // Drag & Drop

@@ -21,6 +21,9 @@ namespace Game1.Entities.Components
         private readonly ItemStack[] _slots;
         private readonly Dictionary<string, int> _countCache = new();
 
+        /// <summary>Raised whenever inventory contents change (add/remove/swap).</summary>
+        public event Action OnInventoryChanged;
+
         public int MaxSlots { get; }
 
         public Inventory(int maxSlots = 30)
@@ -65,6 +68,7 @@ namespace Game1.Entities.Components
                     _slots[empty] = new ItemStack(itemId, 1, 1, equipData, rarity, craftedStats);
                     _updateCacheAdd(itemId, 1);
                 }
+                OnInventoryChanged?.Invoke();
                 return true;
             }
 
@@ -106,6 +110,7 @@ namespace Game1.Entities.Components
                 remaining -= stackSize;
             }
 
+            OnInventoryChanged?.Invoke();
             return true;
         }
 
@@ -137,6 +142,7 @@ namespace Game1.Entities.Components
                 }
             }
 
+            if (remaining == 0) OnInventoryChanged?.Invoke();
             return remaining == 0;
         }
 

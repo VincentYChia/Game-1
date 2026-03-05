@@ -49,14 +49,14 @@ namespace Game1.Unity.UI
         [SerializeField] private Transform _waypointListContainer;
 
         [Header("Settings")]
-        [SerializeField] private float _zoomMin = 0.25f;
-        [SerializeField] private float _zoomMax = 4f;
-        [SerializeField] private float _zoomSpeed = 0.25f;
-        [SerializeField] private int _chunkPixelSize = 12;
+        [SerializeField] private float _zoomMin = 0.5f;
+        [SerializeField] private float _zoomMax = 8f;
+        [SerializeField] private float _zoomSpeed = 0.5f;
+        [SerializeField] private int _chunkPixelSize = 24;
 
         private GameStateManager _stateManager;
         private InputManager _inputManager;
-        private float _currentZoom = 1f;
+        private float _currentZoom = 3f;
         private Texture2D _mapTexture;
         private HashSet<Vector2Int> _exploredChunks = new HashSet<Vector2Int>();
         private Text _zoomLabel;

@@ -127,6 +127,10 @@ namespace Game1.Unity.World
             _deathTimer = 0f;
             _healthPercent = 1f;
             if (_healthBarRoot != null) _healthBarRoot.SetActive(true);
+
+            // Position health bar above enemy using configured offset
+            if (_worldCanvas != null)
+                _worldCanvas.transform.localPosition = new Vector3(0, _healthBarOffset, 0);
         }
 
         /// <summary>Update health bar display.</summary>

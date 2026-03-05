@@ -72,8 +72,8 @@ namespace Game1.Unity.Core
         public event Action OnInteract;
         public event Action<Vector3> OnPrimaryAttack;
         public event Action<Vector3> OnSecondaryAction;
-        public event Action<Vector2> OnUIClick;
         public event Action OnEscape;
+        public event Action OnCycleTool;
         public event Action OnToggleInventory;
         public event Action OnToggleEquipment;
         public event Action OnToggleMap;
@@ -538,6 +538,8 @@ namespace Game1.Unity.Core
                 { Debug.Log("[DBG:INPUT:KEY] Tab pressed → OnToggleInventory"); OnToggleInventory?.Invoke(); } // DBG
                 if (_wasKeyPressed(KeyCode.I))
                 { Debug.Log("[DBG:INPUT:KEY] I pressed → OnToggleEquipment"); OnToggleEquipment?.Invoke(); } // DBG
+                if (_wasKeyPressed(KeyCode.Q) && isPlaying)
+                { Debug.Log("[DBG:INPUT:KEY] Q pressed → OnCycleTool"); OnCycleTool?.Invoke(); } // DBG
                 if (_wasKeyPressed(KeyCode.M))
                 { Debug.Log("[DBG:INPUT:KEY] M pressed → OnToggleMap"); OnToggleMap?.Invoke(); } // DBG
                 if (_wasKeyPressed(KeyCode.J))
@@ -609,8 +611,6 @@ namespace Game1.Unity.Core
                 OnDebugKey?.Invoke("F3");
             if (_wasKeyPressed(KeyCode.F4))
                 OnDebugKey?.Invoke("F4");
-            if (_wasKeyPressed(KeyCode.F5))
-                OnDebugKey?.Invoke("F5");
             if (_wasKeyPressed(KeyCode.F7))
                 OnDebugKey?.Invoke("F7");
         }
@@ -694,7 +694,6 @@ namespace Game1.Unity.Core
                 case KeyCode.F2: return Key.F2;
                 case KeyCode.F3: return Key.F3;
                 case KeyCode.F4: return Key.F4;
-                case KeyCode.F5: return Key.F5;
                 case KeyCode.F7: return Key.F7;
                 default: return Key.None;
             }

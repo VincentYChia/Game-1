@@ -15,6 +15,7 @@ using System.IO;
 using UnityEngine;
 using Game1.Core;
 using Game1.Data.Databases;
+using Game1.Data.Enums;
 using Game1.Data.Models;
 using Game1.Entities;
 using Game1.Systems.World;
@@ -113,7 +114,16 @@ namespace Game1.Unity.Core
             try
             {
                 DatabaseInitializer.InitializeAll();
-                Debug.Log("[GameManager] All databases loaded successfully");
+                // Log counts with UnityEngine.Debug.Log (visible in Console)
+                // since DatabaseInitializer uses System.Diagnostics which is invisible
+                Debug.Log($"[GameManager] Databases loaded — " +
+                    $"Materials:{MaterialDatabase.Instance.Count}, " +
+                    $"Equipment:{EquipmentDatabase.Instance.Count}, " +
+                    $"Recipes:{RecipeDatabase.Instance.Count}, " +
+                    $"Skills:{SkillDatabase.Instance.Count}, " +
+                    $"Classes:{ClassDatabase.Instance.Count}, " +
+                    $"Titles:{TitleDatabase.Instance.Count}, " +
+                    $"Placements:{PlacementDatabase.Instance.Count}");
             }
             catch (Exception ex)
             {
@@ -233,6 +243,9 @@ namespace Game1.Unity.Core
             Player = new Character(spawnPos);
             Player.Name = playerName;
             Player.SelectClass(classId);
+
+            // Give starting tools (matches Python character.py _give_starting_tools)
+            _giveStartingTools();
 
             // Initialize combat system with adapter
             InitializeCombatSystem();
@@ -404,6 +417,48 @@ namespace Game1.Unity.Core
         /// Initialize the combat system with the current player character.
         /// Called from StartNewGame() and LoadGame().
         /// </summary>
+        /// <summary>
+        /// Give starting tools to the player. Matches Python character.py _give_starting_tools().
+        /// Copper Axe in axe slot, Copper Pickaxe in pickaxe slot.
+        /// </summary>
+        private void _giveStartingTools()
+        {
+            if (Player == null) return;
+
+            try
+            {
+                // Create copper axe and equip (SlotRaw is the writable string, Slot is computed)
+                var copperAxe = ItemFactory.CreateFromId("copper_axe") as EquipmentItem;
+                if (copperAxe != null)
+                {
+                    copperAxe.SlotRaw = "axe";
+                    Player.Equipment.Equip(copperAxe);
+                    Debug.Log("[GameManager] Equipped starting copper axe");
+                }
+                else
+                {
+                    Debug.LogWarning("[GameManager] Could not create copper_axe — item not in database");
+                }
+
+                // Create copper pickaxe and equip
+                var copperPickaxe = ItemFactory.CreateFromId("copper_pickaxe") as EquipmentItem;
+                if (copperPickaxe != null)
+                {
+                    copperPickaxe.SlotRaw = "pickaxe";
+                    Player.Equipment.Equip(copperPickaxe);
+                    Debug.Log("[GameManager] Equipped starting copper pickaxe");
+                }
+                else
+                {
+                    Debug.LogWarning("[GameManager] Could not create copper_pickaxe — item not in database");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[GameManager] Error giving starting tools: {ex.Message}");
+            }
+        }
+
         private void InitializeCombatSystem()
         {
             if (Player == null) return;

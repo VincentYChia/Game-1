@@ -14,6 +14,8 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 using Game1.Core;
 using Game1.Data.Enums;
+using Game1.Entities;
+using Game1.Systems.Combat;
 using Game1.Systems.World;
 using Game1.Unity.Core;
 using Game1.Unity.Utilities;
@@ -64,6 +66,19 @@ namespace Game1.Unity.World
         // Container for chunk GameObjects (keeps hierarchy clean)
         private Transform _chunkContainer;
 
+        // Enemy tracking: maps Enemy instances to their 3D GameObjects + health bar fill for position sync
+        private struct EnemyRenderData
+        {
+            public GameObject Go;
+            public Canvas HealthCanvas;
+            public UnityEngine.UI.Image HealthFill;
+        }
+        private Dictionary<Enemy, EnemyRenderData> _enemyRenderData = new Dictionary<Enemy, EnemyRenderData>();
+
+        // Resource tracking: maps resource instances to their GameObjects for depletion removal
+        private Dictionary<NaturalResourceInstance, GameObject> _resourceRenderData =
+            new Dictionary<NaturalResourceInstance, GameObject>();
+
         // ====================================================================
         // Chunk Render Data
         // ====================================================================
@@ -74,6 +89,7 @@ namespace Game1.Unity.World
             public GameObject WaterObject;
             public GameObject EdgeObject;
             public GameObject ResourceContainer;
+            public GameObject EnemyContainer;
         }
 
         // World furniture: crafting stations, spawn beacon (created once)
@@ -94,6 +110,14 @@ namespace Game1.Unity.World
 
             _chunkContainer = new GameObject("ChunkContainer").transform;
             _chunkContainer.SetParent(transform, false);
+
+            // Subscribe to resource depletion events
+            GameEvents.OnResourceDepleted += _onResourceDepleted;
+        }
+
+        private void OnDestroy()
+        {
+            GameEvents.OnResourceDepleted -= _onResourceDepleted;
         }
 
         // ====================================================================
@@ -155,6 +179,81 @@ namespace Game1.Unity.World
                 else
                     _unloadChunkTilemap(coord);
             }
+
+            // Update enemy 3D positions to match AI movement
+            _updateEnemyPositions();
+        }
+
+        /// <summary>
+        /// Sync enemy 3D GameObject positions with their game-logic positions.
+        /// Handles death (hide/fade), chase movement, etc.
+        /// </summary>
+        private void _updateEnemyPositions()
+        {
+            var toRemove = new List<Enemy>();
+
+            foreach (var kvp in _enemyRenderData)
+            {
+                var enemy = kvp.Key;
+                var data = kvp.Value;
+
+                if (data.Go == null)
+                {
+                    toRemove.Add(enemy);
+                    continue;
+                }
+
+                if (!enemy.IsAlive)
+                {
+                    if (data.Go.activeSelf) data.Go.SetActive(false);
+                    continue;
+                }
+
+                // Update world position from game logic
+                float wx = enemy.Position.X;
+                float wz = enemy.Position.Z;
+                float terrainY = ChunkMeshGenerator.SampleTerrainHeight(wx, wz, "grass");
+                data.Go.transform.position = new Vector3(wx, terrainY, wz);
+
+                // Update health bar if damaged
+                if (data.HealthCanvas != null && enemy.HealthPercent < 1f)
+                {
+                    data.HealthCanvas.gameObject.SetActive(true);
+                    if (data.HealthFill != null)
+                    {
+                        data.HealthFill.fillAmount = enemy.HealthPercent;
+                        data.HealthFill.color = Color.Lerp(Color.red, Color.green, enemy.HealthPercent);
+                    }
+                }
+            }
+
+            foreach (var dead in toRemove)
+                _enemyRenderData.Remove(dead);
+        }
+
+        /// <summary>
+        /// Handle resource depletion: find and destroy the resource's visual GameObject.
+        /// </summary>
+        private void _onResourceDepleted(string resourceId)
+        {
+            // Find the resource instance by ID and remove its visual
+            NaturalResourceInstance toRemoveRes = null;
+            foreach (var kvp in _resourceRenderData)
+            {
+                if (kvp.Key.ResourceId == resourceId && kvp.Key.IsDepleted)
+                {
+                    if (kvp.Value != null)
+                    {
+                        Destroy(kvp.Value);
+                    }
+                    toRemoveRes = kvp.Key;
+                    break;
+                }
+            }
+            if (toRemoveRes != null)
+            {
+                _resourceRenderData.Remove(toRemoveRes);
+            }
         }
 
         // ====================================================================
@@ -170,12 +269,15 @@ namespace Game1.Unity.World
             if (chunk == null) return;
 
             // Extract tile types into a 2D array for the mesh generator
+            // Chunk tiles are keyed by WORLD coordinates (e.g. "48,32,0"), not local
+            int startX = chunkCoord.x * _chunkSize;
+            int startZ = chunkCoord.y * _chunkSize;
             string[,] tileTypes = new string[_chunkSize, _chunkSize];
             for (int x = 0; x < _chunkSize; x++)
             {
                 for (int z = 0; z < _chunkSize; z++)
                 {
-                    string tileKey = $"{x},{z},0";
+                    string tileKey = $"{startX + x},{startZ + z},0";
                     string tileType = "grass";
                     if (chunk.Tiles.TryGetValue(tileKey, out var worldTile))
                         tileType = worldTile.TileType.ToString().ToLowerInvariant();
@@ -254,6 +356,9 @@ namespace Game1.Unity.World
 
                         resourceGO.transform.position = new Vector3(wx, terrainY, wz);
                         resourceGO.transform.SetParent(resourceContainer.transform, true);
+
+                        // Track resource → GameObject for depletion removal
+                        _resourceRenderData[resource] = resourceGO;
                     }
                     catch (System.Exception ex)
                     {
@@ -263,6 +368,72 @@ namespace Game1.Unity.World
                 }
 
                 renderData.ResourceContainer = resourceContainer;
+            }
+
+            // --------------------------------------------------------
+            // Spawn enemy objects (hostile mobs in dangerous/rare chunks)
+            // --------------------------------------------------------
+            if (chunk.Enemies != null && chunk.Enemies.Count > 0)
+            {
+                var enemyContainer = new GameObject(
+                    $"Chunk_{chunkCoord.x}_{chunkCoord.y}_Enemies");
+                enemyContainer.transform.SetParent(_chunkContainer, false);
+
+                var combatManager = GameManager.Instance?.CombatManager;
+
+                foreach (var enemy in chunk.Enemies)
+                {
+                    if (enemy == null || !enemy.IsAlive) continue;
+
+                    try
+                    {
+                        bool isBoss = enemy.Definition.Category == "boss";
+                        var enemyGO = PrimitiveShapeFactory.CreateEnemy(enemy.Tier, isBoss);
+                        enemyGO.name = $"Enemy_{enemy.EnemyId}_{enemy.Name}";
+
+                        // Position at enemy's world coordinates, on terrain surface
+                        float wx = enemy.Position.X;
+                        float wz = enemy.Position.Z;
+                        string tileAtEnemy = _getTileTypeAtWorld(
+                            wx, wz, tileTypes, chunkCoord);
+                        float terrainY = ChunkMeshGenerator.SampleTerrainHeight(
+                            wx, wz, tileAtEnemy);
+
+                        enemyGO.transform.position = new Vector3(wx, terrainY, wz);
+                        enemyGO.transform.SetParent(enemyContainer.transform, true);
+
+                        // Add name label
+                        string label = $"{enemy.Name} (T{enemy.Tier})";
+                        Color labelColor = PrimitiveShapeFactory.GetEnemyTierColor(enemy.Tier);
+                        PrimitiveShapeFactory.AddWorldLabel(enemyGO, label, labelColor, 1.8f);
+
+                        // Add health bar and store reference for updates
+                        var (healthCanvas, healthFill) =
+                            PrimitiveShapeFactory.AddWorldHealthBar(enemyGO, 1.5f);
+
+                        // Track enemy render data for position + health bar updates
+                        _enemyRenderData[enemy] = new EnemyRenderData
+                        {
+                            Go = enemyGO,
+                            HealthCanvas = healthCanvas,
+                            HealthFill = healthFill
+                        };
+
+                        // Register with CombatManager for AI + combat
+                        if (combatManager != null)
+                        {
+                            var adapter = new EnemyCombatAdapter(enemy);
+                            combatManager.AddEnemy(adapter);
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogWarning(
+                            $"[WorldRenderer] Failed to create enemy {enemy.EnemyId}: {ex.Message}");
+                    }
+                }
+
+                renderData.EnemyContainer = enemyContainer;
             }
 
             _chunkObjects[chunkCoord] = renderData;
@@ -276,7 +447,33 @@ namespace Game1.Unity.World
                 if (data.TerrainObject != null) Destroy(data.TerrainObject);
                 if (data.WaterObject != null) Destroy(data.WaterObject);
                 if (data.EdgeObject != null) Destroy(data.EdgeObject);
-                if (data.ResourceContainer != null) Destroy(data.ResourceContainer);
+                // Clean up resource tracking for this chunk
+                if (data.ResourceContainer != null)
+                {
+                    var world2 = GameManager.Instance?.World;
+                    var chunk2 = world2?.GetChunk(chunkCoord.x, chunkCoord.y);
+                    if (chunk2?.Resources != null)
+                    {
+                        foreach (var resource in chunk2.Resources)
+                            _resourceRenderData.Remove(resource);
+                    }
+                    Destroy(data.ResourceContainer);
+                }
+
+                // Clean up enemy tracking when chunk unloads
+                if (data.EnemyContainer != null)
+                {
+                    // Remove enemy render data for enemies in this chunk
+                    var world = GameManager.Instance?.World;
+                    var chunk = world?.GetChunk(chunkCoord.x, chunkCoord.y);
+                    if (chunk?.Enemies != null)
+                    {
+                        foreach (var enemy in chunk.Enemies)
+                            _enemyRenderData.Remove(enemy);
+                    }
+                    Destroy(data.EnemyContainer);
+                }
+
                 _chunkObjects.Remove(chunkCoord);
             }
             _loadedChunks.Remove(chunkCoord);
@@ -434,8 +631,10 @@ namespace Game1.Unity.World
                     if (kvp.Value.WaterObject != null) Destroy(kvp.Value.WaterObject);
                     if (kvp.Value.EdgeObject != null) Destroy(kvp.Value.EdgeObject);
                     if (kvp.Value.ResourceContainer != null) Destroy(kvp.Value.ResourceContainer);
+                    if (kvp.Value.EnemyContainer != null) Destroy(kvp.Value.EnemyContainer);
                 }
                 _chunkObjects.Clear();
+                _enemyRenderData.Clear();
             }
             else if (_groundTilemap != null)
             {

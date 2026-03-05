@@ -72,6 +72,8 @@ namespace Game1.Unity.World
             {
                 float offset = Time.time * _waterWaveSpeed;
                 _waterMaterial.SetFloat("_WaveOffset", offset);
+                _waterMaterial.SetFloat("_WaveScale", _waterWaveScale);
+                _waterMaterial.SetFloat("_WaveHeight", _waterWaveHeight);
             }
         }
 
