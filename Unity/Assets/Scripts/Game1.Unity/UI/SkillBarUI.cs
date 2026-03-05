@@ -121,7 +121,7 @@ namespace Game1.Unity.UI
                 {
                     _slots[i].IconImage.enabled = true;
                     if (SpriteDatabase.Instance != null)
-                        _slots[i].IconImage.sprite = SpriteDatabase.Instance.GetItemSprite(skillId);
+                        _slots[i].IconImage.sprite = SpriteDatabase.Instance.GetSkillSprite(skillId);
                 }
 
                 // Cooldown overlay + mana cost display

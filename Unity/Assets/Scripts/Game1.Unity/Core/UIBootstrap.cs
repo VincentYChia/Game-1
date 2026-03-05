@@ -47,6 +47,14 @@ namespace Game1.Unity.Core
             // EventSystem (required for UI raycasting)
             UIHelper.EnsureEventSystem();
 
+            // SpriteDatabase (required for item icons in all UI panels)
+            if (SpriteDatabase.Instance == null)
+            {
+                var spriteDbGO = new GameObject("SpriteDatabase");
+                spriteDbGO.AddComponent<SpriteDatabase>();
+                Debug.Log("[UIBootstrap] Created SpriteDatabase");
+            }
+
             // ================================================================
             // HUD Canvas (sortOrder 0) — always visible during gameplay
             // ================================================================
