@@ -578,7 +578,6 @@ namespace Game1.Unity.UI
                 var le = UIHelper.SetPreferredHeight(entryBtn.gameObject, 30f);
                 le.minHeight = 30f;
             }
-            }
         }
 
         /// <summary>Format an item ID into a human-readable display name.</summary>
