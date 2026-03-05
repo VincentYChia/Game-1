@@ -1,15 +1,15 @@
 # Claude.md - Game-1 Developer Guide
 
 **Quick Reference for AI Assistants & Developers**
-**Last Updated**: February 11, 2026
+**Last Updated**: March 5, 2026
 
 ## Project Summary
 
-**Game-1** is a production-ready crafting RPG built with Python/Pygame featuring:
+**Game-1** is a crafting RPG built with Python/Pygame featuring:
 - 100x100 tile world with procedural chunk generation
 - 5 crafting disciplines (Smithing, Alchemy, Refining, Engineering, Enchanting) with unique minigames
-- **LLM-powered "Invented Items" system** for procedural content generation (NEW)
-- **ML classifiers** (CNN + LightGBM) for recipe validation (NEW)
+- LLM-powered "Invented Items" system for procedural content generation
+- ML classifiers (CNN + LightGBM) for recipe validation
 - Full combat system with enemies, damage pipeline, enchantments, and status effects
 - 100+ skills with mana, cooldowns, and level-based scaling
 - Character progression (30 levels, 6 stats, titles, classes)
@@ -18,117 +18,49 @@
 - Equipment system with durability, weight, and repairs
 
 **Architecture**: Modular (149 Python files, ~75,911 LOC, 398+ JSON data files, 3,749 asset images)
-**Master Reference**: `docs/GAME_MECHANICS_V6.md` (5,089 lines)
-**Status Report**: `docs/REPOSITORY_STATUS_REPORT_2026-01-27.md`
-**Project Duration**: October 19, 2025 - Present (migrating to Unity/C#)
-**Migration Plan**: `Migration-Plan/COMPLETION_STATUS.md` (central hub) — 16,013 lines across 15 documents
+**Master Reference**: `Game-1-modular/docs/GAME_MECHANICS_V6.md` (5,089 lines)
+**Status Report**: `Game-1-modular/docs/REPOSITORY_STATUS_REPORT_2026-01-27.md`
+**Project Duration**: October 19, 2025 - Present
 
 ---
 
-## Unity/C# Migration (Active — February 2026)
+## Unity/C# Migration (PAUSED)
 
-The project is being migrated from Python/Pygame to **Unity/C#**. A comprehensive, actionable migration plan exists in `Migration-Plan/`. This is not a blind port — it's a migration into a 3D engine with architecture improvements.
+A Unity/C# migration exists in `Unity/` and `Migration-Plan/` but is **paused as of March 2026**.
+The Unity port has all 7 phases of C# code written but UIs are ~55-60% functional.
+Active development is on the **Python/Pygame 2D version**.
 
-### Start Here
-- **Central hub**: `Migration-Plan/COMPLETION_STATUS.md` — directs to all 15 documents
-- **Master plan**: `Migration-Plan/MIGRATION_PLAN.md` (1,229 lines)
-- **Branch**: `claude/unity-migration-plan-6KKuK`
-
-### Five Pillars
-1. **Exact Mechanical Fidelity** — Every formula, constant, and behavior preserved verbatim
-2. **JSON-Driven Architecture** — JSON files copied byte-identical to `StreamingAssets/Content/`, loaded via Newtonsoft.Json
-3. **3D-Ready Architecture** — `GamePosition` (Vector3), `TargetFinder` (2D/3D distance), `IPathfinder` (Grid→NavMesh)
-4. **Architecture Improvements** — 8 macro changes, 13 per-file fixes, `IGameItem` type hierarchy, `ItemFactory`, `BaseCraftingMinigame`
-5. **Modularity** — 7 dependency-ordered phases with explicit contracts (RECEIVES/DELIVERS)
-
-### 7-Phase Execution Order
-1. **Phase 1 — Foundation**: Data models, enums, `GamePosition`, `IGameItem`, `ItemFactory` (1,908 lines)
-2. **Phase 2 — Data Layer**: 14 database singletons, JSON loading, position deserialization (1,702 lines)
-3. **Phase 3 — Entity Layer**: Character (2,576 lines), 11 components, enemies, stat caching (1,080 lines)
-4. **Phase 4 — Game Systems**: Combat, 5 crafting minigames, world generation, save/load (1,413 lines)
-5. **Phase 5 — ML Classifiers**: CNN + LightGBM → ONNX → Unity Sentis (1,116 lines) — parallel with 3-4
-6. **Phase 6 — Unity Integration**: GameEngine → ~40 MonoBehaviour components, camera, input, UI (954 lines)
-7. **Phase 7 — Polish & LLM Stub**: `IItemGenerator` interface, E2E testing, 3D verification (1,024 lines)
-
-### Key Architecture Decisions (Migration)
-| Decision | Rationale |
-|----------|-----------|
-| Plain C# for Phases 1-5 | Testable without Unity scene |
-| MonoBehaviours only Phase 6 | Thin wrappers around ported logic |
-| `IGameItem` interface hierarchy | Type-safe items replace dict-based approach |
-| `GamePosition` wrapping `Vector3` | Python `(x,y)` → Unity `(x,0,z)`, height defaults to 0 |
-| `TargetFinder` with `DistanceMode` | Toggleable 2D/3D distance calculations |
-| `IPathfinder` interface | Grid A* now, NavMesh later — no logic changes |
-| `BaseCraftingMinigame` base class | Eliminates ~1,240 lines of duplication |
-| `ItemFactory` centralized | 6 scattered creation sites → 1 entry point |
-| Event system (`GameEvents`) | Decouples components, replaces direct references |
-| Effect dispatch table | Replaces 250-line if/elif chain |
-
-### Migration Document Map
-| Document | Lines | Purpose |
-|----------|-------|---------|
-| `COMPLETION_STATUS.md` | 163 | Central hub and holistic summary |
-| `MIGRATION_PLAN.md` | 1,229 | Master overview, risk register |
-| `IMPROVEMENTS.md` | 1,424 | All architecture improvements with quick reference |
-| `CONVENTIONS.md` | 709 | Living conventions (naming, 3D, items) |
-| `PHASE_CONTRACTS.md` | 641 | Per-phase inputs/outputs with C# types |
-| `MIGRATION_META_PLAN.md` | 1,075 | Validation strategy, testing approach |
-| `phases/PHASE_1-7` | 9,197 | Detailed per-phase instructions |
-| `reference/UNITY_PRIMER.md` | 679 | Unity crash course |
-| `reference/PYTHON_TO_CSHARP.md` | 902 | Type mappings, pattern conversions |
-
-### Critical Constants (MUST PRESERVE)
-```
-Damage: base × hand(1.1-1.2) × STR(1+STR×0.05) × skill × class(max 1.2) × crit(2x) - def(max 75%)
-EXP: 200 × 1.75^(level-1), max level 30
-Stats: STR +5%dmg, DEF +2%red, VIT +15HP, LCK +2%crit, AGI +5%forestry, INT -2%diff +20mana
-Tiers: T1=1.0x, T2=2.0x, T3=4.0x, T4=8.0x
-Durability: 0% = 50% effectiveness, never breaks
-```
-
-### Directory Layout
-```
-Game-1/
-├── Migration-Plan/          # Migration documentation (16,013 lines)
-│   ├── COMPLETION_STATUS.md # START HERE — central hub
-│   ├── MIGRATION_PLAN.md    # Master plan
-│   ├── IMPROVEMENTS.md      # Architecture improvements
-│   ├── CONVENTIONS.md       # Living conventions
-│   ├── PHASE_CONTRACTS.md   # Phase I/O contracts
-│   ├── MIGRATION_META_PLAN.md
-│   ├── phases/              # 7 phase documents
-│   └── reference/           # UNITY_PRIMER.md, PYTHON_TO_CSHARP.md
-├── Game-1-modular/          # Active Python source (read during migration)
-├── Unity/                   # Target Unity project (empty, to be populated)
-├── Python/                  # Symlink to Game-1-modular
-├── Scaled JSON Development/ # ML training data/models
-└── archive/                 # Historical docs
-```
+When resuming migration, start with:
+- `Migration-Plan/COMPLETION_STATUS.md` (central hub)
+- `Migration-Plan/AUDIT_IMPROVEMENT_PLAN.md` (corrected gap list)
+- `VISUAL_SYSTEM_REWORK_PLAN.md` (rendering is broken — most urgent)
+- `Unity/UI_AUDIT_REPORT.md` (panel-by-panel status)
+- `Unity/MANUAL_TASKS_README.md` (scene setup tasks)
 
 ---
 
 ## Critical: What's Implemented vs Designed
 
-### Fully Working
+### Fully Working (Python 2D)
 - World generation & rendering (100x100 tiles, chunk-based)
 - Resource gathering with tool requirements
 - Inventory system (30 slots, drag-and-drop)
 - Equipment system (8 slots: weapons, armor, tools)
-- **All 5 crafting disciplines with minigames** (5,346 lines total)
-- **LLM Item Generation** via Claude API (systems/llm_item_generator.py - 1,393 lines) (NEW)
-- **Crafting Classifiers** - CNN for smithing/adornments, LightGBM for others (NEW)
-- **Invented Recipes** - Player-created content persisted across saves (NEW)
+- All 5 crafting disciplines with minigames (5,346 lines total)
+- LLM Item Generation via Claude API (systems/llm_item_generator.py - 1,393 lines)
+- Crafting Classifiers - CNN for smithing/adornments, LightGBM for others
+- Invented Recipes - Player-created content persisted across saves
 - Character progression (30 levels, 6 stats, EXP curves)
 - Class system (6 classes with tag-driven bonuses)
 - Title system (all tiers: Novice through Master)
-- **Full combat system** (damage pipeline, enchantments, dual wielding)
-- **100+ skills** with mana, cooldowns, effects
-- **Status effects** (DoT, CC, buffs, debuffs - 827 lines)
-- **14 Enchantments fully integrated** (see Combat section)
-- **Full save/load system** (complete state preservation)
-- **Durability, weight, and repair systems**
-- **Tag-driven effect system** (combat, skills, items)
-- **Difficulty/Reward calculators** (material-based scaling)
+- Full combat system (damage pipeline, enchantments, dual wielding)
+- 100+ skills with mana, cooldowns, effects
+- Status effects (DoT, CC, buffs, debuffs - 827 lines)
+- 14 Enchantments fully integrated
+- Full save/load system (complete state preservation)
+- Durability, weight, and repair systems
+- Tag-driven effect system (combat, skills, items)
+- Difficulty/Reward calculators (material-based scaling)
 
 ### Partially Implemented
 - World generation (basic chunks, detailed templates pending)
@@ -144,7 +76,7 @@ Game-1/
 
 ---
 
-## LLM Integration System (NEW - January 2026)
+## LLM Integration System
 
 ### Overview
 Players can **invent new items** by placing materials in unique arrangements. The system:
@@ -168,8 +100,8 @@ Scaled JSON Development/
 ### Classifier Mapping
 | Discipline | Model Type | Input Format |
 |------------|------------|--------------|
-| Smithing | CNN | 36×36×3 RGB image |
-| Adornments | CNN | 56×56×3 RGB image |
+| Smithing | CNN | 36x36x3 RGB image |
+| Adornments | CNN | 56x56x3 RGB image |
 | Alchemy | LightGBM | 34 numeric features |
 | Refining | LightGBM | 18 numeric features |
 | Engineering | LightGBM | 28 numeric features |
@@ -187,9 +119,6 @@ timeout = 30.0
 1. Set environment variable: `export ANTHROPIC_API_KEY="sk-ant-..."`
 2. Or create `.env` file in Game-1-modular/: `ANTHROPIC_API_KEY=sk-ant-...`
 3. Fallback: MockBackend generates placeholder items without API
-
-### Debug Logs
-All LLM API calls are logged to `llm_debug_logs/TIMESTAMP_discipline.json`
 
 ---
 
@@ -214,56 +143,23 @@ Game-1-modular/
 │   └── testing.py               # Crafting system tester
 ├── data/                        # Data layer (25 files, 3,745 LOC)
 │   ├── models/                  # Pure data classes (dataclasses)
-│   │   ├── materials.py         # MaterialDefinition
-│   │   ├── equipment.py         # EquipmentItem
-│   │   ├── skills.py            # SkillDefinition, PlayerSkill
-│   │   ├── recipes.py           # Recipe, PlacementData
-│   │   ├── world.py             # Position, TileType, WorldTile
-│   │   ├── titles.py            # TitleDefinition
-│   │   └── classes.py           # ClassDefinition with tags
 │   └── databases/               # Singleton database loaders (10 files)
-│       ├── material_db.py       # MaterialDatabase
-│       ├── equipment_db.py      # EquipmentDatabase
-│       ├── recipe_db.py         # RecipeDatabase
-│       ├── skill_db.py          # SkillDatabase
-│       ├── title_db.py          # TitleDatabase
-│       ├── class_db.py          # ClassDatabase
-│       ├── npc_db.py            # NPCDatabase
-│       ├── placement_db.py      # PlacementDatabase
-│       ├── translation_db.py    # TranslationDatabase
-│       └── skill_unlock_db.py   # SkillUnlockDatabase
 ├── entities/                    # Game entities (17 files, 6,909 LOC)
 │   ├── character.py             # Character class (1,008 lines)
-│   ├── tool.py                  # Tool class
-│   └── components/              # Character components
-│       ├── inventory.py         # Inventory, ItemStack
-│       ├── equipment_manager.py # EquipmentManager
-│       ├── skill_manager.py     # SkillManager (709 lines)
-│       ├── stats.py             # CharacterStats
-│       ├── buffs.py             # Buff/debuff tracking
-│       └── leveling.py          # LevelingSystem
+│   └── components/              # Stats, Inventory, Equipment, Skills, etc.
 ├── systems/                     # Game system managers (16 files, 5,856 LOC)
 │   ├── world_system.py          # WorldSystem (generation, chunks)
-│   ├── title_system.py          # TitleSystem
-│   ├── class_system.py          # ClassSystem with tag bonuses
-│   ├── llm_item_generator.py    # LLM integration (1,393 lines) (NEW)
-│   └── crafting_classifier.py   # ML classifiers (1,256 lines) (NEW)
+│   ├── llm_item_generator.py    # LLM integration (1,393 lines)
+│   └── crafting_classifier.py   # ML classifiers (1,256 lines)
 ├── rendering/                   # All rendering code (3 files, 5,679 LOC)
 │   └── renderer.py              # Renderer class (2,782 lines)
 ├── Combat/                      # Combat system (3 files, 2,527 LOC)
 │   ├── combat_manager.py        # CombatManager (1,655 lines)
 │   └── enemy.py                 # Enemy, EnemyDatabase (867 lines)
 ├── Crafting-subdisciplines/     # Crafting minigames (8 files, 5,346 LOC)
-│   ├── smithing.py              # Smithing minigame (749 lines)
-│   ├── alchemy.py               # Alchemy minigame (1,052 lines)
-│   ├── refining.py              # Refining minigame (820 lines)
-│   ├── engineering.py           # Engineering minigame (1,315 lines)
-│   └── enchanting.py            # Enchanting minigame (1,410 lines)
 ├── save_system/                 # Save/load system
-│   └── save_manager.py          # Full state persistence
 └── docs/                        # Technical documentation
     ├── GAME_MECHANICS_V6.md     # MASTER REFERENCE (5,089 lines)
-    ├── REPOSITORY_STATUS_REPORT_2026-01-27.md # Current status
     └── tag-system/              # Tag system documentation
 ```
 
@@ -285,8 +181,8 @@ Game-1-modular/
 - `WorldSystem` - 100x100 tiles, chunk-based generation
 - `Renderer` - All drawing logic (2,782 lines)
 - `GameEngine` - Main loop, event handling, UI (7,817 lines)
-- `LLMItemGenerator` - Claude API integration for invented items (NEW)
-- `CraftingClassifierManager` - CNN/LightGBM validation (NEW)
+- `LLMItemGenerator` - Claude API integration for invented items
+- `CraftingClassifierManager` - CNN/LightGBM validation
 
 ### Design Patterns
 
@@ -295,82 +191,33 @@ Game-1-modular/
 3. **Dataclasses**: Heavy use of `@dataclass` for data structures
 4. **Tag-Driven Effects**: Combat, skills, and items use composable tag system
 5. **JSON-Driven Content**: All items, recipes, materials, skills defined in JSON
-6. **Background Threading**: LLM generation runs async to avoid UI freeze (NEW)
+6. **Background Threading**: LLM generation runs async to avoid UI freeze
 
 ---
 
-## Crafting System
+## Critical Constants
 
-### Difficulty Calculator
-Material-based difficulty scaling (core/difficulty_calculator.py):
-
-**Point System** (Linear):
-- T1 = 1 point, T2 = 2 points, T3 = 3 points, T4 = 4 points per item
-
-**Difficulty Tiers**:
-| Tier | Points | Distribution |
-|------|--------|--------------|
-| Common | 0-4 | ~20% |
-| Uncommon | 5-10 | ~25% |
-| Rare | 11-20 | ~30% |
-| Epic | 21-40 | ~20% |
-| Legendary | 41+ | ~5% |
-
-**Discipline-Specific Modifiers**:
-- Smithing: base_points only
-- Refining: base × diversity × station_tier (1.5x-4.5x)
-- Alchemy: base × diversity × tier_modifier × volatility
-- Engineering: base × diversity × slot_modifier
-- Enchanting: base × diversity
-
-### Reward Calculator
-Performance-based rewards (core/reward_calculator.py):
-
-**Quality Tiers** (by performance 0.0-1.0):
-| Score | Quality |
-|-------|---------|
-| 0-25% | Normal |
-| 25-50% | Fine |
-| 50-75% | Superior |
-| 75-90% | Masterwork |
-| 90-100% | Legendary |
+```
+Damage: base x hand(1.1-1.2) x STR(1+STRx0.05) x skill x class(max 1.2) x crit(2x) - def(max 75%)
+EXP: 200 x 1.75^(level-1), max level 30
+Stats: STR +5%dmg, DEF +2%red, VIT +15HP, LCK +2%crit, AGI +5%forestry, INT -2%diff +20mana
+Tiers: T1=1.0x, T2=2.0x, T3=4.0x, T4=8.0x
+Durability: 0% = 50% effectiveness, never breaks
+Final Value = Base x (1 + Stat) x (1 + Title) x (1 + Equipment) x (1 + Class Affinity)
+```
 
 ---
 
-## Tag System (Major Feature)
+## Tag System
 
-The tag-driven effect system is the core combat mechanic. All effects are defined through composable tags:
-
-### Tag Categories
+The tag-driven effect system is the core combat mechanic. See `docs/tag-system/TAG-GUIDE.md` for full reference.
 
 **Damage Types**: `physical`, `fire`, `ice`, `lightning`, `poison`, `arcane`, `shadow`, `holy`
-
 **Geometry Tags**: `single`, `chain`, `cone`, `circle`, `beam`, `pierce`
-
 **Status Effects**: `burn`, `bleed`, `poison`, `freeze`, `chill`, `stun`, `root`, `shock`
-
 **Special Behaviors**: `knockback`, `pull`, `lifesteal`, `execute`, `critical`, `reflect`
 
-### Tag Flow
-```
-JSON Definition → Database → Equipment/Skills → Effect Executor → Game World
-```
-
-### Example: Fire Skill
-```json
-{
-  "skillId": "fireball",
-  "tags": ["fire", "circle", "burn"],
-  "effectParams": {
-    "baseDamage": 50,
-    "circle_radius": 3.0,
-    "burn_duration": 5.0,
-    "burn_damage_per_second": 8.0
-  }
-}
-```
-
-**Documentation**: See `docs/tag-system/TAG-GUIDE.md` for comprehensive tag reference.
+Tag flow: `JSON Definition -> Database -> Equipment/Skills -> Effect Executor -> Game World`
 
 ---
 
@@ -379,333 +226,107 @@ JSON Definition → Database → Equipment/Skills → Effect Executor → Game W
 ### Damage Pipeline
 ```
 Base Damage (weapon)
-  × Hand Type Bonus (+10-20%)
-  × Strength Multiplier (1.0 + STR × 0.05)
-  × Skill Buff Bonus (+50% to +400%)
-  × Class Affinity Bonus (up to +20%)
-  × Title Bonus
-  × Weapon Tag Bonuses
-  × Critical Hit (2x if triggered)
+  x Hand Type Bonus (+10-20%)
+  x Strength Multiplier (1.0 + STR x 0.05)
+  x Skill Buff Bonus (+50% to +400%)
+  x Class Affinity Bonus (up to +20%)
+  x Title Bonus x Weapon Tag Bonuses
+  x Critical Hit (2x if triggered)
   - Enemy Defense (max 75% reduction)
   = Final Damage
 ```
 
-### Enchantment Effects (14 Implemented - January 2026)
-| Enchantment | Type | Trigger | Status |
-|-------------|------|---------|--------|
-| Sharpness I-III | damage_multiplier | Passive | ✅ Working |
-| Protection I-III | defense_multiplier | Passive | ✅ Working |
-| Efficiency I-II | gathering_speed_multiplier | Passive | ✅ Working |
-| Fortune I-II | bonus_yield_chance | Passive | ✅ Working |
-| Unbreaking I-II | durability_multiplier | Passive | ✅ Working |
-| Fire Aspect | damage_over_time | On hit | ✅ Working |
-| Poison | damage_over_time | On hit | ✅ Working |
-| Swiftness | movement_speed_multiplier | Equip | ✅ Working |
-| Thorns | reflect_damage | On hit received | ✅ Working |
-| Knockback | knockback | On hit | ✅ Working |
-| Lifesteal | lifesteal | On hit | ✅ Working |
-| Health Regen | health_regeneration | Periodic | ✅ Working |
-| Frost Touch | slow | On hit | ✅ Working |
-| Chain Damage | chain_damage | On hit | ✅ Working |
+### Enchantments (14 Working)
+Sharpness I-III, Protection I-III, Efficiency I-II, Fortune I-II, Unbreaking I-II,
+Fire Aspect, Poison, Swiftness, Thorns, Knockback, Lifesteal, Health Regen, Frost Touch, Chain Damage.
+Deferred: Self-Repair, Weightless, Silk Touch.
 
-**Deferred** (3 types - by design):
-- Self-Repair, Weightless, Silk Touch
-
-### Status Effects (All Implemented)
-- **DoT**: Burn, Bleed, Poison, Shock (damage per second)
-- **CC**: Freeze, Stun, Root, Slow/Chill (movement/action prevention)
+### Status Effects
+- **DoT**: Burn, Bleed, Poison, Shock
+- **CC**: Freeze, Stun, Root, Slow/Chill
 - **Buffs**: Empower, Fortify, Haste, Regeneration, Shield
 - **Debuffs**: Vulnerable, Weaken
-- **Special**: Phase/Ethereal, Invisible
-
----
-
-## File Organization
-
-```
-Game-1-modular/
-├── items.JSON/                  # Item definitions
-│   ├── items-materials-1.JSON   # 57 raw materials
-│   ├── items-smithing-2.JSON    # Weapons, armor
-│   ├── items-alchemy-1.JSON     # Potions, consumables
-│   ├── items-refining-1.JSON    # Ingots, planks
-│   ├── items-engineering-1.JSON # Devices
-│   └── items-tools-1.JSON       # Placeable tools
-├── recipes.JSON/                # Crafting recipes
-│   ├── recipes-smithing-3.json  # Most current smithing
-│   ├── recipes-alchemy-1.JSON   # Alchemy recipes
-│   ├── recipes-refining-1.JSON  # Material processing
-│   ├── recipes-engineering-1.JSON
-│   ├── recipes-enchanting-1.JSON
-│   └── recipes-adornments-1.json # Enchantments
-├── placements.JSON/             # Grid layouts for minigames
-├── progression/                 # Character progression
-│   ├── classes-1.JSON           # 6 classes with tags
-│   ├── titles-1.JSON            # 40+ titles
-│   └── npcs-1.JSON              # NPC definitions
-├── Skills/                      # Skill definitions
-│   └── skills-skills-1.JSON     # 100+ skills
-└── Definitions.JSON/            # System definitions
-    ├── tag-definitions.JSON     # All tag definitions
-    ├── hostiles-1.JSON          # Enemy definitions
-    ├── stats-calculations.JSON  # Stat formulas
-    └── crafting-stations-1.JSON # Station definitions
-```
 
 ---
 
 ## Key Design Principles
 
-### 1. Hardcode vs JSON Philosophy
-- **Hardcode**: System mechanics (HOW things work)
-- **JSON**: All content, values, balance numbers
-
-### 2. Stats System (6 Core Stats)
-All stats start at 0, gain 1 point per level (max 30):
-- **STR**: +5% mining/melee damage, +10 inventory slots
-- **DEF**: +2% damage reduction, +3% armor effectiveness
-- **VIT**: +15 max HP, +1% health regen
-- **LCK**: +2% crit chance, +2% resource quality, +3% rare drops
-- **AGI**: +5% forestry damage, +3% attack speed
-- **INT**: -2% minigame difficulty (smithing, refining, alchemy, engineering), +20 mana, +5% elemental damage
-
-### 3. Multiplicative Scaling
-```
-Final Value = Base × (1 + Stat Bonuses) × (1 + Title Bonuses) × (1 + Equipment Bonuses) × (1 + Class Affinity)
-```
-
-### 4. Tier System
-- **T1**: Common materials (oak, iron, limestone)
-- **T2**: Uncommon (ash, steel, marble)
-- **T3**: Rare (ironwood, mithril, obsidian)
-- **T4**: Legendary (voidsteel, dragonsteel, voidstone)
-
-Tier multipliers: T1=1.0x, T2=2.0x, T3=4.0x, T4=8.0x
-
-### 5. No Breaking (Durability)
-- 100% durability = 100% effectiveness
-- 0% durability = 50% effectiveness forever
-- Items never destroyed, only degraded
+- **Hardcode vs JSON**: System mechanics are hardcoded; all content/values/balance in JSON
+- **Stats**: STR, DEF, VIT, LCK, AGI, INT — start at 0, +1 per level, max 30
+- **Tiers**: T1 (common) -> T2 (uncommon) -> T3 (rare) -> T4 (legendary), multipliers 1x/2x/4x/8x
+- **Durability**: 0% = 50% effectiveness, items never break
 
 ---
 
-## Known Issues & Current Work
+## Known Issues
 
 **See**: `MASTER_ISSUE_TRACKER.md` for comprehensive bug list
-**See**: `docs/REPOSITORY_STATUS_REPORT_2026-01-27.md` for full status
 
-### Recently Resolved (January 2026)
-- ✅ Inventory click misalignment - spacing synchronized
-- ✅ All 14 enchantments now working (Lifesteal, Knockback, Chain Damage, Health Regen, Frost Touch)
-- ✅ Unused imports (`Path`, `copy`) removed from crafting files
-- ✅ `import random` in enchanting.py - uses inline imports (functional)
-
-### Code Quality Notes
-- Duplicate singleton pattern across 10 database files (acceptable technical debt)
-- Duplicate methods across 5 crafting minigame files (could be refactored)
-
-### Not Yet Implemented (Despite Documentation)
-- Block/Parry combat mechanics
-- Summon mechanics
-- Advanced skill evolution chains
-
-### Open Issues
 - Tooltip z-order (can be covered by equipment menu)
 - Missing crafting station definitions (Tier 3/4)
 - Missing station icons (forge_t4.png, enchanting_table_t2.png)
-
----
-
-## Debugging Tips
-
-### Enable Debug Mode
-Press **F1** in-game to toggle debug mode:
-- Infinite resources
-- Debug info overlays
-
-Additional debug keys:
-- **F2**: Auto-learn all skills
-- **F3**: Grant all titles
-- **F4**: Max level + stats
-- **F7**: Infinite durability
-
-### Check Database Loading
-```python
-mat_db = MaterialDatabase.get_instance()
-print(f"Loaded {len(mat_db.materials)} materials")
-
-skill_db = SkillDatabase.get_instance()
-print(f"Loaded {len(skill_db.skills)} skills")
-```
-
-### Tag System Debugging
-```python
-from core.tag_debug import get_tag_debugger
-debugger = get_tag_debugger()
-debugger.enable()
-# ... your code ...
-debugger.disable()
-```
-
-### LLM Debug Logs
-Check `llm_debug_logs/` for full API request/response logs
+- Block/Parry, Summon mechanics not yet implemented
 
 ---
 
 ## Quick Command Reference
 
-### Run Game
 ```bash
 cd Game-1-modular
-python main.py
+python main.py              # Run game
+python -m pytest tests/ -v  # Run tests
 ```
 
-### Run Tests
-```bash
-cd Game-1-modular
-python -m pytest tests/ -v
-```
-
-### Check JSON Validity
-```bash
-python -m json.tool recipes.JSON/recipes-smithing-3.json > /dev/null
-```
-
----
-
-## Common Development Tasks
-
-### Adding a New Recipe
-
-1. Choose discipline and locate file:
-   - Smithing: `recipes.JSON/recipes-smithing-3.json`
-   - Alchemy: `recipes.JSON/recipes-alchemy-1.JSON`
-
-2. Add recipe object with required fields:
-```json
-{
-  "recipeId": "smithing_iron_sword_001",
-  "outputId": "iron_sword",
-  "outputQty": 1,
-  "stationType": "smithing",
-  "stationTier": 1,
-  "inputs": [
-    {"materialId": "iron_ingot", "qty": 3}
-  ]
-}
-```
-
-3. Game auto-loads on restart
-
-### Adding a New Material
-
-1. Add to `items.JSON/items-materials-1.JSON`:
-```json
-{
-  "materialId": "mythril_ore",
-  "name": "Mythril Ore",
-  "tier": 3,
-  "category": "ore",
-  "rarity": "rare"
-}
-```
-
-2. Add resource node to `Definitions.JSON/Resource-node-1.JSON` if gatherable
-
-### Adding a Skill with Tags
-
-1. Add to `Skills/skills-skills-1.JSON`:
-```json
-{
-  "skillId": "flame_strike",
-  "name": "Flame Strike",
-  "tags": ["fire", "melee", "single", "burn"],
-  "effectParams": {
-    "baseDamage": 75,
-    "burn_duration": 5.0,
-    "burn_damage_per_second": 10.0
-  },
-  "manaCost": "moderate",
-  "cooldown": "short"
-}
-```
+Debug keys: F1 (debug mode), F2 (learn skills), F3 (grant titles), F4 (max level), F7 (infinite durability)
 
 ---
 
 ## When Working on This Project
 
-### For Python Development (bug fixes, features):
+### For Python Development:
 - Check `GAME_MECHANICS_V6.md` for implementation status before assuming features exist
-- Check `REPOSITORY_STATUS_REPORT_2026-01-27.md` for current system state
-- Reference `NAMING_CONVENTIONS.md` for method names
+- Reference `.claude/NAMING_CONVENTIONS.md` for method names
 - Use singleton pattern for databases
 - Follow tag system conventions for new combat effects
 - Test JSON changes by restarting the game
-- Check `llm_debug_logs/` when debugging LLM issues
-
-### For Unity/C# Migration Work:
-- **Start with** `Migration-Plan/COMPLETION_STATUS.md` — it directs to everything
-- **Read** `CONVENTIONS.md` before writing any C# code (naming, 3D, item hierarchy)
-- **Check** `PHASE_CONTRACTS.md` for your phase's exact RECEIVES/DELIVERS
-- **Use** `GamePosition` for ALL positions (never raw Vector3 in game logic)
-- **Use** `ItemFactory` for ALL item creation (never construct items directly)
-- **Use** `IGameItem` interface hierarchy (MaterialItem, EquipmentItem, ConsumableItem, PlaceableItem)
-- **Reference** `IMPROVEMENTS.md` Quick Reference for all architecture changes
-- **Reference** `PYTHON_TO_CSHARP.md` for type mappings and pattern conversions
-- **Reference** `UNITY_PRIMER.md` if new to Unity (MonoBehaviour lifecycle, etc.)
-- **Preserve** all game constants exactly (see Critical Constants above)
-- **Keep** JSON files byte-identical in `StreamingAssets/Content/`
-- Plain C# classes for Phases 1-5, MonoBehaviours only for Phase 6
 
 ### DON'T:
 - Assume design docs describe implemented features
 - Create new JSON schemas without checking existing patterns
 - Hardcode values that should be in JSON
-- Skip checking tag documentation for combat/skill work
-- Change any game formula, constant, or balance number during migration
-- Use raw `Vector3` instead of `GamePosition` in game logic
-- Create items without going through `ItemFactory`
-- Add MonoBehaviour to Phase 1-5 code (plain C# only)
 
 ---
 
 ## Documentation Index
 
-### Migration Plan (in `Migration-Plan/`)
+### Primary (in `Game-1-modular/`)
 | Document | Purpose |
 |----------|---------|
-| **COMPLETION_STATUS.md** | Central hub — start here for migration |
-| **MIGRATION_PLAN.md** | Master overview (1,229 lines) |
-| **IMPROVEMENTS.md** | All architecture improvements (1,424 lines) |
-| **CONVENTIONS.md** | Living conventions for C# code (709 lines) |
-| **PHASE_CONTRACTS.md** | Phase inputs/outputs with C# types (641 lines) |
-| **phases/PHASE_1-7** | Detailed per-phase instructions (9,197 lines total) |
-| **reference/UNITY_PRIMER.md** | Unity crash course (679 lines) |
-| **reference/PYTHON_TO_CSHARP.md** | Type mappings and conversions (902 lines) |
-
-### Python Source Documentation (in `Game-1-modular/`)
-| Document | Purpose |
-|----------|---------|
-| **GAME_MECHANICS_V6.md** | Master reference - all mechanics (5,089 lines) |
-| **REPOSITORY_STATUS_REPORT_2026-01-27.md** | Current system state |
+| **docs/GAME_MECHANICS_V6.md** | Master reference - all mechanics (5,089 lines) |
+| **docs/REPOSITORY_STATUS_REPORT_2026-01-27.md** | Current system state |
 | **MASTER_ISSUE_TRACKER.md** | Known bugs and improvements |
 | **docs/tag-system/TAG-GUIDE.md** | Comprehensive tag system guide |
 | **docs/ARCHITECTURE.md** | System architecture overview |
-| **NAMING_CONVENTIONS.md** | API naming standards |
-| **Fewshot_llm/README.md** | LLM system documentation |
-| **Fewshot_llm/MANUAL_TUNING_GUIDE.md** | LLM prompt editing guide |
+| **DOCUMENTATION_INDEX.md** | Full doc index |
+
+### Migration (PAUSED — in `Migration-Plan/`)
+| Document | Purpose |
+|----------|---------|
+| **COMPLETION_STATUS.md** | Central hub |
+| **AUDIT_IMPROVEMENT_PLAN.md** | Corrected gap list |
+| **MIGRATION_PLAN.md** | Master overview |
 
 ---
 
 ## Version History
 
-- **v4.0** (February 11, 2026): Added Unity/C# migration plan context (16,013 lines, 15 documents), updated stats, migration guidelines
-- **v3.0** (January 27, 2026): Major update for LLM integration, crafting classifiers, invented items system
-- **v2.0** (December 31, 2025): Major update for modular architecture, tag system, full combat, skills, save/load
-- **v1.0** (November 17, 2025): Initial Claude.md creation (monolithic main.py)
+- **v5.0** (March 5, 2026): Trimmed migration bloat (migration paused), refocused on Python 2D development
+- **v4.0** (February 11, 2026): Added Unity/C# migration plan context
+- **v3.0** (January 27, 2026): LLM integration, crafting classifiers, invented items
+- **v2.0** (December 31, 2025): Modular architecture, tag system, combat, skills, save/load
+- **v1.0** (November 17, 2025): Initial Claude.md
 
 ---
 
-**Last Updated**: 2026-02-11
-**For**: AI assistants and developers working on Game-1 (Python source + Unity/C# migration)
-**Maintained By**: Project developers
+**Last Updated**: 2026-03-05
+**For**: AI assistants and developers working on Game-1
