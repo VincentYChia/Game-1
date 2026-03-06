@@ -1320,39 +1320,63 @@ class Renderer:
                 hp_w = int(bar_w * (resource.current_hp / resource.max_hp))
                 pygame.draw.rect(self.screen, Config.COLOR_HP_BAR, (sx - bar_w // 2, bar_y, hp_w, bar_h))
 
-        # Render enemies
+        # Render enemies (size-scaled by visual_size from JSON)
         image_cache = ImageCache.get_instance()
         if combat_manager:
             for enemy in combat_manager.get_all_active_enemies():
                 ex, ey = camera.world_to_screen(Position(enemy.position[0], enemy.position[1], 0))
 
-                # Enemy body
+                # Enemy body - use visual_size for scaling
                 if enemy.is_alive:
-                    # Try to load enemy icon
-                    size = Config.TILE_SIZE // 2
+                    vis_size = getattr(enemy.definition, 'visual_size', 1.0)
+                    base_size = Config.TILE_SIZE // 2
+                    size = max(4, int(base_size * vis_size))
+
+                    # Try to load enemy icon (scaled to visual_size)
                     icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2)) if enemy.definition.icon_path else None
 
                     if icon:
-                        # Render icon centered on enemy position
                         icon_rect = icon.get_rect(center=(ex, ey))
                         self.screen.blit(icon, icon_rect)
                     else:
-                        # Fallback: Color based on tier
+                        # Fallback: Color based on tier, size from visual_size
                         tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
                         enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
                         if enemy.is_boss:
-                            enemy_color = (255, 215, 0)  # Gold for bosses
+                            enemy_color = (255, 215, 0)
 
                         pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
                         pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
 
-                    # Health bar
+                        # Category-based shape accent for visual variety
+                        cat = getattr(enemy.definition, 'category', '')
+                        if cat == 'ooze':
+                            # Ooze: wobbly blob effect — inner lighter circle
+                            inner = max(2, int(size * 0.6))
+                            lighter = tuple(min(255, c + 40) for c in enemy_color)
+                            pygame.draw.circle(self.screen, lighter, (ex - size // 4, ey - size // 4), inner)
+                        elif cat == 'construct':
+                            # Construct: angular overlay
+                            pygame.draw.rect(self.screen, (0, 0, 0),
+                                             (ex - size // 2, ey - size // 2, size, size), 2)
+                        elif cat == 'insect':
+                            # Insect: mandible lines
+                            pygame.draw.line(self.screen, (0, 0, 0),
+                                             (ex - size // 2, ey + size // 3),
+                                             (ex - size, ey + size // 2), 2)
+                            pygame.draw.line(self.screen, (0, 0, 0),
+                                             (ex + size // 2, ey + size // 3),
+                                             (ex + size, ey + size // 2), 2)
+
+                    # Health bar (scaled width)
                     health_percent = enemy.current_health / enemy.max_health
-                    bar_w, bar_h = Config.TILE_SIZE, 4
-                    bar_y = ey - Config.TILE_SIZE // 2 - 12
+                    bar_w = max(Config.TILE_SIZE, int(Config.TILE_SIZE * vis_size))
+                    bar_h = 4
+                    bar_y = ey - size - 8
                     pygame.draw.rect(self.screen, Config.COLOR_HP_BAR_BG, (ex - bar_w // 2, bar_y, bar_w, bar_h))
                     hp_w = int(bar_w * health_percent)
-                    pygame.draw.rect(self.screen, (255, 0, 0), (ex - bar_w // 2, bar_y, hp_w, bar_h))
+                    hp_color = (255, 0, 0) if health_percent > 0.25 else (255, 80, 80)
+                    pygame.draw.rect(self.screen, hp_color, (ex - bar_w // 2, bar_y, hp_w, bar_h))
 
                     # Tier indicator
                     tier_text = f"T{enemy.definition.tier}"
@@ -1362,10 +1386,10 @@ class Renderer:
                     self.screen.blit(tier_surf, (ex - tier_surf.get_width() // 2, ey - 5))
 
                 else:
-                    # Corpse (greyed out)
-                    corpse_color = (100, 100, 100)
-                    size = Config.TILE_SIZE // 3
-                    pygame.draw.circle(self.screen, corpse_color, (ex, ey), size)
+                    # Corpse (greyed out, scaled)
+                    vis_size = getattr(enemy.definition, 'visual_size', 1.0)
+                    corpse_size = max(3, int(Config.TILE_SIZE // 3 * vis_size))
+                    pygame.draw.circle(self.screen, (100, 100, 100), (ex, ey), corpse_size)
                     loot_text = self.tiny_font.render("LOOT", True, (255, 255, 0))
                     self.screen.blit(loot_text, (ex - loot_text.get_width() // 2, ey - 10))
 
@@ -1396,13 +1420,11 @@ class Renderer:
     def _render_action_combat(self, camera: Camera, character, combat_manager, ac: dict):
         """Render all action combat visual overlays.
 
-        Args:
-            camera: Camera for world-to-screen conversion
-            character: Player Character instance
-            combat_manager: CombatManager for enemy lookups
-            ac: Dict of action combat systems from game_engine._ac
+        Visuals are tag-driven: hitbox colors, projectile shapes, flash colors,
+        and telegraph colors all derive from damage type tags in the attack data.
         """
         import math
+        import time as _time
 
         hitbox_sys = ac.get('hitbox')
         projectile_sys = ac.get('projectile')
@@ -1411,38 +1433,91 @@ class Renderer:
         player_sm = ac.get('player_sm')
         player_actions = ac.get('player_actions')
 
+        # Tag -> color mapping for elemental visuals
+        _ELEMENT_COLORS = {
+            "physical": (220, 220, 240),
+            "fire": (255, 120, 30),
+            "ice": (100, 200, 255), "frost": (100, 200, 255),
+            "lightning": (255, 255, 80),
+            "poison": (100, 255, 80),
+            "arcane": (180, 80, 255),
+            "shadow": (130, 80, 180),
+            "holy": (255, 255, 180),
+        }
+
+        def _color_from_tags(tags, fallback=(220, 220, 240)):
+            """Get element color from a list of tags."""
+            if not tags:
+                return fallback
+            for t in tags:
+                if t in _ELEMENT_COLORS:
+                    return _ELEMENT_COLORS[t]
+            return fallback
+
+        def _color_from_context(ctx, fallback=(220, 220, 240)):
+            """Get element color from a damage_context dict."""
+            effect_tags = ctx.get('effect_tags', []) if ctx else []
+            return _color_from_tags(effect_tags, fallback)
+
         # --- Screen shake offset ---
         shake_ox, shake_oy = 0, 0
         if screen_effects:
             shake_ox = int(screen_effects.shake_offset[0])
             shake_oy = int(screen_effects.shake_offset[1])
 
+        # --- Dodge afterimage trail (rendered BEHIND player) ---
+        if screen_effects and screen_effects.afterimages:
+            player_radius = Config.TILE_SIZE // 3
+            for img in screen_effects.afterimages:
+                ix, iy = camera.world_to_screen(Position(img['x'], img['y'], 0))
+                ix += shake_ox
+                iy += shake_oy
+                a = max(0, min(255, img['alpha']))
+                r = int(player_radius * img['size'])
+                if r > 0 and a > 10:
+                    ghost_surf = pygame.Surface((r * 2 + 4, r * 2 + 4), pygame.SRCALPHA)
+                    c = img['color']
+                    # Outer glow
+                    pygame.draw.circle(ghost_surf, (*c, a // 3),
+                                       (r + 2, r + 2), r + 2)
+                    # Inner ghost
+                    pygame.draw.circle(ghost_surf, (*c, a),
+                                       (r + 2, r + 2), r)
+                    self.screen.blit(ghost_surf, (ix - r - 2, iy - r - 2))
+
         # --- Entity flash overlays ---
         if screen_effects and screen_effects.flash_entities:
             for entity_id, (flash_color, flash_remaining) in screen_effects.flash_entities.items():
-                flash_alpha = max(0, min(200, int(200 * (flash_remaining / 80.0))))
+                flash_alpha = max(0, min(220, int(220 * (flash_remaining / 100.0))))
 
                 if entity_id == 'player':
                     px, py = camera.world_to_screen(character.position)
                     radius = Config.TILE_SIZE // 3
-                    flash_surf = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+                    flash_surf = pygame.Surface((radius * 2 + 4, radius * 2 + 4), pygame.SRCALPHA)
+                    # Glow ring
+                    pygame.draw.circle(flash_surf, (*flash_color, flash_alpha // 2),
+                                       (radius + 2, radius + 2), radius + 2)
                     pygame.draw.circle(flash_surf, (*flash_color, flash_alpha),
-                                       (radius, radius), radius)
+                                       (radius + 2, radius + 2), radius)
                     self.screen.blit(flash_surf,
-                                     (px - radius + shake_ox, py - radius + shake_oy))
+                                     (px - radius - 2 + shake_ox, py - radius - 2 + shake_oy))
                 elif combat_manager:
                     enemy = combat_manager.find_enemy_by_entity_id(entity_id)
                     if enemy and enemy.is_alive:
                         ex, ey = camera.world_to_screen(
                             Position(enemy.position[0], enemy.position[1], 0))
-                        radius = Config.TILE_SIZE // 2
-                        flash_surf = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+                        # Use enemy visual_size for flash radius
+                        vis_size = getattr(enemy.definition, 'visual_size', 1.0)
+                        radius = int(Config.TILE_SIZE // 2 * vis_size)
+                        flash_surf = pygame.Surface((radius * 2 + 4, radius * 2 + 4), pygame.SRCALPHA)
+                        pygame.draw.circle(flash_surf, (*flash_color, flash_alpha // 2),
+                                           (radius + 2, radius + 2), radius + 2)
                         pygame.draw.circle(flash_surf, (*flash_color, flash_alpha),
-                                           (radius, radius), radius)
+                                           (radius + 2, radius + 2), radius)
                         self.screen.blit(flash_surf,
-                                         (ex - radius + shake_ox, ey - radius + shake_oy))
+                                         (ex - radius - 2 + shake_ox, ey - radius - 2 + shake_oy))
 
-        # --- Enemy windup telegraphs ---
+        # --- Enemy windup telegraphs (tag-driven colors) ---
         if combat_manager:
             for enemy in combat_manager.get_all_active_enemies():
                 if not enemy.is_alive:
@@ -1452,47 +1527,46 @@ class Renderer:
                     ex, ey = camera.world_to_screen(
                         Position(enemy.position[0], enemy.position[1], 0))
                     progress = asm.windup_progress
-                    # Pulsing red circle telegraph
-                    telegraph_radius = int(Config.TILE_SIZE * 1.5 * progress)
-                    telegraph_alpha = int(40 + progress * 80)
+                    vis_size = getattr(enemy.definition, 'visual_size', 1.0)
+                    telegraph_radius = int(Config.TILE_SIZE * 1.5 * progress * vis_size)
+                    telegraph_alpha = int(30 + progress * 90)
                     color = asm.current_attack.telegraph_color if asm.current_attack else [255, 100, 100]
                     if telegraph_radius > 2:
-                        tele_surf = pygame.Surface(
-                            (telegraph_radius * 2, telegraph_radius * 2), pygame.SRCALPHA)
+                        surf_size = telegraph_radius * 2 + 4
+                        tele_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                        center = surf_size // 2
+                        # Filled telegraph with gradient feel
                         pygame.draw.circle(tele_surf,
-                                           (*color[:3], telegraph_alpha),
-                                           (telegraph_radius, telegraph_radius),
-                                           telegraph_radius)
-                        # Outline
+                                           (*color[:3], telegraph_alpha // 2),
+                                           (center, center), telegraph_radius)
+                        # Brighter ring at edge
                         pygame.draw.circle(tele_surf,
-                                           (*color[:3], min(255, telegraph_alpha + 60)),
-                                           (telegraph_radius, telegraph_radius),
-                                           telegraph_radius, 2)
+                                           (*color[:3], min(255, telegraph_alpha + 80)),
+                                           (center, center), telegraph_radius, 2)
+                        # Pulsing inner ring
+                        inner_r = int(telegraph_radius * 0.6 * progress)
+                        if inner_r > 2:
+                            pygame.draw.circle(tele_surf,
+                                               (*color[:3], min(255, telegraph_alpha + 40)),
+                                               (center, center), inner_r, 1)
                         self.screen.blit(tele_surf,
-                                         (ex - telegraph_radius + shake_ox,
-                                          ey - telegraph_radius + shake_oy))
+                                         (ex - center + shake_ox, ey - center + shake_oy))
 
-        # --- Dodge roll ghost trail ---
+        # --- Dodge roll visual on player ---
         if player_actions and player_actions.is_dodging:
             px, py = camera.world_to_screen(character.position)
-            ghost_alpha = int(100 * (1.0 - player_actions.dodge_timer / player_actions.dodge_duration_ms))
             ghost_radius = Config.TILE_SIZE // 3
-            ghost_surf = pygame.Surface((ghost_radius * 2, ghost_radius * 2), pygame.SRCALPHA)
-            pygame.draw.circle(ghost_surf,
-                               (200, 230, 255, max(0, ghost_alpha)),
-                               (ghost_radius, ghost_radius), ghost_radius)
-            self.screen.blit(ghost_surf,
-                             (px - ghost_radius + shake_ox, py - ghost_radius + shake_oy))
-
-            # I-frame tint on player
+            # I-frame tint on player — bright translucent overlay
             if player_actions.is_invulnerable:
-                iframe_surf = pygame.Surface((ghost_radius * 2, ghost_radius * 2), pygame.SRCALPHA)
-                pygame.draw.circle(iframe_surf, (150, 200, 255, 60),
-                                   (ghost_radius, ghost_radius), ghost_radius)
+                iframe_surf = pygame.Surface((ghost_radius * 2 + 4, ghost_radius * 2 + 4), pygame.SRCALPHA)
+                pulse = 0.5 + 0.5 * abs((_time.time() * 8) % 2 - 1)
+                iframe_alpha = int(60 + 40 * pulse)
+                pygame.draw.circle(iframe_surf, (150, 200, 255, iframe_alpha),
+                                   (ghost_radius + 2, ghost_radius + 2), ghost_radius + 2)
                 self.screen.blit(iframe_surf,
-                                 (px - ghost_radius + shake_ox, py - ghost_radius + shake_oy))
+                                 (px - ghost_radius - 2 + shake_ox, py - ghost_radius - 2 + shake_oy))
 
-        # --- Active hitboxes (debug visualization) ---
+        # --- Active hitboxes (tag-driven visual effects, not just debug) ---
         if hitbox_sys:
             for hitbox in hitbox_sys.active_hitboxes:
                 hx, hy = camera.world_to_screen(
@@ -1500,44 +1574,154 @@ class Renderer:
                 hx += shake_ox
                 hy += shake_oy
 
+                # Determine color from damage context tags
+                base_color = _color_from_context(
+                    hitbox.damage_context,
+                    (100, 200, 255) if hitbox.owner_id == 'player' else (255, 100, 100))
+
+                life_ratio = hitbox.remaining_ms / max(1, hitbox.remaining_ms + 16)
+
                 if hitbox.definition.shape == "circle":
                     radius_px = int(hitbox.definition.radius * Config.TILE_SIZE)
-                    arc_surf = pygame.Surface((radius_px * 2, radius_px * 2), pygame.SRCALPHA)
-                    color = (100, 200, 255, 60) if hitbox.owner_id == 'player' else (255, 100, 100, 60)
-                    pygame.draw.circle(arc_surf, color, (radius_px, radius_px), radius_px)
-                    pygame.draw.circle(arc_surf,
-                                       (*color[:3], min(255, color[3] + 80)),
-                                       (radius_px, radius_px), radius_px, 2)
-                    self.screen.blit(arc_surf, (hx - radius_px, hy - radius_px))
+                    if radius_px > 1:
+                        surf_size = radius_px * 2 + 4
+                        arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                        center = surf_size // 2
+                        alpha = int(50 * life_ratio)
+                        pygame.draw.circle(arc_surf, (*base_color, alpha),
+                                           (center, center), radius_px)
+                        pygame.draw.circle(arc_surf, (*base_color, min(255, alpha + 100)),
+                                           (center, center), radius_px, 2)
+                        self.screen.blit(arc_surf, (hx - center, hy - center))
 
                 elif hitbox.definition.shape == "arc":
                     radius_px = int(hitbox.definition.radius * Config.TILE_SIZE)
                     if radius_px > 2:
-                        arc_surf = pygame.Surface((radius_px * 2, radius_px * 2), pygame.SRCALPHA)
+                        surf_size = radius_px * 2 + 4
+                        arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                        center = surf_size // 2
                         arc_degrees = hitbox.definition.arc_degrees
                         half_arc = arc_degrees / 2.0
                         facing_rad = math.radians(hitbox.facing_angle)
-                        start = facing_rad - math.radians(half_arc)
-                        end = facing_rad + math.radians(half_arc)
-                        color = (100, 200, 255, 80) if hitbox.owner_id == 'player' else (255, 100, 100, 80)
-                        rect = pygame.Rect(0, 0, radius_px * 2, radius_px * 2)
-                        # pygame.draw.arc uses counter-clockwise from right
-                        pygame.draw.arc(arc_surf, (*color[:3], min(255, color[3] + 100)),
-                                        rect, -end, -start, max(2, radius_px // 4))
-                        self.screen.blit(arc_surf, (hx - radius_px, hy - radius_px))
+                        alpha = int(70 * life_ratio)
 
-        # --- Projectiles ---
+                        # Draw filled arc wedge using polygon
+                        num_segments = max(8, int(arc_degrees / 5))
+                        points = [(center, center)]
+                        for i in range(num_segments + 1):
+                            a = facing_rad - math.radians(half_arc) + math.radians(arc_degrees) * i / num_segments
+                            px = center + math.cos(a) * radius_px
+                            py = center + math.sin(a) * radius_px
+                            points.append((int(px), int(py)))
+                        if len(points) >= 3:
+                            pygame.draw.polygon(arc_surf, (*base_color, alpha), points)
+                            # Bright edge
+                            pygame.draw.lines(arc_surf, (*base_color, min(255, alpha + 120)),
+                                              False, points[1:], 2)
+
+                        self.screen.blit(arc_surf, (hx - center, hy - center))
+
+                elif hitbox.definition.shape == "line":
+                    length_px = int(hitbox.definition.length * Config.TILE_SIZE)
+                    facing_rad = math.radians(hitbox.facing_angle)
+                    end_x = hx + int(math.cos(facing_rad) * length_px)
+                    end_y = hy + int(math.sin(facing_rad) * length_px)
+                    alpha = int(180 * life_ratio)
+                    # Thick glowing line
+                    line_surf = pygame.Surface(
+                        (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+                    pygame.draw.line(line_surf, (*base_color, alpha),
+                                    (hx, hy), (end_x, end_y), 4)
+                    pygame.draw.line(line_surf, (*base_color, min(255, alpha + 60)),
+                                    (hx, hy), (end_x, end_y), 2)
+                    self.screen.blit(line_surf, (0, 0))
+
+                elif hitbox.definition.shape == "rect":
+                    w_px = int(hitbox.definition.width * Config.TILE_SIZE)
+                    h_px = int(hitbox.definition.height * Config.TILE_SIZE)
+                    alpha = int(50 * life_ratio)
+                    rect_surf = pygame.Surface((w_px, h_px), pygame.SRCALPHA)
+                    rect_surf.fill((*base_color, alpha))
+                    pygame.draw.rect(rect_surf, (*base_color, min(255, alpha + 100)),
+                                     (0, 0, w_px, h_px), 2)
+                    # Rotate to facing angle
+                    rotated = pygame.transform.rotate(rect_surf, -hitbox.facing_angle)
+                    self.screen.blit(rotated, rotated.get_rect(center=(hx, hy)))
+
+        # --- Projectiles (tag-driven visual shapes) ---
         if projectile_sys:
             for proj in projectile_sys.projectiles:
                 px_screen, py_screen = camera.world_to_screen(
                     Position(proj.x, proj.y, 0))
                 px_screen += shake_ox
                 py_screen += shake_oy
-                # Simple circle projectile with direction indicator
-                radius = max(3, int(proj.definition.hitbox_radius * Config.TILE_SIZE * 0.5))
-                color = (100, 180, 255) if proj.owner_id == 'player' else (255, 120, 50)
-                pygame.draw.circle(self.screen, color, (px_screen, py_screen), radius)
-                pygame.draw.circle(self.screen, (255, 255, 255), (px_screen, py_screen), radius, 1)
+
+                vis = proj.definition.visual
+                proj_tags = proj.definition.tags
+
+                if vis:
+                    shape = vis.get('shape', 'orb')
+                    color = tuple(vis.get('color', [200, 200, 255]))
+                    glow = vis.get('glow', False)
+                    glow_color = tuple(vis.get('glow_color', color))
+
+                    if shape == 'elongated':
+                        # Arrow/shard: rotated elongated shape
+                        length = vis.get('length_px', 10)
+                        width = vis.get('width_px', 3)
+                        arrow_surf = pygame.Surface((length + 4, width + 4), pygame.SRCALPHA)
+                        pygame.draw.ellipse(arrow_surf, color,
+                                            (2, 2, length, width))
+                        if glow:
+                            pygame.draw.ellipse(arrow_surf, (*glow_color, 80),
+                                                (0, 0, length + 4, width + 4))
+                        rotated = pygame.transform.rotate(arrow_surf, -proj.facing_angle)
+                        self.screen.blit(rotated,
+                                         rotated.get_rect(center=(px_screen, py_screen)))
+
+                    elif shape == 'beam':
+                        # Fast beam: short glowing line with trail
+                        bw = vis.get('width_px', 4)
+                        facing_rad = math.radians(proj.facing_angle)
+                        trail_len = 20
+                        sx = px_screen - int(math.cos(facing_rad) * trail_len)
+                        sy = py_screen - int(math.sin(facing_rad) * trail_len)
+                        # Outer glow
+                        if glow:
+                            pygame.draw.line(self.screen, (*glow_color, 120) if len(glow_color) == 3 else glow_color,
+                                             (sx, sy), (px_screen, py_screen), bw + 3)
+                        pygame.draw.line(self.screen, color,
+                                         (sx, sy), (px_screen, py_screen), bw)
+                        # Bright tip
+                        pygame.draw.circle(self.screen, (255, 255, 255),
+                                           (px_screen, py_screen), bw // 2 + 1)
+
+                    else:  # 'orb' default
+                        radius = vis.get('radius_px', 5)
+                        pulse = vis.get('pulse', False)
+                        if pulse:
+                            t = _time.time() * 10
+                            radius = radius + int(1.5 * abs(t % 2 - 1))
+                        if glow:
+                            glow_surf = pygame.Surface(
+                                (radius * 4 + 4, radius * 4 + 4), pygame.SRCALPHA)
+                            pygame.draw.circle(glow_surf, (*glow_color, 40),
+                                               (radius * 2 + 2, radius * 2 + 2),
+                                               radius * 2)
+                            self.screen.blit(glow_surf,
+                                             (px_screen - radius * 2 - 2,
+                                              py_screen - radius * 2 - 2))
+                        pygame.draw.circle(self.screen, color,
+                                           (px_screen, py_screen), radius)
+                        pygame.draw.circle(self.screen, (255, 255, 255),
+                                           (px_screen, py_screen), max(1, radius // 2))
+                else:
+                    # Fallback: simple circle with tag color
+                    color = _color_from_tags(proj_tags, (200, 200, 255))
+                    radius = max(3, int(proj.definition.hitbox_radius * Config.TILE_SIZE * 0.5))
+                    pygame.draw.circle(self.screen, color, (px_screen, py_screen), radius)
+                    pygame.draw.circle(self.screen, (255, 255, 255),
+                                       (px_screen, py_screen), max(1, radius - 1), 1)
 
         # --- Combat particles ---
         if particles:
@@ -1650,13 +1834,13 @@ class Renderer:
             exit_surf = self.tiny_font.render("EXIT", True, (200, 230, 255))
             self.screen.blit(exit_surf, (px - exit_surf.get_width() // 2, py - 5))
 
-        # Render enemies (same as world enemies but for dungeon)
+        # Render enemies (size-scaled, same logic as world enemies)
         image_cache = ImageCache.get_instance()
         tier_colors = {
-            1: (100, 200, 100),  # Green
-            2: (100, 150, 255),  # Blue
-            3: (200, 100, 200),  # Purple
-            4: (255, 100, 100),  # Red
+            1: (100, 200, 100),
+            2: (100, 150, 255),
+            3: (200, 100, 200),
+            4: (255, 100, 100),
         }
 
         for enemy in dungeon_enemies:
@@ -1664,30 +1848,29 @@ class Renderer:
 
             if -50 <= ex <= Config.VIEWPORT_WIDTH + 50 and -50 <= ey <= Config.VIEWPORT_HEIGHT + 50:
                 if enemy.is_alive:
-                    size = Config.TILE_SIZE // 2
+                    vis_size = getattr(enemy.definition, 'visual_size', 1.0)
+                    base_size = Config.TILE_SIZE // 2
+                    size = max(4, int(base_size * vis_size))
 
-                    # Try to load enemy PNG icon (same as world enemies)
                     icon = None
                     if enemy.definition.icon_path:
                         icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2))
 
                     if icon:
-                        # Render icon centered on enemy position
                         icon_rect = icon.get_rect(center=(ex, ey))
                         self.screen.blit(icon, icon_rect)
                     else:
-                        # Fallback: Color based on tier
                         enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
                         if enemy.is_boss:
                             enemy_color = (255, 215, 0)
-                            size = Config.TILE_SIZE // 2 + 4
 
                         pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
                         pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
 
-                    # Health bar
+                    # Health bar (scaled)
                     health_percent = enemy.current_health / enemy.max_health
-                    bar_w, bar_h = Config.TILE_SIZE, 4
+                    bar_w = max(Config.TILE_SIZE, int(Config.TILE_SIZE * vis_size))
+                    bar_h = 4
                     bar_y = ey - size - 8
                     pygame.draw.rect(self.screen, (60, 60, 60), (ex - bar_w // 2, bar_y, bar_w, bar_h))
                     hp_w = int(bar_w * health_percent)
@@ -1707,6 +1890,15 @@ class Renderer:
         center_x, center_y = camera.world_to_screen(character.position)
         pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
         pygame.draw.circle(self.screen, (0, 0, 0), (center_x, center_y), Config.TILE_SIZE // 3, 2)
+
+        # Render action combat overlays in dungeon (hitboxes, projectiles, particles, flashes)
+        ac_systems = getattr(self, '_temp_ac_systems', None)
+        if ac_systems:
+            # Pass combat_manager=None; find_enemy_by_entity_id is on the manager
+            # but we need the full combat_manager reference.
+            # The caller should set _temp_combat_manager before calling.
+            cm = getattr(self, '_temp_combat_manager', None)
+            self._render_action_combat(camera, character, cm, ac_systems)
 
         # Render attack effects (lines, blocked indicators)
         self._render_attack_effects(camera)

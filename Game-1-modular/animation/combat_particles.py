@@ -152,7 +152,9 @@ class CombatParticleSystem:
             "ice_trail": [(100, 200, 255), (150, 230, 255)],
             "arcane_trail": [(200, 100, 255), (150, 50, 255)],
             "acid_trail": [(100, 255, 100), (50, 200, 50)],
-            "arrow_trail": [(200, 200, 200), (150, 150, 150)],
+            "lightning_trail": [(255, 255, 100), (255, 255, 200)],
+            "shadow_trail": [(100, 50, 150), (80, 30, 120)],
+            "arrow_trail": [(180, 160, 120), (150, 140, 100)],
         }
         colors = trail_colors.get(trail_type, [(200, 200, 200)])
 

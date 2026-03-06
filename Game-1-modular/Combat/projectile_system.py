@@ -29,6 +29,8 @@ class ProjectileDefinition:
     piercing: bool = False           # Pass through first target?
     aoe_on_hit: Optional[Dict[str, Any]] = None  # Hitbox def dict for explosion
     aoe_duration_ms: float = 100.0
+    visual: Dict[str, Any] = field(default_factory=dict)  # shape, color, glow, etc.
+    tags: List[str] = field(default_factory=list)           # element/behavior tags
 
     def __post_init__(self):
         if self.aoe_on_hit is None:

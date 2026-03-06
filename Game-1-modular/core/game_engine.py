@@ -2868,8 +2868,18 @@ class GameEngine:
             new_y = self.character.position.y + dodge_vel[1]
             self.character.position.x = new_x
             self.character.position.y = new_y
-            # Emit dust particles
-            if pa.dodge_timer > pa.dodge_duration_ms - 30:  # First frame only
+
+            # Spawn afterimage ghosts throughout the dodge roll
+            dodge_progress = 1.0 - (pa.dodge_timer / pa.dodge_duration_ms)
+            # Spawn every ~40ms worth of progress
+            if int(dodge_progress * 6) != int((dodge_progress - effective_dt_ms / pa.dodge_duration_ms) * 6):
+                alpha = int(200 * (1.0 - dodge_progress * 0.5))
+                se.add_afterimage(
+                    self.character.position.x, self.character.position.y,
+                    alpha=alpha, color=(150, 200, 255), size=1.0)
+
+            # Emit dust particles on first frame
+            if pa.dodge_timer > pa.dodge_duration_ms - 30:
                 particles.emit_dodge_dust(
                     self.character.position.x, self.character.position.y)
 
@@ -2924,7 +2934,7 @@ class GameEngine:
             return
 
         pos = (self.character.position.x, self.character.position.y)
-        facing = getattr(self.character, 'facing_angle', 0.0)
+        facing = getattr(self, '_ac_attack_angle', getattr(self.character, 'facing_angle', 0.0))
 
         if attack_def.projectile_id:
             proj_def = data.get_projectile(attack_def.projectile_id)
@@ -2958,6 +2968,16 @@ class GameEngine:
             next_def = data.get_weapon_attack(
                 weapon_type, player_sm.combo_count)
             if next_def and player_sm.damage_context:
+                # Recompute attack direction toward mouse cursor for combo
+                mouse_pos = pygame.mouse.get_pos()
+                player_screen_x = Config.VIEWPORT_WIDTH // 2
+                player_screen_y = Config.VIEWPORT_HEIGHT // 2
+                dx = mouse_pos[0] - player_screen_x
+                dy = mouse_pos[1] - player_screen_y
+                import math
+                self._ac_attack_angle = math.degrees(math.atan2(dy, dx))
+                self.character.facing_angle = self._ac_attack_angle
+
                 player_sm.start_attack(next_def, player_sm.damage_context)
 
     def _ac_process_hit(self, hit):
@@ -2985,6 +3005,28 @@ class GameEngine:
             damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
                 enemy, effect_tags, effect_params)
 
+            # Determine damage type from tags for visual feedback
+            damage_type = "physical"
+            for tag in effect_tags:
+                if tag in ("fire", "ice", "frost", "lightning", "poison",
+                           "arcane", "shadow", "holy"):
+                    damage_type = tag
+                    if tag == "frost":
+                        damage_type = "ice"
+                    break
+
+            # Tag-driven flash color
+            flash_colors = {
+                "physical": (255, 255, 255),
+                "fire": (255, 150, 50),
+                "ice": (100, 200, 255),
+                "lightning": (255, 255, 100),
+                "poison": (100, 255, 100),
+                "arcane": (200, 100, 255),
+                "shadow": (150, 100, 200),
+                "holy": (255, 255, 200),
+            }
+
             # Visual feedback
             if damage > 0:
                 self.damage_numbers.append(DamageNumber(
@@ -2992,18 +3034,20 @@ class GameEngine:
                     Position(enemy.position[0], enemy.position[1], 0),
                     is_crit))
 
-                se.flash_entity(hit.target_id, (255, 255, 255), 80)
+                flash_color = flash_colors.get(damage_type, (255, 255, 255))
+                se.flash_entity(hit.target_id, flash_color, 100)
                 particles.emit_hit_sparks(
                     enemy.position[0], enemy.position[1],
-                    "physical", min(damage / 50.0, 3.0))
+                    damage_type, min(damage / 50.0, 3.0))
 
                 if is_crit:
                     se.hit_pause(40)
-                    se.screen_shake(4, 100)
 
             if not enemy.is_alive:
                 se.hit_pause(60)
-                se.screen_shake(3, 80)
+                # Screen shake only for T3+ enemy kills
+                if enemy.definition.tier >= 3:
+                    se.screen_shake(4, 120)
 
         else:
             # Enemy hit the player
@@ -3024,7 +3068,9 @@ class GameEngine:
                 enemy, shield_blocking=shield_blocking)
 
             se.flash_entity('player', (255, 100, 100), 100)
-            se.screen_shake(3, 80)
+            # Screen shake only for boss/T4 enemy attacks
+            if enemy.definition.tier >= 4 or enemy.is_boss:
+                se.screen_shake(4, 100)
 
     def _get_weapon_type(self, hand: str = 'mainHand') -> str:
         """Determine weapon type string from equipped weapon tags."""
@@ -3040,13 +3086,24 @@ class GameEngine:
 
         tag_set = set(t.lower() if isinstance(t, str) else '' for t in tags)
 
-        if 'bow' in tag_set or 'ranged' in tag_set:
+        # Also check subtype for direct mapping
+        subtype = ''
+        if hasattr(weapon, 'subtype'):
+            subtype = (weapon.subtype or '').lower()
+
+        if 'bow' in tag_set or 'ranged' in tag_set or subtype == 'bow':
             return "bow"
-        elif 'staff' in tag_set or 'magic' in tag_set:
+        elif 'staff' in tag_set or 'magic' in tag_set or subtype == 'staff':
             return "staff"
-        elif 'dagger' in tag_set:
+        elif 'dagger' in tag_set or subtype == 'dagger':
             return "dagger"
-        elif 'two_handed' in tag_set and ('hammer' in tag_set or 'mace' in tag_set):
+        elif 'spear' in tag_set or subtype == 'spear':
+            return "spear"
+        elif 'axe' in tag_set or subtype in ('axe', 'battleaxe'):
+            return "axe"
+        elif 'mace' in tag_set or subtype in ('mace', 'warhammer'):
+            return "mace"
+        elif 'two_handed' in tag_set and ('hammer' in tag_set):
             return "hammer_2h"
         elif 'two_handed' in tag_set:
             return "sword_2h"
@@ -7113,6 +7170,16 @@ class GameEngine:
                                     'effect_tags': effect_tags,
                                     'effect_params': effect_params,
                                 }
+                                # Compute attack direction toward mouse cursor
+                                mouse_pos = pygame.mouse.get_pos()
+                                player_screen_x = Config.VIEWPORT_WIDTH // 2
+                                player_screen_y = Config.VIEWPORT_HEIGHT // 2
+                                dx = mouse_pos[0] - player_screen_x
+                                dy = mouse_pos[1] - player_screen_y
+                                import math
+                                self._ac_attack_angle = math.degrees(math.atan2(dy, dx))
+                                self.character.facing_angle = self._ac_attack_angle
+
                                 player_sm.start_attack(attack_def, damage_context)
                                 self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
                         elif player_sm.is_attacking:
@@ -7211,6 +7278,13 @@ class GameEngine:
 
         # Render world or dungeon depending on state
         if self.dungeon_manager.in_dungeon:
+            # Pass action combat systems for dungeon rendering too
+            if self._action_combat:
+                self.renderer._temp_ac_systems = self._ac
+                self.renderer._temp_combat_manager = self.combat_manager
+            else:
+                self.renderer._temp_ac_systems = None
+                self.renderer._temp_combat_manager = None
             # Render dungeon
             self.renderer.render_dungeon(
                 self.dungeon_manager,
@@ -7225,8 +7299,10 @@ class GameEngine:
             # Pass action combat systems to renderer for visual overlays
             if self._action_combat:
                 self.renderer._temp_ac_systems = self._ac
+                self.renderer._temp_combat_manager = self.combat_manager
             else:
                 self.renderer._temp_ac_systems = None
+                self.renderer._temp_combat_manager = None
             self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers, self.combat_manager)
 
         # Render day/night cycle overlay

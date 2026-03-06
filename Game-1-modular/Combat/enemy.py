@@ -93,6 +93,10 @@ class EnemyDefinition:
     # Special abilities (tag-based attacks)
     special_abilities: List[SpecialAbility] = field(default_factory=list)
 
+    # Visual / collision
+    visual_size: float = 1.0        # Render scale multiplier (0.6 = small, 3.0 = huge)
+    hurtbox_radius: float = 0.5     # Collision radius in tiles
+
     # Metadata
     narrative: str = ""
     tags: List[str] = field(default_factory=list)
@@ -196,6 +200,9 @@ class EnemyDatabase:
                 # Parse metadata
                 metadata = enemy_data.get('metadata', {})
 
+                # Parse visual data
+                visual_data = enemy_data.get('visual', {})
+
                 # Auto-generate icon path if not provided
                 enemy_id = enemy_data.get('enemyId', '')
                 icon_path = enemy_data.get('iconPath')
@@ -219,6 +226,8 @@ class EnemyDatabase:
                     drops=drops,
                     ai_pattern=ai_pattern,
                     special_abilities=special_abilities,
+                    visual_size=visual_data.get('size', 1.0),
+                    hurtbox_radius=visual_data.get('hurtboxRadius', 0.5),
                     narrative=metadata.get('narrative', ''),
                     tags=metadata.get('tags', []),
                     icon_path=icon_path
@@ -309,6 +318,9 @@ class EnemyDatabase:
                 metadata = enemy_data.get('metadata', {})
                 enemy_id = enemy_data.get('enemyId', '')
 
+                # Parse visual data
+                visual_data = enemy_data.get('visual', {})
+
                 # Icon path
                 icon_path = enemy_data.get('iconPath')
                 if not icon_path and enemy_id:
@@ -331,6 +343,8 @@ class EnemyDatabase:
                     drops=drops,
                     ai_pattern=ai_pattern,
                     special_abilities=special_abilities,
+                    visual_size=visual_data.get('size', 1.0),
+                    hurtbox_radius=visual_data.get('hurtboxRadius', 0.5),
                     narrative=metadata.get('narrative', ''),
                     tags=metadata.get('tags', []),
                     icon_path=icon_path
@@ -452,7 +466,7 @@ class Enemy:
         # Action combat fields (used when combat.USE_ACTION_COMBAT is True)
         self.facing_angle: float = 0.0          # Degrees, 0=right, 90=down
         self.attack_state_machine = None         # Set by game engine when action combat is active
-        self.hurtbox_radius: float = 0.5         # Overridden by combat data loader per enemy type
+        self.hurtbox_radius: float = self.definition.hurtbox_radius  # From definition
 
     def _get_initial_state(self) -> AIState:
         """Map behavior string to initial AI state"""

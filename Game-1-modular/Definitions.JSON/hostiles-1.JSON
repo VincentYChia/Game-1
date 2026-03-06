@@ -342,6 +342,10 @@
       "tier": 1,
       "category": "beast",
       "behavior": "passive_patrol",
+      "visual": {
+        "size": 0.8,
+        "hurtboxRadius": 0.35
+      },
       "stats": {
         "health": 80,
         "damage": [8, 12],
@@ -380,6 +384,10 @@
       "tier": 2,
       "category": "beast",
       "behavior": "aggressive_pack",
+      "visual": {
+        "size": 1.1,
+        "hurtboxRadius": 0.5
+      },
       "stats": {
         "health": 200,
         "damage": [18, 28],
@@ -424,6 +432,10 @@
       "tier": 3,
       "category": "beast",
       "behavior": "boss_encounter",
+      "visual": {
+        "size": 1.5,
+        "hurtboxRadius": 0.7
+      },
       "stats": {
         "health": 600,
         "damage": [45, 70],
@@ -474,6 +486,10 @@
       "tier": 1,
       "category": "ooze",
       "behavior": "stationary",
+      "visual": {
+        "size": 0.6,
+        "hurtboxRadius": 0.3
+      },
       "stats": {
         "health": 50,
         "damage": [5, 8],
@@ -512,6 +528,10 @@
       "tier": 2,
       "category": "ooze",
       "behavior": "aggressive_swarm",
+      "visual": {
+        "size": 0.9,
+        "hurtboxRadius": 0.45
+      },
       "stats": {
         "health": 120,
         "damage": [15, 22],
@@ -556,6 +576,10 @@
       "tier": 3,
       "category": "ooze",
       "behavior": "boss_encounter",
+      "visual": {
+        "size": 1.3,
+        "hurtboxRadius": 0.6
+      },
       "stats": {
         "health": 500,
         "damage": [40, 60],
@@ -605,6 +629,10 @@
       "tier": 1,
       "category": "insect",
       "behavior": "docile_wander",
+      "visual": {
+        "size": 0.7,
+        "hurtboxRadius": 0.35
+      },
       "stats": {
         "health": 100,
         "damage": [6, 10],
@@ -643,6 +671,10 @@
       "tier": 2,
       "category": "insect",
       "behavior": "territorial",
+      "visual": {
+        "size": 1.0,
+        "hurtboxRadius": 0.5
+      },
       "stats": {
         "health": 250,
         "damage": [20, 30],
@@ -687,6 +719,10 @@
       "tier": 4,
       "category": "insect",
       "behavior": "boss_encounter",
+      "visual": {
+        "size": 2.0,
+        "hurtboxRadius": 1.0
+      },
       "stats": {
         "health": 1200,
         "damage": [70, 110],
@@ -736,6 +772,10 @@
       "tier": 3,
       "category": "construct",
       "behavior": "boss_encounter",
+      "visual": {
+        "size": 1.8,
+        "hurtboxRadius": 0.9
+      },
       "stats": {
         "health": 800,
         "damage": [50, 80],
@@ -785,6 +825,10 @@
       "tier": 4,
       "category": "construct",
       "behavior": "boss_encounter",
+      "visual": {
+        "size": 2.2,
+        "hurtboxRadius": 1.1
+      },
       "stats": {
         "health": 1000,
         "damage": [80, 120],
@@ -834,6 +878,10 @@
       "tier": 4,
       "category": "undead",
       "behavior": "aggressive_phase",
+      "visual": {
+        "size": 1.4,
+        "hurtboxRadius": 0.6
+      },
       "stats": {
         "health": 400,
         "damage": [60, 90],
@@ -883,6 +931,10 @@
       "tier": 4,
       "category": "aberration",
       "behavior": "boss_encounter",
+      "visual": {
+        "size": 3.0,
+        "hurtboxRadius": 1.5
+      },
       "stats": {
         "health": 2000,
         "damage": [120, 180],

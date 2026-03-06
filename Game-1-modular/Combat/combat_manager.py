@@ -1734,9 +1734,13 @@ class CombatManager:
 
         eid = f"enemy_{id(enemy)}"
 
-        # Set hurtbox radius from JSON data
-        enemy.hurtbox_radius = self._combat_data.get_enemy_hurtbox_radius(
-            enemy.definition.enemy_id)
+        # Set hurtbox radius: prefer definition field, fall back to combat data JSON
+        def_radius = getattr(enemy.definition, 'hurtbox_radius', 0.0)
+        if def_radius > 0:
+            enemy.hurtbox_radius = def_radius
+        else:
+            enemy.hurtbox_radius = self._combat_data.get_enemy_hurtbox_radius(
+                enemy.definition.enemy_id)
 
         # Register hurtbox
         self._hitbox_system.register_hurtbox(eid, enemy.hurtbox_radius)
@@ -1986,6 +1990,9 @@ class CombatManager:
             enemy.ai_state = AIState.CHASE
             enemy.in_combat = True
 
+            # Register with action combat (hurtbox + attack state machine)
+            self._register_enemy_action_combat(enemy)
+
             self.dungeon_enemies.append(enemy)
             dungeon.spawned_enemy_ids.append(enemy.enemy_id if hasattr(enemy, 'enemy_id') else str(id(enemy)))
             spawned += 1
@@ -1995,6 +2002,9 @@ class CombatManager:
 
     def clear_dungeon_enemies(self):
         """Clear all dungeon enemies (when exiting dungeon)."""
+        # Unregister hurtboxes from action combat
+        for enemy in self.dungeon_enemies:
+            self._unregister_enemy_action_combat(enemy)
         self.dungeon_enemies.clear()
 
         # Also remove any dungeon enemy corpses

@@ -61,6 +61,9 @@ class AttackDefinition:
     combo_next: Optional[str] = None
     combo_window_ms: float = 0.0
 
+    # Tags for element/type driven visuals (e.g. ["physical", "slashing"])
+    tags: List[str] = field(default_factory=list)
+
     def __post_init__(self):
         if self.hitbox_params is None:
             self.hitbox_params = {}

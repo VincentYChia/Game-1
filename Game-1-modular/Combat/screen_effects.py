@@ -1,12 +1,12 @@
 """
 Screen-wide visual effects for combat feedback.
 
-Screen shake, hit pause (freeze frame), time dilation, and entity flash
-tracking. These effects modify the entire render output and/or game timing.
+Screen shake (restricted to boss/T4/big skill hits), hit pause (freeze frame),
+and entity flash tracking. Slow motion removed by design.
 """
 
 import random
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 
 class ScreenEffects:
@@ -22,15 +22,18 @@ class ScreenEffects:
         # Hit pause (freeze frame)
         self.hit_pause_remaining: float = 0.0
 
-        # Time dilation
-        self.time_scale: float = 1.0
-        self.time_scale_duration: float = 0.0
-
         # Entity flash tracking: entity_id -> (color, remaining_ms)
         self.flash_entities: Dict[str, Tuple[Tuple[int, int, int], float]] = {}
 
+        # Dodge afterimage trail: list of (world_x, world_y, alpha, color)
+        self.afterimages: List[dict] = []
+
     def screen_shake(self, intensity: float, duration_ms: float) -> None:
-        """Trigger screen shake. Stacks with existing (takes max)."""
+        """Trigger screen shake. Stacks with existing (takes max).
+
+        Should only be called for boss attacks, T4 enemy abilities,
+        and high-tier player skills. Not for regular melee hits.
+        """
         self.shake_intensity = max(self.shake_intensity, intensity)
         self.shake_duration = max(self.shake_duration, duration_ms)
         self.shake_decay = self.shake_intensity / max(self.shake_duration, 1.0)
@@ -39,16 +42,24 @@ class ScreenEffects:
         """Freeze game world for duration. UI still updates."""
         self.hit_pause_remaining = max(self.hit_pause_remaining, duration_ms)
 
-    def slow_motion(self, time_scale: float, duration_ms: float) -> None:
-        """Temporary time dilation. Lower = slower."""
-        self.time_scale = time_scale
-        self.time_scale_duration = duration_ms
-
     def flash_entity(self, entity_id: str,
                      color: Tuple[int, int, int] = (255, 255, 255),
                      duration_ms: float = 80.0) -> None:
         """Mark entity for color flash on next render."""
         self.flash_entities[entity_id] = (color, duration_ms)
+
+    def add_afterimage(self, world_x: float, world_y: float,
+                       alpha: int = 180,
+                       color: Tuple[int, int, int] = (150, 200, 255),
+                       size: float = 1.0) -> None:
+        """Add a dodge afterimage ghost at a world position."""
+        self.afterimages.append({
+            'x': world_x, 'y': world_y,
+            'alpha': alpha, 'color': color,
+            'size': size, 'max_alpha': alpha,
+            'life': 300.0,  # ms
+            'max_life': 300.0,
+        })
 
     def update(self, dt_ms: float) -> None:
         """Advance all effect timers."""
@@ -77,13 +88,6 @@ class ScreenEffects:
                 else:
                     self.shake_offset = (0, 0)
 
-        # Time dilation
-        if self.time_scale_duration > 0:
-            self.time_scale_duration -= dt_ms
-            if self.time_scale_duration <= 0:
-                self.time_scale = 1.0
-                self.time_scale_duration = 0
-
         # Entity flashes
         expired = []
         for eid in list(self.flash_entities.keys()):
@@ -96,15 +100,25 @@ class ScreenEffects:
         for eid in expired:
             del self.flash_entities[eid]
 
+        # Afterimages
+        surviving = []
+        for img in self.afterimages:
+            img['life'] -= dt_ms
+            if img['life'] > 0:
+                ratio = img['life'] / img['max_life']
+                img['alpha'] = int(img['max_alpha'] * ratio)
+                surviving.append(img)
+        self.afterimages = surviving
+
     @property
     def is_paused(self) -> bool:
         return self.hit_pause_remaining > 0
 
     def get_effective_dt(self, raw_dt_ms: float) -> float:
-        """Apply time dilation to delta time."""
+        """Return effective delta time (0 during hit pause)."""
         if self.is_paused:
             return 0.0
-        return raw_dt_ms * self.time_scale
+        return raw_dt_ms
 
     def is_entity_flashing(self, entity_id: str) -> bool:
         return entity_id in self.flash_entities
@@ -120,6 +134,5 @@ class ScreenEffects:
         self.shake_duration = 0
         self.shake_offset = (0, 0)
         self.hit_pause_remaining = 0
-        self.time_scale = 1.0
-        self.time_scale_duration = 0
         self.flash_entities.clear()
+        self.afterimages.clear()

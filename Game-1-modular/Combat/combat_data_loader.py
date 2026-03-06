@@ -223,6 +223,8 @@ class CombatDataLoader:
                     piercing=proj_data.get("piercing", False),
                     aoe_on_hit=proj_data.get("aoe_on_hit"),
                     aoe_duration_ms=proj_data.get("aoe_duration_ms", 100.0),
+                    visual=proj_data.get('visual', {}),
+                    tags=proj_data.get('tags', []),
                 )
 
             return True
@@ -251,6 +253,7 @@ class CombatDataLoader:
             telegraph_color=data.get("telegraph_color", [255, 100, 100]),
             combo_next=data.get("combo_next"),
             combo_window_ms=data.get("combo_window_ms", 0),
+            tags=data.get("tags", []),
         )
 
     def _create_fallback_weapon_attacks(self) -> None:
