@@ -721,7 +721,7 @@ class GameEngine:
                 elif event.key == pygame.K_SPACE:
                     # Action combat: dodge roll (Space bar)
                     if self._action_combat and not self.active_minigame:
-                        from combat.player_actions import FACING_TO_ANGLE
+                        from Combat.player_actions import FACING_TO_ANGLE
                         pa = self._ac['player_actions']
                         # Determine dodge direction from movement keys or facing
                         dodge_dx, dodge_dy = 0.0, 0.0
@@ -2777,19 +2777,19 @@ class GameEngine:
         if imports fail or JSON is missing, falls back to legacy instant combat.
         """
         try:
-            from combat import USE_ACTION_COMBAT
+            from Combat import USE_ACTION_COMBAT
             if not USE_ACTION_COMBAT:
                 self._action_combat = False
                 self._action_combat_systems = {}
                 print("⚙ Action combat disabled (USE_ACTION_COMBAT = False)")
                 return
 
-            from combat.hitbox_system import HitboxSystem
-            from combat.projectile_system import ProjectileSystem
-            from combat.attack_state_machine import AttackStateMachine
-            from combat.player_actions import PlayerActionSystem
-            from combat.screen_effects import ScreenEffects
-            from combat.combat_data_loader import CombatDataLoader
+            from Combat.hitbox_system import HitboxSystem
+            from Combat.projectile_system import ProjectileSystem
+            from Combat.attack_state_machine import AttackStateMachine
+            from Combat.player_actions import PlayerActionSystem
+            from Combat.screen_effects import ScreenEffects
+            from Combat.combat_data_loader import CombatDataLoader
             from animation.animation_manager import AnimationManager
             from animation.combat_particles import CombatParticleSystem
 
@@ -2899,7 +2899,7 @@ class GameEngine:
         hitbox.update_hurtbox_positions(positions)
 
         # Check hitbox collisions
-        from combat.combat_event import HitEvent
+        from Combat.combat_event import HitEvent
         hit_events = hitbox.update(effective_dt_ms)
         for hit in hit_events:
             self._ac_process_hit(hit)

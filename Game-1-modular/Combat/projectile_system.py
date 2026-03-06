@@ -10,8 +10,8 @@ import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Set, Optional, Any
 
-from combat.combat_event import HitEvent
-from combat.hitbox_system import HitboxSystem, HitboxDefinition
+from Combat.combat_event import HitEvent
+from Combat.hitbox_system import HitboxSystem, HitboxDefinition
 
 
 @dataclass

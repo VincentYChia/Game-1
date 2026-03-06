@@ -14,9 +14,9 @@ import random
 from typing import Dict, List, Optional, Any
 
 from core.paths import get_resource_path
-from combat.attack_state_machine import AttackDefinition
-from combat.projectile_system import ProjectileDefinition
-from combat.hitbox_system import HitboxDefinition
+from Combat.attack_state_machine import AttackDefinition
+from Combat.projectile_system import ProjectileDefinition
+from Combat.hitbox_system import HitboxDefinition
 
 
 class CombatDataLoader:

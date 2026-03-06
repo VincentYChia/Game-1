@@ -1730,7 +1730,7 @@ class CombatManager:
         if not self._action_combat or not self._hitbox_system or not self._combat_data:
             return
 
-        from combat.attack_state_machine import AttackStateMachine
+        from Combat.attack_state_machine import AttackStateMachine
 
         eid = f"enemy_{id(enemy)}"
 

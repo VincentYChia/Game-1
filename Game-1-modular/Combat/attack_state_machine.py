@@ -14,7 +14,7 @@ from enum import Enum
 from dataclasses import dataclass, field
 from typing import Optional, List, Set, Dict, Any
 
-from combat.combat_event import CombatEvent
+from Combat.combat_event import CombatEvent
 
 
 class AttackPhase(Enum):
