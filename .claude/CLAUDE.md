@@ -1,7 +1,7 @@
 # Claude.md - Game-1 Developer Guide
 
 **Quick Reference for AI Assistants & Developers**
-**Last Updated**: February 11, 2026
+**Last Updated**: March 6, 2026
 
 ## Project Summary
 
@@ -20,34 +20,39 @@
 **Architecture**: Modular (149 Python files, ~75,911 LOC, 398+ JSON data files, 3,749 asset images)
 **Master Reference**: `docs/GAME_MECHANICS_V6.md` (5,089 lines)
 **Status Report**: `docs/REPOSITORY_STATUS_REPORT_2026-01-27.md`
-**Project Duration**: October 19, 2025 - Present (migrating to Unity/C#)
-**Migration Plan**: `Migration-Plan/COMPLETION_STATUS.md` (central hub) — 16,013 lines across 15 documents
+**Project Duration**: October 19, 2025 - Present (Python/Pygame — active development)
+**Development Plan**: `Development-Plan/OVERVIEW.md` (active roadmap — Living World + Combat Overhaul)
+**Migration Plan**: `Migration-Plan/COMPLETION_STATUS.md` (paused indefinitely — retained for reference)
 
 ---
 
-## Unity/C# Migration (Active — February 2026)
+## Active Development: Living World & Combat Overhaul (March 2026)
 
-The project is being migrated from Python/Pygame to **Unity/C#**. A comprehensive, actionable migration plan exists in `Migration-Plan/`. This is not a blind port — it's a migration into a 3D engine with architecture improvements.
+All development targets the **2D Python/Pygame version**. Unity migration is paused indefinitely.
 
-### Start Here
-- **Central hub**: `Migration-Plan/COMPLETION_STATUS.md` — directs to all 15 documents
-- **Master plan**: `Migration-Plan/MIGRATION_PLAN.md` (1,229 lines)
-- **Branch**: `claude/unity-migration-plan-6KKuK`
+### Development Plan
+- **Start here**: `Development-Plan/OVERVIEW.md` — roadmap and dependency graph
+- **Part 1**: `Development-Plan/PART_1_COMBAT_VISUALS.md` — Action combat, animations, hitboxes, projectiles
+- **Part 2**: `Development-Plan/PART_2_LIVING_WORLD.md` — Memory layer, NPC agents, factions, ecosystem, events
+- **Part 3**: `Development-Plan/PART_3_PLAYER_INTELLIGENCE.md` — Behavior classifier, preferences, arc tracking
+- **Shared**: `Development-Plan/SHARED_INFRASTRUCTURE.md` — Balance validator, async runner, event integration
 
-### Five Pillars
-1. **Exact Mechanical Fidelity** — Every formula, constant, and behavior preserved verbatim
-2. **JSON-Driven Architecture** — JSON files copied byte-identical to `StreamingAssets/Content/`, loaded via Newtonsoft.Json
-3. **3D-Ready Architecture** — `GamePosition` (Vector3), `TargetFinder` (2D/3D distance), `IPathfinder` (Grid→NavMesh)
-4. **Architecture Improvements** — 8 macro changes, 13 per-file fixes, `IGameItem` type hierarchy, `ItemFactory`, `BaseCraftingMinigame`
-5. **Modularity** — 7 dependency-ordered phases with explicit contracts (RECEIVES/DELIVERS)
+### Priority Order
+1. **Combat Visuals** (P1): Animation framework → attack state machine → hitboxes → projectiles → dodge → enemy scaling → polish
+2. **Living World AI** (P2): Memory layer → model backends → NPC agents → factions → ecosystem → world events → quests
+3. **Player Intelligence** (P3): Behavior classifier → preference model → arc tracker
 
-### 7-Phase Execution Order
-1. **Phase 1 — Foundation**: Data models, enums, `GamePosition`, `IGameItem`, `ItemFactory` (1,908 lines)
-2. **Phase 2 — Data Layer**: 14 database singletons, JSON loading, position deserialization (1,702 lines)
-3. **Phase 3 — Entity Layer**: Character (2,576 lines), 11 components, enemies, stat caching (1,080 lines)
-4. **Phase 4 — Game Systems**: Combat, 5 crafting minigames, world generation, save/load (1,413 lines)
-5. **Phase 5 — ML Classifiers**: CNN + LightGBM → ONNX → Unity Sentis (1,116 lines) — parallel with 3-4
-6. **Phase 6 — Unity Integration**: GameEngine → ~40 MonoBehaviour components, camera, input, UI (954 lines)
+### Key Architecture Additions
+- `animation/` — Frame-based animation system with procedural generation from static sprites
+- `combat/` — Attack state machine, hitbox system, projectile system (supplements existing `Combat/`)
+- `ai/` — Memory layer (SQLite), model backends (Ollama/Claude/Mock), NPC/faction/ecosystem agents
+- `events/` — GameEventBus pub/sub system connecting all new systems
+
+---
+
+## Unity/C# Migration (PAUSED — February 2026)
+
+The Unity migration plan is retained in `Migration-Plan/` for reference but is **not being actively developed**. See `Migration-Plan/COMPLETION_STATUS.md` for the full plan if resuming later.
 7. **Phase 7 — Polish & LLM Stub**: `IItemGenerator` interface, E2E testing, 3D verification (1,024 lines)
 
 ### Key Architecture Decisions (Migration)
@@ -643,29 +648,26 @@ python -m json.tool recipes.JSON/recipes-smithing-3.json > /dev/null
 - Test JSON changes by restarting the game
 - Check `llm_debug_logs/` when debugging LLM issues
 
-### For Unity/C# Migration Work:
-- **Start with** `Migration-Plan/COMPLETION_STATUS.md` — it directs to everything
-- **Read** `CONVENTIONS.md` before writing any C# code (naming, 3D, item hierarchy)
-- **Check** `PHASE_CONTRACTS.md` for your phase's exact RECEIVES/DELIVERS
-- **Use** `GamePosition` for ALL positions (never raw Vector3 in game logic)
-- **Use** `ItemFactory` for ALL item creation (never construct items directly)
-- **Use** `IGameItem` interface hierarchy (MaterialItem, EquipmentItem, ConsumableItem, PlaceableItem)
-- **Reference** `IMPROVEMENTS.md` Quick Reference for all architecture changes
-- **Reference** `PYTHON_TO_CSHARP.md` for type mappings and pattern conversions
-- **Reference** `UNITY_PRIMER.md` if new to Unity (MonoBehaviour lifecycle, etc.)
-- **Preserve** all game constants exactly (see Critical Constants above)
-- **Keep** JSON files byte-identical in `StreamingAssets/Content/`
-- Plain C# classes for Phases 1-5, MonoBehaviours only for Phase 6
+### For Living World / Combat Overhaul Work:
+- **Start with** `Development-Plan/OVERVIEW.md` — roadmap and dependency graph
+- **Read** the relevant Part document before implementing any phase
+- **Use** `GameEventBus` for all new inter-system communication
+- **Use** `BackendManager` for all LLM inference (never call APIs directly)
+- **Use** `BalanceValidator` to gate all AI-generated content before injection
+- **All timing, hitboxes, attack patterns in JSON** — consistent with project philosophy
+- **Preserve** all game constants exactly (damage pipeline, EXP curve, tier multipliers)
+- **New modules** go in `animation/`, `combat/` (lowercase), `ai/`, `events/`
+- **Existing code** modified minimally — add event publishing, don't restructure
 
 ### DON'T:
 - Assume design docs describe implemented features
 - Create new JSON schemas without checking existing patterns
 - Hardcode values that should be in JSON
 - Skip checking tag documentation for combat/skill work
-- Change any game formula, constant, or balance number during migration
-- Use raw `Vector3` instead of `GamePosition` in game logic
-- Create items without going through `ItemFactory`
-- Add MonoBehaviour to Phase 1-5 code (plain C# only)
+- Change any game formula, constant, or balance number
+- Call LLM APIs directly — always go through BackendManager
+- Skip BalanceValidator for AI-generated content
+- Modify existing combat_manager.py logic — extend via new modules
 
 ---
 
@@ -699,6 +701,7 @@ python -m json.tool recipes.JSON/recipes-smithing-3.json > /dev/null
 
 ## Version History
 
+- **v5.0** (March 6, 2026): Strategic pivot to Python/Pygame active development. Added Living World + Combat Overhaul development plan. Unity migration paused indefinitely.
 - **v4.0** (February 11, 2026): Added Unity/C# migration plan context (16,013 lines, 15 documents), updated stats, migration guidelines
 - **v3.0** (January 27, 2026): Major update for LLM integration, crafting classifiers, invented items system
 - **v2.0** (December 31, 2025): Major update for modular architecture, tag system, full combat, skills, save/load
@@ -706,6 +709,6 @@ python -m json.tool recipes.JSON/recipes-smithing-3.json > /dev/null
 
 ---
 
-**Last Updated**: 2026-02-11
-**For**: AI assistants and developers working on Game-1 (Python source + Unity/C# migration)
+**Last Updated**: 2026-03-06
+**For**: AI assistants and developers working on Game-1 (Python/Pygame active development)
 **Maintained By**: Project developers
