@@ -156,6 +156,11 @@ class CombatManager:
         self.dungeon_manager = None  # Set by game_engine when dungeon system is active
         self.dungeon_enemies: List[Enemy] = []  # Enemies spawned in current dungeon
 
+        # Action combat references (set by game_engine when combat.USE_ACTION_COMBAT is True)
+        self._hitbox_system = None      # combat.HitboxSystem
+        self._combat_data = None        # combat.CombatDataLoader
+        self._action_combat = False     # Whether action combat is active
+
     def load_config(self, config_path: str, enemies_path: str, chunk_templates_path: Optional[str] = None):
         """Load combat configuration, enemy definitions, and chunk templates"""
         self.config.load_from_file(config_path)
@@ -368,6 +373,9 @@ class CombatManager:
             enemy.corpse_lifetime = self.config.corpse_lifetime
             self.enemies[chunk_coords].append(enemy)
 
+            # Register with action combat systems if active
+            self._register_enemy_action_combat(enemy)
+
     def spawn_initial_enemies(self, player_position: Tuple[float, float], count: int = 5):
         """Spawn initial enemies for testing (around player but outside safe zone)"""
         print(f"🎮 Spawning {count} initial enemies for testing...")
@@ -507,6 +515,7 @@ class CombatManager:
                     if enemy.ai_state == AIState.DEAD:
                         enemy.ai_state = AIState.CORPSE
                         enemy.time_since_death = 0.0  # Reset timer when entering corpse state
+                        self._unregister_enemy_action_combat(enemy)
 
                     if enemy.ai_state == AIState.CORPSE:
                         # Increment corpse timer
@@ -1700,6 +1709,68 @@ class CombatManager:
             self.player_last_combat_time += dt
             if self.player_last_combat_time >= self.config.combat_timeout:
                 self.player_in_combat = False
+
+    # ========================================================================
+    # ACTION COMBAT INTEGRATION
+    # ========================================================================
+
+    def setup_action_combat(self, hitbox_system, combat_data):
+        """Called by game_engine to wire up action combat systems.
+
+        Args:
+            hitbox_system: combat.HitboxSystem instance
+            combat_data: combat.CombatDataLoader instance
+        """
+        self._hitbox_system = hitbox_system
+        self._combat_data = combat_data
+        self._action_combat = True
+
+    def _register_enemy_action_combat(self, enemy: Enemy) -> None:
+        """Register a newly spawned enemy with action combat systems."""
+        if not self._action_combat or not self._hitbox_system or not self._combat_data:
+            return
+
+        from combat.attack_state_machine import AttackStateMachine
+
+        eid = f"enemy_{id(enemy)}"
+
+        # Set hurtbox radius from JSON data
+        enemy.hurtbox_radius = self._combat_data.get_enemy_hurtbox_radius(
+            enemy.definition.enemy_id)
+
+        # Register hurtbox
+        self._hitbox_system.register_hurtbox(eid, enemy.hurtbox_radius)
+
+        # Create attack state machine
+        enemy.attack_state_machine = AttackStateMachine(eid)
+
+    def _unregister_enemy_action_combat(self, enemy: Enemy) -> None:
+        """Unregister a dying/despawning enemy from action combat systems."""
+        if not self._action_combat or not self._hitbox_system:
+            return
+
+        eid = f"enemy_{id(enemy)}"
+        self._hitbox_system.unregister_hurtbox(eid)
+
+        if enemy.attack_state_machine:
+            enemy.attack_state_machine.force_reset()
+            enemy.attack_state_machine = None
+
+    def get_enemy_entity_id(self, enemy: Enemy) -> str:
+        """Get the entity ID string for an enemy (used by hitbox system)."""
+        return f"enemy_{id(enemy)}"
+
+    def find_enemy_by_entity_id(self, entity_id: str) -> Optional[Enemy]:
+        """Find an enemy by its entity ID string."""
+        for enemy_list in self.enemies.values():
+            for enemy in enemy_list:
+                if f"enemy_{id(enemy)}" == entity_id and enemy.is_alive:
+                    return enemy
+        # Also check dungeon enemies
+        for enemy in self.dungeon_enemies:
+            if f"enemy_{id(enemy)}" == entity_id and enemy.is_alive:
+                return enemy
+        return None
 
     def get_enemies_in_range(self, position: Tuple[float, float], radius: float) -> List[Enemy]:
         """Get all living enemies within radius of position.

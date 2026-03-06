@@ -449,6 +449,11 @@ class Enemy:
             ability.ability_id: 0 for ability in definition.special_abilities
         }
 
+        # Action combat fields (used when combat.USE_ACTION_COMBAT is True)
+        self.facing_angle: float = 0.0          # Degrees, 0=right, 90=down
+        self.attack_state_machine = None         # Set by game engine when action combat is active
+        self.hurtbox_radius: float = 0.5         # Overridden by combat data loader per enemy type
+
     def _get_initial_state(self) -> AIState:
         """Map behavior string to initial AI state"""
         state_map = {
@@ -589,6 +594,18 @@ class Enemy:
 
         # Get distance to player
         dist_to_player = self.distance_to(player_position)
+
+        # Update facing angle toward player when in combat states
+        if self.ai_state in (AIState.CHASE, AIState.ATTACK):
+            dx = player_position[0] - self.position[0]
+            dy = player_position[1] - self.position[1]
+            if abs(dx) > 0.01 or abs(dy) > 0.01:
+                import math
+                self.facing_angle = math.degrees(math.atan2(dy, dx))
+
+        # Update action combat attack state machine if present
+        if self.attack_state_machine is not None:
+            self.attack_state_machine.update(dt * 1000)  # ASM expects ms
 
         # State machine
         if self.ai_state == AIState.IDLE:

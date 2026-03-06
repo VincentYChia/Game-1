@@ -1376,6 +1376,11 @@ class Renderer:
         center_x, center_y = camera.world_to_screen(character.position)
         pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
 
+        # Render action combat overlays (hitboxes, projectiles, particles, flashes)
+        ac_systems = getattr(self, '_temp_ac_systems', None)
+        if ac_systems:
+            self._render_action_combat(camera, character, combat_manager, ac_systems)
+
         # Render attack effects (lines, blocked indicators)
         self._render_attack_effects(camera)
 
@@ -1387,6 +1392,156 @@ class Renderer:
             surf = (self.font if dmg.is_crit else self.small_font).render(text, True, color)
             surf.set_alpha(alpha)
             self.screen.blit(surf, surf.get_rect(center=(sx, sy)))
+
+    def _render_action_combat(self, camera: Camera, character, combat_manager, ac: dict):
+        """Render all action combat visual overlays.
+
+        Args:
+            camera: Camera for world-to-screen conversion
+            character: Player Character instance
+            combat_manager: CombatManager for enemy lookups
+            ac: Dict of action combat systems from game_engine._ac
+        """
+        import math
+
+        hitbox_sys = ac.get('hitbox')
+        projectile_sys = ac.get('projectile')
+        particles = ac.get('particles')
+        screen_effects = ac.get('screen_effects')
+        player_sm = ac.get('player_sm')
+        player_actions = ac.get('player_actions')
+
+        # --- Screen shake offset ---
+        shake_ox, shake_oy = 0, 0
+        if screen_effects:
+            shake_ox = int(screen_effects.shake_offset[0])
+            shake_oy = int(screen_effects.shake_offset[1])
+
+        # --- Entity flash overlays ---
+        if screen_effects and screen_effects.flash_entities:
+            for entity_id, (flash_color, flash_remaining) in screen_effects.flash_entities.items():
+                flash_alpha = max(0, min(200, int(200 * (flash_remaining / 80.0))))
+
+                if entity_id == 'player':
+                    px, py = camera.world_to_screen(character.position)
+                    radius = Config.TILE_SIZE // 3
+                    flash_surf = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+                    pygame.draw.circle(flash_surf, (*flash_color, flash_alpha),
+                                       (radius, radius), radius)
+                    self.screen.blit(flash_surf,
+                                     (px - radius + shake_ox, py - radius + shake_oy))
+                elif combat_manager:
+                    enemy = combat_manager.find_enemy_by_entity_id(entity_id)
+                    if enemy and enemy.is_alive:
+                        ex, ey = camera.world_to_screen(
+                            Position(enemy.position[0], enemy.position[1], 0))
+                        radius = Config.TILE_SIZE // 2
+                        flash_surf = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+                        pygame.draw.circle(flash_surf, (*flash_color, flash_alpha),
+                                           (radius, radius), radius)
+                        self.screen.blit(flash_surf,
+                                         (ex - radius + shake_ox, ey - radius + shake_oy))
+
+        # --- Enemy windup telegraphs ---
+        if combat_manager:
+            for enemy in combat_manager.get_all_active_enemies():
+                if not enemy.is_alive:
+                    continue
+                asm = getattr(enemy, 'attack_state_machine', None)
+                if asm and asm.is_in_windup:
+                    ex, ey = camera.world_to_screen(
+                        Position(enemy.position[0], enemy.position[1], 0))
+                    progress = asm.windup_progress
+                    # Pulsing red circle telegraph
+                    telegraph_radius = int(Config.TILE_SIZE * 1.5 * progress)
+                    telegraph_alpha = int(40 + progress * 80)
+                    color = asm.current_attack.telegraph_color if asm.current_attack else [255, 100, 100]
+                    if telegraph_radius > 2:
+                        tele_surf = pygame.Surface(
+                            (telegraph_radius * 2, telegraph_radius * 2), pygame.SRCALPHA)
+                        pygame.draw.circle(tele_surf,
+                                           (*color[:3], telegraph_alpha),
+                                           (telegraph_radius, telegraph_radius),
+                                           telegraph_radius)
+                        # Outline
+                        pygame.draw.circle(tele_surf,
+                                           (*color[:3], min(255, telegraph_alpha + 60)),
+                                           (telegraph_radius, telegraph_radius),
+                                           telegraph_radius, 2)
+                        self.screen.blit(tele_surf,
+                                         (ex - telegraph_radius + shake_ox,
+                                          ey - telegraph_radius + shake_oy))
+
+        # --- Dodge roll ghost trail ---
+        if player_actions and player_actions.is_dodging:
+            px, py = camera.world_to_screen(character.position)
+            ghost_alpha = int(100 * (1.0 - player_actions.dodge_timer / player_actions.dodge_duration_ms))
+            ghost_radius = Config.TILE_SIZE // 3
+            ghost_surf = pygame.Surface((ghost_radius * 2, ghost_radius * 2), pygame.SRCALPHA)
+            pygame.draw.circle(ghost_surf,
+                               (200, 230, 255, max(0, ghost_alpha)),
+                               (ghost_radius, ghost_radius), ghost_radius)
+            self.screen.blit(ghost_surf,
+                             (px - ghost_radius + shake_ox, py - ghost_radius + shake_oy))
+
+            # I-frame tint on player
+            if player_actions.is_invulnerable:
+                iframe_surf = pygame.Surface((ghost_radius * 2, ghost_radius * 2), pygame.SRCALPHA)
+                pygame.draw.circle(iframe_surf, (150, 200, 255, 60),
+                                   (ghost_radius, ghost_radius), ghost_radius)
+                self.screen.blit(iframe_surf,
+                                 (px - ghost_radius + shake_ox, py - ghost_radius + shake_oy))
+
+        # --- Active hitboxes (debug visualization) ---
+        if hitbox_sys:
+            for hitbox in hitbox_sys.active_hitboxes:
+                hx, hy = camera.world_to_screen(
+                    Position(hitbox.world_x, hitbox.world_y, 0))
+                hx += shake_ox
+                hy += shake_oy
+
+                if hitbox.definition.shape == "circle":
+                    radius_px = int(hitbox.definition.radius * Config.TILE_SIZE)
+                    arc_surf = pygame.Surface((radius_px * 2, radius_px * 2), pygame.SRCALPHA)
+                    color = (100, 200, 255, 60) if hitbox.owner_id == 'player' else (255, 100, 100, 60)
+                    pygame.draw.circle(arc_surf, color, (radius_px, radius_px), radius_px)
+                    pygame.draw.circle(arc_surf,
+                                       (*color[:3], min(255, color[3] + 80)),
+                                       (radius_px, radius_px), radius_px, 2)
+                    self.screen.blit(arc_surf, (hx - radius_px, hy - radius_px))
+
+                elif hitbox.definition.shape == "arc":
+                    radius_px = int(hitbox.definition.radius * Config.TILE_SIZE)
+                    if radius_px > 2:
+                        arc_surf = pygame.Surface((radius_px * 2, radius_px * 2), pygame.SRCALPHA)
+                        arc_degrees = hitbox.definition.arc_degrees
+                        half_arc = arc_degrees / 2.0
+                        facing_rad = math.radians(hitbox.facing_angle)
+                        start = facing_rad - math.radians(half_arc)
+                        end = facing_rad + math.radians(half_arc)
+                        color = (100, 200, 255, 80) if hitbox.owner_id == 'player' else (255, 100, 100, 80)
+                        rect = pygame.Rect(0, 0, radius_px * 2, radius_px * 2)
+                        # pygame.draw.arc uses counter-clockwise from right
+                        pygame.draw.arc(arc_surf, (*color[:3], min(255, color[3] + 100)),
+                                        rect, -end, -start, max(2, radius_px // 4))
+                        self.screen.blit(arc_surf, (hx - radius_px, hy - radius_px))
+
+        # --- Projectiles ---
+        if projectile_sys:
+            for proj in projectile_sys.projectiles:
+                px_screen, py_screen = camera.world_to_screen(
+                    Position(proj.x, proj.y, 0))
+                px_screen += shake_ox
+                py_screen += shake_oy
+                # Simple circle projectile with direction indicator
+                radius = max(3, int(proj.definition.hitbox_radius * Config.TILE_SIZE * 0.5))
+                color = (100, 180, 255) if proj.owner_id == 'player' else (255, 120, 50)
+                pygame.draw.circle(self.screen, color, (px_screen, py_screen), radius)
+                pygame.draw.circle(self.screen, (255, 255, 255), (px_screen, py_screen), radius, 1)
+
+        # --- Combat particles ---
+        if particles:
+            particles.render(self.screen, camera, shake_ox, shake_oy)
 
     def render_dungeon(self, dungeon_manager, camera: Camera, character,
                        damage_numbers, dungeon_enemies):

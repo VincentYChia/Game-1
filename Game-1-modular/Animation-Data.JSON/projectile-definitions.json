@@ -1,0 +1,60 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Projectile definitions. Speed in tiles/sec, ranges in tiles, radii in tiles."
+  },
+  "projectiles": {
+    "arrow_basic": {
+      "speed": 12.0,
+      "max_range": 15.0,
+      "hitbox_radius": 0.2,
+      "sprite_id": "arrow",
+      "trail_type": null,
+      "homing": 0.0,
+      "gravity": 0.0,
+      "piercing": false
+    },
+    "magic_bolt": {
+      "speed": 10.0,
+      "max_range": 12.0,
+      "hitbox_radius": 0.3,
+      "sprite_id": "magic_bolt",
+      "trail_type": "arcane_trail",
+      "homing": 0.0,
+      "gravity": 0.0,
+      "piercing": false
+    },
+    "enemy_fireball": {
+      "speed": 8.0,
+      "max_range": 10.0,
+      "hitbox_radius": 0.4,
+      "sprite_id": "fireball",
+      "trail_type": "fire_trail",
+      "homing": 0.0,
+      "gravity": 0.0,
+      "piercing": false,
+      "aoe_on_hit": { "shape": "circle", "radius": 2.0 },
+      "aoe_duration_ms": 100
+    },
+    "enemy_acid_spit": {
+      "speed": 6.0,
+      "max_range": 8.0,
+      "hitbox_radius": 0.5,
+      "sprite_id": "acid_blob",
+      "trail_type": "acid_trail",
+      "homing": 0.0,
+      "gravity": 2.0,
+      "piercing": false
+    },
+    "enemy_crystal_beam": {
+      "speed": 15.0,
+      "max_range": 15.0,
+      "hitbox_radius": 0.3,
+      "sprite_id": "crystal_shard",
+      "trail_type": "arcane_trail",
+      "homing": 0.0,
+      "gravity": 0.0,
+      "piercing": true
+    }
+  }
+}
