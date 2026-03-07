@@ -512,6 +512,9 @@ class Enemy:
         self._attack_windup_ms: float = 0.0
         self._attack_active_ms: float = 0.0
         self._attack_recovery_ms: float = 0.0
+        # Attack geometry (set by start_phased_attack, read by renderer)
+        self._attack_arc_degrees: float = 80.0
+        self._attack_radius: float = 1.0
 
     def _get_initial_state(self) -> AIState:
         """Map behavior string to initial AI state"""
@@ -941,17 +944,18 @@ class Enemy:
         if self.attack_phase != 'idle':
             return False
 
-        # Get category-based base timing from combat_data_loader profiles
+        # Category -> timing + geometry (single source of truth for attack shape).
+        # Mirrors _ENEMY_ATTACK_PROFILES in combat_data_loader.py.
         _PROFILES = {
-            'beast':     {'windup': 600, 'active': 240, 'recovery': 400},
-            'ooze':      {'windup': 800, 'active': 400, 'recovery': 600},
-            'insect':    {'windup': 400, 'active': 160, 'recovery': 300},
-            'construct': {'windup': 800, 'active': 400, 'recovery': 600},
-            'undead':    {'windup': 700, 'active': 300, 'recovery': 500},
-            'elemental': {'windup': 700, 'active': 360, 'recovery': 500},
-            'aberration': {'windup': 600, 'active': 320, 'recovery': 400},
-            'dragon':    {'windup': 1000, 'active': 500, 'recovery': 700},
-            'humanoid':  {'windup': 500, 'active': 200, 'recovery': 360},
+            'beast':     {'windup': 600, 'active': 240, 'recovery': 400, 'arc': 80,  'shape': 'arc'},
+            'ooze':      {'windup': 800, 'active': 400, 'recovery': 600, 'arc': 360, 'shape': 'circle'},
+            'insect':    {'windup': 400, 'active': 160, 'recovery': 300, 'arc': 60,  'shape': 'arc'},
+            'construct': {'windup': 800, 'active': 400, 'recovery': 600, 'arc': 100, 'shape': 'arc'},
+            'undead':    {'windup': 700, 'active': 300, 'recovery': 500, 'arc': 90,  'shape': 'arc'},
+            'elemental': {'windup': 700, 'active': 360, 'recovery': 500, 'arc': 360, 'shape': 'circle'},
+            'aberration': {'windup': 600, 'active': 320, 'recovery': 400, 'arc': 120, 'shape': 'arc'},
+            'dragon':    {'windup': 1000, 'active': 500, 'recovery': 700, 'arc': 140, 'shape': 'arc'},
+            'humanoid':  {'windup': 500, 'active': 200, 'recovery': 360, 'arc': 80,  'shape': 'arc'},
         }
         profile = _PROFILES.get(self.definition.category, _PROFILES['beast'])
 
@@ -964,6 +968,11 @@ class Enemy:
         self._attack_windup_ms = profile['windup'] * speed_factor * tier_speed
         self._attack_active_ms = profile['active'] * speed_factor * tier_speed
         self._attack_recovery_ms = profile['recovery'] * speed_factor * tier_speed
+
+        # Store attack geometry (single source of truth for renderer)
+        tier_radius_mult = {1: 1.0, 2: 1.3, 3: 1.6, 4: 2.0}.get(self.definition.tier, 1.0)
+        self._attack_arc_degrees = profile.get('arc', 80)
+        self._attack_radius = self.definition.visual_size * 0.8 * tier_radius_mult
 
         # Enter windup phase
         self.attack_phase = 'windup'

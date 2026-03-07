@@ -33,23 +33,23 @@ _WEAPON_PROFILES = {
     'axe':      {'shape': 'arc', 'arc': 65, 'windup': 400, 'active': 240, 'recovery': 360},
     'mace':     {'shape': 'arc', 'arc': 50, 'windup': 440, 'active': 260, 'recovery': 400},
     'hammer_2h': {'shape': 'arc', 'arc': 75, 'windup': 600, 'active': 360, 'recovery': 500},
-    'spear':    {'shape': 'line', 'length': 2.5, 'windup': 360, 'active': 200, 'recovery': 300},
+    'spear':    {'shape': 'arc', 'arc': 15, 'windup': 360, 'active': 200, 'recovery': 300},
     'staff':    {'shape': 'arc', 'arc': 30, 'windup': 400, 'active': 240, 'recovery': 320},
     'bow':      {'shape': 'projectile', 'windup': 600, 'active': 100, 'recovery': 400},
     'unarmed':  {'shape': 'arc', 'arc': 50, 'windup': 200, 'active': 160, 'recovery': 200},
 }
 
-# Element tag -> telegraph/visual color
+# Element tag -> telegraph/visual color (vibrant, high-saturation for visibility)
 ELEMENT_COLORS = {
-    "physical": [220, 220, 240],
-    "fire": [255, 120, 30],
-    "ice": [100, 200, 255],
-    "frost": [100, 200, 255],
-    "lightning": [255, 255, 80],
-    "poison": [100, 255, 80],
-    "arcane": [180, 80, 255],
-    "shadow": [130, 80, 180],
-    "holy": [255, 255, 180],
+    "physical": [230, 230, 255],
+    "fire": [255, 100, 20],
+    "ice": [80, 200, 255],
+    "frost": [80, 200, 255],
+    "lightning": [255, 255, 60],
+    "poison": [80, 255, 60],
+    "arcane": [200, 60, 255],
+    "shadow": [160, 60, 220],
+    "holy": [255, 255, 160],
 }
 
 # Enemy category -> base attack profile

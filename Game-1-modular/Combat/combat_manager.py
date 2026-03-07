@@ -1211,7 +1211,7 @@ class CombatManager:
             print(f"   ⚠️  Attack failed: {e}")
             return (0.0, False, [])
 
-    def player_attack_enemy_with_tags(self, enemy: Enemy, tags: List[str], params: dict = None, skip_visual: bool = False) -> Tuple[float, bool, List[Tuple[str, int]]]:
+    def player_attack_enemy_with_tags(self, enemy: Enemy, tags: List[str], params: dict = None, skip_visual: bool = False, skip_los: bool = False) -> Tuple[float, bool, List[Tuple[str, int]]]:
         """
         Player attacks enemy using tag-based effects system
 
@@ -1237,9 +1237,11 @@ class CombatManager:
         player_pos = (self.character.position.x, self.character.position.y)
         enemy_pos = (enemy.position[0], enemy.position[1])
 
-        # Line-of-sight check (circle/AoE attacks bypass this)
+        # Line-of-sight check (circle/AoE attacks bypass this).
+        # skip_los=True when hitbox system already confirmed geometric collision
+        # (action combat path), so a second LOS check is redundant.
         bypass_tags = {'circle', 'aoe', 'ground'}
-        if not any(tag in bypass_tags for tag in tags):
+        if not skip_los and not any(tag in bypass_tags for tag in tags):
             los_result = collision_system.has_line_of_sight(
                 player_pos, enemy_pos, attack_tags=tags
             )

@@ -2795,8 +2795,12 @@ class GameEngine:
                 phase = event.data.get("phase")
                 if phase == "active":
                     self._ac_spawn_player_attack()
+                elif phase == "recovery":
+                    # Unlock facing direction after active phase ends
+                    self.character._attack_facing_locked = False
                 elif phase in ("cooldown", "idle"):
                     self._ac_check_combo()
+                    self.character._attack_facing_locked = False
 
         # Update all hurtbox positions
         positions = {'player': (self.character.position.x, self.character.position.y)}
@@ -2913,9 +2917,12 @@ class GameEngine:
             effect_tags = ctx.get('effect_tags', ['physical', 'single'])
             effect_params = ctx.get('effect_params', {})
 
-            # Route through existing damage pipeline (skip visual — action combat has its own)
+            # Route through existing damage pipeline.
+            # skip_visual: action combat has its own hit effects.
+            # skip_los: hitbox system already confirmed geometric collision,
+            # a second LOS check would incorrectly block hits near obstacles.
             damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
-                enemy, effect_tags, effect_params, skip_visual=True)
+                enemy, effect_tags, effect_params, skip_visual=True, skip_los=True)
 
             # Determine damage type from tags for visual feedback
             damage_type = "physical"
@@ -3036,6 +3043,7 @@ class GameEngine:
                         'effect_params': effect_params,
                     }
                     player_sm.start_attack(attack_def, damage_context)
+                    self.character._attack_facing_locked = True
                     self.character.reset_attack_cooldown(is_weapon=True, hand=hand)
             elif player_sm.is_attacking:
                 pa.input_buffer.buffer("attack")
@@ -7218,6 +7226,7 @@ class GameEngine:
                                 self.character.facing_angle = self._ac_attack_angle
 
                                 player_sm.start_attack(attack_def, damage_context)
+                                self.character._attack_facing_locked = True
                                 self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
                         elif player_sm.is_attacking:
                             # Buffer the attack for combo continuation
