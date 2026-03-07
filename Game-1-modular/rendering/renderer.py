@@ -1320,124 +1320,201 @@ class Renderer:
                 hp_w = int(bar_w * (resource.current_hp / resource.max_hp))
                 pygame.draw.rect(self.screen, Config.COLOR_HP_BAR, (sx - bar_w // 2, bar_y, hp_w, bar_h))
 
-        # Render enemies (size-scaled by visual_size from JSON)
+        # Render enemies — readable with names, facing, state, telegraphs
+        import math as _emath
+        import time as _etime
         image_cache = ImageCache.get_instance()
+
+        # Shared tag→color map for enemy visuals
+        _ETAG_COLORS = {
+            'fire': (255, 120, 30), 'ice': (100, 200, 255),
+            'frost': (100, 200, 255), 'lightning': (255, 255, 80),
+            'poison': (100, 255, 80), 'arcane': (180, 80, 255),
+            'shadow': (130, 80, 180), 'holy': (255, 255, 180),
+            'chaos': (200, 50, 50), 'physical': (220, 220, 240),
+        }
+
+        def _enemy_tag_color(tags, fallback=(220, 220, 240)):
+            for t in tags:
+                if t in _ETAG_COLORS:
+                    return _ETAG_COLORS[t]
+            return fallback
+
+        # AI state colors
+        _STATE_COLORS = {
+            'idle': (100, 200, 100), 'wander': (100, 200, 100),
+            'patrol': (100, 200, 100), 'guard': (180, 180, 100),
+            'chase': (255, 200, 50), 'attack': (255, 80, 60),
+            'flee': (100, 150, 255), 'dead': (100, 100, 100),
+        }
+
         if combat_manager:
             for enemy in combat_manager.get_all_active_enemies():
                 ex, ey = camera.world_to_screen(Position(enemy.position[0], enemy.position[1], 0))
 
-                # Enemy body - use visual_size for scaling
                 if enemy.is_alive:
                     vis_size = getattr(enemy.definition, 'visual_size', 1.0)
                     base_size = Config.TILE_SIZE // 2
                     size = max(4, int(base_size * vis_size))
+                    tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
+                    enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
+                    if enemy.is_boss:
+                        enemy_color = (255, 215, 0)
 
-                    # Try to load enemy icon (scaled to visual_size)
+                    # --- Windup telegraph (pulsing ring before attack lands) ---
+                    attack_phase = getattr(enemy, 'attack_phase', 'idle')
+                    if attack_phase == 'windup':
+                        progress = getattr(enemy, 'windup_progress', 0.0)
+                        atk_tags = getattr(enemy, 'attack_anim_tags', [])
+                        telegraph_color = _enemy_tag_color(atk_tags, (255, 100, 100))
+                        # Growing pulsing ring
+                        t_radius = int(size * 2.0 * (0.3 + progress * 0.7))
+                        pulse = 0.5 + 0.5 * abs((_etime.time() * 6) % 2 - 1)
+                        t_alpha = int((40 + 80 * progress) * pulse)
+                        if t_radius > 2:
+                            ts = t_radius * 2 + 4
+                            tsurf = pygame.Surface((ts, ts), pygame.SRCALPHA)
+                            tc = ts // 2
+                            pygame.draw.circle(tsurf, (*telegraph_color, t_alpha), (tc, tc), t_radius)
+                            pygame.draw.circle(tsurf, (*telegraph_color, min(255, t_alpha + 100)), (tc, tc), t_radius, 2)
+                            self.screen.blit(tsurf, (ex - tc, ey - tc))
+                        # Direction indicator — line toward target
+                        target_pos = getattr(enemy, 'attack_target_pos', None)
+                        if target_pos and progress > 0.3:
+                            tx, ty = camera.world_to_screen(Position(target_pos[0], target_pos[1], 0))
+                            # Dash line from enemy toward target
+                            angle = _emath.atan2(ty - ey, tx - ex)
+                            line_len = min(t_radius, int(60 * progress))
+                            lx = ex + int(_emath.cos(angle) * line_len)
+                            ly = ey + int(_emath.sin(angle) * line_len)
+                            pygame.draw.line(self.screen, (*telegraph_color, min(255, t_alpha + 80)),
+                                             (ex, ey), (lx, ly), 2)
+
+                    # --- Active phase glow (damage window) ---
+                    if attack_phase == 'active':
+                        atk_tags = getattr(enemy, 'attack_anim_tags', [])
+                        active_color = _enemy_tag_color(atk_tags, (255, 100, 100))
+                        angle = getattr(enemy, 'attack_anim_angle', 0.0)
+                        # Flash and arc during active
+                        arc_r = int(size * 2.0)
+                        lunge_x, lunge_y = 0, 0
+                        if getattr(enemy, 'attack_anim_lunge', False):
+                            rad = _emath.radians(angle)
+                            lunge_x = int(_emath.cos(rad) * size * 0.4)
+                            lunge_y = int(_emath.sin(rad) * size * 0.4)
+                        if arc_r > 2:
+                            as_size = arc_r * 2 + 4
+                            asurf = pygame.Surface((as_size, as_size), pygame.SRCALPHA)
+                            ac_ = as_size // 2
+                            rad = _emath.radians(angle)
+                            half_arc = _emath.radians(45)
+                            pts = [(ac_, ac_)]
+                            for i in range(12):
+                                a = rad - half_arc + _emath.radians(90) * i / 11
+                                pts.append((int(ac_ + _emath.cos(a) * arc_r),
+                                            int(ac_ + _emath.sin(a) * arc_r)))
+                            if len(pts) >= 3:
+                                pygame.draw.polygon(asurf, (*active_color, 120), pts)
+                                pygame.draw.lines(asurf, (*active_color, 200), False, pts[1:], 2)
+                            self.screen.blit(asurf, (ex + lunge_x - ac_, ey + lunge_y - ac_))
+
+                    # --- Recovery phase (enemy exposed, dimmer) ---
+                    if attack_phase == 'recovery':
+                        # Subtle blue tint indicating vulnerability
+                        rec_r = size + 3
+                        rsurf = pygame.Surface((rec_r * 2 + 4, rec_r * 2 + 4), pygame.SRCALPHA)
+                        rc = rec_r + 2
+                        pygame.draw.circle(rsurf, (100, 150, 255, 40), (rc, rc), rec_r)
+                        pygame.draw.circle(rsurf, (100, 150, 255, 80), (rc, rc), rec_r, 1)
+                        self.screen.blit(rsurf, (ex - rc, ey - rc))
+
+                    # --- Enemy body ---
                     icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2)) if enemy.definition.icon_path else None
-
                     if icon:
                         icon_rect = icon.get_rect(center=(ex, ey))
                         self.screen.blit(icon, icon_rect)
                     else:
-                        # Fallback: Color based on tier, size from visual_size
-                        tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
-                        enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
-                        if enemy.is_boss:
-                            enemy_color = (255, 215, 0)
-
                         pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
                         pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
 
-                        # Category-based shape accent for visual variety
+                        # Category accents
                         cat = getattr(enemy.definition, 'category', '')
                         if cat == 'ooze':
-                            # Ooze: wobbly blob effect — inner lighter circle
                             inner = max(2, int(size * 0.6))
                             lighter = tuple(min(255, c + 40) for c in enemy_color)
                             pygame.draw.circle(self.screen, lighter, (ex - size // 4, ey - size // 4), inner)
                         elif cat == 'construct':
-                            # Construct: angular overlay
                             pygame.draw.rect(self.screen, (0, 0, 0),
                                              (ex - size // 2, ey - size // 2, size, size), 2)
                         elif cat == 'insect':
-                            # Insect: mandible lines
                             pygame.draw.line(self.screen, (0, 0, 0),
                                              (ex - size // 2, ey + size // 3),
                                              (ex - size, ey + size // 2), 2)
                             pygame.draw.line(self.screen, (0, 0, 0),
                                              (ex + size // 2, ey + size // 3),
                                              (ex + size, ey + size // 2), 2)
+                        elif cat == 'beast':
+                            # Beast: ear nubs on top
+                            pygame.draw.circle(self.screen, enemy_color,
+                                               (ex - size // 3, ey - size + 2), max(2, size // 4))
+                            pygame.draw.circle(self.screen, enemy_color,
+                                               (ex + size // 3, ey - size + 2), max(2, size // 4))
+                        elif cat == 'undead':
+                            # Undead: hollow eyes
+                            eye_r = max(1, size // 5)
+                            pygame.draw.circle(self.screen, (0, 0, 0), (ex - size // 3, ey - size // 4), eye_r)
+                            pygame.draw.circle(self.screen, (0, 0, 0), (ex + size // 3, ey - size // 4), eye_r)
+                        elif cat == 'elemental':
+                            # Elemental: rotating particle dots
+                            t = _etime.time() * 2
+                            for j in range(3):
+                                a = t + j * 2.094  # 120 degrees apart
+                                px = ex + int(_emath.cos(a) * size * 0.7)
+                                py = ey + int(_emath.sin(a) * size * 0.7)
+                                pygame.draw.circle(self.screen, (255, 255, 200), (px, py), max(1, size // 6))
 
-                    # Enemy attack animation overlay (tag-driven, matches player system)
-                    import math as _emath
-                    anim_timer = getattr(enemy, 'attack_anim_timer', 0.0)
-                    if anim_timer > 0:
-                        anim_dur = getattr(enemy, 'attack_anim_duration', 0.4)
-                        anim_progress = 1.0 - (anim_timer / anim_dur)
-                        anim_angle = getattr(enemy, 'attack_anim_angle', 0.0)
+                    # --- Facing direction indicator (small triangle showing where enemy looks) ---
+                    facing = getattr(enemy, 'facing_angle', 0.0)
+                    facing_rad = _emath.radians(facing)
+                    ind_dist = size + 4
+                    ind_x = ex + int(_emath.cos(facing_rad) * ind_dist)
+                    ind_y = ey + int(_emath.sin(facing_rad) * ind_dist)
+                    # Small triangle
+                    tri_size = max(2, size // 4)
+                    perp = facing_rad + _emath.pi / 2
+                    p1 = (ind_x + int(_emath.cos(facing_rad) * tri_size),
+                          ind_y + int(_emath.sin(facing_rad) * tri_size))
+                    p2 = (ind_x + int(_emath.cos(perp) * tri_size // 2),
+                          ind_y + int(_emath.sin(perp) * tri_size // 2))
+                    p3 = (ind_x - int(_emath.cos(perp) * tri_size // 2),
+                          ind_y - int(_emath.sin(perp) * tri_size // 2))
+                    pygame.draw.polygon(self.screen, enemy_color, [p1, p2, p3])
 
-                        # Lunge offset — only for leap/charge abilities
-                        lunge_x, lunge_y = 0, 0
-                        if getattr(enemy, 'attack_anim_lunge', False):
-                            lunge_dist = int(size * 0.3 * (1.0 - abs(anim_progress * 2 - 1)))
-                            lunge_rad = _emath.radians(anim_angle)
-                            lunge_x = int(_emath.cos(lunge_rad) * lunge_dist)
-                            lunge_y = int(_emath.sin(lunge_rad) * lunge_dist)
+                    # --- AI state dot (tiny colored circle indicating intent) ---
+                    state_name = getattr(enemy.ai_state, 'value', 'idle')
+                    state_color = _STATE_COLORS.get(state_name, (150, 150, 150))
+                    pygame.draw.circle(self.screen, state_color, (ex + size + 2, ey - size - 2), 3)
+                    pygame.draw.circle(self.screen, (0, 0, 0), (ex + size + 2, ey - size - 2), 3, 1)
 
-                        # Determine attack color from stored attack tags (damage type tags)
-                        _TAG_COLORS = {
-                            'fire': (255, 120, 30), 'ice': (100, 200, 255),
-                            'frost': (100, 200, 255),
-                            'lightning': (255, 255, 80), 'poison': (100, 255, 80),
-                            'arcane': (180, 80, 255), 'shadow': (130, 80, 180),
-                            'holy': (255, 255, 180), 'chaos': (200, 50, 50),
-                        }
-                        attack_color = (220, 220, 240)  # Default physical
-                        anim_tags = getattr(enemy, 'attack_anim_tags', [])
-                        for t in anim_tags:
-                            if t in _TAG_COLORS:
-                                attack_color = _TAG_COLORS[t]
-                                break
-
-                        # Draw attack arc emanating from enemy (same style as player hitboxes)
-                        arc_radius = int(size * 1.8 * (0.5 + anim_progress * 0.5))
-                        arc_alpha = int(180 * (1.0 - anim_progress))
-                        if arc_radius > 2 and arc_alpha > 10:
-                            arc_surf_size = arc_radius * 2 + 4
-                            arc_surf = pygame.Surface((arc_surf_size, arc_surf_size), pygame.SRCALPHA)
-                            ac = arc_surf_size // 2
-                            lunge_rad = _emath.radians(anim_angle)
-                            half_arc = _emath.radians(40)
-                            num_seg = 10
-                            arc_points = [(ac, ac)]
-                            for i in range(num_seg + 1):
-                                a = lunge_rad - half_arc + _emath.radians(80) * i / num_seg
-                                px = ac + _emath.cos(a) * arc_radius
-                                py = ac + _emath.sin(a) * arc_radius
-                                arc_points.append((int(px), int(py)))
-                            if len(arc_points) >= 3:
-                                pygame.draw.polygon(arc_surf, (*attack_color, arc_alpha), arc_points)
-                                pygame.draw.lines(arc_surf, (*attack_color, min(255, arc_alpha + 60)),
-                                                  False, arc_points[1:], 2)
-                            self.screen.blit(arc_surf,
-                                             (ex + lunge_x - ac, ey + lunge_y - ac))
-
-                    # Health bar (scaled width)
+                    # --- Health bar ---
                     health_percent = enemy.current_health / enemy.max_health
                     bar_w = max(Config.TILE_SIZE, int(Config.TILE_SIZE * vis_size))
                     bar_h = 4
-                    bar_y = ey - size - 8
+                    bar_y = ey - size - 12
                     pygame.draw.rect(self.screen, Config.COLOR_HP_BAR_BG, (ex - bar_w // 2, bar_y, bar_w, bar_h))
                     hp_w = int(bar_w * health_percent)
-                    hp_color = (255, 0, 0) if health_percent > 0.25 else (255, 80, 80)
+                    hp_color = (0, 200, 0) if health_percent > 0.5 else (255, 200, 0) if health_percent > 0.25 else (255, 60, 60)
                     pygame.draw.rect(self.screen, hp_color, (ex - bar_w // 2, bar_y, hp_w, bar_h))
 
-                    # Tier indicator
-                    tier_text = f"T{enemy.definition.tier}"
-                    if enemy.is_boss:
-                        tier_text = "BOSS"
-                    tier_surf = self.tiny_font.render(tier_text, True, (255, 255, 255))
-                    self.screen.blit(tier_surf, (ex - tier_surf.get_width() // 2, ey - 5))
+                    # --- Name + tier label ---
+                    name = enemy.definition.name
+                    tier_prefix = f"T{enemy.definition.tier} " if not enemy.is_boss else "BOSS "
+                    label = f"{tier_prefix}{name}"
+                    name_surf = self.tiny_font.render(label, True, (255, 255, 255))
+                    name_bg = pygame.Surface((name_surf.get_width() + 4, name_surf.get_height() + 2), pygame.SRCALPHA)
+                    name_bg.fill((0, 0, 0, 120))
+                    self.screen.blit(name_bg, (ex - name_surf.get_width() // 2 - 2, bar_y - name_surf.get_height() - 2))
+                    self.screen.blit(name_surf, (ex - name_surf.get_width() // 2, bar_y - name_surf.get_height() - 1))
 
                 else:
                     # Corpse (greyed out, scaled)

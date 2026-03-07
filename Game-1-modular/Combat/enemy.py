@@ -502,6 +502,17 @@ class Enemy:
         self.attack_anim_tags: List[str] = []   # Damage type tags for color (e.g. ['fire','circle'])
         self.attack_anim_lunge: bool = False    # True only for leap/charge abilities
 
+        # Phased attack system — windup (telegraph) → active (damage) → recovery
+        # This gives the player a dodge/react window before damage lands.
+        self.attack_phase: str = 'idle'         # 'idle', 'windup', 'active', 'recovery'
+        self.attack_phase_timer: float = 0.0    # Counts down within current phase
+        self.attack_target_pos: Optional[Tuple[float, float]] = None  # Locked target position
+        self.attack_pending_data: Optional[Dict] = None  # Stored data for when damage fires
+        # Phase durations derived from category + attack_speed
+        self._attack_windup_ms: float = 0.0
+        self._attack_active_ms: float = 0.0
+        self._attack_recovery_ms: float = 0.0
+
     def _get_initial_state(self) -> AIState:
         """Map behavior string to initial AI state"""
         state_map = {
@@ -902,12 +913,136 @@ class Enemy:
                 self.position[1] = new_y
 
     def can_attack(self) -> bool:
-        """Check if enemy can attack (cooldown ready and not CC'd)"""
+        """Check if enemy can attack (cooldown ready, not CC'd, not mid-attack)"""
         # Check if stunned/silenced
         if hasattr(self, 'status_manager') and self.status_manager.is_silenced():
             return False
 
+        # Can't start new attack while in a phased attack
+        if self.attack_phase != 'idle':
+            return False
+
         return self.attack_cooldown <= 0 and self.ai_state == AIState.ATTACK
+
+    def start_phased_attack(self, target_pos: Tuple[float, float],
+                            tags: Optional[List[str]] = None,
+                            is_ability: bool = False,
+                            ability: Optional['SpecialAbility'] = None) -> bool:
+        """Begin a phased attack: windup → active → recovery.
+
+        During windup the enemy telegraphs visually but deals no damage.
+        The player can dodge during this window. Damage fires at the
+        start of the active phase. Recovery prevents the next attack.
+
+        Timing scales with enemy's attack_speed stat and category profile.
+        """
+        import math as _math
+
+        if self.attack_phase != 'idle':
+            return False
+
+        # Get category-based base timing from combat_data_loader profiles
+        _PROFILES = {
+            'beast':     {'windup': 300, 'active': 120, 'recovery': 200},
+            'ooze':      {'windup': 400, 'active': 200, 'recovery': 300},
+            'insect':    {'windup': 200, 'active': 80, 'recovery': 150},
+            'construct': {'windup': 400, 'active': 200, 'recovery': 300},
+            'undead':    {'windup': 350, 'active': 150, 'recovery': 250},
+            'elemental': {'windup': 350, 'active': 180, 'recovery': 250},
+            'aberration': {'windup': 300, 'active': 160, 'recovery': 200},
+            'dragon':    {'windup': 500, 'active': 250, 'recovery': 350},
+            'humanoid':  {'windup': 250, 'active': 100, 'recovery': 180},
+        }
+        profile = _PROFILES.get(self.definition.category, _PROFILES['beast'])
+
+        # Scale by attack_speed: higher attack_speed = faster phases
+        speed_factor = 1.0 / max(0.3, self.definition.attack_speed)
+
+        # Tier scaling: higher tier = slightly faster (more dangerous)
+        tier_speed = {1: 1.0, 2: 0.95, 3: 0.9, 4: 0.85}.get(self.definition.tier, 1.0)
+
+        self._attack_windup_ms = profile['windup'] * speed_factor * tier_speed
+        self._attack_active_ms = profile['active'] * speed_factor * tier_speed
+        self._attack_recovery_ms = profile['recovery'] * speed_factor * tier_speed
+
+        # Enter windup phase
+        self.attack_phase = 'windup'
+        self.attack_phase_timer = self._attack_windup_ms
+        self.attack_target_pos = target_pos
+
+        # Compute facing toward target
+        dx = target_pos[0] - self.position[0]
+        dy = target_pos[1] - self.position[1]
+        self.facing_angle = _math.degrees(_math.atan2(dy, dx))
+
+        # Store pending data — combat_manager will read this when active phase starts
+        attack_tags = tags or ['physical']
+        self.attack_pending_data = {
+            'tags': attack_tags,
+            'is_ability': is_ability,
+            'ability': ability,
+        }
+
+        # Set animation data for renderer
+        self.attack_anim_angle = self.facing_angle
+        self.attack_anim_tags = list(attack_tags)
+        self.attack_anim_lunge = (ability is not None and
+            ability.ability_id in ('leap_attack', 'charge_attack', 'pounce'))
+        total_dur = (self._attack_windup_ms + self._attack_active_ms +
+                     self._attack_recovery_ms) / 1000.0
+        self.attack_anim_timer = total_dur
+        self.attack_anim_duration = total_dur
+
+        # Set attack cooldown so can_attack() blocks until full cycle + cooldown
+        self.attack_cooldown = total_dur + (1.0 / self.definition.attack_speed)
+
+        return True
+
+    def update_attack_phase(self, dt_ms: float) -> Optional[str]:
+        """Advance the phased attack timer. Returns phase transition event or None.
+
+        Returns:
+            'active_start' when windup ends and damage should fire
+            'recovery_start' when active ends
+            'idle' when recovery ends
+            None when no transition
+        """
+        if self.attack_phase == 'idle':
+            return None
+
+        self.attack_phase_timer -= dt_ms
+        if self.attack_phase_timer <= 0:
+            if self.attack_phase == 'windup':
+                self.attack_phase = 'active'
+                self.attack_phase_timer = self._attack_active_ms
+                return 'active_start'
+            elif self.attack_phase == 'active':
+                self.attack_phase = 'recovery'
+                self.attack_phase_timer = self._attack_recovery_ms
+                return 'recovery_start'
+            elif self.attack_phase == 'recovery':
+                self.attack_phase = 'idle'
+                self.attack_phase_timer = 0
+                self.attack_pending_data = None
+                self.attack_target_pos = None
+                return 'idle'
+        return None
+
+    @property
+    def windup_progress(self) -> float:
+        """0.0 to 1.0 progress through windup. 0 if not in windup."""
+        if self.attack_phase != 'windup' or self._attack_windup_ms <= 0:
+            return 0.0
+        elapsed = self._attack_windup_ms - self.attack_phase_timer
+        return min(1.0, elapsed / self._attack_windup_ms)
+
+    @property
+    def is_in_windup(self) -> bool:
+        return self.attack_phase == 'windup'
+
+    @property
+    def is_in_recovery(self) -> bool:
+        return self.attack_phase == 'recovery'
 
     def perform_attack(self) -> float:
         """Perform attack, return damage amount"""
@@ -1001,12 +1136,96 @@ class Enemy:
             )
             print(f"   ✓ Affected {len(context.targets)} target(s)")
 
+            # Generate tag-driven visual feedback for this ability
+            self._generate_ability_visual(target, tags, params, context.targets)
+
             return True
 
         except Exception as e:
             self.debugger.error(f"Enemy special ability failed: {e}")
             print(f"   ⚠ Ability failed: {e}")
             return False
+
+    def _generate_ability_visual(self, target, tags, params, affected_targets):
+        """Generate tag-driven visual effects for enemy special abilities.
+
+        Reads geometry tags (circle, cone, beam, chain) from the ability
+        and creates corresponding visual effects using the attack_effects system.
+        """
+        import math as _math
+        try:
+            from systems.attack_effects import get_attack_effects_manager, AttackSourceType
+        except ImportError:
+            return
+
+        effects = get_attack_effects_manager()
+        enemy_pos = (self.position[0], self.position[1])
+
+        # Get target position
+        target_pos = enemy_pos
+        if hasattr(target, 'position'):
+            pos = target.position
+            if hasattr(pos, 'x'):
+                target_pos = (pos.x, pos.y)
+            elif isinstance(pos, (list, tuple)):
+                target_pos = (pos[0], pos[1])
+
+        dx = target_pos[0] - enemy_pos[0]
+        dy = target_pos[1] - enemy_pos[1]
+        facing = _math.degrees(_math.atan2(dy, dx)) if (dx != 0 or dy != 0) else 0.0
+
+        has_circle = 'circle' in tags
+        has_cone = 'cone' in tags
+        has_beam = 'beam' in tags
+        has_chain = 'chain' in tags
+
+        if has_circle:
+            radius = params.get('circle_radius', 3.0)
+            origin = params.get('origin', 'source')
+            center = enemy_pos if origin == 'source' else target_pos
+            effects.add_area_effect(center, radius, AttackSourceType.ENEMY,
+                                    tags=tags)
+            effects.add_impact_burst(center, AttackSourceType.ENEMY, tags=tags)
+
+        elif has_cone:
+            cone_angle = params.get('cone_angle', 60.0)
+            cone_range = params.get('cone_range', 3.0)
+            effects.add_attack_effect(
+                enemy_pos, target_pos, AttackSourceType.ENEMY,
+                damage=params.get('baseDamage', 0), tags=tags,
+                facing_angle=facing, arc_degrees=cone_angle, radius=cone_range)
+
+        elif has_beam:
+            beam_range = params.get('beam_range', 5.0)
+            effects.add_attack_effect(
+                enemy_pos, target_pos, AttackSourceType.ENEMY,
+                damage=params.get('baseDamage', 0),
+                tags=tags + ['thrust'],
+                facing_angle=facing, radius=beam_range)
+
+        elif has_chain:
+            prev_pos = enemy_pos
+            for t in affected_targets:
+                t_pos = prev_pos
+                if hasattr(t, 'position'):
+                    pos = t.position
+                    if hasattr(pos, 'x'):
+                        t_pos = (pos.x, pos.y)
+                    elif isinstance(pos, (list, tuple)):
+                        t_pos = (pos[0], pos[1])
+                effects.add_attack_effect(
+                    prev_pos, t_pos, AttackSourceType.ENEMY,
+                    damage=params.get('baseDamage', 0), tags=tags)
+                effects.add_impact_burst(t_pos, AttackSourceType.ENEMY, tags=tags)
+                prev_pos = t_pos
+
+        else:
+            # Default: slash arc toward target
+            effects.add_attack_effect(
+                enemy_pos, target_pos, AttackSourceType.ENEMY,
+                damage=params.get('baseDamage', 0), tags=tags,
+                facing_angle=facing, arc_degrees=80.0,
+                radius=max(1.0, self.definition.visual_size * 0.8))
 
     def use_special_ability(self, ability: SpecialAbility, target: Any, available_targets: List[Any] = None) -> bool:
         """

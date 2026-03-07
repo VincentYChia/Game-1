@@ -486,27 +486,30 @@ class CombatManager:
                                     safe_zone_center=(self.config.safe_zone_x, self.config.safe_zone_y),
                                     safe_zone_radius=self.config.safe_zone_radius)
 
-                    # Check if enemy can use special ability
+                    # Update phased attack timer — fires damage at the right moment
+                    phase_event = enemy.update_attack_phase(dt * 1000)  # dt is seconds, timer is ms
+                    if phase_event == 'active_start':
+                        self._enemy_phased_damage(enemy, shield_blocking=shield_blocking)
+
+                    # Check if enemy can use special ability (only when idle)
                     dist = enemy.distance_to(player_pos)
                     special_ability = enemy.can_use_special_ability(dist_to_target=dist, target_position=player_pos)
                     if special_ability:
-                        # Build available targets list (player + turrets + other valid targets)
-                        available_targets = [self.character]
-
-                        # Include turrets so enemies can target them with abilities
-                        if hasattr(self.world, 'placed_entities'):
-                            turrets = [e for e in self.world.placed_entities
-                                      if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
-                            available_targets.extend(turrets)
-
-                        # Use special ability if in range (abilities define their own ranges via distance conditions)
-                        enemy.use_special_ability(special_ability, self.character, available_targets)
+                        # Start phased attack for ability — uses ability tags
+                        enemy.start_phased_attack(
+                            player_pos,
+                            tags=special_ability.tags,
+                            is_ability=True,
+                            ability=special_ability,
+                        )
 
                     # Check if enemy can attack player normally
                     elif enemy.can_attack():
                         dist = enemy.distance_to(player_pos)
                         if dist <= 1.5:  # Melee range
-                            self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
+                            # Start phased attack — windup telegraph first, then damage
+                            enemy_tags = getattr(enemy.definition, 'tags', []) or ['physical']
+                            enemy.start_phased_attack(player_pos, tags=enemy_tags)
 
                 else:
                     # Enemy is dead - handle corpse
@@ -1504,6 +1507,29 @@ class CombatManager:
             # Fall back to 0 damage on error
             return (0.0, False, [])
 
+    def _enemy_phased_damage(self, enemy: Enemy, shield_blocking: bool = False):
+        """Called when an enemy's windup completes and the active phase begins.
+
+        Routes to either special ability execution or normal attack damage.
+        The windup phase gave the player time to react (dodge/block).
+        """
+        pending = enemy.attack_pending_data
+        if not pending:
+            return
+
+        if pending.get('is_ability') and pending.get('ability'):
+            # Execute the special ability through the tag system
+            ability = pending['ability']
+            available_targets = [self.character]
+            if hasattr(self.world, 'placed_entities'):
+                turrets = [e for e in self.world.placed_entities
+                          if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
+                available_targets.extend(turrets)
+            enemy.use_special_ability(ability, self.character, available_targets)
+        else:
+            # Normal melee attack — route through existing damage pipeline
+            self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
+
     def _enemy_attack_player(self, enemy: Enemy, shield_blocking: bool = False):
         """Enemy attacks player
         shield_blocking: True if player is actively blocking with shield (right mouse held)
@@ -2071,18 +2097,27 @@ class CombatManager:
                 enemy.update_ai(dt, player_position, aggro_multiplier, speed_multiplier,
                                 world_system=self.world)
 
+                # Update phased attack timer
+                phase_event = enemy.update_attack_phase(dt * 1000)
+                if phase_event == 'active_start':
+                    self._enemy_phased_damage(enemy, shield_blocking=shield_blocking)
+
                 # Check if enemy can use special ability
                 dist = enemy.distance_to(player_position)
                 special_ability = enemy.can_use_special_ability(dist_to_target=dist, target_position=player_position)
                 if special_ability:
-                    # Build available targets list (just player in dungeons)
-                    available_targets = [self.character]
-                    enemy.use_special_ability(special_ability, self.character, available_targets)
+                    enemy.start_phased_attack(
+                        player_position,
+                        tags=special_ability.tags,
+                        is_ability=True,
+                        ability=special_ability,
+                    )
 
                 # Check if enemy can attack player normally
                 elif enemy.can_attack():
                     if dist <= 1.5:  # Melee range
-                        self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
+                        enemy_tags = getattr(enemy.definition, 'tags', []) or ['physical']
+                        enemy.start_phased_attack(player_position, tags=enemy_tags)
 
             else:
                 # Enemy is dead - handle corpse

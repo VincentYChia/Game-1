@@ -1294,6 +1294,27 @@ class GameEngine:
             self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
             self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
 
+            # Visual feedback — tag-colored attack arc toward enemy
+            try:
+                from systems.attack_effects import get_attack_effects_manager, AttackSourceType
+                import math as _oh_math
+                _oh_effects = get_attack_effects_manager()
+                _oh_player = (self.character.position.x, self.character.position.y)
+                _oh_enemy = (enemy.position[0], enemy.position[1])
+                _oh_facing = _oh_math.degrees(_oh_math.atan2(
+                    _oh_enemy[1] - _oh_player[1], _oh_enemy[0] - _oh_player[0]))
+                _oh_range = self.character.equipment.get_weapon_range('offHand')
+                _oh_effects.add_attack_effect(
+                    _oh_player, _oh_enemy, AttackSourceType.PLAYER,
+                    damage=damage, tags=effect_tags or ['physical'],
+                    facing_angle=_oh_facing, arc_degrees=70.0,
+                    radius=_oh_range)
+                if damage > 0:
+                    _oh_effects.add_impact_burst(
+                        _oh_enemy, AttackSourceType.PLAYER, tags=effect_tags)
+            except Exception:
+                pass
+
             if not enemy.is_alive:
                 self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
                 self.character.activities.record_activity('combat', 1)
@@ -7134,6 +7155,26 @@ class GameEngine:
                                     )
                                     self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
                                     self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
+
+                                    # Visual feedback for offhand attack
+                                    try:
+                                        from systems.attack_effects import get_attack_effects_manager, AttackSourceType
+                                        import math as _xoh_math
+                                        _xoh_effects = get_attack_effects_manager()
+                                        _xoh_p = (self.character.position.x, self.character.position.y)
+                                        _xoh_e = (enemy.position[0], enemy.position[1])
+                                        _xoh_f = _xoh_math.degrees(_xoh_math.atan2(
+                                            _xoh_e[1] - _xoh_p[1], _xoh_e[0] - _xoh_p[0]))
+                                        _xoh_effects.add_attack_effect(
+                                            _xoh_p, _xoh_e, AttackSourceType.PLAYER,
+                                            damage=damage, tags=effect_tags or ['physical'],
+                                            facing_angle=_xoh_f, arc_degrees=70.0,
+                                            radius=weapon_range)
+                                        if damage > 0:
+                                            _xoh_effects.add_impact_burst(
+                                                _xoh_e, AttackSourceType.PLAYER, tags=effect_tags)
+                                    except Exception:
+                                        pass
 
                                     if not enemy.is_alive:
                                         self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
