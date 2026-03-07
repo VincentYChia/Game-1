@@ -1361,72 +1361,52 @@ class Renderer:
                     if enemy.is_boss:
                         enemy_color = (255, 215, 0)
 
-                    # --- Windup telegraph (pulsing ring before attack lands) ---
-                    attack_phase = getattr(enemy, 'attack_phase', 'idle')
-                    if attack_phase == 'windup':
-                        progress = getattr(enemy, 'windup_progress', 0.0)
-                        atk_tags = getattr(enemy, 'attack_anim_tags', [])
-                        telegraph_color = _enemy_tag_color(atk_tags, (255, 100, 100))
-                        # Growing pulsing ring
-                        t_radius = int(size * 2.0 * (0.3 + progress * 0.7))
-                        pulse = 0.5 + 0.5 * abs((_etime.time() * 6) % 2 - 1)
-                        t_alpha = int((40 + 80 * progress) * pulse)
-                        if t_radius > 2:
-                            ts = t_radius * 2 + 4
-                            tsurf = pygame.Surface((ts, ts), pygame.SRCALPHA)
-                            tc = ts // 2
-                            pygame.draw.circle(tsurf, (*telegraph_color, t_alpha), (tc, tc), t_radius)
-                            pygame.draw.circle(tsurf, (*telegraph_color, min(255, t_alpha + 100)), (tc, tc), t_radius, 2)
-                            self.screen.blit(tsurf, (ex - tc, ey - tc))
-                        # Direction indicator — line toward target
-                        target_pos = getattr(enemy, 'attack_target_pos', None)
-                        if target_pos and progress > 0.3:
-                            tx, ty = camera.world_to_screen(Position(target_pos[0], target_pos[1], 0))
-                            # Dash line from enemy toward target
-                            angle = _emath.atan2(ty - ey, tx - ex)
-                            line_len = min(t_radius, int(60 * progress))
-                            lx = ex + int(_emath.cos(angle) * line_len)
-                            ly = ey + int(_emath.sin(angle) * line_len)
-                            pygame.draw.line(self.screen, (*telegraph_color, min(255, t_alpha + 80)),
-                                             (ex, ey), (lx, ly), 2)
+                    # --- Enemy attack animation (rendered after body) ---
+                    # (Handled below after enemy body rendering)
 
-                    # --- Active phase glow (damage window) ---
-                    if attack_phase == 'active':
+                    # --- Attack animation glow (quick flash on hit) ---
+                    anim_timer = getattr(enemy, 'attack_anim_timer', 0)
+                    if anim_timer > 0:
                         atk_tags = getattr(enemy, 'attack_anim_tags', [])
                         active_color = _enemy_tag_color(atk_tags, (255, 100, 100))
                         angle = getattr(enemy, 'attack_anim_angle', 0.0)
-                        # Flash and arc during active
-                        arc_r = int(size * 2.0)
-                        lunge_x, lunge_y = 0, 0
-                        if getattr(enemy, 'attack_anim_lunge', False):
-                            rad = _emath.radians(angle)
-                            lunge_x = int(_emath.cos(rad) * size * 0.4)
-                            lunge_y = int(_emath.sin(rad) * size * 0.4)
+                        anim_duration = getattr(enemy, 'attack_anim_duration', 0.5)
+                        anim_progress = 1.0 - (anim_timer / max(0.01, anim_duration))
+                        # Sweeping arc animation matching player weapon feel
+                        arc_r = int(size * 1.8)
+                        _enemy_arc_deg = 55.0  # Match moderate default
                         if arc_r > 2:
                             as_size = arc_r * 2 + 4
                             asurf = pygame.Surface((as_size, as_size), pygame.SRCALPHA)
                             ac_ = as_size // 2
                             rad = _emath.radians(angle)
-                            half_arc = _emath.radians(45)
-                            pts = [(ac_, ac_)]
-                            for i in range(12):
-                                a = rad - half_arc + _emath.radians(90) * i / 11
-                                pts.append((int(ac_ + _emath.cos(a) * arc_r),
-                                            int(ac_ + _emath.sin(a) * arc_r)))
-                            if len(pts) >= 3:
-                                pygame.draw.polygon(asurf, (*active_color, 120), pts)
-                                pygame.draw.lines(asurf, (*active_color, 200), False, pts[1:], 2)
-                            self.screen.blit(asurf, (ex + lunge_x - ac_, ey + lunge_y - ac_))
+                            half_arc = _emath.radians(_enemy_arc_deg / 2.0)
 
-                    # --- Recovery phase (enemy exposed, dimmer) ---
-                    if attack_phase == 'recovery':
-                        # Subtle blue tint indicating vulnerability
-                        rec_r = size + 3
-                        rsurf = pygame.Surface((rec_r * 2 + 4, rec_r * 2 + 4), pygame.SRCALPHA)
-                        rc = rec_r + 2
-                        pygame.draw.circle(rsurf, (100, 150, 255, 40), (rc, rc), rec_r)
-                        pygame.draw.circle(rsurf, (100, 150, 255, 80), (rc, rc), rec_r, 1)
-                        self.screen.blit(rsurf, (ex - rc, ey - rc))
+                            # Sweep the arc over the animation duration
+                            sweep_p = min(1.0, anim_progress * 2.0)  # Sweep in first half
+                            num_seg = 10
+                            sweep_segs = max(2, int(num_seg * sweep_p))
+
+                            trail_pts = [(ac_, ac_)]
+                            for i in range(sweep_segs + 1):
+                                a = rad - half_arc + _emath.radians(_enemy_arc_deg) * i / num_seg
+                                trail_pts.append((int(ac_ + _emath.cos(a) * arc_r),
+                                                  int(ac_ + _emath.sin(a) * arc_r)))
+
+                            fade_alpha = max(0.0, 1.0 - anim_progress)
+                            if len(trail_pts) >= 3:
+                                fill_a = int(80 * fade_alpha)
+                                pygame.draw.polygon(asurf, (*active_color, fill_a), trail_pts)
+                                # Leading edge
+                                sweep_a = rad - half_arc + _emath.radians(_enemy_arc_deg) * sweep_p
+                                lead_x = int(ac_ + _emath.cos(sweep_a) * arc_r)
+                                lead_y = int(ac_ + _emath.sin(sweep_a) * arc_r)
+                                edge_a = int(180 * fade_alpha)
+                                pygame.draw.line(asurf, (*active_color, edge_a),
+                                                 (ac_, ac_), (lead_x, lead_y), 3)
+                            self.screen.blit(asurf, (ex - ac_, ey - ac_))
+
+                    # (Phased attack system removed — old instant attacks with visual effects)
 
                     # --- Enemy body ---
                     icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2)) if enemy.definition.icon_path else None
@@ -1809,21 +1789,22 @@ class Renderer:
                                          rotated.get_rect(center=(px_screen, py_screen)))
 
                     elif shape == 'beam':
-                        # Fast beam: short glowing line with trail
-                        bw = vis.get('width_px', 4)
+                        # Beam: wider glowing line with trail
+                        bw = max(8, vis.get('width_px', 8))
                         facing_rad = math.radians(proj.facing_angle)
-                        trail_len = 20
+                        trail_len = 28
                         sx = px_screen - int(math.cos(facing_rad) * trail_len)
                         sy = py_screen - int(math.sin(facing_rad) * trail_len)
-                        # Outer glow
+                        # Outer glow (wide)
                         if glow:
-                            pygame.draw.line(self.screen, (*glow_color, 120) if len(glow_color) == 3 else glow_color,
-                                             (sx, sy), (px_screen, py_screen), bw + 3)
+                            pygame.draw.line(self.screen, (*glow_color, 100) if len(glow_color) == 3 else glow_color,
+                                             (sx, sy), (px_screen, py_screen), bw + 6)
+                        # Core beam
                         pygame.draw.line(self.screen, color,
                                          (sx, sy), (px_screen, py_screen), bw)
                         # Bright tip
                         pygame.draw.circle(self.screen, (255, 255, 255),
-                                           (px_screen, py_screen), bw // 2 + 1)
+                                           (px_screen, py_screen), bw // 2 + 2)
 
                     else:  # 'orb' default
                         radius = vis.get('radius_px', 5)
@@ -7088,7 +7069,8 @@ class Renderer:
                     Position(effect.end_pos[0], effect.end_pos[1], 0))
 
                 if effect.effect_type == AttackEffectType.SLASH_ARC:
-                    # Prominent sweeping arc — visible, colored by tags
+                    # Sweeping arc — animates across the arc over the effect duration
+                    # First ~30% is charge-up (faint glow), then sweep across arc
                     radius_px = int(effect.radius * Config.TILE_SIZE)
                     if radius_px < 4:
                         continue
@@ -7100,48 +7082,114 @@ class Renderer:
                     half_arc = _math.radians(effect.arc_degrees / 2.0)
                     num_seg = max(8, int(effect.arc_degrees / 5))
 
-                    # Filled arc wedge
-                    points = [(center, center)]
-                    for i in range(num_seg + 1):
-                        a = facing_rad - half_arc + _math.radians(effect.arc_degrees) * i / num_seg
-                        px = center + _math.cos(a) * radius_px
-                        py = center + _math.sin(a) * radius_px
-                        points.append((int(px), int(py)))
+                    # Animation progress: 0→1 over the effect's life
+                    progress = min(1.0, effect.age / effect.duration)
+                    # Phase 1 (0-0.25): charge-up glow at start angle
+                    # Phase 2 (0.25-0.7): sweep across the arc
+                    # Phase 3 (0.7-1.0): fade trail
 
-                    if len(points) >= 3:
-                        # Semi-transparent fill
-                        fill_alpha = min(255, int(alpha * 0.5))
-                        pygame.draw.polygon(arc_surf, (*rgb, fill_alpha), points)
-                        # Bright edge
-                        edge_alpha = min(255, int(alpha * 0.9))
-                        pygame.draw.lines(arc_surf, (*rgb, edge_alpha), False, points[1:], 3)
-                        # Brighter leading edge
-                        if len(points) > 2:
-                            pygame.draw.line(arc_surf, (*rgb, min(255, alpha)),
-                                             points[0], points[-1], 2)
+                    if progress < 0.25:
+                        # Charge-up: faint glow line from center toward start of arc
+                        charge_p = progress / 0.25
+                        charge_alpha = int(40 + 80 * charge_p)
+                        charge_len = int(radius_px * (0.3 + 0.7 * charge_p))
+                        start_a = facing_rad - half_arc
+                        cx = center + int(_math.cos(start_a) * charge_len)
+                        cy = center + int(_math.sin(start_a) * charge_len)
+                        pygame.draw.line(arc_surf, (*rgb, charge_alpha),
+                                         (center, center), (cx, cy), 3)
+                        # Small glow at charge point
+                        pygame.draw.circle(arc_surf, (*rgb, min(255, charge_alpha + 40)),
+                                          (cx, cy), 5)
+                    else:
+                        # Sweep: draw the arc up to current sweep position
+                        if progress < 0.7:
+                            sweep_p = (progress - 0.25) / 0.45  # 0→1 during sweep
+                        else:
+                            sweep_p = 1.0  # Fully swept
+                        sweep_segs = max(2, int(num_seg * sweep_p))
+
+                        # Trail/wake: slightly transparent filled wedge behind the sweep
+                        trail_points = [(center, center)]
+                        for i in range(sweep_segs + 1):
+                            a = facing_rad - half_arc + _math.radians(effect.arc_degrees) * i / num_seg
+                            px = center + _math.cos(a) * radius_px
+                            py = center + _math.sin(a) * radius_px
+                            trail_points.append((int(px), int(py)))
+
+                        if len(trail_points) >= 3:
+                            trail_alpha = min(255, int(alpha * 0.35))
+                            pygame.draw.polygon(arc_surf, (*rgb, trail_alpha), trail_points)
+
+                        # Leading edge — bright sweeping line at current position
+                        sweep_angle = facing_rad - half_arc + _math.radians(effect.arc_degrees) * sweep_p
+                        lead_x = center + int(_math.cos(sweep_angle) * radius_px)
+                        lead_y = center + int(_math.sin(sweep_angle) * radius_px)
+
+                        # Bright leading edge line
+                        lead_alpha = min(255, int(alpha * 0.95))
+                        pygame.draw.line(arc_surf, (*rgb, lead_alpha),
+                                         (center, center), (lead_x, lead_y), 4)
+                        # Bright tip at leading edge
+                        pygame.draw.circle(arc_surf, (*rgb, min(255, int(alpha * 0.9))),
+                                          (lead_x, lead_y), 5)
+
+                        # Arc edge outline (swept portion only)
+                        if len(trail_points) > 2:
+                            edge_alpha = min(255, int(alpha * 0.7))
+                            pygame.draw.lines(arc_surf, (*rgb, edge_alpha),
+                                              False, trail_points[1:], 3)
 
                     self.screen.blit(arc_surf, (start_sx - center, start_sy - center))
 
                 elif effect.effect_type == AttackEffectType.THRUST:
-                    # Forward thrust — bright glowing line
+                    # Forward thrust — animates as a stab extending outward
                     length_px = int(effect.radius * Config.TILE_SIZE)
                     facing_rad = _math.radians(effect.facing_angle)
-                    ex = start_sx + int(_math.cos(facing_rad) * length_px)
-                    ey = start_sy + int(_math.sin(facing_rad) * length_px)
 
-                    # Outer glow
-                    glow_alpha = min(255, int(alpha * 0.4))
-                    glow_surf = pygame.Surface(
-                        (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
-                    pygame.draw.line(glow_surf, (*rgb, glow_alpha),
-                                    (start_sx, start_sy), (ex, ey), 6)
-                    # Core line
-                    core_alpha = min(255, int(alpha * 0.8))
-                    pygame.draw.line(glow_surf, (*rgb, core_alpha),
-                                    (start_sx, start_sy), (ex, ey), 3)
-                    # Bright tip
-                    pygame.draw.circle(glow_surf, (*rgb, min(255, alpha)), (ex, ey), 4)
-                    self.screen.blit(glow_surf, (0, 0))
+                    # Animation: charge (0-0.25), extend (0.25-0.6), hold+fade (0.6-1.0)
+                    progress = min(1.0, effect.age / effect.duration)
+
+                    if progress < 0.25:
+                        # Charge-up: glowing point at weapon origin
+                        charge_p = progress / 0.25
+                        charge_alpha = int(60 + 100 * charge_p)
+                        short_len = int(length_px * 0.15 * charge_p)
+                        cx = start_sx + int(_math.cos(facing_rad) * short_len)
+                        cy = start_sy + int(_math.sin(facing_rad) * short_len)
+                        glow_surf = pygame.Surface(
+                            (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+                        pygame.draw.circle(glow_surf, (*rgb, charge_alpha),
+                                          (start_sx, start_sy), int(4 + 3 * charge_p))
+                        if short_len > 1:
+                            pygame.draw.line(glow_surf, (*rgb, charge_alpha),
+                                            (start_sx, start_sy), (cx, cy), 3)
+                        self.screen.blit(glow_surf, (0, 0))
+                    else:
+                        # Extend and hold
+                        if progress < 0.6:
+                            extend_p = (progress - 0.25) / 0.35
+                        else:
+                            extend_p = 1.0
+                        current_len = int(length_px * extend_p)
+                        ex = start_sx + int(_math.cos(facing_rad) * current_len)
+                        ey = start_sy + int(_math.sin(facing_rad) * current_len)
+
+                        glow_surf = pygame.Surface(
+                            (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+                        # Outer glow (wider for beam-like weapons)
+                        glow_width = 8
+                        glow_alpha = min(255, int(alpha * 0.4))
+                        pygame.draw.line(glow_surf, (*rgb, glow_alpha),
+                                        (start_sx, start_sy), (ex, ey), glow_width)
+                        # Core line
+                        core_alpha = min(255, int(alpha * 0.85))
+                        pygame.draw.line(glow_surf, (*rgb, core_alpha),
+                                        (start_sx, start_sy), (ex, ey), 4)
+                        # Bright tip
+                        tip_alpha = min(255, int(alpha * 0.95))
+                        pygame.draw.circle(glow_surf, (*rgb, tip_alpha), (ex, ey), 6)
+                        self.screen.blit(glow_surf, (0, 0))
 
                 elif effect.effect_type == AttackEffectType.IMPACT_BURST:
                     # Radial burst at hit point — bright expanding ring

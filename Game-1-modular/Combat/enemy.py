@@ -497,7 +497,7 @@ class Enemy:
 
         # Attack animation state (for visual feedback in renderer)
         self.attack_anim_timer: float = 0.0     # Counts down during attack animation
-        self.attack_anim_duration: float = 0.4  # Total animation time (seconds)
+        self.attack_anim_duration: float = 1.0  # Total animation time (seconds, slower for visibility)
         self.attack_anim_angle: float = 0.0     # Direction of attack
         self.attack_anim_tags: List[str] = []   # Damage type tags for color (e.g. ['fire','circle'])
         self.attack_anim_lunge: bool = False    # True only for leap/charge abilities
@@ -1224,7 +1224,7 @@ class Enemy:
             effects.add_attack_effect(
                 enemy_pos, target_pos, AttackSourceType.ENEMY,
                 damage=params.get('baseDamage', 0), tags=tags,
-                facing_angle=facing, arc_degrees=80.0,
+                facing_angle=facing, arc_degrees=55.0,
                 radius=max(1.0, self.definition.visual_size * 0.8))
 
     def use_special_ability(self, ability: SpecialAbility, target: Any, available_targets: List[Any] = None) -> bool:

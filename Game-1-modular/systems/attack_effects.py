@@ -77,12 +77,12 @@ class AttackEffect:
     start_pos: Tuple[float, float]     # World coordinates (attacker)
     end_pos: Tuple[float, float]       # World coordinates (target/endpoint)
     start_time: float
-    duration: float = 0.35             # Seconds
+    duration: float = 1.05             # Seconds (3x longer for visible animation)
     blocked: bool = False
     damage: float = 0.0
     tags: List[str] = field(default_factory=list)
     facing_angle: float = 0.0          # Degrees, for arc direction
-    arc_degrees: float = 90.0          # Width of slash arc
+    arc_degrees: float = 55.0          # Width of slash arc (default moderate)
     radius: float = 1.5               # Reach of the effect in tiles
 
     @property
@@ -135,9 +135,9 @@ class AttackEffectsManager:
                           damage: float = 0.0,
                           blocked: bool = False,
                           tags: Optional[List[str]] = None,
-                          duration: float = 0.5,
+                          duration: float = 1.5,
                           facing_angle: float = 0.0,
-                          arc_degrees: float = 90.0,
+                          arc_degrees: float = 55.0,
                           radius: float = 1.5):
         """Add a prominent slash arc or thrust effect.
 
@@ -175,7 +175,7 @@ class AttackEffectsManager:
                         damage: float = 0.0,
                         blocked: bool = False,
                         tags: Optional[List[str]] = None,
-                        duration: float = 0.35):
+                        duration: float = 1.05):
         """Backward-compatible: converts old line calls to slash arcs."""
         dx = target_pos[0] - source_pos[0]
         dy = target_pos[1] - source_pos[1]
@@ -190,7 +190,7 @@ class AttackEffectsManager:
                          source_type: AttackSourceType,
                          damage: float = 0.0,
                          tags: Optional[List[str]] = None,
-                         duration: float = 0.45):
+                         duration: float = 1.35):
         """Add a radial impact burst at hit location. Prominent and bright."""
         tags = tags or ['physical']
         effect = AttackEffect(
@@ -209,7 +209,7 @@ class AttackEffectsManager:
     def add_blocked_indicator(self,
                               position: Tuple[float, float],
                               source_type: AttackSourceType,
-                              duration: float = 0.5):
+                              duration: float = 1.5):
         """Add blocked attack indicator."""
         effect = AttackEffect(
             effect_type=AttackEffectType.BLOCKED,
@@ -227,7 +227,7 @@ class AttackEffectsManager:
                         radius: float,
                         source_type: AttackSourceType,
                         tags: Optional[List[str]] = None,
-                        duration: float = 0.6):
+                        duration: float = 1.8):
         """Add AoE ring effect."""
         tags = tags or ['physical']
         effect = AttackEffect(

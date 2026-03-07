@@ -486,30 +486,25 @@ class CombatManager:
                                     safe_zone_center=(self.config.safe_zone_x, self.config.safe_zone_y),
                                     safe_zone_radius=self.config.safe_zone_radius)
 
-                    # Update phased attack timer — fires damage at the right moment
-                    phase_event = enemy.update_attack_phase(dt * 1000)  # dt is seconds, timer is ms
-                    if phase_event == 'active_start':
-                        self._enemy_phased_damage(enemy, shield_blocking=shield_blocking)
-
-                    # Check if enemy can use special ability (only when idle)
+                    # Check if enemy can use special ability
                     dist = enemy.distance_to(player_pos)
                     special_ability = enemy.can_use_special_ability(dist_to_target=dist, target_position=player_pos)
                     if special_ability:
-                        # Start phased attack for ability — uses ability tags
-                        enemy.start_phased_attack(
-                            player_pos,
-                            tags=special_ability.tags,
-                            is_ability=True,
-                            ability=special_ability,
-                        )
+                        # Execute special ability immediately with visual
+                        available_targets = [self.character]
+                        if hasattr(self.world, 'placed_entities'):
+                            from systems.world_system import PlacedEntityType
+                            turrets = [e for e in self.world.placed_entities
+                                      if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
+                            available_targets.extend(turrets)
+                        enemy.use_special_ability(special_ability, self.character, available_targets)
+                        enemy.attack_cooldown = 1.0 / enemy.definition.attack_speed
 
-                    # Check if enemy can attack player normally
+                    # Check if enemy can attack player normally — instant damage + visual
                     elif enemy.can_attack():
                         dist = enemy.distance_to(player_pos)
                         if dist <= 1.5:  # Melee range
-                            # Start phased attack — windup telegraph first, then damage
-                            enemy_tags = getattr(enemy.definition, 'tags', []) or ['physical']
-                            enemy.start_phased_attack(player_pos, tags=enemy_tags)
+                            self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
 
                 else:
                     # Enemy is dead - handle corpse
@@ -1271,29 +1266,43 @@ class CombatManager:
         _facing = _math.degrees(_math.atan2(_dy, _dx))
         _dist = _math.sqrt(_dx * _dx + _dy * _dy)
 
-        # Determine visual shape from weapon tags
+        # Determine visual shape from weapon tags — arc size matches weapon type
         _is_thrust = any(t in tags for t in ('piercing', 'spear', 'thrust', 'dagger'))
+        _base_damage = params.get('baseDamage', 0) if params else 0
+        _weapon_range = min(_dist + 0.3, 2.0)  # Reach just past the target, capped
+
         if _is_thrust:
-            # Thrust line — no cone, just a forward line
+            # Thrust line — narrow forward stab (spears, daggers)
             attack_effects.add_attack_effect(
                 player_pos, enemy_pos, AttackSourceType.PLAYER,
-                damage=params.get('baseDamage', 0) if params else 0,
+                damage=_base_damage,
                 tags=list(tags) + (['thrust'] if 'thrust' not in tags else []),
-                facing_angle=_facing, arc_degrees=20.0,
-                radius=max(1.0, _dist))
+                facing_angle=_facing, arc_degrees=15.0,
+                radius=_weapon_range)
         else:
-            # Slash arc — moderate arc, not a huge cone
-            _arc = 70.0  # Default melee arc
-            if any(t in tags for t in ('heavy', 'two_handed', 'axe')):
-                _arc = 100.0
-            elif any(t in tags for t in ('light', 'fast')):
-                _arc = 50.0
+            # Slash arc — size depends on weapon type
+            # Weapon-type arc mapping (tight, deliberate swings)
+            if any(t in tags for t in ('staff', 'wand')):
+                _arc = 30.0    # Staff: narrow swing
+            elif any(t in tags for t in ('dagger', 'knife')):
+                _arc = 25.0    # Dagger: quick jab
+            elif any(t in tags for t in ('sword', 'blade')):
+                _arc = 55.0    # One-handed sword: moderate
+            elif any(t in tags for t in ('axe',)):
+                _arc = 65.0    # Axe: slightly wider
+            elif any(t in tags for t in ('mace', 'hammer', 'crushing')):
+                _arc = 50.0    # Mace/hammer: focused smash
+            elif any(t in tags for t in ('heavy', 'two_handed')):
+                _arc = 75.0    # Two-handed: wide sweep
+            else:
+                _arc = 50.0    # Default: moderate swing
+
             attack_effects.add_attack_effect(
                 player_pos, enemy_pos, AttackSourceType.PLAYER,
-                damage=params.get('baseDamage', 0) if params else 0,
+                damage=_base_damage,
                 tags=tags or ['physical'],
                 facing_angle=_facing, arc_degrees=_arc,
-                radius=max(1.0, min(_dist, 2.0)))
+                radius=_weapon_range)
 
         # Check for active devastate buffs (AoE attacks like Whirlwind Strike)
         # Must check BEFORE normal attack to trigger AoE
@@ -1599,16 +1608,30 @@ class CombatManager:
         dx = player_pos[0] - enemy_pos[0]
         dy = player_pos[1] - enemy_pos[1]
         facing = _math.degrees(_math.atan2(dy, dx))
+        _dist = _math.sqrt(dx * dx + dy * dy)
         enemy_tags = getattr(enemy.definition, 'tags', []) or ['physical']
+        _enemy_arc = min(80.0, 50.0 + enemy.definition.visual_size * 15.0)
         attack_effects.add_attack_effect(
             enemy_pos, player_pos,
             AttackSourceType.ENEMY,
             damage=enemy.definition.damage_max,
             tags=enemy_tags,
             facing_angle=facing,
-            arc_degrees=80.0,
-            radius=max(1.0, enemy.definition.visual_size * 0.8),
+            arc_degrees=_enemy_arc,
+            radius=min(_dist + 0.3, enemy.definition.visual_size * 1.2),
         )
+
+        # Screen shake on all enemy hits — scales with tier
+        try:
+            from Combat.screen_effects import ScreenEffects
+            # Access screen effects from game engine's action combat systems
+            # For non-action-combat, create a screen shake via camera
+            _shake_intensity = {1: 2, 2: 3, 3: 5, 4: 7}.get(enemy.definition.tier, 2)
+            _shake_duration = {1: 80, 2: 120, 3: 180, 4: 250}.get(enemy.definition.tier, 80)
+            # Store shake request on enemy for game_engine to pick up
+            enemy._pending_screen_shake = (_shake_intensity, _shake_duration)
+        except Exception:
+            pass
 
         # Trigger enemy attack animation
         enemy.attack_anim_timer = enemy.attack_anim_duration
@@ -2120,27 +2143,23 @@ class CombatManager:
                 enemy.update_ai(dt, player_position, aggro_multiplier, speed_multiplier,
                                 world_system=self.world)
 
-                # Update phased attack timer
-                phase_event = enemy.update_attack_phase(dt * 1000)
-                if phase_event == 'active_start':
-                    self._enemy_phased_damage(enemy, shield_blocking=shield_blocking)
-
                 # Check if enemy can use special ability
                 dist = enemy.distance_to(player_position)
                 special_ability = enemy.can_use_special_ability(dist_to_target=dist, target_position=player_position)
                 if special_ability:
-                    enemy.start_phased_attack(
-                        player_position,
-                        tags=special_ability.tags,
-                        is_ability=True,
-                        ability=special_ability,
-                    )
+                    available_targets = [self.character]
+                    if hasattr(self.world, 'placed_entities'):
+                        from systems.world_system import PlacedEntityType
+                        turrets = [e for e in self.world.placed_entities
+                                  if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
+                        available_targets.extend(turrets)
+                    enemy.use_special_ability(special_ability, self.character, available_targets)
+                    enemy.attack_cooldown = 1.0 / enemy.definition.attack_speed
 
-                # Check if enemy can attack player normally
+                # Check if enemy can attack player normally — instant damage + visual
                 elif enemy.can_attack():
                     if dist <= 1.5:  # Melee range
-                        enemy_tags = getattr(enemy.definition, 'tags', []) or ['physical']
-                        enemy.start_phased_attack(player_position, tags=enemy_tags)
+                        self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
 
             else:
                 # Enemy is dead - handle corpse

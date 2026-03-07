@@ -1294,37 +1294,7 @@ class GameEngine:
             self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
             self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
 
-            # Visual feedback — tag-colored attack arc toward enemy
-            try:
-                from systems.attack_effects import get_attack_effects_manager, AttackSourceType
-                import math as _oh_math
-                _oh_effects = get_attack_effects_manager()
-                _oh_player = (self.character.position.x, self.character.position.y)
-                _oh_enemy = (enemy.position[0], enemy.position[1])
-                _oh_facing = _oh_math.degrees(_oh_math.atan2(
-                    _oh_enemy[1] - _oh_player[1], _oh_enemy[0] - _oh_player[0]))
-                _oh_range = self.character.equipment.get_weapon_range('offHand')
-                _oh_is_thrust = any(t in (effect_tags or []) for t in ('piercing', 'spear', 'thrust', 'dagger'))
-                if _oh_is_thrust:
-                    _oh_tags = list(effect_tags or ['physical'])
-                    if 'thrust' not in _oh_tags:
-                        _oh_tags.append('thrust')
-                    _oh_effects.add_attack_effect(
-                        _oh_player, _oh_enemy, AttackSourceType.PLAYER,
-                        damage=damage, tags=_oh_tags,
-                        facing_angle=_oh_facing, arc_degrees=20.0,
-                        radius=_oh_range)
-                else:
-                    _oh_effects.add_attack_effect(
-                        _oh_player, _oh_enemy, AttackSourceType.PLAYER,
-                        damage=damage, tags=effect_tags or ['physical'],
-                        facing_angle=_oh_facing, arc_degrees=70.0,
-                        radius=min(_oh_range, 2.0))
-                if damage > 0:
-                    _oh_effects.add_impact_burst(
-                        _oh_enemy, AttackSourceType.PLAYER, tags=effect_tags)
-            except Exception:
-                pass
+            # Visual feedback is handled by combat_manager.player_attack_enemy_with_tags
 
             if not enemy.is_alive:
                 self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
@@ -3080,9 +3050,9 @@ class GameEngine:
 
             if not enemy.is_alive:
                 se.hit_pause(60)
-                # Screen shake only for T3+ enemy kills
-                if enemy.definition.tier >= 3:
-                    se.screen_shake(4, 120)
+                # Screen shake on all enemy kills — scales with tier
+                _kill_shake = {1: 2, 2: 3, 3: 5, 4: 8}.get(enemy.definition.tier, 2)
+                se.screen_shake(_kill_shake, 150)
 
         else:
             # Enemy hit the player
@@ -3103,9 +3073,10 @@ class GameEngine:
                 enemy, shield_blocking=shield_blocking)
 
             se.flash_entity('player', (255, 100, 100), 100)
-            # Screen shake only for boss/T4 enemy attacks
-            if enemy.definition.tier >= 4 or enemy.is_boss:
-                se.screen_shake(4, 100)
+            # Screen shake on all enemy hits — intensity scales with tier
+            _shake_i = {1: 2, 2: 3, 3: 5, 4: 7}.get(enemy.definition.tier, 2)
+            _shake_d = {1: 80, 2: 120, 3: 180, 4: 250}.get(enemy.definition.tier, 80)
+            se.screen_shake(_shake_i, _shake_d)
 
     def _get_weapon_type(self, hand: str = 'mainHand') -> str:
         """Determine weapon type string from equipped weapon tags."""
@@ -3144,6 +3115,31 @@ class GameEngine:
             return "sword_2h"
         else:
             return "sword_1h"
+
+    def _process_enemy_screen_shakes(self):
+        """Check all enemies for pending screen shake from attacks and apply them."""
+        if not self._action_combat or 'screen_effects' not in self._ac:
+            # Fallback: apply shake directly to camera for non-action-combat
+            for enemy in self.combat_manager.get_all_active_enemies():
+                shake = getattr(enemy, '_pending_screen_shake', None)
+                if shake:
+                    intensity, duration = shake
+                    # Apply directly via camera shake_offset for a few frames
+                    import random as _rng
+                    mag = int(intensity)
+                    if mag > 0:
+                        self.camera.shake_offset = (
+                            _rng.randint(-mag, mag), _rng.randint(-mag, mag))
+                    enemy._pending_screen_shake = None
+            return
+
+        se = self._ac['screen_effects']
+        for enemy in self.combat_manager.get_all_active_enemies():
+            shake = getattr(enemy, '_pending_screen_shake', None)
+            if shake:
+                intensity, duration = shake
+                se.screen_shake(intensity, duration)
+                enemy._pending_screen_shake = None
 
     # ========================================================================
     # CONFIGURATION LOADERS
@@ -7167,36 +7163,7 @@ class GameEngine:
                                     self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
                                     self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
 
-                                    # Visual feedback for offhand attack
-                                    try:
-                                        from systems.attack_effects import get_attack_effects_manager, AttackSourceType
-                                        import math as _xoh_math
-                                        _xoh_effects = get_attack_effects_manager()
-                                        _xoh_p = (self.character.position.x, self.character.position.y)
-                                        _xoh_e = (enemy.position[0], enemy.position[1])
-                                        _xoh_f = _xoh_math.degrees(_xoh_math.atan2(
-                                            _xoh_e[1] - _xoh_p[1], _xoh_e[0] - _xoh_p[0]))
-                                        _xoh_is_thrust = any(t in (effect_tags or []) for t in ('piercing', 'spear', 'thrust', 'dagger'))
-                                        if _xoh_is_thrust:
-                                            _xoh_tags = list(effect_tags or ['physical'])
-                                            if 'thrust' not in _xoh_tags:
-                                                _xoh_tags.append('thrust')
-                                            _xoh_effects.add_attack_effect(
-                                                _xoh_p, _xoh_e, AttackSourceType.PLAYER,
-                                                damage=damage, tags=_xoh_tags,
-                                                facing_angle=_xoh_f, arc_degrees=20.0,
-                                                radius=weapon_range)
-                                        else:
-                                            _xoh_effects.add_attack_effect(
-                                                _xoh_p, _xoh_e, AttackSourceType.PLAYER,
-                                                damage=damage, tags=effect_tags or ['physical'],
-                                                facing_angle=_xoh_f, arc_degrees=70.0,
-                                                radius=min(weapon_range, 2.0))
-                                        if damage > 0:
-                                            _xoh_effects.add_impact_burst(
-                                                _xoh_e, AttackSourceType.PLAYER, tags=effect_tags)
-                                    except Exception:
-                                        pass
+                                    # Visual feedback is handled by combat_manager.player_attack_enemy_with_tags
 
                                     if not enemy.is_alive:
                                         self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
@@ -7298,6 +7265,9 @@ class GameEngine:
                 self._update_dungeon(dt)
             else:
                 self.combat_manager.update(dt, shield_blocking=shield_blocking, is_night=self.is_night())
+
+            # Process pending screen shakes from enemy attacks
+            self._process_enemy_screen_shakes()
 
             # Update action combat systems (hitboxes, projectiles, dodge, effects)
             self._update_action_combat(dt)

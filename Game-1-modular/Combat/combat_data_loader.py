@@ -27,16 +27,16 @@ from Combat.hitbox_system import HitboxDefinition
 
 # Weapon type -> base attack shape/timing profile
 _WEAPON_PROFILES = {
-    'sword_1h': {'shape': 'arc', 'arc': 90, 'windup': 300, 'active': 200, 'recovery': 240},
-    'sword_2h': {'shape': 'arc', 'arc': 120, 'windup': 500, 'active': 300, 'recovery': 400},
-    'dagger':   {'shape': 'arc', 'arc': 60, 'windup': 160, 'active': 120, 'recovery': 160},
-    'axe':      {'shape': 'arc', 'arc': 100, 'windup': 400, 'active': 240, 'recovery': 360},
-    'mace':     {'shape': 'arc', 'arc': 80, 'windup': 440, 'active': 260, 'recovery': 400},
-    'hammer_2h': {'shape': 'arc', 'arc': 130, 'windup': 600, 'active': 360, 'recovery': 500},
+    'sword_1h': {'shape': 'arc', 'arc': 55, 'windup': 300, 'active': 200, 'recovery': 240},
+    'sword_2h': {'shape': 'arc', 'arc': 75, 'windup': 500, 'active': 300, 'recovery': 400},
+    'dagger':   {'shape': 'arc', 'arc': 25, 'windup': 160, 'active': 120, 'recovery': 160},
+    'axe':      {'shape': 'arc', 'arc': 65, 'windup': 400, 'active': 240, 'recovery': 360},
+    'mace':     {'shape': 'arc', 'arc': 50, 'windup': 440, 'active': 260, 'recovery': 400},
+    'hammer_2h': {'shape': 'arc', 'arc': 75, 'windup': 600, 'active': 360, 'recovery': 500},
     'spear':    {'shape': 'line', 'length': 2.5, 'windup': 360, 'active': 200, 'recovery': 300},
-    'staff':    {'shape': 'arc', 'arc': 70, 'windup': 400, 'active': 240, 'recovery': 320},
+    'staff':    {'shape': 'arc', 'arc': 30, 'windup': 400, 'active': 240, 'recovery': 320},
     'bow':      {'shape': 'projectile', 'windup': 600, 'active': 100, 'recovery': 400},
-    'unarmed':  {'shape': 'arc', 'arc': 70, 'windup': 200, 'active': 160, 'recovery': 200},
+    'unarmed':  {'shape': 'arc', 'arc': 50, 'windup': 200, 'active': 160, 'recovery': 200},
 }
 
 # Element tag -> telegraph/visual color
@@ -203,7 +203,7 @@ def generate_projectile_from_tags(weapon_type: str,
         length_px, width_px = 12, 3
     elif is_beam:
         vis_shape = 'beam'
-        length_px, width_px = 20, 4
+        length_px, width_px = 24, 8
     elif is_shard:
         vis_shape = 'elongated'
         length_px, width_px = 8, 5

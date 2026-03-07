@@ -1070,7 +1070,7 @@ class SkillManager:
                 player_pos, target_pos, AttackSourceType.PLAYER,
                 damage=params.get('baseDamage', 0),
                 tags=combat_tags, facing_angle=facing,
-                arc_degrees=20.0 if (_is_thrust or has_pierce) else 60.0,
+                arc_degrees=15.0 if (_is_thrust or has_pierce) else 50.0,
                 radius=2.0)
             for target in affected_targets:
                 t_pos = target_pos
