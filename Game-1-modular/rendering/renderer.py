@@ -1631,15 +1631,32 @@ class Renderer:
             for enemy in combat_manager.get_all_active_enemies():
                 if not enemy.is_alive:
                     continue
+
+                # Determine windup state and progress from either ASM or phased attack
+                is_winding_up = False
+                progress = 0.0
+                color = [255, 100, 100]
+                telegraph_tags = []
+
                 asm = getattr(enemy, 'attack_state_machine', None)
                 if asm and asm.is_in_windup:
+                    is_winding_up = True
+                    progress = asm.windup_progress
+                    color = asm.current_attack.telegraph_color if asm.current_attack else [255, 100, 100]
+                elif getattr(enemy, 'attack_phase', 'idle') == 'windup':
+                    is_winding_up = True
+                    windup_total = getattr(enemy, '_attack_windup_ms', 600)
+                    timer = getattr(enemy, 'attack_phase_timer', 0)
+                    progress = 1.0 - (timer / max(1, windup_total))
+                    telegraph_tags = getattr(enemy, 'attack_anim_tags', [])
+                    color = list(_color_from_tags(telegraph_tags, (255, 100, 100)))
+
+                if is_winding_up:
                     ex, ey = camera.world_to_screen(
                         Position(enemy.position[0], enemy.position[1], 0))
-                    progress = asm.windup_progress
                     vis_size = getattr(enemy.definition, 'visual_size', 1.0)
                     telegraph_radius = int(Config.TILE_SIZE * 1.5 * progress * vis_size)
                     telegraph_alpha = int(30 + progress * 90)
-                    color = asm.current_attack.telegraph_color if asm.current_attack else [255, 100, 100]
                     if telegraph_radius > 2:
                         surf_size = telegraph_radius * 2 + 4
                         tele_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
@@ -1658,6 +1675,26 @@ class Renderer:
                             pygame.draw.circle(tele_surf,
                                                (*color[:3], min(255, telegraph_alpha + 40)),
                                                (center, center), inner_r, 1)
+
+                        # Direction indicator — line toward attack target
+                        target_pos = getattr(enemy, 'attack_target_pos', None)
+                        if target_pos and progress > 0.3:
+                            tx, ty = camera.world_to_screen(
+                                Position(target_pos[0], target_pos[1], 0))
+                            dir_dx = tx - ex
+                            dir_dy = ty - ey
+                            dir_len = max(1, (dir_dx ** 2 + dir_dy ** 2) ** 0.5)
+                            nx, ny = dir_dx / dir_len, dir_dy / dir_len
+                            line_len = telegraph_radius * 1.3
+                            end_x = center + int(nx * line_len)
+                            end_y = center + int(ny * line_len)
+                            line_alpha = min(255, int(telegraph_alpha * 1.5))
+                            pygame.draw.line(tele_surf, (*color[:3], line_alpha),
+                                             (center, center), (end_x, end_y), 3)
+                            # Arrow tip
+                            pygame.draw.circle(tele_surf, (*color[:3], line_alpha),
+                                               (end_x, end_y), 4)
+
                         self.screen.blit(tele_surf,
                                          (ex - center + shake_ox, ey - center + shake_oy))
 

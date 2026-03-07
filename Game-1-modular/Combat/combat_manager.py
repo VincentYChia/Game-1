@@ -500,11 +500,18 @@ class CombatManager:
                         enemy.use_special_ability(special_ability, self.character, available_targets)
                         enemy.attack_cooldown = 1.0 / enemy.definition.attack_speed
 
-                    # Check if enemy can attack player normally — instant damage + visual
+                    # Update phased attack timer (windup → active → recovery)
+                    phase_event = enemy.update_attack_phase(dt * 1000.0)
+                    if phase_event == 'active_start':
+                        # Windup finished — now deal damage
+                        self._enemy_phased_damage(enemy, shield_blocking=shield_blocking)
+
+                    # Check if enemy can start a new attack
                     elif enemy.can_attack():
                         dist = enemy.distance_to(player_pos)
                         if dist <= 1.5:  # Melee range
-                            self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
+                            enemy_tags = getattr(enemy.definition, 'tags', []) or ['physical']
+                            enemy.start_phased_attack(player_pos, tags=enemy_tags)
 
                 else:
                     # Enemy is dead - handle corpse
@@ -1204,7 +1211,7 @@ class CombatManager:
             print(f"   ⚠️  Attack failed: {e}")
             return (0.0, False, [])
 
-    def player_attack_enemy_with_tags(self, enemy: Enemy, tags: List[str], params: dict = None) -> Tuple[float, bool, List[Tuple[str, int]]]:
+    def player_attack_enemy_with_tags(self, enemy: Enemy, tags: List[str], params: dict = None, skip_visual: bool = False) -> Tuple[float, bool, List[Tuple[str, int]]]:
         """
         Player attacks enemy using tag-based effects system
 
@@ -1266,43 +1273,51 @@ class CombatManager:
         _facing = _math.degrees(_math.atan2(_dy, _dx))
         _dist = _math.sqrt(_dx * _dx + _dy * _dy)
 
-        # Determine visual shape from weapon tags — arc size matches weapon type
-        _is_thrust = any(t in tags for t in ('piercing', 'spear', 'thrust', 'dagger'))
-        _base_damage = params.get('baseDamage', 0) if params else 0
-        _weapon_range = min(_dist + 0.3, 2.0)  # Reach just past the target, capped
+        if not skip_visual:
+            # Use actual weapon range for effect radius (not capped at 2.0)
+            _weapon_range = self.character.equipment.get_weapon_range(
+                getattr(self.character, '_selected_slot', 'mainHand') or 'mainHand')
+            _weapon_range = max(_weapon_range, _dist + 0.3)
 
-        if _is_thrust:
-            # Thrust line — narrow forward stab (spears, daggers)
-            attack_effects.add_attack_effect(
-                player_pos, enemy_pos, AttackSourceType.PLAYER,
-                damage=_base_damage,
-                tags=list(tags) + (['thrust'] if 'thrust' not in tags else []),
-                facing_angle=_facing, arc_degrees=15.0,
-                radius=_weapon_range)
-        else:
-            # Slash arc — size depends on weapon type
-            # Weapon-type arc mapping (tight, deliberate swings)
-            if any(t in tags for t in ('staff', 'wand')):
-                _arc = 30.0    # Staff: narrow swing
-            elif any(t in tags for t in ('dagger', 'knife')):
-                _arc = 25.0    # Dagger: quick jab
-            elif any(t in tags for t in ('sword', 'blade')):
-                _arc = 55.0    # One-handed sword: moderate
-            elif any(t in tags for t in ('axe',)):
-                _arc = 65.0    # Axe: slightly wider
-            elif any(t in tags for t in ('mace', 'hammer', 'crushing')):
-                _arc = 50.0    # Mace/hammer: focused smash
-            elif any(t in tags for t in ('heavy', 'two_handed')):
-                _arc = 75.0    # Two-handed: wide sweep
+            _base_damage = params.get('baseDamage', 0) if params else 0
+
+            # Determine visual type by weapon category
+            _is_thrust = any(t in tags for t in ('piercing', 'spear', 'thrust', 'dagger'))
+            _is_staff = any(t in tags for t in ('staff', 'wand', 'magic'))
+            _is_bow = any(t in tags for t in ('bow', 'ranged'))
+
+            if _is_bow:
+                # Bows don't create sweep/thrust — they use the projectile system
+                pass
+            elif _is_thrust or _is_staff:
+                # Thrust line — spears, daggers, staffs (no sweep, instant forward line)
+                attack_effects.add_attack_effect(
+                    player_pos, enemy_pos, AttackSourceType.PLAYER,
+                    damage=_base_damage,
+                    tags=list(tags) + (['thrust'] if 'thrust' not in tags else []),
+                    facing_angle=_facing, arc_degrees=15.0,
+                    radius=_weapon_range)
             else:
-                _arc = 50.0    # Default: moderate swing
+                # Slash arc — sweeping weapons (swords, axes, maces, hammers)
+                if any(t in tags for t in ('dagger', 'knife')):
+                    _arc = 25.0
+                elif any(t in tags for t in ('sword', 'blade')):
+                    _arc = 55.0
+                elif any(t in tags for t in ('axe',)):
+                    _arc = 65.0
+                elif any(t in tags for t in ('mace', 'hammer', 'crushing')):
+                    _arc = 50.0
+                elif any(t in tags for t in ('heavy', 'two_handed')):
+                    _arc = 75.0
+                else:
+                    _arc = 50.0
 
-            attack_effects.add_attack_effect(
-                player_pos, enemy_pos, AttackSourceType.PLAYER,
-                damage=_base_damage,
-                tags=tags or ['physical'],
-                facing_angle=_facing, arc_degrees=_arc,
-                radius=_weapon_range)
+                attack_effects.add_attack_effect(
+                    player_pos, enemy_pos, AttackSourceType.PLAYER,
+                    damage=_base_damage,
+                    tags=tags or ['physical'],
+                    facing_angle=_facing, arc_degrees=_arc,
+                    radius=_weapon_range)
 
         # Check for active devastate buffs (AoE attacks like Whirlwind Strike)
         # Must check BEFORE normal attack to trigger AoE
@@ -1618,7 +1633,7 @@ class CombatManager:
             tags=enemy_tags,
             facing_angle=facing,
             arc_degrees=_enemy_arc,
-            radius=min(_dist + 0.3, enemy.definition.visual_size * 1.2),
+            radius=max(1.5, _dist + 0.3),  # Cover full attack range
         )
 
         # Screen shake on all enemy hits — scales with tier
@@ -2156,10 +2171,16 @@ class CombatManager:
                     enemy.use_special_ability(special_ability, self.character, available_targets)
                     enemy.attack_cooldown = 1.0 / enemy.definition.attack_speed
 
-                # Check if enemy can attack player normally — instant damage + visual
+                # Update phased attack timer (windup → active → recovery)
+                phase_event = enemy.update_attack_phase(dt * 1000.0)
+                if phase_event == 'active_start':
+                    self._enemy_phased_damage(enemy, shield_blocking=shield_blocking)
+
+                # Check if enemy can start a new attack
                 elif enemy.can_attack():
                     if dist <= 1.5:  # Melee range
-                        self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
+                        enemy_tags = getattr(enemy.definition, 'tags', []) or ['physical']
+                        enemy.start_phased_attack(player_position, tags=enemy_tags)
 
             else:
                 # Enemy is dead - handle corpse

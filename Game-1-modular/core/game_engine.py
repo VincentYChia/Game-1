@@ -1272,41 +1272,10 @@ class GameEngine:
         wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
         wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
 
-        # Check for enemy at position
+        # Check for enemy at position — route through attack system
         enemy = self.combat_manager.get_enemy_at_position((wx, wy))
         if enemy and enemy.is_alive:
-            # Check if offhand can attack
-            if not self.character.can_attack('offHand'):
-                return  # Still on cooldown
-
-            # Check if in range (using offhand weapon's range)
-            weapon_range = self.character.equipment.get_weapon_range('offHand')
-            dist = enemy.distance_to((self.character.position.x, self.character.position.y))
-            if dist > weapon_range:
-                self.add_notification(f"Enemy too far (offhand range: {weapon_range})", (255, 100, 100))
-                return
-
-            # Attack with offhand (using tag system)
-            effect_tags, effect_params = self._get_weapon_effect_data('offHand')
-            damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
-                enemy, effect_tags, effect_params
-            )
-            self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
-            self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
-
-            # Visual feedback is handled by combat_manager.player_attack_enemy_with_tags
-
-            if not enemy.is_alive:
-                self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
-                self.character.activities.record_activity('combat', 1)
-
-                # Show loot notifications (auto-looted)
-                if loot:
-                    mat_db = MaterialDatabase.get_instance()
-                    for material_id, qty in loot:
-                        mat = mat_db.get_material(material_id)
-                        item_name = mat.name if mat else material_id
-                        self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+            self._initiate_attack_toward(wx, wy, 'offHand')
 
     def handle_npc_dialogue_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks on NPC dialogue buttons (accept/turn in quests)"""
@@ -2155,90 +2124,16 @@ class GameEngine:
                     self._exit_dungeon_via_portal()
                     return
 
-            # Check for dungeon enemy click
+            # Check for dungeon enemy click — initiate attack toward enemy
             enemy = self.combat_manager.get_dungeon_enemy_at_position((wx, wy))
             if enemy and enemy.is_alive:
-                # Check if player can attack with mainhand
-                if not self.character.can_attack('mainHand'):
-                    return  # Still on cooldown
-
-                # Check if stunned or frozen
-                if hasattr(self.character, 'status_manager'):
-                    if self.character.status_manager.has_status('stun'):
-                        self.add_notification("Cannot attack while stunned!", (255, 100, 100))
-                        return
-                    if self.character.status_manager.has_status('freeze'):
-                        self.add_notification("Cannot attack while frozen!", (255, 100, 100))
-                        return
-
-                # Check if in range
-                weapon_range = self.character.equipment.get_weapon_range('mainHand')
-                dist = enemy.distance_to((self.character.position.x, self.character.position.y))
-                if dist > weapon_range:
-                    self.add_notification("Enemy too far away", (255, 100, 100))
-                    return
-
-                # Attack dungeon enemy
-                effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
-                damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
-                    enemy, effect_tags, effect_params
-                )
-                self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
-                self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
-
-                if not enemy.is_alive:
-                    # Track dungeon enemy kill (kill tracking already done in combat_manager)
-                    exp_reward = self.combat_manager._calculate_exp_reward(enemy)
-                    if hasattr(self.character, 'stat_tracker'):
-                        self.character.stat_tracker.record_dungeon_enemy_killed(exp_reward)
-                    # Note: on_dungeon_enemy_killed already called by player_attack_enemy_with_tags
-                    self.add_notification(f"Defeated {enemy.definition.name}! (+{exp_reward} EXP)", (255, 215, 0))
+                self._initiate_attack_toward(wx, wy, 'mainHand')
                 return  # Don't process world clicks when in dungeon
 
-        # Check for enemy click (living enemies)
+        # Check for enemy click (living enemies) — initiate attack toward click
         enemy = self.combat_manager.get_enemy_at_position((wx, wy))
         if enemy and enemy.is_alive:
-            # Check if player can attack with mainhand
-            if not self.character.can_attack('mainHand'):
-                return  # Still on cooldown
-
-            # Check if stunned or frozen (cannot attack)
-            if hasattr(self.character, 'status_manager'):
-                if self.character.status_manager.has_status('stun'):
-                    self.add_notification("Cannot attack while stunned!", (255, 100, 100))
-                    return
-                if self.character.status_manager.has_status('freeze'):
-                    self.add_notification("Cannot attack while frozen!", (255, 100, 100))
-                    return
-
-            # Check if in range (using mainhand weapon's range)
-            weapon_range = self.character.equipment.get_weapon_range('mainHand')
-            dist = enemy.distance_to((self.character.position.x, self.character.position.y))
-            if dist > weapon_range:
-                weapon_name = self.character.equipment.slots.get('mainHand')
-                range_msg = f"Enemy too far (range: {weapon_range})" if weapon_name else "Enemy too far away"
-                self.add_notification(range_msg, (255, 100, 100))
-                return
-
-            # Attack enemy with mainhand (using tag system)
-            effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
-            damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
-                enemy, effect_tags, effect_params
-            )
-            self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
-            self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
-
-            if not enemy.is_alive:
-                self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
-                self.character.activities.record_activity('combat', 1)
-
-                # Show loot notifications (auto-looted)
-                if loot:
-                    mat_db = MaterialDatabase.get_instance()
-                    for material_id, qty in loot:
-                        mat = mat_db.get_material(material_id)
-                        item_name = mat.name if mat else material_id
-                        self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+            self._initiate_attack_toward(wx, wy, 'mainHand')
             return
 
         # Note: Corpse looting is now automatic when enemy dies
@@ -3006,9 +2901,9 @@ class GameEngine:
             effect_tags = ctx.get('effect_tags', ['physical', 'single'])
             effect_params = ctx.get('effect_params', {})
 
-            # Route through existing damage pipeline
+            # Route through existing damage pipeline (skip visual — action combat has its own)
             damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
-                enemy, effect_tags, effect_params)
+                enemy, effect_tags, effect_params, skip_visual=True)
 
             # Determine damage type from tags for visual feedback
             damage_type = "physical"
@@ -3077,6 +2972,131 @@ class GameEngine:
             _shake_i = {1: 2, 2: 3, 3: 5, 4: 7}.get(enemy.definition.tier, 2)
             _shake_d = {1: 80, 2: 120, 3: 180, 4: 250}.get(enemy.definition.tier, 80)
             se.screen_shake(_shake_i, _shake_d)
+
+    def _initiate_attack_toward(self, world_x: float, world_y: float, hand: str = 'mainHand'):
+        """Initiate an attack toward a world position using the action combat state machine.
+
+        Instead of dealing instant damage, this starts the attack windup/sweep.
+        Damage is applied when the hitbox/projectile collides with an enemy.
+        """
+        import math
+
+        # Check if player can attack
+        if not self.character.can_attack(hand):
+            return
+
+        # Check if stunned or frozen
+        if hasattr(self.character, 'status_manager'):
+            if self.character.status_manager.has_status('stun'):
+                self.add_notification("Cannot attack while stunned!", (255, 100, 100))
+                return
+            if self.character.status_manager.has_status('freeze'):
+                self.add_notification("Cannot attack while frozen!", (255, 100, 100))
+                return
+
+        # Compute attack direction from player toward click position
+        player_x = self.character.position.x
+        player_y = self.character.position.y
+        dx = world_x - player_x
+        dy = world_y - player_y
+        attack_angle = math.degrees(math.atan2(dy, dx))
+        self.character.facing_angle = attack_angle
+        self._ac_attack_angle = attack_angle
+
+        if self._action_combat:
+            # Route through action combat state machine (windup → active → hit check)
+            player_sm = self._ac['player_sm']
+            pa = self._ac['player_actions']
+            data = self._ac['data']
+
+            if not player_sm.is_attacking and not pa.is_dodging:
+                weapon_type = self._get_weapon_type(hand)
+                weapon_range = self.character.equipment.get_weapon_range(hand)
+                weapon_speed = self.character.equipment.get_weapon_attack_speed(hand)
+                weapon = self.character.equipment.slots.get(hand)
+                weapon_tags = weapon.get_metadata_tags() if weapon and hasattr(weapon, 'get_metadata_tags') else []
+                attack_def = data.get_weapon_attack(
+                    weapon_type, 0, weapon_range, weapon_speed, weapon_tags)
+                if attack_def:
+                    effect_tags, effect_params = self._get_weapon_effect_data(hand)
+                    damage_context = {
+                        'effect_tags': effect_tags,
+                        'effect_params': effect_params,
+                    }
+                    player_sm.start_attack(attack_def, damage_context)
+                    self.character.reset_attack_cooldown(is_weapon=True, hand=hand)
+            elif player_sm.is_attacking:
+                pa.input_buffer.buffer("attack")
+        else:
+            # Legacy fallback: create a sweep effect that checks for hits
+            # Uses the attack effects system with a sweep that covers weapon range
+            weapon_range = self.character.equipment.get_weapon_range(hand)
+
+            # Check for enemies in range along the attack direction
+            enemies = self.combat_manager.get_all_active_enemies()
+            if self.combat_manager.dungeon_enemies:
+                enemies = list(enemies) + list(self.combat_manager.dungeon_enemies)
+
+            hit_enemy = None
+            for enemy in enemies:
+                if not enemy.is_alive:
+                    continue
+                dist = enemy.distance_to((player_x, player_y))
+                if dist > weapon_range:
+                    continue
+                # Check if enemy is within the attack arc
+                ex, ey = enemy.position[0], enemy.position[1]
+                angle_to_enemy = math.degrees(math.atan2(ey - player_y, ex - player_x))
+                angle_diff = abs((angle_to_enemy - attack_angle + 180) % 360 - 180)
+                weapon_type = self._get_weapon_type(hand)
+                arc_half = 45.0  # Default arc half-width
+                if weapon_type in ('bow', 'staff'):
+                    arc_half = 15.0
+                elif weapon_type in ('dagger', 'spear'):
+                    arc_half = 20.0
+                elif weapon_type in ('axe', 'sword_2h', 'hammer_2h'):
+                    arc_half = 55.0
+                if angle_diff <= arc_half:
+                    hit_enemy = enemy
+                    break
+
+            # Create sweep visual effect
+            effect_tags, effect_params = self._get_weapon_effect_data(hand)
+            from systems.attack_effects import get_attack_effects_manager, AttackSourceType
+            attack_effects = get_attack_effects_manager()
+
+            target_x = player_x + math.cos(math.radians(attack_angle)) * weapon_range
+            target_y = player_y + math.sin(math.radians(attack_angle)) * weapon_range
+            attack_effects.add_attack_effect(
+                (player_x, player_y), (target_x, target_y),
+                AttackSourceType.PLAYER,
+                damage=effect_params.get('baseDamage', 0),
+                tags=effect_tags or ['physical'],
+                facing_angle=attack_angle,
+                arc_degrees=arc_half * 2,
+                radius=weapon_range)
+
+            # Apply damage if an enemy was in the sweep
+            if hit_enemy:
+                damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
+                    hit_enemy, effect_tags, effect_params, skip_visual=True
+                )
+                self.damage_numbers.append(DamageNumber(
+                    int(damage),
+                    Position(hit_enemy.position[0], hit_enemy.position[1], 0),
+                    is_crit))
+
+                if not hit_enemy.is_alive:
+                    self.add_notification(f"Defeated {hit_enemy.definition.name}!", (255, 215, 0))
+                    self.character.activities.record_activity('combat', 1)
+                    if loot:
+                        mat_db = MaterialDatabase.get_instance()
+                        for material_id, qty in loot:
+                            mat = mat_db.get_material(material_id)
+                            item_name = mat.name if mat else material_id
+                            self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+
+            self.character.reset_attack_cooldown(is_weapon=True, hand=hand)
 
     def _get_weapon_type(self, hand: str = 'mainHand') -> str:
         """Determine weapon type string from equipped weapon tags."""
@@ -7136,46 +7156,13 @@ class GameEngine:
 
             # Handle X key for offhand attacks (when not blocking)
             if pygame.K_x in self.keys_pressed and not shield_blocking:
-                # Get offhand weapon
                 offhand_weapon = self.character.equipment.slots.get('offHand')
                 if offhand_weapon and offhand_weapon.item_type != "shield":
-                    # Try to attack enemy at mouse position
                     mouse_pos = pygame.mouse.get_pos()
-                    if mouse_pos[0] < Config.VIEWPORT_WIDTH:  # In viewport
-                        # Convert to world coordinates
+                    if mouse_pos[0] < Config.VIEWPORT_WIDTH:
                         wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
                         wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
-
-                        # Check for enemy at position
-                        enemy = self.combat_manager.get_enemy_at_position((wx, wy))
-                        if enemy and enemy.is_alive:
-                            # Check if offhand can attack
-                            if self.character.can_attack('offHand'):
-                                # Check if in range
-                                weapon_range = self.character.equipment.get_weapon_range('offHand')
-                                dist = enemy.distance_to((self.character.position.x, self.character.position.y))
-                                if dist <= weapon_range:
-                                    # Attack with offhand (using tag system)
-                                    effect_tags, effect_params = self._get_weapon_effect_data('offHand')
-                                    damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
-                                        enemy, effect_tags, effect_params
-                                    )
-                                    self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
-                                    self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
-
-                                    # Visual feedback is handled by combat_manager.player_attack_enemy_with_tags
-
-                                    if not enemy.is_alive:
-                                        self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
-                                        self.character.activities.record_activity('combat', 1)
-
-                                        # Show loot notifications
-                                        if loot:
-                                            mat_db = MaterialDatabase.get_instance()
-                                            for material_id, qty in loot:
-                                                mat = mat_db.get_material(material_id)
-                                                item_name = mat.name if mat else material_id
-                                                self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+                        self._initiate_attack_toward(wx, wy, 'offHand')
 
             # Handle continuous left-click (mainhand) attacks when mouse is held
             # This allows attacking while also blocking with right-click
@@ -7224,41 +7211,12 @@ class GameEngine:
                             # Buffer the attack for combo continuation
                             pa.input_buffer.buffer("attack")
                     else:
-                        # Legacy instant combat path
-                        # Get mouse position and convert to world coordinates
+                        # Legacy path — route through _initiate_attack_toward
                         mouse_pos = pygame.mouse.get_pos()
-                        if mouse_pos[0] < Config.VIEWPORT_WIDTH:  # In viewport (not UI)
+                        if mouse_pos[0] < Config.VIEWPORT_WIDTH:
                             wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
                             wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
-
-                            # Check for enemy at mouse position
-                            if self.dungeon_manager.in_dungeon:
-                                enemy = self.combat_manager.get_dungeon_enemy_at_position((wx, wy))
-                            else:
-                                enemy = self.combat_manager.get_enemy_at_position((wx, wy))
-
-                            if enemy and enemy.is_alive:
-                                # Check if in range
-                                weapon_range = self.character.equipment.get_weapon_range('mainHand')
-                                dist = enemy.distance_to((self.character.position.x, self.character.position.y))
-                                if dist <= weapon_range:
-                                    # Attack with mainhand
-                                    effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
-                                    damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
-                                        enemy, effect_tags, effect_params
-                                    )
-                                    self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
-                                    self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
-
-                                    if not enemy.is_alive:
-                                        self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
-                                        self.character.activities.record_activity('combat', 1)
-                                        if loot:
-                                            mat_db = MaterialDatabase.get_instance()
-                                            for material_id, qty in loot:
-                                                mat = mat_db.get_material(material_id)
-                                                item_name = mat.name if mat else material_id
-                                                self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+                            self._initiate_attack_toward(wx, wy, 'mainHand')
 
             # Update combat based on whether in dungeon or world
             if self.dungeon_manager.in_dungeon:
