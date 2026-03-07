@@ -1368,7 +1368,7 @@ class Renderer:
                                              (ex + size // 2, ey + size // 3),
                                              (ex + size, ey + size // 2), 2)
 
-                    # Enemy attack animation overlay
+                    # Enemy attack animation overlay (tag-driven, matches player system)
                     import math as _emath
                     anim_timer = getattr(enemy, 'attack_anim_timer', 0.0)
                     if anim_timer > 0:
@@ -1376,32 +1376,37 @@ class Renderer:
                         anim_progress = 1.0 - (anim_timer / anim_dur)
                         anim_angle = getattr(enemy, 'attack_anim_angle', 0.0)
 
-                        # Lunge offset — enemy visually lunges toward target
-                        lunge_dist = int(size * 0.3 * (1.0 - abs(anim_progress * 2 - 1)))
-                        lunge_rad = _emath.radians(anim_angle)
-                        lunge_x = int(_emath.cos(lunge_rad) * lunge_dist)
-                        lunge_y = int(_emath.sin(lunge_rad) * lunge_dist)
+                        # Lunge offset — only for leap/charge abilities
+                        lunge_x, lunge_y = 0, 0
+                        if getattr(enemy, 'attack_anim_lunge', False):
+                            lunge_dist = int(size * 0.3 * (1.0 - abs(anim_progress * 2 - 1)))
+                            lunge_rad = _emath.radians(anim_angle)
+                            lunge_x = int(_emath.cos(lunge_rad) * lunge_dist)
+                            lunge_y = int(_emath.sin(lunge_rad) * lunge_dist)
 
-                        # Attack indicator arc (tag-colored)
-                        attack_color = enemy_color
-                        enemy_tags = getattr(enemy.definition, 'tags', [])
-                        for t in enemy_tags:
-                            _tag_colors = {
-                                'fire': (255, 120, 30), 'ice': (100, 200, 255),
-                                'lightning': (255, 255, 80), 'poison': (100, 255, 80),
-                                'arcane': (180, 80, 255), 'shadow': (130, 80, 180),
-                            }
-                            if t in _tag_colors:
-                                attack_color = _tag_colors[t]
+                        # Determine attack color from stored attack tags (damage type tags)
+                        _TAG_COLORS = {
+                            'fire': (255, 120, 30), 'ice': (100, 200, 255),
+                            'frost': (100, 200, 255),
+                            'lightning': (255, 255, 80), 'poison': (100, 255, 80),
+                            'arcane': (180, 80, 255), 'shadow': (130, 80, 180),
+                            'holy': (255, 255, 180), 'chaos': (200, 50, 50),
+                        }
+                        attack_color = (220, 220, 240)  # Default physical
+                        anim_tags = getattr(enemy, 'attack_anim_tags', [])
+                        for t in anim_tags:
+                            if t in _TAG_COLORS:
+                                attack_color = _TAG_COLORS[t]
                                 break
 
-                        # Draw attack arc emanating from enemy
+                        # Draw attack arc emanating from enemy (same style as player hitboxes)
                         arc_radius = int(size * 1.8 * (0.5 + anim_progress * 0.5))
                         arc_alpha = int(180 * (1.0 - anim_progress))
                         if arc_radius > 2 and arc_alpha > 10:
                             arc_surf_size = arc_radius * 2 + 4
                             arc_surf = pygame.Surface((arc_surf_size, arc_surf_size), pygame.SRCALPHA)
                             ac = arc_surf_size // 2
+                            lunge_rad = _emath.radians(anim_angle)
                             half_arc = _emath.radians(40)
                             num_seg = 10
                             arc_points = [(ac, ac)]

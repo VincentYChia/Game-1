@@ -1564,6 +1564,8 @@ class CombatManager:
         # Trigger enemy attack animation
         enemy.attack_anim_timer = enemy.attack_anim_duration
         enemy.attack_anim_angle = facing
+        enemy.attack_anim_tags = list(enemy_tags)
+        enemy.attack_anim_lunge = False  # Basic attacks don't lunge
 
         print(f"\n👹 ENEMY ATTACK: {enemy.definition.name}")
 

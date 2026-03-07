@@ -499,6 +499,8 @@ class Enemy:
         self.attack_anim_timer: float = 0.0     # Counts down during attack animation
         self.attack_anim_duration: float = 0.4  # Total animation time (seconds)
         self.attack_anim_angle: float = 0.0     # Direction of attack
+        self.attack_anim_tags: List[str] = []   # Damage type tags for color (e.g. ['fire','circle'])
+        self.attack_anim_lunge: bool = False    # True only for leap/charge abilities
 
     def _get_initial_state(self) -> AIState:
         """Map behavior string to initial AI state"""
@@ -1032,6 +1034,21 @@ class Enemy:
 
             # Track usage (for once-per-fight and max-uses-per-fight limitations)
             self.ability_uses_this_fight[ability.ability_id] = self.ability_uses_this_fight.get(ability.ability_id, 0) + 1
+
+            # Trigger attack animation with ability tags
+            import math as _math
+            target_pos = getattr(target, 'position', None)
+            if target_pos:
+                tx = target_pos.x if hasattr(target_pos, 'x') else target_pos[0]
+                ty = target_pos.y if hasattr(target_pos, 'y') else target_pos[1]
+                dx = tx - self.position[0]
+                dy = ty - self.position[1]
+                self.attack_anim_angle = _math.degrees(_math.atan2(dy, dx))
+            self.attack_anim_timer = self.attack_anim_duration
+            self.attack_anim_tags = list(ability.tags)
+            # Lunge only for leap/charge type abilities
+            _LUNGE_ABILITIES = {'leap_attack', 'charge_attack', 'pounce'}
+            self.attack_anim_lunge = ability.ability_id in _LUNGE_ABILITIES
 
             # VISIBLE FEEDBACK - Show enemy used ability!
             print(f"\n⚡💀 ENEMY ABILITY: {self.definition.name} used {ability.name}!")
