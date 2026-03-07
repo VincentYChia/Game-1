@@ -1,8 +1,8 @@
 """
 Screen-wide visual effects for combat feedback.
 
-Screen shake (restricted to boss/T4/big skill hits), hit pause (freeze frame),
-and entity flash tracking. Slow motion removed by design.
+Screen shake and entity flash tracking. Time is always constant —
+no freeze frames, no slow motion, no hit pause.
 """
 
 import random
@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple
 
 
 class ScreenEffects:
-    """Global visual effects manager."""
+    """Global visual effects manager. Time never stops or slows."""
 
     def __init__(self):
         # Screen shake
@@ -19,9 +19,6 @@ class ScreenEffects:
         self.shake_decay: float = 0.0
         self.shake_offset: Tuple[int, int] = (0, 0)
 
-        # Hit pause (freeze frame)
-        self.hit_pause_remaining: float = 0.0
-
         # Entity flash tracking: entity_id -> (color, remaining_ms)
         self.flash_entities: Dict[str, Tuple[Tuple[int, int, int], float]] = {}
 
@@ -29,18 +26,14 @@ class ScreenEffects:
         self.afterimages: List[dict] = []
 
     def screen_shake(self, intensity: float, duration_ms: float) -> None:
-        """Trigger screen shake. Stacks with existing (takes max).
-
-        Should only be called for boss attacks, T4 enemy abilities,
-        and high-tier player skills. Not for regular melee hits.
-        """
+        """Trigger screen shake. Stacks with existing (takes max)."""
         self.shake_intensity = max(self.shake_intensity, intensity)
         self.shake_duration = max(self.shake_duration, duration_ms)
         self.shake_decay = self.shake_intensity / max(self.shake_duration, 1.0)
 
     def hit_pause(self, duration_ms: float) -> None:
-        """Freeze game world for duration. UI still updates."""
-        self.hit_pause_remaining = max(self.hit_pause_remaining, duration_ms)
+        """No-op. Time is always constant — freeze frames removed by design."""
+        pass
 
     def flash_entity(self, entity_id: str,
                      color: Tuple[int, int, int] = (255, 255, 255),
@@ -62,14 +55,7 @@ class ScreenEffects:
         })
 
     def update(self, dt_ms: float) -> None:
-        """Advance all effect timers."""
-        # Hit pause — if active, only decay pause timer
-        if self.hit_pause_remaining > 0:
-            self.hit_pause_remaining -= dt_ms
-            if self.hit_pause_remaining < 0:
-                self.hit_pause_remaining = 0
-            return  # Don't decay other effects during pause
-
+        """Advance all effect timers. dt_ms is always the real delta time."""
         # Screen shake
         if self.shake_duration > 0:
             self.shake_duration -= dt_ms
@@ -112,12 +98,11 @@ class ScreenEffects:
 
     @property
     def is_paused(self) -> bool:
-        return self.hit_pause_remaining > 0
+        """Always False — time never stops."""
+        return False
 
     def get_effective_dt(self, raw_dt_ms: float) -> float:
-        """Return effective delta time (0 during hit pause)."""
-        if self.is_paused:
-            return 0.0
+        """Always returns the real delta time — no time manipulation."""
         return raw_dt_ms
 
     def is_entity_flashing(self, entity_id: str) -> bool:
@@ -133,6 +118,5 @@ class ScreenEffects:
         self.shake_intensity = 0
         self.shake_duration = 0
         self.shake_offset = (0, 0)
-        self.hit_pause_remaining = 0
         self.flash_entities.clear()
         self.afterimages.clear()

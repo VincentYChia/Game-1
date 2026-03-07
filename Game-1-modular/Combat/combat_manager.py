@@ -1261,11 +1261,12 @@ class CombatManager:
                 # Return 0 damage - cooldown is handled by caller
                 return (0.0, False, [])
 
-        # Add attack line visual effect (will be drawn by renderer)
+        # Add tag-driven attack visual effect
         attack_effects.add_attack_line(
             player_pos, enemy_pos,
             AttackSourceType.PLAYER,
-            damage=params.get('baseDamage', 0) if params else 0
+            damage=params.get('baseDamage', 0) if params else 0,
+            tags=tags or ['physical'],
         )
 
         # Check for active devastate buffs (AoE attacks like Whirlwind Strike)
@@ -1544,12 +1545,25 @@ class CombatManager:
             enemy.attack_cooldown = 1.0 / enemy.definition.attack_speed
             return
 
-        # Add attack line visual
-        attack_effects.add_attack_line(
+        # Add tag-driven attack visual (slash arc toward player)
+        import math as _math
+        dx = player_pos[0] - enemy_pos[0]
+        dy = player_pos[1] - enemy_pos[1]
+        facing = _math.degrees(_math.atan2(dy, dx))
+        enemy_tags = getattr(enemy.definition, 'tags', []) or ['physical']
+        attack_effects.add_attack_effect(
             enemy_pos, player_pos,
             AttackSourceType.ENEMY,
-            damage=enemy.definition.damage_max
+            damage=enemy.definition.damage_max,
+            tags=enemy_tags,
+            facing_angle=facing,
+            arc_degrees=80.0,
+            radius=max(1.0, enemy.definition.visual_size * 0.8),
         )
+
+        # Trigger enemy attack animation
+        enemy.attack_anim_timer = enemy.attack_anim_duration
+        enemy.attack_anim_angle = facing
 
         print(f"\n👹 ENEMY ATTACK: {enemy.definition.name}")
 

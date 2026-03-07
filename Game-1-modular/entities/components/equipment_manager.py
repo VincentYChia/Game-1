@@ -138,10 +138,14 @@ class EquipmentManager:
         return (0, 0)  # No offhand
 
     def get_weapon_range(self, hand: str = 'mainHand') -> float:
-        """Get range of equipped weapon in specified hand, default to 1.0 for unarmed"""
+        """Get range of equipped weapon or tool.
+
+        Any weapon or tool gets +1 range over bare fists (1.0).
+        Narratively, swinging any object extends your reach beyond a punch.
+        """
         weapon = self.slots.get(hand)
         if weapon:
-            base_range = weapon.range
+            base_range = weapon.range + 1.0  # +1 range for any held item
 
             # Add tag-based range bonus (reach)
             weapon_tags = weapon.get_metadata_tags()
@@ -152,7 +156,7 @@ class EquipmentManager:
 
             return base_range
         if hand == 'mainHand':
-            return 1.0  # Unarmed/default range
+            return 1.0  # Unarmed/default range (bare fists)
         return 0.0  # No offhand range
 
     def get_weapon_attack_speed(self, hand: str = 'mainHand') -> float:

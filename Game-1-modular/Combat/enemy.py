@@ -93,14 +93,50 @@ class EnemyDefinition:
     # Special abilities (tag-based attacks)
     special_abilities: List[SpecialAbility] = field(default_factory=list)
 
-    # Visual / collision
-    visual_size: float = 1.0        # Render scale multiplier (0.6 = small, 3.0 = huge)
-    hurtbox_radius: float = 0.5     # Collision radius in tiles
-
     # Metadata
     narrative: str = ""
     tags: List[str] = field(default_factory=list)
     icon_path: Optional[str] = None  # Optional path to enemy icon image (PNG/JPG)
+
+    # --- Computed visual size system ---
+    # Category defines a base size, tier multiplies it. Always >= 1.0, max 8.0.
+    # This replaces the old JSON-driven visual_size field.
+
+    # Category base sizes (minimum 1.0 for all)
+    _CATEGORY_BASE_SIZE = {
+        'beast': 1.0,
+        'ooze': 1.0,
+        'insect': 1.0,
+        'construct': 1.2,
+        'undead': 1.0,
+        'elemental': 1.1,
+        'aberration': 1.3,
+        'dragon': 1.5,
+        'humanoid': 1.0,
+    }
+
+    # Tier multipliers (only scale UP)
+    _TIER_SIZE_MULTIPLIER = {
+        1: 1.0,
+        2: 1.4,
+        3: 2.0,
+        4: 3.0,
+    }
+
+    @property
+    def visual_size(self) -> float:
+        """Compute visual size from category base × tier multiplier.
+
+        Always >= 1.0, max 8.0. Sizes only go UP with tier, never down.
+        """
+        base = self._CATEGORY_BASE_SIZE.get(self.category, 1.0)
+        multiplier = self._TIER_SIZE_MULTIPLIER.get(self.tier, 1.0)
+        return min(8.0, max(1.0, base * multiplier))
+
+    @property
+    def hurtbox_radius(self) -> float:
+        """Hurtbox radius scales with visual size. Proportional to visual_size."""
+        return max(0.4, self.visual_size * 0.4)
 
 
 # ============================================================================
@@ -200,16 +236,14 @@ class EnemyDatabase:
                 # Parse metadata
                 metadata = enemy_data.get('metadata', {})
 
-                # Parse visual data
-                visual_data = enemy_data.get('visual', {})
-
                 # Auto-generate icon path if not provided
                 enemy_id = enemy_data.get('enemyId', '')
                 icon_path = enemy_data.get('iconPath')
                 if not icon_path and enemy_id:
                     icon_path = f"enemies/{enemy_id}.png"
 
-                # Create definition
+                # Create definition (visual_size and hurtbox_radius are computed
+                # from category + tier, not loaded from JSON)
                 enemy_def = EnemyDefinition(
                     enemy_id=enemy_id,
                     name=enemy_data.get('name', 'Unknown Enemy'),
@@ -226,8 +260,6 @@ class EnemyDatabase:
                     drops=drops,
                     ai_pattern=ai_pattern,
                     special_abilities=special_abilities,
-                    visual_size=visual_data.get('size', 1.0),
-                    hurtbox_radius=visual_data.get('hurtboxRadius', 0.5),
                     narrative=metadata.get('narrative', ''),
                     tags=metadata.get('tags', []),
                     icon_path=icon_path
@@ -318,15 +350,12 @@ class EnemyDatabase:
                 metadata = enemy_data.get('metadata', {})
                 enemy_id = enemy_data.get('enemyId', '')
 
-                # Parse visual data
-                visual_data = enemy_data.get('visual', {})
-
                 # Icon path
                 icon_path = enemy_data.get('iconPath')
                 if not icon_path and enemy_id:
                     icon_path = f"enemies/{enemy_id}.png"
 
-                # Create definition
+                # Create definition (visual_size/hurtbox_radius computed from category+tier)
                 enemy_def = EnemyDefinition(
                     enemy_id=enemy_id,
                     name=enemy_data.get('name', 'Unknown Enemy'),
@@ -343,8 +372,6 @@ class EnemyDatabase:
                     drops=drops,
                     ai_pattern=ai_pattern,
                     special_abilities=special_abilities,
-                    visual_size=visual_data.get('size', 1.0),
-                    hurtbox_radius=visual_data.get('hurtboxRadius', 0.5),
                     narrative=metadata.get('narrative', ''),
                     tags=metadata.get('tags', []),
                     icon_path=icon_path
@@ -467,6 +494,11 @@ class Enemy:
         self.facing_angle: float = 0.0          # Degrees, 0=right, 90=down
         self.attack_state_machine = None         # Set by game engine when action combat is active
         self.hurtbox_radius: float = self.definition.hurtbox_radius  # From definition
+
+        # Attack animation state (for visual feedback in renderer)
+        self.attack_anim_timer: float = 0.0     # Counts down during attack animation
+        self.attack_anim_duration: float = 0.4  # Total animation time (seconds)
+        self.attack_anim_angle: float = 0.0     # Direction of attack
 
     def _get_initial_state(self) -> AIState:
         """Map behavior string to initial AI state"""
@@ -600,6 +632,10 @@ class Enemy:
         # Update attack cooldown
         if self.attack_cooldown > 0:
             self.attack_cooldown -= dt
+
+        # Update attack animation timer
+        if self.attack_anim_timer > 0:
+            self.attack_anim_timer -= dt
 
         # Update ability cooldowns
         for ability_id in self.ability_cooldowns:

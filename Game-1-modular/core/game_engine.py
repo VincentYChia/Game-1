@@ -2844,12 +2844,8 @@ class GameEngine:
 
         raw_dt_ms = dt * 1000.0
         se = self._ac['screen_effects']
-        effective_dt_ms = se.get_effective_dt(raw_dt_ms)
-
-        # Skip game updates during hit pause
-        if se.is_paused:
-            se.update(raw_dt_ms)
-            return
+        # Time is always constant — no freeze frames, no slow motion
+        effective_dt_ms = raw_dt_ms
 
         pa = self._ac['player_actions']
         player_sm = self._ac['player_sm']
@@ -2922,8 +2918,8 @@ class GameEngine:
         # Always update screen effects and particles
         se.update(raw_dt_ms)
         self._ac['animation'].update_all(
-            effective_dt_ms if not se.is_paused else 0)
-        particles.update(effective_dt_ms if not se.is_paused else 0)
+            effective_dt_ms)
+        particles.update(effective_dt_ms)
 
     def _ac_spawn_player_attack(self):
         """Spawn hitbox or projectile when player enters ACTIVE phase."""
@@ -2937,7 +2933,10 @@ class GameEngine:
         facing = getattr(self, '_ac_attack_angle', getattr(self.character, 'facing_angle', 0.0))
 
         if attack_def.projectile_id:
-            proj_def = data.get_projectile(attack_def.projectile_id)
+            # Generate projectile definition dynamically from attack tags
+            weapon_type = self._get_weapon_type('mainHand')
+            proj_def = data.get_projectile(
+                attack_def.projectile_id, weapon_type, attack_def.tags)
             if proj_def:
                 self._ac['projectile'].spawn(
                     proj_def, pos, facing, 'player',
@@ -2965,8 +2964,12 @@ class GameEngine:
         buffered = pa.input_buffer.consume()
         if buffered and buffered[0] == "attack":
             weapon_type = self._get_weapon_type('mainHand')
+            weapon_range = self.character.equipment.get_weapon_range('mainHand')
+            weapon_speed = self.character.equipment.get_weapon_attack_speed('mainHand')
+            weapon = self.character.equipment.slots.get('mainHand')
+            weapon_tags = weapon.get_metadata_tags() if weapon and hasattr(weapon, 'get_metadata_tags') else []
             next_def = data.get_weapon_attack(
-                weapon_type, player_sm.combo_count)
+                weapon_type, 0, weapon_range, weapon_speed, weapon_tags)
             if next_def and player_sm.damage_context:
                 # Recompute attack direction toward mouse cursor for combo
                 mouse_pos = pygame.mouse.get_pos()
@@ -7161,9 +7164,14 @@ class GameEngine:
                         data = self._ac['data']
 
                         if not player_sm.is_attacking and not pa.is_dodging:
-                            # Start first attack in combo chain
+                            # Generate attack from weapon properties
                             weapon_type = self._get_weapon_type('mainHand')
-                            attack_def = data.get_weapon_attack(weapon_type, 0)
+                            weapon_range = self.character.equipment.get_weapon_range('mainHand')
+                            weapon_speed = self.character.equipment.get_weapon_attack_speed('mainHand')
+                            weapon = self.character.equipment.slots.get('mainHand')
+                            weapon_tags = weapon.get_metadata_tags() if weapon and hasattr(weapon, 'get_metadata_tags') else []
+                            attack_def = data.get_weapon_attack(
+                                weapon_type, 0, weapon_range, weapon_speed, weapon_tags)
                             if attack_def:
                                 effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
                                 damage_context = {
@@ -7276,6 +7284,12 @@ class GameEngine:
             pygame.display.flip()
             return
 
+        # Apply screen shake offset to camera for this frame
+        if self._action_combat and 'screen_effects' in self._ac:
+            self.camera.shake_offset = self._ac['screen_effects'].shake_offset
+        else:
+            self.camera.shake_offset = (0, 0)
+
         # Render world or dungeon depending on state
         if self.dungeon_manager.in_dungeon:
             # Pass action combat systems for dungeon rendering too
@@ -7304,6 +7318,9 @@ class GameEngine:
                 self.renderer._temp_ac_systems = None
                 self.renderer._temp_combat_manager = None
             self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers, self.combat_manager)
+
+        # Reset shake offset so UI elements are not affected
+        self.camera.shake_offset = (0, 0)
 
         # Render day/night cycle overlay
         time_phase, phase_progress = self.get_time_of_day()

@@ -1368,6 +1368,55 @@ class Renderer:
                                              (ex + size // 2, ey + size // 3),
                                              (ex + size, ey + size // 2), 2)
 
+                    # Enemy attack animation overlay
+                    import math as _emath
+                    anim_timer = getattr(enemy, 'attack_anim_timer', 0.0)
+                    if anim_timer > 0:
+                        anim_dur = getattr(enemy, 'attack_anim_duration', 0.4)
+                        anim_progress = 1.0 - (anim_timer / anim_dur)
+                        anim_angle = getattr(enemy, 'attack_anim_angle', 0.0)
+
+                        # Lunge offset — enemy visually lunges toward target
+                        lunge_dist = int(size * 0.3 * (1.0 - abs(anim_progress * 2 - 1)))
+                        lunge_rad = _emath.radians(anim_angle)
+                        lunge_x = int(_emath.cos(lunge_rad) * lunge_dist)
+                        lunge_y = int(_emath.sin(lunge_rad) * lunge_dist)
+
+                        # Attack indicator arc (tag-colored)
+                        attack_color = enemy_color
+                        enemy_tags = getattr(enemy.definition, 'tags', [])
+                        for t in enemy_tags:
+                            _tag_colors = {
+                                'fire': (255, 120, 30), 'ice': (100, 200, 255),
+                                'lightning': (255, 255, 80), 'poison': (100, 255, 80),
+                                'arcane': (180, 80, 255), 'shadow': (130, 80, 180),
+                            }
+                            if t in _tag_colors:
+                                attack_color = _tag_colors[t]
+                                break
+
+                        # Draw attack arc emanating from enemy
+                        arc_radius = int(size * 1.8 * (0.5 + anim_progress * 0.5))
+                        arc_alpha = int(180 * (1.0 - anim_progress))
+                        if arc_radius > 2 and arc_alpha > 10:
+                            arc_surf_size = arc_radius * 2 + 4
+                            arc_surf = pygame.Surface((arc_surf_size, arc_surf_size), pygame.SRCALPHA)
+                            ac = arc_surf_size // 2
+                            half_arc = _emath.radians(40)
+                            num_seg = 10
+                            arc_points = [(ac, ac)]
+                            for i in range(num_seg + 1):
+                                a = lunge_rad - half_arc + _emath.radians(80) * i / num_seg
+                                px = ac + _emath.cos(a) * arc_radius
+                                py = ac + _emath.sin(a) * arc_radius
+                                arc_points.append((int(px), int(py)))
+                            if len(arc_points) >= 3:
+                                pygame.draw.polygon(arc_surf, (*attack_color, arc_alpha), arc_points)
+                                pygame.draw.lines(arc_surf, (*attack_color, min(255, arc_alpha + 60)),
+                                                  False, arc_points[1:], 2)
+                            self.screen.blit(arc_surf,
+                                             (ex + lunge_x - ac, ey + lunge_y - ac))
+
                     # Health bar (scaled width)
                     health_percent = enemy.current_health / enemy.max_health
                     bar_w = max(Config.TILE_SIZE, int(Config.TILE_SIZE * vis_size))
@@ -1459,11 +1508,9 @@ class Renderer:
             effect_tags = ctx.get('effect_tags', []) if ctx else []
             return _color_from_tags(effect_tags, fallback)
 
-        # --- Screen shake offset ---
+        # Screen shake is now applied via camera.shake_offset in world_to_screen,
+        # so no manual offset needed here.
         shake_ox, shake_oy = 0, 0
-        if screen_effects:
-            shake_ox = int(screen_effects.shake_offset[0])
-            shake_oy = int(screen_effects.shake_offset[1])
 
         # --- Dodge afterimage trail (rendered BEHIND player) ---
         if screen_effects and screen_effects.afterimages:
@@ -6932,73 +6979,140 @@ class Renderer:
             font.set_bold(False)
 
     def _render_attack_effects(self, camera: 'Camera'):
-        """Render attack effect visuals (lines, blocked indicators).
+        """Render tag-driven attack visual effects.
 
-        Args:
-            camera: Camera for world-to-screen coordinate conversion
+        Effects include slash arcs, impact bursts, thrust lines, blocked
+        indicators, and AoE rings. Colors are driven by damage type tags.
         """
+        import math as _math
         try:
             from systems.attack_effects import get_attack_effects_manager, AttackEffectType
             from data.models.world import Position
 
             manager = get_attack_effects_manager()
-            manager.update()  # Remove expired effects
+            manager.update()
 
             for effect in manager.get_active_effects():
                 color = effect.get_color()
+                if color[3] <= 0:
+                    continue
 
-                # Convert positions to screen coordinates
+                rgb = color[:3]
+                alpha = color[3]
+
                 start_sx, start_sy = camera.world_to_screen(
-                    Position(effect.start_pos[0], effect.start_pos[1], 0)
-                )
+                    Position(effect.start_pos[0], effect.start_pos[1], 0))
                 end_sx, end_sy = camera.world_to_screen(
-                    Position(effect.end_pos[0], effect.end_pos[1], 0)
-                )
+                    Position(effect.end_pos[0], effect.end_pos[1], 0))
 
-                if effect.effect_type == AttackEffectType.LINE:
-                    # Draw attack line
-                    line_width = effect.get_line_width()
+                if effect.effect_type == AttackEffectType.SLASH_ARC:
+                    # Prominent sweeping arc — visible, colored by tags
+                    radius_px = int(effect.radius * Config.TILE_SIZE)
+                    if radius_px < 4:
+                        continue
+                    surf_size = radius_px * 2 + 8
+                    arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                    center = surf_size // 2
 
-                    # Create a surface for alpha support
-                    if color[3] > 0:  # Only draw if visible
-                        pygame.draw.line(self.screen, color[:3], (start_sx, start_sy),
-                                        (end_sx, end_sy), line_width)
+                    facing_rad = _math.radians(effect.facing_angle)
+                    half_arc = _math.radians(effect.arc_degrees / 2.0)
+                    num_seg = max(8, int(effect.arc_degrees / 5))
 
-                        # Draw small circle at impact point
-                        impact_radius = max(2, line_width)
-                        pygame.draw.circle(self.screen, color[:3], (end_sx, end_sy), impact_radius)
+                    # Filled arc wedge
+                    points = [(center, center)]
+                    for i in range(num_seg + 1):
+                        a = facing_rad - half_arc + _math.radians(effect.arc_degrees) * i / num_seg
+                        px = center + _math.cos(a) * radius_px
+                        py = center + _math.sin(a) * radius_px
+                        points.append((int(px), int(py)))
+
+                    if len(points) >= 3:
+                        # Semi-transparent fill
+                        fill_alpha = min(255, int(alpha * 0.5))
+                        pygame.draw.polygon(arc_surf, (*rgb, fill_alpha), points)
+                        # Bright edge
+                        edge_alpha = min(255, int(alpha * 0.9))
+                        pygame.draw.lines(arc_surf, (*rgb, edge_alpha), False, points[1:], 3)
+                        # Brighter leading edge
+                        if len(points) > 2:
+                            pygame.draw.line(arc_surf, (*rgb, min(255, alpha)),
+                                             points[0], points[-1], 2)
+
+                    self.screen.blit(arc_surf, (start_sx - center, start_sy - center))
+
+                elif effect.effect_type == AttackEffectType.THRUST:
+                    # Forward thrust — bright glowing line
+                    length_px = int(effect.radius * Config.TILE_SIZE)
+                    facing_rad = _math.radians(effect.facing_angle)
+                    ex = start_sx + int(_math.cos(facing_rad) * length_px)
+                    ey = start_sy + int(_math.sin(facing_rad) * length_px)
+
+                    # Outer glow
+                    glow_alpha = min(255, int(alpha * 0.4))
+                    glow_surf = pygame.Surface(
+                        (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+                    pygame.draw.line(glow_surf, (*rgb, glow_alpha),
+                                    (start_sx, start_sy), (ex, ey), 6)
+                    # Core line
+                    core_alpha = min(255, int(alpha * 0.8))
+                    pygame.draw.line(glow_surf, (*rgb, core_alpha),
+                                    (start_sx, start_sy), (ex, ey), 3)
+                    # Bright tip
+                    pygame.draw.circle(glow_surf, (*rgb, min(255, alpha)), (ex, ey), 4)
+                    self.screen.blit(glow_surf, (0, 0))
+
+                elif effect.effect_type == AttackEffectType.IMPACT_BURST:
+                    # Radial burst at hit point — bright expanding ring
+                    burst_radius = max(4, int(effect.radius * Config.TILE_SIZE * (1.0 + (1.0 - effect.alpha) * 0.5)))
+                    surf_size = burst_radius * 2 + 8
+                    burst_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                    c = surf_size // 2
+
+                    # Inner glow
+                    inner_alpha = min(255, int(alpha * 0.6))
+                    pygame.draw.circle(burst_surf, (*rgb, inner_alpha), (c, c), burst_radius)
+                    # Bright ring
+                    ring_alpha = min(255, int(alpha * 0.9))
+                    pygame.draw.circle(burst_surf, (*rgb, ring_alpha), (c, c), burst_radius, 3)
+                    # Cross-hair lines for extra punch
+                    line_len = burst_radius // 2
+                    for angle_offset in (0, 45, 90, 135):
+                        rad = _math.radians(angle_offset)
+                        lx = int(_math.cos(rad) * line_len)
+                        ly = int(_math.sin(rad) * line_len)
+                        pygame.draw.line(burst_surf, (*rgb, ring_alpha),
+                                         (c - lx, c - ly), (c + lx, c + ly), 2)
+
+                    self.screen.blit(burst_surf, (start_sx - c, start_sy - c))
 
                 elif effect.effect_type == AttackEffectType.BLOCKED:
-                    # Draw blocked indicator (X mark)
                     size = int(Config.TILE_SIZE * 0.4 * effect.alpha)
                     if size > 2:
-                        # Draw X
-                        pygame.draw.line(self.screen, color[:3],
+                        pygame.draw.line(self.screen, rgb,
                                         (start_sx - size, start_sy - size),
                                         (start_sx + size, start_sy + size), 3)
-                        pygame.draw.line(self.screen, color[:3],
+                        pygame.draw.line(self.screen, rgb,
                                         (start_sx + size, start_sy - size),
                                         (start_sx - size, start_sy + size), 3)
-
-                        # Draw "BLOCKED" text if effect is fresh
                         if effect.alpha > 0.7:
-                            blocked_surf = self.tiny_font.render("BLOCKED", True, color[:3])
+                            blocked_surf = self.tiny_font.render("BLOCKED", True, rgb)
                             self.screen.blit(blocked_surf,
                                            (start_sx - blocked_surf.get_width() // 2,
                                             start_sy - size - 15))
 
                 elif effect.effect_type == AttackEffectType.AREA:
-                    # Draw area effect circle
-                    radius_world = effect.end_pos[0] - effect.start_pos[0]  # Stored in end_pos
-                    radius_screen = int(radius_world * Config.TILE_SIZE)
-
-                    if color[3] > 0 and radius_screen > 0:
-                        # Draw expanding circle with fading alpha
-                        pygame.draw.circle(self.screen, color[:3], (start_sx, start_sy),
-                                         radius_screen, max(1, int(3 * effect.alpha)))
+                    radius_px = int(effect.radius * Config.TILE_SIZE)
+                    if radius_px > 0:
+                        surf_size = radius_px * 2 + 8
+                        area_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                        c = surf_size // 2
+                        fill_alpha = min(255, int(alpha * 0.3))
+                        pygame.draw.circle(area_surf, (*rgb, fill_alpha), (c, c), radius_px)
+                        ring_alpha = min(255, int(alpha * 0.8))
+                        pygame.draw.circle(area_surf, (*rgb, ring_alpha), (c, c), radius_px, 3)
+                        self.screen.blit(area_surf, (start_sx - c, start_sy - c))
 
         except ImportError:
-            # Attack effects module not available
             pass
 
     def render_loading_indicator(self):
