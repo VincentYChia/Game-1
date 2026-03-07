@@ -1272,10 +1272,8 @@ class GameEngine:
         wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
         wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
 
-        # Check for enemy at position — route through attack system
-        enemy = self.combat_manager.get_enemy_at_position((wx, wy))
-        if enemy and enemy.is_alive:
-            self._initiate_attack_toward(wx, wy, 'offHand')
+        # Attack toward click position with offhand — hitbox system determines hits
+        self._initiate_attack_toward(wx, wy, 'offHand')
 
     def handle_npc_dialogue_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks on NPC dialogue buttons (accept/turn in quests)"""
@@ -2124,15 +2122,17 @@ class GameEngine:
                     self._exit_dungeon_via_portal()
                     return
 
-            # Check for dungeon enemy click — initiate attack toward enemy
-            enemy = self.combat_manager.get_dungeon_enemy_at_position((wx, wy))
-            if enemy and enemy.is_alive:
-                self._initiate_attack_toward(wx, wy, 'mainHand')
-                return  # Don't process world clicks when in dungeon
+            # In dungeon: always attack toward click position
+            # The hitbox/sweep system determines if any enemy gets hit
+            self._initiate_attack_toward(wx, wy, 'mainHand')
+            return  # Don't process world clicks when in dungeon
 
-        # Check for enemy click (living enemies) — initiate attack toward click
+        # Attack toward click position — the hitbox/sweep system determines hits
+        # Only attack if not clicking on interactive objects (checked below)
+        # We check for interactive objects first, then fall through to attack
         enemy = self.combat_manager.get_enemy_at_position((wx, wy))
         if enemy and enemy.is_alive:
+            # Clicked directly on enemy — attack toward them
             self._initiate_attack_toward(wx, wy, 'mainHand')
             return
 
@@ -2342,6 +2342,11 @@ class GameEngine:
                 # Show remaining health percentage
                 health_pct = (placed_entity.health / placed_entity.max_health) * 100
                 print(f"   Block health: {placed_entity.health:.0f}/{placed_entity.max_health:.0f} ({health_pct:.0f}%)")
+            return
+
+        # No interactive object was clicked — attack toward cursor position
+        # The hitbox/sweep system will determine if anything gets hit
+        self._initiate_attack_toward(wx, wy, 'mainHand')
 
     def handle_enchantment_selection_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks on the enchantment selection UI"""
@@ -2820,6 +2825,7 @@ class GameEngine:
 
     def _ac_spawn_player_attack(self):
         """Spawn hitbox or projectile when player enters ACTIVE phase."""
+        import math as _math
         player_sm = self._ac['player_sm']
         data = self._ac['data']
         attack_def = player_sm.current_attack
@@ -2835,9 +2841,15 @@ class GameEngine:
             proj_def = data.get_projectile(
                 attack_def.projectile_id, weapon_type, attack_def.tags)
             if proj_def:
+                # Compute target position from facing angle at max range
+                facing_rad = _math.radians(facing)
+                target_pos = (
+                    pos[0] + _math.cos(facing_rad) * proj_def.max_range,
+                    pos[1] + _math.sin(facing_rad) * proj_def.max_range,
+                )
                 self._ac['projectile'].spawn(
                     proj_def, pos, facing, 'player',
-                    player_sm.damage_context)
+                    player_sm.damage_context, target_pos)
         else:
             hitbox_def = data.hitbox_def_from_attack(attack_def)
             hitbox_pos = hitbox_def.compute_world_position(pos[0], pos[1], facing)

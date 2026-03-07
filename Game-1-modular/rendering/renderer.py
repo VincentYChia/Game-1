@@ -1626,7 +1626,7 @@ class Renderer:
                         self.screen.blit(flash_surf,
                                          (ex - radius - 2 + shake_ox, ey - radius - 2 + shake_oy))
 
-        # --- Enemy windup telegraphs (tag-driven colors) ---
+        # --- Enemy windup telegraphs (show sweep area with intensifying hue) ---
         if combat_manager:
             for enemy in combat_manager.get_all_active_enemies():
                 if not enemy.is_alive:
@@ -1636,13 +1636,16 @@ class Renderer:
                 is_winding_up = False
                 progress = 0.0
                 color = [255, 100, 100]
-                telegraph_tags = []
+                attack_arc = 80.0  # Default arc degrees
+                attack_radius = 1.0  # Default attack radius in tiles
 
                 asm = getattr(enemy, 'attack_state_machine', None)
-                if asm and asm.is_in_windup:
+                if asm and asm.is_in_windup and asm.current_attack:
                     is_winding_up = True
                     progress = asm.windup_progress
-                    color = asm.current_attack.telegraph_color if asm.current_attack else [255, 100, 100]
+                    color = list(asm.current_attack.telegraph_color)
+                    attack_arc = asm.current_attack.hitbox_arc_degrees
+                    attack_radius = asm.current_attack.hitbox_radius
                 elif getattr(enemy, 'attack_phase', 'idle') == 'windup':
                     is_winding_up = True
                     windup_total = getattr(enemy, '_attack_windup_ms', 600)
@@ -1650,53 +1653,173 @@ class Renderer:
                     progress = 1.0 - (timer / max(1, windup_total))
                     telegraph_tags = getattr(enemy, 'attack_anim_tags', [])
                     color = list(_color_from_tags(telegraph_tags, (255, 100, 100)))
+                    vis_size = getattr(enemy.definition, 'visual_size', 1.0)
+                    attack_radius = vis_size * 0.8
+                    category = getattr(enemy.definition, 'category', 'beast')
+                    _arc_map = {'beast': 80, 'ooze': 360, 'insect': 60, 'construct': 100,
+                                'undead': 90, 'elemental': 360, 'aberration': 120,
+                                'dragon': 140, 'humanoid': 80}
+                    attack_arc = _arc_map.get(category, 80)
 
                 if is_winding_up:
                     ex, ey = camera.world_to_screen(
                         Position(enemy.position[0], enemy.position[1], 0))
-                    vis_size = getattr(enemy.definition, 'visual_size', 1.0)
-                    telegraph_radius = int(Config.TILE_SIZE * 1.5 * progress * vis_size)
-                    telegraph_alpha = int(30 + progress * 90)
-                    if telegraph_radius > 2:
-                        surf_size = telegraph_radius * 2 + 4
+                    facing_angle = getattr(enemy, 'facing_angle', 0.0)
+                    facing_rad = math.radians(facing_angle)
+
+                    # Attack radius in pixels, scaled by progress for growing effect
+                    radius_px = int(attack_radius * Config.TILE_SIZE * (0.3 + 0.7 * progress))
+                    # Alpha intensifies as windup progresses
+                    base_alpha = int(20 + progress * 140)
+
+                    if radius_px > 2:
+                        surf_size = radius_px * 2 + 8
                         tele_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
                         center = surf_size // 2
-                        # Filled telegraph with gradient feel
-                        pygame.draw.circle(tele_surf,
-                                           (*color[:3], telegraph_alpha // 2),
-                                           (center, center), telegraph_radius)
-                        # Brighter ring at edge
-                        pygame.draw.circle(tele_surf,
-                                           (*color[:3], min(255, telegraph_alpha + 80)),
-                                           (center, center), telegraph_radius, 2)
-                        # Pulsing inner ring
-                        inner_r = int(telegraph_radius * 0.6 * progress)
-                        if inner_r > 2:
-                            pygame.draw.circle(tele_surf,
-                                               (*color[:3], min(255, telegraph_alpha + 40)),
-                                               (center, center), inner_r, 1)
 
-                        # Direction indicator — line toward attack target
-                        target_pos = getattr(enemy, 'attack_target_pos', None)
-                        if target_pos and progress > 0.3:
-                            tx, ty = camera.world_to_screen(
-                                Position(target_pos[0], target_pos[1], 0))
-                            dir_dx = tx - ex
-                            dir_dy = ty - ey
-                            dir_len = max(1, (dir_dx ** 2 + dir_dy ** 2) ** 0.5)
-                            nx, ny = dir_dx / dir_len, dir_dy / dir_len
-                            line_len = telegraph_radius * 1.3
-                            end_x = center + int(nx * line_len)
-                            end_y = center + int(ny * line_len)
-                            line_alpha = min(255, int(telegraph_alpha * 1.5))
-                            pygame.draw.line(tele_surf, (*color[:3], line_alpha),
-                                             (center, center), (end_x, end_y), 3)
-                            # Arrow tip
-                            pygame.draw.circle(tele_surf, (*color[:3], line_alpha),
-                                               (end_x, end_y), 4)
+                        is_circle = attack_arc >= 360
+                        if is_circle:
+                            # AoE circle telegraph
+                            pygame.draw.circle(tele_surf,
+                                               (*color[:3], base_alpha // 3),
+                                               (center, center), radius_px)
+                            pygame.draw.circle(tele_surf,
+                                               (*color[:3], min(255, base_alpha)),
+                                               (center, center), radius_px, 2)
+                        else:
+                            # Arc/sweep telegraph — shows WHERE the attack will land
+                            half_arc = math.radians(attack_arc / 2.0)
+                            num_seg = max(8, int(attack_arc / 5))
+
+                            # Filled sweep area with intensifying alpha
+                            points = [(center, center)]
+                            for i in range(num_seg + 1):
+                                a = facing_rad - half_arc + math.radians(attack_arc) * i / num_seg
+                                px_pt = center + math.cos(a) * radius_px
+                                py_pt = center + math.sin(a) * radius_px
+                                points.append((int(px_pt), int(py_pt)))
+
+                            if len(points) >= 3:
+                                # Fill: faint at start, stronger as windup completes
+                                fill_alpha = min(255, int(base_alpha * 0.4))
+                                pygame.draw.polygon(tele_surf, (*color[:3], fill_alpha), points)
+                                # Bright edge outline
+                                edge_alpha = min(255, int(base_alpha * 0.9))
+                                pygame.draw.lines(tele_surf, (*color[:3], edge_alpha),
+                                                  False, points[1:], 2)
+                                # Bright leading edges from center
+                                for sign in (1, -1):
+                                    edge_a = facing_rad + sign * half_arc
+                                    lx = center + int(math.cos(edge_a) * radius_px)
+                                    ly = center + int(math.sin(edge_a) * radius_px)
+                                    pygame.draw.line(tele_surf, (*color[:3], edge_alpha),
+                                                     (center, center), (lx, ly), 2)
+
+                            # Pulsing center indicator (subtle danger pulse)
+                            pulse = 0.5 + 0.5 * abs((_time.time() * 6) % 2 - 1)
+                            pulse_alpha = min(255, int(base_alpha * pulse))
+                            pulse_r = int(6 * progress)
+                            if pulse_r > 1:
+                                pygame.draw.circle(tele_surf,
+                                                   (*color[:3], pulse_alpha),
+                                                   (center, center), pulse_r)
 
                         self.screen.blit(tele_surf,
                                          (ex - center + shake_ox, ey - center + shake_oy))
+
+        # --- Player windup telegraph (attack arc preview, moves with player) ---
+        if player_sm and player_sm.is_in_windup and player_sm.current_attack:
+            attack_def = player_sm.current_attack
+            progress = player_sm.windup_progress
+            px, py = camera.world_to_screen(character.position)
+            facing_angle = getattr(character, 'facing_angle', 0.0)
+            facing_rad = math.radians(facing_angle)
+
+            # Get element color from attack context
+            ctx = player_sm.damage_context
+            effect_tags = ctx.get('effect_tags', []) if ctx else []
+            color = _color_from_tags(effect_tags, (100, 180, 255))
+
+            is_projectile = attack_def.projectile_id is not None
+            is_line = attack_def.hitbox_shape == 'line'
+
+            if is_projectile:
+                # Bow/ranged: show aiming line extending outward
+                aim_len_px = int(3.0 * Config.TILE_SIZE * (0.3 + 0.7 * progress))
+                aim_alpha = min(255, int(40 + 160 * progress))
+                aim_surf = pygame.Surface(
+                    (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+                aim_ex = px + int(math.cos(facing_rad) * aim_len_px)
+                aim_ey = py + int(math.sin(facing_rad) * aim_len_px)
+                # Dashed aim line with intensifying alpha
+                pygame.draw.line(aim_surf, (*color, aim_alpha),
+                                 (px, py), (aim_ex, aim_ey), 2)
+                # Bright crosshair at end
+                ch_size = int(4 + 4 * progress)
+                pygame.draw.circle(aim_surf, (*color, min(255, aim_alpha + 40)),
+                                   (aim_ex, aim_ey), ch_size, 2)
+                self.screen.blit(aim_surf, (0, 0))
+
+            elif is_line:
+                # Spear/thrust: show extending line telegraph
+                line_length = attack_def.hitbox_params.get('length', 2.0)
+                length_px = int(line_length * Config.TILE_SIZE * (0.3 + 0.7 * progress))
+                line_alpha = min(255, int(30 + 140 * progress))
+                line_surf = pygame.Surface(
+                    (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+                line_ex = px + int(math.cos(facing_rad) * length_px)
+                line_ey = py + int(math.sin(facing_rad) * length_px)
+                # Outer glow
+                pygame.draw.line(line_surf, (*color, line_alpha // 2),
+                                 (px, py), (line_ex, line_ey), 6)
+                # Core line
+                pygame.draw.line(line_surf, (*color, line_alpha),
+                                 (px, py), (line_ex, line_ey), 3)
+                # Bright tip
+                pygame.draw.circle(line_surf, (*color, min(255, line_alpha + 40)),
+                                   (line_ex, line_ey), 5)
+                self.screen.blit(line_surf, (0, 0))
+
+            else:
+                # Arc/sweep: show attack arc growing with progress
+                arc_degrees = attack_def.hitbox_arc_degrees
+                arc_radius = attack_def.hitbox_radius
+                radius_px = int(arc_radius * Config.TILE_SIZE * (0.3 + 0.7 * progress))
+                arc_alpha = min(255, int(25 + 120 * progress))
+
+                if radius_px > 2:
+                    surf_size = radius_px * 2 + 8
+                    tele_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                    center = surf_size // 2
+                    half_arc = math.radians(arc_degrees / 2.0)
+                    num_seg = max(8, int(arc_degrees / 5))
+
+                    # Filled arc wedge
+                    points = [(center, center)]
+                    for i in range(num_seg + 1):
+                        a = facing_rad - half_arc + math.radians(arc_degrees) * i / num_seg
+                        pt_x = center + math.cos(a) * radius_px
+                        pt_y = center + math.sin(a) * radius_px
+                        points.append((int(pt_x), int(pt_y)))
+
+                    if len(points) >= 3:
+                        # Fill with player color (blue-ish tint)
+                        fill_alpha = min(255, int(arc_alpha * 0.35))
+                        pygame.draw.polygon(tele_surf, (*color, fill_alpha), points)
+                        # Edge outline
+                        edge_alpha = min(255, int(arc_alpha * 0.8))
+                        pygame.draw.lines(tele_surf, (*color, edge_alpha),
+                                          False, points[1:], 2)
+                        # Leading edges from center
+                        for sign in (1, -1):
+                            edge_a = facing_rad + sign * half_arc
+                            lx = center + int(math.cos(edge_a) * radius_px)
+                            ly = center + int(math.sin(edge_a) * radius_px)
+                            pygame.draw.line(tele_surf, (*color, edge_alpha),
+                                             (center, center), (lx, ly), 2)
+
+                    self.screen.blit(tele_surf,
+                                     (px - center + shake_ox, py - center + shake_oy))
 
         # --- Dodge roll visual on player ---
         if player_actions and player_actions.is_dodging:
