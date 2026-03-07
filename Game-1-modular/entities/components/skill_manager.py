@@ -1065,11 +1065,12 @@ class SkillManager:
 
         elif has_single or has_pierce:
             # Single target slash or piercing thrust
+            _is_thrust = any(t in combat_tags for t in ('piercing', 'spear', 'thrust', 'dagger'))
             effects.add_attack_effect(
                 player_pos, target_pos, AttackSourceType.PLAYER,
                 damage=params.get('baseDamage', 0),
                 tags=combat_tags, facing_angle=facing,
-                arc_degrees=90.0 if has_single else 30.0,
+                arc_degrees=20.0 if (_is_thrust or has_pierce) else 60.0,
                 radius=2.0)
             for target in affected_targets:
                 t_pos = target_pos

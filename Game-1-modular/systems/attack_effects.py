@@ -135,7 +135,7 @@ class AttackEffectsManager:
                           damage: float = 0.0,
                           blocked: bool = False,
                           tags: Optional[List[str]] = None,
-                          duration: float = 0.35,
+                          duration: float = 0.5,
                           facing_angle: float = 0.0,
                           arc_degrees: float = 90.0,
                           radius: float = 1.5):
@@ -190,7 +190,7 @@ class AttackEffectsManager:
                          source_type: AttackSourceType,
                          damage: float = 0.0,
                          tags: Optional[List[str]] = None,
-                         duration: float = 0.3):
+                         duration: float = 0.45):
         """Add a radial impact burst at hit location. Prominent and bright."""
         tags = tags or ['physical']
         effect = AttackEffect(
@@ -227,7 +227,7 @@ class AttackEffectsManager:
                         radius: float,
                         source_type: AttackSourceType,
                         tags: Optional[List[str]] = None,
-                        duration: float = 0.4):
+                        duration: float = 0.6):
         """Add AoE ring effect."""
         tags = tags or ['physical']
         effect = AttackEffect(

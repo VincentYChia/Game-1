@@ -1264,13 +1264,36 @@ class CombatManager:
                 # Return 0 damage - cooldown is handled by caller
                 return (0.0, False, [])
 
-        # Add tag-driven attack visual effect
-        attack_effects.add_attack_line(
-            player_pos, enemy_pos,
-            AttackSourceType.PLAYER,
-            damage=params.get('baseDamage', 0) if params else 0,
-            tags=tags or ['physical'],
-        )
+        # Add tag-driven attack visual — shape determined by weapon type
+        import math as _math
+        _dx = enemy_pos[0] - player_pos[0]
+        _dy = enemy_pos[1] - player_pos[1]
+        _facing = _math.degrees(_math.atan2(_dy, _dx))
+        _dist = _math.sqrt(_dx * _dx + _dy * _dy)
+
+        # Determine visual shape from weapon tags
+        _is_thrust = any(t in tags for t in ('piercing', 'spear', 'thrust', 'dagger'))
+        if _is_thrust:
+            # Thrust line — no cone, just a forward line
+            attack_effects.add_attack_effect(
+                player_pos, enemy_pos, AttackSourceType.PLAYER,
+                damage=params.get('baseDamage', 0) if params else 0,
+                tags=list(tags) + (['thrust'] if 'thrust' not in tags else []),
+                facing_angle=_facing, arc_degrees=20.0,
+                radius=max(1.0, _dist))
+        else:
+            # Slash arc — moderate arc, not a huge cone
+            _arc = 70.0  # Default melee arc
+            if any(t in tags for t in ('heavy', 'two_handed', 'axe')):
+                _arc = 100.0
+            elif any(t in tags for t in ('light', 'fast')):
+                _arc = 50.0
+            attack_effects.add_attack_effect(
+                player_pos, enemy_pos, AttackSourceType.PLAYER,
+                damage=params.get('baseDamage', 0) if params else 0,
+                tags=tags or ['physical'],
+                facing_angle=_facing, arc_degrees=_arc,
+                radius=max(1.0, min(_dist, 2.0)))
 
         # Check for active devastate buffs (AoE attacks like Whirlwind Strike)
         # Must check BEFORE normal attack to trigger AoE

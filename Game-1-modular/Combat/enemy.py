@@ -943,15 +943,15 @@ class Enemy:
 
         # Get category-based base timing from combat_data_loader profiles
         _PROFILES = {
-            'beast':     {'windup': 300, 'active': 120, 'recovery': 200},
-            'ooze':      {'windup': 400, 'active': 200, 'recovery': 300},
-            'insect':    {'windup': 200, 'active': 80, 'recovery': 150},
-            'construct': {'windup': 400, 'active': 200, 'recovery': 300},
-            'undead':    {'windup': 350, 'active': 150, 'recovery': 250},
-            'elemental': {'windup': 350, 'active': 180, 'recovery': 250},
-            'aberration': {'windup': 300, 'active': 160, 'recovery': 200},
-            'dragon':    {'windup': 500, 'active': 250, 'recovery': 350},
-            'humanoid':  {'windup': 250, 'active': 100, 'recovery': 180},
+            'beast':     {'windup': 600, 'active': 240, 'recovery': 400},
+            'ooze':      {'windup': 800, 'active': 400, 'recovery': 600},
+            'insect':    {'windup': 400, 'active': 160, 'recovery': 300},
+            'construct': {'windup': 800, 'active': 400, 'recovery': 600},
+            'undead':    {'windup': 700, 'active': 300, 'recovery': 500},
+            'elemental': {'windup': 700, 'active': 360, 'recovery': 500},
+            'aberration': {'windup': 600, 'active': 320, 'recovery': 400},
+            'dragon':    {'windup': 1000, 'active': 500, 'recovery': 700},
+            'humanoid':  {'windup': 500, 'active': 200, 'recovery': 360},
         }
         profile = _PROFILES.get(self.definition.category, _PROFILES['beast'])
 

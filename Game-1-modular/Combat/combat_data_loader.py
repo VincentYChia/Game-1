@@ -27,16 +27,16 @@ from Combat.hitbox_system import HitboxDefinition
 
 # Weapon type -> base attack shape/timing profile
 _WEAPON_PROFILES = {
-    'sword_1h': {'shape': 'arc', 'arc': 90, 'windup': 150, 'active': 100, 'recovery': 120},
-    'sword_2h': {'shape': 'arc', 'arc': 120, 'windup': 250, 'active': 150, 'recovery': 200},
-    'dagger':   {'shape': 'arc', 'arc': 60, 'windup': 80, 'active': 60, 'recovery': 80},
-    'axe':      {'shape': 'arc', 'arc': 100, 'windup': 200, 'active': 120, 'recovery': 180},
-    'mace':     {'shape': 'arc', 'arc': 80, 'windup': 220, 'active': 130, 'recovery': 200},
-    'hammer_2h': {'shape': 'arc', 'arc': 130, 'windup': 300, 'active': 180, 'recovery': 250},
-    'spear':    {'shape': 'line', 'length': 2.5, 'windup': 180, 'active': 100, 'recovery': 150},
-    'staff':    {'shape': 'arc', 'arc': 70, 'windup': 200, 'active': 120, 'recovery': 160},
-    'bow':      {'shape': 'projectile', 'windup': 300, 'active': 50, 'recovery': 200},
-    'unarmed':  {'shape': 'arc', 'arc': 70, 'windup': 100, 'active': 80, 'recovery': 100},
+    'sword_1h': {'shape': 'arc', 'arc': 90, 'windup': 300, 'active': 200, 'recovery': 240},
+    'sword_2h': {'shape': 'arc', 'arc': 120, 'windup': 500, 'active': 300, 'recovery': 400},
+    'dagger':   {'shape': 'arc', 'arc': 60, 'windup': 160, 'active': 120, 'recovery': 160},
+    'axe':      {'shape': 'arc', 'arc': 100, 'windup': 400, 'active': 240, 'recovery': 360},
+    'mace':     {'shape': 'arc', 'arc': 80, 'windup': 440, 'active': 260, 'recovery': 400},
+    'hammer_2h': {'shape': 'arc', 'arc': 130, 'windup': 600, 'active': 360, 'recovery': 500},
+    'spear':    {'shape': 'line', 'length': 2.5, 'windup': 360, 'active': 200, 'recovery': 300},
+    'staff':    {'shape': 'arc', 'arc': 70, 'windup': 400, 'active': 240, 'recovery': 320},
+    'bow':      {'shape': 'projectile', 'windup': 600, 'active': 100, 'recovery': 400},
+    'unarmed':  {'shape': 'arc', 'arc': 70, 'windup': 200, 'active': 160, 'recovery': 200},
 }
 
 # Element tag -> telegraph/visual color
@@ -54,15 +54,15 @@ ELEMENT_COLORS = {
 
 # Enemy category -> base attack profile
 _ENEMY_ATTACK_PROFILES = {
-    'beast':     {'shape': 'arc', 'arc': 80, 'windup': 300, 'active': 120, 'recovery': 200},
-    'ooze':      {'shape': 'circle', 'radius': 1.0, 'windup': 400, 'active': 200, 'recovery': 300},
-    'insect':    {'shape': 'arc', 'arc': 60, 'windup': 200, 'active': 80, 'recovery': 150},
-    'construct': {'shape': 'arc', 'arc': 100, 'windup': 400, 'active': 200, 'recovery': 300},
-    'undead':    {'shape': 'arc', 'arc': 90, 'windup': 350, 'active': 150, 'recovery': 250},
-    'elemental': {'shape': 'circle', 'radius': 1.2, 'windup': 350, 'active': 180, 'recovery': 250},
-    'aberration': {'shape': 'arc', 'arc': 120, 'windup': 300, 'active': 160, 'recovery': 200},
-    'dragon':    {'shape': 'cone', 'arc': 140, 'windup': 500, 'active': 250, 'recovery': 350},
-    'humanoid':  {'shape': 'arc', 'arc': 80, 'windup': 250, 'active': 100, 'recovery': 180},
+    'beast':     {'shape': 'arc', 'arc': 80, 'windup': 600, 'active': 240, 'recovery': 400},
+    'ooze':      {'shape': 'circle', 'radius': 1.0, 'windup': 800, 'active': 400, 'recovery': 600},
+    'insect':    {'shape': 'arc', 'arc': 60, 'windup': 400, 'active': 160, 'recovery': 300},
+    'construct': {'shape': 'arc', 'arc': 100, 'windup': 800, 'active': 400, 'recovery': 600},
+    'undead':    {'shape': 'arc', 'arc': 90, 'windup': 700, 'active': 300, 'recovery': 500},
+    'elemental': {'shape': 'circle', 'radius': 1.2, 'windup': 700, 'active': 360, 'recovery': 500},
+    'aberration': {'shape': 'arc', 'arc': 120, 'windup': 600, 'active': 320, 'recovery': 400},
+    'dragon':    {'shape': 'cone', 'arc': 140, 'windup': 1000, 'active': 500, 'recovery': 700},
+    'humanoid':  {'shape': 'arc', 'arc': 80, 'windup': 500, 'active': 200, 'recovery': 360},
 }
 
 
