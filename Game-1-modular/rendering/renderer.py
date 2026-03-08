@@ -2087,7 +2087,8 @@ class Renderer:
                                         spx = center + int(math.cos(sp_angle) * sp_r)
                                         spy = center + int(math.sin(sp_angle) * sp_r)
                                         sp_size = _rng.randint(1, max(1, int(2 * thickness_mult)))
-                                        sp_a = _rng.randint(80, min(255, trail_a + 40))
+                                        sp_a_upper = min(255, trail_a + 40)
+                                        sp_a = _rng.randint(min(80, sp_a_upper), sp_a_upper)
                                         pygame.draw.circle(arc_surf, (*bright, sp_a),
                                                            (spx, spy), sp_size)
 
