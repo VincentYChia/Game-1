@@ -637,6 +637,62 @@ python -m json.tool recipes.JSON/recipes-smithing-3.json > /dev/null
 
 ---
 
+## Visual Overhaul Design Standards (March 2026)
+
+**MANDATORY**: These principles govern all visual/animation/combat-visual work. Read before writing any code.
+
+### The Prime Directive
+
+> **"The code layer implements the rules. The data layer defines the world. The rules never change. The world grows without limits."**
+
+### DO NOT TOUCH (Sacred Boundaries)
+
+1. **No content JSON modifications** — All `items.JSON/`, `recipes.JSON/`, `placements.JSON/`, `Skills/`, `Definitions.JSON/`, `progression/`, `hostiles-*.JSON` files are OFF LIMITS. These define game content and must remain unchanged.
+2. **No new content tags** — The existing tag system defines game behavior. Visual work does not add tags to `tag-definitions.JSON` or any content schema.
+3. **No icon/asset PNGs** — The `assets/` folder contains game icons (inventory, items, UI). These are NOT animation sprites. Do not modify, replace, or rename them.
+4. **No formula changes** — The damage pipeline, EXP curve, stat scaling, tier multipliers, and all balance constants are immutable:
+   ```
+   Damage: base × hand(1.1-1.2) × STR(1+STR×0.05) × skill × class(max 1.2) × crit(2x) - def(max 75%)
+   EXP:    200 × 1.75^(level-1), max level 30
+   Tiers:  T1=1.0x, T2=2.0x, T3=4.0x, T4=8.0x
+   ```
+5. **No restructuring existing systems** — `combat_manager.py`, `effect_executor.py`, `skill_manager.py`, crafting minigames — extend via new modules, don't rewrite.
+
+### ALLOWED (Visual Overhaul Scope)
+
+1. **New configuration JSONs** — Animation configs, VFX configs, hitbox definitions, visual timing data. These are *system configuration*, not game content.
+2. **New Python modules** — `animation/`, `combat/` (lowercase, supplements existing `Combat/`), `events/` for visual systems.
+3. **Sprite overhaul** — Entity/world sprites (NOT icon PNGs in `assets/`) can be replaced, enhanced, or supplemented with new animation sprite assets.
+4. **Procedural animation from static sprites** — Rotation, scaling, tinting, flashing, particle generation from existing sprites.
+5. **Minimal integration hooks** — Small additions to existing code (event publications, component attachments) to connect visual systems.
+
+### Architecture Standards for Visual Systems
+
+1. **Configuration-Driven**: All visual parameters (frame counts, timings, colors, hitbox shapes, particle configs) live in configuration JSON files, not hardcoded in Python.
+2. **Tag-Aware Rendering**: Visual effects should READ existing tags to determine presentation. A `"fire"` tag on a skill implies fire VFX. A `"circle"` geometry tag implies radial effects. No per-skill hardcoding.
+3. **Decoupled via Events**: Visual systems subscribe to game events (`DAMAGE_DEALT`, `SKILL_ACTIVATED`, `ENEMY_KILLED`). They do not import or call game logic systems directly.
+4. **Component-Based Entities**: Animation/visual state attaches to entities as components. Systems check `hasattr(entity, 'animation_component')` and degrade gracefully.
+5. **Singleton Pattern for Visual Data**: Animation databases, VFX registries follow the same `get_instance()` pattern as all other databases.
+6. **Centralized Visual Manager**: A single manager (like stats/class systems) coordinates animation state, VFX dispatch, and rendering pipeline integration.
+
+### Naming Conventions (Visual Systems)
+
+- Config files: `animation-config.json`, `vfx-config.json`, `hitbox-config.json`
+- New modules: `animation/animation_manager.py`, `animation/sprite_animator.py`
+- Classes: `AnimationManager`, `HitboxSystem`, `ProjectileRenderer`
+- Methods: `play_animation()`, `spawn_particles()`, `check_hitbox()`
+- JSON keys: `camelCase` (`frameCount`, `swingArc`, `particleColor`)
+
+### What BalanceValidator Is (Context)
+
+BalanceValidator is **designed but NOT implemented**. It exists only as a spec in `Development-Plan/SHARED_INFRASTRUCTURE.md` (lines 7-56). It was planned to gate AI-generated content with tier-based stat range checks. No Python code exists for it. **Do not reference it as if it works. Do not build against it. It is a future TODO.**
+
+### JSON File Count Clarification
+
+The "398+ JSON files" count includes ~218 save/chunk files and ~80 ML training/debug logs. The actual game-definition JSON files number approximately **~60 files** across `items.JSON/`, `recipes.JSON/`, `placements.JSON/`, `Skills/`, `Definitions.JSON/`, `progression/`, and `Update-*/`.
+
+---
+
 ## When Working on This Project
 
 ### For Python Development (bug fixes, features):
@@ -653,21 +709,20 @@ python -m json.tool recipes.JSON/recipes-smithing-3.json > /dev/null
 - **Read** the relevant Part document before implementing any phase
 - **Use** `GameEventBus` for all new inter-system communication
 - **Use** `BackendManager` for all LLM inference (never call APIs directly)
-- **Use** `BalanceValidator` to gate all AI-generated content before injection
-- **All timing, hitboxes, attack patterns in JSON** — consistent with project philosophy
+- **All timing, hitboxes, attack patterns in configuration JSON** — consistent with project philosophy
 - **Preserve** all game constants exactly (damage pipeline, EXP curve, tier multipliers)
 - **New modules** go in `animation/`, `combat/` (lowercase), `ai/`, `events/`
 - **Existing code** modified minimally — add event publishing, don't restructure
 
 ### DON'T:
 - Assume design docs describe implemented features
-- Create new JSON schemas without checking existing patterns
-- Hardcode values that should be in JSON
+- Modify any content JSON (items, recipes, skills, hostiles, placements, tags)
+- Modify icon PNGs in `assets/` folder
+- Hardcode visual parameters that should be in configuration JSON
 - Skip checking tag documentation for combat/skill work
 - Change any game formula, constant, or balance number
-- Call LLM APIs directly — always go through BackendManager
-- Skip BalanceValidator for AI-generated content
 - Modify existing combat_manager.py logic — extend via new modules
+- Reference BalanceValidator or BackendManager as if they exist in code (they don't yet)
 
 ---
 
@@ -701,6 +756,7 @@ python -m json.tool recipes.JSON/recipes-smithing-3.json > /dev/null
 
 ## Version History
 
+- **v6.0** (March 8, 2026): Added Visual Overhaul Design Standards section. Clarified sacred boundaries (no content JSON, no icon PNGs, no formula changes). Corrected BalanceValidator status (designed, not implemented). Fixed JSON file count (60 game-definition files, not 398).
 - **v5.0** (March 6, 2026): Strategic pivot to Python/Pygame active development. Added Living World + Combat Overhaul development plan. Unity migration paused indefinitely.
 - **v4.0** (February 11, 2026): Added Unity/C# migration plan context (16,013 lines, 15 documents), updated stats, migration guidelines
 - **v3.0** (January 27, 2026): Major update for LLM integration, crafting classifiers, invented items system
