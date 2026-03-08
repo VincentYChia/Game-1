@@ -679,6 +679,18 @@ class CombatManager:
         # Apply damage
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
+        # Publish DAMAGE_DEALT event
+        try:
+            from rendering.visual_effect_bridge import publish_damage_dealt
+            publish_damage_dealt(
+                target_id=getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                attacker_id="player", amount=final_damage,
+                damage_type="physical", is_crit=is_crit,
+                position_x=enemy.position[0], position_y=enemy.position[1],
+                source="combat_manager")
+        except ImportError:
+            pass
+
         loot = []
         if enemy_died:
             print(f"      ☠️ Killed!")
@@ -695,6 +707,20 @@ class CombatManager:
             # Notify dungeon manager of kill for wave tracking
             if self.dungeon_manager and self.dungeon_manager.in_dungeon:
                 self.on_dungeon_enemy_killed(enemy)
+
+            # Publish ENEMY_KILLED event
+            try:
+                from rendering.visual_effect_bridge import publish_enemy_killed
+                publish_enemy_killed(
+                    enemy_id=getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                    killer_id="player",
+                    position_x=enemy.position[0], position_y=enemy.position[1],
+                    tier=enemy.definition.tier,
+                    visual_size=getattr(enemy.definition, 'visual_size', 1.0),
+                    is_boss=getattr(enemy.definition, 'is_boss', False),
+                    loot=loot, source="combat_manager")
+            except ImportError:
+                pass
 
         return (final_damage, is_crit, loot)
 
@@ -1434,6 +1460,21 @@ class CombatManager:
             if enemy.is_alive:
                 self._apply_weapon_enchantment_effects(enemy)
 
+            # Publish DAMAGE_DEALT event for tag-based attack
+            try:
+                from rendering.visual_effect_bridge import publish_damage_dealt
+                _dmg_type = next((t for t in tags if t in
+                    ('fire', 'ice', 'lightning', 'poison', 'arcane', 'shadow', 'holy')), 'physical')
+                publish_damage_dealt(
+                    target_id=getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                    attacker_id="player", amount=final_damage,
+                    damage_type=_dmg_type,
+                    is_crit=getattr(context, 'any_crit', False) if hasattr(context, 'any_crit') else False,
+                    position_x=enemy.position[0], position_y=enemy.position[1],
+                    source="combat_manager_tags")
+            except (ImportError, Exception):
+                pass
+
             # Track damage dealt
             total_damage = 0.0
             enemy_died = False
@@ -1478,6 +1519,20 @@ class CombatManager:
 
                 # Execute on-kill triggers
                 self._execute_triggers('on_kill', target=enemy, hand='mainHand')
+
+                # Publish ENEMY_KILLED event
+                try:
+                    from rendering.visual_effect_bridge import publish_enemy_killed
+                    publish_enemy_killed(
+                        enemy_id=getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                        killer_id="player",
+                        position_x=enemy.position[0], position_y=enemy.position[1],
+                        tier=enemy.definition.tier,
+                        visual_size=getattr(enemy.definition, 'visual_size', 1.0),
+                        is_boss=getattr(enemy.definition, 'is_boss', False),
+                        loot=loot, source="combat_manager_tags")
+                except ImportError:
+                    pass
             else:
                 print(f"   Enemy HP remaining: {enemy.current_health:.1f}/{enemy.max_health:.1f}")
 
@@ -1756,6 +1811,19 @@ class CombatManager:
                 damage_type=enemy_damage_type,
                 attack_type=enemy_attack_type
             )
+
+        # Publish PLAYER_HIT event for visual/AI systems
+        try:
+            from rendering.visual_effect_bridge import publish_player_hit
+            publish_player_hit(
+                attacker_id=getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                amount=final_damage,
+                damage_type=getattr(enemy.definition, 'damage_type', 'physical'),
+                player_x=self.character.position.x,
+                player_y=self.character.position.y,
+                source="combat_manager")
+        except ImportError:
+            pass
 
         # REFLECT/THORNS: Check for reflect damage on armor (capped at 80%)
         if hasattr(self.character, 'equipment') and enemy.is_alive:

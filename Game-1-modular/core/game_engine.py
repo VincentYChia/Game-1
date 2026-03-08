@@ -308,6 +308,18 @@ class GameEngine:
             self._enhanced_damage_numbers = None
             self._enemy_death_manager = None
             self._visual_effects_loaded = False
+
+        # Event-driven visual bridge (connects EventBus to visual managers)
+        self._visual_bridge = None
+        try:
+            from rendering.visual_effect_bridge import VisualEffectBridge
+            self._visual_bridge = VisualEffectBridge(
+                damage_number_manager=self._enhanced_damage_numbers,
+                death_effect_manager=self._enemy_death_manager,
+            )
+            self._visual_bridge.connect()
+        except ImportError:
+            pass
         self.crafting_window_rect = None
         self.crafting_recipes = []
         self.selected_recipe = None  # Currently selected recipe in crafting UI (for placement display)
@@ -758,6 +770,15 @@ class GameEngine:
                             # Track in stat tracker
                             if hasattr(self.character, 'stat_tracker'):
                                 self.character.stat_tracker.record_dodge_roll()
+                            # Publish dodge event
+                            try:
+                                from rendering.visual_effect_bridge import publish_dodge_performed
+                                publish_dodge_performed(
+                                    position_x=self.character.position.x,
+                                    position_y=self.character.position.y,
+                                    direction=(dodge_dx, dodge_dy))
+                            except ImportError:
+                                pass
 
                 # Skill hotbar (keys 1-5)
                 elif event.key == pygame.K_1:
@@ -2740,6 +2761,11 @@ class GameEngine:
 
             print("✓ Action combat systems initialized")
 
+            # Wire visual bridge to screen effects and particles
+            if self._visual_bridge:
+                self._visual_bridge._screen_fx = screen_effects
+                self._visual_bridge._particles = combat_particles
+
         except Exception as e:
             self._action_combat = False
             self._ac = {}
@@ -2980,6 +3006,17 @@ class GameEngine:
                 if is_crit:
                     se.hit_pause(40)
 
+                # Publish DAMAGE_DEALT event for other systems
+                try:
+                    from rendering.visual_effect_bridge import publish_damage_dealt
+                    publish_damage_dealt(
+                        target_id=hit.target_id, attacker_id="player",
+                        amount=damage, damage_type=damage_type, is_crit=is_crit,
+                        position_x=enemy.position[0], position_y=enemy.position[1],
+                        source="action_combat")
+                except ImportError:
+                    pass
+
             if not enemy.is_alive:
                 se.hit_pause(60)
                 # Screen shake on all enemy kills — scales with tier
@@ -2994,6 +3031,19 @@ class GameEngine:
                     self._enemy_death_manager.spawn(
                         enemy.position[0], enemy.position[1],
                         vis_size, enemy.definition.tier, e_color)
+
+                # Publish ENEMY_KILLED event
+                try:
+                    from rendering.visual_effect_bridge import publish_enemy_killed
+                    publish_enemy_killed(
+                        enemy_id=hit.target_id, killer_id="player",
+                        position_x=enemy.position[0], position_y=enemy.position[1],
+                        tier=enemy.definition.tier,
+                        visual_size=getattr(enemy.definition, 'visual_size', 1.0),
+                        is_boss=getattr(enemy.definition, 'is_boss', False),
+                        source="action_combat")
+                except ImportError:
+                    pass
 
         else:
             # Enemy hit the player
@@ -3018,6 +3068,19 @@ class GameEngine:
             _shake_i = {1: 2, 2: 3, 3: 5, 4: 7}.get(enemy.definition.tier, 2)
             _shake_d = {1: 80, 2: 120, 3: 180, 4: 250}.get(enemy.definition.tier, 80)
             se.screen_shake(_shake_i, _shake_d)
+
+            # Publish PLAYER_HIT event
+            try:
+                from rendering.visual_effect_bridge import publish_player_hit
+                publish_player_hit(
+                    attacker_id=hit.attacker_id,
+                    amount=enemy.definition.damage_max,
+                    damage_type=getattr(enemy.definition, 'damage_type', 'physical'),
+                    player_x=self.character.position.x,
+                    player_y=self.character.position.y,
+                    source="action_combat")
+            except ImportError:
+                pass
 
     def _initiate_attack_toward(self, world_x: float, world_y: float, hand: str = 'mainHand'):
         """Initiate an attack toward a world position using the action combat state machine.
@@ -3077,6 +3140,16 @@ class GameEngine:
                     player_sm.start_attack(attack_def, damage_context)
                     self.character._attack_facing_locked = True
                     self.character.reset_attack_cooldown(is_weapon=True, hand=hand)
+                    # Publish ATTACK_STARTED event
+                    try:
+                        from rendering.visual_effect_bridge import publish_attack_started
+                        publish_attack_started(
+                            entity_id="player",
+                            attack_id=attack_def.attack_id,
+                            weapon_type=weapon_type,
+                            tags=effect_tags)
+                    except ImportError:
+                        pass
             elif player_sm.is_attacking:
                 pa.input_buffer.buffer("attack")
         else:
@@ -3147,6 +3220,23 @@ class GameEngine:
                         int(damage), hit_enemy.position[0], hit_enemy.position[1],
                         is_crit=is_crit, damage_type=_dmg_type)
 
+                # Publish DAMAGE_DEALT event for legacy combat path
+                try:
+                    from rendering.visual_effect_bridge import publish_damage_dealt
+                    _dmg_type_evt = "physical"
+                    for _t in (effect_tags or []):
+                        if _t in ("fire", "ice", "frost", "lightning", "poison", "arcane", "shadow", "holy"):
+                            _dmg_type_evt = "ice" if _t == "frost" else _t
+                            break
+                    publish_damage_dealt(
+                        target_id=getattr(hit_enemy, 'entity_id', 'enemy'),
+                        attacker_id="player", amount=damage,
+                        damage_type=_dmg_type_evt, is_crit=is_crit,
+                        position_x=hit_enemy.position[0], position_y=hit_enemy.position[1],
+                        source="legacy_combat")
+                except ImportError:
+                    pass
+
                 if not hit_enemy.is_alive:
                     if self._enemy_death_manager:
                         _vis = getattr(hit_enemy.definition, 'visual_size', 1.0)
@@ -3157,6 +3247,22 @@ class GameEngine:
                             _tc.get(hit_enemy.definition.tier, (200, 100, 100)))
                     self.add_notification(f"Defeated {hit_enemy.definition.name}!", (255, 215, 0))
                     self.character.activities.record_activity('combat', 1)
+
+                    # Publish ENEMY_KILLED event
+                    try:
+                        from rendering.visual_effect_bridge import publish_enemy_killed
+                        publish_enemy_killed(
+                            enemy_id=getattr(hit_enemy, 'entity_id', 'enemy'),
+                            killer_id="player",
+                            position_x=hit_enemy.position[0], position_y=hit_enemy.position[1],
+                            tier=hit_enemy.definition.tier,
+                            visual_size=getattr(hit_enemy.definition, 'visual_size', 1.0),
+                            is_boss=getattr(hit_enemy.definition, 'is_boss', False),
+                            loot=loot if loot else [],
+                            source="legacy_combat")
+                    except ImportError:
+                        pass
+
                     if loot:
                         mat_db = MaterialDatabase.get_instance()
                         for material_id, qty in loot:
