@@ -8,15 +8,37 @@
 
 ---
 
+## Existing Infrastructure Audit
+
+Before planning new work, here is what **already exists** in the codebase:
+
+| System | Status | Location | Notes |
+|--------|--------|----------|-------|
+| Animation Manager | **EXISTS** | `animation/animation_manager.py` (121 lines) | Singleton, entity→SpriteAnimation registry, update_all/play/stop |
+| Animation Data | **EXISTS** | `animation/animation_data.py` (42 lines) | AnimationFrame, AnimationDefinition dataclasses |
+| Sprite Animation | **EXISTS** | `animation/sprite_animation.py` (69 lines) | Frame player with progress, hitbox_active, completion callback |
+| Procedural Animations | **EXISTS** | `animation/procedural.py` (368 lines) | swing_arc, telegraph_pulse, hit_flash, idle_bob, slash_trail, ground_telegraph |
+| Combat Particles | **EXISTS** | `animation/combat_particles.py` (212 lines) | World-space particles: hit_sparks, slash_trail, dodge_dust, projectile_trail |
+| Weapon Visuals | **EXISTS** | `animation/weapon_visuals.py` (181 lines) | Tag-driven visual style resolver (element colors, tier scaling, weight/speed) |
+| Damage Numbers | **BASIC** | `entities/damage_number.py` (20 lines) | Simple dataclass — no color, no easing, no pop effect |
+| Screen Shake | **BASIC** | `core/minigame_effects.py:556-596` | Works but coupled to minigame UI, not centralized |
+| Easing Functions | **PARTIAL** | `core/minigame_effects.py:48-84` + `animation/procedural.py:20-31` | Duplicated across files, no Tween/TweenGroup class |
+| Attack Effects | **EXISTS** | `systems/attack_effects.py` | Tag-driven slash/thrust/impact/blocked/area effects |
+| Telegraph Rendering | **EXISTS** | `rendering/renderer.py:1597-1850` | Arc/circle telegraphs with progress-based fill |
+
+**Key gaps**: No centralized easing+Tween system, no enhanced damage numbers (color/pop/easing), no centralized screen effects (shake/pause/flash/slow-mo), no JSON-driven particle emitters, telegraph visuals could be more readable.
+
+---
+
 ## Table of Contents
 
 1. [Section A — pygame-ce Migration](#section-a--pygame-ce-migration)
 2. [Section B — Easing & Tweening Foundation](#section-b--easing--tweening-foundation)
-3. [Section C — Frame-Based Animation Controller](#section-c--frame-based-animation-controller)
-4. [Section D — Procedural Combat Animations](#section-d--procedural-combat-animations)
+3. [Section C — Animation Controller Enhancement](#section-c--animation-controller-enhancement)
+4. [Section D — Procedural Animation Extensions](#section-d--procedural-animation-extensions)
 5. [Section E — Floating Combat Text (Damage Numbers)](#section-e--floating-combat-text-damage-numbers)
 6. [Section F — Screen Effects System](#section-f--screen-effects-system)
-7. [Section G — Combat Particle System](#section-g--combat-particle-system)
+7. [Section G — Combat Particle System Enhancement](#section-g--combat-particle-system-enhancement)
 8. [Section H — Attack Telegraph Visuals](#section-h--attack-telegraph-visuals)
 9. [Dependency Graph](#dependency-graph)
 10. [File Map](#file-map)
@@ -154,273 +176,160 @@ class TweenGroup:
 
 ---
 
-## Section C — Frame-Based Animation Controller
+## Section C — Animation Controller Enhancement
 
-**Priority**: Tier 1 — Core foundation
-**Risk**: Low (new module, renderer integration is additive)
-**Effort**: ~3 hours
-**New files**: `animation/sprite_animation.py`, `animation/animation_manager.py`
+**Priority**: Tier 1 — Extend existing foundation
+**Risk**: Low (extending existing modules)
+**Effort**: ~1.5 hours (reduced — core already exists)
+**Modified files**: `animation/animation_data.py`, `animation/animation_manager.py`
 **Modified file**: `rendering/renderer.py` (additive — new method, not replacing existing)
 
-### What
+### What Already Exists
 
-A state machine that sequences sprite frames with per-frame timing, events, and transitions. This is the backbone for all sprite-based animations (idle bob, attack swings, hit reactions, death).
+The animation system is **substantially built**:
+- `animation/animation_data.py` — `AnimationFrame` (surface, duration, offset, hitbox_active, scale) and `AnimationDefinition` (frames, loop, total_duration)
+- `animation/sprite_animation.py` — Frame player with `update()`, `get_current_frame()`, `progress`, `finished`, completion callback
+- `animation/animation_manager.py` — Singleton with `play()`, `stop()`, `update_all()`, `get_current_frame()`, `is_animating()`, definition registry
 
-### Architecture
+### What's Missing
 
-```
-animation/
-├── __init__.py
-├── easing.py                  # (Section B)
-├── sprite_animation.py        # AnimationFrame, AnimationDefinition, SpriteAnimation
-└── animation_manager.py       # AnimationManager singleton
-```
+1. **AnimationFrame lacks `rotation`, `alpha`, and `event` fields** — needed for weapon swings (rotation), death fade (alpha), and timed events (sound/hitbox triggers)
+2. **AnimationManager lacks layer support** — currently one animation per entity; combat needs body + weapon + effect overlays simultaneously
+3. **No renderer integration** — `renderer.py` doesn't query the AnimationManager yet
+4. **No JSON loading** — definitions are only created procedurally, not loadable from JSON
 
-### Core Data Structures
+### Changes Needed
+
+**1. Extend AnimationFrame** (add 3 fields to existing dataclass):
 
 ```python
 @dataclass
 class AnimationFrame:
-    """Single frame of animation."""
-    surface: pygame.Surface        # The rendered frame (or None for procedural)
-    duration_ms: float             # How long this frame is shown
-    offset_x: float = 0.0         # Pixel offset from entity center
+    surface: Optional[pygame.Surface]
+    duration_ms: float
+    offset_x: float = 0.0
     offset_y: float = 0.0
-    rotation: float = 0.0         # Degrees of rotation for this frame
-    scale: float = 1.0            # Scale multiplier
-    alpha: int = 255              # Transparency (0=invisible, 255=opaque)
-    event: Optional[str] = None   # Event fired when this frame starts ("hit", "sound", etc.)
-
-
-@dataclass
-class AnimationDefinition:
-    """Complete animation sequence. Loaded from JSON or generated procedurally."""
-    animation_id: str
-    frames: List[AnimationFrame]
-    loop: bool = False
-    total_duration_ms: float = 0   # Computed from frames
-
-
-class SpriteAnimation:
-    """Plays an AnimationDefinition. Tracks current frame, elapsed time, events."""
-    def __init__(self, definition: AnimationDefinition)
-    def update(self, dt_ms: float) -> List[str]   # Returns events fired this frame
-    def get_current_frame(self) -> AnimationFrame
-    @property
-    def is_complete(self) -> bool
-    def reset(self) -> None
+    hitbox_active: bool = False
+    scale: float = 1.0
+    rotation: float = 0.0         # NEW — Degrees of rotation
+    alpha: int = 255              # NEW — Transparency
+    event: Optional[str] = None   # NEW — Event name fired when frame starts
 ```
 
-### AnimationManager (Singleton)
+**2. Add layer support to AnimationManager**:
 
 ```python
-class AnimationManager:
-    """Global animation manager. Updated once per game loop tick."""
-    _instance = None
+# Change internal storage from Dict[str, SpriteAnimation]
+# to Dict[str, Dict[str, SpriteAnimation]] — entity_id → layer → animation
+# Layers: 'body', 'weapon', 'effect'
 
-    def play(self, entity_id: str, animation: SpriteAnimation,
-             layer: str = 'default', blend_mode: str = 'replace') -> None
-
-    def stop(self, entity_id: str, layer: str = 'default') -> None
-
-    def update(self, dt_ms: float) -> Dict[str, List[str]]
-        # Returns {entity_id: [events_fired]} for all active animations
-
-    def get_frame(self, entity_id: str, layer: str = 'default') -> Optional[AnimationFrame]
-        # Returns current frame for renderer to draw
-
-    def is_playing(self, entity_id: str, layer: str = 'default') -> bool
+def play(self, entity_id, animation_id, layer='default', ...):
+def get_current_frame(self, entity_id, layer='default'):
 ```
 
-### Layer System
-
-Each entity can have multiple simultaneous animation layers:
-- `'body'` — Base sprite animation (idle, walk, hit)
-- `'weapon'` — Weapon swing overlay
-- `'effect'` — Visual effect overlay (glow, flash)
-
-Layers composite in order: body → weapon → effect.
-
-### Renderer Integration
-
-Add a single new method to `renderer.py` (does NOT replace existing drawing):
+**3. Renderer integration** — add one method to `renderer.py`:
 
 ```python
 def _draw_animated_entity(self, surface, entity, screen_pos):
-    """Draw entity with animation overrides if any are playing.
-    Called from existing entity drawing code — falls through to
-    static sprite if no animation is active."""
-    anim_mgr = AnimationManager.get_instance()
-    frame = anim_mgr.get_frame(entity.entity_id)
-    if frame is None:
-        return False  # No animation — caller draws static sprite
-    # Apply frame transforms (offset, rotation, scale, alpha) and blit
-    ...
-    return True  # Animation handled drawing
+    """Draw entity with animation overrides if active. Falls through
+    to static sprite if no animation playing."""
 ```
 
-### JSON Schema (Animation-Data.JSON/)
+**4. JSON animation loading** — add a loader method to AnimationManager:
 
-```json
-{
-  "animations": {
-    "idle_bob": {
-      "loop": true,
-      "frames": [
-        {"offset_y": 0, "duration_ms": 200},
-        {"offset_y": -2, "duration_ms": 200},
-        {"offset_y": 0, "duration_ms": 200},
-        {"offset_y": 1, "duration_ms": 200}
-      ]
-    },
-    "hit_flash": {
-      "loop": false,
-      "frames": [
-        {"alpha": 255, "scale": 1.05, "duration_ms": 50, "event": "flash_white"},
-        {"alpha": 200, "scale": 1.0, "duration_ms": 50},
-        {"alpha": 255, "scale": 1.0, "duration_ms": 100}
-      ]
-    }
-  }
-}
+```python
+def load_definitions(self, filepath: str) -> int:
+    """Load animation definitions from JSON file. Returns count loaded."""
 ```
 
 ### Verification
 
-- AnimationManager.play() → update() → get_frame() returns correct frames
-- Frame events fire at correct times
-- Looping animations restart correctly
-- Non-looping animations report is_complete
+- Existing procedural animations (swing_arc, hit_flash, etc.) still work
+- New rotation/alpha/event fields used by Section D
+- Layer support allows body + weapon animations simultaneously
 - Renderer falls through to static sprite when no animation is active
 
 ---
 
-## Section D — Procedural Combat Animations
+## Section D — Procedural Animation Extensions
 
-**Priority**: Tier 2 — Build during combat overhaul
+**Priority**: Tier 2 — Extend during combat overhaul
 **Risk**: Medium (interacts with combat state machine)
-**Effort**: ~4 hours
-**New file**: `animation/procedural_animations.py`
-**Depends on**: Section B (easing), Section C (animation controller)
+**Effort**: ~2 hours (reduced — core generators exist)
+**Modified file**: `animation/procedural.py`
+**Depends on**: Section B (easing), Section C (animation controller enhancements)
 
-### What
+### What Already Exists
 
-Generate animation frames procedurally from static sprites. Instead of requiring hand-drawn sprite sheets (which don't exist — the game has 3,749 static PNGs), this creates attack swings, hit reactions, idle bobs, and death animations by applying transforms (rotation, scale, offset, alpha, tint) to existing sprites using easing curves.
+`animation/procedural.py` (368 lines) already provides:
+- `create_swing_arc()` — Melee arc with easing, frame-based hitbox_active
+- `create_telegraph_pulse()` — Scale + tint for enemy windup
+- `create_hit_flash()` — 2-frame white flash on damage
+- `create_idle_bob()` — Vertical sine oscillation (looping)
+- `create_slash_trail()` — Expanding arc trail with fade
+- `create_ground_telegraph()` — Circle/arc fill indicator
 
-### Core Factory Functions
+Also has internal easing helpers: `_ease_out_cubic`, `_ease_in_out_sine`, `_lerp`, `_tint_surface`, `_white_flash_surface`.
+
+### What's Missing
+
+1. **`create_death_fade()`** — Fade out + vertical collapse for death animation
+2. **`create_dodge_roll()`** — Rotation + offset for dodge animation
+3. **`create_hit_reaction()`** — White flash + knockback settle (elastic easing) — current `create_hit_flash` is just 2 frames without knockback
+4. **Weapon-type-aware swing** — `create_swing_arc()` takes arc/duration but doesn't integrate with `weapon_visuals.py` WeaponVisualStyle
+5. **Attack profile integration** — Connect `EnemyAttackDef` from the generator to procedural animations
+
+### Changes Needed
+
+Add 3 new methods to `ProceduralAnimations` class:
 
 ```python
-class ProceduralAnimations:
-    """Factory for creating animations from static sprites using easing curves."""
+@staticmethod
+def create_death_fade(base_sprite: pygame.Surface,
+                       duration_ms: float = 800.0,
+                       collapse: bool = True) -> AnimationDefinition:
+    """Fade out + optional vertical collapse. Uses ease_in_quad for alpha."""
 
-    @staticmethod
-    def create_weapon_swing(
-        weapon_surface: pygame.Surface,
-        arc_start: float,           # Starting angle (degrees)
-        arc_end: float,             # Ending angle
-        duration_ms: float,         # Total swing time
-        easing: Callable = ease_in_out_quad,
-        num_frames: int = 8,
-    ) -> AnimationDefinition:
-        """Create a weapon swing animation through an arc.
+@staticmethod
+def create_dodge_roll(direction_angle: float,
+                       distance_px: float = 48.0,
+                       duration_ms: float = 250.0) -> AnimationDefinition:
+    """Rotation + position offset in direction. Uses ease_out_quad."""
 
-        The weapon sprite rotates from arc_start to arc_end over duration_ms.
-        Easing controls the acceleration curve (fast start = slash,
-        slow start = heavy overhead).
-        """
+@staticmethod
+def create_hit_reaction(base_sprite: pygame.Surface,
+                         knockback_px: float = 8.0,
+                         duration_ms: float = 200.0) -> AnimationDefinition:
+    """Flash + knockback settle. Uses ease_out_elastic for spring feel."""
+```
 
-    @staticmethod
-    def create_hit_reaction(
-        entity_surface: pygame.Surface,
-        knockback_px: float = 8.0,     # Pixels of knockback
-        flash_color: Tuple = (255, 255, 255),
-        duration_ms: float = 200.0,
-        easing: Callable = ease_out_elastic,
-    ) -> AnimationDefinition:
-        """White flash + knockback settle. Used when entity takes damage."""
+Add a bridge function to connect AttackProfileGenerator to animations:
 
-    @staticmethod
-    def create_windup_pulse(
-        entity_surface: pygame.Surface,
-        scale_peak: float = 1.15,       # Max scale during windup
-        glow_color: Tuple = (255, 100, 100),
-        duration_ms: float = 500.0,
-    ) -> AnimationDefinition:
-        """Scale pulse + color tint for attack telegraph on the entity itself.
-        Grows slightly during windup, giving visual "charging" feel."""
-
-    @staticmethod
-    def create_death_fade(
-        entity_surface: pygame.Surface,
-        duration_ms: float = 800.0,
-        collapse: bool = True,         # Shrink vertically as well
-    ) -> AnimationDefinition:
-        """Fade out + optional vertical collapse for death animation."""
-
-    @staticmethod
-    def create_idle_bob(
-        amplitude_px: float = 2.0,
-        period_ms: float = 800.0,
-    ) -> AnimationDefinition:
-        """Subtle vertical bob for idle entities. Loop animation."""
-
-    @staticmethod
-    def create_dodge_roll(
-        direction_angle: float,
-        distance_px: float = 48.0,
-        duration_ms: float = 250.0,
-    ) -> AnimationDefinition:
-        """Roll animation: rotation + position offset in direction."""
+```python
+def create_enemy_attack_animation(attack_def, enemy_surface):
+    """Generate animation from AttackProfileGenerator output.
+    Uses existing create_swing_arc for arc attacks,
+    create_telegraph_pulse for circle attacks."""
 ```
 
 ### Weapon Type → Animation Mapping
 
-Derived from existing weapon data (no JSON changes needed):
+Derived from existing `weapon_visuals.py` profiles (no JSON changes needed):
 
 | Weapon Category | Arc Start | Arc End | Duration | Easing | Feel |
 |----------------|-----------|---------|----------|--------|------|
-| sword_1h | -45° | +45° | 350ms | ease_in_out_quad | Balanced swing |
-| sword_2h | -60° | +60° | 550ms | ease_in_quad | Heavy, committal |
-| dagger | -30° | +30° | 220ms | ease_out_quad | Fast slash |
-| axe_1h | -50° | +50° | 400ms | ease_in_cubic | Heavy start, fast finish |
-| hammer | +90° | -30° | 600ms | ease_in_expo | Overhead slam |
-| staff | -20° | +20° | 380ms | ease_in_out_quad | Quick poke |
-| bow | 0° | 0° | 400ms | linear | Drawback + release (scale-based) |
-
-### Integration with Attack Profile Generator
-
-The existing `EnemyAttackDef` already has `shape`, `arc`, and timing. Procedural animations read these directly:
-
-```python
-def create_enemy_attack_animation(attack_def: EnemyAttackDef,
-                                   enemy_surface: pygame.Surface) -> AnimationDefinition:
-    """Generate attack animation from the attack profile generator's output.
-
-    No additional data needed — the generator already computed shape, arc,
-    windup timing, etc. from the enemy's JSON fields.
-    """
-    if attack_def.shape == 'arc':
-        return ProceduralAnimations.create_weapon_swing(
-            enemy_surface,
-            arc_start=-attack_def.arc / 2,
-            arc_end=attack_def.arc / 2,
-            duration_ms=attack_def.active,
-        )
-    elif attack_def.shape == 'circle':
-        return ProceduralAnimations.create_windup_pulse(
-            enemy_surface,
-            scale_peak=1.2,
-            duration_ms=attack_def.windup,
-        )
-```
+| sword_1h | -32° | +32° | 350ms | ease_in_out_quad | Balanced swing |
+| sword_2h | -50° | +50° | 550ms | ease_in_quad | Heavy, committal |
+| dagger | -15° | +15° | 220ms | ease_out_quad | Fast slash |
+| axe | -40° | +40° | 400ms | ease_in_cubic | Heavy start, fast finish |
+| hammer_2h | -45° | +45° | 600ms | ease_in_expo | Overhead slam |
+| staff | -17° | +17° | 380ms | ease_in_out_quad | Quick poke |
 
 ### Verification
 
-- Weapon swing rotates smoothly through arc
-- Hit reaction flashes white and settles
-- Windup pulse is visible and matches attack timing
-- Death fade completes and entity is invisible at end
-- Idle bob loops seamlessly
+- New death/dodge/hit_reaction animations work alongside existing generators
+- AttackProfileGenerator output seamlessly drives enemy attack visuals
+- weapon_visuals.py WeaponVisualStyle parameters map to swing arc parameters
 
 ---
 
@@ -634,26 +543,37 @@ camera.shake_offset = screen_effects.get_shake_offset()
 
 ---
 
-## Section G — Combat Particle System
+## Section G — Combat Particle System Enhancement
 
 **Priority**: Tier 2 — Medium effort, high value
 **Risk**: Medium (performance sensitive)
-**Effort**: ~5 hours
-**New files**: `animation/particles.py`, `Animation-Data.JSON/particle-emitters.json`
+**Effort**: ~3 hours (reduced — world-space particles already exist)
+**Modified file**: `animation/combat_particles.py`
+**New file**: `Animation-Data.JSON/particle-emitters.json`
 **Depends on**: Section B (easing)
-**Builds on**: `core/minigame_effects.py` (existing particle system, ~2,000 lines)
 
-### What
+### What Already Exists
 
-A generalized, JSON-driven particle system for combat effects: hit sparks, blood/slime splatter, magic trails, status effect auras, death bursts. Built by extracting and generalizing patterns from the existing `minigame_effects.py`.
+`animation/combat_particles.py` (212 lines) provides:
+- `CombatParticle` class with world-space physics (gravity, drag, velocity, lifetime, alpha fade)
+- `CombatParticleSystem` with 400 max particles, off-screen culling, world-to-screen rendering
+- `emit_hit_sparks()` — Tag-colored burst at hit location (8 damage types mapped to colors)
+- `emit_slash_trail()` — Particles along slash arc path
+- `emit_dodge_dust()` — Dust cloud at dodge position
+- `emit_projectile_trail()` — 7 trail types (fire, ice, arcane, acid, lightning, shadow, arrow)
+- `DAMAGE_SPARK_COLORS` — Complete color mapping for all damage types
 
-### Why Not Just Use minigame_effects.py?
+`core/minigame_effects.py` (1,522 lines) provides separate screen-space particles for crafting:
+- Spark, Ember, Bubble, Steam, Spirit, GearTooth particle types
+- ScreenShake, GlowEffect, FlameEffect classes
 
-The existing system is tightly coupled to crafting minigame UI coordinates and effects. Combat particles need:
-- World-space positioning (follows camera)
-- Tag-driven appearance (fire particles look different from ice)
-- JSON-driven emitter definitions (consistent with project philosophy)
-- Performance budget awareness (combat has more simultaneous effects)
+### What's Missing
+
+1. **JSON-driven emitter definitions** — all emitters are currently hardcoded in Python
+2. **Continuous emitters** — current system only does bursts, no sustained effects (poison aura, fire trail)
+3. **Object pooling** — creates/destroys particle objects each frame (GC pressure)
+4. **Status effect auras** — no per-entity continuous visual effects
+5. **Death burst** — no enemy death explosion particles
 
 ### Architecture
 
@@ -906,44 +826,37 @@ Section B: Easing Foundation
 
 ```
 animation/
-├── __init__.py                      # Section B
-├── easing.py                        # Section B — Easing functions + Tween
-├── sprite_animation.py              # Section C — AnimationFrame, SpriteAnimation
-├── animation_manager.py             # Section C — AnimationManager singleton
-├── procedural_animations.py         # Section D — Factory for procedural anims
-├── screen_effects.py                # Section F — Shake, pause, flash, slow-mo
-└── particles.py                     # Section G — ParticleSystem, Emitter, Particle
-
-combat/
-└── damage_numbers.py                # Section E — Floating combat text
+├── easing.py                        # Section B — Centralized easing + Tween/TweenGroup
+└── screen_effects.py                # Section F — Shake, pause, flash, slow-mo
 
 Animation-Data.JSON/
-├── attack-animations.json           # Section C/D — Animation definitions
+├── attack-animations.json           # Section C — JSON animation definitions
 └── particle-emitters.json           # Section G — Particle emitter configs
 ```
 
 ### Modified Files (Minimal Additions)
 
 ```
+animation/animation_data.py          # Section C — Add rotation, alpha, event fields
+animation/animation_manager.py       # Section C — Add layer support, JSON loading
+animation/procedural.py              # Section D — Add death_fade, dodge_roll, hit_reaction
+animation/combat_particles.py        # Section G — Add JSON emitters, continuous mode, pooling
+entities/damage_number.py            # Section E — Enhance with color, easing, pop, crit
+
 rendering/renderer.py
   + _draw_animated_entity()          # Section C — Animation-aware entity drawing
-  + _draw_damage_numbers()           # Section E — Floating text draw pass
+  + _draw_damage_numbers() enhanced  # Section E — Eased floating text
   + _draw_telegraph_arc() improved   # Section H — Better telegraph visuals
-  + _draw_particles()                # Section G — Particle draw pass
 
 Combat/combat_manager.py
-  + DamageNumberSystem.spawn(...)    # Section E — 1 line after damage applied
-  + ParticleSystem.emit(...)         # Section G — 1 line after damage applied
+  + DamageNumberSystem.spawn(...)    # Section E — Enhanced spawn with tags
   + ScreenEffects.shake(...)         # Section F — 1 line on hit events
 
 core/camera.py
   (already has shake_offset)         # Section F — ScreenEffects sets this
 
 core/game_engine.py
-  + AnimationManager.update(dt)      # Section C — 1 line in game loop
   + ScreenEffects.update(dt)         # Section F — 1 line in game loop
-  + ParticleSystem.update(dt)        # Section G — 1 line in game loop
-  + DamageNumberSystem.update(dt)    # Section E — 1 line in game loop
 ```
 
 ### Existing Files NOT Touched
@@ -954,18 +867,22 @@ core/game_engine.py
 - All crafting minigame files
 - Save system
 - Entity models
+- animation/weapon_visuals.py (already complete)
+- animation/sprite_animation.py (already complete)
+- systems/attack_effects.py (already complete)
 
 ---
 
 ## Implementation Order Recommendation
 
 1. **Section A** — pygame-ce swap (30 min)
-2. **Section B** — Easing module (1 hr)
-3. **Section E** — Damage numbers (2 hr) — immediate visual payoff
-4. **Section F** — Screen effects (2 hr) — immediate feel payoff
-5. **Section H** — Telegraph improvements (2 hr) — polish existing
-6. **Section C** — Animation controller (3 hr) — foundation for D
-7. **Section G** — Particle system (5 hr) — eye candy
-8. **Section D** — Procedural animations (4 hr) — full animation system
+2. **Section B** — Easing module (1 hr) — consolidates duplicated easing code
+3. **Section E** — Damage number enhancement (1.5 hr) — immediate visual payoff
+4. **Section F** — Screen effects system (2 hr) — immediate feel payoff
+5. **Section H** — Telegraph improvements (1.5 hr) — polish existing
+6. **Section C** — Animation controller enhancements (1.5 hr) — layers + JSON loading
+7. **Section G** — Particle system enhancement (3 hr) — JSON emitters, continuous mode
+8. **Section D** — Procedural animation extensions (2 hr) — death, dodge, hit_reaction
 
-**Total estimated effort**: ~20 hours across all sections.
+**Total estimated effort**: ~13 hours across all sections.
+**Reduced from ~20 hours** thanks to existing animation/, combat_particles, weapon_visuals, and damage_number infrastructure.
