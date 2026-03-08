@@ -1572,9 +1572,14 @@ class Renderer:
         # Render NPCs
         self.render_npcs(camera, character)
 
-        # Render player
-        center_x, center_y = camera.world_to_screen(character.position)
-        pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
+        # Render player (enhanced: facing indicator, shadow, idle bob)
+        try:
+            from rendering.visual_effects import render_player_enhanced
+            render_player_enhanced(self.screen, camera, character, Config.TILE_SIZE,
+                                   getattr(self, '_temp_ac_systems', None))
+        except Exception:
+            center_x, center_y = camera.world_to_screen(character.position)
+            pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
 
         # Render action combat overlays (hitboxes, projectiles, particles, flashes)
         ac_systems = getattr(self, '_temp_ac_systems', None)
@@ -1584,14 +1589,39 @@ class Renderer:
         # Render attack effects (lines, blocked indicators)
         self._render_attack_effects(camera)
 
-        for dmg in damage_numbers:
-            sx, sy = camera.world_to_screen(dmg.position)
-            alpha = int(255 * (dmg.lifetime / 1.0))
-            color = Config.COLOR_DAMAGE_CRIT if dmg.is_crit else Config.COLOR_DAMAGE_NORMAL
-            text = f"{dmg.damage}!" if dmg.is_crit else str(dmg.damage)
-            surf = (self.font if dmg.is_crit else self.small_font).render(text, True, color)
-            surf.set_alpha(alpha)
-            self.screen.blit(surf, surf.get_rect(center=(sx, sy)))
+        # Enhanced damage numbers (config-driven, type-colored, physics-based)
+        # Render via DamageNumberManager if available on renderer, else legacy fallback
+        dmg_manager = getattr(self, '_damage_number_manager', None)
+        if dmg_manager is not None:
+            dmg_manager.render(self.screen, camera, self.small_font, self.font)
+        else:
+            for dmg in damage_numbers:
+                sx, sy = camera.world_to_screen(dmg.position)
+                alpha = int(255 * (dmg.lifetime / 1.0))
+                color = Config.COLOR_DAMAGE_CRIT if dmg.is_crit else Config.COLOR_DAMAGE_NORMAL
+                text = f"{dmg.damage}!" if dmg.is_crit else str(dmg.damage)
+                surf = (self.font if dmg.is_crit else self.small_font).render(text, True, color)
+                surf.set_alpha(alpha)
+                self.screen.blit(surf, surf.get_rect(center=(sx, sy)))
+
+        # Debug hitbox visualization (F1 toggle)
+        ac_debug = getattr(self, '_temp_ac_systems', None)
+        if ac_debug and getattr(self, '_debug_hitboxes', False):
+            try:
+                from rendering.visual_effects import render_debug_hitboxes, render_debug_projectiles
+                hitbox_sys = ac_debug.get('hitbox')
+                proj_sys = ac_debug.get('projectile')
+                if hitbox_sys:
+                    render_debug_hitboxes(self.screen, camera, hitbox_sys, Config.TILE_SIZE)
+                if proj_sys:
+                    render_debug_projectiles(self.screen, camera, proj_sys, Config.TILE_SIZE)
+            except Exception:
+                pass
+
+        # Death effects (fade/shrink animations for killed enemies)
+        death_manager = getattr(self, '_death_effect_manager', None)
+        if death_manager:
+            death_manager.render(self.screen, camera, Config.TILE_SIZE)
 
     @staticmethod
     def _draw_telegraph_arc(surface, center_x, center_y, radius_px, facing_rad,
@@ -2387,10 +2417,15 @@ class Renderer:
                     # Corpse (no loot in dungeons - just a grey dot)
                     pygame.draw.circle(self.screen, (80, 80, 80), (ex, ey), Config.TILE_SIZE // 4)
 
-        # Render player
-        center_x, center_y = camera.world_to_screen(character.position)
-        pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
-        pygame.draw.circle(self.screen, (0, 0, 0), (center_x, center_y), Config.TILE_SIZE // 3, 2)
+        # Render player (enhanced: facing indicator, shadow, idle bob)
+        try:
+            from rendering.visual_effects import render_player_enhanced
+            render_player_enhanced(self.screen, camera, character, Config.TILE_SIZE,
+                                   getattr(self, '_temp_ac_systems', None))
+        except Exception:
+            center_x, center_y = camera.world_to_screen(character.position)
+            pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
+            pygame.draw.circle(self.screen, (0, 0, 0), (center_x, center_y), Config.TILE_SIZE // 3, 2)
 
         # Render action combat overlays in dungeon (hitboxes, projectiles, particles, flashes)
         ac_systems = getattr(self, '_temp_ac_systems', None)

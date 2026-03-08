@@ -297,6 +297,17 @@ class GameEngine:
 
         self.damage_numbers: List[DamageNumber] = []
         self.notifications: List[Notification] = []
+
+        # Enhanced visual systems (graceful fallback if unavailable)
+        try:
+            from rendering.visual_effects import DamageNumberManager, EnemyDeathManager
+            self._enhanced_damage_numbers = DamageNumberManager()
+            self._enemy_death_manager = EnemyDeathManager()
+            self._visual_effects_loaded = True
+        except ImportError:
+            self._enhanced_damage_numbers = None
+            self._enemy_death_manager = None
+            self._visual_effects_loaded = False
         self.crafting_window_rect = None
         self.crafting_recipes = []
         self.selected_recipe = None  # Currently selected recipe in crafting UI (for placement display)
@@ -2948,10 +2959,17 @@ class GameEngine:
 
             # Visual feedback
             if damage > 0:
+                # Legacy damage number (for non-enhanced fallback)
                 self.damage_numbers.append(DamageNumber(
                     int(damage),
                     Position(enemy.position[0], enemy.position[1], 0),
                     is_crit))
+
+                # Enhanced damage number (type-colored, physics-based)
+                if self._enhanced_damage_numbers:
+                    self._enhanced_damage_numbers.spawn(
+                        int(damage), enemy.position[0], enemy.position[1],
+                        is_crit=is_crit, damage_type=damage_type)
 
                 flash_color = flash_colors.get(damage_type, (255, 255, 255))
                 se.flash_entity(hit.target_id, flash_color, 100)
@@ -2967,6 +2985,15 @@ class GameEngine:
                 # Screen shake on all enemy kills — scales with tier
                 _kill_shake = {1: 2, 2: 3, 3: 5, 4: 8}.get(enemy.definition.tier, 2)
                 se.screen_shake(_kill_shake, 150)
+
+                # Spawn death effect (fade + shrink animation)
+                if self._enemy_death_manager:
+                    vis_size = getattr(enemy.definition, 'visual_size', 1.0)
+                    tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
+                    e_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
+                    self._enemy_death_manager.spawn(
+                        enemy.position[0], enemy.position[1],
+                        vis_size, enemy.definition.tier, e_color)
 
         else:
             # Enemy hit the player
@@ -3110,8 +3137,24 @@ class GameEngine:
                     int(damage),
                     Position(hit_enemy.position[0], hit_enemy.position[1], 0),
                     is_crit))
+                if self._enhanced_damage_numbers:
+                    _dmg_type = "physical"
+                    for _t in (effect_tags or []):
+                        if _t in ("fire", "ice", "frost", "lightning", "poison", "arcane", "shadow", "holy"):
+                            _dmg_type = "ice" if _t == "frost" else _t
+                            break
+                    self._enhanced_damage_numbers.spawn(
+                        int(damage), hit_enemy.position[0], hit_enemy.position[1],
+                        is_crit=is_crit, damage_type=_dmg_type)
 
                 if not hit_enemy.is_alive:
+                    if self._enemy_death_manager:
+                        _vis = getattr(hit_enemy.definition, 'visual_size', 1.0)
+                        _tc = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
+                        self._enemy_death_manager.spawn(
+                            hit_enemy.position[0], hit_enemy.position[1],
+                            _vis, hit_enemy.definition.tier,
+                            _tc.get(hit_enemy.definition.tier, (200, 100, 100)))
                     self.add_notification(f"Defeated {hit_enemy.definition.name}!", (255, 215, 0))
                     self.character.activities.record_activity('combat', 1)
                     if loot:
@@ -7288,6 +7331,13 @@ class GameEngine:
         self.damage_numbers = [d for d in self.damage_numbers if d.update(dt)]
         self.notifications = [n for n in self.notifications if n.update(dt)]
 
+        # Update enhanced visual systems
+        dt_ms = dt * 1000.0
+        if self._enhanced_damage_numbers:
+            self._enhanced_damage_numbers.update(dt_ms)
+        if self._enemy_death_manager:
+            self._enemy_death_manager.update(dt_ms)
+
     def render(self):
         self.screen.fill(Config.COLOR_BACKGROUND)
 
@@ -7312,6 +7362,11 @@ class GameEngine:
             self.camera.shake_offset = self._ac['screen_effects'].shake_offset
         else:
             self.camera.shake_offset = (0, 0)
+
+        # Pass enhanced visual managers to renderer for this frame
+        self.renderer._damage_number_manager = self._enhanced_damage_numbers
+        self.renderer._death_effect_manager = self._enemy_death_manager
+        self.renderer._debug_hitboxes = self.debug_mode_active.get('f1', False)
 
         # Render world or dungeon depending on state
         if self.dungeon_manager.in_dungeon:
