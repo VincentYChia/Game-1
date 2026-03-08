@@ -256,24 +256,6 @@ class EnemyDatabase:
                     else:
                         print(f"⚠️ Warning: Enemy {enemy_data.get('enemyId')} references unknown ability '{ability_id}'")
 
-                # Parse per-enemy attacks
-                attack_defs = []
-                for atk_data in enemy_data.get('attacks', []):
-                    attack_defs.append(EnemyAttackDef(
-                        attack_id=atk_data.get('attackId', 'basic'),
-                        shape=atk_data.get('shape', 'arc'),
-                        arc=atk_data.get('arc', 80.0),
-                        range=atk_data.get('range', 1.5),
-                        windup=atk_data.get('windup', 500.0),
-                        active=atk_data.get('active', 200.0),
-                        recovery=atk_data.get('recovery', 350.0),
-                        weight=atk_data.get('weight', 1),
-                        tags=atk_data.get('tags', ['physical']),
-                        screen_shake=atk_data.get('screenShake', False),
-                        damage_multiplier=atk_data.get('damageMultiplier', 1.0),
-                        status_tags=atk_data.get('statusTags', []),
-                    ))
-
                 # Parse metadata
                 metadata = enemy_data.get('metadata', {})
 
@@ -301,11 +283,15 @@ class EnemyDatabase:
                     drops=drops,
                     ai_pattern=ai_pattern,
                     special_abilities=special_abilities,
-                    attacks=attack_defs,
                     narrative=metadata.get('narrative', ''),
                     tags=metadata.get('tags', []),
                     icon_path=icon_path
                 )
+
+                # Generate attack profiles from existing fields (category, tier,
+                # behavior, stats, abilities) — no JSON modification needed.
+                from Combat.attack_profile_generator import generate_attack_profile
+                enemy_def.attacks = generate_attack_profile(enemy_def)
 
                 self.enemies[enemy_def.enemy_id] = enemy_def
                 if enemy_def.tier in self.enemies_by_tier:
@@ -388,24 +374,6 @@ class EnemyDatabase:
                     else:
                         print(f"⚠️ Warning: Enemy {enemy_data.get('enemyId')} references unknown ability '{ability_id}'")
 
-                # Parse per-enemy attacks
-                attack_defs = []
-                for atk_data in enemy_data.get('attacks', []):
-                    attack_defs.append(EnemyAttackDef(
-                        attack_id=atk_data.get('attackId', 'basic'),
-                        shape=atk_data.get('shape', 'arc'),
-                        arc=atk_data.get('arc', 80.0),
-                        range=atk_data.get('range', 1.5),
-                        windup=atk_data.get('windup', 500.0),
-                        active=atk_data.get('active', 200.0),
-                        recovery=atk_data.get('recovery', 350.0),
-                        weight=atk_data.get('weight', 1),
-                        tags=atk_data.get('tags', ['physical']),
-                        screen_shake=atk_data.get('screenShake', False),
-                        damage_multiplier=atk_data.get('damageMultiplier', 1.0),
-                        status_tags=atk_data.get('statusTags', []),
-                    ))
-
                 # Parse metadata
                 metadata = enemy_data.get('metadata', {})
                 enemy_id = enemy_data.get('enemyId', '')
@@ -432,11 +400,14 @@ class EnemyDatabase:
                     drops=drops,
                     ai_pattern=ai_pattern,
                     special_abilities=special_abilities,
-                    attacks=attack_defs,
                     narrative=metadata.get('narrative', ''),
                     tags=metadata.get('tags', []),
                     icon_path=icon_path
                 )
+
+                # Generate attack profiles from existing fields
+                from Combat.attack_profile_generator import generate_attack_profile
+                enemy_def.attacks = generate_attack_profile(enemy_def)
 
                 self.enemies[enemy_def.enemy_id] = enemy_def
                 if enemy_def.tier in self.enemies_by_tier:
@@ -1034,33 +1005,32 @@ class Enemy:
 
             attack_tags = selected_attack.tags
         else:
-            # Fallback: category-based profile (for abilities or enemies without attack defs)
-            _PROFILES = {
-                'beast':     {'windup': 600, 'active': 240, 'recovery': 400, 'arc': 80,  'shape': 'arc'},
-                'ooze':      {'windup': 800, 'active': 400, 'recovery': 600, 'arc': 360, 'shape': 'circle'},
-                'insect':    {'windup': 400, 'active': 160, 'recovery': 300, 'arc': 60,  'shape': 'arc'},
-                'construct': {'windup': 800, 'active': 400, 'recovery': 600, 'arc': 100, 'shape': 'arc'},
-                'undead':    {'windup': 700, 'active': 300, 'recovery': 500, 'arc': 90,  'shape': 'arc'},
-                'elemental': {'windup': 700, 'active': 360, 'recovery': 500, 'arc': 360, 'shape': 'circle'},
-                'aberration': {'windup': 600, 'active': 320, 'recovery': 400, 'arc': 120, 'shape': 'arc'},
-                'dragon':    {'windup': 1000, 'active': 500, 'recovery': 700, 'arc': 140, 'shape': 'arc'},
-                'humanoid':  {'windup': 500, 'active': 200, 'recovery': 360, 'arc': 80,  'shape': 'arc'},
-            }
-            profile = _PROFILES.get(self.definition.category, _PROFILES['beast'])
+            # Ability-only fallback: use the primary generated attack's timing
+            # as a baseline for ability windups (abilities skip _select_attack).
+            primary = self.definition.attacks[0] if self.definition.attacks else None
+            if primary:
+                speed_factor = 1.0 / max(0.3, self.definition.attack_speed)
+                tier_speed = {1: 1.0, 2: 0.95, 3: 0.9, 4: 0.85}.get(self.definition.tier, 1.0)
 
-            speed_factor = 1.0 / max(0.3, self.definition.attack_speed)
-            tier_speed = {1: 1.0, 2: 0.95, 3: 0.9, 4: 0.85}.get(self.definition.tier, 1.0)
+                self._attack_windup_ms = primary.windup * speed_factor * tier_speed
+                self._attack_active_ms = primary.active * speed_factor * tier_speed
+                self._attack_recovery_ms = primary.recovery * speed_factor * tier_speed
 
-            self._attack_windup_ms = profile['windup'] * speed_factor * tier_speed
-            self._attack_active_ms = profile['active'] * speed_factor * tier_speed
-            self._attack_recovery_ms = profile['recovery'] * speed_factor * tier_speed
-
-            tier_radius_mult = {1: 1.0, 2: 1.3, 3: 1.6, 4: 2.0}.get(self.definition.tier, 1.0)
-            self._attack_arc_degrees = profile.get('arc', 80)
-            self._attack_radius = self.definition.visual_size * 0.8 * tier_radius_mult
-            self._attack_shape = profile.get('shape', 'arc')
-            self._attack_screen_shake = False
-            self._attack_damage_mult = 1.0
+                self._attack_arc_degrees = primary.arc if primary.shape == 'arc' else 360
+                self._attack_radius = primary.range
+                self._attack_shape = primary.shape
+                self._attack_screen_shake = False
+                self._attack_damage_mult = 1.0
+            else:
+                # Absolute last resort (should never happen with generator)
+                self._attack_windup_ms = 600
+                self._attack_active_ms = 240
+                self._attack_recovery_ms = 400
+                self._attack_arc_degrees = 80
+                self._attack_radius = 1.5
+                self._attack_shape = 'arc'
+                self._attack_screen_shake = False
+                self._attack_damage_mult = 1.0
 
             attack_tags = tags or ['physical']
 
