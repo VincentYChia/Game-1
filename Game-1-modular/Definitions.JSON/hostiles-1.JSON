@@ -362,6 +362,33 @@
           "chance": "low"
         }
       ],
+      "attacks": [
+        {
+          "attackId": "snap_bite",
+          "shape": "arc",
+          "arc": 45,
+          "range": 1.5,
+          "windup": 400,
+          "active": 180,
+          "recovery": 280,
+          "weight": 3,
+          "tags": ["physical"],
+          "screenShake": false
+        },
+        {
+          "attackId": "lunge_bite",
+          "shape": "arc",
+          "arc": 35,
+          "range": 2.2,
+          "windup": 550,
+          "active": 200,
+          "recovery": 400,
+          "weight": 1,
+          "tags": ["physical"],
+          "screenShake": true,
+          "damageMultiplier": 1.3
+        }
+      ],
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
@@ -403,6 +430,46 @@
           "materialId": "living_ichor",
           "quantity": [1, 2],
           "chance": "moderate"
+        }
+      ],
+      "attacks": [
+        {
+          "attackId": "savage_bite",
+          "shape": "arc",
+          "arc": 55,
+          "range": 1.8,
+          "windup": 350,
+          "active": 180,
+          "recovery": 300,
+          "weight": 3,
+          "tags": ["physical"],
+          "screenShake": false
+        },
+        {
+          "attackId": "raking_claws",
+          "shape": "arc",
+          "arc": 90,
+          "range": 1.5,
+          "windup": 280,
+          "active": 160,
+          "recovery": 250,
+          "weight": 2,
+          "tags": ["physical", "bleed"],
+          "screenShake": false,
+          "statusTags": ["bleed"]
+        },
+        {
+          "attackId": "lunging_snap",
+          "shape": "arc",
+          "arc": 30,
+          "range": 2.8,
+          "windup": 600,
+          "active": 220,
+          "recovery": 450,
+          "weight": 1,
+          "tags": ["physical"],
+          "screenShake": true,
+          "damageMultiplier": 1.5
         }
       ],
       "aiPattern": {
@@ -454,6 +521,46 @@
           "chance": "moderate"
         }
       ],
+      "attacks": [
+        {
+          "attackId": "shadow_bite",
+          "shape": "arc",
+          "arc": 70,
+          "range": 2.5,
+          "windup": 300,
+          "active": 160,
+          "recovery": 280,
+          "weight": 3,
+          "tags": ["physical", "shadow"],
+          "screenShake": false
+        },
+        {
+          "attackId": "shadow_rend",
+          "shape": "arc",
+          "arc": 120,
+          "range": 2.0,
+          "windup": 450,
+          "active": 240,
+          "recovery": 350,
+          "weight": 2,
+          "tags": ["shadow"],
+          "screenShake": true,
+          "damageMultiplier": 1.4,
+          "statusTags": ["bleed"]
+        },
+        {
+          "attackId": "alpha_lunge",
+          "shape": "line",
+          "range": 4.0,
+          "windup": 700,
+          "active": 200,
+          "recovery": 500,
+          "weight": 1,
+          "tags": ["physical", "shadow"],
+          "screenShake": true,
+          "damageMultiplier": 2.0
+        }
+      ],
       "aiPattern": {
         "defaultState": "patrol",
         "aggroOnDamage": true,
@@ -492,6 +599,19 @@
           "materialId": "water_crystal",
           "quantity": [1, 1],
           "chance": "rare"
+        }
+      ],
+      "attacks": [
+        {
+          "attackId": "slime_bump",
+          "shape": "circle",
+          "range": 0.8,
+          "windup": 600,
+          "active": 400,
+          "recovery": 500,
+          "weight": 3,
+          "tags": ["physical"],
+          "screenShake": false
         }
       ],
       "aiPattern": {
@@ -535,6 +655,32 @@
           "materialId": "shadow_core",
           "quantity": [1, 1],
           "chance": "low"
+        }
+      ],
+      "attacks": [
+        {
+          "attackId": "acid_touch",
+          "shape": "circle",
+          "range": 1.2,
+          "windup": 500,
+          "active": 350,
+          "recovery": 450,
+          "weight": 3,
+          "tags": ["poison"],
+          "screenShake": false,
+          "statusTags": ["poison"]
+        },
+        {
+          "attackId": "acid_splash",
+          "shape": "circle",
+          "range": 2.0,
+          "windup": 800,
+          "active": 500,
+          "recovery": 600,
+          "weight": 1,
+          "tags": ["poison"],
+          "screenShake": true,
+          "damageMultiplier": 1.5
         }
       ],
       "aiPattern": {
@@ -586,6 +732,31 @@
           "chance": "moderate"
         }
       ],
+      "attacks": [
+        {
+          "attackId": "crystal_pulse",
+          "shape": "circle",
+          "range": 1.8,
+          "windup": 600,
+          "active": 400,
+          "recovery": 500,
+          "weight": 3,
+          "tags": ["arcane"],
+          "screenShake": false
+        },
+        {
+          "attackId": "prismatic_burst",
+          "shape": "circle",
+          "range": 3.0,
+          "windup": 1000,
+          "active": 600,
+          "recovery": 700,
+          "weight": 1,
+          "tags": ["arcane", "lightning"],
+          "screenShake": true,
+          "damageMultiplier": 1.8
+        }
+      ],
       "aiPattern": {
         "defaultState": "patrol",
         "aggroOnDamage": true,
@@ -623,6 +794,32 @@
           "materialId": "earth_crystal",
           "quantity": [1, 1],
           "chance": "low"
+        }
+      ],
+      "attacks": [
+        {
+          "attackId": "mandible_snap",
+          "shape": "arc",
+          "arc": 40,
+          "range": 1.2,
+          "windup": 300,
+          "active": 140,
+          "recovery": 250,
+          "weight": 3,
+          "tags": ["physical"],
+          "screenShake": false
+        },
+        {
+          "attackId": "carapace_slam",
+          "shape": "circle",
+          "range": 0.8,
+          "windup": 500,
+          "active": 200,
+          "recovery": 400,
+          "weight": 1,
+          "tags": ["physical"],
+          "screenShake": false,
+          "damageMultiplier": 1.2
         }
       ],
       "aiPattern": {
@@ -666,6 +863,46 @@
           "materialId": "living_ichor",
           "quantity": [2, 3],
           "chance": "moderate"
+        }
+      ],
+      "attacks": [
+        {
+          "attackId": "armored_bite",
+          "shape": "arc",
+          "arc": 50,
+          "range": 1.5,
+          "windup": 350,
+          "active": 160,
+          "recovery": 300,
+          "weight": 3,
+          "tags": ["physical"],
+          "screenShake": false
+        },
+        {
+          "attackId": "horn_gore",
+          "shape": "arc",
+          "arc": 25,
+          "range": 2.5,
+          "windup": 500,
+          "active": 200,
+          "recovery": 400,
+          "weight": 2,
+          "tags": ["physical"],
+          "screenShake": true,
+          "damageMultiplier": 1.4,
+          "statusTags": ["bleed"]
+        },
+        {
+          "attackId": "body_slam",
+          "shape": "circle",
+          "range": 1.5,
+          "windup": 700,
+          "active": 300,
+          "recovery": 500,
+          "weight": 1,
+          "tags": ["physical"],
+          "screenShake": true,
+          "damageMultiplier": 1.6
         }
       ],
       "aiPattern": {
@@ -717,6 +954,45 @@
           "chance": "moderate"
         }
       ],
+      "attacks": [
+        {
+          "attackId": "mandible_crush",
+          "shape": "arc",
+          "arc": 70,
+          "range": 2.0,
+          "windup": 300,
+          "active": 140,
+          "recovery": 250,
+          "weight": 3,
+          "tags": ["physical"],
+          "screenShake": false
+        },
+        {
+          "attackId": "titan_horn_sweep",
+          "shape": "arc",
+          "arc": 140,
+          "range": 3.0,
+          "windup": 600,
+          "active": 300,
+          "recovery": 450,
+          "weight": 2,
+          "tags": ["physical"],
+          "screenShake": true,
+          "damageMultiplier": 1.5
+        },
+        {
+          "attackId": "titan_slam",
+          "shape": "circle",
+          "range": 3.5,
+          "windup": 900,
+          "active": 400,
+          "recovery": 600,
+          "weight": 1,
+          "tags": ["physical"],
+          "screenShake": true,
+          "damageMultiplier": 2.0
+        }
+      ],
       "aiPattern": {
         "defaultState": "patrol",
         "aggroOnDamage": true,
@@ -764,6 +1040,44 @@
           "materialId": "diamond",
           "quantity": [1, 2],
           "chance": "moderate"
+        }
+      ],
+      "attacks": [
+        {
+          "attackId": "stone_fist",
+          "shape": "arc",
+          "arc": 80,
+          "range": 2.0,
+          "windup": 700,
+          "active": 350,
+          "recovery": 500,
+          "weight": 3,
+          "tags": ["physical"],
+          "screenShake": true
+        },
+        {
+          "attackId": "boulder_smash",
+          "shape": "circle",
+          "range": 2.5,
+          "windup": 1000,
+          "active": 500,
+          "recovery": 700,
+          "weight": 2,
+          "tags": ["physical"],
+          "screenShake": true,
+          "damageMultiplier": 1.6
+        },
+        {
+          "attackId": "ground_pound",
+          "shape": "circle",
+          "range": 4.0,
+          "windup": 1200,
+          "active": 600,
+          "recovery": 800,
+          "weight": 1,
+          "tags": ["physical"],
+          "screenShake": true,
+          "damageMultiplier": 2.0
         }
       ],
       "aiPattern": {
@@ -815,6 +1129,45 @@
           "chance": "low"
         }
       ],
+      "attacks": [
+        {
+          "attackId": "crystal_slam",
+          "shape": "arc",
+          "arc": 100,
+          "range": 2.5,
+          "windup": 600,
+          "active": 350,
+          "recovery": 450,
+          "weight": 3,
+          "tags": ["arcane"],
+          "screenShake": true
+        },
+        {
+          "attackId": "prism_sweep",
+          "shape": "arc",
+          "arc": 160,
+          "range": 3.0,
+          "windup": 800,
+          "active": 450,
+          "recovery": 600,
+          "weight": 2,
+          "tags": ["arcane", "lightning"],
+          "screenShake": true,
+          "damageMultiplier": 1.5
+        },
+        {
+          "attackId": "crystal_nova",
+          "shape": "circle",
+          "range": 4.5,
+          "windup": 1100,
+          "active": 600,
+          "recovery": 800,
+          "weight": 1,
+          "tags": ["arcane"],
+          "screenShake": true,
+          "damageMultiplier": 2.0
+        }
+      ],
       "aiPattern": {
         "defaultState": "guard",
         "aggroOnDamage": true,
@@ -862,6 +1215,46 @@
           "materialId": "essence_blood",
           "quantity": [3, 4],
           "chance": "moderate"
+        }
+      ],
+      "attacks": [
+        {
+          "attackId": "spectral_claw",
+          "shape": "arc",
+          "arc": 60,
+          "range": 2.0,
+          "windup": 350,
+          "active": 200,
+          "recovery": 300,
+          "weight": 3,
+          "tags": ["shadow"],
+          "screenShake": false
+        },
+        {
+          "attackId": "void_slash",
+          "shape": "line",
+          "range": 4.0,
+          "windup": 500,
+          "active": 180,
+          "recovery": 400,
+          "weight": 2,
+          "tags": ["shadow"],
+          "screenShake": false,
+          "damageMultiplier": 1.4
+        },
+        {
+          "attackId": "soul_rend",
+          "shape": "arc",
+          "arc": 180,
+          "range": 3.0,
+          "windup": 700,
+          "active": 300,
+          "recovery": 500,
+          "weight": 1,
+          "tags": ["shadow"],
+          "screenShake": true,
+          "damageMultiplier": 1.8,
+          "statusTags": ["weaken"]
         }
       ],
       "aiPattern": {
@@ -916,6 +1309,58 @@
           "materialId": "primordial_crystal",
           "quantity": [2, 4],
           "chance": "moderate"
+        }
+      ],
+      "attacks": [
+        {
+          "attackId": "reality_lash",
+          "shape": "arc",
+          "arc": 120,
+          "range": 3.5,
+          "windup": 400,
+          "active": 280,
+          "recovery": 350,
+          "weight": 3,
+          "tags": ["chaos", "arcane"],
+          "screenShake": true
+        },
+        {
+          "attackId": "dimensional_sweep",
+          "shape": "arc",
+          "arc": 200,
+          "range": 4.0,
+          "windup": 700,
+          "active": 400,
+          "recovery": 500,
+          "weight": 2,
+          "tags": ["chaos", "shadow"],
+          "screenShake": true,
+          "damageMultiplier": 1.5,
+          "statusTags": ["vulnerable"]
+        },
+        {
+          "attackId": "entropy_nova",
+          "shape": "circle",
+          "range": 6.0,
+          "windup": 1200,
+          "active": 600,
+          "recovery": 800,
+          "weight": 1,
+          "tags": ["chaos"],
+          "screenShake": true,
+          "damageMultiplier": 2.5
+        },
+        {
+          "attackId": "void_tendril",
+          "shape": "line",
+          "range": 8.0,
+          "windup": 600,
+          "active": 250,
+          "recovery": 450,
+          "weight": 2,
+          "tags": ["shadow"],
+          "screenShake": false,
+          "damageMultiplier": 1.3
         }
       ],
       "aiPattern": {

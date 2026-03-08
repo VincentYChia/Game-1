@@ -3038,9 +3038,14 @@ class GameEngine:
                     weapon_type, 0, weapon_range, weapon_speed, weapon_tags)
                 if attack_def:
                     effect_tags, effect_params = self._get_weapon_effect_data(hand)
+                    _w = weapon
                     damage_context = {
                         'effect_tags': effect_tags,
                         'effect_params': effect_params,
+                        'weapon_type': weapon_type,
+                        'weapon_tags': weapon_tags,
+                        'weapon_tier': getattr(_w, 'tier', 1) if _w else 1,
+                        'weapon_weight': getattr(_w, 'weight', 1.0) if _w else 1.0,
                     }
                     player_sm.start_attack(attack_def, damage_context)
                     self.character._attack_facing_locked = True
@@ -7211,9 +7216,15 @@ class GameEngine:
                                 weapon_type, 0, weapon_range, weapon_speed, weapon_tags)
                             if attack_def:
                                 effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
+                                # Include weapon metadata for visual style resolution
+                                _w = self.character.equipment.slots.get('mainHand')
                                 damage_context = {
                                     'effect_tags': effect_tags,
                                     'effect_params': effect_params,
+                                    'weapon_type': weapon_type,
+                                    'weapon_tags': weapon_tags,
+                                    'weapon_tier': getattr(_w, 'tier', 1) if _w else 1,
+                                    'weapon_weight': getattr(_w, 'weight', 1.0) if _w else 1.0,
                                 }
                                 # Compute attack direction toward mouse cursor
                                 mouse_pos = pygame.mouse.get_pos()

@@ -437,6 +437,9 @@ class CombatManager:
                         self.enemies[chunk_coords] = []
                     self.enemies[chunk_coords].append(enemy)
 
+                    # Register with action combat systems (hurtbox + ASM)
+                    self._register_enemy_action_combat(enemy)
+
                     spawned += 1
                     print(f"   ✓ Spawned T{tier} {enemy_def.name} at ({spawn_x:.1f}, {spawn_y:.1f})")
 
@@ -1620,35 +1623,42 @@ class CombatManager:
             enemy.attack_cooldown = 1.0 / enemy.definition.attack_speed
             return
 
+        # Read per-attack data from pending attack (set by start_phased_attack)
+        pending = getattr(enemy, 'attack_pending_data', None) or {}
+        _atk_dmg_mult = pending.get('damage_multiplier', 1.0)
+        _atk_screen_shake = pending.get('screen_shake', False)
+        _atk_tags = pending.get('tags', [])
+
         # Add tag-driven attack visual (slash arc toward player)
         import math as _math
         dx = player_pos[0] - enemy_pos[0]
         dy = player_pos[1] - enemy_pos[1]
         facing = _math.degrees(_math.atan2(dy, dx))
         _dist = _math.sqrt(dx * dx + dy * dy)
-        enemy_tags = getattr(enemy.definition, 'tags', []) or ['physical']
-        _enemy_arc = min(80.0, 50.0 + enemy.definition.visual_size * 15.0)
+
+        # Use per-enemy attack tags if available, else definition tags
+        enemy_tags = _atk_tags if _atk_tags else (getattr(enemy.definition, 'tags', []) or ['physical'])
+        # Use actual attack geometry from the enemy instance
+        _enemy_arc = getattr(enemy, '_attack_arc_degrees', 80.0)
+        _enemy_radius = getattr(enemy, '_attack_radius', max(1.5, _dist + 0.3))
         attack_effects.add_attack_effect(
             enemy_pos, player_pos,
             AttackSourceType.ENEMY,
-            damage=enemy.definition.damage_max,
+            damage=enemy.definition.damage_max * _atk_dmg_mult,
             tags=enemy_tags,
             facing_angle=facing,
             arc_degrees=_enemy_arc,
-            radius=max(1.5, _dist + 0.3),  # Cover full attack range
+            radius=max(1.5, _enemy_radius),
         )
 
-        # Screen shake on all enemy hits — scales with tier
-        try:
-            from Combat.screen_effects import ScreenEffects
-            # Access screen effects from game engine's action combat systems
-            # For non-action-combat, create a screen shake via camera
-            _shake_intensity = {1: 2, 2: 3, 3: 5, 4: 7}.get(enemy.definition.tier, 2)
-            _shake_duration = {1: 80, 2: 120, 3: 180, 4: 250}.get(enemy.definition.tier, 80)
-            # Store shake request on enemy for game_engine to pick up
-            enemy._pending_screen_shake = (_shake_intensity, _shake_duration)
-        except Exception:
-            pass
+        # Screen shake — controlled by per-attack flag + tier scaling
+        if _atk_screen_shake:
+            try:
+                _shake_intensity = {1: 2, 2: 4, 3: 6, 4: 9}.get(enemy.definition.tier, 2)
+                _shake_duration = {1: 100, 2: 150, 3: 200, 4: 280}.get(enemy.definition.tier, 100)
+                enemy._pending_screen_shake = (_shake_intensity, _shake_duration)
+            except Exception:
+                pass
 
         # Trigger enemy attack animation
         enemy.attack_anim_timer = enemy.attack_anim_duration
@@ -1658,9 +1668,9 @@ class CombatManager:
 
         print(f"\n👹 ENEMY ATTACK: {enemy.definition.name}")
 
-        # Calculate damage
-        damage = enemy.perform_attack()
-        print(f"   Base damage: {damage:.1f}")
+        # Calculate damage (apply per-attack multiplier from JSON definition)
+        damage = enemy.perform_attack() * _atk_dmg_mult
+        print(f"   Base damage: {damage:.1f} (x{_atk_dmg_mult:.1f})")
 
         # Calculate damage reduction
         defense_stat = self.character.stats.defense

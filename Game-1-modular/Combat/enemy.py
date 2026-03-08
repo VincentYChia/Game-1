@@ -70,6 +70,26 @@ class AIPattern:
     special_abilities: List[str] = field(default_factory=list)
 
 @dataclass
+class EnemyAttackDef:
+    """Per-enemy attack definition loaded from JSON.
+
+    Each enemy can have multiple attacks with different shapes, arcs, ranges,
+    and timing. The 'weight' field controls selection probability.
+    """
+    attack_id: str
+    shape: str                       # 'arc', 'circle', 'line', 'rect'
+    arc: float = 80.0                # Arc angle in degrees (for 'arc' shape)
+    range: float = 1.5               # Attack reach in tiles
+    windup: float = 500.0            # Windup phase duration (ms)
+    active: float = 200.0            # Active (damage) phase duration (ms)
+    recovery: float = 350.0          # Recovery phase duration (ms)
+    weight: int = 1                  # Selection weight (higher = more frequent)
+    tags: List[str] = field(default_factory=lambda: ['physical'])
+    screen_shake: bool = False
+    damage_multiplier: float = 1.0
+    status_tags: List[str] = field(default_factory=list)
+
+@dataclass
 class EnemyDefinition:
     enemy_id: str
     name: str
@@ -92,6 +112,9 @@ class EnemyDefinition:
 
     # Special abilities (tag-based attacks)
     special_abilities: List[SpecialAbility] = field(default_factory=list)
+
+    # Per-enemy attack definitions (loaded from JSON)
+    attacks: List[EnemyAttackDef] = field(default_factory=list)
 
     # Metadata
     narrative: str = ""
@@ -233,6 +256,24 @@ class EnemyDatabase:
                     else:
                         print(f"⚠️ Warning: Enemy {enemy_data.get('enemyId')} references unknown ability '{ability_id}'")
 
+                # Parse per-enemy attacks
+                attack_defs = []
+                for atk_data in enemy_data.get('attacks', []):
+                    attack_defs.append(EnemyAttackDef(
+                        attack_id=atk_data.get('attackId', 'basic'),
+                        shape=atk_data.get('shape', 'arc'),
+                        arc=atk_data.get('arc', 80.0),
+                        range=atk_data.get('range', 1.5),
+                        windup=atk_data.get('windup', 500.0),
+                        active=atk_data.get('active', 200.0),
+                        recovery=atk_data.get('recovery', 350.0),
+                        weight=atk_data.get('weight', 1),
+                        tags=atk_data.get('tags', ['physical']),
+                        screen_shake=atk_data.get('screenShake', False),
+                        damage_multiplier=atk_data.get('damageMultiplier', 1.0),
+                        status_tags=atk_data.get('statusTags', []),
+                    ))
+
                 # Parse metadata
                 metadata = enemy_data.get('metadata', {})
 
@@ -250,7 +291,7 @@ class EnemyDatabase:
                     tier=enemy_data.get('tier', 1),
                     category=enemy_data.get('category', 'beast'),
                     behavior=enemy_data.get('behavior', 'passive_patrol'),
-                    max_health=stats.get('health', 50) * 0.1,  # Reduced by 90% for testing
+                    max_health=stats.get('health', 50),
                     damage_min=damage[0] if isinstance(damage, list) else damage,
                     damage_max=damage[1] if isinstance(damage, list) else damage,
                     defense=stats.get('defense', 0),
@@ -260,6 +301,7 @@ class EnemyDatabase:
                     drops=drops,
                     ai_pattern=ai_pattern,
                     special_abilities=special_abilities,
+                    attacks=attack_defs,
                     narrative=metadata.get('narrative', ''),
                     tags=metadata.get('tags', []),
                     icon_path=icon_path
@@ -346,6 +388,24 @@ class EnemyDatabase:
                     else:
                         print(f"⚠️ Warning: Enemy {enemy_data.get('enemyId')} references unknown ability '{ability_id}'")
 
+                # Parse per-enemy attacks
+                attack_defs = []
+                for atk_data in enemy_data.get('attacks', []):
+                    attack_defs.append(EnemyAttackDef(
+                        attack_id=atk_data.get('attackId', 'basic'),
+                        shape=atk_data.get('shape', 'arc'),
+                        arc=atk_data.get('arc', 80.0),
+                        range=atk_data.get('range', 1.5),
+                        windup=atk_data.get('windup', 500.0),
+                        active=atk_data.get('active', 200.0),
+                        recovery=atk_data.get('recovery', 350.0),
+                        weight=atk_data.get('weight', 1),
+                        tags=atk_data.get('tags', ['physical']),
+                        screen_shake=atk_data.get('screenShake', False),
+                        damage_multiplier=atk_data.get('damageMultiplier', 1.0),
+                        status_tags=atk_data.get('statusTags', []),
+                    ))
+
                 # Parse metadata
                 metadata = enemy_data.get('metadata', {})
                 enemy_id = enemy_data.get('enemyId', '')
@@ -362,7 +422,7 @@ class EnemyDatabase:
                     tier=enemy_data.get('tier', 1),
                     category=enemy_data.get('category', 'beast'),
                     behavior=enemy_data.get('behavior', 'passive_patrol'),
-                    max_health=stats.get('health', 50) * 0.1,
+                    max_health=stats.get('health', 50),
                     damage_min=damage[0] if isinstance(damage, list) else damage,
                     damage_max=damage[1] if isinstance(damage, list) else damage,
                     defense=stats.get('defense', 0),
@@ -372,6 +432,7 @@ class EnemyDatabase:
                     drops=drops,
                     ai_pattern=ai_pattern,
                     special_abilities=special_abilities,
+                    attacks=attack_defs,
                     narrative=metadata.get('narrative', ''),
                     tags=metadata.get('tags', []),
                     icon_path=icon_path
@@ -927,6 +988,14 @@ class Enemy:
 
         return self.attack_cooldown <= 0 and self.ai_state == AIState.ATTACK
 
+    def _select_attack(self) -> Optional['EnemyAttackDef']:
+        """Select a random attack from the enemy's attack pool using weights."""
+        attacks = self.definition.attacks
+        if not attacks:
+            return None
+        weights = [atk.weight for atk in attacks]
+        return random.choices(attacks, weights=weights, k=1)[0]
+
     def start_phased_attack(self, target_pos: Tuple[float, float],
                             tags: Optional[List[str]] = None,
                             is_ability: bool = False,
@@ -937,42 +1006,63 @@ class Enemy:
         The player can dodge during this window. Damage fires at the
         start of the active phase. Recovery prevents the next attack.
 
-        Timing scales with enemy's attack_speed stat and category profile.
+        Uses per-enemy attack definitions from JSON when available,
+        otherwise falls back to category-based profiles.
         """
         import math as _math
 
         if self.attack_phase != 'idle':
             return False
 
-        # Category -> timing + geometry (single source of truth for attack shape).
-        # Mirrors _ENEMY_ATTACK_PROFILES in combat_data_loader.py.
-        _PROFILES = {
-            'beast':     {'windup': 600, 'active': 240, 'recovery': 400, 'arc': 80,  'shape': 'arc'},
-            'ooze':      {'windup': 800, 'active': 400, 'recovery': 600, 'arc': 360, 'shape': 'circle'},
-            'insect':    {'windup': 400, 'active': 160, 'recovery': 300, 'arc': 60,  'shape': 'arc'},
-            'construct': {'windup': 800, 'active': 400, 'recovery': 600, 'arc': 100, 'shape': 'arc'},
-            'undead':    {'windup': 700, 'active': 300, 'recovery': 500, 'arc': 90,  'shape': 'arc'},
-            'elemental': {'windup': 700, 'active': 360, 'recovery': 500, 'arc': 360, 'shape': 'circle'},
-            'aberration': {'windup': 600, 'active': 320, 'recovery': 400, 'arc': 120, 'shape': 'arc'},
-            'dragon':    {'windup': 1000, 'active': 500, 'recovery': 700, 'arc': 140, 'shape': 'arc'},
-            'humanoid':  {'windup': 500, 'active': 200, 'recovery': 360, 'arc': 80,  'shape': 'arc'},
-        }
-        profile = _PROFILES.get(self.definition.category, _PROFILES['beast'])
+        # Try to select a per-enemy attack definition (JSON-driven)
+        selected_attack = None if is_ability else self._select_attack()
 
-        # Scale by attack_speed: higher attack_speed = faster phases
-        speed_factor = 1.0 / max(0.3, self.definition.attack_speed)
+        if selected_attack:
+            # Use per-enemy attack definition — full variety from JSON
+            speed_factor = 1.0 / max(0.3, self.definition.attack_speed)
+            tier_speed = {1: 1.0, 2: 0.95, 3: 0.9, 4: 0.85}.get(self.definition.tier, 1.0)
 
-        # Tier scaling: higher tier = slightly faster (more dangerous)
-        tier_speed = {1: 1.0, 2: 0.95, 3: 0.9, 4: 0.85}.get(self.definition.tier, 1.0)
+            self._attack_windup_ms = selected_attack.windup * speed_factor * tier_speed
+            self._attack_active_ms = selected_attack.active * speed_factor * tier_speed
+            self._attack_recovery_ms = selected_attack.recovery * speed_factor * tier_speed
 
-        self._attack_windup_ms = profile['windup'] * speed_factor * tier_speed
-        self._attack_active_ms = profile['active'] * speed_factor * tier_speed
-        self._attack_recovery_ms = profile['recovery'] * speed_factor * tier_speed
+            self._attack_arc_degrees = selected_attack.arc if selected_attack.shape == 'arc' else 360
+            self._attack_radius = selected_attack.range
+            self._attack_shape = selected_attack.shape
+            self._attack_screen_shake = selected_attack.screen_shake
+            self._attack_damage_mult = selected_attack.damage_multiplier
 
-        # Store attack geometry (single source of truth for renderer)
-        tier_radius_mult = {1: 1.0, 2: 1.3, 3: 1.6, 4: 2.0}.get(self.definition.tier, 1.0)
-        self._attack_arc_degrees = profile.get('arc', 80)
-        self._attack_radius = self.definition.visual_size * 0.8 * tier_radius_mult
+            attack_tags = selected_attack.tags
+        else:
+            # Fallback: category-based profile (for abilities or enemies without attack defs)
+            _PROFILES = {
+                'beast':     {'windup': 600, 'active': 240, 'recovery': 400, 'arc': 80,  'shape': 'arc'},
+                'ooze':      {'windup': 800, 'active': 400, 'recovery': 600, 'arc': 360, 'shape': 'circle'},
+                'insect':    {'windup': 400, 'active': 160, 'recovery': 300, 'arc': 60,  'shape': 'arc'},
+                'construct': {'windup': 800, 'active': 400, 'recovery': 600, 'arc': 100, 'shape': 'arc'},
+                'undead':    {'windup': 700, 'active': 300, 'recovery': 500, 'arc': 90,  'shape': 'arc'},
+                'elemental': {'windup': 700, 'active': 360, 'recovery': 500, 'arc': 360, 'shape': 'circle'},
+                'aberration': {'windup': 600, 'active': 320, 'recovery': 400, 'arc': 120, 'shape': 'arc'},
+                'dragon':    {'windup': 1000, 'active': 500, 'recovery': 700, 'arc': 140, 'shape': 'arc'},
+                'humanoid':  {'windup': 500, 'active': 200, 'recovery': 360, 'arc': 80,  'shape': 'arc'},
+            }
+            profile = _PROFILES.get(self.definition.category, _PROFILES['beast'])
+
+            speed_factor = 1.0 / max(0.3, self.definition.attack_speed)
+            tier_speed = {1: 1.0, 2: 0.95, 3: 0.9, 4: 0.85}.get(self.definition.tier, 1.0)
+
+            self._attack_windup_ms = profile['windup'] * speed_factor * tier_speed
+            self._attack_active_ms = profile['active'] * speed_factor * tier_speed
+            self._attack_recovery_ms = profile['recovery'] * speed_factor * tier_speed
+
+            tier_radius_mult = {1: 1.0, 2: 1.3, 3: 1.6, 4: 2.0}.get(self.definition.tier, 1.0)
+            self._attack_arc_degrees = profile.get('arc', 80)
+            self._attack_radius = self.definition.visual_size * 0.8 * tier_radius_mult
+            self._attack_shape = profile.get('shape', 'arc')
+            self._attack_screen_shake = False
+            self._attack_damage_mult = 1.0
+
+            attack_tags = tags or ['physical']
 
         # Enter windup phase
         self.attack_phase = 'windup'
@@ -985,14 +1075,15 @@ class Enemy:
         self.facing_angle = _math.degrees(_math.atan2(dy, dx))
 
         # Store pending data — combat_manager will read this when active phase starts
-        attack_tags = tags or ['physical']
         self.attack_pending_data = {
             'tags': attack_tags,
             'is_ability': is_ability,
             'ability': ability,
+            'damage_multiplier': getattr(self, '_attack_damage_mult', 1.0),
+            'screen_shake': getattr(self, '_attack_screen_shake', False),
         }
 
-        # Set animation data for renderer
+        # Set animation data for renderer (reads _attack_arc_degrees, _attack_radius, _attack_shape)
         self.attack_anim_angle = self.facing_angle
         self.attack_anim_tags = list(attack_tags)
         self.attack_anim_lunge = (ability is not None and

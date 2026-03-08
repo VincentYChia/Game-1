@@ -130,23 +130,69 @@ def generate_weapon_attack(weapon_type: str, weapon_range: float,
 def generate_enemy_attack(enemy_def, attack_index: int = 0) -> AttackDefinition:
     """Generate an attack definition from an enemy definition.
 
-    Uses the enemy's category for base shape, tier for timing/radius scaling,
-    and tags for visual coloring.
+    Uses per-enemy attack definitions from JSON when available. Falls back
+    to category-based profiles for enemies without explicit attack defs.
     """
+    import random as _rng
     category = getattr(enemy_def, 'category', 'beast')
     tier = getattr(enemy_def, 'tier', 1)
     enemy_tags = getattr(enemy_def, 'tags', [])
     visual_size = getattr(enemy_def, 'visual_size', 1.0)
 
-    profile = _ENEMY_ATTACK_PROFILES.get(category, _ENEMY_ATTACK_PROFILES['beast'])
-
-    # Tier scales attack radius and timing
-    tier_radius_mult = {1: 1.0, 2: 1.3, 3: 1.6, 4: 2.0}.get(tier, 1.0)
     tier_speed_mult = {1: 1.0, 2: 0.95, 3: 0.9, 4: 0.85}.get(tier, 1.0)
+
+    # Check for per-enemy attack definitions (loaded from JSON)
+    per_enemy_attacks = getattr(enemy_def, 'attacks', [])
+    if per_enemy_attacks:
+        # Select a weighted random attack from the pool
+        weights = [atk.weight for atk in per_enemy_attacks]
+        selected = _rng.choices(per_enemy_attacks, weights=weights, k=1)[0]
+
+        shape = selected.shape
+        hitbox_params = {'offset_forward': visual_size * 0.6}
+
+        if shape == 'arc' or shape == 'cone':
+            hitbox_params['shape'] = 'arc'
+            hitbox_params['radius'] = selected.range
+            hitbox_params['arc_degrees'] = selected.arc
+        elif shape == 'circle':
+            hitbox_params['shape'] = 'circle'
+            hitbox_params['radius'] = selected.range
+        elif shape == 'line':
+            hitbox_params['shape'] = 'line'
+            hitbox_params['length'] = selected.range
+        elif shape == 'rect':
+            hitbox_params['shape'] = 'rect'
+            hitbox_params['width'] = selected.range * 0.5
+            hitbox_params['height'] = selected.range
+
+        atk_tags = selected.tags or enemy_tags
+        telegraph_color = _color_from_tags(atk_tags, [255, 100, 100])
+
+        return AttackDefinition(
+            attack_id=f"enemy_{getattr(enemy_def, 'enemy_id', 'unknown')}_{selected.attack_id}",
+            windup_ms=selected.windup * tier_speed_mult,
+            active_ms=selected.active * tier_speed_mult,
+            recovery_ms=selected.recovery * tier_speed_mult,
+            cooldown_ms=200 * tier_speed_mult,
+            hitbox_shape=hitbox_params.get('shape', 'arc'),
+            hitbox_params=hitbox_params,
+            damage_multiplier=selected.damage_multiplier,
+            movement_multiplier=0.5,
+            can_be_interrupted=True,
+            animation_id=f"enemy_{category}_{selected.attack_id}",
+            status_tags=selected.status_tags,
+            screen_shake=selected.screen_shake,
+            telegraph_color=telegraph_color,
+            tags=atk_tags,
+        )
+
+    # Fallback: category-based profile
+    profile = _ENEMY_ATTACK_PROFILES.get(category, _ENEMY_ATTACK_PROFILES['beast'])
+    tier_radius_mult = {1: 1.0, 2: 1.3, 3: 1.6, 4: 2.0}.get(tier, 1.0)
 
     shape = profile['shape']
     hitbox_params = {'offset_forward': visual_size * 0.6}
-
     base_radius = visual_size * 0.8 * tier_radius_mult
 
     if shape == 'arc' or shape == 'cone':

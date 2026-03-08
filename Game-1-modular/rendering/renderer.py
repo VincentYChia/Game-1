@@ -1364,7 +1364,7 @@ class Renderer:
                     # --- Enemy attack animation (rendered after body) ---
                     # (Handled below after enemy body rendering)
 
-                    # --- Attack animation glow (quick flash on hit) ---
+                    # --- Attack animation glow (shape-aware, reads from enemy attack data) ---
                     anim_timer = getattr(enemy, 'attack_anim_timer', 0)
                     if anim_timer > 0:
                         atk_tags = getattr(enemy, 'attack_anim_tags', [])
@@ -1372,50 +1372,115 @@ class Renderer:
                         angle = getattr(enemy, 'attack_anim_angle', 0.0)
                         anim_duration = getattr(enemy, 'attack_anim_duration', 0.5)
                         anim_progress = 1.0 - (anim_timer / max(0.01, anim_duration))
-                        # Sweeping arc animation matching player weapon feel
-                        arc_r = int(size * 1.8)
-                        _enemy_arc_deg = 55.0  # Match moderate default
+
+                        # Read actual attack geometry from enemy instance
+                        _enemy_arc_deg = getattr(enemy, '_attack_arc_degrees', 80.0)
+                        _atk_shape = getattr(enemy, '_attack_shape', 'arc')
+                        _atk_radius = getattr(enemy, '_attack_radius', 1.5)
+                        arc_r = max(int(size * 1.2), int(_atk_radius * Config.TILE_SIZE * 0.5))
+
                         if arc_r > 2:
                             as_size = arc_r * 2 + 4
                             asurf = pygame.Surface((as_size, as_size), pygame.SRCALPHA)
                             ac_ = as_size // 2
                             rad = _emath.radians(angle)
-                            half_arc = _emath.radians(_enemy_arc_deg / 2.0)
-
-                            # Sweep the arc over the animation duration
-                            sweep_p = min(1.0, anim_progress * 2.0)  # Sweep in first half
-                            num_seg = 10
-                            sweep_segs = max(2, int(num_seg * sweep_p))
-
-                            trail_pts = [(ac_, ac_)]
-                            for i in range(sweep_segs + 1):
-                                a = rad - half_arc + _emath.radians(_enemy_arc_deg) * i / num_seg
-                                trail_pts.append((int(ac_ + _emath.cos(a) * arc_r),
-                                                  int(ac_ + _emath.sin(a) * arc_r)))
-
                             fade_alpha = max(0.0, 1.0 - anim_progress)
-                            if len(trail_pts) >= 3:
-                                fill_a = int(80 * fade_alpha)
-                                pygame.draw.polygon(asurf, (*active_color, fill_a), trail_pts)
-                                # Leading edge
-                                sweep_a = rad - half_arc + _emath.radians(_enemy_arc_deg) * sweep_p
-                                lead_x = int(ac_ + _emath.cos(sweep_a) * arc_r)
-                                lead_y = int(ac_ + _emath.sin(sweep_a) * arc_r)
+
+                            if _atk_shape == 'circle':
+                                # Circle attack: expanding ring
+                                sweep_p = min(1.0, anim_progress * 2.0)
+                                ring_r = int(arc_r * sweep_p)
+                                fill_a = int(60 * fade_alpha)
                                 edge_a = int(180 * fade_alpha)
-                                pygame.draw.line(asurf, (*active_color, edge_a),
-                                                 (ac_, ac_), (lead_x, lead_y), 3)
+                                if ring_r > 2:
+                                    pygame.draw.circle(asurf, (*active_color, fill_a), (ac_, ac_), ring_r)
+                                    pygame.draw.circle(asurf, (*active_color, edge_a), (ac_, ac_), ring_r, 2)
+                                    # Inner pulse
+                                    inner_r = max(2, int(ring_r * 0.6))
+                                    pulse_a = int(40 * fade_alpha * (0.5 + 0.5 * _emath.sin(anim_progress * 8)))
+                                    pygame.draw.circle(asurf, (*active_color, pulse_a), (ac_, ac_), inner_r)
+
+                            elif _atk_shape == 'line':
+                                # Line attack: extending beam
+                                sweep_p = min(1.0, anim_progress * 2.5)
+                                line_len = int(arc_r * sweep_p)
+                                fill_a = int(160 * fade_alpha)
+                                end_x = int(ac_ + _emath.cos(rad) * line_len)
+                                end_y = int(ac_ + _emath.sin(rad) * line_len)
+                                # Beam with glow
+                                pygame.draw.line(asurf, (*active_color, fill_a), (ac_, ac_), (end_x, end_y), 4)
+                                glow_a = int(60 * fade_alpha)
+                                pygame.draw.line(asurf, (*active_color, glow_a), (ac_, ac_), (end_x, end_y), 8)
+                                # Tip spark
+                                if line_len > 4:
+                                    spark_a = int(200 * fade_alpha)
+                                    pygame.draw.circle(asurf, (*active_color, spark_a), (end_x, end_y), 4)
+
+                            else:
+                                # Arc/cone: sweeping wedge (default)
+                                half_arc = _emath.radians(_enemy_arc_deg / 2.0)
+                                sweep_p = min(1.0, anim_progress * 2.0)
+                                num_seg = max(6, int(_enemy_arc_deg / 8))
+                                sweep_segs = max(2, int(num_seg * sweep_p))
+
+                                trail_pts = [(ac_, ac_)]
+                                for i in range(sweep_segs + 1):
+                                    a = rad - half_arc + _emath.radians(_enemy_arc_deg) * i / num_seg
+                                    trail_pts.append((int(ac_ + _emath.cos(a) * arc_r),
+                                                      int(ac_ + _emath.sin(a) * arc_r)))
+
+                                if len(trail_pts) >= 3:
+                                    fill_a = int(80 * fade_alpha)
+                                    pygame.draw.polygon(asurf, (*active_color, fill_a), trail_pts)
+                                    # Leading edge
+                                    sweep_a = rad - half_arc + _emath.radians(_enemy_arc_deg) * sweep_p
+                                    lead_x = int(ac_ + _emath.cos(sweep_a) * arc_r)
+                                    lead_y = int(ac_ + _emath.sin(sweep_a) * arc_r)
+                                    edge_a = int(180 * fade_alpha)
+                                    pygame.draw.line(asurf, (*active_color, edge_a),
+                                                     (ac_, ac_), (lead_x, lead_y), 3)
+
                             self.screen.blit(asurf, (ex - ac_, ey - ac_))
 
                     # (Phased attack system removed — old instant attacks with visual effects)
 
                     # --- Enemy body ---
+                    _is_winding = getattr(enemy, 'attack_phase', 'idle') == 'windup'
+                    _windup_t = 0.0
+                    if _is_winding:
+                        _wu_total = getattr(enemy, '_attack_windup_ms', 600)
+                        _wu_timer = getattr(enemy, 'attack_phase_timer', 0)
+                        _windup_t = 1.0 - (_wu_timer / max(1, _wu_total))
+
                     icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2)) if enemy.definition.icon_path else None
                     if icon:
+                        # Scale up slightly during windup (1.0 → 1.12)
+                        if _is_winding and _windup_t > 0.1:
+                            _wu_scale = 1.0 + 0.12 * _windup_t
+                            _new_w = int(icon.get_width() * _wu_scale)
+                            _new_h = int(icon.get_height() * _wu_scale)
+                            icon = pygame.transform.smoothscale(icon, (_new_w, _new_h))
                         icon_rect = icon.get_rect(center=(ex, ey))
                         self.screen.blit(icon, icon_rect)
+                        # Windup tint overlay on sprite
+                        if _is_winding and _windup_t > 0.1:
+                            _wu_tags = getattr(enemy, 'attack_anim_tags', [])
+                            _wu_color = _enemy_tag_color(_wu_tags, (255, 80, 80))
+                            _tint_a = int(60 * _windup_t)
+                            _tint_surf = pygame.Surface(icon_rect.size, pygame.SRCALPHA)
+                            _tint_surf.fill((*_wu_color, _tint_a))
+                            self.screen.blit(_tint_surf, icon_rect, special_flags=pygame.BLEND_RGBA_ADD)
                     else:
                         pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
                         pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
+                        # Windup pulse on circle body
+                        if _is_winding and _windup_t > 0.1:
+                            _wu_tags = getattr(enemy, 'attack_anim_tags', [])
+                            _wu_color = _enemy_tag_color(_wu_tags, (255, 80, 80))
+                            _pulse = 0.5 + 0.5 * _emath.sin(_etime.time() * 12)
+                            _wu_a = int((40 + 60 * _pulse) * _windup_t)
+                            pygame.draw.circle(self.screen, (*_wu_color, min(255, _wu_a)),
+                                               (ex, ey), size + 3, 2)
 
                         # Category accents
                         cat = getattr(enemy.definition, 'category', '')
@@ -1865,26 +1930,64 @@ class Renderer:
                 self.screen.blit(iframe_surf,
                                  (px - ghost_radius - 2 + shake_ox, py - ghost_radius - 2 + shake_oy))
 
-        # --- Active hitboxes (tag-driven visual effects, not just debug) ---
+        # --- Active hitboxes (tag-driven visual effects) ---
+        # Player hitboxes use weapon visual style for richer animations.
         if hitbox_sys:
+            # Lazy-load weapon visual resolver (only when needed)
+            _weapon_style = None
+            try:
+                from animation.weapon_visuals import resolve_weapon_visual
+                _weapon_style = True  # Module available
+            except ImportError:
+                _weapon_style = None
+
             for hitbox in hitbox_sys.active_hitboxes:
                 hx, hy = camera.world_to_screen(
                     Position(hitbox.world_x, hitbox.world_y, 0))
                 hx += shake_ox
                 hy += shake_oy
 
-                # Determine color from damage context tags
+                is_player = hitbox.owner_id == 'player'
+
+                # Determine base color from damage context tags
                 base_color = _color_from_context(
                     hitbox.damage_context,
-                    (100, 200, 255) if hitbox.owner_id == 'player' else (255, 100, 100))
+                    (100, 200, 255) if is_player else (255, 100, 100))
 
                 life_ratio = hitbox.remaining_ms / max(1, hitbox.remaining_ms + 16)
+
+                # For player attacks, resolve weapon visual style
+                thickness_mult = 1.0
+                glow_mult = 1.0
+                speed_feel = 1.0
+                impact_flash = False
+                particle_density = 1.0
+                if is_player and _weapon_style:
+                    try:
+                        ctx = hitbox.damage_context or {}
+                        w_type = ctx.get('weapon_type', 'unarmed')
+                        w_tags = ctx.get('weapon_tags', ctx.get('effect_tags', []))
+                        w_tier = ctx.get('weapon_tier', 1)
+                        w_weight = ctx.get('weapon_weight', 1.0)
+                        w_speed = ctx.get('attack_speed', 1.0)
+                        style = resolve_weapon_visual(
+                            w_type, w_tags, tier=w_tier,
+                            weight=w_weight, attack_speed=w_speed)
+                        base_color = style.color
+                        thickness_mult = style.thickness
+                        glow_mult = 0.6 + style.glow_intensity
+                        speed_feel = style.speed_feel
+                        impact_flash = style.impact_flash
+                        particle_density = style.particle_density
+                    except Exception:
+                        pass
+
                 bright = [min(255, c + 60) for c in base_color]
 
                 if hitbox.definition.shape == "circle":
                     radius_px = int(hitbox.definition.radius * Config.TILE_SIZE)
                     if radius_px > 1:
-                        glow_pad = 6
+                        glow_pad = int(6 * glow_mult)
                         surf_size = radius_px * 2 + glow_pad * 2
                         arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
                         center = surf_size // 2
@@ -1896,14 +1999,15 @@ class Renderer:
                         pygame.draw.circle(arc_surf, (*base_color, alpha),
                                            (center, center), radius_px)
                         # Bright ring
+                        ring_w = max(2, int(2 * thickness_mult))
                         pygame.draw.circle(arc_surf, (*bright, min(255, alpha + 120)),
-                                           (center, center), radius_px, 2)
+                                           (center, center), radius_px, ring_w)
                         self.screen.blit(arc_surf, (hx - center, hy - center))
 
                 elif hitbox.definition.shape == "arc":
                     radius_px = int(hitbox.definition.radius * Config.TILE_SIZE)
                     if radius_px > 2:
-                        glow_pad = 8
+                        glow_pad = int(8 * glow_mult)
                         surf_size = radius_px * 2 + glow_pad * 2
                         arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
                         center = surf_size // 2
@@ -1934,16 +2038,58 @@ class Renderer:
 
                             # Filled wedge
                             pygame.draw.polygon(arc_surf, (*base_color, alpha), points)
-                            # Bright edge
+                            # Bright edge (thickness from weapon style)
+                            edge_w = max(2, int(2 * thickness_mult))
                             pygame.draw.lines(arc_surf, (*bright, min(255, alpha + 130)),
-                                              False, points[1:], 2)
-                            # Bright leading edges
+                                              False, points[1:], edge_w)
+                            # Leading edges
                             for sign_v in (1, -1):
                                 ea = facing_rad + sign_v * math.radians(half_arc)
                                 lx = center + int(math.cos(ea) * radius_px)
                                 ly = center + int(math.sin(ea) * radius_px)
                                 pygame.draw.line(arc_surf, (*bright, min(255, alpha + 100)),
-                                                 (center, center), (lx, ly), 2)
+                                                 (center, center), (lx, ly), edge_w)
+
+                            # --- Slash trail (player only, weapon-style driven) ---
+                            if is_player and thickness_mult > 0:
+                                # Trailing arc edge: a bright line along the sweep's leading edge
+                                # that gives the visual impression of a blade path
+                                sweep_progress = 1.0 - life_ratio  # 0=start, 1=end
+                                trail_angle = facing_rad - math.radians(half_arc) + \
+                                    math.radians(arc_degrees) * min(1.0, sweep_progress * 1.3)
+                                trail_r_inner = int(radius_px * 0.3)
+                                trail_r_outer = radius_px
+                                tx1 = center + int(math.cos(trail_angle) * trail_r_inner)
+                                ty1 = center + int(math.sin(trail_angle) * trail_r_inner)
+                                tx2 = center + int(math.cos(trail_angle) * trail_r_outer)
+                                ty2 = center + int(math.sin(trail_angle) * trail_r_outer)
+                                trail_w = max(2, int(3 * thickness_mult))
+                                trail_a = int(200 * life_ratio)
+                                # Glow behind the blade edge
+                                pygame.draw.line(arc_surf, (*base_color, trail_a // 3),
+                                                 (tx1, ty1), (tx2, ty2), trail_w + 4)
+                                # Bright blade edge
+                                pygame.draw.line(arc_surf, (*bright, min(255, trail_a)),
+                                                 (tx1, ty1), (tx2, ty2), trail_w)
+                                # Tip spark at outer end
+                                spark_a = int(255 * life_ratio)
+                                pygame.draw.circle(arc_surf, (*bright, spark_a),
+                                                   (tx2, ty2), max(2, int(3 * thickness_mult)))
+
+                                # Particle sparks along the arc edge (density from weapon style)
+                                if particle_density > 0.8 and sweep_progress > 0.2:
+                                    import random as _rng
+                                    n_sparks = int(2 * particle_density)
+                                    for _ in range(n_sparks):
+                                        sp_angle = facing_rad - math.radians(half_arc) + \
+                                            math.radians(arc_degrees) * _rng.random() * sweep_progress
+                                        sp_r = trail_r_outer + _rng.randint(-3, 6)
+                                        spx = center + int(math.cos(sp_angle) * sp_r)
+                                        spy = center + int(math.sin(sp_angle) * sp_r)
+                                        sp_size = _rng.randint(1, max(1, int(2 * thickness_mult)))
+                                        sp_a = _rng.randint(80, min(255, trail_a + 40))
+                                        pygame.draw.circle(arc_surf, (*bright, sp_a),
+                                                           (spx, spy), sp_size)
 
                         self.screen.blit(arc_surf, (hx - center, hy - center))
 
@@ -1955,15 +2101,24 @@ class Renderer:
                     alpha = int(200 * life_ratio)
                     line_surf = pygame.Surface(
                         (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+                    # Width scales with thickness multiplier
+                    glow_w = max(6, int(8 * thickness_mult))
+                    core_w = max(3, int(4 * thickness_mult))
+                    inner_w = max(1, int(2 * thickness_mult))
                     # Wide outer glow
                     pygame.draw.line(line_surf, (*base_color, alpha // 4),
-                                    (hx, hy), (end_x, end_y), 8)
+                                    (hx, hy), (end_x, end_y), glow_w)
                     # Core line
                     pygame.draw.line(line_surf, (*base_color, alpha),
-                                    (hx, hy), (end_x, end_y), 4)
+                                    (hx, hy), (end_x, end_y), core_w)
                     # Bright center
                     pygame.draw.line(line_surf, (*bright, min(255, alpha + 60)),
-                                    (hx, hy), (end_x, end_y), 2)
+                                    (hx, hy), (end_x, end_y), inner_w)
+                    # Tip glow for player attacks
+                    if is_player:
+                        tip_a = min(255, int(alpha * 1.3))
+                        pygame.draw.circle(line_surf, (*bright, tip_a),
+                                           (end_x, end_y), max(3, int(4 * thickness_mult)))
                     self.screen.blit(line_surf, (0, 0))
 
                 elif hitbox.definition.shape == "rect":
@@ -1972,11 +2127,25 @@ class Renderer:
                     alpha = int(50 * life_ratio)
                     rect_surf = pygame.Surface((w_px, h_px), pygame.SRCALPHA)
                     rect_surf.fill((*base_color, alpha))
+                    edge_w = max(2, int(2 * thickness_mult))
                     pygame.draw.rect(rect_surf, (*base_color, min(255, alpha + 100)),
-                                     (0, 0, w_px, h_px), 2)
-                    # Rotate to facing angle
+                                     (0, 0, w_px, h_px), edge_w)
                     rotated = pygame.transform.rotate(rect_surf, -hitbox.facing_angle)
                     self.screen.blit(rotated, rotated.get_rect(center=(hx, hy)))
+
+                # --- Heavy weapon impact flash (weapon-style driven) ---
+                if is_player and impact_flash and life_ratio < 0.3:
+                    flash_intensity = (0.3 - life_ratio) / 0.3  # 0→1 as hitbox expires
+                    flash_r = int(12 + 8 * thickness_mult)
+                    flash_a = int(180 * flash_intensity)
+                    flash_surf = pygame.Surface((flash_r * 2 + 4, flash_r * 2 + 4), pygame.SRCALPHA)
+                    fc = flash_r + 2
+                    # White-hot center
+                    pygame.draw.circle(flash_surf, (255, 255, 255, flash_a), (fc, fc), int(flash_r * 0.4))
+                    # Colored glow ring
+                    pygame.draw.circle(flash_surf, (*bright, flash_a // 2), (fc, fc), flash_r)
+                    pygame.draw.circle(flash_surf, (*bright, flash_a // 4), (fc, fc), flash_r, 2)
+                    self.screen.blit(flash_surf, (hx - fc, hy - fc))
 
         # --- Projectiles (tag-driven visual shapes) ---
         if projectile_sys:
