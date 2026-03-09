@@ -2762,7 +2762,7 @@ class GameEngine:
             print("✓ Action combat systems initialized")
 
             # Wire visual bridge to screen effects and particles
-            if self._visual_bridge:
+            if getattr(self, '_visual_bridge', None):
                 self._visual_bridge._screen_fx = screen_effects
                 self._visual_bridge._particles = combat_particles
 
@@ -3162,6 +3162,15 @@ class GameEngine:
             if self.combat_manager.dungeon_enemies:
                 enemies = list(enemies) + list(self.combat_manager.dungeon_enemies)
 
+            weapon_type = self._get_weapon_type(hand)
+            arc_half = 45.0  # Default arc half-width
+            if weapon_type in ('bow', 'staff'):
+                arc_half = 15.0
+            elif weapon_type in ('dagger', 'spear'):
+                arc_half = 20.0
+            elif weapon_type in ('axe', 'sword_2h', 'hammer_2h'):
+                arc_half = 55.0
+
             hit_enemy = None
             for enemy in enemies:
                 if not enemy.is_alive:
@@ -3173,14 +3182,6 @@ class GameEngine:
                 ex, ey = enemy.position[0], enemy.position[1]
                 angle_to_enemy = math.degrees(math.atan2(ey - player_y, ex - player_x))
                 angle_diff = abs((angle_to_enemy - attack_angle + 180) % 360 - 180)
-                weapon_type = self._get_weapon_type(hand)
-                arc_half = 45.0  # Default arc half-width
-                if weapon_type in ('bow', 'staff'):
-                    arc_half = 15.0
-                elif weapon_type in ('dagger', 'spear'):
-                    arc_half = 20.0
-                elif weapon_type in ('axe', 'sword_2h', 'hammer_2h'):
-                    arc_half = 55.0
                 if angle_diff <= arc_half:
                     hit_enemy = enemy
                     break
