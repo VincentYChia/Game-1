@@ -246,7 +246,7 @@ def generate_projectile_from_tags(weapon_type: str,
 
     if is_arrow:
         vis_shape = 'elongated'
-        length_px, width_px = 12, 3
+        length_px, width_px = 8, 3
     elif is_beam:
         vis_shape = 'beam'
         length_px, width_px = 24, 8

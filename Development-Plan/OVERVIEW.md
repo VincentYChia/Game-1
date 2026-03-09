@@ -25,17 +25,19 @@ This plan is split into focused documents for maintainability:
 
 ---
 
-## Current State Summary
+## Current State Summary (Updated 2026-03-09)
 
 | System | State | Key Files | LOC |
 |--------|-------|-----------|-----|
-| Combat | Click-to-attack, instant damage, circular collision | `Combat/combat_manager.py`, `enemy.py` | 2,527 |
-| Rendering | Static sprites, no animation, single Renderer class | `rendering/renderer.py` | 2,782 |
-| Enemy AI | FSM (patrol/chase/attack/retreat), fixed patterns | `Combat/enemy.py` | 867 |
+| Combat | **Action combat with hitboxes, projectiles, dodge, attack state machine** | `Combat/` (8 files), `systems/attack_effects.py` | ~2,000+ |
+| Animation | **Procedural animation framework, combat particles, weapon visuals** | `animation/` (6 files) | ~900+ |
+| Rendering | **Enhanced renderer with tag-driven VFX, damage numbers, death effects, visual config** | `rendering/renderer.py`, `rendering/visual_effects.py`, `rendering/visual_effect_bridge.py` | 7,400+ |
+| Enemy AI | FSM (patrol/chase/attack/retreat), phased attacks with windup/active/recovery | `Combat/enemy.py`, `Combat/attack_profile_generator.py` | ~1,400 |
 | World | Infinite chunks, static resource nodes, seed-based | `systems/world_system.py` | ~1,200 |
 | NPCs | Static quest dispensers, JSON dialogue, no memory | `systems/npc_system.py`, `quest_system.py` | ~800 |
 | AI/ML | LLM item gen (Claude API), CNN/LightGBM classifiers | `systems/llm_item_generator.py`, `crafting_classifier.py` | 2,649 |
-| Assets | 3,744 PNGs, all enemy sprites 1024x1024, no sprite sheets | `assets/` | — |
+| Events | **GameEventBus pub/sub connecting combat → visuals** | `events/event_bus.py` | ~150 |
+| Assets | 3,749 PNGs, all enemy sprites 1024x1024, no sprite sheets | `assets/` | — |
 
 ### Technical Constraints
 - **Engine**: Pygame (SDL2 wrapper) — no built-in animation, physics, or scene graph
@@ -48,13 +50,14 @@ This plan is split into focused documents for maintainability:
 ## Dependency Graph
 
 ```
-PART 1: Combat Visuals (independent — start immediately)
-  Phase 1.1: Animation Framework ──────────────────────┐
-  Phase 1.2: Attack State Machine ─────────────────────┤
-  Phase 1.3: Hitbox & Hurtbox System ──────────────────┤──→ Phase 1.7: Integration & Polish
-  Phase 1.4: Projectile System ────────────────────────┤
-  Phase 1.5: Player Actions (dodge, combo) ────────────┤
-  Phase 1.6: Enemy Tier Scaling & Patterns ────────────┘
+PART 1: Combat Visuals
+  Phase 1.1: Animation Framework ──────────────────────┐  ✅ COMPLETE (animation/ module)
+  Phase 1.2: Attack State Machine ─────────────────────┤  ✅ COMPLETE (Combat/attack_state_machine.py)
+  Phase 1.3: Hitbox & Hurtbox System ──────────────────┤  ✅ COMPLETE (Combat/hitbox_system.py)
+  Phase 1.4: Projectile System ────────────────────────┤  ✅ COMPLETE (Combat/projectile_system.py)
+  Phase 1.5: Player Actions (dodge, combo) ────────────┤  ✅ COMPLETE (Combat/player_actions.py)
+  Phase 1.6: Enemy Tier Scaling & Patterns ────────────┤  ✅ COMPLETE (Combat/attack_profile_generator.py)
+  Phase 1.7: Integration & Polish ─────────────────────┘  ⚠️ NEEDS OVERHAUL (visual quality insufficient — new plan needed)
 
 PART 2: Living World (starts after Phase 1.3 complete)
   Phase 2.1: Memory Layer (FOUNDATION) ────────────────┐
@@ -68,6 +71,8 @@ PART 3: Player Intelligence (starts after Phase 2.1)
   Phase 3.2: Preference Model ─────────────────────────┤──→ Feeds all generators
   Phase 3.3: Player Arc Tracker ───────────────────────┘
 ```
+
+> **Note (2026-03-09)**: Part 1 Phases 1.1–1.6 are structurally complete — the systems exist and function. However, the **visual quality** of combat animations needs a grand overhaul. The current implementation uses procedural geometric shapes (arcs, polygons, lines) rather than true sprite-based animations. A new visual overhaul plan is needed to replace these with proper animated sprites and high-quality VFX.
 
 ---
 

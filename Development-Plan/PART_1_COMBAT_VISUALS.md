@@ -3,6 +3,8 @@
 **Priority**: P1 — First
 **Goal**: Transform click-to-attack into full action combat with projectile physics, dodgeable attacks, tier-scaled enemies, and polished visuals.
 
+> **STATUS (2026-03-09)**: Phases 1.1–1.6 are **structurally complete** — all systems implemented and functional. Phase 1.7 (Integration & Polish) needs a **grand visual overhaul** — current procedural geometry visuals (arcs, polygons) need replacement with proper animated sprites and high-quality VFX. A new plan will be created for this overhaul.
+
 ---
 
 ## What Exists Today

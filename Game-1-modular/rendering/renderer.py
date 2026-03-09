@@ -1417,28 +1417,67 @@ class Renderer:
                                     pygame.draw.circle(asurf, (*active_color, spark_a), (end_x, end_y), 4)
 
                             else:
-                                # Arc/cone: sweeping wedge (default)
+                                # Arc: animated slash sweep (blade motion blur)
                                 half_arc = _emath.radians(_enemy_arc_deg / 2.0)
                                 sweep_p = min(1.0, anim_progress * 2.0)
-                                num_seg = max(6, int(_enemy_arc_deg / 8))
-                                sweep_segs = max(2, int(num_seg * sweep_p))
+                                num_seg = max(8, int(_enemy_arc_deg / 5))
+                                bright_color = [min(255, c + 60) for c in active_color]
 
-                                trail_pts = [(ac_, ac_)]
-                                for i in range(sweep_segs + 1):
-                                    a = rad - half_arc + _emath.radians(_enemy_arc_deg) * i / num_seg
-                                    trail_pts.append((int(ac_ + _emath.cos(a) * arc_r),
-                                                      int(ac_ + _emath.sin(a) * arc_r)))
+                                # Motion blur trail ribbons behind the blade
+                                for layer in range(3):
+                                    layer_t = max(0.0, sweep_p - layer * 0.15)
+                                    if layer_t <= 0:
+                                        continue
+                                    layer_a = int(60 * fade_alpha * (0.5 - layer * 0.15))
+                                    if layer_a <= 0:
+                                        continue
+                                    r_inner = int(arc_r * (0.35 + layer * 0.05))
+                                    r_outer = arc_r
+                                    t_segs = max(3, int(num_seg * layer_t))
+                                    outer_pts = []
+                                    inner_pts = []
+                                    for i in range(t_segs + 1):
+                                        a = rad - half_arc + _emath.radians(_enemy_arc_deg) * layer_t * i / t_segs
+                                        outer_pts.append((int(ac_ + _emath.cos(a) * r_outer),
+                                                          int(ac_ + _emath.sin(a) * r_outer)))
+                                        inner_pts.append((int(ac_ + _emath.cos(a) * r_inner),
+                                                          int(ac_ + _emath.sin(a) * r_inner)))
+                                    ribbon = outer_pts + list(reversed(inner_pts))
+                                    if len(ribbon) >= 3:
+                                        pygame.draw.polygon(asurf, (*active_color, layer_a), ribbon)
 
-                                if len(trail_pts) >= 3:
-                                    fill_a = int(80 * fade_alpha)
-                                    pygame.draw.polygon(asurf, (*active_color, fill_a), trail_pts)
-                                    # Leading edge
-                                    sweep_a = rad - half_arc + _emath.radians(_enemy_arc_deg) * sweep_p
-                                    lead_x = int(ac_ + _emath.cos(sweep_a) * arc_r)
-                                    lead_y = int(ac_ + _emath.sin(sweep_a) * arc_r)
-                                    edge_a = int(180 * fade_alpha)
-                                    pygame.draw.line(asurf, (*active_color, edge_a),
-                                                     (ac_, ac_), (lead_x, lead_y), 3)
+                                # Leading blade edge
+                                sweep_a = rad - half_arc + _emath.radians(_enemy_arc_deg) * sweep_p
+                                blade_inner = int(arc_r * 0.15)
+                                blade_outer = arc_r + 3
+                                bx1 = int(ac_ + _emath.cos(sweep_a) * blade_inner)
+                                by1 = int(ac_ + _emath.sin(sweep_a) * blade_inner)
+                                bx2 = int(ac_ + _emath.cos(sweep_a) * blade_outer)
+                                by2 = int(ac_ + _emath.sin(sweep_a) * blade_outer)
+                                edge_a = min(255, int(220 * fade_alpha))
+                                # Glow
+                                pygame.draw.line(asurf, (*active_color, edge_a // 3),
+                                                 (bx1, by1), (bx2, by2), 7)
+                                # Core blade
+                                pygame.draw.line(asurf, (*bright_color, edge_a),
+                                                 (bx1, by1), (bx2, by2), 3)
+                                # Tip spark
+                                tip_a = min(255, int(255 * fade_alpha))
+                                pygame.draw.circle(asurf, (*bright_color, tip_a),
+                                                   (bx2, by2), 3)
+
+                                # Swept arc edge outline
+                                if sweep_p > 0.05:
+                                    edge_pts = []
+                                    e_segs = max(3, int(num_seg * sweep_p))
+                                    for i in range(e_segs + 1):
+                                        a = rad - half_arc + _emath.radians(_enemy_arc_deg) * sweep_p * i / e_segs
+                                        edge_pts.append((int(ac_ + _emath.cos(a) * arc_r),
+                                                          int(ac_ + _emath.sin(a) * arc_r)))
+                                    if len(edge_pts) >= 2:
+                                        outline_a = min(255, int(100 * fade_alpha))
+                                        pygame.draw.lines(asurf, (*bright_color, outline_a),
+                                                          False, edge_pts, 2)
 
                             self.screen.blit(asurf, (ex - ac_, ey - ac_))
 
@@ -1667,62 +1706,66 @@ class Renderer:
                 pygame.draw.circle(surface, (*color[:3], pulse_alpha),
                                    (center_x, center_y), inner_r, 1)
         else:
-            # Arc/cone telegraph
+            # Arc telegraph — ribbon outline showing attack zone (not filled cone)
             half_arc = math.radians(arc_degrees / 2.0)
-            num_seg = max(8, int(arc_degrees / 5))
+            num_seg = max(10, int(arc_degrees / 4))
+            bright_color = [min(255, c + 60) for c in color[:3]]
+            pulse = 0.5 + 0.5 * math.sin(time_val * 10)
 
-            # Build wedge polygon
-            points = [(center_x, center_y)]
+            # Outer arc edge (the danger zone boundary)
+            edge_alpha = min(255, int(base_alpha * 0.8))
+            edge_pts = []
             for i in range(num_seg + 1):
                 a = facing_rad - half_arc + math.radians(arc_degrees) * i / num_seg
-                pt_x = center_x + math.cos(a) * radius_px
-                pt_y = center_y + math.sin(a) * radius_px
-                points.append((int(pt_x), int(pt_y)))
+                edge_pts.append((
+                    int(center_x + math.cos(a) * radius_px),
+                    int(center_y + math.sin(a) * radius_px)))
+            if len(edge_pts) >= 2:
+                pygame.draw.lines(surface, (*bright_color, edge_alpha),
+                                  False, edge_pts, 2)
 
-            if len(points) >= 3:
-                # Outer glow — slightly larger arc with low alpha
-                glow_r = radius_px + int(3 + 5 * progress)
-                glow_points = [(center_x, center_y)]
-                for i in range(num_seg + 1):
-                    a = facing_rad - half_arc + math.radians(arc_degrees) * i / num_seg
-                    glow_points.append((
-                        int(center_x + math.cos(a) * glow_r),
-                        int(center_y + math.sin(a) * glow_r)))
-                glow_alpha = min(255, int(base_alpha * 0.15))
-                pygame.draw.polygon(surface, (*color[:3], glow_alpha), glow_points)
+            # Thin ribbon fill (not a full cone — just the arc band)
+            r_inner = int(radius_px * 0.7)
+            fill_alpha = min(255, int(base_alpha * 0.2))
+            outer_pts = []
+            inner_pts = []
+            for i in range(num_seg + 1):
+                a = facing_rad - half_arc + math.radians(arc_degrees) * i / num_seg
+                outer_pts.append((
+                    int(center_x + math.cos(a) * radius_px),
+                    int(center_y + math.sin(a) * radius_px)))
+                inner_pts.append((
+                    int(center_x + math.cos(a) * r_inner),
+                    int(center_y + math.sin(a) * r_inner)))
+            ribbon = outer_pts + list(reversed(inner_pts))
+            if len(ribbon) >= 3:
+                pygame.draw.polygon(surface, (*color[:3], fill_alpha), ribbon)
 
-                # Filled wedge — intensifies with progress
-                fill_alpha = min(255, int(base_alpha * 0.4))
-                pygame.draw.polygon(surface, (*color[:3], fill_alpha), points)
+            # Sweep indicator line that moves with progress (shows timing)
+            sweep_angle = facing_rad - half_arc + math.radians(arc_degrees) * progress
+            sweep_r_inner = int(radius_px * 0.15)
+            sx_pt = center_x + int(math.cos(sweep_angle) * sweep_r_inner)
+            sy_pt = center_y + int(math.sin(sweep_angle) * sweep_r_inner)
+            ex_pt = center_x + int(math.cos(sweep_angle) * radius_px)
+            ey_pt = center_y + int(math.sin(sweep_angle) * radius_px)
+            sweep_alpha = min(255, int(base_alpha * 0.9))
+            pygame.draw.line(surface, (*bright_color, sweep_alpha),
+                             (sx_pt, sy_pt), (ex_pt, ey_pt), 2)
 
-                # Bright edge arc outline
-                edge_alpha = min(255, int(base_alpha * 0.9))
-                pygame.draw.lines(surface, (*color[:3], edge_alpha),
-                                  False, points[1:], 2)
+            # Side boundary lines (faint)
+            side_alpha = min(255, int(base_alpha * 0.3))
+            for sign in (1, -1):
+                edge_a = facing_rad + sign * half_arc
+                lx = center_x + int(math.cos(edge_a) * radius_px)
+                ly = center_y + int(math.sin(edge_a) * radius_px)
+                pygame.draw.line(surface, (*color[:3], side_alpha),
+                                 (center_x, center_y), (lx, ly), 1)
 
-                # Leading edges from center (bright)
-                bright_color = [min(255, c + 40) for c in color[:3]]
-                for sign in (1, -1):
-                    edge_a = facing_rad + sign * half_arc
-                    lx = center_x + int(math.cos(edge_a) * radius_px)
-                    ly = center_y + int(math.sin(edge_a) * radius_px)
-                    pygame.draw.line(surface, (*bright_color, edge_alpha),
-                                     (center_x, center_y), (lx, ly), 2)
-
-            # Pulsing danger indicator at center
-            pulse = 0.5 + 0.5 * math.sin(time_val * 10)
+            # Pulsing dot at weapon origin
             pulse_alpha = min(255, int(base_alpha * (0.5 + 0.5 * pulse)))
-            pulse_r = max(2, int(4 + 4 * progress * pulse))
-            # Bright center dot
-            bright = [min(255, c + 80) for c in color[:3]]
-            pygame.draw.circle(surface, (*bright, pulse_alpha),
+            pulse_r = max(2, int(3 + 3 * progress * pulse))
+            pygame.draw.circle(surface, (*bright_color, pulse_alpha),
                                (center_x, center_y), pulse_r)
-            # Pulsing ring at ~40% radius
-            ring_r = int(radius_px * (0.35 + 0.1 * pulse))
-            if ring_r > 3 and progress > 0.3:
-                ring_alpha = min(255, int(base_alpha * 0.3 * pulse))
-                pygame.draw.circle(surface, (*color[:3], ring_alpha),
-                                   (center_x, center_y), ring_r, 1)
 
     def _render_action_combat(self, camera: Camera, character, combat_manager, ac: dict):
         """Render all action combat visual overlays.
@@ -2037,90 +2080,110 @@ class Renderer:
                 elif hitbox.definition.shape == "arc":
                     radius_px = int(hitbox.definition.radius * Config.TILE_SIZE)
                     if radius_px > 2:
-                        glow_pad = int(8 * glow_mult)
+                        import random as _rng
+                        glow_pad = int(10 * glow_mult)
                         surf_size = radius_px * 2 + glow_pad * 2
                         arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
                         center = surf_size // 2
                         arc_degrees = hitbox.definition.arc_degrees
                         half_arc = arc_degrees / 2.0
                         facing_rad = math.radians(hitbox.facing_angle)
-                        alpha = int(100 * life_ratio)
+                        alpha = int(140 * life_ratio)
 
-                        # Build arc wedge
-                        num_segments = max(8, int(arc_degrees / 5))
-                        points = [(center, center)]
-                        for i in range(num_segments + 1):
-                            a = facing_rad - math.radians(half_arc) + math.radians(arc_degrees) * i / num_segments
-                            px_pt = center + math.cos(a) * radius_px
-                            py_pt = center + math.sin(a) * radius_px
-                            points.append((int(px_pt), int(py_pt)))
+                        # Sweep progress: blade travels from start to end of arc
+                        sweep_progress = min(1.0, (1.0 - life_ratio) * 1.4)
+                        sweep_angle = facing_rad - math.radians(half_arc) + \
+                            math.radians(arc_degrees) * sweep_progress
 
-                        if len(points) >= 3:
-                            # Outer glow arc (slightly larger)
-                            glow_points = [(center, center)]
-                            glow_r = radius_px + glow_pad
-                            for i in range(num_segments + 1):
-                                a = facing_rad - math.radians(half_arc) + math.radians(arc_degrees) * i / num_segments
-                                glow_points.append((
-                                    int(center + math.cos(a) * glow_r),
-                                    int(center + math.sin(a) * glow_r)))
-                            pygame.draw.polygon(arc_surf, (*base_color, alpha // 5), glow_points)
+                        num_segments = max(12, int(arc_degrees / 4))
 
-                            # Filled wedge
-                            pygame.draw.polygon(arc_surf, (*base_color, alpha), points)
-                            # Bright edge (thickness from weapon style)
-                            edge_w = max(2, int(2 * thickness_mult))
-                            pygame.draw.lines(arc_surf, (*bright, min(255, alpha + 130)),
-                                              False, points[1:], edge_w)
-                            # Leading edges
-                            for sign_v in (1, -1):
-                                ea = facing_rad + sign_v * math.radians(half_arc)
-                                lx = center + int(math.cos(ea) * radius_px)
-                                ly = center + int(math.sin(ea) * radius_px)
-                                pygame.draw.line(arc_surf, (*bright, min(255, alpha + 100)),
-                                                 (center, center), (lx, ly), edge_w)
+                        # --- Motion blur trail (fading arc behind the blade) ---
+                        trail_layers = 4
+                        for layer in range(trail_layers):
+                            layer_t = max(0.0, sweep_progress - layer * 0.12)
+                            if layer_t <= 0:
+                                continue
+                            layer_alpha = int(alpha * (0.5 - layer * 0.12) * life_ratio)
+                            if layer_alpha <= 0:
+                                continue
+                            # Build thin arc stripe for this trail layer
+                            trail_r_inner = int(radius_px * (0.35 + layer * 0.05))
+                            trail_r_outer = radius_px + int(glow_pad * 0.3)
+                            trail_segs = max(3, int(num_segments * layer_t))
+                            outer_pts = []
+                            inner_pts = []
+                            for i in range(trail_segs + 1):
+                                a = facing_rad - math.radians(half_arc) + \
+                                    math.radians(arc_degrees) * layer_t * i / trail_segs
+                                outer_pts.append((
+                                    int(center + math.cos(a) * trail_r_outer),
+                                    int(center + math.sin(a) * trail_r_outer)))
+                                inner_pts.append((
+                                    int(center + math.cos(a) * trail_r_inner),
+                                    int(center + math.sin(a) * trail_r_inner)))
+                            # Draw filled ribbon (outer + reversed inner)
+                            ribbon = outer_pts + list(reversed(inner_pts))
+                            if len(ribbon) >= 3:
+                                pygame.draw.polygon(arc_surf, (*base_color, layer_alpha), ribbon)
 
-                            # --- Slash trail (player only, weapon-style driven) ---
-                            if is_player and thickness_mult > 0:
-                                # Trailing arc edge: a bright line along the sweep's leading edge
-                                # that gives the visual impression of a blade path
-                                sweep_progress = 1.0 - life_ratio  # 0=start, 1=end
-                                trail_angle = facing_rad - math.radians(half_arc) + \
-                                    math.radians(arc_degrees) * min(1.0, sweep_progress * 1.3)
-                                trail_r_inner = int(radius_px * 0.3)
-                                trail_r_outer = radius_px
-                                tx1 = center + int(math.cos(trail_angle) * trail_r_inner)
-                                ty1 = center + int(math.sin(trail_angle) * trail_r_inner)
-                                tx2 = center + int(math.cos(trail_angle) * trail_r_outer)
-                                ty2 = center + int(math.sin(trail_angle) * trail_r_outer)
-                                trail_w = max(2, int(3 * thickness_mult))
-                                trail_a = int(200 * life_ratio)
-                                # Glow behind the blade edge
-                                pygame.draw.line(arc_surf, (*base_color, trail_a // 3),
-                                                 (tx1, ty1), (tx2, ty2), trail_w + 4)
-                                # Bright blade edge
-                                pygame.draw.line(arc_surf, (*bright, min(255, trail_a)),
-                                                 (tx1, ty1), (tx2, ty2), trail_w)
-                                # Tip spark at outer end
-                                spark_a = int(255 * life_ratio)
-                                pygame.draw.circle(arc_surf, (*bright, spark_a),
-                                                   (tx2, ty2), max(2, int(3 * thickness_mult)))
+                        # --- Bright leading blade edge ---
+                        blade_r_inner = int(radius_px * 0.15)
+                        blade_r_outer = radius_px + int(glow_pad * 0.4)
+                        bx1 = center + int(math.cos(sweep_angle) * blade_r_inner)
+                        by1 = center + int(math.sin(sweep_angle) * blade_r_inner)
+                        bx2 = center + int(math.cos(sweep_angle) * blade_r_outer)
+                        by2 = center + int(math.sin(sweep_angle) * blade_r_outer)
+                        blade_w = max(3, int(4 * thickness_mult))
+                        blade_a = min(255, int(230 * life_ratio))
+                        # Wide glow behind blade
+                        pygame.draw.line(arc_surf, (*base_color, blade_a // 3),
+                                         (bx1, by1), (bx2, by2), blade_w + 6)
+                        # Bright blade core
+                        pygame.draw.line(arc_surf, (*bright, blade_a),
+                                         (bx1, by1), (bx2, by2), blade_w)
+                        # White-hot center line
+                        pygame.draw.line(arc_surf, (255, 255, 255, min(255, blade_a)),
+                                         (bx1, by1), (bx2, by2), max(1, blade_w // 2))
 
-                                # Particle sparks along the arc edge (density from weapon style)
-                                if particle_density > 0.8 and sweep_progress > 0.2:
-                                    import random as _rng
-                                    n_sparks = int(2 * particle_density)
-                                    for _ in range(n_sparks):
-                                        sp_angle = facing_rad - math.radians(half_arc) + \
-                                            math.radians(arc_degrees) * _rng.random() * sweep_progress
-                                        sp_r = trail_r_outer + _rng.randint(-3, 6)
-                                        spx = center + int(math.cos(sp_angle) * sp_r)
-                                        spy = center + int(math.sin(sp_angle) * sp_r)
-                                        sp_size = _rng.randint(1, max(1, int(2 * thickness_mult)))
-                                        sp_a_upper = min(255, trail_a + 40)
-                                        sp_a = _rng.randint(min(80, sp_a_upper), sp_a_upper)
-                                        pygame.draw.circle(arc_surf, (*bright, sp_a),
-                                                           (spx, spy), sp_size)
+                        # --- Tip spark at blade end ---
+                        tip_size = max(3, int(4 * thickness_mult * life_ratio))
+                        pygame.draw.circle(arc_surf, (255, 255, 255, min(255, blade_a)),
+                                           (bx2, by2), tip_size)
+                        pygame.draw.circle(arc_surf, (*bright, blade_a // 2),
+                                           (bx2, by2), tip_size + 3)
+
+                        # --- Particle sparks along swept arc edge ---
+                        if is_player and particle_density > 0.5 and sweep_progress > 0.15:
+                            n_sparks = int(3 * particle_density)
+                            for _ in range(n_sparks):
+                                sp_t = _rng.random() * sweep_progress
+                                sp_angle = facing_rad - math.radians(half_arc) + \
+                                    math.radians(arc_degrees) * sp_t
+                                sp_r = blade_r_outer + _rng.randint(-2, 5)
+                                spx = center + int(math.cos(sp_angle) * sp_r)
+                                spy = center + int(math.sin(sp_angle) * sp_r)
+                                sp_size = _rng.randint(1, max(1, int(2 * thickness_mult)))
+                                # Sparks brighter near the blade
+                                sp_brightness = max(0.3, 1.0 - abs(sp_t - sweep_progress) * 3)
+                                sp_a = min(255, int(200 * life_ratio * sp_brightness))
+                                pygame.draw.circle(arc_surf, (*bright, sp_a),
+                                                   (spx, spy), sp_size)
+
+                        # --- Arc edge outline (subtle, swept portion) ---
+                        if sweep_progress > 0.05:
+                            edge_pts = []
+                            edge_segs = max(4, int(num_segments * sweep_progress))
+                            for i in range(edge_segs + 1):
+                                a = facing_rad - math.radians(half_arc) + \
+                                    math.radians(arc_degrees) * sweep_progress * i / edge_segs
+                                edge_pts.append((
+                                    int(center + math.cos(a) * radius_px),
+                                    int(center + math.sin(a) * radius_px)))
+                            if len(edge_pts) >= 2:
+                                edge_a = min(255, int(alpha * 0.6))
+                                edge_w = max(2, int(2 * thickness_mult))
+                                pygame.draw.lines(arc_surf, (*bright, edge_a),
+                                                  False, edge_pts, edge_w)
 
                         self.screen.blit(arc_surf, (hx - center, hy - center))
 
@@ -2196,15 +2259,17 @@ class Renderer:
                     glow_color = tuple(vis.get('glow_color', color))
 
                     if shape == 'elongated':
-                        # Arrow/shard: rotated elongated shape
-                        length = vis.get('length_px', 10)
+                        # Arrow/shard: compact rotated elongated shape
+                        length = vis.get('length_px', 8)
                         width = vis.get('width_px', 3)
-                        arrow_surf = pygame.Surface((length + 4, width + 4), pygame.SRCALPHA)
+                        arrow_surf = pygame.Surface((length + 2, width + 2), pygame.SRCALPHA)
                         pygame.draw.ellipse(arrow_surf, color,
-                                            (2, 2, length, width))
+                                            (1, 1, length, width))
                         if glow:
-                            pygame.draw.ellipse(arrow_surf, (*glow_color, 80),
-                                                (0, 0, length + 4, width + 4))
+                            glow_surf = pygame.Surface((length + 2, width + 2), pygame.SRCALPHA)
+                            pygame.draw.ellipse(glow_surf, (*glow_color, 50),
+                                                (0, 0, length + 2, width + 2))
+                            arrow_surf.blit(glow_surf, (0, 0))
                         rotated = pygame.transform.rotate(arrow_surf, -proj.facing_angle)
                         self.screen.blit(rotated,
                                          rotated.get_rect(center=(px_screen, py_screen)))
@@ -7650,11 +7715,7 @@ class Renderer:
                         pygame.draw.line(self.screen, rgb,
                                         (start_sx + size, start_sy - size),
                                         (start_sx - size, start_sy + size), 3)
-                        if effect.alpha > 0.7:
-                            blocked_surf = self.tiny_font.render("BLOCKED", True, rgb)
-                            self.screen.blit(blocked_surf,
-                                           (start_sx - blocked_surf.get_width() // 2,
-                                            start_sy - size - 15))
+                        # Visual X indicator is sufficient — no text overlay
 
                 elif effect.effect_type == AttackEffectType.AREA:
                     radius_px = int(effect.radius * Config.TILE_SIZE)
