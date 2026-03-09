@@ -279,7 +279,7 @@ class EnemyDeathEffect:
         self.fade_duration = vc.death_fade_duration_ms
         self.shrink_target = vc.death_shrink_factor
         self.linger_ms = vc.corpse_linger_ms
-        self.corpse_fade_ms = self._get("enemyVisuals", "corpseFadeMs", 1000)
+        self.corpse_fade_ms = self._get("enemyVisuals", "corpseFadeMs", default=1000)
         self.age_ms: float = 0.0
         self.alive: bool = True
         self.phase: str = "dying"  # "dying" -> "corpse" -> dead

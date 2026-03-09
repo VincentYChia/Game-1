@@ -1594,7 +1594,7 @@ class CombatManager:
                 if enemy_died:
                     self.character.stat_tracker.record_enemy_killed(
                         tier=enemy.definition.tier,
-                        is_boss=enemy.definition.is_boss,
+                        is_boss=enemy.is_boss,
                         is_dragon='dragon' in enemy.definition.enemy_id.lower(),
                         weapon_element=weapon_element
                     )

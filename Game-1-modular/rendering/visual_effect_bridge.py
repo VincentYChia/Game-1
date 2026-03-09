@@ -167,10 +167,6 @@ class VisualEffectBridge:
         if self._particles and hasattr(self._particles, 'emit_dodge_dust'):
             self._particles.emit_dodge_dust(x, y, direction)
 
-        # Show "DODGE" text
-        if self._damage_mgr:
-            self._damage_mgr.spawn(0, x, y, special="dodge")
-
     def _on_screen_shake(self, event: GameEvent) -> None:
         """Direct screen shake request from any system."""
         d = event.data
