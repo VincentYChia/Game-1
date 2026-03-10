@@ -1324,11 +1324,6 @@ class Renderer:
         import math as _emath
         import time as _etime
         image_cache = ImageCache.get_instance()
-        try:
-            from animation.swing_renderer import get_swing_renderer as _get_eswing
-            _enemy_swing = _get_eswing()
-        except ImportError:
-            _enemy_swing = None
 
         # Shared tag→color map for enemy visuals
         _ETAG_COLORS = {
@@ -1384,49 +1379,106 @@ class Renderer:
                         _atk_radius = getattr(enemy, '_attack_radius', 1.5)
                         arc_r = max(int(size * 1.2), int(_atk_radius * Config.TILE_SIZE * 0.5))
 
-                        if arc_r > 2 and _enemy_swing:
-                            try:
-                                if _atk_shape == 'circle':
-                                    frames = _enemy_swing.get_enemy_radial_frames(active_color, arc_r)
-                                elif _atk_shape == 'line':
-                                    frames = _enemy_swing.get_enemy_thrust_frames(active_color, arc_r)
-                                else:
-                                    frames = _enemy_swing.get_enemy_swing_frames(
-                                        active_color, _enemy_arc_deg, arc_r)
-
-                                # Map anim_progress to frame index
-                                progress = min(1.0, anim_progress * 1.4)
-                                frame_idx = min(len(frames) - 1,
-                                                int(progress * (len(frames) - 1)))
-                                frame = frames[frame_idx]
-
-                                if _atk_shape in ('arc', 'circle'):
-                                    # Arc/circle: rotate frame to attack facing angle
-                                    rotated = pygame.transform.rotate(frame, -angle)
-                                    rc = rotated.get_rect(center=(ex, ey))
-                                    self.screen.blit(rotated, rc)
-                                else:
-                                    # Line/thrust: rotate frame to facing
-                                    rotated = pygame.transform.rotate(frame, -angle)
-                                    rc = rotated.get_rect(center=(ex, ey))
-                                    self.screen.blit(rotated, rc)
-                            except Exception:
-                                # Fallback: simple indicator
-                                as_size = arc_r * 2 + 4
-                                asurf = pygame.Surface((as_size, as_size), pygame.SRCALPHA)
-                                ac_ = as_size // 2
-                                fade_alpha = max(0, int(150 * (1.0 - anim_progress)))
-                                pygame.draw.circle(asurf, (*active_color, fade_alpha),
-                                                   (ac_, ac_), arc_r, 3)
-                                self.screen.blit(asurf, (ex - ac_, ey - ac_))
-                        elif arc_r > 2:
-                            # No swing renderer — simple fallback
+                        if arc_r > 2:
                             as_size = arc_r * 2 + 4
                             asurf = pygame.Surface((as_size, as_size), pygame.SRCALPHA)
                             ac_ = as_size // 2
-                            fade_alpha = max(0, int(150 * (1.0 - anim_progress)))
-                            pygame.draw.circle(asurf, (*active_color, fade_alpha),
-                                               (ac_, ac_), arc_r, 3)
+                            rad = _emath.radians(angle)
+                            fade_alpha = max(0.0, 1.0 - anim_progress)
+
+                            if _atk_shape == 'circle':
+                                # Circle attack: expanding ring
+                                sweep_p = min(1.0, anim_progress * 2.0)
+                                ring_r = int(arc_r * sweep_p)
+                                fill_a = int(60 * fade_alpha)
+                                edge_a = int(180 * fade_alpha)
+                                if ring_r > 2:
+                                    pygame.draw.circle(asurf, (*active_color, fill_a), (ac_, ac_), ring_r)
+                                    pygame.draw.circle(asurf, (*active_color, edge_a), (ac_, ac_), ring_r, 2)
+                                    # Inner pulse
+                                    inner_r = max(2, int(ring_r * 0.6))
+                                    pulse_a = int(40 * fade_alpha * (0.5 + 0.5 * _emath.sin(anim_progress * 8)))
+                                    pygame.draw.circle(asurf, (*active_color, pulse_a), (ac_, ac_), inner_r)
+
+                            elif _atk_shape == 'line':
+                                # Line attack: extending beam
+                                sweep_p = min(1.0, anim_progress * 2.5)
+                                line_len = int(arc_r * sweep_p)
+                                fill_a = int(160 * fade_alpha)
+                                end_x = int(ac_ + _emath.cos(rad) * line_len)
+                                end_y = int(ac_ + _emath.sin(rad) * line_len)
+                                # Beam with glow
+                                pygame.draw.line(asurf, (*active_color, fill_a), (ac_, ac_), (end_x, end_y), 4)
+                                glow_a = int(60 * fade_alpha)
+                                pygame.draw.line(asurf, (*active_color, glow_a), (ac_, ac_), (end_x, end_y), 8)
+                                # Tip spark
+                                if line_len > 4:
+                                    spark_a = int(200 * fade_alpha)
+                                    pygame.draw.circle(asurf, (*active_color, spark_a), (end_x, end_y), 4)
+
+                            else:
+                                # Arc: animated slash sweep (blade motion blur)
+                                half_arc = _emath.radians(_enemy_arc_deg / 2.0)
+                                sweep_p = min(1.0, anim_progress * 2.0)
+                                num_seg = max(8, int(_enemy_arc_deg / 5))
+                                bright_color = [min(255, c + 60) for c in active_color]
+
+                                # Motion blur trail ribbons behind the blade
+                                for layer in range(3):
+                                    layer_t = max(0.0, sweep_p - layer * 0.15)
+                                    if layer_t <= 0:
+                                        continue
+                                    layer_a = int(60 * fade_alpha * (0.5 - layer * 0.15))
+                                    if layer_a <= 0:
+                                        continue
+                                    r_inner = int(arc_r * (0.35 + layer * 0.05))
+                                    r_outer = arc_r
+                                    t_segs = max(3, int(num_seg * layer_t))
+                                    outer_pts = []
+                                    inner_pts = []
+                                    for i in range(t_segs + 1):
+                                        a = rad - half_arc + _emath.radians(_enemy_arc_deg) * layer_t * i / t_segs
+                                        outer_pts.append((int(ac_ + _emath.cos(a) * r_outer),
+                                                          int(ac_ + _emath.sin(a) * r_outer)))
+                                        inner_pts.append((int(ac_ + _emath.cos(a) * r_inner),
+                                                          int(ac_ + _emath.sin(a) * r_inner)))
+                                    ribbon = outer_pts + list(reversed(inner_pts))
+                                    if len(ribbon) >= 3:
+                                        pygame.draw.polygon(asurf, (*active_color, layer_a), ribbon)
+
+                                # Leading blade edge
+                                sweep_a = rad - half_arc + _emath.radians(_enemy_arc_deg) * sweep_p
+                                blade_inner = int(arc_r * 0.15)
+                                blade_outer = arc_r + 3
+                                bx1 = int(ac_ + _emath.cos(sweep_a) * blade_inner)
+                                by1 = int(ac_ + _emath.sin(sweep_a) * blade_inner)
+                                bx2 = int(ac_ + _emath.cos(sweep_a) * blade_outer)
+                                by2 = int(ac_ + _emath.sin(sweep_a) * blade_outer)
+                                edge_a = min(255, int(220 * fade_alpha))
+                                # Glow
+                                pygame.draw.line(asurf, (*active_color, edge_a // 3),
+                                                 (bx1, by1), (bx2, by2), 7)
+                                # Core blade
+                                pygame.draw.line(asurf, (*bright_color, edge_a),
+                                                 (bx1, by1), (bx2, by2), 3)
+                                # Tip spark
+                                tip_a = min(255, int(255 * fade_alpha))
+                                pygame.draw.circle(asurf, (*bright_color, tip_a),
+                                                   (bx2, by2), 3)
+
+                                # Swept arc edge outline
+                                if sweep_p > 0.05:
+                                    edge_pts = []
+                                    e_segs = max(3, int(num_seg * sweep_p))
+                                    for i in range(e_segs + 1):
+                                        a = rad - half_arc + _emath.radians(_enemy_arc_deg) * sweep_p * i / e_segs
+                                        edge_pts.append((int(ac_ + _emath.cos(a) * arc_r),
+                                                          int(ac_ + _emath.sin(a) * arc_r)))
+                                    if len(edge_pts) >= 2:
+                                        outline_a = min(255, int(100 * fade_alpha))
+                                        pygame.draw.lines(asurf, (*bright_color, outline_a),
+                                                          False, edge_pts, 2)
+
                             self.screen.blit(asurf, (ex - ac_, ey - ac_))
 
                     # (Phased attack system removed — old instant attacks with visual effects)
@@ -1954,14 +2006,11 @@ class Renderer:
         # --- Active hitboxes (tag-driven visual effects) ---
         # Player hitboxes use weapon visual style for richer animations.
         if hitbox_sys:
-            # Lazy-load weapon visual resolver and swing renderer
+            # Lazy-load weapon visual resolver (only when needed)
             _weapon_style = None
-            _swing_renderer = None
             try:
                 from animation.weapon_visuals import resolve_weapon_visual
-                from animation.swing_renderer import get_swing_renderer
-                _weapon_style = True
-                _swing_renderer = get_swing_renderer()
+                _weapon_style = True  # Module available
             except ImportError:
                 _weapon_style = None
 
@@ -2011,170 +2060,160 @@ class Renderer:
                 if hitbox.definition.shape == "circle":
                     radius_px = int(hitbox.definition.radius * Config.TILE_SIZE)
                     if radius_px > 1:
-                        if is_player and _swing_renderer and _weapon_style:
-                            # Frame-based radial burst
-                            try:
-                                frames = _swing_renderer.get_radial_frames(style, radius_px)
-                                progress = min(1.0, (1.0 - life_ratio) * 1.4)
-                                frame_idx = min(len(frames) - 1, int(progress * (len(frames) - 1)))
-                                frame = frames[frame_idx]
-                                fc = frame.get_width() // 2
-                                self.screen.blit(frame, (hx - fc, hy - fc))
-                            except Exception:
-                                # Fallback to simple circle
-                                glow_pad = int(6 * glow_mult)
-                                surf_size = radius_px * 2 + glow_pad * 2
-                                arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
-                                center = surf_size // 2
-                                alpha = int(80 * life_ratio)
-                                pygame.draw.circle(arc_surf, (*base_color, alpha),
-                                                   (center, center), radius_px)
-                                pygame.draw.circle(arc_surf, (*bright, min(255, alpha + 120)),
-                                                   (center, center), radius_px, max(2, int(2 * thickness_mult)))
-                                self.screen.blit(arc_surf, (hx - center, hy - center))
-                        else:
-                            # Non-player or fallback: simple circle
-                            glow_pad = int(6 * glow_mult)
-                            surf_size = radius_px * 2 + glow_pad * 2
-                            arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
-                            center = surf_size // 2
-                            alpha = int(80 * life_ratio)
-                            pygame.draw.circle(arc_surf, (*base_color, alpha // 4),
-                                               (center, center), radius_px + glow_pad)
-                            pygame.draw.circle(arc_surf, (*base_color, alpha),
-                                               (center, center), radius_px)
-                            ring_w = max(2, int(2 * thickness_mult))
-                            pygame.draw.circle(arc_surf, (*bright, min(255, alpha + 120)),
-                                               (center, center), radius_px, ring_w)
-                            self.screen.blit(arc_surf, (hx - center, hy - center))
+                        glow_pad = int(6 * glow_mult)
+                        surf_size = radius_px * 2 + glow_pad * 2
+                        arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                        center = surf_size // 2
+                        alpha = int(80 * life_ratio)
+                        # Outer glow
+                        pygame.draw.circle(arc_surf, (*base_color, alpha // 4),
+                                           (center, center), radius_px + glow_pad)
+                        # Fill
+                        pygame.draw.circle(arc_surf, (*base_color, alpha),
+                                           (center, center), radius_px)
+                        # Bright ring
+                        ring_w = max(2, int(2 * thickness_mult))
+                        pygame.draw.circle(arc_surf, (*bright, min(255, alpha + 120)),
+                                           (center, center), radius_px, ring_w)
+                        self.screen.blit(arc_surf, (hx - center, hy - center))
 
                 elif hitbox.definition.shape == "arc":
                     radius_px = int(hitbox.definition.radius * Config.TILE_SIZE)
                     if radius_px > 2:
-                        if is_player and _swing_renderer and _weapon_style:
-                            # Frame-based swing arc
-                            try:
-                                frames = _swing_renderer.get_swing_frames(style, radius_px)
-                                progress = min(1.0, (1.0 - life_ratio) * 1.4)
-                                frame_idx = min(len(frames) - 1, int(progress * (len(frames) - 1)))
-                                frame = frames[frame_idx]
-                                # Frames are rendered pointing RIGHT (0°).
-                                # Rotate to match attack facing angle.
-                                rotated = pygame.transform.rotate(frame, -hitbox.facing_angle)
-                                rc = rotated.get_rect(center=(hx, hy))
-                                self.screen.blit(rotated, rc)
-                            except Exception:
-                                # Fallback: simple arc indicator
-                                surf_size = radius_px * 2 + 8
-                                arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
-                                center = surf_size // 2
-                                alpha = int(100 * life_ratio)
-                                pygame.draw.circle(arc_surf, (*base_color, alpha),
-                                                   (center, center), radius_px, 3)
-                                self.screen.blit(arc_surf, (hx - center, hy - center))
-                        else:
-                            # Non-player: inline geometric drawing
-                            import random as _rng
-                            glow_pad = int(10 * glow_mult)
-                            surf_size = radius_px * 2 + glow_pad * 2
-                            arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
-                            center = surf_size // 2
-                            arc_degrees = hitbox.definition.arc_degrees
-                            half_arc = arc_degrees / 2.0
-                            facing_rad = math.radians(hitbox.facing_angle)
-                            alpha = int(140 * life_ratio)
-                            sweep_progress = min(1.0, (1.0 - life_ratio) * 1.4)
-                            sweep_angle = facing_rad - math.radians(half_arc) + \
-                                math.radians(arc_degrees) * sweep_progress
-                            num_segments = max(12, int(arc_degrees / 4))
-                            # Motion blur trail
-                            for layer in range(4):
-                                layer_t = max(0.0, sweep_progress - layer * 0.12)
-                                if layer_t <= 0:
-                                    continue
-                                layer_alpha = int(alpha * (0.5 - layer * 0.12) * life_ratio)
-                                if layer_alpha <= 0:
-                                    continue
-                                trail_r_inner = int(radius_px * (0.35 + layer * 0.05))
-                                trail_r_outer = radius_px + int(glow_pad * 0.3)
-                                trail_segs = max(3, int(num_segments * layer_t))
-                                outer_pts = []
-                                inner_pts = []
-                                for i in range(trail_segs + 1):
-                                    a = facing_rad - math.radians(half_arc) + \
-                                        math.radians(arc_degrees) * layer_t * i / trail_segs
-                                    outer_pts.append((int(center + math.cos(a) * trail_r_outer),
-                                                      int(center + math.sin(a) * trail_r_outer)))
-                                    inner_pts.append((int(center + math.cos(a) * trail_r_inner),
-                                                      int(center + math.sin(a) * trail_r_inner)))
-                                ribbon = outer_pts + list(reversed(inner_pts))
-                                if len(ribbon) >= 3:
-                                    pygame.draw.polygon(arc_surf, (*base_color, layer_alpha), ribbon)
-                            # Leading blade edge
-                            blade_r_inner = int(radius_px * 0.15)
-                            blade_r_outer = radius_px + int(glow_pad * 0.4)
-                            bx1 = center + int(math.cos(sweep_angle) * blade_r_inner)
-                            by1 = center + int(math.sin(sweep_angle) * blade_r_inner)
-                            bx2 = center + int(math.cos(sweep_angle) * blade_r_outer)
-                            by2 = center + int(math.sin(sweep_angle) * blade_r_outer)
-                            blade_w = max(3, int(4 * thickness_mult))
-                            blade_a = min(255, int(230 * life_ratio))
-                            pygame.draw.line(arc_surf, (*base_color, blade_a // 3),
-                                             (bx1, by1), (bx2, by2), blade_w + 6)
-                            pygame.draw.line(arc_surf, (*bright, blade_a),
-                                             (bx1, by1), (bx2, by2), blade_w)
-                            pygame.draw.line(arc_surf, (255, 255, 255, min(255, blade_a)),
-                                             (bx1, by1), (bx2, by2), max(1, blade_w // 2))
-                            # Tip spark
-                            tip_size = max(3, int(4 * thickness_mult * life_ratio))
-                            pygame.draw.circle(arc_surf, (255, 255, 255, min(255, blade_a)),
-                                               (bx2, by2), tip_size)
-                            pygame.draw.circle(arc_surf, (*bright, blade_a // 2),
-                                               (bx2, by2), tip_size + 3)
-                            self.screen.blit(arc_surf, (hx - center, hy - center))
+                        import random as _rng
+                        glow_pad = int(10 * glow_mult)
+                        surf_size = radius_px * 2 + glow_pad * 2
+                        arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                        center = surf_size // 2
+                        arc_degrees = hitbox.definition.arc_degrees
+                        half_arc = arc_degrees / 2.0
+                        facing_rad = math.radians(hitbox.facing_angle)
+                        alpha = int(140 * life_ratio)
+
+                        # Sweep progress: blade travels from start to end of arc
+                        sweep_progress = min(1.0, (1.0 - life_ratio) * 1.4)
+                        sweep_angle = facing_rad - math.radians(half_arc) + \
+                            math.radians(arc_degrees) * sweep_progress
+
+                        num_segments = max(12, int(arc_degrees / 4))
+
+                        # --- Motion blur trail (fading arc behind the blade) ---
+                        trail_layers = 4
+                        for layer in range(trail_layers):
+                            layer_t = max(0.0, sweep_progress - layer * 0.12)
+                            if layer_t <= 0:
+                                continue
+                            layer_alpha = int(alpha * (0.5 - layer * 0.12) * life_ratio)
+                            if layer_alpha <= 0:
+                                continue
+                            # Build thin arc stripe for this trail layer
+                            trail_r_inner = int(radius_px * (0.35 + layer * 0.05))
+                            trail_r_outer = radius_px + int(glow_pad * 0.3)
+                            trail_segs = max(3, int(num_segments * layer_t))
+                            outer_pts = []
+                            inner_pts = []
+                            for i in range(trail_segs + 1):
+                                a = facing_rad - math.radians(half_arc) + \
+                                    math.radians(arc_degrees) * layer_t * i / trail_segs
+                                outer_pts.append((
+                                    int(center + math.cos(a) * trail_r_outer),
+                                    int(center + math.sin(a) * trail_r_outer)))
+                                inner_pts.append((
+                                    int(center + math.cos(a) * trail_r_inner),
+                                    int(center + math.sin(a) * trail_r_inner)))
+                            # Draw filled ribbon (outer + reversed inner)
+                            ribbon = outer_pts + list(reversed(inner_pts))
+                            if len(ribbon) >= 3:
+                                pygame.draw.polygon(arc_surf, (*base_color, layer_alpha), ribbon)
+
+                        # --- Bright leading blade edge ---
+                        blade_r_inner = int(radius_px * 0.15)
+                        blade_r_outer = radius_px + int(glow_pad * 0.4)
+                        bx1 = center + int(math.cos(sweep_angle) * blade_r_inner)
+                        by1 = center + int(math.sin(sweep_angle) * blade_r_inner)
+                        bx2 = center + int(math.cos(sweep_angle) * blade_r_outer)
+                        by2 = center + int(math.sin(sweep_angle) * blade_r_outer)
+                        blade_w = max(3, int(4 * thickness_mult))
+                        blade_a = min(255, int(230 * life_ratio))
+                        # Wide glow behind blade
+                        pygame.draw.line(arc_surf, (*base_color, blade_a // 3),
+                                         (bx1, by1), (bx2, by2), blade_w + 6)
+                        # Bright blade core
+                        pygame.draw.line(arc_surf, (*bright, blade_a),
+                                         (bx1, by1), (bx2, by2), blade_w)
+                        # White-hot center line
+                        pygame.draw.line(arc_surf, (255, 255, 255, min(255, blade_a)),
+                                         (bx1, by1), (bx2, by2), max(1, blade_w // 2))
+
+                        # --- Tip spark at blade end ---
+                        tip_size = max(3, int(4 * thickness_mult * life_ratio))
+                        pygame.draw.circle(arc_surf, (255, 255, 255, min(255, blade_a)),
+                                           (bx2, by2), tip_size)
+                        pygame.draw.circle(arc_surf, (*bright, blade_a // 2),
+                                           (bx2, by2), tip_size + 3)
+
+                        # --- Particle sparks along swept arc edge ---
+                        if is_player and particle_density > 0.5 and sweep_progress > 0.15:
+                            n_sparks = int(3 * particle_density)
+                            for _ in range(n_sparks):
+                                sp_t = _rng.random() * sweep_progress
+                                sp_angle = facing_rad - math.radians(half_arc) + \
+                                    math.radians(arc_degrees) * sp_t
+                                sp_r = blade_r_outer + _rng.randint(-2, 5)
+                                spx = center + int(math.cos(sp_angle) * sp_r)
+                                spy = center + int(math.sin(sp_angle) * sp_r)
+                                sp_size = _rng.randint(1, max(1, int(2 * thickness_mult)))
+                                # Sparks brighter near the blade
+                                sp_brightness = max(0.3, 1.0 - abs(sp_t - sweep_progress) * 3)
+                                sp_a = min(255, int(200 * life_ratio * sp_brightness))
+                                pygame.draw.circle(arc_surf, (*bright, sp_a),
+                                                   (spx, spy), sp_size)
+
+                        # --- Arc edge outline (subtle, swept portion) ---
+                        if sweep_progress > 0.05:
+                            edge_pts = []
+                            edge_segs = max(4, int(num_segments * sweep_progress))
+                            for i in range(edge_segs + 1):
+                                a = facing_rad - math.radians(half_arc) + \
+                                    math.radians(arc_degrees) * sweep_progress * i / edge_segs
+                                edge_pts.append((
+                                    int(center + math.cos(a) * radius_px),
+                                    int(center + math.sin(a) * radius_px)))
+                            if len(edge_pts) >= 2:
+                                edge_a = min(255, int(alpha * 0.6))
+                                edge_w = max(2, int(2 * thickness_mult))
+                                pygame.draw.lines(arc_surf, (*bright, edge_a),
+                                                  False, edge_pts, edge_w)
+
+                        self.screen.blit(arc_surf, (hx - center, hy - center))
 
                 elif hitbox.definition.shape == "line":
                     length_px = int(hitbox.definition.length * Config.TILE_SIZE)
-                    if is_player and _swing_renderer and _weapon_style:
-                        # Frame-based thrust
-                        try:
-                            frames = _swing_renderer.get_thrust_frames(style, length_px)
-                            progress = min(1.0, (1.0 - life_ratio) * 1.4)
-                            frame_idx = min(len(frames) - 1, int(progress * (len(frames) - 1)))
-                            frame = frames[frame_idx]
-                            # Frames point RIGHT. Rotate to facing angle.
-                            rotated = pygame.transform.rotate(frame, -hitbox.facing_angle)
-                            rc = rotated.get_rect(center=(hx, hy))
-                            self.screen.blit(rotated, rc)
-                        except Exception:
-                            # Fallback: simple line
-                            facing_rad = math.radians(hitbox.facing_angle)
-                            end_x = hx + int(math.cos(facing_rad) * length_px)
-                            end_y = hy + int(math.sin(facing_rad) * length_px)
-                            alpha = int(200 * life_ratio)
-                            pygame.draw.line(self.screen, (*base_color, min(255, alpha)),
-                                            (hx, hy), (end_x, end_y), max(3, int(4 * thickness_mult)))
-                    else:
-                        # Non-player or fallback: inline geometric thrust
-                        facing_rad = math.radians(hitbox.facing_angle)
-                        end_x = hx + int(math.cos(facing_rad) * length_px)
-                        end_y = hy + int(math.sin(facing_rad) * length_px)
-                        alpha = int(200 * life_ratio)
-                        line_surf = pygame.Surface(
-                            (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
-                        glow_w = max(6, int(8 * thickness_mult))
-                        core_w = max(3, int(4 * thickness_mult))
-                        inner_w = max(1, int(2 * thickness_mult))
-                        pygame.draw.line(line_surf, (*base_color, alpha // 4),
-                                        (hx, hy), (end_x, end_y), glow_w)
-                        pygame.draw.line(line_surf, (*base_color, alpha),
-                                        (hx, hy), (end_x, end_y), core_w)
-                        pygame.draw.line(line_surf, (*bright, min(255, alpha + 60)),
-                                        (hx, hy), (end_x, end_y), inner_w)
+                    facing_rad = math.radians(hitbox.facing_angle)
+                    end_x = hx + int(math.cos(facing_rad) * length_px)
+                    end_y = hy + int(math.sin(facing_rad) * length_px)
+                    alpha = int(200 * life_ratio)
+                    line_surf = pygame.Surface(
+                        (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+                    # Width scales with thickness multiplier
+                    glow_w = max(6, int(8 * thickness_mult))
+                    core_w = max(3, int(4 * thickness_mult))
+                    inner_w = max(1, int(2 * thickness_mult))
+                    # Wide outer glow
+                    pygame.draw.line(line_surf, (*base_color, alpha // 4),
+                                    (hx, hy), (end_x, end_y), glow_w)
+                    # Core line
+                    pygame.draw.line(line_surf, (*base_color, alpha),
+                                    (hx, hy), (end_x, end_y), core_w)
+                    # Bright center
+                    pygame.draw.line(line_surf, (*bright, min(255, alpha + 60)),
+                                    (hx, hy), (end_x, end_y), inner_w)
+                    # Tip glow for player attacks
+                    if is_player:
                         tip_a = min(255, int(alpha * 1.3))
                         pygame.draw.circle(line_surf, (*bright, tip_a),
                                            (end_x, end_y), max(3, int(4 * thickness_mult)))
-                        self.screen.blit(line_surf, (0, 0))
+                    self.screen.blit(line_surf, (0, 0))
 
                 elif hitbox.definition.shape == "rect":
                     w_px = int(hitbox.definition.width * Config.TILE_SIZE)
@@ -2202,7 +2241,7 @@ class Renderer:
                     pygame.draw.circle(flash_surf, (*bright, flash_a // 4), (fc, fc), flash_r, 2)
                     self.screen.blit(flash_surf, (hx - fc, hy - fc))
 
-        # --- Projectiles (tag-driven visual shapes, polished with glow + trails) ---
+        # --- Projectiles (tag-driven visual shapes) ---
         if projectile_sys:
             for proj in projectile_sys.projectiles:
                 px_screen, py_screen = camera.world_to_screen(
@@ -2212,128 +2251,73 @@ class Renderer:
 
                 vis = proj.definition.visual
                 proj_tags = proj.definition.tags
-                facing_rad = math.radians(proj.facing_angle)
 
                 if vis:
                     shape = vis.get('shape', 'orb')
                     color = tuple(vis.get('color', [200, 200, 255]))
                     glow = vis.get('glow', False)
                     glow_color = tuple(vis.get('glow_color', color))
-                    bright_color = tuple(min(255, c + 80) for c in color)
 
                     if shape == 'elongated':
-                        # Arrow/shard with motion blur trail + glow halo
+                        # Arrow/shard: compact rotated elongated shape
                         length = vis.get('length_px', 8)
                         width = vis.get('width_px', 3)
-                        # Larger surface for glow halo
-                        pad = 6
-                        surf_w = length + pad * 2
-                        surf_h = width + pad * 2
-                        arrow_surf = pygame.Surface((surf_w, surf_h), pygame.SRCALPHA)
-                        # Outer glow halo (3-pass)
-                        pygame.draw.ellipse(arrow_surf, (*glow_color, 20),
-                                            (0, 0, surf_w, surf_h))
-                        pygame.draw.ellipse(arrow_surf, (*glow_color, 40),
-                                            (pad // 2, pad // 2, surf_w - pad, surf_h - pad))
-                        # Core body
+                        arrow_surf = pygame.Surface((length + 2, width + 2), pygame.SRCALPHA)
                         pygame.draw.ellipse(arrow_surf, color,
-                                            (pad, pad, length, width))
-                        # White highlight center
-                        hl_w = max(2, length // 2)
-                        hl_h = max(1, width // 3)
-                        pygame.draw.ellipse(arrow_surf, (255, 255, 255, 180),
-                                            (pad + length // 4, pad + width // 3, hl_w, hl_h))
+                                            (1, 1, length, width))
+                        if glow:
+                            glow_surf = pygame.Surface((length + 2, width + 2), pygame.SRCALPHA)
+                            pygame.draw.ellipse(glow_surf, (*glow_color, 50),
+                                                (0, 0, length + 2, width + 2))
+                            arrow_surf.blit(glow_surf, (0, 0))
                         rotated = pygame.transform.rotate(arrow_surf, -proj.facing_angle)
                         self.screen.blit(rotated,
                                          rotated.get_rect(center=(px_screen, py_screen)))
-                        # Motion blur trail behind projectile
-                        trail_len = 18
-                        trail_sx = px_screen - int(math.cos(facing_rad) * trail_len)
-                        trail_sy = py_screen - int(math.sin(facing_rad) * trail_len)
-                        for tl in range(3):
-                            t_frac = (tl + 1) / 4.0
-                            tx = int(px_screen + (trail_sx - px_screen) * t_frac)
-                            ty = int(py_screen + (trail_sy - py_screen) * t_frac)
-                            t_alpha = int(60 * (1.0 - t_frac))
-                            t_size = max(1, int(width * (1.0 - t_frac * 0.5)))
-                            trail_surf = pygame.Surface((t_size * 2 + 2, t_size * 2 + 2), pygame.SRCALPHA)
-                            pygame.draw.circle(trail_surf, (*color, t_alpha),
-                                               (t_size + 1, t_size + 1), t_size)
-                            self.screen.blit(trail_surf, (tx - t_size - 1, ty - t_size - 1))
 
                     elif shape == 'beam':
-                        # Beam with multi-layer glow and bright tip
+                        # Beam: wider glowing line with trail
                         bw = max(8, vis.get('width_px', 8))
-                        trail_len = 32
+                        facing_rad = math.radians(proj.facing_angle)
+                        trail_len = 28
                         sx = px_screen - int(math.cos(facing_rad) * trail_len)
                         sy = py_screen - int(math.sin(facing_rad) * trail_len)
-                        # Wide outer glow (lowest alpha)
-                        glow_surf = pygame.Surface(
-                            (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
-                        pygame.draw.line(glow_surf, (*glow_color, 30),
-                                         (sx, sy), (px_screen, py_screen), bw + 10)
-                        pygame.draw.line(glow_surf, (*glow_color, 60),
-                                         (sx, sy), (px_screen, py_screen), bw + 4)
+                        # Outer glow (wide)
+                        if glow:
+                            pygame.draw.line(self.screen, (*glow_color, 100) if len(glow_color) == 3 else glow_color,
+                                             (sx, sy), (px_screen, py_screen), bw + 6)
                         # Core beam
-                        pygame.draw.line(glow_surf, (*color, 220),
+                        pygame.draw.line(self.screen, color,
                                          (sx, sy), (px_screen, py_screen), bw)
-                        # Bright center line
-                        pygame.draw.line(glow_surf, (255, 255, 255, 180),
-                                         (sx, sy), (px_screen, py_screen), max(2, bw // 3))
-                        # Bright tip with halo
-                        pygame.draw.circle(glow_surf, (255, 255, 255, 220),
+                        # Bright tip
+                        pygame.draw.circle(self.screen, (255, 255, 255),
                                            (px_screen, py_screen), bw // 2 + 2)
-                        pygame.draw.circle(glow_surf, (*bright_color, 80),
-                                           (px_screen, py_screen), bw // 2 + 6)
-                        self.screen.blit(glow_surf, (0, 0))
 
-                    else:  # 'orb' default — with glow halo + white highlight
+                    else:  # 'orb' default
                         radius = vis.get('radius_px', 5)
                         pulse = vis.get('pulse', False)
                         if pulse:
                             t = _time.time() * 10
                             radius = radius + int(1.5 * abs(t % 2 - 1))
-                        # Multi-layer glow halo
-                        halo_r = radius * 2 + 4
-                        halo_surf = pygame.Surface(
-                            (halo_r * 2 + 4, halo_r * 2 + 4), pygame.SRCALPHA)
-                        hc = halo_r + 2
-                        # Outermost soft glow
-                        pygame.draw.circle(halo_surf, (*glow_color, 20), (hc, hc), halo_r)
-                        # Middle glow
-                        pygame.draw.circle(halo_surf, (*glow_color, 50),
-                                           (hc, hc), int(halo_r * 0.7))
-                        # Core body
-                        pygame.draw.circle(halo_surf, (*color, 230), (hc, hc), radius)
-                        # White-hot center highlight
-                        hl_r = max(1, radius // 2)
-                        pygame.draw.circle(halo_surf, (255, 255, 255, 200), (hc, hc), hl_r)
-                        self.screen.blit(halo_surf,
-                                         (px_screen - hc, py_screen - hc))
-                        # Motion blur trail
-                        trail_len = 12
-                        for tl in range(3):
-                            t_frac = (tl + 1) / 4.0
-                            tx = int(px_screen - math.cos(facing_rad) * trail_len * t_frac)
-                            ty = int(py_screen - math.sin(facing_rad) * trail_len * t_frac)
-                            t_alpha = int(50 * (1.0 - t_frac))
-                            t_size = max(1, int(radius * (1.0 - t_frac * 0.4)))
-                            trail_surf = pygame.Surface((t_size * 2 + 2, t_size * 2 + 2), pygame.SRCALPHA)
-                            pygame.draw.circle(trail_surf, (*color, t_alpha),
-                                               (t_size + 1, t_size + 1), t_size)
-                            self.screen.blit(trail_surf, (tx - t_size - 1, ty - t_size - 1))
+                        if glow:
+                            glow_surf = pygame.Surface(
+                                (radius * 4 + 4, radius * 4 + 4), pygame.SRCALPHA)
+                            pygame.draw.circle(glow_surf, (*glow_color, 40),
+                                               (radius * 2 + 2, radius * 2 + 2),
+                                               radius * 2)
+                            self.screen.blit(glow_surf,
+                                             (px_screen - radius * 2 - 2,
+                                              py_screen - radius * 2 - 2))
+                        pygame.draw.circle(self.screen, color,
+                                           (px_screen, py_screen), radius)
+                        pygame.draw.circle(self.screen, (255, 255, 255),
+                                           (px_screen, py_screen), max(1, radius // 2))
                 else:
-                    # Fallback: simple circle with tag color + basic glow
+                    # Fallback: simple circle with tag color
                     color = _color_from_tags(proj_tags, (200, 200, 255))
                     radius = max(3, int(proj.definition.hitbox_radius * Config.TILE_SIZE * 0.5))
-                    # Small glow halo
-                    glow_surf = pygame.Surface((radius * 4 + 4, radius * 4 + 4), pygame.SRCALPHA)
-                    gc = radius * 2 + 2
-                    pygame.draw.circle(glow_surf, (*color, 30), (gc, gc), radius * 2)
-                    self.screen.blit(glow_surf, (px_screen - gc, py_screen - gc))
                     pygame.draw.circle(self.screen, color, (px_screen, py_screen), radius)
                     pygame.draw.circle(self.screen, (255, 255, 255),
-                                       (px_screen, py_screen), max(1, radius // 2))
+                                       (px_screen, py_screen), max(1, radius - 1), 1)
 
         # --- Combat particles ---
         if particles:
@@ -7558,11 +7542,6 @@ class Renderer:
         try:
             from systems.attack_effects import get_attack_effects_manager, AttackEffectType
             from data.models.world import Position
-            try:
-                from animation.swing_renderer import get_swing_renderer as _get_fx_swing
-                _fx_swing = _get_fx_swing()
-            except ImportError:
-                _fx_swing = None
 
             manager = get_attack_effects_manager()
             manager.update()
@@ -7581,77 +7560,126 @@ class Renderer:
                     Position(effect.end_pos[0], effect.end_pos[1], 0))
 
                 if effect.effect_type == AttackEffectType.SLASH_ARC:
+                    # Sweeping arc — animates across the arc over the effect duration
+                    # First ~30% is charge-up (faint glow), then sweep across arc
                     radius_px = int(effect.radius * Config.TILE_SIZE)
                     if radius_px < 4:
                         continue
-                    progress = min(1.0, effect.age / effect.duration)
+                    surf_size = radius_px * 2 + 8
+                    arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                    center = surf_size // 2
 
-                    if _fx_swing:
-                        try:
-                            arc_deg = getattr(effect, 'arc_degrees', 65.0)
-                            frames = _fx_swing.get_enemy_swing_frames(rgb, arc_deg, radius_px)
-                            frame_idx = min(len(frames) - 1,
-                                            int(progress * (len(frames) - 1)))
-                            frame = frames[frame_idx]
-                            # Apply overall alpha fade from effect
-                            if alpha < 200:
-                                frame = frame.copy()
-                                frame.set_alpha(alpha)
-                            rotated = pygame.transform.rotate(frame, -effect.facing_angle)
-                            rc = rotated.get_rect(center=(start_sx, start_sy))
-                            self.screen.blit(rotated, rc)
-                        except Exception:
-                            # Fallback to simple arc
-                            surf_size = radius_px * 2 + 8
-                            arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
-                            center = surf_size // 2
-                            pygame.draw.circle(arc_surf, (*rgb, min(255, alpha // 2)),
-                                               (center, center), radius_px, 3)
-                            self.screen.blit(arc_surf, (start_sx - center, start_sy - center))
+                    facing_rad = _math.radians(effect.facing_angle)
+                    half_arc = _math.radians(effect.arc_degrees / 2.0)
+                    num_seg = max(8, int(effect.arc_degrees / 5))
+
+                    # Animation progress: 0→1 over the effect's life
+                    progress = min(1.0, effect.age / effect.duration)
+                    # Phase 1 (0-0.25): charge-up glow at start angle
+                    # Phase 2 (0.25-0.7): sweep across the arc
+                    # Phase 3 (0.7-1.0): fade trail
+
+                    if progress < 0.25:
+                        # Charge-up: faint glow line from center toward start of arc
+                        charge_p = progress / 0.25
+                        charge_alpha = int(40 + 80 * charge_p)
+                        charge_len = int(radius_px * (0.3 + 0.7 * charge_p))
+                        start_a = facing_rad - half_arc
+                        cx = center + int(_math.cos(start_a) * charge_len)
+                        cy = center + int(_math.sin(start_a) * charge_len)
+                        pygame.draw.line(arc_surf, (*rgb, charge_alpha),
+                                         (center, center), (cx, cy), 3)
+                        # Small glow at charge point
+                        pygame.draw.circle(arc_surf, (*rgb, min(255, charge_alpha + 40)),
+                                          (cx, cy), 5)
                     else:
-                        # No swing renderer — simple arc indicator
-                        surf_size = radius_px * 2 + 8
-                        arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
-                        center = surf_size // 2
-                        pygame.draw.circle(arc_surf, (*rgb, min(255, alpha // 2)),
-                                           (center, center), radius_px, 3)
-                        self.screen.blit(arc_surf, (start_sx - center, start_sy - center))
+                        # Sweep: draw the arc up to current sweep position
+                        if progress < 0.7:
+                            sweep_p = (progress - 0.25) / 0.45  # 0→1 during sweep
+                        else:
+                            sweep_p = 1.0  # Fully swept
+                        sweep_segs = max(2, int(num_seg * sweep_p))
+
+                        # Trail/wake: slightly transparent filled wedge behind the sweep
+                        trail_points = [(center, center)]
+                        for i in range(sweep_segs + 1):
+                            a = facing_rad - half_arc + _math.radians(effect.arc_degrees) * i / num_seg
+                            px = center + _math.cos(a) * radius_px
+                            py = center + _math.sin(a) * radius_px
+                            trail_points.append((int(px), int(py)))
+
+                        if len(trail_points) >= 3:
+                            trail_alpha = min(255, int(alpha * 0.35))
+                            pygame.draw.polygon(arc_surf, (*rgb, trail_alpha), trail_points)
+
+                        # Leading edge — bright sweeping line at current position
+                        sweep_angle = facing_rad - half_arc + _math.radians(effect.arc_degrees) * sweep_p
+                        lead_x = center + int(_math.cos(sweep_angle) * radius_px)
+                        lead_y = center + int(_math.sin(sweep_angle) * radius_px)
+
+                        # Bright leading edge line
+                        lead_alpha = min(255, int(alpha * 0.95))
+                        pygame.draw.line(arc_surf, (*rgb, lead_alpha),
+                                         (center, center), (lead_x, lead_y), 4)
+                        # Bright tip at leading edge
+                        pygame.draw.circle(arc_surf, (*rgb, min(255, int(alpha * 0.9))),
+                                          (lead_x, lead_y), 5)
+
+                        # Arc edge outline (swept portion only)
+                        if len(trail_points) > 2:
+                            edge_alpha = min(255, int(alpha * 0.7))
+                            pygame.draw.lines(arc_surf, (*rgb, edge_alpha),
+                                              False, trail_points[1:], 3)
+
+                    self.screen.blit(arc_surf, (start_sx - center, start_sy - center))
 
                 elif effect.effect_type == AttackEffectType.THRUST:
+                    # Forward thrust — animates as a stab extending outward
                     length_px = int(effect.radius * Config.TILE_SIZE)
+                    facing_rad = _math.radians(effect.facing_angle)
+
+                    # Animation: charge (0-0.25), extend (0.25-0.6), hold+fade (0.6-1.0)
                     progress = min(1.0, effect.age / effect.duration)
 
-                    if _fx_swing:
-                        try:
-                            frames = _fx_swing.get_enemy_thrust_frames(rgb, length_px)
-                            frame_idx = min(len(frames) - 1,
-                                            int(progress * (len(frames) - 1)))
-                            frame = frames[frame_idx]
-                            if alpha < 200:
-                                frame = frame.copy()
-                                frame.set_alpha(alpha)
-                            rotated = pygame.transform.rotate(frame, -effect.facing_angle)
-                            rc = rotated.get_rect(center=(start_sx, start_sy))
-                            self.screen.blit(rotated, rc)
-                        except Exception:
-                            # Fallback
-                            facing_rad = _math.radians(effect.facing_angle)
-                            ex = start_sx + int(_math.cos(facing_rad) * length_px)
-                            ey = start_sy + int(_math.sin(facing_rad) * length_px)
-                            pygame.draw.line(self.screen, (*rgb, min(255, alpha)),
-                                            (start_sx, start_sy), (ex, ey), 4)
-                    else:
-                        facing_rad = _math.radians(effect.facing_angle)
-                        ex = start_sx + int(_math.cos(facing_rad) * length_px)
-                        ey = start_sy + int(_math.sin(facing_rad) * length_px)
+                    if progress < 0.25:
+                        # Charge-up: glowing point at weapon origin
+                        charge_p = progress / 0.25
+                        charge_alpha = int(60 + 100 * charge_p)
+                        short_len = int(length_px * 0.15 * charge_p)
+                        cx = start_sx + int(_math.cos(facing_rad) * short_len)
+                        cy = start_sy + int(_math.sin(facing_rad) * short_len)
                         glow_surf = pygame.Surface(
                             (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
-                        pygame.draw.line(glow_surf, (*rgb, min(255, int(alpha * 0.4))),
-                                        (start_sx, start_sy), (ex, ey), 8)
-                        pygame.draw.line(glow_surf, (*rgb, min(255, int(alpha * 0.85))),
+                        pygame.draw.circle(glow_surf, (*rgb, charge_alpha),
+                                          (start_sx, start_sy), int(4 + 3 * charge_p))
+                        if short_len > 1:
+                            pygame.draw.line(glow_surf, (*rgb, charge_alpha),
+                                            (start_sx, start_sy), (cx, cy), 3)
+                        self.screen.blit(glow_surf, (0, 0))
+                    else:
+                        # Extend and hold
+                        if progress < 0.6:
+                            extend_p = (progress - 0.25) / 0.35
+                        else:
+                            extend_p = 1.0
+                        current_len = int(length_px * extend_p)
+                        ex = start_sx + int(_math.cos(facing_rad) * current_len)
+                        ey = start_sy + int(_math.sin(facing_rad) * current_len)
+
+                        glow_surf = pygame.Surface(
+                            (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+                        # Outer glow (wider for beam-like weapons)
+                        glow_width = 8
+                        glow_alpha = min(255, int(alpha * 0.4))
+                        pygame.draw.line(glow_surf, (*rgb, glow_alpha),
+                                        (start_sx, start_sy), (ex, ey), glow_width)
+                        # Core line
+                        core_alpha = min(255, int(alpha * 0.85))
+                        pygame.draw.line(glow_surf, (*rgb, core_alpha),
                                         (start_sx, start_sy), (ex, ey), 4)
-                        pygame.draw.circle(glow_surf, (*rgb, min(255, int(alpha * 0.95))),
-                                          (ex, ey), 6)
+                        # Bright tip
+                        tip_alpha = min(255, int(alpha * 0.95))
+                        pygame.draw.circle(glow_surf, (*rgb, tip_alpha), (ex, ey), 6)
                         self.screen.blit(glow_surf, (0, 0))
 
                 elif effect.effect_type == AttackEffectType.IMPACT_BURST:
