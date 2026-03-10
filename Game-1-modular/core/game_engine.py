@@ -3136,7 +3136,6 @@ class GameEngine:
                         'weapon_tags': weapon_tags,
                         'weapon_tier': getattr(_w, 'tier', 1) if _w else 1,
                         'weapon_weight': getattr(_w, 'weight', 1.0) if _w else 1.0,
-                        'weapon_icon_path': getattr(_w, 'icon_path', None) if _w else None,
                     }
                     player_sm.start_attack(attack_def, damage_context)
                     self.character._attack_facing_locked = True
@@ -7376,7 +7375,6 @@ class GameEngine:
                                     'weapon_tags': weapon_tags,
                                     'weapon_tier': getattr(_w, 'tier', 1) if _w else 1,
                                     'weapon_weight': getattr(_w, 'weight', 1.0) if _w else 1.0,
-                                    'weapon_icon_path': getattr(_w, 'icon_path', None) if _w else None,
                                 }
                                 # Compute attack direction toward mouse cursor
                                 mouse_pos = pygame.mouse.get_pos()

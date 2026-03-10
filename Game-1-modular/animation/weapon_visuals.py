@@ -56,8 +56,7 @@ class WeaponVisualStyle:
     __slots__ = ('arc_degrees', 'trail_frames', 'thickness', 'motion_type',
                  'color', 'glow_color', 'glow_intensity', 'particle_density',
                  'screen_shake_intensity', 'trail_alpha_base',
-                 'speed_feel', 'impact_flash',
-                 'weapon_icon_path', 'weapon_icon_surface')
+                 'speed_feel', 'impact_flash')
 
     def __init__(self):
         # Geometry
@@ -77,10 +76,6 @@ class WeaponVisualStyle:
         self.trail_alpha_base: int = 180
         self.speed_feel: float = 1.0  # <1 = heavy/slow, >1 = fast/light
         self.impact_flash: bool = False
-
-        # Weapon sprite (optional — set by renderer from damage context)
-        self.weapon_icon_path: Optional[str] = None
-        self.weapon_icon_surface: Optional[Any] = None  # pygame.Surface
 
 
 def resolve_weapon_visual(weapon_type: str,
