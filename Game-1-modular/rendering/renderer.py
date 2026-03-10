@@ -7715,7 +7715,11 @@ class Renderer:
                         pygame.draw.line(self.screen, rgb,
                                         (start_sx + size, start_sy - size),
                                         (start_sx - size, start_sy + size), 3)
-                        # Visual X indicator is sufficient — no text overlay
+                        if effect.alpha > 0.7:
+                            blocked_surf = self.tiny_font.render("BLOCKED", True, rgb)
+                            self.screen.blit(blocked_surf,
+                                           (start_sx - blocked_surf.get_width() // 2,
+                                            start_sy - size - 15))
 
                 elif effect.effect_type == AttackEffectType.AREA:
                     radius_px = int(effect.radius * Config.TILE_SIZE)
