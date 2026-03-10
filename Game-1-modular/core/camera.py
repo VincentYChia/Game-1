@@ -12,16 +12,18 @@ class Camera:
         self.viewport_width = viewport_width
         self.viewport_height = viewport_height
         self.position = Position(0, 0, 0)
+        # Screen shake offset (pixels). Set each frame by ScreenEffects.
+        self.shake_offset: Tuple[int, int] = (0, 0)
 
     def follow(self, target: Position):
         """Center camera on target position"""
         self.position = target.copy()
 
     def world_to_screen(self, world_pos: Position) -> Tuple[int, int]:
-        """Convert world coordinates to screen coordinates"""
+        """Convert world coordinates to screen coordinates, including shake."""
         sx = (world_pos.x - self.position.x) * Config.TILE_SIZE + self.viewport_width // 2
         sy = (world_pos.y - self.position.y) * Config.TILE_SIZE + self.viewport_height // 2
-        return int(sx), int(sy)
+        return int(sx) + self.shake_offset[0], int(sy) + self.shake_offset[1]
 
     def screen_to_world(self, screen_x: int, screen_y: int) -> Position:
         """Convert screen coordinates to world coordinates"""

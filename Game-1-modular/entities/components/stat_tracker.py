@@ -569,7 +569,14 @@ class StatTracker:
             "used_lightning_weapon": False,
             "fire_weapon_kills": 0,
             "ice_weapon_kills": 0,
-            "lightning_weapon_kills": 0
+            "lightning_weapon_kills": 0,
+            # Action combat stats
+            "dodge_rolls": 0,
+            "successful_dodge_iframes": 0,
+            "combo_attacks": 0,
+            "longest_combo": 0,
+            "projectiles_fired": 0,
+            "projectiles_hit": 0,
         }
 
         self.combat_status_effects = {
@@ -1520,6 +1527,33 @@ class StatTracker:
             self.barrier_stats["enemy_attacks_blocked"] += 1
         elif source == "turret":
             self.barrier_stats["turret_attacks_blocked"] += 1
+
+    # =========================================================================
+    # ACTION COMBAT STATS
+    # =========================================================================
+
+    def record_dodge_roll(self):
+        """Record a dodge roll attempt."""
+        self.combat_actions["dodge_rolls"] += 1
+
+    def record_successful_dodge(self):
+        """Record a dodge that avoided damage via i-frames."""
+        self.combat_actions["successful_dodge_iframes"] += 1
+        self.combat_actions["perfect_dodges"] += 1
+
+    def record_combo_attack(self, combo_count: int):
+        """Record a combo hit and update longest combo."""
+        self.combat_actions["combo_attacks"] += 1
+        if combo_count > self.combat_actions["longest_combo"]:
+            self.combat_actions["longest_combo"] = combo_count
+
+    def record_projectile_fired(self):
+        """Record a projectile being launched."""
+        self.combat_actions["projectiles_fired"] += 1
+
+    def record_projectile_hit(self):
+        """Record a projectile connecting with a target."""
+        self.combat_actions["projectiles_hit"] += 1
 
     # =========================================================================
     # SERIALIZATION
