@@ -5,8 +5,9 @@ Follows the architecture of core/minigame_effects.py but operates in world
 coordinates (tiles) instead of screen-space pixels. Particles are converted
 to screen coordinates during render() via the camera.
 
-Particle types: hit sparks, slash trails, blood splatter, dodge dust,
-projectile trails.
+Particle types: hit sparks (elongated streaks), slash trails, impact bursts,
+dodge dust, projectile trails. All particles use proper glow rendering with
+multi-pass alpha blending for game-quality visuals.
 """
 
 import math
@@ -18,30 +19,31 @@ import pygame
 from core.config import Config
 
 
-# Damage type -> spark color palette
+# Damage type -> spark color palette (brighter, more saturated)
 DAMAGE_SPARK_COLORS = {
-    "physical": [(220, 220, 240), (255, 255, 255), (180, 180, 200)],
-    "fire": [(255, 200, 50), (255, 120, 20), (255, 80, 10)],
-    "ice": [(100, 200, 255), (150, 230, 255), (200, 240, 255)],
-    "lightning": [(255, 255, 100), (255, 255, 200), (200, 200, 255)],
-    "poison": [(100, 255, 100), (50, 200, 50), (150, 255, 100)],
-    "arcane": [(200, 100, 255), (150, 50, 255), (230, 150, 255)],
-    "shadow": [(150, 100, 200), (100, 50, 150), (180, 130, 230)],
-    "holy": [(255, 255, 200), (255, 240, 150), (255, 255, 255)],
+    "physical": [(230, 230, 250), (255, 255, 255), (200, 200, 220)],
+    "fire": [(255, 220, 80), (255, 140, 30), (255, 100, 10)],
+    "ice": [(120, 210, 255), (180, 240, 255), (220, 250, 255)],
+    "lightning": [(255, 255, 120), (255, 255, 220), (220, 220, 255)],
+    "poison": [(120, 255, 120), (70, 220, 70), (180, 255, 120)],
+    "arcane": [(220, 120, 255), (170, 70, 255), (240, 170, 255)],
+    "shadow": [(170, 120, 220), (120, 70, 170), (200, 150, 240)],
+    "holy": [(255, 255, 220), (255, 250, 170), (255, 255, 255)],
 }
 
 
 class CombatParticle:
-    """A single world-space particle."""
+    """A single world-space particle with velocity-based streak rendering."""
 
     __slots__ = ('x', 'y', 'vx', 'vy', 'life', 'max_life', 'size',
-                 'color', 'alpha', 'gravity', 'drag')
+                 'color', 'alpha', 'gravity', 'drag', 'streak')
 
     def __init__(self, x: float, y: float,
                  vx: float = 0.0, vy: float = 0.0,
                  life: float = 1.0, size: float = 3.0,
                  color: Tuple[int, int, int] = (255, 255, 255),
-                 gravity: float = 0.0, drag: float = 0.0):
+                 gravity: float = 0.0, drag: float = 0.0,
+                 streak: bool = False):
         self.x = x
         self.y = y
         self.vx = vx
@@ -53,6 +55,7 @@ class CombatParticle:
         self.alpha = 255
         self.gravity = gravity
         self.drag = drag
+        self.streak = streak  # If True, render as elongated streak in velocity direction
 
     def update(self, dt_sec: float) -> bool:
         """Update particle physics. Returns False when dead."""
@@ -72,9 +75,9 @@ class CombatParticle:
 
 
 class CombatParticleSystem:
-    """Manages world-space combat particles."""
+    """Manages world-space combat particles with game-quality rendering."""
 
-    def __init__(self, max_particles: int = 400):
+    def __init__(self, max_particles: int = 600):
         self.particles: List[CombatParticle] = []
         self.max_particles = max_particles
 
@@ -85,88 +88,110 @@ class CombatParticleSystem:
     def emit_hit_sparks(self, world_x: float, world_y: float,
                         damage_type: str = "physical",
                         intensity: float = 1.0) -> None:
-        """Burst of sparks at hit location."""
+        """Burst of elongated spark streaks at hit location."""
         colors = DAMAGE_SPARK_COLORS.get(damage_type,
                                           DAMAGE_SPARK_COLORS["physical"])
-        count = int(5 + intensity * 3)
+        count = int(8 + intensity * 5)
 
         for _ in range(count):
             angle = random.uniform(0, math.pi * 2)
-            speed = random.uniform(1.5, 4.0) * intensity
+            speed = random.uniform(2.0, 5.0) * intensity
             self._add(CombatParticle(
-                x=world_x + random.uniform(-0.1, 0.1),
-                y=world_y + random.uniform(-0.1, 0.1),
+                x=world_x + random.uniform(-0.08, 0.08),
+                y=world_y + random.uniform(-0.08, 0.08),
                 vx=math.cos(angle) * speed,
-                vy=math.sin(angle) * speed - 1.0,  # Bias upward
-                life=random.uniform(0.2, 0.5),
-                size=random.uniform(2.0, 4.0),
+                vy=math.sin(angle) * speed - 1.5,  # Bias upward
+                life=random.uniform(0.25, 0.55),
+                size=random.uniform(2.5, 5.0),
                 color=random.choice(colors),
-                gravity=5.0,
-                drag=3.0
+                gravity=6.0,
+                drag=2.5,
+                streak=True
+            ))
+
+        # Add a few bright flash dots at center
+        for _ in range(3):
+            self._add(CombatParticle(
+                x=world_x + random.uniform(-0.03, 0.03),
+                y=world_y + random.uniform(-0.03, 0.03),
+                vx=random.uniform(-0.5, 0.5),
+                vy=random.uniform(-0.5, 0.5),
+                life=random.uniform(0.08, 0.15),
+                size=random.uniform(5.0, 8.0),
+                color=(255, 255, 255),
+                drag=8.0,
+                streak=False
             ))
 
     def emit_slash_trail(self, world_x: float, world_y: float,
                          angle_deg: float, arc_degrees: float,
                          radius: float) -> None:
-        """Particles along a slash arc path."""
-        count = 4
+        """Particles along a slash arc path — more particles, streaked."""
+        count = int(6 + arc_degrees / 15)
         half_arc = arc_degrees / 2.0
         for _ in range(count):
             a = math.radians(angle_deg + random.uniform(-half_arc, half_arc))
-            r = radius * random.uniform(0.6, 1.0)
+            r = radius * random.uniform(0.5, 1.1)
             px = world_x + math.cos(a) * r
             py = world_y + math.sin(a) * r
 
+            # Tangential velocity (along the arc)
+            tangent = a + math.pi / 2
+            speed = random.uniform(0.5, 1.5)
+
             self._add(CombatParticle(
                 x=px, y=py,
-                vx=math.cos(a) * 0.5,
-                vy=math.sin(a) * 0.5,
-                life=random.uniform(0.1, 0.25),
-                size=random.uniform(1.5, 3.0),
+                vx=math.cos(tangent) * speed + math.cos(a) * 0.3,
+                vy=math.sin(tangent) * speed + math.sin(a) * 0.3,
+                life=random.uniform(0.12, 0.3),
+                size=random.uniform(2.0, 4.0),
                 color=(220, 230, 255),
-                drag=5.0
+                drag=4.0,
+                streak=True
             ))
 
     def emit_dodge_dust(self, world_x: float, world_y: float) -> None:
-        """Small dust cloud at dodge start position."""
-        for _ in range(6):
+        """Dust cloud at dodge start position."""
+        for _ in range(8):
             angle = random.uniform(0, math.pi * 2)
-            speed = random.uniform(0.5, 1.5)
+            speed = random.uniform(0.5, 2.0)
             self._add(CombatParticle(
                 x=world_x + random.uniform(-0.15, 0.15),
                 y=world_y + random.uniform(-0.15, 0.15),
                 vx=math.cos(angle) * speed,
                 vy=math.sin(angle) * speed,
-                life=random.uniform(0.3, 0.6),
-                size=random.uniform(3.0, 6.0),
+                life=random.uniform(0.3, 0.7),
+                size=random.uniform(4.0, 7.0),
                 color=(180, 170, 150),
                 gravity=-0.5,
-                drag=4.0
+                drag=3.5,
+                streak=False
             ))
 
     def emit_projectile_trail(self, world_x: float, world_y: float,
                               trail_type: str) -> None:
-        """Single trail particle at projectile position."""
+        """Trail particles at projectile position — streaked for motion."""
         trail_colors = {
-            "fire_trail": [(255, 150, 50), (255, 100, 20)],
-            "ice_trail": [(100, 200, 255), (150, 230, 255)],
-            "arcane_trail": [(200, 100, 255), (150, 50, 255)],
-            "acid_trail": [(100, 255, 100), (50, 200, 50)],
-            "lightning_trail": [(255, 255, 100), (255, 255, 200)],
-            "shadow_trail": [(100, 50, 150), (80, 30, 120)],
-            "arrow_trail": [(180, 160, 120), (150, 140, 100)],
+            "fire_trail": [(255, 170, 60), (255, 120, 30)],
+            "ice_trail": [(120, 210, 255), (170, 240, 255)],
+            "arcane_trail": [(210, 120, 255), (170, 70, 255)],
+            "acid_trail": [(120, 255, 120), (70, 220, 70)],
+            "lightning_trail": [(255, 255, 120), (255, 255, 210)],
+            "shadow_trail": [(120, 70, 170), (100, 50, 140)],
+            "arrow_trail": [(190, 170, 130), (160, 150, 110)],
         }
         colors = trail_colors.get(trail_type, [(200, 200, 200)])
 
         self._add(CombatParticle(
             x=world_x + random.uniform(-0.05, 0.05),
             y=world_y + random.uniform(-0.05, 0.05),
-            vx=random.uniform(-0.2, 0.2),
-            vy=random.uniform(-0.3, 0.0),
-            life=random.uniform(0.15, 0.3),
-            size=random.uniform(2.0, 3.5),
+            vx=random.uniform(-0.3, 0.3),
+            vy=random.uniform(-0.4, 0.0),
+            life=random.uniform(0.15, 0.35),
+            size=random.uniform(2.5, 4.5),
             color=random.choice(colors),
-            drag=2.0
+            drag=2.0,
+            streak=True
         ))
 
     def update(self, dt_ms: float) -> None:
@@ -176,7 +201,11 @@ class CombatParticleSystem:
 
     def render(self, screen: pygame.Surface, camera,
                shake_ox: int = 0, shake_oy: int = 0) -> None:
-        """Convert world positions to screen, draw all particles."""
+        """Convert world positions to screen, draw all particles.
+
+        Streak particles render as elongated shapes in their velocity
+        direction. Regular particles render as soft glowing circles.
+        """
         from data.models import Position
 
         for p in self.particles:
@@ -188,20 +217,96 @@ class CombatParticleSystem:
             sy += shake_oy
 
             # Cull off-screen particles
-            if sx < -20 or sx > Config.VIEWPORT_WIDTH + 20:
+            if sx < -30 or sx > Config.VIEWPORT_WIDTH + 30:
                 continue
-            if sy < -20 or sy > Config.VIEWPORT_HEIGHT + 20:
+            if sy < -30 or sy > Config.VIEWPORT_HEIGHT + 30:
                 continue
 
-            size = max(1, int(p.size * (p.life / p.max_life)))
-            if size <= 1:
-                # Single pixel for tiny particles
-                screen.set_at((int(sx), int(sy)), p.color)
+            life_ratio = p.life / p.max_life
+            size = max(1, int(p.size * life_ratio))
+
+            if p.streak and (abs(p.vx) > 0.3 or abs(p.vy) > 0.3):
+                # Elongated streak in velocity direction
+                speed = math.sqrt(p.vx * p.vx + p.vy * p.vy)
+                streak_len = max(3, int(speed * size * 0.8))
+
+                # Streak direction
+                if speed > 0.01:
+                    dx = p.vx / speed
+                    dy = p.vy / speed
+                else:
+                    dx, dy = 1.0, 0.0
+
+                # Trail end (behind the particle)
+                tx = int(sx - dx * streak_len)
+                ty = int(sy - dy * streak_len)
+                isx, isy = int(sx), int(sy)
+
+                # Outer glow pass (wider, dimmer)
+                glow_w = max(3, size + 2)
+                glow_alpha = max(0, min(255, p.alpha // 3))
+                if glow_alpha > 10:
+                    glow_surf = pygame.Surface((abs(isx - tx) + glow_w * 2 + 4,
+                                                abs(isy - ty) + glow_w * 2 + 4), pygame.SRCALPHA)
+                    ox = min(isx, tx) - glow_w - 2
+                    oy = min(isy, ty) - glow_w - 2
+                    pygame.draw.line(glow_surf, (*p.color, glow_alpha),
+                                     (isx - ox, isy - oy), (tx - ox, ty - oy), glow_w)
+                    screen.blit(glow_surf, (ox, oy))
+
+                # Core streak (narrow, bright)
+                core_w = max(2, size)
+                core_alpha = max(0, min(255, p.alpha))
+                bright_color = tuple(min(255, c + 60) for c in p.color)
+                core_surf = pygame.Surface((abs(isx - tx) + core_w * 2 + 4,
+                                            abs(isy - ty) + core_w * 2 + 4), pygame.SRCALPHA)
+                ox = min(isx, tx) - core_w - 2
+                oy = min(isy, ty) - core_w - 2
+                pygame.draw.line(core_surf, (*bright_color, core_alpha),
+                                 (isx - ox, isy - oy), (tx - ox, ty - oy), core_w)
+                screen.blit(core_surf, (ox, oy))
+
+                # Bright head dot
+                if size >= 2:
+                    dot_surf = pygame.Surface((size * 2 + 4, size * 2 + 4), pygame.SRCALPHA)
+                    dc = size + 2
+                    pygame.draw.circle(dot_surf, (*p.color, min(255, int(p.alpha * 0.5))),
+                                       (dc, dc), size + 1)
+                    pygame.draw.circle(dot_surf, (255, 255, 255, min(255, p.alpha)),
+                                       (dc, dc), max(1, size // 2))
+                    screen.blit(dot_surf, (isx - dc, isy - dc))
             else:
-                particle_surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
-                pygame.draw.circle(particle_surf, (*p.color, p.alpha),
-                                   (size, size), size)
-                screen.blit(particle_surf, (int(sx) - size, int(sy) - size))
+                # Soft glowing circle particle
+                if size <= 1:
+                    try:
+                        screen.set_at((int(sx), int(sy)), p.color)
+                    except (IndexError, TypeError):
+                        pass
+                else:
+                    # Multi-pass glow: outer dim + inner bright
+                    surf_size = size * 2 + 6
+                    particle_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                    c = surf_size // 2
+
+                    # Outer glow
+                    glow_alpha = max(0, min(255, p.alpha // 3))
+                    if glow_alpha > 5:
+                        pygame.draw.circle(particle_surf, (*p.color, glow_alpha),
+                                           (c, c), size + 2)
+
+                    # Core
+                    pygame.draw.circle(particle_surf, (*p.color, min(255, p.alpha)),
+                                       (c, c), size)
+
+                    # Bright center
+                    if size >= 3:
+                        inner_r = max(1, size // 2)
+                        bright_alpha = max(0, min(255, int(p.alpha * 0.7)))
+                        pygame.draw.circle(particle_surf,
+                                           (255, 255, 255, bright_alpha),
+                                           (c, c), inner_r)
+
+                    screen.blit(particle_surf, (int(sx) - c, int(sy) - c))
 
     def clear(self) -> None:
         self.particles.clear()

@@ -1986,6 +1986,7 @@ class Renderer:
                 speed_feel = 1.0
                 impact_flash = False
                 particle_density = 1.0
+                _weapon_icon = None
                 if is_player and _weapon_style:
                     try:
                         ctx = hitbox.damage_context or {}
@@ -2003,6 +2004,11 @@ class Renderer:
                         speed_feel = style.speed_feel
                         impact_flash = style.impact_flash
                         particle_density = style.particle_density
+                        # Load weapon icon for sprite rendering
+                        w_icon_path = ctx.get('weapon_icon_path')
+                        if w_icon_path and w_type != 'unarmed':
+                            _weapon_icon = image_cache.get_image(
+                                w_icon_path, (Config.TILE_SIZE, Config.TILE_SIZE))
                     except Exception:
                         pass
 
@@ -2033,20 +2039,32 @@ class Renderer:
                                                    (center, center), radius_px, max(2, int(2 * thickness_mult)))
                                 self.screen.blit(arc_surf, (hx - center, hy - center))
                         else:
-                            # Non-player or fallback: simple circle
-                            glow_pad = int(6 * glow_mult)
-                            surf_size = radius_px * 2 + glow_pad * 2
-                            arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
-                            center = surf_size // 2
-                            alpha = int(80 * life_ratio)
-                            pygame.draw.circle(arc_surf, (*base_color, alpha // 4),
-                                               (center, center), radius_px + glow_pad)
-                            pygame.draw.circle(arc_surf, (*base_color, alpha),
-                                               (center, center), radius_px)
-                            ring_w = max(2, int(2 * thickness_mult))
-                            pygame.draw.circle(arc_surf, (*bright, min(255, alpha + 120)),
-                                               (center, center), radius_px, ring_w)
-                            self.screen.blit(arc_surf, (hx - center, hy - center))
+                            # Non-player: use swing renderer for consistent quality
+                            if _swing_renderer:
+                                try:
+                                    frames = _swing_renderer.get_enemy_radial_frames(
+                                        tuple(base_color), radius_px, thickness_mult)
+                                    progress = min(1.0, (1.0 - life_ratio) * 1.4)
+                                    frame_idx = min(len(frames) - 1, int(progress * (len(frames) - 1)))
+                                    frame = frames[frame_idx]
+                                    fc = frame.get_width() // 2
+                                    self.screen.blit(frame, (hx - fc, hy - fc))
+                                except Exception:
+                                    surf_size = radius_px * 2 + 8
+                                    arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                                    center = surf_size // 2
+                                    alpha = int(80 * life_ratio)
+                                    pygame.draw.circle(arc_surf, (*base_color, alpha),
+                                                       (center, center), radius_px, 3)
+                                    self.screen.blit(arc_surf, (hx - center, hy - center))
+                            else:
+                                surf_size = radius_px * 2 + 8
+                                arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                                center = surf_size // 2
+                                alpha = int(80 * life_ratio)
+                                pygame.draw.circle(arc_surf, (*base_color, alpha),
+                                                   (center, center), radius_px, 3)
+                                self.screen.blit(arc_surf, (hx - center, hy - center))
 
                 elif hitbox.definition.shape == "arc":
                     radius_px = int(hitbox.definition.radius * Config.TILE_SIZE)
@@ -2063,6 +2081,25 @@ class Renderer:
                                 rotated = pygame.transform.rotate(frame, -hitbox.facing_angle)
                                 rc = rotated.get_rect(center=(hx, hy))
                                 self.screen.blit(rotated, rc)
+                                # Render weapon sprite on top of swing effect
+                                if _weapon_icon:
+                                    _arc_d = getattr(hitbox.definition, 'arc_degrees', style.arc_degrees)
+                                    _half = _arc_d / 2.0
+                                    _sweep_t = min(1.0, progress)
+                                    # Weapon follows the leading edge of the swing arc
+                                    _sw_ease = 1.0 - (1.0 - _sweep_t) ** 3
+                                    _w_angle_deg = hitbox.facing_angle - _half + _arc_d * _sw_ease
+                                    _w_angle_rad = math.radians(_w_angle_deg)
+                                    _w_dist = int(radius_px * 0.6)
+                                    _wx = hx + int(math.cos(_w_angle_rad) * _w_dist)
+                                    _wy = hy + int(math.sin(_w_angle_rad) * _w_dist)
+                                    # Rotate weapon icon to match swing angle
+                                    _rot_icon = pygame.transform.rotate(_weapon_icon, -_w_angle_deg - 45)
+                                    _icon_fade = 1.0 if progress < 0.7 else max(0.0, (1.0 - progress) / 0.3)
+                                    if _icon_fade < 1.0:
+                                        _rot_icon.set_alpha(int(255 * _icon_fade))
+                                    _ir = _rot_icon.get_rect(center=(_wx, _wy))
+                                    self.screen.blit(_rot_icon, _ir)
                             except Exception:
                                 # Fallback: simple arc indicator
                                 surf_size = radius_px * 2 + 8
@@ -2073,65 +2110,35 @@ class Renderer:
                                                    (center, center), radius_px, 3)
                                 self.screen.blit(arc_surf, (hx - center, hy - center))
                         else:
-                            # Non-player: inline geometric drawing
-                            import random as _rng
-                            glow_pad = int(10 * glow_mult)
-                            surf_size = radius_px * 2 + glow_pad * 2
-                            arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
-                            center = surf_size // 2
-                            arc_degrees = hitbox.definition.arc_degrees
-                            half_arc = arc_degrees / 2.0
-                            facing_rad = math.radians(hitbox.facing_angle)
-                            alpha = int(140 * life_ratio)
-                            sweep_progress = min(1.0, (1.0 - life_ratio) * 1.4)
-                            sweep_angle = facing_rad - math.radians(half_arc) + \
-                                math.radians(arc_degrees) * sweep_progress
-                            num_segments = max(12, int(arc_degrees / 4))
-                            # Motion blur trail
-                            for layer in range(4):
-                                layer_t = max(0.0, sweep_progress - layer * 0.12)
-                                if layer_t <= 0:
-                                    continue
-                                layer_alpha = int(alpha * (0.5 - layer * 0.12) * life_ratio)
-                                if layer_alpha <= 0:
-                                    continue
-                                trail_r_inner = int(radius_px * (0.35 + layer * 0.05))
-                                trail_r_outer = radius_px + int(glow_pad * 0.3)
-                                trail_segs = max(3, int(num_segments * layer_t))
-                                outer_pts = []
-                                inner_pts = []
-                                for i in range(trail_segs + 1):
-                                    a = facing_rad - math.radians(half_arc) + \
-                                        math.radians(arc_degrees) * layer_t * i / trail_segs
-                                    outer_pts.append((int(center + math.cos(a) * trail_r_outer),
-                                                      int(center + math.sin(a) * trail_r_outer)))
-                                    inner_pts.append((int(center + math.cos(a) * trail_r_inner),
-                                                      int(center + math.sin(a) * trail_r_inner)))
-                                ribbon = outer_pts + list(reversed(inner_pts))
-                                if len(ribbon) >= 3:
-                                    pygame.draw.polygon(arc_surf, (*base_color, layer_alpha), ribbon)
-                            # Leading blade edge
-                            blade_r_inner = int(radius_px * 0.15)
-                            blade_r_outer = radius_px + int(glow_pad * 0.4)
-                            bx1 = center + int(math.cos(sweep_angle) * blade_r_inner)
-                            by1 = center + int(math.sin(sweep_angle) * blade_r_inner)
-                            bx2 = center + int(math.cos(sweep_angle) * blade_r_outer)
-                            by2 = center + int(math.sin(sweep_angle) * blade_r_outer)
-                            blade_w = max(3, int(4 * thickness_mult))
-                            blade_a = min(255, int(230 * life_ratio))
-                            pygame.draw.line(arc_surf, (*base_color, blade_a // 3),
-                                             (bx1, by1), (bx2, by2), blade_w + 6)
-                            pygame.draw.line(arc_surf, (*bright, blade_a),
-                                             (bx1, by1), (bx2, by2), blade_w)
-                            pygame.draw.line(arc_surf, (255, 255, 255, min(255, blade_a)),
-                                             (bx1, by1), (bx2, by2), max(1, blade_w // 2))
-                            # Tip spark
-                            tip_size = max(3, int(4 * thickness_mult * life_ratio))
-                            pygame.draw.circle(arc_surf, (255, 255, 255, min(255, blade_a)),
-                                               (bx2, by2), tip_size)
-                            pygame.draw.circle(arc_surf, (*bright, blade_a // 2),
-                                               (bx2, by2), tip_size + 3)
-                            self.screen.blit(arc_surf, (hx - center, hy - center))
+                            # Non-player: use swing renderer for consistent quality
+                            if _swing_renderer:
+                                try:
+                                    arc_degrees = hitbox.definition.arc_degrees
+                                    frames = _swing_renderer.get_enemy_swing_frames(
+                                        tuple(base_color), arc_degrees, radius_px, thickness_mult)
+                                    progress = min(1.0, (1.0 - life_ratio) * 1.4)
+                                    frame_idx = min(len(frames) - 1, int(progress * (len(frames) - 1)))
+                                    frame = frames[frame_idx]
+                                    rotated = pygame.transform.rotate(frame, -hitbox.facing_angle)
+                                    rc = rotated.get_rect(center=(hx, hy))
+                                    self.screen.blit(rotated, rc)
+                                except Exception:
+                                    # Ultimate fallback
+                                    surf_size = radius_px * 2 + 8
+                                    arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                                    center = surf_size // 2
+                                    alpha = int(100 * life_ratio)
+                                    pygame.draw.circle(arc_surf, (*base_color, alpha),
+                                                       (center, center), radius_px, 3)
+                                    self.screen.blit(arc_surf, (hx - center, hy - center))
+                            else:
+                                surf_size = radius_px * 2 + 8
+                                arc_surf = pygame.Surface((surf_size, surf_size), pygame.SRCALPHA)
+                                center = surf_size // 2
+                                alpha = int(100 * life_ratio)
+                                pygame.draw.circle(arc_surf, (*base_color, alpha),
+                                                   (center, center), radius_px, 3)
+                                self.screen.blit(arc_surf, (hx - center, hy - center))
 
                 elif hitbox.definition.shape == "line":
                     length_px = int(hitbox.definition.length * Config.TILE_SIZE)
@@ -2146,6 +2153,20 @@ class Renderer:
                             rotated = pygame.transform.rotate(frame, -hitbox.facing_angle)
                             rc = rotated.get_rect(center=(hx, hy))
                             self.screen.blit(rotated, rc)
+                            # Render weapon sprite at thrust tip
+                            if _weapon_icon:
+                                _thrust_extend = min(1.0, progress * 1.3)
+                                _facing_rad = math.radians(hitbox.facing_angle)
+                                _tip_dist = int(length_px * _thrust_extend * 0.7)
+                                _tx = hx + int(math.cos(_facing_rad) * _tip_dist)
+                                _ty = hy + int(math.sin(_facing_rad) * _tip_dist)
+                                _rot_icon = pygame.transform.rotate(
+                                    _weapon_icon, -hitbox.facing_angle - 45)
+                                _icon_fade = 1.0 if progress < 0.6 else max(0.0, (1.0 - progress) / 0.4)
+                                if _icon_fade < 1.0:
+                                    _rot_icon.set_alpha(int(255 * _icon_fade))
+                                _ir = _rot_icon.get_rect(center=(_tx, _ty))
+                                self.screen.blit(_rot_icon, _ir)
                         except Exception:
                             # Fallback: simple line
                             facing_rad = math.radians(hitbox.facing_angle)
@@ -2155,26 +2176,31 @@ class Renderer:
                             pygame.draw.line(self.screen, (*base_color, min(255, alpha)),
                                             (hx, hy), (end_x, end_y), max(3, int(4 * thickness_mult)))
                     else:
-                        # Non-player or fallback: inline geometric thrust
-                        facing_rad = math.radians(hitbox.facing_angle)
-                        end_x = hx + int(math.cos(facing_rad) * length_px)
-                        end_y = hy + int(math.sin(facing_rad) * length_px)
-                        alpha = int(200 * life_ratio)
-                        line_surf = pygame.Surface(
-                            (Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
-                        glow_w = max(6, int(8 * thickness_mult))
-                        core_w = max(3, int(4 * thickness_mult))
-                        inner_w = max(1, int(2 * thickness_mult))
-                        pygame.draw.line(line_surf, (*base_color, alpha // 4),
-                                        (hx, hy), (end_x, end_y), glow_w)
-                        pygame.draw.line(line_surf, (*base_color, alpha),
-                                        (hx, hy), (end_x, end_y), core_w)
-                        pygame.draw.line(line_surf, (*bright, min(255, alpha + 60)),
-                                        (hx, hy), (end_x, end_y), inner_w)
-                        tip_a = min(255, int(alpha * 1.3))
-                        pygame.draw.circle(line_surf, (*bright, tip_a),
-                                           (end_x, end_y), max(3, int(4 * thickness_mult)))
-                        self.screen.blit(line_surf, (0, 0))
+                        # Non-player: use swing renderer for consistent quality
+                        if _swing_renderer:
+                            try:
+                                frames = _swing_renderer.get_enemy_thrust_frames(
+                                    tuple(base_color), length_px, thickness_mult)
+                                progress = min(1.0, (1.0 - life_ratio) * 1.4)
+                                frame_idx = min(len(frames) - 1, int(progress * (len(frames) - 1)))
+                                frame = frames[frame_idx]
+                                rotated = pygame.transform.rotate(frame, -hitbox.facing_angle)
+                                rc = rotated.get_rect(center=(hx, hy))
+                                self.screen.blit(rotated, rc)
+                            except Exception:
+                                facing_rad = math.radians(hitbox.facing_angle)
+                                end_x = hx + int(math.cos(facing_rad) * length_px)
+                                end_y = hy + int(math.sin(facing_rad) * length_px)
+                                alpha = int(200 * life_ratio)
+                                pygame.draw.line(self.screen, (*base_color, min(255, alpha)),
+                                                (hx, hy), (end_x, end_y), 4)
+                        else:
+                            facing_rad = math.radians(hitbox.facing_angle)
+                            end_x = hx + int(math.cos(facing_rad) * length_px)
+                            end_y = hy + int(math.sin(facing_rad) * length_px)
+                            alpha = int(200 * life_ratio)
+                            pygame.draw.line(self.screen, (*base_color, min(255, alpha)),
+                                            (hx, hy), (end_x, end_y), 4)
 
                 elif hitbox.definition.shape == "rect":
                     w_px = int(hitbox.definition.width * Config.TILE_SIZE)
