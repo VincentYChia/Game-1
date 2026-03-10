@@ -2259,20 +2259,30 @@ class Renderer:
                     glow_color = tuple(vis.get('glow_color', color))
 
                     if shape == 'elongated':
-                        # Arrow/shard: compact rotated elongated shape
+                        # Arrow/shard: draw a clean pointed arrow directly on screen
+                        facing_rad = math.radians(proj.facing_angle)
                         length = vis.get('length_px', 8)
-                        width = vis.get('width_px', 3)
-                        arrow_surf = pygame.Surface((length + 2, width + 2), pygame.SRCALPHA)
-                        pygame.draw.ellipse(arrow_surf, color,
-                                            (1, 1, length, width))
-                        if glow:
-                            glow_surf = pygame.Surface((length + 2, width + 2), pygame.SRCALPHA)
-                            pygame.draw.ellipse(glow_surf, (*glow_color, 50),
-                                                (0, 0, length + 2, width + 2))
-                            arrow_surf.blit(glow_surf, (0, 0))
-                        rotated = pygame.transform.rotate(arrow_surf, -proj.facing_angle)
-                        self.screen.blit(rotated,
-                                         rotated.get_rect(center=(px_screen, py_screen)))
+                        cos_a = math.cos(facing_rad)
+                        sin_a = math.sin(facing_rad)
+                        # Tip of the arrow (front)
+                        tip_x = px_screen + int(cos_a * length)
+                        tip_y = py_screen + int(sin_a * length)
+                        # Tail of the arrow (back)
+                        tail_x = px_screen - int(cos_a * length)
+                        tail_y = py_screen - int(sin_a * length)
+                        # Draw the shaft line
+                        pygame.draw.line(self.screen, color,
+                                         (tail_x, tail_y), (tip_x, tip_y), 2)
+                        # Draw arrowhead (small triangle at tip)
+                        perp_x = -sin_a * 3
+                        perp_y = cos_a * 3
+                        head_back_x = tip_x - int(cos_a * 5)
+                        head_back_y = tip_y - int(sin_a * 5)
+                        pygame.draw.polygon(self.screen, color, [
+                            (tip_x, tip_y),
+                            (int(head_back_x + perp_x), int(head_back_y + perp_y)),
+                            (int(head_back_x - perp_x), int(head_back_y - perp_y)),
+                        ])
 
                     elif shape == 'beam':
                         # Beam: wider glowing line with trail
