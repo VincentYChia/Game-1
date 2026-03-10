@@ -9,6 +9,7 @@ from animation.sprite_animation import SpriteAnimation
 from animation.animation_manager import AnimationManager, get_animation_manager
 from animation.procedural import ProceduralAnimations
 from animation.combat_particles import CombatParticleSystem, CombatParticle
+from animation.swing_renderer import SwingEffectRenderer, get_swing_renderer
 
 __all__ = [
     'AnimationFrame', 'AnimationDefinition',
@@ -16,4 +17,5 @@ __all__ = [
     'AnimationManager', 'get_animation_manager',
     'ProceduralAnimations',
     'CombatParticleSystem', 'CombatParticle',
+    'SwingEffectRenderer', 'get_swing_renderer',
 ]
