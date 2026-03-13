@@ -161,6 +161,25 @@ class CombatManager:
         self._combat_data = None        # combat.CombatDataLoader
         self._action_combat = False     # Whether action combat is active
 
+    def on_chunk_unloaded(self, chunk_key: Tuple[int, int]):
+        """Clean up enemies and corpses belonging to an unloaded chunk.
+
+        Called by WorldSystem via callback when a chunk leaves the loaded set.
+        Prevents enemy objects from leaking in memory after their chunk is gone.
+        """
+        # Remove enemies tracked for this chunk
+        removed_enemies = self.enemies.pop(chunk_key, [])
+
+        # Unregister action combat hurtboxes and clean corpse references
+        if removed_enemies:
+            removed_set = set(id(e) for e in removed_enemies)
+            for enemy in removed_enemies:
+                self._unregister_enemy_action_combat(enemy)
+            self.corpses = [c for c in self.corpses if id(c) not in removed_set]
+
+        # Clear spawn timer for this chunk so it respawns fresh on reload
+        self.spawn_timers.pop(chunk_key, None)
+
     def load_config(self, config_path: str, enemies_path: str, chunk_templates_path: Optional[str] = None):
         """Load combat configuration, enemy definitions, and chunk templates"""
         self.config.load_from_file(config_path)

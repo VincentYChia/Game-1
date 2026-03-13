@@ -9,7 +9,7 @@ import random
 import os
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Set, Any
+from typing import Callable, Dict, List, Optional, Tuple, Set, Any
 
 from data.models import (
     Position, WorldTile, TileType, StationType, CraftingStation,
@@ -80,6 +80,9 @@ class WorldSystem:
 
         # Death chests (items dropped on death)
         self.death_chests: List[LootChest] = []
+
+        # Callbacks fired when a chunk is unloaded, signature: (chunk_key: Tuple[int,int]) -> None
+        self._on_chunk_unload_callbacks: List[Callable[[Tuple[int, int]], None]] = []
 
         # Load initial chunks and spawn fixed content
         self._load_initial_chunks()
@@ -318,6 +321,14 @@ class WorldSystem:
     # Chunk Loading Management
     # =========================================================================
 
+    def register_chunk_unload_callback(self, callback: Callable[[Tuple[int, int]], None]):
+        """Register a callback to be called when a chunk is unloaded.
+
+        Args:
+            callback: Function taking (chunk_x, chunk_y) tuple, called before chunk removal.
+        """
+        self._on_chunk_unload_callbacks.append(callback)
+
     def update_loaded_chunks(self, player_pos: Position):
         """Update which chunks are loaded based on player position.
 
@@ -379,6 +390,10 @@ class WorldSystem:
         # Save chunk if it has modifications
         if chunk.has_modifications():
             self._save_chunk_to_file(chunk)
+
+        # Notify listeners (e.g. combat_manager cleans up enemies in this chunk)
+        for callback in self._on_chunk_unload_callbacks:
+            callback(key)
 
         # Remove from loaded chunks
         del self.loaded_chunks[key]

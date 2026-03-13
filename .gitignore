@@ -4,51 +4,78 @@ __pycache__/
 *$py.class
 *.so
 .Python
+*.egg-info/
+dist/
+build/
 
 # Virtual environments
 venv/
 env/
 ENV/
+.venv/
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Game-specific
-*.log
-*.db
+# Environment / secrets
+.env
+.env.*
+*.pem
+
+# =============================================================================
+# GAME RUNTIME - Save files, debug logs, caches
+# =============================================================================
+
+# Save game data (player-specific, not shared)
+Game-1-modular/saves/
+
+# LLM debug logs (generated at runtime, not useful in repo)
+Game-1-modular/llm_debug_logs/
+
+# Pytest
 .pytest_cache/
 
-# Test outputs and generated files
+# Game logs
+*.log
+
+# =============================================================================
+# TEST / GENERATED OUTPUT
+# =============================================================================
+
 **/test_output/
 **/generated_icons/
-**/__pycache__/
 
-# Generated training datasets (regenerated during training)
+# =============================================================================
+# ML / TRAINING - Regenerated artifacts
+# =============================================================================
+
+# Generated training datasets
 *.npz
 
 # Generated LLM/VLM training data output
 Scaled JSON Development/training_data/
 
-# =============================================================================
-# CLASSIFIER MODELS - Large binary files
-# =============================================================================
-# Production models are tracked (Scaled JSON Development/models/{discipline}/)
-# Training/archived models are NOT tracked (too large, regenerated)
+# Together.ai fine-tuning outputs (JSONL is regenerated from source data)
+Scaled JSON Development/LLM Training Data/jsonl_outputs/
 
-# Ignore archived models (old/backup versions)
+# Archived models (old/backup versions)
 Scaled JSON Development/models/archived/
 
-# Ignore CNN training directories (large training models + datasets)
+# CNN training artifacts (large, regenerated)
 Scaled JSON Development/Convolution Neural Network (CNN)/Smithing/*.keras
 Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/*.keras
 Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/best_model_variations/
 
-# Ignore LightGBM training artifacts (regenerated)
+# LightGBM training artifacts (regenerated)
 Scaled JSON Development/Simple Classifiers (LightGBM)/*.bin
 Scaled JSON Development/Simple Classifiers (LightGBM)/*.txt
 

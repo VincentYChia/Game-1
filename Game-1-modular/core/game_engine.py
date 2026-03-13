@@ -212,6 +212,7 @@ class GameEngine:
         self.combat_manager.dungeon_manager = self.dungeon_manager  # Link for 2x EXP, no drops
         self.world.dungeon_manager = self.dungeon_manager  # Link for dungeon tile walkability checks
         self.world.map_system = self.map_system  # Link for death chest map markers
+        self.world.register_chunk_unload_callback(self.combat_manager.on_chunk_unloaded)  # Clean up enemies on chunk unload
 
         # Initialize action combat systems
         self._init_action_combat()
@@ -1436,6 +1437,7 @@ class GameEngine:
                     self.world = WorldSystem(seed=saved_seed)
                     self.world.set_chunk_save_directory("autosave.json")
                     self.world.dungeon_manager = self.dungeon_manager
+                    self.world.register_chunk_unload_callback(self.combat_manager.on_chunk_unloaded)
                     # Update combat manager's world reference
                     self.combat_manager.world = self.world
                 else:
@@ -1517,6 +1519,7 @@ class GameEngine:
                     self.world = WorldSystem(seed=saved_seed)
                     self.world.set_chunk_save_directory("default_save.json")
                     self.world.dungeon_manager = self.dungeon_manager
+                    self.world.register_chunk_unload_callback(self.combat_manager.on_chunk_unloaded)
                     # Update combat manager's world reference
                     self.combat_manager.world = self.world
                 else:
