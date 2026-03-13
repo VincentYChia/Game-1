@@ -64,8 +64,15 @@ Game-1-modular/llm_debug_logs/
 # Generated LLM/VLM training data output
 Scaled JSON Development/training_data/
 
+# Together.ai scripts (parameters change every run — FILE_ID, MODEL, hyperparams)
+Scaled JSON Development/LLM Training Data/together_finetune.py
+Scaled JSON Development/LLM Training Data/upload_together.py
+
 # Together.ai fine-tuning outputs (JSONL is regenerated from source data)
 Scaled JSON Development/LLM Training Data/jsonl_outputs/
+
+# LLM few-shot test outputs (batch runs, results)
+Scaled JSON Development/LLM Training Data/Fewshot_llm/outputs/
 
 # Archived models (old/backup versions)
 Scaled JSON Development/models/archived/
@@ -79,6 +86,15 @@ Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/best_model_va
 Scaled JSON Development/Simple Classifiers (LightGBM)/*.bin
 Scaled JSON Development/Simple Classifiers (LightGBM)/*.txt
 
+# Feature extractor pickles (regenerated during training)
+Scaled JSON Development/models/**/*.pkl
+
+# Data hash caches (regenerated)
+Scaled JSON Development/.data_hashes.json
+
+# Template generation cache
+Scaled JSON Development/json_templates/
+
 # Keep production models tracked - these are the ones the game uses
 # Located at: Scaled JSON Development/models/{smithing,adornment,alchemy,engineering,refining}/
-# These should be pushed to the repo
+# .keras and .json model files should be pushed to the repo
