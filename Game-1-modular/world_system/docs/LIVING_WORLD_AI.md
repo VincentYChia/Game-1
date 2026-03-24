@@ -1,7 +1,8 @@
 # Living World AI — Phase 2 Systems
 
 **Created**: 2026-03-24
-**Status**: Active — Phases 2.2–2.5 implemented, integration pending
+**Updated**: 2026-03-24
+**Status**: Active — Phases 2.2–2.5 implemented, integration pending. Layer architecture redesigned (see [LAYER_ARCHITECTURE.md](LAYER_ARCHITECTURE.md))
 **Depends on**: Phase 2.1 (World Memory System)
 
 ---
@@ -38,26 +39,26 @@ No system imports another directly. Each subscribes to events it cares about.
 ## File Map
 
 ```
-ai/
-├── backends/
-│   └── backend_manager.py       # 2.2  ModelBackend ABC + 3 backends + manager
-├── npc/
-│   ├── npc_memory.py            # 2.3  Per-NPC persistent state
-│   └── npc_agent.py             # 2.3  Dialogue generation + gossip engine
-├── factions/
-│   └── faction_system.py        # 2.4  Reputation tracking + ripple effects
-├── ecosystem/
-│   └── ecosystem_agent.py       # 2.5  Biome resource pressure + regeneration
-├── memory/                      # 2.1  (pre-existing) World Memory System
-│   └── event_store.py           #      Schema expanded with new tables
+world_system/
+├── living_world/
+│   ├── backends/
+│   │   └── backend_manager.py       # 2.2  ModelBackend ABC + 3 backends + manager
+│   ├── npc/
+│   │   ├── npc_memory.py            # 2.3  Per-NPC persistent state
+│   │   └── npc_agent.py             # 2.3  Dialogue generation + gossip engine
+│   ├── factions/
+│   │   └── faction_system.py        # 2.4  Reputation tracking + ripple effects
+│   └── ecosystem/
+│       └── ecosystem_agent.py       # 2.5  Biome resource pressure + regeneration
+├── world_memory/                    # 2.1  World Memory System
+│   ├── event_store.py               #      SQLite schema (Layers 2-7)
+│   ├── evaluators/                  #      9 Layer 3 evaluators
+│   └── interpreter.py               #      Evaluator orchestrator
+├── config/                          # All JSON configuration
+│   ├── backend-config.json, npc-personalities.json, faction-definitions.json,
+│   └── ecosystem-config.json, memory-config.json, geographic-map.json
 └── tests/
-    └── test_phase2_systems.py   #      32 tests across all new systems
-
-AI-Config.JSON/
-├── backend-config.json          # Backend routing, rate limits, fallback chain
-├── npc-personalities.json       # 6 NPC archetypes + gossip + memory limits
-├── faction-definitions.json     # 4 factions + inter-faction relations + milestones
-└── ecosystem-config.json        # Biome resource pools + regen rates + thresholds
+    └── test_phase2_systems.py       #      32 tests across all systems
 ```
 
 ---
@@ -381,20 +382,26 @@ These work. They don't need LLM. But they could *optionally* be upgraded for `se
 
 ## Design Principles
 
-**1. Clever interpretation over mass collection**
-The prime-number trigger system means we don't interpret every event — only on the 1st, 2nd, 3rd, 5th, 7th, 11th, etc. occurrence. Early events get attention; high-frequency events are sampled logarithmically.
+**1. Compression upward, not mass collection**
+Seven layers compress raw events into progressively concise and impactful information. Milestone triggers (1, 3, 5, 10, 25, 50, 100...) sample with logarithmic spacing — dense early, sparse later. The biggest leaps happen at 1, 10, 100, 1000. Each layer exists to condense the one below for better information transfer.
 
 **2. Bounded context, not infinite history**
-NPCMemory caps knowledge at 30 items. Conversation summaries at 500 chars. WorldQuery uses dual-windowed results (static minimum + recency bias). This prevents LLM context bloat while keeping the most useful information.
+NPCMemory caps knowledge at 30 items. Conversation summaries at 500 chars. WorldQuery uses dual-windowed results (static minimum + recency bias). Consumers get the top 5-10 most relevant items, tag-scored against their identity. This prevents LLM context bloat while keeping the most useful information.
 
 **3. Cascade by significance, not by type**
-Gossip only propagates when `significance > 0.1`. Ripple effects only trigger when `delta >= 0.1`. Interpretation only fires on prime occurrences. The systems are **self-throttling** — quiet games stay quiet, eventful games generate rich narratives.
+Gossip only propagates when `significance > 0.1`. Ripple effects only trigger when `delta >= 0.1`. Layer 3→4 propagation requires severity "significant"+. The systems are **self-throttling** — quiet games stay quiet, eventful games generate rich narratives.
 
-**4. Every system degrades gracefully**
+**4. Dual coverage is encouraged**
+The same event fires multiple evaluators. Killing wolves triggers Population ("ecosystem impact") AND Combat ("player proficiency"). These are different truths for different consumers. More evaluators is better than fewer — the cost of a no-op evaluation is near zero.
+
+**5. Every system degrades gracefully**
 No LLM? Mock backend returns templates. No Ollama? Falls back to Claude. No API key? Falls back to mock. NPC dialogue falls back to relationship-based templates. The game is always playable.
 
-**5. JSON defines the world, code defines the rules**
-All thresholds, personalities, faction relationships, regeneration rates, and routing config live in `AI-Config.JSON/`. Tuning the world never requires touching Python.
+**6. JSON defines the world, code defines the rules**
+All thresholds, personalities, faction relationships, regeneration rates, and routing config live in `world_system/config/`. Tuning the world never requires touching Python.
+
+**7. The world has state beyond the player**
+Every layer tracks region state, ecosystem state, and faction state — not just player actions. Even without the player doing anything, resources regenerate, factions have territory, and the world has an identity (Layer 7).
 
 ---
 
@@ -404,10 +411,10 @@ All thresholds, personalities, faction relationships, regeneration rates, and ro
 cd Game-1-modular
 
 # Phase 2.1 (memory system) — 10 tests
-python ai/memory/test_memory_system.py
+python world_system/world_memory/test_memory_system.py
 
 # Phase 2.2–2.5 (new systems) — 32 tests
-python ai/tests/test_phase2_systems.py
+python world_system/tests/test_phase2_systems.py
 ```
 
 All 42 tests pass with no external dependencies (no API keys, no Ollama, no pygame).

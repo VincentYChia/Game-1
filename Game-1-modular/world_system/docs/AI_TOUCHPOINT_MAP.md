@@ -1,7 +1,9 @@
 # AI Touchpoint Map — Current State & Design Analysis
 
 **Created**: 2026-03-24
+**Updated**: 2026-03-24
 **Scope**: Every place AI inference or narrative interpretation fires in the Living World system
+**Note**: The exact touchpoint design is secondary to the data layer design. All touchpoints build entirely on the 7-layer data collection system. Get storage and retrieval right first — touchpoints follow naturally.
 
 ---
 
@@ -10,68 +12,94 @@
 ```
 TOUCHPOINT                          TYPE            FIRES WHEN
 ─────────────────────────────────── ─────────────── ──────────────────────────────
-1. PopulationChangeEvaluator        Template        Prime-count enemy_killed
-2. ResourcePressureEvaluator        Template        Prime-count resource_gathered
-3. PlayerMilestoneEvaluator         Template        Prime-count level/kill/craft/title
-4. AreaDangerEvaluator              Template        Prime-count damage_taken/death
-5. CraftingTrendEvaluator           Template        Prime-count craft_attempted
-6. NPCAgentSystem.generate_dialogue LLM (fallback)  Player talks to NPC
-7. FactionSystem._on_milestone      Event only      Rep crosses 0.25/0.50/0.75
-8. EcosystemAgent._check_thresholds Event only      Depletion hits 70%/90%
-9. LLMItemGenerator.generate        LLM (separate)  Player invents item in crafting UI
+LAYER 3 EVALUATORS (milestone-triggered, template output):
+ 1. Population Dynamics             Template        Milestone enemy_killed
+ 2. Ecosystem Pressure              Template        Milestone resource_gathered
+ 3. Combat Proficiency              Template        Milestone kills/damage/dodge/death
+ 4. Crafting Mastery                Template        Milestone craft/invent
+ 5. Player Milestones               Template        Milestone level/title/class/skill
+ 6. Exploration & Discovery         Template        Milestone chunk_entered/area_discovered
+ 7. Social & Reputation             Template        Milestone npc_interaction/quest
+ 8. Economy & Items                 Template        Milestone item_acquired/equipped
+ 9. Dungeon Progress                Template        Milestone dungeon events
+
+LAYER 4 EVALUATORS (accumulation-triggered, template output):
+10. Regional Activity Synthesizer   Template        3+ L3 interpretations in district
+11. Cross-Domain Pattern Detector   Template        2+ L3 categories in same area
+12. Player Identity Consolidator    Template        Every 10 L3 interpretations
+13. Faction Narrative Synthesizer   Template        Faction milestone or 5+ social L3s
+
+OTHER TOUCHPOINTS:
+14. NPCAgentSystem.generate_dialogue LLM (fallback)  Player talks to NPC
+15. FactionSystem._on_milestone      Event only      Rep crosses 0.25/0.50/0.75
+16. EcosystemAgent._check_thresholds Event only      Depletion hits 70%/90%
+17. LLMItemGenerator.generate        LLM (separate)  Player invents item in crafting UI
 ```
 
 **Template** = hardcoded f-string with `{enemy}`, `{region}`, `{count}` slots
 **LLM** = calls BackendManager → ollama/claude/mock chain
 **Event only** = publishes data to bus, generates zero narrative text
+**Milestone thresholds**: `1, 3, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 100000`
 
 ---
 
-## Touchpoints 1–5: The Pattern Evaluators
+## Touchpoints 1–13: The Layer 3 and Layer 4 Evaluators
 
-All five share identical architecture:
+### Layer 3 Flow (milestone-triggered)
 
 ```
 GameEventBus event
     → EventRecorder (wildcard subscriber, priority -10)
     → Convert to WorldMemoryEvent, write to SQLite
     → Increment occurrence count for (actor, type, subtype)
-    → If count is prime (1,2,3,5,7,11,13...) → trigger interpreter
-    → WorldInterpreter.on_trigger() → each evaluator.evaluate()
-    → If threshold met → InterpretedEvent with narrative string
+    → If count hits milestone (1,3,5,10,25,50,100...) → trigger interpreter
+    → WorldInterpreter.on_trigger() → each Layer 3 evaluator.evaluate()
+    → If pattern notable → InterpretedEvent with narrative string
     → Store in SQLite, propagate to region states
+    → Check Layer 4 accumulation thresholds
 ```
 
-### What each evaluator sees and produces:
+### Layer 3 Evaluators (9 total)
 
-| # | Evaluator | Listens to | Key data at trigger | Narrative example | Severity tiers |
-|---|-----------|-----------|-------------------|-------------------|----------------|
-| 1 | Population | `enemy_killed` | Kill count in locality over lookback window | "The wolf population has been devastated in Old Forest. 47 killed." | 5→minor, 10→moderate, 20→significant, 50→major |
-| 2 | Resources | `resource_gathered` | Gather count in locality over lookback | "Iron Ore deposits are critically strained in Iron Hills." | 10→minor, 25→moderate, 50→significant, 100→major |
-| 3 | Milestones | kills, levels, crafts, titles, class | Occurrence count matches milestone list | "The adventurer has reached level 10. A major milestone." | Per-milestone configured |
-| 4 | Danger | `damage_taken`, `player_death` | threat_score = hits + deaths×10 | "Old Forest is extremely dangerous. 3 deaths." | 5→minor, 10→moderate, 20→significant, 3deaths→major |
-| 5 | Crafting | `craft_attempted` | Discipline distribution, quality ratios | "The adventurer is becoming a master smithing crafter." | By specialization ratio + quality |
+| # | Evaluator | Listens to | Key data | Example output |
+|---|-----------|-----------|----------|----------------|
+| 1 | Population Dynamics | enemy_killed | Kill distribution by species/tier/region + L1 totals | "Wolf population declining in Old Forest. 23 killed." |
+| 2 | Ecosystem Pressure | resource_gathered, node_depleted | Depletion state + regen rate + gather rate | "Iron ore nearly exhausted in Eastern Caves. 95% depleted." |
+| 3 | Combat Proficiency | kills, damage, dodge, death, status | Full combat picture: kills, near-death, flawless, weapons | "Flawless victory against T2 pack — no damage taken." |
+| 4 | Crafting Mastery | craft_attempted, item_invented | ALL discipline counts, quality by discipline, 95%+ scores | "Dual specialty: smithing+enchanting, both 30+ crafts." |
+| 5 | Player Milestones | level_up, title, class, skill | Progression stats, milestone significance | "Level 10 reached. A significant milestone." |
+| 6 | Exploration | chunk_entered, area_discovered | Unique chunks, distance, biome coverage | "25 unique areas explored. Well-traveled." |
+| 7 | Social & Reputation | npc_interaction, quest, faction | NPC/faction metadata, likes/dislikes, region | "Village Guard: Recognized (0.28)." |
+| 8 | Economy & Items | item_acquired, equipped, consumed | Collection, usage patterns, equipment swaps | "Heavy potion usage — 8 consumed in recent fights." |
+| 9 | Dungeon Progress | dungeon events | Completions by rarity, deaths, clears | "3 rare dungeons completed." |
 
-### What evaluators CAN'T see (and my take on whether they should):
+### Layer 4 Evaluators (4 total, accumulation-triggered)
 
-| Missing context | Available in | Should evaluators use it? |
-|----------------|-------------|--------------------------|
-| Ecosystem depletion % | EcosystemAgent | **No** — evaluators are about *player behavior patterns*, not world state. ResourcePressure already covers this angle via event counting. Double-tracking is waste. |
-| Faction reputation | FactionSystem | **No** — evaluators produce world-level narratives, not faction-aware ones. Faction context belongs in NPC dialogue prompts. |
-| NPC reactions | NPCMemory | **No** — evaluators shouldn't know about NPCs. Narratives propagate TO NPCs via region states + gossip. Keep the separation. |
-| Other evaluator outputs | Interpreter | **Maybe** — a "compound event" evaluator that reads existing interpretations could detect interesting intersections (danger + scarcity = crisis). Worth considering later, not now. |
+| # | Evaluator | Consumes | Trigger | Example output |
+|---|-----------|----------|---------|----------------|
+| 10 | Regional Activity | ALL L3 categories in a district | 3+ L3 interpretations in district | "Player systematically clearing Old Forest — population + resources declining." |
+| 11 | Cross-Domain | Different L3 categories in same area | 2+ L3 categories, same area, same window | "Plundering Iron Hills — both wildlife and ore under pressure." |
+| 12 | Player Identity | All L3 outputs, weighted | Every 10 L3 interpretations | "Primarily a combatant — 60% of notable activity is combat-related." |
+| 13 | Faction Narrative | L3 Social + faction data | Faction milestone OR 5+ social L3s | "Village Guard went from ignoring to recognizing as an ally." |
 
-### My recommendation on evaluators:
+### What evaluators see (the "two layers down" rule)
 
-Templates are **fine** for these. They fire infrequently (prime-gated), produce one-sentence narratives consumed by region state and NPC knowledge. LLM-upgrading them adds latency for marginal quality gain on text that players rarely read directly — it's background context for NPC prompts. **Don't LLM-enhance evaluators.**
+| Evaluator Layer | Full visibility | Limited visibility |
+|:---:|:---:|:---:|
+| Layer 3 | Layer 2 events (in lookback window) | Layer 1 aggregate stats (for broader context) |
+| Layer 4 | Layer 3 interpretations (in scope) | Layer 2 events (for supporting detail) |
 
-The one exception: if you want evaluators to produce *flavor variations* so the same pattern doesn't always say the exact same thing, an LLM call with tight constraints (30-50 tokens, cached by severity+category) could work. But this is polish, not priority.
+**Dual coverage is expected and encouraged**: A wolf kill fires both Population ("wolves are dying") and Combat ("player is becoming a skilled hunter"). Context within each evaluator prevents misclassification — Crafting sees ALL discipline counts before declaring a specialty. See [EVALUATOR_DESIGN.md](EVALUATOR_DESIGN.md) for the full specification.
+
+### Templates vs LLM
+
+Templates are correct for Layers 3-4. They fire infrequently, produce one-sentence narratives consumed as background context by NPC prompts. LLM enhancement would add latency for marginal gain on text players rarely read directly.
 
 ---
 
-## Touchpoint 6: NPC Dialogue — The Main LLM Consumer
+## Touchpoint 14: NPC Dialogue — The Main LLM Consumer
 
-**File**: `ai/npc/npc_agent.py:142-185`
+**File**: `living_world/npc/npc_agent.py:142-185`
 
 ### What the prompt currently assembles:
 
@@ -145,9 +173,9 @@ NPC "knows" facts from gossip but can't distinguish between stale knowledge and 
 
 ---
 
-## Touchpoint 7: Faction Milestones — The Empty Event
+## Touchpoint 15: Faction Milestones — The Empty Event
 
-**File**: `ai/factions/faction_system.py:318-336`
+**File**: `living_world/factions/faction_system.py:318-336`
 
 When player reputation with a faction crosses 0.25, 0.50, or 0.75:
 
@@ -199,9 +227,9 @@ Cache by `(faction_id, threshold)` — same milestone never regenerated. Worth t
 
 ---
 
-## Touchpoint 8: Ecosystem Scarcity Events — Data Without Story
+## Touchpoint 16: Ecosystem Scarcity Events — Data Without Story
 
-**File**: `ai/ecosystem/ecosystem_agent.py:244-286`
+**File**: `living_world/ecosystem/ecosystem_agent.py:244-286`
 
 When resource depletion crosses 70% or 90%:
 
@@ -242,7 +270,7 @@ Also: add `RESOURCE_SCARCITY` and `RESOURCE_RECOVERED` to the `BUS_TO_MEMORY_TYP
 
 ---
 
-## Touchpoint 9: LLM Item Generator — Separate System
+## Touchpoint 17: LLM Item Generator — Separate System
 
 **File**: `systems/llm_item_generator.py`
 
@@ -268,7 +296,7 @@ If Ollama support for crafting is desired later, a thin adapter can route `task=
 
 ---
 
-## The Big Picture: Data Flow Audit
+## The Big Picture: Data Flow (7-Layer)
 
 ```
 GAME ACTION (kill, gather, craft, level up)
@@ -277,47 +305,52 @@ GAME ACTION (kill, gather, craft, level up)
     │       │              │                │                      │
     │  Visual FX (p10) Faction (p5)    Ecosystem (p5)     EventRecorder (p-10)
     │       │              │                │                      │
-    │  Screen shake   Rep change ±     Track depletion      Write to SQLite
-    │  Damage nums    Ripple allies    Scarcity events      Prime→Interpreter
+    │  Screen shake   Rep change ±     Track depletion     L1: stat_tracker++
+    │  Damage nums    Ripple allies    Scarcity events     L2: INSERT events
     │  Death FX       Milestone?       Regen tick               │
-    │                     │                │               5 Evaluators
+    │                     │                │           occurrence_counts++
+    │                     │                │          milestone hit? (1,3,5,10,25...)
     │                     │                │                      │
-    │                     │                │              InterpretedEvent
-    │                     │                │              (narrative text)
+    │                     │                │              L3: 9 evaluators
+    │                     │                │              (template narratives)
     │                     │                │                      │
-    │                     └────── NOT CONNECTED ──────────────────┘
+    │                     │                │              accumulation check
+    │                     │                │                      │
+    │                     │                │              L4: 4 connected evaluators
+    │                     │                │              (cross-domain patterns)
+    │                     │                │                      │
+    │                     │                │              L5-7: rare, high-impact
+    │                     │                │                      │
+    │                     └─── gossip bridge (TODO) ──────────────┘
     │                                                             │
     │                                                    Region states
     │                                                    NPC knowledge
     │                                                             │
     │                                                             ▼
     │                                               WorldQuery.query_entity()
-    │                                               (rich context, UNDERUSED)
+    │                                               (tag-scored, distance-filtered)
     │                                                             │
     │                                                             ▼
-    │                                               NPC Dialogue prompt
-    │                                               (only uses 3 conditions)
+    │                                               NPC Dialogue / Quest Gen
+    │                                               (top 5 relevant items)
     │
     └── PLAYER SEES: damage numbers, level up text, NPC dialogue
 ```
 
-### The three disconnects:
+### Remaining disconnects:
 
 1. **Faction milestones → player feedback**: Events fire, nothing visible happens
 2. **Ecosystem scarcity → NPC awareness**: Data exists, no gossip bridge
-3. **WorldQuery richness → NPC prompts**: query_entity() returns 5 contextual fields, only global summary used
+3. **WorldQuery richness → NPC prompts**: query_entity() returns 5+ contextual fields, only global summary used
 
-### Design philosophy I'm proposing:
+### Priority: Storage and retrieval first
 
-**Don't collect more data. Wire what exists.**
+The touchpoint design is secondary. All touchpoints build on the data layer. The immediate priority is:
+1. Finalize the 7-layer storage schema (see [STORAGE_SCHEMA.md](STORAGE_SCHEMA.md))
+2. Implement the milestone trigger system (replacing primes)
+3. Expand evaluators from 5 to 9 with dual-coverage
+4. Build Layer 4 connected evaluators
+5. Wire the retrieval API (entity-first queries with tag scoring)
+6. Then connect the plumbing (gossip bridge, faction templates, NPC prompt enrichment)
 
-The memory system already records, interprets, and indexes everything. WorldQuery already assembles entity-specific context windows. The evaluators already produce narratives. The ecosystem already tracks scarcity. The faction system already detects milestones.
-
-The work is **plumbing**, not architecture:
-- 1 line in system prompt adds faction context
-- 1 function swap replaces `get_world_summary()` with `query_entity()`
-- 1 subscriber bridges scarcity events to gossip
-- 1 template dict gives milestones visible text
-- 2 entries in BUS_TO_MEMORY_TYPE map ecosystem events to memory
-
-None of this requires new systems. It requires connecting existing ones.
+See [RETRIEVAL_DESIGN.md](RETRIEVAL_DESIGN.md) for the full retrieval strategy.

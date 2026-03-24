@@ -3,15 +3,44 @@
 **Created**: 2026-03-24
 **Scope**: Everything that makes the world feel alive — memory, AI agents, data collection, narrative
 
-See also:
-- [LIVING_WORLD_AI.md](LIVING_WORLD_AI.md) — Architecture diagrams and per-system deep dives
-- [AI_TOUCHPOINT_MAP.md](AI_TOUCHPOINT_MAP.md) — Every place AI inference or interpretation fires
+## Document Map
+
+| Document | Purpose |
+|----------|---------|
+| **README.md** (this file) | Overview — data layers, agents, worked example |
+| [LAYER_ARCHITECTURE.md](LAYER_ARCHITECTURE.md) | **7-layer hierarchy** — triggers, geographic scale, compression principle |
+| [EVALUATOR_DESIGN.md](EVALUATOR_DESIGN.md) | Layer 3+4 evaluators — what they see, dual coverage, cross-domain |
+| [STORAGE_SCHEMA.md](STORAGE_SCHEMA.md) | Every SQL table — Layers 2-7, data flow diagram |
+| [RETRIEVAL_DESIGN.md](RETRIEVAL_DESIGN.md) | How data is queried — entity-first, tag scoring, distance filtering, gossip |
+| [LIVING_WORLD_AI.md](LIVING_WORLD_AI.md) | Living world agents — backends, NPC, factions, ecosystem |
+| [AI_TOUCHPOINT_MAP.md](AI_TOUCHPOINT_MAP.md) | Every place AI inference or interpretation fires |
 
 ---
 
-## All Data the World System Can See
+## The 7-Layer Architecture (Summary)
 
-Three layers of data exist. Each serves a different purpose.
+Data compresses upward. Each layer condenses the one below into better information transfer. A consumer at Layer 5 never needs to read Layer 2 — the summaries encode everything relevant at that scale.
+
+| Layer | Name | Scale | What it stores |
+|:---:|-------|-------|---------------|
+| 1 | Numerical Stats | Global | 850+ cumulative counters (stat_tracker.py) |
+| 2 | Structured Events | Chunk/Locality | Timestamped facts in SQLite — WHO/WHAT/WHERE/WHEN |
+| 3 | Simple Interpretations | Locality/District | One-sentence narratives from 9 evaluators |
+| 4 | Connected Interpretations | District/Province | Cross-domain and cross-region pattern detection |
+| 5 | Principality Summaries | Province | Gross summaries of provincial state |
+| 6 | Regional/National State | Realm | Faction landscapes, economic state, player reputation |
+| 7 | World State | World | Narrative threads, world identity, themes, history |
+
+**Trigger cadence**: `1, 3, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 100000`
+The biggest leaps happen at **1, 10, 100, 1000**. Triggers are opportunities to evaluate, not mandates to produce output.
+
+**Full design**: [LAYER_ARCHITECTURE.md](LAYER_ARCHITECTURE.md)
+
+---
+
+## All Data the World System Stores
+
+Seven layers, each serving a different purpose.
 
 ### Layer 1 — StatTracker (cumulative counters, pre-existing)
 
@@ -38,7 +67,7 @@ Also: `ActivityTracker` — 8 simple counters (mining, forestry, smithing, refin
 
 ### Layer 2 — EventStore (timestamped facts, new)
 
-**File**: `ai/memory/event_store.py` — SQLite database per save slot
+**File**: `world_memory/event_store.py` — SQLite database per save slot
 
 Every game action recorded as a structured row with WHO, WHAT, WHERE, WHEN:
 
@@ -70,32 +99,57 @@ Meta:      WORLD_EVENT
 
 **Not recorded** (filtered as visual noise): SCREEN_SHAKE, PARTICLE_BURST, FLASH_ENTITY, ATTACK_PHASE, ATTACK_STARTED
 
-### Layer 3 — Interpretations (narrative summaries, new)
+### Layer 3 — Simple Interpretations
 
-**Files**: `ai/memory/evaluators/*.py` — 5 pattern evaluators
+**Files**: `world_memory/evaluators/*.py` — 9 evaluators (expanded from 5)
 
-When event occurrence counts hit prime numbers (1, 2, 3, 5, 7, 11, 13...), evaluators scan recent Layer 2 data and produce one-sentence narratives:
+When occurrence counts hit milestone thresholds (1, 3, 5, 10, 25, 50, 100...), evaluators scan recent Layer 2 data and Layer 1 stats to produce one-sentence narratives.
 
-| Evaluator | Watches | Example output |
-|-----------|---------|----------------|
-| Population | enemy kills per region | "The wolf population has been devastated in Old Forest. 47 killed." |
-| Resources | gathers per region | "Iron Ore deposits are critically strained in Iron Hills." |
-| Milestones | kills, levels, crafts, titles | "The adventurer has reached level 10. A major milestone." |
-| Danger | damage taken, deaths | "Old Forest is extremely dangerous. 3 deaths recorded." |
-| Crafting | discipline specialization | "The adventurer is becoming a master smithing crafter." |
+| Evaluator | Question it answers | Example output |
+|-----------|-------------------|----------------|
+| Population Dynamics | What's happening to creature populations? | "Wolf population declining in Old Forest. 23 killed." |
+| Ecosystem Pressure | Are resources being sustainably harvested? | "Iron ore nearly exhausted in Eastern Caves. 95% depleted." |
+| Combat Proficiency | How capable is the player in combat? | "Flawless victory against T2 pack — no damage taken." |
+| Crafting Mastery | What is the player's crafting identity? | "Dual specialty: smithing and enchanting both at 30+ crafts." |
+| Player Milestones | Has the player achieved something notable? | "Level 10 reached. A significant milestone." |
+| Exploration & Discovery | How is the player engaging geographically? | "25 unique areas explored. Well-traveled." |
+| Social & Reputation | How is the player interacting with NPCs/factions? | "Village Guard: Recognized (0.28). Guards warming up." |
+| Economy & Items | What is the player's economic behavior? | "Heavy potion usage — 8 consumed in recent fights." |
+| Dungeon Progress | How is dungeon content going? | "3 rare dungeons completed. Taking on serious challenges." |
 
-These propagate to region states (locality → district → province based on severity) and are queryable by NPC agents.
+**Dual coverage is expected**: killing wolves triggers both Population ("wolves are dying") and Combat ("player is becoming a skilled hunter"). These serve different consumers.
 
-### New SQL Tables (Phase 2.2–2.5)
+**Full evaluator design**: [EVALUATOR_DESIGN.md](EVALUATOR_DESIGN.md)
 
-| Table | What it stores |
-|-------|---------------|
-| `npc_memory` | Per-NPC: relationship score, emotion, knowledge[], conversation summary, reputation tags, quest state |
-| `faction_state` | Per-faction: player reputation score, crossed milestones, last change |
-| `faction_reputation_history` | Audit trail: delta, reason, game_time, is_ripple |
-| `biome_resource_state` | Per-biome per-resource: initial pool, current, gathered, regen rate, scarce/critical flags |
-| `event_triggers` | Future: world event cooldown tracking |
-| `pacing_state` | Future: tension/reward cadence tracking |
+### Layers 4-7 — Higher Interpretation Layers
+
+| Layer | What it produces | Example |
+|-------|-----------------|---------|
+| 4 — Connected | Cross-domain patterns | "Player is plundering Iron Hills — both wildlife and resources under pressure." |
+| 5 — Principality | Province-wide summaries | "Northern province largely cleared of wildlife. Heavy resource extraction." |
+| 6 — National | Realm-wide state | Faction power balances, global resource scarcity, player reputation |
+| 7 — World | Narrative threads, world identity | Active wars, plagues, discoveries. World themes and tone. |
+
+Each layer can see two layers down. Layer 4 sees Layer 3 (full) and Layer 2 (limited). This prevents upper layers from needing raw event streams while still grounding them in reality.
+
+### SQL Tables
+
+| Table | Layer | Purpose |
+|-------|:---:|---------|
+| `events` + `event_tags` | 2 | Every game action as structured fact |
+| `occurrence_counts` | 2 | Milestone trigger tracking |
+| `interpretations` + `interpretation_tags` | 3 | One-sentence evaluator narratives |
+| `connected_interpretations` | 4 | Cross-domain pattern narratives |
+| `province_summaries` | 5 | Province-level state snapshots |
+| `realm_state` | 6 | Realm-wide political/economic state |
+| `world_narrative` + `narrative_threads` | 7 | World identity and active story threads |
+| `npc_memory` | — | Per-NPC relationship, knowledge, conversation |
+| `faction_state` + `faction_reputation_history` | — | Faction reputation audit trail |
+| `biome_resource_state` | — | Ecosystem depletion tracking |
+| `region_state` | — | Per-region active conditions |
+| `entity_state` | — | Per-entity tag and activity persistence |
+
+**Full schema**: [STORAGE_SCHEMA.md](STORAGE_SCHEMA.md)
 
 ---
 
@@ -113,7 +167,9 @@ Five systems subscribe to the GameEventBus. None import each other directly.
      │    │    │    ┌───┴───┐
      │    │    │  SQLite  Interpreter
      │    │    │           │
-     │    │    │     5 Evaluators
+     │    │    │   L3: 9 Evaluators
+     │    │    │           │
+     │    │    │   L4: 4 Connected
      │    │    │           │
      │    │    │     Region states
      │    │    │           │
@@ -131,16 +187,17 @@ Five systems subscribe to the GameEventBus. None import each other directly.
 
 ### Agent 1: EventRecorder — the journalist
 
-Subscribes to every event (wildcard `"*"`, priority -10 = runs last). Converts bus events to structured WorldMemoryEvents with geographic context. Writes to SQLite. Triggers the interpreter on prime-number occurrence counts.
+Subscribes to every event (wildcard `"*"`, priority -10 = runs last). Converts bus events to structured WorldMemoryEvents with geographic context. Writes to SQLite. Triggers evaluators at milestone thresholds.
 
 **Example**: Player gathers iron ore →
 - EventRecorder stamps it with chunk (2,4), locality "iron_hills", biome "mountain"
-- Increments occurrence count for (player, resource_gathered, gathered_iron_ore) → count=7
-- 7 is prime → triggers WorldInterpreter
-- ResourcePressureEvaluator counts 25 recent gathers → "Notable iron ore harvesting in Iron Hills"
+- Increments occurrence count for (player, resource_gathered, gathered_iron_ore) → count=10
+- 10 is a milestone threshold → triggers 9 Layer 3 evaluators
+- EcosystemPressure evaluator checks depletion state → "Iron ore under heavy pressure in Iron Hills"
+- Combat evaluator: not relevant, skips
 - Narrative stored as InterpretedEvent, propagated to region state
 
-**My thinking**: This is the most important system. It's the bridge between raw gameplay and everything downstream. The prime-number trigger is clever — it naturally samples more densely early (1,2,3,5,7) and logarithmically later (97,101,103), so the first wolf kill always gets interpreted but the 500th only gets interpreted at prime checkpoints. This keeps SQLite small without losing narrative coverage.
+**Trigger cadence**: `1, 3, 5, 10, 25, 50, 100, 250, 500, 1000...` — logarithmic spacing. First occurrence always evaluated. Major evaluation leaps at 1, 10, 100, 1000. A trigger is an *opportunity* — evaluators may find nothing notable and produce no output.
 
 ### Agent 2: FactionSystem — reputation tracker
 
@@ -160,7 +217,7 @@ Subscribes to RESOURCE_GATHERED (priority 5). Tracks per-biome, per-resource dep
 
 **What the agent communicates**: Publishes `RESOURCE_SCARCITY` and `RESOURCE_RECOVERED` to the bus. **Problem**: nobody listens. EventRecorder doesn't map these event types yet. NPCs don't hear about scarcity.
 
-**Missing bridge** (10 lines): Subscribe to RESOURCE_SCARCITY → compose summary → call `NPCAgentSystem.propagate_gossip()`. Also: add these to `BUS_TO_MEMORY_TYPE` in event_schema.py. **My proposal**: Wire this in WorldMemorySystem.initialize() as a lightweight subscriber.
+**Missing bridge** (10 lines): Subscribe to RESOURCE_SCARCITY → compose summary → call `NPCAgentSystem.propagate_gossip()`. Also: add these to `BUS_TO_MEMORY_TYPE` in event_schema.py. Wire this in WorldMemorySystem.initialize() as a lightweight subscriber.
 
 ### Agent 4: NPC Agent System — personality + memory + dialogue
 
@@ -221,7 +278,11 @@ Not an autonomous agent — a service layer. Routes `generate(task, system, user
 4. EventRecorder hears RESOURCE_GATHERED (p-10)
    └─ Writes WorldMemoryEvent to SQLite
    └─ Occurrence count for (player, resource_gathered, gathered_iron_ore) = 50
-   └─ 50 is not prime → no interpreter trigger
+   └─ 50 is a milestone threshold → triggers Layer 3 evaluators
+   └─ EcosystemPressure: depletion at 80%, already flagged → updates existing interpretation
+   └─ CombatProficiency: not relevant, skips
+   └─ Layer 4 check: 3+ ecosystem interpretations in this district → triggers connected evaluator
+   └─ Connected: "Heavy resource extraction in Iron Hills district"
 
 5. [PROPOSED] Scarcity bridge hears RESOURCE_SCARCITY
    └─ Composes: "Iron ore is becoming scarce in the mountains"
@@ -251,11 +312,13 @@ Not an autonomous agent — a service layer. Routes `generate(task, system, user
 
 | System | Why not yet |
 |--------|-----------|
-| Quest generation | Needs all agents integrated first — quests should be grounded in faction rep + scarcity + NPC personality |
-| World events (invasions, migrations) | Needs quest system + pacing model. Tables exist in schema. |
+| Quest generation | Needs all layers integrated first — quests should be grounded in Layer 4+ patterns |
+| World events (invasions, migrations) | Needs quest system + pacing model. Layer 7 tables designed for this. |
 | NPC schedules/movement | Blocked by animation system (Phase 1) |
 | BalanceValidator | Spec only, no code. Gates AI-generated content with tier-based stat ranges |
-| Player behavior classification | Phase 3. Requires enough stat history to classify playstyle |
+| Player behavior classification | Phase 3. Layer 4's Player Identity Consolidator is the foundation for this. |
+| Narrative threads | Layer 7 concept. Designed (see Scratchpad). Needs Layers 3-5 stable first. |
+| Multiplayer sub-layer | Would be ~Layer 3.5 — per-player connected interpretations before merging into shared Layer 4+. |
 
 ---
 
