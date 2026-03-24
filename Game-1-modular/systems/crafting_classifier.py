@@ -1,8 +1,8 @@
 """
 Crafting Recipe Classifier Integration
 
-Validates player-invented recipes using CNN and LightGBM models.
-Designed for modularity - easy to swap models, prompts, and transformers.
+Validates player-invented recipes using CNN and LightGBM crafting_classifier_models.
+Designed for modularity - easy to swap crafting_classifier_models, prompts, and transformers.
 
 Created: 2026-01-25
 """
@@ -66,7 +66,7 @@ class MaterialColorEncoder:
     Encodes materials as RGB colors using HSV color space.
 
     This is the exact encoding used during CNN model training.
-    DO NOT MODIFY without retraining models.
+    DO NOT MODIFY without retraining crafting_classifier_models.
     """
 
     # Category to Hue mapping (degrees, 0-360)
@@ -517,10 +517,10 @@ class AdornmentImageRenderer:
 
 class LightGBMFeatureExtractor:
     """
-    Extracts features from recipes for LightGBM models.
+    Extracts features from recipes for LightGBM crafting_classifier_models.
 
     CRITICAL: Feature extraction MUST match training script EXACTLY.
-    DO NOT modify vocabularies without retraining models.
+    DO NOT modify vocabularies without retraining crafting_classifier_models.
 
     Vocabularies are HARDCODED to match training data:
     - Categories: {'elemental': 0, 'metal': 1, 'monster_drop': 2, 'stone': 3, 'wood': 4}
@@ -1021,47 +1021,47 @@ class CraftingClassifierManager:
     Main entry point for recipe validation.
 
     Manages all 5 discipline classifiers with:
-    - Lazy loading (models loaded on first use)
+    - Lazy loading (crafting_classifier_models loaded on first use)
     - Graceful fallbacks (returns error result if model unavailable)
-    - Modular design (easy to swap models/configs)
+    - Modular design (easy to swap crafting_classifier_models/configs)
     """
 
     # Default model paths (relative to project root)
-    # Models are stored in Scaled JSON Development/models/{discipline}/
+    # Models are stored in Scaled JSON Development/crafting_classifier_models/{discipline}/
     DEFAULT_CONFIGS = {
         'smithing': ClassifierConfig(
             discipline='smithing',
             classifier_type='cnn',
-            model_path='Scaled JSON Development/models/smithing/smithing_best.keras',
+            model_path='Scaled JSON Development/crafting_classifier_models/smithing/smithing_best.keras',
             img_size=36,
             threshold=0.5
         ),
         'adornments': ClassifierConfig(
             discipline='adornments',
             classifier_type='cnn',
-            model_path='Scaled JSON Development/models/adornment/adornment_best.keras',
+            model_path='Scaled JSON Development/crafting_classifier_models/adornment/adornment_best.keras',
             img_size=56,
             threshold=0.5
         ),
         'alchemy': ClassifierConfig(
             discipline='alchemy',
             classifier_type='lightgbm',
-            model_path='Scaled JSON Development/models/alchemy/alchemy_model.txt',
-            extractor_path='Scaled JSON Development/models/alchemy/alchemy_extractor.pkl',
+            model_path='Scaled JSON Development/crafting_classifier_models/alchemy/alchemy_model.txt',
+            extractor_path='Scaled JSON Development/crafting_classifier_models/alchemy/alchemy_extractor.pkl',
             threshold=0.5
         ),
         'refining': ClassifierConfig(
             discipline='refining',
             classifier_type='lightgbm',
-            model_path='Scaled JSON Development/models/refining/refining_model.txt',
-            extractor_path='Scaled JSON Development/models/refining/refining_extractor.pkl',
+            model_path='Scaled JSON Development/crafting_classifier_models/refining/refining_model.txt',
+            extractor_path='Scaled JSON Development/crafting_classifier_models/refining/refining_extractor.pkl',
             threshold=0.5
         ),
         'engineering': ClassifierConfig(
             discipline='engineering',
             classifier_type='lightgbm',
-            model_path='Scaled JSON Development/models/engineering/engineering_model.txt',
-            extractor_path='Scaled JSON Development/models/engineering/engineering_extractor.pkl',
+            model_path='Scaled JSON Development/crafting_classifier_models/engineering/engineering_model.txt',
+            extractor_path='Scaled JSON Development/crafting_classifier_models/engineering/engineering_extractor.pkl',
             threshold=0.5
         ),
     }
@@ -1295,12 +1295,12 @@ class CraftingClassifierManager:
 
     def preload(self, discipline: Optional[str] = None):
         """
-        Preload classifier models to avoid delay when validating recipes.
+        Preload classifier crafting_classifier_models to avoid delay when validating recipes.
 
-        Call this when the interactive crafting UI opens to load models
+        Call this when the interactive crafting UI opens to load crafting_classifier_models
         in advance, rather than on first validation attempt.
 
-        IMPORTANT: For CNN models (TensorFlow/Keras), this runs a warmup prediction
+        IMPORTANT: For CNN crafting_classifier_models (TensorFlow/Keras), this runs a warmup prediction
         to fully compile the computational graph. Without this, the first real
         prediction will still be slow even though the model file is loaded.
 
@@ -1382,7 +1382,7 @@ class CraftingClassifierManager:
 
     def unload(self, discipline: Optional[str] = None):
         """
-        Unload classifier models to free memory.
+        Unload classifier crafting_classifier_models to free memory.
 
         Call this when the interactive crafting UI closes.
 

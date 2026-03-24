@@ -370,7 +370,7 @@ class BestModelVariationTrainer:
         """
         Check if results are suspiciously perfect (likely memorization).
 
-        Reject models with:
+        Reject crafting_classifier_models with:
         - 98%+ accuracy (suspiciously high, likely memorized)
         - <0.3% overfitting gap (suspiciously low, suggests data leakage or memorization)
 
@@ -393,7 +393,7 @@ class BestModelVariationTrainer:
         A model with 90% accuracy and 2% gap is BETTER than
         a model with 94% accuracy and 10% gap.
 
-        ALSO: Reject models that are "too perfect" (memorization indicators)
+        ALSO: Reject crafting_classifier_models that are "too perfect" (memorization indicators)
         - 98%+ accuracy → returns -1 (rejected)
         - <0.3% gap → returns -1 (rejected)
         """
@@ -541,9 +541,9 @@ class BestModelVariationTrainer:
             if best_result:
                 print(f"[OK] Best model: {best_result['variation_name']} (robustness={best_result.get('robustness_score', 0):.4f})")
         else:
-            print(f"\n[!] WARNING: No valid models found! All configs showed signs of memorization.")
+            print(f"\n[!] WARNING: No valid crafting_classifier_models found! All configs showed signs of memorization.")
 
-        # Show rejected models
+        # Show rejected crafting_classifier_models
         if rejected_results:
             print(f"\nRejected configs (memorization suspected):")
             for r in rejected_results:
@@ -585,4 +585,4 @@ if __name__ == "__main__":
         results = trainer.train_all_variations()
 
     print(f"\n[OK] Trained {len(results)} variations!")
-    print("Run comprehensive_model_evaluator.py to compare all models.")
+    print("Run comprehensive_model_evaluator.py to compare all crafting_classifier_models.")

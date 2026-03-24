@@ -428,7 +428,7 @@ def extract_resources(base_path: Path) -> List[EntityEntry]:
     """Extract resources from resource-node-1.JSON
 
     Now loads all 28 resources from JSON instead of using hardcoded list.
-    The ResourceType enum in data/models/world.py has been expanded to match.
+    The ResourceType enum in data/crafting_classifier_models/world.py has been expanded to match.
     """
     global RESOURCES
 

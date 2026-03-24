@@ -1,4 +1,4 @@
-"""Skill-related data models"""
+"""Skill-related data crafting_classifier_models"""
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Union

@@ -1,4 +1,4 @@
-"""Skill unlock data models"""
+"""Skill unlock data crafting_classifier_models"""
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional

@@ -1,6 +1,6 @@
 """
 Math utilities for geometry calculations
-Works with Position class from data.models.world
+Works with Position class from data.crafting_classifier_models.world
 """
 
 import math

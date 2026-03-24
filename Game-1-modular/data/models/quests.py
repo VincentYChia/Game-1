@@ -1,4 +1,4 @@
-"""Quest-related data models"""
+"""Quest-related data crafting_classifier_models"""
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Any

@@ -6,7 +6,7 @@ clean modules for maintainability and scalability.
 
 Architecture:
 - core/         - Core game systems (engine, config, camera)
-- data/         - Data models and database loaders
+- data/         - Data crafting_classifier_models and database loaders
 - entities/     - Game entities (character, components)a
 - systems/      - Game systems (world, quests, NPCs, titles)
 - rendering/    - All rendering code

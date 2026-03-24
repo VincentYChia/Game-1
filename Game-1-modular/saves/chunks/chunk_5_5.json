@@ -1,7 +1,7 @@
 {
   "chunk_x": 5,
   "chunk_y": 5,
-  "chunk_type": "peaceful_quarry",
+  "chunk_type": "water_lake",
   "dungeon_entrance": {
     "position": {
       "x": 83,
@@ -10,5 +10,5 @@
     },
     "rarity": "epic"
   },
-  "unload_timestamp": 73.11100000000035
+  "unload_timestamp": 131.74000000000234
 }

@@ -253,7 +253,7 @@ Create at: `Game-1-modular/systems/crafting_classifier.py`
 ```python
 """
 Crafting Recipe Classifier Integration
-Validates player-invented recipes using CNN and LightGBM models
+Validates player-invented recipes using CNN and LightGBM crafting_classifier_models
 """
 
 import numpy as np
@@ -324,7 +324,7 @@ class CraftingClassifier:
     def __init__(self, game_root: Path, materials_db):
         self.game_root = game_root
         self.materials_db = materials_db
-        self._models = {}  # Lazy-loaded models
+        self._models = {}  # Lazy-loaded crafting_classifier_models
         self._extractors = {}  # Feature extractors for LightGBM
 
     def _load_model(self, discipline: str):

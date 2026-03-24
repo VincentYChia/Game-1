@@ -1,4 +1,4 @@
-"""World-related data models (Position, Tiles, Resources, Chunks, Stations)"""
+"""World-related data crafting_classifier_models (Position, Tiles, Resources, Chunks, Stations)"""
 
 from dataclasses import dataclass
 from typing import Tuple, Optional, List, Dict, Any, Set

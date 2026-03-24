@@ -602,13 +602,13 @@ public static class AlchemyFeatureExtractor
 
 **Step 1: Export from Python**
 ```bash
-# CNN models (Keras/TensorFlow)
-python -m tf2onnx.convert --keras models/smithing_cnn.keras \
-    --output models/smithing_cnn.onnx --opset 15
+# CNN crafting_classifier_models (Keras/TensorFlow)
+python -m tf2onnx.convert --keras crafting_classifier_models/smithing_cnn.keras \
+    --output crafting_classifier_models/smithing_cnn.onnx --opset 15
 
-# LightGBM models
-python scripts/convert_lgbm_to_onnx.py models/alchemy_lgbm.txt \
-    --output models/alchemy_lgbm.onnx
+# LightGBM crafting_classifier_models
+python scripts/convert_lgbm_to_onnx.py crafting_classifier_models/alchemy_lgbm.txt \
+    --output crafting_classifier_models/alchemy_lgbm.onnx
 ```
 
 **Step 2: Validate ONNX**

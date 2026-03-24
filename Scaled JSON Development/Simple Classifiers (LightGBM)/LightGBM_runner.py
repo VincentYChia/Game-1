@@ -1,6 +1,6 @@
 """
 Recipe Validation Tester
-Tests placement JSON files against trained LightGBM models.
+Tests placement JSON files against trained LightGBM crafting_classifier_models.
 """
 
 import json

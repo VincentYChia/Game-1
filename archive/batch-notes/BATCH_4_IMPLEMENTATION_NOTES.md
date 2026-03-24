@@ -262,7 +262,7 @@ All effects can now be created via `create_status_effect()` factory function or 
 ✅ **PASSED** - All modified files passed `python3 -m py_compile`
 
 ```bash
-python3 -m py_compile core/effect_executor.py entities/status_effect.py entities/character.py data/models/equipment.py
+python3 -m py_compile core/effect_executor.py entities/status_effect.py entities/character.py data/crafting_classifier_models/equipment.py
 # No errors reported
 ```
 

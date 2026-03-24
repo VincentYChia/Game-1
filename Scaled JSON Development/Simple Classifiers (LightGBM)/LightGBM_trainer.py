@@ -709,7 +709,7 @@ def is_suspicious_result(val_accuracy, overfit_gap):
     """
     Check if results are suspiciously perfect (likely memorization).
 
-    Reject models with:
+    Reject crafting_classifier_models with:
     - 98%+ accuracy (suspiciously high, likely memorized)
     - <0.3% overfitting gap (suspiciously low, suggests data leakage or memorization)
 
@@ -734,7 +734,7 @@ def calculate_robustness_score(val_accuracy, overfit_gap):
     A model with 92% accuracy and 2% gap is BETTER than
     a model with 95% accuracy and 8% gap.
 
-    ALSO: Reject models that are "too perfect" (memorization indicators)
+    ALSO: Reject crafting_classifier_models that are "too perfect" (memorization indicators)
     - 98%+ accuracy → returns -1 (rejected)
     - <0.3% gap → returns -1 (rejected)
 
@@ -917,7 +917,7 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
     search_end = datetime.now()
     total_time = (search_end - search_start).total_seconds()
 
-    # Count rejected models
+    # Count rejected crafting_classifier_models
     rejected_count = sum(1 for r in results if r.get('rejected', False))
     valid_results = [r for r in results if not r.get('rejected', False)]
 
@@ -927,13 +927,13 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
     print(f"Total time: {total_time:.1f}s")
     print(f"Configs tested: {len(results)}")
     print(f"Rejected (memorization): {rejected_count}")
-    print(f"Valid models: {len(valid_results)}")
+    print(f"Valid crafting_classifier_models: {len(valid_results)}")
 
     if best_model is not None:
         print(f"Best config: {best_config_name}")
         print(f"Best robustness score: {best_score:.4f}")
     else:
-        print(f"[!] WARNING: No valid models found! All configs showed signs of memorization.")
+        print(f"[!] WARNING: No valid crafting_classifier_models found! All configs showed signs of memorization.")
         # Fall back to the best rejected model - pick the one with highest val_acc
         if results:
             best_rejected = max(results, key=lambda x: x['val_acc'])

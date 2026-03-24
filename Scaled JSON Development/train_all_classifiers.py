@@ -12,8 +12,8 @@ Trains all 5 crafting classifiers (2 CNN + 3 LightGBM):
 Features:
 - Model selection based on: score = val_accuracy - 2.0 * overfit_gap
   (overfitting is penalized 2x more than accuracy loss)
-- Automatic archiving of old models with timestamps
-- Seamless replacement: new models go to EXACT paths the game expects
+- Automatic archiving of old crafting_classifier_models with timestamps
+- Seamless replacement: new crafting_classifier_models go to EXACT paths the game expects
 - Comprehensive debug output with --debug flag
 
 Model Selection Philosophy:
@@ -31,13 +31,13 @@ Usage:
     python train_all_classifiers.py --test-mode        # Skeleton test (1 config, 1 epoch)
 python "Scaled JSON Development/train_all_classifiers.py" --force
 Directory Structure:
-    models/
-        smithing/       - Trained smithing CNN models
-        adornment/      - Trained adornment CNN models
-        alchemy/        - Trained alchemy LightGBM models
-        refining/       - Trained refining LightGBM models
-        engineering/    - Trained engineering LightGBM models
-        archived/       - Old models archived here
+    crafting_classifier_models/
+        smithing/       - Trained smithing CNN crafting_classifier_models
+        adornment/      - Trained adornment CNN crafting_classifier_models
+        alchemy/        - Trained alchemy LightGBM crafting_classifier_models
+        refining/       - Trained refining LightGBM crafting_classifier_models
+        engineering/    - Trained engineering LightGBM crafting_classifier_models
+        archived/       - Old crafting_classifier_models archived here
     training_data/
         smithing/       - Smithing training datasets
         adornment/      - Adornment training datasets
@@ -72,11 +72,11 @@ LIGHTGBM_DIR = SCRIPT_DIR / "Simple Classifiers (LightGBM)"
 GAME_MODULAR = SCRIPT_DIR.parent / "Game-1-modular"
 
 # New organized directories
-MODELS_DIR = SCRIPT_DIR / "models"
+MODELS_DIR = SCRIPT_DIR / "crafting_classifier_models"
 TRAINING_DATA_DIR = SCRIPT_DIR / "training_data"
-ARCHIVE_DIR = MODELS_DIR / "archived"  # Archive lives inside models folder
+ARCHIVE_DIR = MODELS_DIR / "archived"  # Archive lives inside crafting_classifier_models folder
 
-# Game expects models at these EXACT paths - updated to use organized structure
+# Game expects crafting_classifier_models at these EXACT paths - updated to use organized structure
 GAME_MODEL_PATHS = {
     'smithing': MODELS_DIR / "smithing" / "smithing_best.keras",
     'adornments': MODELS_DIR / "adornment" / "adornment_best.keras",
@@ -349,25 +349,25 @@ def update_data_hash_cache(discipline: str):
 
 
 # ============================================================================
-# MODEL CLEANUP (Keep best N models)
+# MODEL CLEANUP (Keep best N crafting_classifier_models)
 # ============================================================================
 
 def cleanup_old_models(discipline: str, config: Dict, keep_best: int = 3):
     """
-    Clean up old models, keeping only the best N.
+    Clean up old crafting_classifier_models, keeping only the best N.
 
     Models are ranked by modification time (newest = best).
-    Non-selected models are moved to archive.
+    Non-selected crafting_classifier_models are moved to archive.
     """
     work_dir = config['work_dir']
     model_pattern = config['model_pattern']
 
-    debug(f"Cleaning up models for {discipline}")
+    debug(f"Cleaning up crafting_classifier_models for {discipline}")
     debug(f"  Work dir: {work_dir}")
     debug(f"  Pattern: {model_pattern}")
     debug(f"  Keep best: {keep_best}")
 
-    # Find all models
+    # Find all crafting_classifier_models
     if '*' in model_pattern:
         # If pattern has subdir, handle it
         if '/' in model_pattern:
@@ -381,7 +381,7 @@ def cleanup_old_models(discipline: str, config: Dict, keep_best: int = 3):
     else:
         models = list(work_dir.glob(model_pattern))
 
-    debug(f"  Found {len(models)} models")
+    debug(f"  Found {len(models)} crafting_classifier_models")
 
     if len(models) <= keep_best:
         debug(f"  No cleanup needed (have {len(models)}, keep {keep_best})")
@@ -578,7 +578,7 @@ def archive_file(filepath: Path, discipline: str, dry_run: bool = False) -> Opti
 
     debug(f"Archiving: {filepath} -> {archive_path}")
     shutil.copy2(filepath, archive_path)
-    # Remove the original so old models don't get selected when new training doesn't save
+    # Remove the original so old crafting_classifier_models don't get selected when new training doesn't save
     filepath.unlink()
     print(f"    Archived: {filepath.name} -> {archived_name}")
     return archive_path
@@ -1032,48 +1032,48 @@ def find_best_model(discipline: str, config: Dict, work_dir: Path) -> Optional[T
     debug(f"  Pattern: {model_pattern}")
     debug(f"  Work dir: {work_dir}")
 
-    # Find all matching models - first try direct match
+    # Find all matching crafting_classifier_models - first try direct match
     models = list(work_dir.glob(model_pattern))
-    debug(f"  Found {len(models)} models with direct glob")
+    debug(f"  Found {len(models)} crafting_classifier_models with direct glob")
 
     if not models:
         # Try recursive search (CNN trainers may save to subdirectories)
         pattern = model_pattern.split('/')[-1] if '/' in model_pattern else model_pattern
         models = list(work_dir.rglob(pattern))
-        debug(f"  Found {len(models)} models with recursive search (rglob)")
+        debug(f"  Found {len(models)} crafting_classifier_models with recursive search (rglob)")
 
     # Also check common subdirectories for CNN trainers
     if not models and model_type == 'cnn':
-        common_subdirs = ['best_model_variations', 'models', 'output']
+        common_subdirs = ['best_model_variations', 'crafting_classifier_models', 'output']
         for subdir in common_subdirs:
             subdir_path = work_dir / subdir
             if subdir_path.exists():
                 subdir_models = list(subdir_path.glob(model_pattern))
-                debug(f"  Found {len(subdir_models)} models in {subdir}/")
+                debug(f"  Found {len(subdir_models)} crafting_classifier_models in {subdir}/")
                 models.extend(subdir_models)
 
     if not models:
-        print(f"    No models found matching: {model_pattern}")
+        print(f"    No crafting_classifier_models found matching: {model_pattern}")
         debug(f"    Searched in: {work_dir}")
         debug(f"    Subdirs present: {[d.name for d in work_dir.iterdir() if d.is_dir()]}")
         return None
 
-    # Separate candidate and non-candidate models
+    # Separate candidate and non-candidate crafting_classifier_models
     candidate_models = [m for m in models if 'CANDIDATE' in m.name.upper()]
     good_models = [m for m in models if 'CANDIDATE' not in m.name.upper()]
 
-    debug(f"  Found {len(good_models)} good models, {len(candidate_models)} candidates")
+    debug(f"  Found {len(good_models)} good crafting_classifier_models, {len(candidate_models)} candidates")
 
-    # Prefer non-candidate models, fall back to candidates
+    # Prefer non-candidate crafting_classifier_models, fall back to candidates
     if good_models:
         best_model = max(good_models, key=lambda p: p.stat().st_mtime)
         is_candidate = False
     elif candidate_models:
         best_model = max(candidate_models, key=lambda p: p.stat().st_mtime)
         is_candidate = True
-        print(f"    WARNING: Only candidate models available, using best candidate")
+        print(f"    WARNING: Only candidate crafting_classifier_models available, using best candidate")
     else:
-        # Should not happen since we checked models is non-empty
+        # Should not happen since we checked crafting_classifier_models is non-empty
         return None
 
     debug(f"  Selected: {best_model} (most recent {'candidate' if is_candidate else 'good'} model)")
@@ -1166,7 +1166,7 @@ def install_model(discipline: str, source_model: Path, dry_run: bool = False) ->
 
 
 def _install_extractor(source_model: Path, target_path: Path) -> None:
-    """Install the feature extractor .pkl file for LightGBM models."""
+    """Install the feature extractor .pkl file for LightGBM crafting_classifier_models."""
     # Try different naming conventions
     extractor_patterns = [
         source_model.with_suffix('.pkl').with_name(
@@ -1215,13 +1215,13 @@ def train_discipline(discipline: str, dry_run: bool = False,
     3. Train model
     4. Select best model
     5. Install to game path
-    6. Cleanup old models (keep best N)
+    6. Cleanup old crafting_classifier_models (keep best N)
 
     Args:
         discipline: Name of discipline to train
         dry_run: If True, don't actually execute, just show what would happen
         force: If True, train even if data hasn't changed
-        keep_best: Number of best models to keep (rest are archived)
+        keep_best: Number of best crafting_classifier_models to keep (rest are archived)
 
     Returns dict with results summary.
     """
@@ -1352,7 +1352,7 @@ def train_discipline(discipline: str, dry_run: bool = False,
         if DEBUG_MODE:
             traceback.print_exc()
 
-    # Step 6: Cleanup old models and update hash cache
+    # Step 6: Cleanup old crafting_classifier_models and update hash cache
     print(f"\n[6/6] Cleanup and finalize...")
     try:
         if not dry_run:
@@ -1360,13 +1360,13 @@ def train_discipline(discipline: str, dry_run: bool = False,
             update_data_hash_cache(discipline)
             print(f"    Updated data hash cache for {discipline}")
 
-            # Cleanup old models
+            # Cleanup old crafting_classifier_models
             if keep_best > 0:
                 archived = cleanup_old_models(discipline, config, keep_best)
                 if archived:
                     results['cleaned_up'] = archived
         else:
-            print(f"    [DRY RUN] Would update hash cache and cleanup models")
+            print(f"    [DRY RUN] Would update hash cache and cleanup crafting_classifier_models")
         results['steps_completed'].append('finalize')
     except Exception as e:
         print(f"    ERROR during cleanup: {e}")
@@ -1516,13 +1516,13 @@ Training Order:
         type=int,
         default=3,
         metavar='N',
-        help='Keep best N models, archive the rest (default: 3)'
+        help='Keep best N crafting_classifier_models, archive the rest (default: 3)'
     )
 
     parser.add_argument(
         '--no-cleanup',
         action='store_true',
-        help='Skip model cleanup (keep all models)'
+        help='Skip model cleanup (keep all crafting_classifier_models)'
     )
 
     parser.add_argument(

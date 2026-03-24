@@ -349,7 +349,7 @@ import random
 from typing import List, Dict, Tuple, Optional, Any
 from dataclasses import dataclass
 
-# Game modules - data models
+# Game modules - data crafting_classifier_models
 from data.models.world import PlacedEntity, PlacedEntityType, Position
 from data.models.equipment import EquipmentItem
 

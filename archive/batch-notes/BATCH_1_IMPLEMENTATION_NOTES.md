@@ -350,7 +350,7 @@ final_damage = damage * def_multiplier * armor_multiplier * protection_multiplie
 ✅ **PASSED** - All modified files passed `python3 -m py_compile`
 
 ```bash
-python3 -m py_compile core/effect_executor.py core/game_engine.py Combat/combat_manager.py entities/character.py data/models/equipment.py
+python3 -m py_compile core/effect_executor.py core/game_engine.py Combat/combat_manager.py entities/character.py data/crafting_classifier_models/equipment.py
 # No errors reported
 ```
 

@@ -39,14 +39,14 @@ except Exception as e:
     errors.append(f"core.Notification: {e}")
     print(f"❌ core.Notification: {e}")
 
-# Test data models
+# Test data crafting_classifier_models
 print("\n[Data Models]")
 try:
     from data.models import Position, Recipe, EquipmentItem, MaterialDefinition
-    print("✓ data.models (Position, Recipe, EquipmentItem, MaterialDefinition)")
+    print("✓ data.crafting_classifier_models (Position, Recipe, EquipmentItem, MaterialDefinition)")
 except Exception as e:
-    errors.append(f"data.models: {e}")
-    print(f"❌ data.models: {e}")
+    errors.append(f"data.crafting_classifier_models: {e}")
+    print(f"❌ data.crafting_classifier_models: {e}")
 
 # Test data databases
 print("\n[Data Databases]")

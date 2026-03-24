@@ -1,0 +1,14 @@
+{
+  "chunk_x": -8,
+  "chunk_y": -1,
+  "chunk_type": "dangerous_quarry",
+  "dungeon_entrance": {
+    "position": {
+      "x": -124,
+      "y": -12,
+      "z": 0
+    },
+    "rarity": "common"
+  },
+  "unload_timestamp": 15.856999999999939
+}

@@ -511,18 +511,18 @@ class HyperparameterSearch:
             print(f"  Batch Size:           {best['batch_size']}")
             print(f"  Learning Rate:        {best['learning_rate']}")
         else:
-            print(f"\n[!] WARNING: No valid models found! All configs showed signs of memorization.")
+            print(f"\n[!] WARNING: No valid crafting_classifier_models found! All configs showed signs of memorization.")
 
-        # Passing models
+        # Passing crafting_classifier_models
         passing = [r for r in valid_results if r['meets_requirements']]
         print(f"\n{'='*100}")
         print(f"Models meeting ALL requirements: {len(passing)}/{len(valid_results)} (excluding rejected)")
         if passing:
-            print(f"\nPassing models:")
+            print(f"\nPassing crafting_classifier_models:")
             for r in passing:
                 print(f"  - {r['name']:<30} {r['val_acc']*100:.2f}% acc, {r['overfitting_gap']*100:.1f}% gap")
 
-        # Show rejected models
+        # Show rejected crafting_classifier_models
         if rejected_results:
             print(f"\nRejected configs (memorization suspected):")
             for r in rejected_results:
@@ -535,7 +535,7 @@ def is_suspicious_result(val_acc, overfit_gap):
     """
     Check if results are suspiciously perfect (likely memorization).
 
-    Reject models with:
+    Reject crafting_classifier_models with:
     - 98%+ accuracy (suspiciously high, likely memorized)
     - <0.3% overfitting gap (suspiciously low, suggests data leakage or memorization)
 
@@ -559,7 +559,7 @@ def calculate_robustness_score(val_acc, overfit_gap):
     A model with 90% accuracy and 2% gap is BETTER than
     a model with 94% accuracy and 10% gap.
 
-    ALSO: Reject models that are "too perfect" (memorization indicators)
+    ALSO: Reject crafting_classifier_models that are "too perfect" (memorization indicators)
     - 98%+ accuracy → returns -1 (rejected)
     - <0.3% gap → returns -1 (rejected)
     """

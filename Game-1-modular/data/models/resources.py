@@ -1,4 +1,4 @@
-"""Resource node data models - loaded from JSON"""
+"""Resource node data crafting_classifier_models - loaded from JSON"""
 
 from dataclasses import dataclass, field
 from typing import List, Optional

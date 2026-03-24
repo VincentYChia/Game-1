@@ -250,7 +250,7 @@ except json.JSONDecodeError as e:
 #### 1. Update Data Model
 
 ```python
-# data/models/equipment.py
+# data/crafting_classifier_models/equipment.py
 # No changes needed - EquipmentItem already supports any slot
 
 # core/config.py
@@ -530,7 +530,7 @@ if is_critical:
 #### 1. Add Enum Value
 
 ```python
-# data/models/world.py
+# data/crafting_classifier_models/world.py
 class StationType(Enum):
     # ... existing ...
     COOKING = "cooking"

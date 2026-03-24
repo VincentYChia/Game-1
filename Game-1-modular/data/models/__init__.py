@@ -1,4 +1,4 @@
-"""Data models for game entities"""
+"""Data crafting_classifier_models for game entities"""
 
 from .materials import MaterialDefinition
 from .equipment import EquipmentItem

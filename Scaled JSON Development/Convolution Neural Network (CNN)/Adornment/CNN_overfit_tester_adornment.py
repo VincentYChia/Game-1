@@ -10,7 +10,7 @@ import seaborn as sns
 
 
 class ComprehensiveModelEvaluator:
-    """Comprehensive evaluation of all models on the full dataset"""
+    """Comprehensive evaluation of all crafting_classifier_models on the full dataset"""
 
     def __init__(self, dataset_path):
         """
@@ -149,17 +149,17 @@ class ComprehensiveModelEvaluator:
         }
 
     def evaluate_all_models(self, model_dirs=None):
-        """Evaluate all models in specified directories"""
+        """Evaluate all crafting_classifier_models in specified directories"""
 
         if model_dirs is None:
             model_dirs = [
-                Path("models"),
+                Path("crafting_classifier_models"),
                 Path("smart_search_results"),
                 Path("targeted_results"),
                 Path("experiment_results")
             ]
 
-        # Find all models
+        # Find all crafting_classifier_models
         model_paths = []
         for model_dir in model_dirs:
             if model_dir.exists():
@@ -167,7 +167,7 @@ class ComprehensiveModelEvaluator:
                 model_paths.extend(models)
 
         if not model_paths:
-            print("No models found!")
+            print("No crafting_classifier_models found!")
             return []
 
         # Sort by modification time (most recent first)
@@ -176,7 +176,7 @@ class ComprehensiveModelEvaluator:
         print(f"\n{'=' * 80}")
         print(f"COMPREHENSIVE MODEL EVALUATION")
         print(f"{'=' * 80}")
-        print(f"Found {len(model_paths)} models to evaluate")
+        print(f"Found {len(model_paths)} crafting_classifier_models to evaluate")
         print(f"Dataset: {self.dataset_path}")
         print(f"{'=' * 80}")
 
@@ -220,7 +220,7 @@ class ComprehensiveModelEvaluator:
                 'val_valid': int(self.y_val.sum()),
                 'val_invalid': int(len(self.y_val) - self.y_val.sum())
             },
-            'models': self.results
+            'crafting_classifier_models': self.results
         }
 
         # Save full results
@@ -231,7 +231,7 @@ class ComprehensiveModelEvaluator:
         print(f"\n✓ Results saved to: {results_file}")
 
     def _print_comparison(self):
-        """Print comparison table of all models"""
+        """Print comparison table of all crafting_classifier_models"""
 
         print(f"\n{'=' * 120}")
         print("MODEL COMPARISON - SORTED BY VALIDATION F1 SCORE")
@@ -302,7 +302,7 @@ class ComprehensiveModelEvaluator:
         print(f"   Path: {best_model['model_path']}")
 
     def plot_comparison(self, save_path=None):
-        """Create visualization comparing models"""
+        """Create visualization comparing crafting_classifier_models"""
 
         if not self.results:
             print("No results to plot!")
@@ -404,7 +404,7 @@ if __name__ == "__main__":
     # Create evaluator
     evaluator = ComprehensiveModelEvaluator(dataset_path)
 
-    # Evaluate all models
+    # Evaluate all crafting_classifier_models
     results = evaluator.evaluate_all_models()
 
     # Create visualization

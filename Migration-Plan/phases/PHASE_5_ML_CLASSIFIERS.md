@@ -541,9 +541,9 @@ from onnxmltools.convert import convert_lightgbm
 from onnxmltools.convert.common.data_types import FloatTensorType
 
 MODELS = {
-    'alchemy':     ('models/alchemy/alchemy_model.txt',         34),
-    'refining':    ('models/refining/refining_model.txt',        19),
-    'engineering': ('models/engineering/engineering_model.txt',   28),
+    'alchemy':     ('crafting_classifier_models/alchemy/alchemy_model.txt',         34),
+    'refining':    ('crafting_classifier_models/refining/refining_model.txt',        19),
+    'engineering': ('crafting_classifier_models/engineering/engineering_model.txt',   28),
 }
 
 for name, (path, num_features) in MODELS.items():
@@ -560,7 +560,7 @@ for name, (path, num_features) in MODELS.items():
     )
 
     # Save
-    output_path = f"models/{name}/{name}.onnx"
+    output_path = f"crafting_classifier_models/{name}/{name}.onnx"
     onnxmltools.utils.save_model(onnx_model, output_path)
     print(f"Saved {output_path}")
 ```

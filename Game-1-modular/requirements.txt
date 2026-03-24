@@ -12,9 +12,9 @@ numpy>=1.24.0
 anthropic>=0.18.0
 
 # Optional: ML classifiers for recipe validation
-# TensorFlow for CNN models (Smithing, Adornments)
+# TensorFlow for CNN crafting_classifier_models (Smithing, Adornments)
 # tensorflow>=2.15.0
-# LightGBM for tabular models (Alchemy, Refining, Engineering)
+# LightGBM for tabular crafting_classifier_models (Alchemy, Refining, Engineering)
 # lightgbm>=4.0.0
 
 # Note: TensorFlow and LightGBM are optional. The game will run without them
@@ -23,7 +23,7 @@ anthropic>=0.18.0
 
 # Note: All other dependencies are Python standard library
 # - json (data loading/saving)
-# - dataclasses (data models)
+# - dataclasses (data crafting_classifier_models)
 # - pathlib (file handling)
 # - typing (type hints)
 # - enum (constants)

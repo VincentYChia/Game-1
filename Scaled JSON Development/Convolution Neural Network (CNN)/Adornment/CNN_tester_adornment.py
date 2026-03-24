@@ -374,9 +374,9 @@ if __name__ == "__main__":
         print("ADORNMENT RECIPE CNN TESTER")
         print("=" * 80)
 
-        # List available models
+        # List available crafting_classifier_models
         model_dirs = [
-            Path("models"),
+            Path("crafting_classifier_models"),
             Path("smart_search_results"),
             Path("targeted_results"),
             Path("experiment_results")
@@ -392,7 +392,7 @@ if __name__ == "__main__":
             # Sort by modification time (most recent first)
             available_models.sort(key=lambda p: p.stat().st_mtime, reverse=True)
 
-            print(f"\nFound {len(available_models)} available models:")
+            print(f"\nFound {len(available_models)} available crafting_classifier_models:")
             for i, model_file in enumerate(available_models, 1):
                 size_mb = model_file.stat().st_size / (1024 * 1024)
                 # Extract accuracy from filename if present
@@ -408,7 +408,7 @@ if __name__ == "__main__":
                 print(f"     ({size_mb:.1f} MB) - {model_file.parent.name}/{model_file.name}")
 
             print("\nOptions:")
-            print("  - Enter 'all' to test ALL models")
+            print("  - Enter 'all' to test ALL crafting_classifier_models")
             print("  - Enter model number (1-{})".format(len(available_models)))
             print("  - Enter full path to model file")
             print("  - Press Enter to use most recent model")
@@ -416,10 +416,10 @@ if __name__ == "__main__":
             user_input = input("\nYour choice: ").strip()
 
             if user_input.lower() == "all":
-                # Test all models
+                # Test all crafting_classifier_models
                 model_paths = available_models
                 test_all_models = True
-                print(f"\nWill test all {len(model_paths)} models!")
+                print(f"\nWill test all {len(model_paths)} crafting_classifier_models!")
             elif user_input == "":
                 # Use most recent model
                 model_paths = [available_models[0]]
@@ -443,7 +443,7 @@ if __name__ == "__main__":
                     print(f"Error: Model file not found at {model_paths[0]}")
                     sys.exit(1)
         else:
-            print("\nNo models found in standard directories.")
+            print("\nNo crafting_classifier_models found in standard directories.")
             model_path = input("Enter full path to model file: ").strip()
             model_paths = [Path(model_path)]
             test_all_models = False
@@ -458,7 +458,7 @@ if __name__ == "__main__":
         print(f"\nWarning: Materials file not found at default path")
         materials_path = input("Enter path to materials JSON file: ").strip()
 
-    # If testing all models, run batch prediction on each
+    # If testing all crafting_classifier_models, run batch prediction on each
     if len(model_paths) > 1 or (len(sys.argv) <= 1 and 'test_all_models' in locals() and test_all_models):
         print(f"\n{'=' * 80}")
         print(f"TESTING ALL {len(model_paths)} MODELS")
@@ -520,7 +520,7 @@ if __name__ == "__main__":
             json.dump({
                 'timestamp': datetime.now().isoformat(),
                 'total_models_tested': len(all_model_results),
-                'models': sorted(all_model_results, key=lambda x: x['valid_percentage'], reverse=True)
+                'crafting_classifier_models': sorted(all_model_results, key=lambda x: x['valid_percentage'], reverse=True)
             }, f, indent=2)
 
         # Print comparison

@@ -37,13 +37,13 @@ Scaled JSON Development/training_data/
 # =============================================================================
 # CLASSIFIER MODELS - Large binary files
 # =============================================================================
-# Production models are tracked (Scaled JSON Development/models/{discipline}/)
-# Training/archived models are NOT tracked (too large, regenerated)
+# Production crafting_classifier_models are tracked (Scaled JSON Development/crafting_classifier_models/{discipline}/)
+# Training/archived crafting_classifier_models are NOT tracked (too large, regenerated)
 
-# Ignore archived models (old/backup versions)
-Scaled JSON Development/models/archived/
+# Ignore archived crafting_classifier_models (old/backup versions)
+Scaled JSON Development/crafting_classifier_models/archived/
 
-# Ignore CNN training directories (large training models + datasets)
+# Ignore CNN training directories (large training crafting_classifier_models + datasets)
 Scaled JSON Development/Convolution Neural Network (CNN)/Smithing/*.keras
 Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/*.keras
 Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/best_model_variations/
@@ -52,6 +52,6 @@ Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/best_model_va
 Scaled JSON Development/Simple Classifiers (LightGBM)/*.bin
 Scaled JSON Development/Simple Classifiers (LightGBM)/*.txt
 
-# Keep production models tracked - these are the ones the game uses
-# Located at: Scaled JSON Development/models/{smithing,adornment,alchemy,engineering,refining}/
+# Keep production crafting_classifier_models tracked - these are the ones the game uses
+# Located at: Scaled JSON Development/crafting_classifier_models/{smithing,adornment,alchemy,engineering,refining}/
 # These should be pushed to the repo

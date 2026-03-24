@@ -243,8 +243,8 @@ python3 -m py_compile **/*.py
 
 No circular dependencies:
 ```bash
-# Data models can be imported without triggering heavy dependencies
-# Databases cleanly import from models
+# Data crafting_classifier_models can be imported without triggering heavy dependencies
+# Databases cleanly import from crafting_classifier_models
 # Systems import from both data and entities
 # No circular import chains detected
 ```

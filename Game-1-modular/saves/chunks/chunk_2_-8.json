@@ -1,0 +1,14 @@
+{
+  "chunk_x": 2,
+  "chunk_y": -8,
+  "chunk_type": "dangerous_cave",
+  "dungeon_entrance": {
+    "position": {
+      "x": 41,
+      "y": -123,
+      "z": 0
+    },
+    "rarity": "common"
+  },
+  "unload_timestamp": 168.07999999998583
+}

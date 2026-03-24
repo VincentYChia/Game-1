@@ -8,8 +8,8 @@ from together import Together
 # CHANGE THESE EVERY RUN
 # ============================================================================
 
-FILE_ID = "file-fb7be24e-7178-48bf-8757-b6a60b4838be"  # Your uploaded file ID
-JOB_NAME = "test_adornment"                          # Name/suffix for your job
+FILE_ID = "file-e91ad22a-4bd9-477e-9d4c-6be089a6f814"  # Your uploaded file ID
+JOB_NAME = "new_refining_1"                          # Name/suffix for your job
 MODEL = "google/gemma-3-4b-it-VLM"                    # Model to fine-tune
 
 # Parameters

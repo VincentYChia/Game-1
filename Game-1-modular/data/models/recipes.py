@@ -1,4 +1,4 @@
-"""Recipe and placement data models"""
+"""Recipe and placement data crafting_classifier_models"""
 
 from dataclasses import dataclass, field
 from typing import List, Dict

@@ -89,7 +89,7 @@ def get_weapon_damage(self) -> float:
 
 ### Enchantment Application (Correct Implementation)
 ```python
-# File: data/models/equipment.py:41-53
+# File: data/crafting_classifier_models/equipment.py:41-53
 def get_actual_damage(self) -> Tuple[int, int]:
     """Get actual damage including durability and enchantment effects"""
     eff = self.get_effectiveness()
