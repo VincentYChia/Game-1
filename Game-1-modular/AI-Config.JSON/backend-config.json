@@ -1,0 +1,75 @@
+{
+  "description": "Model backend configuration for AI-powered systems. Controls which LLM backend is used for each task type, with fallback chains for resilience.",
+
+  "backends": {
+    "ollama": {
+      "enabled": true,
+      "base_url": "http://localhost:11434",
+      "default_model": "llama3.1:8b",
+      "timeout_seconds": 30.0,
+      "description": "Local Ollama server for offline LLM inference"
+    },
+    "claude": {
+      "enabled": true,
+      "model": "claude-sonnet-4-20250514",
+      "max_tokens": 2000,
+      "temperature": 0.4,
+      "top_p": 0.95,
+      "timeout_seconds": 30.0,
+      "description": "Anthropic Claude API for high-quality inference"
+    },
+    "mock": {
+      "enabled": true,
+      "description": "Deterministic template-based responses for testing and fallback"
+    }
+  },
+
+  "task_routing": {
+    "crafting": {
+      "primary": "claude",
+      "description": "Item generation from crafting — uses existing llm_item_generator flow"
+    },
+    "dialogue": {
+      "primary": "ollama",
+      "description": "NPC dialogue generation"
+    },
+    "quests": {
+      "primary": "ollama",
+      "description": "Quest narrative generation"
+    },
+    "lore": {
+      "primary": "ollama",
+      "description": "Flavor text and world lore"
+    },
+    "faction_narrative": {
+      "primary": "ollama",
+      "description": "Faction reputation milestone narratives"
+    }
+  },
+
+  "fallback_chain": ["ollama", "claude", "mock"],
+
+  "rate_limits": {
+    "ollama": {
+      "max_concurrent": 2,
+      "cooldown_ms": 100,
+      "description": "Local model — higher concurrency, lower cooldown"
+    },
+    "claude": {
+      "max_concurrent": 1,
+      "cooldown_ms": 1000,
+      "description": "API model — rate-limited, higher cooldown"
+    },
+    "mock": {
+      "max_concurrent": 10,
+      "cooldown_ms": 0,
+      "description": "No limits on mock backend"
+    }
+  },
+
+  "defaults": {
+    "temperature": 0.4,
+    "max_tokens": 2000,
+    "response_format": "text"
+  }
+}

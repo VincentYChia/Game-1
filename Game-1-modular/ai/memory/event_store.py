@@ -133,6 +133,93 @@ CREATE TABLE IF NOT EXISTS region_state (
     summary_text TEXT DEFAULT '',
     last_updated REAL DEFAULT 0.0
 );
+
+
+-- ══════════════════════════════════════════════════════════════════
+-- Phase 2.3: NPC Memory (per-NPC persistent state)
+-- ══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS npc_memory (
+    npc_id TEXT PRIMARY KEY,
+    relationship_score REAL DEFAULT 0.0,
+    interaction_count INTEGER DEFAULT 0,
+    last_interaction_time REAL DEFAULT 0.0,
+    emotional_state TEXT DEFAULT 'neutral',
+    knowledge_json TEXT DEFAULT '[]',
+    conversation_summary TEXT DEFAULT '',
+    reputation_tags_json TEXT DEFAULT '[]',
+    quest_state_json TEXT DEFAULT '{}'
+);
+
+CREATE INDEX IF NOT EXISTS idx_npc_memory_relationship ON npc_memory(relationship_score);
+
+
+-- ══════════════════════════════════════════════════════════════════
+-- Phase 2.4: Faction State (player reputation per faction)
+-- ══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS faction_state (
+    faction_id TEXT PRIMARY KEY,
+    player_reputation REAL DEFAULT 0.0,
+    crossed_milestones_json TEXT DEFAULT '[]',
+    last_change_reason TEXT DEFAULT '',
+    last_change_time REAL DEFAULT 0.0
+);
+
+CREATE TABLE IF NOT EXISTS faction_reputation_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    faction_id TEXT NOT NULL,
+    delta REAL NOT NULL,
+    new_score REAL NOT NULL,
+    reason TEXT DEFAULT '',
+    game_time REAL DEFAULT 0.0,
+    is_ripple INTEGER DEFAULT 0,
+    FOREIGN KEY (faction_id) REFERENCES faction_state(faction_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_faction_history_faction ON faction_reputation_history(faction_id);
+CREATE INDEX IF NOT EXISTS idx_faction_history_time ON faction_reputation_history(game_time);
+
+
+-- ══════════════════════════════════════════════════════════════════
+-- Phase 2.5: Biome Resource State (ecosystem tracking)
+-- ══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS biome_resource_state (
+    biome_type TEXT NOT NULL,
+    resource_id TEXT NOT NULL,
+    initial_total INTEGER DEFAULT 100,
+    current_total REAL DEFAULT 100.0,
+    total_gathered INTEGER DEFAULT 0,
+    regeneration_rate REAL DEFAULT 300.0,
+    is_scarce INTEGER DEFAULT 0,
+    is_critical INTEGER DEFAULT 0,
+    PRIMARY KEY (biome_type, resource_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_biome_resource_biome ON biome_resource_state(biome_type);
+CREATE INDEX IF NOT EXISTS idx_biome_resource_scarce ON biome_resource_state(is_scarce)
+    WHERE is_scarce = 1;
+
+
+-- ══════════════════════════════════════════════════════════════════
+-- Phase 2.6+: Event Triggers and Pacing (future use)
+-- ══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS event_triggers (
+    trigger_id TEXT PRIMARY KEY,
+    last_fired_time REAL DEFAULT 0.0,
+    fire_count INTEGER DEFAULT 0,
+    is_one_shot INTEGER DEFAULT 0,
+    is_exhausted INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS pacing_state (
+    key TEXT PRIMARY KEY,
+    value_real REAL DEFAULT 0.0,
+    value_text TEXT DEFAULT '',
+    updated_at REAL DEFAULT 0.0
+);
 """
 
 
@@ -674,5 +761,157 @@ class EventStore:
                 "recent_events": json.loads(row[2]),
                 "summary_text": row[3],
                 "last_updated": row[4],
+            }
+        return result
+
+    # ── NPC Memory persistence (Phase 2.3) ────────────────────────────
+
+    def save_npc_memory(self, npc_id: str, memory_data: Dict[str, Any]) -> None:
+        """Save NPC memory state to SQLite."""
+        self.connection.execute(
+            """INSERT OR REPLACE INTO npc_memory
+               (npc_id, relationship_score, interaction_count,
+                last_interaction_time, emotional_state,
+                knowledge_json, conversation_summary,
+                reputation_tags_json, quest_state_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                npc_id,
+                memory_data.get("relationship_score", 0.0),
+                memory_data.get("interaction_count", 0),
+                memory_data.get("last_interaction_time", 0.0),
+                memory_data.get("emotional_state", "neutral"),
+                json.dumps(memory_data.get("knowledge", [])),
+                memory_data.get("conversation_summary", ""),
+                json.dumps(memory_data.get("player_reputation_tags", [])),
+                json.dumps(memory_data.get("quest_state", {})),
+            ),
+        )
+        self.connection.commit()
+
+    def load_npc_memory(self, npc_id: str) -> Optional[Dict[str, Any]]:
+        """Load NPC memory state from SQLite."""
+        row = self.connection.execute(
+            "SELECT * FROM npc_memory WHERE npc_id = ?", (npc_id,)
+        ).fetchone()
+        if not row:
+            return None
+        return {
+            "npc_id": row[0],
+            "relationship_score": row[1],
+            "interaction_count": row[2],
+            "last_interaction_time": row[3],
+            "emotional_state": row[4],
+            "knowledge": json.loads(row[5]),
+            "conversation_summary": row[6],
+            "player_reputation_tags": json.loads(row[7]),
+            "quest_state": json.loads(row[8]),
+        }
+
+    def load_all_npc_memories(self) -> Dict[str, Dict[str, Any]]:
+        """Load all NPC memories."""
+        rows = self.connection.execute("SELECT * FROM npc_memory").fetchall()
+        result = {}
+        for row in rows:
+            result[row[0]] = {
+                "npc_id": row[0],
+                "relationship_score": row[1],
+                "interaction_count": row[2],
+                "last_interaction_time": row[3],
+                "emotional_state": row[4],
+                "knowledge": json.loads(row[5]),
+                "conversation_summary": row[6],
+                "player_reputation_tags": json.loads(row[7]),
+                "quest_state": json.loads(row[8]),
+            }
+        return result
+
+    # ── Faction state persistence (Phase 2.4) ─────────────────────────
+
+    def save_faction_state(self, faction_id: str, reputation: float,
+                           milestones: List[float], reason: str,
+                           game_time: float) -> None:
+        """Save faction state to SQLite."""
+        self.connection.execute(
+            """INSERT OR REPLACE INTO faction_state
+               (faction_id, player_reputation, crossed_milestones_json,
+                last_change_reason, last_change_time)
+               VALUES (?, ?, ?, ?, ?)""",
+            (faction_id, reputation, json.dumps(milestones), reason, game_time),
+        )
+        self.connection.commit()
+
+    def load_all_faction_states(self) -> Dict[str, Dict[str, Any]]:
+        """Load all faction states."""
+        rows = self.connection.execute("SELECT * FROM faction_state").fetchall()
+        result = {}
+        for row in rows:
+            result[row[0]] = {
+                "faction_id": row[0],
+                "player_reputation": row[1],
+                "crossed_milestones": json.loads(row[2]),
+                "last_change_reason": row[3],
+                "last_change_time": row[4],
+            }
+        return result
+
+    def save_faction_history(self, entries: List[Dict[str, Any]]) -> None:
+        """Save faction reputation history entries."""
+        conn = self.connection
+        for entry in entries:
+            conn.execute(
+                """INSERT INTO faction_reputation_history
+                   (faction_id, delta, new_score, reason, game_time, is_ripple)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (
+                    entry.get("faction_id", ""),
+                    entry.get("delta", 0.0),
+                    entry.get("new_score", 0.0),
+                    entry.get("reason", ""),
+                    entry.get("game_time", 0.0),
+                    int(entry.get("is_ripple", False)),
+                ),
+            )
+        conn.commit()
+
+    # ── Biome resource state persistence (Phase 2.5) ──────────────────
+
+    def save_biome_resource(self, biome_type: str, resource_id: str,
+                            data: Dict[str, Any]) -> None:
+        """Save biome resource state to SQLite."""
+        self.connection.execute(
+            """INSERT OR REPLACE INTO biome_resource_state
+               (biome_type, resource_id, initial_total, current_total,
+                total_gathered, regeneration_rate, is_scarce, is_critical)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                biome_type, resource_id,
+                data.get("initial_total", 100),
+                data.get("current_total", 100.0),
+                data.get("total_gathered", 0),
+                data.get("regeneration_rate", 300.0),
+                int(data.get("is_scarce", False)),
+                int(data.get("is_critical", False)),
+            ),
+        )
+        self.connection.commit()
+
+    def load_all_biome_resources(self) -> Dict[str, Dict[str, Dict[str, Any]]]:
+        """Load all biome resource states. Returns {biome → {resource → data}}."""
+        rows = self.connection.execute(
+            "SELECT * FROM biome_resource_state"
+        ).fetchall()
+        result: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        for row in rows:
+            biome_type = row[0]
+            if biome_type not in result:
+                result[biome_type] = {}
+            result[biome_type][row[1]] = {
+                "initial_total": row[2],
+                "current_total": row[3],
+                "total_gathered": row[4],
+                "regeneration_rate": row[5],
+                "is_scarce": bool(row[6]),
+                "is_critical": bool(row[7]),
             }
         return result

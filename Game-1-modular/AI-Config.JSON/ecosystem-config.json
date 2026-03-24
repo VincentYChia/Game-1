@@ -1,0 +1,76 @@
+{
+  "description": "Ecosystem configuration for resource tracking, scarcity thresholds, and regeneration rates.",
+
+  "scarcity_thresholds": {
+    "scarce": 0.7,
+    "critical": 0.9,
+    "description": "Depletion ratios that trigger scarcity flags (0.7 = 70% depleted)"
+  },
+
+  "regeneration_rates": {
+    "null": 0.0,
+    "quick": 120.0,
+    "normal": 300.0,
+    "slow": 600.0,
+    "very_slow": 1200.0,
+    "description": "Resource respawn timers in game-seconds. 'null' means no regeneration."
+  },
+
+  "default_regeneration": "normal",
+
+  "biome_resource_defaults": {
+    "peaceful_forest": {
+      "resources": {
+        "oak_log": {"initial": 200, "regeneration": "normal"},
+        "herb_common": {"initial": 100, "regeneration": "quick"},
+        "flower_wild": {"initial": 80, "regeneration": "quick"},
+        "mushroom": {"initial": 60, "regeneration": "normal"}
+      }
+    },
+    "forest": {
+      "resources": {
+        "oak_log": {"initial": 300, "regeneration": "normal"},
+        "ash_log": {"initial": 150, "regeneration": "slow"},
+        "herb_common": {"initial": 120, "regeneration": "quick"},
+        "herb_rare": {"initial": 30, "regeneration": "slow"},
+        "mushroom": {"initial": 80, "regeneration": "normal"}
+      }
+    },
+    "mountain": {
+      "resources": {
+        "iron_ore": {"initial": 250, "regeneration": "slow"},
+        "copper_ore": {"initial": 200, "regeneration": "normal"},
+        "stone": {"initial": 500, "regeneration": "slow"},
+        "mithril_ore": {"initial": 20, "regeneration": "very_slow"}
+      }
+    },
+    "cave": {
+      "resources": {
+        "iron_ore": {"initial": 300, "regeneration": "slow"},
+        "copper_ore": {"initial": 250, "regeneration": "normal"},
+        "crystal": {"initial": 40, "regeneration": "very_slow"},
+        "obsidian": {"initial": 15, "regeneration": "very_slow"}
+      }
+    },
+    "plains": {
+      "resources": {
+        "herb_common": {"initial": 150, "regeneration": "quick"},
+        "clay": {"initial": 200, "regeneration": "normal"},
+        "limestone": {"initial": 180, "regeneration": "slow"}
+      }
+    },
+    "unknown": {
+      "resources": {
+        "stone": {"initial": 100, "regeneration": "normal"}
+      }
+    }
+  },
+
+  "tick_interval_game_seconds": 60.0,
+
+  "event_publishing": {
+    "scarcity_event_type": "RESOURCE_SCARCITY",
+    "recovery_event_type": "RESOURCE_RECOVERED",
+    "description": "Events published when resources cross scarcity thresholds"
+  }
+}

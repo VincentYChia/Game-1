@@ -1,0 +1,100 @@
+{
+  "description": "Faction definitions for the Living World. Defines factions, their territories, inter-faction relationships, and reputation event modifiers.",
+
+  "factions": {
+    "village_guard": {
+      "name": "Village Guard",
+      "description": "The defenders of the central settlement. Value order and strength.",
+      "territory_regions": ["spawn_crossroads", "elder_grove"],
+      "member_npc_ids": [],
+      "hostile_threshold": -0.5,
+      "allied_threshold": 0.5,
+      "tags": ["military", "order", "protection"]
+    },
+    "crafters_guild": {
+      "name": "Crafters Guild",
+      "description": "Artisans and smiths who value skill and quality materials.",
+      "territory_regions": ["traders_corner"],
+      "member_npc_ids": [],
+      "hostile_threshold": -0.75,
+      "allied_threshold": 0.4,
+      "tags": ["crafting", "trade", "knowledge"]
+    },
+    "forest_wardens": {
+      "name": "Forest Wardens",
+      "description": "Protectors of the natural world. Disapprove of over-harvesting.",
+      "territory_regions": ["whispering_woods"],
+      "member_npc_ids": [],
+      "hostile_threshold": -0.6,
+      "allied_threshold": 0.5,
+      "tags": ["nature", "balance", "gathering"]
+    },
+    "miners_collective": {
+      "name": "Miners Collective",
+      "description": "Hardworking miners who value strength and endurance.",
+      "territory_regions": ["iron_hills", "deep_caverns"],
+      "member_npc_ids": [],
+      "hostile_threshold": -0.5,
+      "allied_threshold": 0.5,
+      "tags": ["mining", "strength", "resources"]
+    }
+  },
+
+  "inter_faction_relationships": {
+    "village_guard": {
+      "crafters_guild": 0.3,
+      "forest_wardens": 0.1,
+      "miners_collective": 0.2
+    },
+    "crafters_guild": {
+      "village_guard": 0.3,
+      "forest_wardens": -0.1,
+      "miners_collective": 0.4
+    },
+    "forest_wardens": {
+      "village_guard": 0.1,
+      "crafters_guild": -0.1,
+      "miners_collective": -0.3
+    },
+    "miners_collective": {
+      "village_guard": 0.2,
+      "crafters_guild": 0.4,
+      "forest_wardens": -0.3
+    }
+  },
+
+  "reputation_events": {
+    "ENEMY_KILLED": {
+      "village_guard": {"delta": 0.02, "description": "Guards appreciate monster slaying"},
+      "forest_wardens": {"delta": -0.01, "description": "Wardens see killing as necessary but unpleasant"}
+    },
+    "ITEM_CRAFTED": {
+      "crafters_guild": {"delta": 0.01, "description": "Crafters respect fellow artisans"},
+      "miners_collective": {"delta": 0.005, "description": "Miners appreciate demand for materials"}
+    },
+    "RESOURCE_GATHERED": {
+      "miners_collective": {"delta": 0.005, "description": "Miners respect fellow gatherers"},
+      "forest_wardens": {"delta": -0.005, "description": "Wardens worry about over-harvesting"}
+    },
+    "LEVEL_UP": {
+      "village_guard": {"delta": 0.01, "description": "Guards respect growing strength"}
+    }
+  },
+
+  "reputation_milestones": [
+    {"threshold": 0.25, "label": "Recognized", "unlock_type": "dialogue"},
+    {"threshold": 0.50, "label": "Respected", "unlock_type": "quests"},
+    {"threshold": 0.75, "label": "Honored", "unlock_type": "recipes"},
+    {"threshold": -0.25, "label": "Distrusted", "unlock_type": "dialogue"},
+    {"threshold": -0.50, "label": "Shunned", "unlock_type": "restrictions"},
+    {"threshold": -0.75, "label": "Hostile", "unlock_type": "combat"}
+  ],
+
+  "ripple_config": {
+    "ally_ripple_factor": 0.3,
+    "enemy_ripple_factor": -0.2,
+    "neutral_ripple_factor": 0.0,
+    "ripple_threshold": 0.1,
+    "description": "When player reputation changes with one faction, allied/hostile factions get a dampened ripple"
+  }
+}
