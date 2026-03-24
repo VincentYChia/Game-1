@@ -11,12 +11,12 @@ import uuid
 import time
 from typing import Any, Callable, ClassVar, Dict, List, Optional, Set, Tuple
 
-from world_memory.memory.event_schema import (
+from world_system.world_memory.event_schema import (
     BUS_TO_MEMORY_TYPE, SKIP_BUS_EVENTS, EventType, WorldMemoryEvent,
 )
-from world_memory.memory.event_store import EventStore
-from world_memory.memory.geographic_registry import GeographicRegistry
-from world_memory.memory.entity_registry import EntityRegistry
+from world_system.world_memory.event_store import EventStore
+from world_system.world_memory.geographic_registry import GeographicRegistry
+from world_system.world_memory.entity_registry import EntityRegistry
 
 
 def _generate_primes(up_to: int) -> Set[int]:

@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 def test_event_schema():
     """Test WorldMemoryEvent and InterpretedEvent creation."""
-    from world_memory.memory.event_schema import WorldMemoryEvent, InterpretedEvent, EventType
+    from world_system.world_memory.event_schema import WorldMemoryEvent, InterpretedEvent, EventType
 
     # Create event via factory
     event = WorldMemoryEvent.create(
@@ -51,8 +51,8 @@ def test_event_schema():
 
 def test_event_store():
     """Test SQLite event storage and retrieval."""
-    from world_memory.memory.event_schema import WorldMemoryEvent, InterpretedEvent
-    from world_memory.memory.event_store import EventStore
+    from world_system.world_memory.event_schema import WorldMemoryEvent, InterpretedEvent
+    from world_system.world_memory.event_store import EventStore
 
     with tempfile.TemporaryDirectory() as tmpdir:
         store = EventStore(save_dir=tmpdir)
@@ -156,15 +156,15 @@ def test_event_store():
 
 def test_geographic_registry():
     """Test geographic region loading and lookup."""
-    from world_memory.memory.geographic_registry import GeographicRegistry, Region, RegionLevel
+    from world_system.world_memory.geographic_registry import GeographicRegistry, Region, RegionLevel
 
     GeographicRegistry.reset()
     geo = GeographicRegistry.get_instance()
 
     # Load from JSON config
     config_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-        "world_memory", "config", "geographic-map.json"
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "config", "geographic-map.json"
     )
     if os.path.exists(config_path):
         geo.load_base_map(config_path)
@@ -209,7 +209,7 @@ def test_geographic_registry():
 
 def test_tag_relevance():
     """Test tag matching and relevance scoring."""
-    from world_memory.memory.tag_relevance import calculate_relevance, tags_overlap
+    from world_system.world_memory.tag_relevance import calculate_relevance, tags_overlap
 
     # Exact match should score high
     entity_tags = ["job:blacksmith", "domain:smithing", "resource:iron"]
@@ -237,7 +237,7 @@ def test_tag_relevance():
 
 def test_entity_registry():
     """Test entity registration and lookup."""
-    from world_memory.memory.entity_registry import EntityRegistry, WorldEntity, EntityType
+    from world_system.world_memory.entity_registry import EntityRegistry, WorldEntity, EntityType
 
     EntityRegistry.reset()
     reg = EntityRegistry.get_instance()
@@ -288,10 +288,10 @@ def test_entity_registry():
 
 def test_event_recorder():
     """Test event recording pipeline with mock bus events."""
-    from world_memory.memory.event_store import EventStore
-    from world_memory.memory.geographic_registry import GeographicRegistry
-    from world_memory.memory.entity_registry import EntityRegistry
-    from world_memory.memory.event_recorder import EventRecorder, is_prime_trigger
+    from world_system.world_memory.event_store import EventStore
+    from world_system.world_memory.geographic_registry import GeographicRegistry
+    from world_system.world_memory.entity_registry import EntityRegistry
+    from world_system.world_memory.event_recorder import EventRecorder, is_prime_trigger
 
     # Test prime detection
     assert is_prime_trigger(1)  # First occurrence
@@ -353,11 +353,11 @@ def test_event_recorder():
 
 def test_interpreter():
     """Test the interpreter with pattern evaluators."""
-    from world_memory.memory.event_store import EventStore
-    from world_memory.memory.geographic_registry import GeographicRegistry, Region, RegionLevel
-    from world_memory.memory.entity_registry import EntityRegistry
-    from world_memory.memory.interpreter import WorldInterpreter
-    from world_memory.memory.event_schema import WorldMemoryEvent
+    from world_system.world_memory.event_store import EventStore
+    from world_system.world_memory.geographic_registry import GeographicRegistry, Region, RegionLevel
+    from world_system.world_memory.entity_registry import EntityRegistry
+    from world_system.world_memory.interpreter import WorldInterpreter
+    from world_system.world_memory.event_schema import WorldMemoryEvent
 
     with tempfile.TemporaryDirectory() as tmpdir:
         store = EventStore(save_dir=tmpdir)
@@ -431,11 +431,11 @@ def test_interpreter():
 
 def test_query_interface():
     """Test the WorldQuery entity-first query interface."""
-    from world_memory.memory.event_store import EventStore
-    from world_memory.memory.geographic_registry import GeographicRegistry, Region, RegionLevel
-    from world_memory.memory.entity_registry import EntityRegistry, WorldEntity, EntityType
-    from world_memory.memory.query import WorldQuery, EventWindow
-    from world_memory.memory.event_schema import WorldMemoryEvent
+    from world_system.world_memory.event_store import EventStore
+    from world_system.world_memory.geographic_registry import GeographicRegistry, Region, RegionLevel
+    from world_system.world_memory.entity_registry import EntityRegistry, WorldEntity, EntityType
+    from world_system.world_memory.query import WorldQuery, EventWindow
+    from world_system.world_memory.event_schema import WorldMemoryEvent
 
     with tempfile.TemporaryDirectory() as tmpdir:
         store = EventStore(save_dir=tmpdir)
@@ -505,9 +505,9 @@ def test_query_interface():
 
 def test_retention():
     """Test event retention and pruning."""
-    from world_memory.memory.event_store import EventStore
-    from world_memory.memory.event_schema import WorldMemoryEvent
-    from world_memory.memory.retention import EventRetentionManager
+    from world_system.world_memory.event_store import EventStore
+    from world_system.world_memory.event_schema import WorldMemoryEvent
+    from world_system.world_memory.retention import EventRetentionManager
 
     with tempfile.TemporaryDirectory() as tmpdir:
         store = EventStore(save_dir=tmpdir)
@@ -540,7 +540,7 @@ def test_retention():
 
 def test_full_pipeline():
     """End-to-end test: events flow through the entire pipeline."""
-    from world_memory.memory.world_memory_system import WorldMemorySystem
+    from world_system.world_memory.world_memory_system import WorldMemorySystem
 
     with tempfile.TemporaryDirectory() as tmpdir:
         WorldMemorySystem.reset()

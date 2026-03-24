@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import Dict, Optional, Tuple
 
-from world_memory.memory.config_loader import get_evaluator_config
-from world_memory.memory.event_schema import InterpretedEvent, WorldMemoryEvent
-from world_memory.memory.event_store import EventStore
-from world_memory.memory.geographic_registry import GeographicRegistry
-from world_memory.memory.entity_registry import EntityRegistry
-from world_memory.memory.interpreter import PatternEvaluator
+from world_system.world_memory.config_loader import get_evaluator_config
+from world_system.world_memory.event_schema import InterpretedEvent, WorldMemoryEvent
+from world_system.world_memory.event_store import EventStore
+from world_system.world_memory.geographic_registry import GeographicRegistry
+from world_system.world_memory.entity_registry import EntityRegistry
+from world_system.world_memory.interpreter import PatternEvaluator
 
 
 class PlayerMilestoneEvaluator(PatternEvaluator):

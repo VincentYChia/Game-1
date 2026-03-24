@@ -13,11 +13,11 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import ClassVar, Dict, List, Optional
 
-from world_memory.memory.config_loader import get_section
-from world_memory.memory.event_schema import InterpretedEvent, WorldMemoryEvent, SEVERITY_ORDER
-from world_memory.memory.event_store import EventStore
-from world_memory.memory.geographic_registry import GeographicRegistry
-from world_memory.memory.entity_registry import EntityRegistry
+from world_system.world_memory.config_loader import get_section
+from world_system.world_memory.event_schema import InterpretedEvent, WorldMemoryEvent, SEVERITY_ORDER
+from world_system.world_memory.event_store import EventStore
+from world_system.world_memory.geographic_registry import GeographicRegistry
+from world_system.world_memory.entity_registry import EntityRegistry
 
 
 class PatternEvaluator(ABC):
@@ -70,11 +70,11 @@ class WorldInterpreter:
         self.entity_registry = entity_registry
 
         # Register built-in evaluators
-        from world_memory.memory.evaluators.population import PopulationChangeEvaluator
-        from world_memory.memory.evaluators.resources import ResourcePressureEvaluator
-        from world_memory.memory.evaluators.player_milestones import PlayerMilestoneEvaluator
-        from world_memory.memory.evaluators.area_danger import AreaDangerEvaluator
-        from world_memory.memory.evaluators.crafting import CraftingTrendEvaluator
+        from world_system.world_memory.evaluators.population import PopulationChangeEvaluator
+        from world_system.world_memory.evaluators.resources import ResourcePressureEvaluator
+        from world_system.world_memory.evaluators.player_milestones import PlayerMilestoneEvaluator
+        from world_system.world_memory.evaluators.area_danger import AreaDangerEvaluator
+        from world_system.world_memory.evaluators.crafting import CraftingTrendEvaluator
 
         self._evaluators = [
             PopulationChangeEvaluator(),

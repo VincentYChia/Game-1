@@ -5,7 +5,7 @@ AI-Config.JSON/memory-config.json so they can be checked and modified
 without touching Python code.
 
 Usage:
-    from world_memory.memory.config_loader import get_memory_config
+    from world_system.world_memory.config_loader import get_memory_config
     cfg = get_memory_config()
     lookback = cfg["evaluators"]["population_change"]["lookback_time"]
 """
@@ -29,7 +29,7 @@ def _find_config_path() -> Optional[str]:
     this_dir = os.path.dirname(os.path.abspath(__file__))
     candidates = [
         os.path.join(this_dir, "..", "config", _CONFIG_FILENAME),
-        os.path.join(os.getcwd(), "world_memory", "config", _CONFIG_FILENAME),
+        os.path.join(os.getcwd(), "world_system", "config", _CONFIG_FILENAME),
     ]
     for path in candidates:
         resolved = os.path.normpath(path)

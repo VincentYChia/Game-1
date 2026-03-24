@@ -13,7 +13,7 @@ import os
 import sqlite3
 from typing import Any, Dict, List, Optional, Tuple
 
-from world_memory.memory.event_schema import InterpretedEvent, WorldMemoryEvent
+from world_system.world_memory.event_schema import InterpretedEvent, WorldMemoryEvent
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -611,7 +611,7 @@ class EventStore:
                               include_archived: bool = False,
                               limit: int = 50) -> List[InterpretedEvent]:
         """Query Layer 3 interpretations."""
-        from world_memory.memory.event_schema import SEVERITY_ORDER
+        from world_system.world_memory.event_schema import SEVERITY_ORDER
         conn = self.connection
         conn.row_factory = sqlite3.Row
         clauses: List[str] = []
