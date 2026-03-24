@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from ai.memory.config_loader import get_evaluator_config
 from ai.memory.event_schema import InterpretedEvent, WorldMemoryEvent
 from ai.memory.event_store import EventStore
 from ai.memory.geographic_registry import GeographicRegistry
@@ -15,7 +16,29 @@ from ai.memory.interpreter import PatternEvaluator
 class ResourcePressureEvaluator(PatternEvaluator):
 
     RELEVANT_TYPES = {"resource_gathered", "node_depleted"}
-    LOOKBACK_TIME = 50.0
+
+    def __init__(self):
+        cfg = get_evaluator_config("resource_pressure")
+        self.lookback_time = cfg.get("lookback_time", 50.0)
+        self.expiration_offset = cfg.get("expiration_offset", 75.0)
+        t = cfg.get("thresholds", {})
+        self.min_trigger = t.get("minimum_trigger", 10)
+        self.moderate_min = t.get("moderate_min", 25)
+        self.significant_min = t.get("significant_min", 50)
+        self.major_min = t.get("major_min", 100)
+        templates = cfg.get("narrative_templates", {})
+        self.tpl_major = templates.get("major",
+            "{resource} deposits are critically strained in {region}. "
+            "Over {count} units have been harvested recently, far outpacing "
+            "natural regeneration.")
+        self.tpl_significant = templates.get("significant",
+            "{resource} is becoming scarce in {region}. "
+            "Heavy harvesting ({count} units) is depleting available nodes.")
+        self.tpl_moderate = templates.get("moderate",
+            "Notable {resource} harvesting activity in {region}. "
+            "Resource availability may be declining.")
+        self.tpl_minor = templates.get("minor",
+            "Steady {resource} gathering is underway in {region}.")
 
     def is_relevant(self, event: WorldMemoryEvent) -> bool:
         return event.event_type in self.RELEVANT_TYPES
@@ -36,39 +59,31 @@ class ResourcePressureEvaluator(PatternEvaluator):
             event_type="resource_gathered",
             event_subtype=subtype,
             locality_id=locality_id,
-            since_game_time=trigger_event.game_time - self.LOOKBACK_TIME,
+            since_game_time=trigger_event.game_time - self.lookback_time,
         )
 
-        if recent_gathers < 10:
+        if recent_gathers < self.min_trigger:
             return None
 
         region = geo_registry.regions.get(locality_id)
         region_name = region.name if region else locality_id
 
-        if recent_gathers >= 100:
+        if recent_gathers >= self.major_min:
             severity = "major"
-            narrative = (
-                f"{resource_name.title()} deposits are critically strained in {region_name}. "
-                f"Over {recent_gathers} units have been harvested recently, far outpacing "
-                f"natural regeneration."
-            )
-        elif recent_gathers >= 50:
+            narrative = self.tpl_major.format(
+                resource=resource_name.title(), region=region_name, count=recent_gathers)
+        elif recent_gathers >= self.significant_min:
             severity = "significant"
-            narrative = (
-                f"{resource_name.title()} is becoming scarce in {region_name}. "
-                f"Heavy harvesting ({recent_gathers} units) is depleting available nodes."
-            )
-        elif recent_gathers >= 25:
+            narrative = self.tpl_significant.format(
+                resource=resource_name.title(), region=region_name, count=recent_gathers)
+        elif recent_gathers >= self.moderate_min:
             severity = "moderate"
-            narrative = (
-                f"Notable {resource_name} harvesting activity in {region_name}. "
-                f"Resource availability may be declining."
-            )
+            narrative = self.tpl_moderate.format(
+                resource=resource_name, region=region_name, count=recent_gathers)
         else:
             severity = "minor"
-            narrative = (
-                f"Steady {resource_name} gathering is underway in {region_name}."
-            )
+            narrative = self.tpl_minor.format(
+                resource=resource_name, region=region_name, count=recent_gathers)
 
         parent_id = region.parent_id if region else None
         return InterpretedEvent.create(
@@ -87,5 +102,5 @@ class ResourcePressureEvaluator(PatternEvaluator):
                 f"biome:{trigger_event.biome}",
             ],
             is_ongoing=True,
-            expires_at=trigger_event.game_time + 75.0,
+            expires_at=trigger_event.game_time + self.expiration_offset,
         )

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from ai.memory.config_loader import get_evaluator_config
 from ai.memory.event_schema import InterpretedEvent, WorldMemoryEvent
 from ai.memory.event_store import EventStore
 from ai.memory.geographic_registry import GeographicRegistry
@@ -14,7 +15,16 @@ from ai.memory.interpreter import PatternEvaluator
 class CraftingTrendEvaluator(PatternEvaluator):
 
     RELEVANT_TYPES = {"craft_attempted", "item_invented"}
-    LOOKBACK_TIME = 100.0
+
+    def __init__(self):
+        cfg = get_evaluator_config("crafting_trends")
+        self.lookback_time = cfg.get("lookback_time", 100.0)
+        self.min_event_count = cfg.get("minimum_event_count", 5)
+        self.specialization_ratio = cfg.get("specialization_ratio", 0.6)
+        self.quality_ratio_threshold = cfg.get("quality_ratio_threshold", 0.3)
+        self.high_quality_types = set(cfg.get("high_quality_types",
+            ["superior", "masterwork", "legendary"]))
+        self.moderate_craft_count = cfg.get("moderate_craft_count", 20)
 
     def is_relevant(self, event: WorldMemoryEvent) -> bool:
         return event.event_type in self.RELEVANT_TYPES
@@ -24,23 +34,20 @@ class CraftingTrendEvaluator(PatternEvaluator):
                  geo_registry: GeographicRegistry,
                  entity_registry: EntityRegistry,
                  interpretation_store: EventStore) -> Optional[InterpretedEvent]:
-        # Only trigger at meaningful counts
         count = trigger_event.interpretation_count
-        if count < 5:
+        if count < self.min_event_count:
             return None
 
-        # Get all recent crafting events
         recent_crafts = event_store.query(
             event_type="craft_attempted",
             actor_id="player",
-            since_game_time=trigger_event.game_time - self.LOOKBACK_TIME,
+            since_game_time=trigger_event.game_time - self.lookback_time,
             limit=100,
         )
 
-        if len(recent_crafts) < 5:
+        if len(recent_crafts) < self.min_event_count:
             return None
 
-        # Count by discipline
         disciplines = {}
         qualities = {}
         for craft in recent_crafts:
@@ -49,29 +56,26 @@ class CraftingTrendEvaluator(PatternEvaluator):
             qual = craft.quality or "normal"
             qualities[qual] = qualities.get(qual, 0) + 1
 
-        # Find dominant discipline
         if not disciplines:
             return None
         dominant = max(disciplines, key=disciplines.get)
         dominant_count = disciplines[dominant]
         total = len(recent_crafts)
 
-        # Check for specialization (>60% in one discipline)
-        if dominant_count / total < 0.6:
+        if dominant_count / total < self.specialization_ratio:
             return None
 
-        # Check quality trend
-        high_quality = qualities.get("superior", 0) + qualities.get("masterwork", 0) + qualities.get("legendary", 0)
+        high_quality = sum(qualities.get(qt, 0) for qt in self.high_quality_types)
         quality_ratio = high_quality / total if total > 0 else 0
 
-        if quality_ratio > 0.3:
+        if quality_ratio > self.quality_ratio_threshold:
             severity = "significant"
             narrative = (
                 f"The adventurer is becoming a master {dominant} crafter. "
                 f"{dominant_count} of their last {total} crafts were {dominant}, "
                 f"and {high_quality} achieved exceptional quality."
             )
-        elif dominant_count >= 20:
+        elif dominant_count >= self.moderate_craft_count:
             severity = "moderate"
             narrative = (
                 f"The adventurer specializes in {dominant}. "

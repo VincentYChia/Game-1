@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from ai.memory.config_loader import get_evaluator_config
 from ai.memory.event_schema import InterpretedEvent, WorldMemoryEvent
 from ai.memory.event_store import EventStore
 from ai.memory.geographic_registry import GeographicRegistry
@@ -15,7 +16,29 @@ from ai.memory.interpreter import PatternEvaluator
 class PopulationChangeEvaluator(PatternEvaluator):
 
     RELEVANT_TYPES = {"enemy_killed"}
-    LOOKBACK_TIME = 50.0  # Game-time units to look back
+
+    def __init__(self):
+        cfg = get_evaluator_config("population_change")
+        self.lookback_time = cfg.get("lookback_time", 50.0)
+        self.expiration_offset = cfg.get("expiration_offset", 100.0)
+        t = cfg.get("thresholds", {})
+        self.min_trigger = t.get("minimum_trigger", 5)
+        self.moderate_min = t.get("moderate_min", 10)
+        self.significant_min = t.get("significant_min", 20)
+        self.major_min = t.get("major_min", 50)
+        templates = cfg.get("narrative_templates", {})
+        self.tpl_major = templates.get("major",
+            "The {enemy} population has been devastated in {region}. "
+            "{count} have been killed in a short period. "
+            "The species may take significant time to recover in this area.")
+        self.tpl_significant = templates.get("significant",
+            "{enemy} numbers are noticeably declining in {region}. "
+            "{count} have been killed recently.")
+        self.tpl_moderate = templates.get("moderate",
+            "Increased hunting activity has thinned the {enemy} population "
+            "in {region}.")
+        self.tpl_minor = templates.get("minor",
+            "Several {enemy}s have been killed in {region}.")
 
     def is_relevant(self, event: WorldMemoryEvent) -> bool:
         return event.event_type in self.RELEVANT_TYPES
@@ -34,46 +57,38 @@ class PopulationChangeEvaluator(PatternEvaluator):
             event_type="enemy_killed",
             event_subtype=enemy_subtype,
             locality_id=locality_id,
-            since_game_time=trigger_event.game_time - self.LOOKBACK_TIME,
+            since_game_time=trigger_event.game_time - self.lookback_time,
         )
 
-        if recent_kills < 5:
+        if recent_kills < self.min_trigger:
             return None
 
         region = geo_registry.regions.get(locality_id)
         region_name = region.name if region else locality_id
         enemy_name = enemy_subtype.replace("killed_", "").replace("_", " ")
 
-        if recent_kills >= 50:
+        if recent_kills >= self.major_min:
             severity = "major"
-            narrative = (
-                f"The {enemy_name} population has been devastated in {region_name}. "
-                f"{recent_kills} have been killed in a short period. "
-                f"The species may take significant time to recover in this area."
-            )
-        elif recent_kills >= 20:
+            narrative = self.tpl_major.format(
+                enemy=enemy_name, region=region_name, count=recent_kills)
+        elif recent_kills >= self.significant_min:
             severity = "significant"
-            narrative = (
-                f"{enemy_name.title()} numbers are noticeably declining in {region_name}. "
-                f"{recent_kills} have been killed recently."
-            )
-        elif recent_kills >= 10:
+            narrative = self.tpl_significant.format(
+                enemy=enemy_name, region=region_name, count=recent_kills)
+        elif recent_kills >= self.moderate_min:
             severity = "moderate"
-            narrative = (
-                f"Increased hunting activity has thinned the {enemy_name} population "
-                f"in {region_name}."
-            )
+            narrative = self.tpl_moderate.format(
+                enemy=enemy_name, region=region_name, count=recent_kills)
         else:
             severity = "minor"
-            narrative = (
-                f"Several {enemy_name}s have been killed in {region_name}."
-            )
+            narrative = self.tpl_minor.format(
+                enemy=enemy_name, region=region_name, count=recent_kills)
 
         cause_events = event_store.query(
             event_type="enemy_killed",
             event_subtype=enemy_subtype,
             locality_id=locality_id,
-            since_game_time=trigger_event.game_time - self.LOOKBACK_TIME,
+            since_game_time=trigger_event.game_time - self.lookback_time,
             limit=10,
         )
 
@@ -95,5 +110,5 @@ class PopulationChangeEvaluator(PatternEvaluator):
                 f"biome:{trigger_event.biome}",
             ],
             is_ongoing=True,
-            expires_at=trigger_event.game_time + 100.0,
+            expires_at=trigger_event.game_time + self.expiration_offset,
         )

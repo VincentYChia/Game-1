@@ -13,6 +13,7 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import ClassVar, Dict, List, Optional
 
+from ai.memory.config_loader import get_section
 from ai.memory.event_schema import InterpretedEvent, WorldMemoryEvent, SEVERITY_ORDER
 from ai.memory.event_store import EventStore
 from ai.memory.geographic_registry import GeographicRegistry
@@ -135,7 +136,12 @@ class WorldInterpreter:
         if not geo:
             return
 
-        max_recent = 20
+        cfg = get_section("interpreter")
+        max_recent = cfg.get("max_recent_events_per_region", 20)
+        district_severities = set(cfg.get("propagation_to_district",
+            ["significant", "major", "critical"]))
+        province_severities = set(cfg.get("propagation_to_province",
+            ["major", "critical"]))
 
         # Update affected localities
         for locality_id in interpretation.affected_locality_ids:
@@ -149,7 +155,7 @@ class WorldInterpreter:
                 region.state.recent_events = region.state.recent_events[-max_recent:]
 
         # Districts get significant+ events
-        if interpretation.severity in ("significant", "major", "critical"):
+        if interpretation.severity in district_severities:
             for district_id in interpretation.affected_district_ids:
                 region = geo.regions.get(district_id)
                 if not region:
@@ -161,7 +167,7 @@ class WorldInterpreter:
                     region.state.recent_events = region.state.recent_events[-max_recent:]
 
         # Provinces get major+ events
-        if interpretation.severity in ("major", "critical"):
+        if interpretation.severity in province_severities:
             for province_id in interpretation.affected_province_ids:
                 region = geo.regions.get(province_id)
                 if not region:

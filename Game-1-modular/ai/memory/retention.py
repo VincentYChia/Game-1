@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Set
 
+from ai.memory.config_loader import get_section
 from ai.memory.event_recorder import is_prime_trigger
 from ai.memory.event_store import EventStore
 
@@ -15,16 +16,16 @@ from ai.memory.event_store import EventStore
 class EventRetentionManager:
     """Runs periodically to prune old events from the database."""
 
-    PRUNE_AGE_THRESHOLD = 50.0   # Game-time units before events become pruneable
-    TIMELINE_WINDOW = 1.0        # Game-time units per mandatory timeline marker
-    PRUNE_INTERVAL = 10.0        # How often to run pruning (game-time units)
-    POWER_OF_10 = {100, 1000, 10000, 100000}
-
     def __init__(self):
+        cfg = get_section("retention")
+        self.prune_age_threshold = cfg.get("prune_age_threshold", 50.0)
+        self.timeline_window = cfg.get("timeline_window", 1.0)
+        self.prune_interval = cfg.get("prune_interval", 10.0)
+        self.power_of_10 = set(cfg.get("power_of_10_milestones", [100, 1000, 10000, 100000]))
         self._last_prune_time: float = 0.0
 
     def should_prune(self, current_game_time: float) -> bool:
-        return current_game_time - self._last_prune_time >= self.PRUNE_INTERVAL
+        return current_game_time - self._last_prune_time >= self.prune_interval
 
     def prune(self, event_store: EventStore, current_game_time: float) -> int:
         """Remove old events that don't meet retention criteria.
@@ -32,7 +33,7 @@ class EventRetentionManager:
         Returns the number of events deleted.
         """
         self._last_prune_time = current_game_time
-        cutoff_time = current_game_time - self.PRUNE_AGE_THRESHOLD
+        cutoff_time = current_game_time - self.prune_age_threshold
 
         # Get old events
         old_events = event_store.query(
@@ -67,7 +68,7 @@ class EventRetentionManager:
                 elif is_prime_trigger(count):
                     keep = True
                 # Rule 3: Power-of-10 milestones
-                elif count in self.POWER_OF_10:
+                elif count in self.power_of_10:
                     keep = True
                 # Rule 4: Triggered interpretation
                 elif event.triggered_interpretation:
@@ -77,12 +78,12 @@ class EventRetentionManager:
                     keep = True
                 else:
                     # Rule 6: Timeline marker (one per window)
-                    time_bucket = int(event.game_time / self.TIMELINE_WINDOW)
+                    time_bucket = int(event.game_time / self.timeline_window)
                     if time_bucket not in kept_time_buckets:
                         keep = True
 
                 if keep:
-                    time_bucket = int(event.game_time / self.TIMELINE_WINDOW)
+                    time_bucket = int(event.game_time / self.timeline_window)
                     kept_time_buckets.add(time_bucket)
                 else:
                     events_to_delete.append(event.event_id)

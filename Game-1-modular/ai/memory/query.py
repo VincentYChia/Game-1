@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, ClassVar, Dict, List, Optional
 
+from ai.memory.config_loader import get_section, get_query_window_config
 from ai.memory.event_schema import InterpretedEvent, WorldMemoryEvent
 from ai.memory.event_store import EventStore
 from ai.memory.geographic_registry import GeographicRegistry
@@ -26,12 +27,20 @@ class EventWindow:
     recency_period: float = 5.0
 
 
-# Preset windows for common contexts
-WINDOW_NPC_LOCAL = EventWindow(static_size=10, recency_period=5.0)
-WINDOW_REGION_SUMMARY = EventWindow(static_size=15, recency_period=10.0)
-WINDOW_PLAYER_ACTIVITY = EventWindow(static_size=8, recency_period=3.0)
-WINDOW_FULL_HISTORY = EventWindow(static_size=20, recency_period=20.0)
-WINDOW_QUICK_CHECK = EventWindow(static_size=5, recency_period=2.0)
+def _load_window(name: str, default_size: int, default_period: float) -> EventWindow:
+    cfg = get_query_window_config(name)
+    return EventWindow(
+        static_size=cfg.get("static_size", default_size),
+        recency_period=cfg.get("recency_period", default_period),
+    )
+
+
+# Preset windows — loaded from config with hardcoded fallbacks
+WINDOW_NPC_LOCAL = _load_window("npc_local", 10, 5.0)
+WINDOW_REGION_SUMMARY = _load_window("region_summary", 15, 10.0)
+WINDOW_PLAYER_ACTIVITY = _load_window("player_activity", 8, 3.0)
+WINDOW_FULL_HISTORY = _load_window("full_history", 20, 20.0)
+WINDOW_QUICK_CHECK = _load_window("quick_check", 5, 2.0)
 
 
 @dataclass
@@ -59,6 +68,11 @@ class WorldQuery:
         self.entity_registry: Optional[EntityRegistry] = None
         self.geo_registry: Optional[GeographicRegistry] = None
         self.event_store: Optional[EventStore] = None
+        qt = get_section("query_thresholds")
+        self._nearby_relevance_min = qt.get("nearby_relevance_minimum", 0.2)
+        self._ongoing_relevance_min = qt.get("ongoing_condition_relevance_minimum", 0.3)
+        self._local_recent_limit = qt.get("local_context_recent_limit", 5)
+        self._regional_notable_limit = qt.get("regional_context_notable_limit", 3)
 
     @classmethod
     def get_instance(cls) -> WorldQuery:
@@ -182,7 +196,7 @@ class WorldQuery:
         scored = []
         for event in events:
             relevance = calculate_relevance(entity.tags, event.tags)
-            if relevance > 0.2:
+            if relevance > self._nearby_relevance_min:
                 scored.append((relevance, event))
 
         # Sort by relevance * recency
@@ -207,7 +221,7 @@ class WorldQuery:
 
         # Resolve recent interpretation narratives
         recent_narratives = []
-        for interp_id in region.state.recent_events[-5:]:
+        for interp_id in region.state.recent_events[-self._local_recent_limit:]:
             interp = self.event_store.get_interpretation(interp_id)
             if interp:
                 recent_narratives.append(interp.narrative)
@@ -236,7 +250,7 @@ class WorldQuery:
             return None
 
         notable_narratives = []
-        for interp_id in region.state.recent_events[-3:]:
+        for interp_id in region.state.recent_events[-self._regional_notable_limit:]:
             interp = self.event_store.get_interpretation(interp_id)
             if interp:
                 notable_narratives.append(interp.narrative)
@@ -258,7 +272,7 @@ class WorldQuery:
         relevant = []
         for interp in ongoing:
             relevance = calculate_relevance(entity.tags, interp.affects_tags)
-            if relevance > 0.3:
+            if relevance > self._ongoing_relevance_min:
                 relevant.append(interp.narrative)
         return relevant
 

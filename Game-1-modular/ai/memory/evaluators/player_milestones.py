@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Dict, Optional, Tuple
 
+from ai.memory.config_loader import get_evaluator_config
 from ai.memory.event_schema import InterpretedEvent, WorldMemoryEvent
 from ai.memory.event_store import EventStore
 from ai.memory.geographic_registry import GeographicRegistry
@@ -18,14 +19,24 @@ class PlayerMilestoneEvaluator(PatternEvaluator):
         "craft_attempted", "skill_learned", "class_changed",
     }
 
-    # Milestones: (event_type, count) → (severity, narrative_template)
-    KILL_MILESTONES = {
-        1: ("minor", "The adventurer has slain their first {enemy} in {region}."),
-        5: ("minor", "The adventurer is becoming experienced at hunting {enemy}s in {region}."),
-        11: ("moderate", "The adventurer has become a proficient {enemy} hunter, with {count} kills in {region}."),
-        29: ("significant", "The adventurer is a seasoned {enemy} slayer. {count} have fallen in {region}."),
-        97: ("major", "The adventurer is legendary among {enemy} hunters. {count} kills in {region}."),
-    }
+    def __init__(self):
+        cfg = get_evaluator_config("player_milestones")
+        # Build kill milestones from config
+        raw_kills = cfg.get("kill_milestones", {
+            "1":  {"severity": "minor",       "template": "The adventurer has slain their first {enemy} in {region}."},
+            "5":  {"severity": "minor",       "template": "The adventurer is becoming experienced at hunting {enemy}s in {region}."},
+            "11": {"severity": "moderate",    "template": "The adventurer has become a proficient {enemy} hunter, with {count} kills in {region}."},
+            "29": {"severity": "significant", "template": "The adventurer is a seasoned {enemy} slayer. {count} have fallen in {region}."},
+            "97": {"severity": "major",       "template": "The adventurer is legendary among {enemy} hunters. {count} kills in {region}."},
+        })
+        self.kill_milestones: Dict[int, Tuple[str, str]] = {
+            int(k): (v["severity"], v["template"]) for k, v in raw_kills.items()
+        }
+        self.level_milestones = tuple(cfg.get("level_milestones", [5, 10, 15, 20, 25, 30]))
+        self.level_major_threshold = cfg.get("level_major_threshold", 20)
+        self.craft_min_count = cfg.get("craft_minimum_count", 3)
+        self.craft_milestones = set(cfg.get("craft_milestones", [5, 11, 29]))
+        self.high_quality_types = set(cfg.get("high_quality_types", ["masterwork", "legendary"]))
 
     def is_relevant(self, event: WorldMemoryEvent) -> bool:
         return event.event_type in self.RELEVANT_TYPES
@@ -55,14 +66,14 @@ class PlayerMilestoneEvaluator(PatternEvaluator):
         region = geo.regions.get(event.locality_id or "") if event.locality_id else None
         region_name = region.name if region else "the wilds"
 
-        if level in (5, 10, 15, 20, 25, 30):
-            severity = "significant" if level >= 20 else "moderate"
+        if level in self.level_milestones:
+            severity = "significant" if level >= self.level_major_threshold else "moderate"
             narrative = (
                 f"The adventurer has reached level {int(level)} in {region_name}. "
-                f"{'A major milestone of power.' if level >= 20 else 'Growing stronger with each challenge.'}"
+                f"{'A major milestone of power.' if level >= self.level_major_threshold else 'Growing stronger with each challenge.'}"
             )
         elif level == 1:
-            return None  # Starting level, not interesting
+            return None
         else:
             severity = "minor"
             narrative = f"The adventurer has grown to level {int(level)}."
@@ -101,23 +112,15 @@ class PlayerMilestoneEvaluator(PatternEvaluator):
                              store: EventStore,
                              geo: GeographicRegistry) -> Optional[InterpretedEvent]:
         count = event.interpretation_count
-        # Only fire at specific milestone counts
         milestone = None
-        for threshold in sorted(self.KILL_MILESTONES.keys(), reverse=True):
-            if count >= threshold:
+        for threshold in sorted(self.kill_milestones.keys(), reverse=True):
+            if count == threshold:
                 milestone = threshold
                 break
-        if milestone is None or count != milestone:
-            # Only fire exactly at milestone counts (since we're triggered at primes)
-            # Find the highest milestone <= count
-            for threshold in sorted(self.KILL_MILESTONES.keys(), reverse=True):
-                if count == threshold:
-                    milestone = threshold
-                    break
-            else:
-                return None
+        if milestone is None:
+            return None
 
-        severity, template = self.KILL_MILESTONES[milestone]
+        severity, template = self.kill_milestones[milestone]
         enemy_name = event.event_subtype.replace("killed_", "").replace("_", " ")
         region = geo.regions.get(event.locality_id or "")
         region_name = region.name if region else "the wilds"
@@ -142,17 +145,17 @@ class PlayerMilestoneEvaluator(PatternEvaluator):
                               store: EventStore,
                               geo: GeographicRegistry) -> Optional[InterpretedEvent]:
         count = event.interpretation_count
-        if count < 3:
+        if count < self.craft_min_count:
             return None
         quality = event.quality or "normal"
 
-        if quality in ("masterwork", "legendary"):
+        if quality in self.high_quality_types:
             severity = "significant"
             narrative = (
                 f"The adventurer has crafted a {quality} quality item. "
                 f"Such skill is rare and noteworthy."
             )
-        elif count in (5, 11, 29):
+        elif count in self.craft_milestones:
             severity = "minor"
             narrative = (
                 f"The adventurer continues to hone their crafting skill, "
