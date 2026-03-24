@@ -1,0 +1,135 @@
+{
+  "realm": {
+    "region_id": "known_lands",
+    "name": "The Known Lands",
+    "level": "realm",
+    "bounds": [-800, -800, 800, 800],
+    "description": "A frontier land of forests, hills, caves, and ancient ruins."
+  },
+  "provinces": [
+    {
+      "region_id": "northwestern_reaches",
+      "name": "Northwestern Reaches",
+      "level": "province",
+      "bounds": [-800, -800, 0, 0],
+      "parent_id": "known_lands",
+      "biome_primary": "forest",
+      "description": "Dense forests and quiet clearings. Peaceful in the shallows, dangerous deeper in.",
+      "tags": ["terrain:forest", "terrain:dense", "resource:wood", "resource:herbs", "climate:temperate"]
+    },
+    {
+      "region_id": "northeastern_highlands",
+      "name": "Northeastern Highlands",
+      "level": "province",
+      "bounds": [0, -800, 800, 0],
+      "parent_id": "known_lands",
+      "biome_primary": "quarry",
+      "description": "Rocky highlands rich with mineral deposits and ancient quarries.",
+      "tags": ["terrain:hills", "terrain:rocky", "resource:iron", "resource:stone", "climate:temperate"]
+    },
+    {
+      "region_id": "southwestern_lowlands",
+      "name": "Southwestern Lowlands",
+      "level": "province",
+      "bounds": [-800, 0, 0, 800],
+      "parent_id": "known_lands",
+      "biome_primary": "cave",
+      "description": "Low-lying terrain dotted with cave entrances and underground passages.",
+      "tags": ["terrain:cave", "terrain:underground", "resource:gems", "resource:stone", "climate:cool"]
+    },
+    {
+      "region_id": "southeastern_frontier",
+      "name": "Southeastern Frontier",
+      "level": "province",
+      "bounds": [0, 0, 800, 800],
+      "parent_id": "known_lands",
+      "biome_primary": "water",
+      "description": "Frontier territory with rivers, lakes, and scattered settlements.",
+      "tags": ["terrain:water", "terrain:plains", "resource:fish", "resource:water", "climate:warm"]
+    }
+  ],
+  "districts": [
+    {
+      "region_id": "whispering_woods",
+      "name": "Whispering Woods",
+      "level": "district",
+      "bounds": [-160, -160, -16, -16],
+      "parent_id": "northwestern_reaches",
+      "biome_primary": "peaceful_forest",
+      "description": "A tranquil forest with tall trees and ample wildlife. A good place for beginners.",
+      "tags": ["terrain:forest", "biome:peaceful_forest", "resource:wood", "resource:herbs", "resource:wildlife", "danger:low", "atmosphere:peaceful"]
+    },
+    {
+      "region_id": "iron_hills",
+      "name": "Iron Hills",
+      "level": "district",
+      "bounds": [16, -160, 160, -16],
+      "parent_id": "northeastern_highlands",
+      "biome_primary": "peaceful_quarry",
+      "description": "Rocky hills with exposed iron veins and copper deposits.",
+      "tags": ["terrain:hills", "biome:peaceful_quarry", "resource:iron", "resource:copper", "resource:stone", "feature:mines", "danger:low"]
+    },
+    {
+      "region_id": "deep_caverns",
+      "name": "Deep Caverns",
+      "level": "district",
+      "bounds": [-160, 16, -16, 160],
+      "parent_id": "southwestern_lowlands",
+      "biome_primary": "peaceful_cave",
+      "description": "Shallow cave networks with glowing minerals and underground streams.",
+      "tags": ["terrain:cave", "biome:peaceful_cave", "resource:stone", "resource:gems", "feature:caves", "danger:low"]
+    },
+    {
+      "region_id": "spawn_crossroads",
+      "name": "The Crossroads",
+      "level": "district",
+      "bounds": [-16, -16, 16, 16],
+      "parent_id": "northwestern_reaches",
+      "biome_primary": "peaceful_forest",
+      "description": "The central meeting point where adventurers begin their journey.",
+      "tags": ["terrain:clearing", "feature:spawn", "feature:npcs", "danger:none", "atmosphere:safe"]
+    }
+  ],
+  "localities": [
+    {
+      "region_id": "elder_grove",
+      "name": "Elder's Grove",
+      "level": "locality",
+      "bounds": [-16, -16, 0, 0],
+      "parent_id": "spawn_crossroads",
+      "biome_primary": "peaceful_forest",
+      "description": "A small clearing where the Elder Sage can often be found.",
+      "tags": ["terrain:clearing", "feature:npcs", "feature:spawn", "danger:none"]
+    },
+    {
+      "region_id": "traders_corner",
+      "name": "Trader's Corner",
+      "level": "locality",
+      "bounds": [0, -16, 16, 0],
+      "parent_id": "spawn_crossroads",
+      "biome_primary": "peaceful_forest",
+      "description": "A small market area near the crossroads.",
+      "tags": ["terrain:clearing", "feature:market", "feature:npcs", "danger:none"]
+    },
+    {
+      "region_id": "south_clearing",
+      "name": "South Clearing",
+      "level": "locality",
+      "bounds": [-16, 0, 0, 16],
+      "parent_id": "spawn_crossroads",
+      "biome_primary": "peaceful_forest",
+      "description": "An open area south of the crossroads.",
+      "tags": ["terrain:clearing", "danger:none"]
+    },
+    {
+      "region_id": "east_path",
+      "name": "East Path",
+      "level": "locality",
+      "bounds": [0, 0, 16, 16],
+      "parent_id": "spawn_crossroads",
+      "biome_primary": "peaceful_forest",
+      "description": "A well-worn path heading east toward the hills.",
+      "tags": ["terrain:path", "danger:none"]
+    }
+  ]
+}

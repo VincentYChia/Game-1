@@ -1,0 +1,159 @@
+{
+  "version": "1.0.0",
+  "description": "World Memory System configuration — all tunable thresholds, windows, and evaluator parameters.",
+
+  "position_sampler": {
+    "sample_interval_seconds": 10.0,
+    "description": "Real-time seconds between position breadcrumb recordings."
+  },
+
+  "retention": {
+    "prune_age_threshold": 50.0,
+    "timeline_window": 1.0,
+    "prune_interval": 10.0,
+    "power_of_10_milestones": [100, 1000, 10000, 100000],
+    "description": "Controls event pruning. prune_age_threshold = game-time before events are pruneable. timeline_window = game-time per mandatory marker. prune_interval = game-time between prune cycles."
+  },
+
+  "event_recorder": {
+    "prime_sieve_limit": 10000,
+    "bus_subscription_priority": -10,
+    "chunk_size": 16,
+    "description": "Prime sieve generates primes up to this limit for interpretation triggers. chunk_size must match core/config.py CHUNK_SIZE."
+  },
+
+  "interpreter": {
+    "max_recent_events_per_region": 20,
+    "propagation_to_district": ["significant", "major", "critical"],
+    "propagation_to_province": ["major", "critical"],
+    "description": "Controls how interpretations propagate up the geographic hierarchy."
+  },
+
+  "query_windows": {
+    "npc_local": {
+      "static_size": 10,
+      "recency_period": 5.0,
+      "description": "Default window for NPC context queries."
+    },
+    "region_summary": {
+      "static_size": 15,
+      "recency_period": 10.0,
+      "description": "Window for region-level summaries."
+    },
+    "player_activity": {
+      "static_size": 8,
+      "recency_period": 3.0,
+      "description": "Window for player's recent activity."
+    },
+    "full_history": {
+      "static_size": 20,
+      "recency_period": 20.0,
+      "description": "Window for deep history lookups."
+    },
+    "quick_check": {
+      "static_size": 5,
+      "recency_period": 2.0,
+      "description": "Window for fast spot-checks."
+    }
+  },
+
+  "query_thresholds": {
+    "nearby_relevance_minimum": 0.2,
+    "ongoing_condition_relevance_minimum": 0.3,
+    "local_context_recent_limit": 5,
+    "regional_context_notable_limit": 3,
+    "description": "Minimum relevance scores and display limits for query results."
+  },
+
+  "evaluators": {
+    "population_change": {
+      "enabled": true,
+      "lookback_time": 50.0,
+      "expiration_offset": 100.0,
+      "thresholds": {
+        "minimum_trigger": 5,
+        "minor_max": 9,
+        "moderate_min": 10,
+        "significant_min": 20,
+        "major_min": 50
+      },
+      "narrative_templates": {
+        "major": "The {enemy} population has been devastated in {region}. {count} have been killed in a short period. The species may take significant time to recover in this area.",
+        "significant": "{enemy} numbers are noticeably declining in {region}. {count} have been killed recently.",
+        "moderate": "Increased hunting activity has thinned the {enemy} population in {region}.",
+        "minor": "Several {enemy}s have been killed in {region}."
+      },
+      "description": "Detects when enemy kills in a region exceed natural recovery thresholds."
+    },
+
+    "resource_pressure": {
+      "enabled": true,
+      "lookback_time": 50.0,
+      "expiration_offset": 75.0,
+      "thresholds": {
+        "minimum_trigger": 10,
+        "minor_max": 24,
+        "moderate_min": 25,
+        "significant_min": 50,
+        "major_min": 100
+      },
+      "narrative_templates": {
+        "major": "{resource} deposits are critically strained in {region}. Over {count} units have been harvested recently, far outpacing natural regeneration.",
+        "significant": "{resource} is becoming scarce in {region}. Heavy harvesting ({count} units) is depleting available nodes.",
+        "moderate": "Notable {resource} harvesting activity in {region}. Resource availability may be declining.",
+        "minor": "Steady {resource} gathering is underway in {region}."
+      },
+      "description": "Detects when gathering outpaces regeneration in an area."
+    },
+
+    "area_danger": {
+      "enabled": true,
+      "lookback_time": 30.0,
+      "expiration_offset": 50.0,
+      "death_weight_multiplier": 10,
+      "thresholds": {
+        "minimum_threat_score": 5,
+        "moderate_threat_score": 10,
+        "significant_threat_score": 20,
+        "significant_death_count": 1,
+        "major_death_count": 3
+      },
+      "narrative_templates": {
+        "major": "{region} is extremely dangerous. The adventurer has died {deaths} times here recently. This area poses a serious threat.",
+        "significant_death": "{region} has proven hazardous. Frequent combat injuries and a death mark this area as dangerous.",
+        "significant_deaths": "{region} has proven hazardous. Frequent combat injuries and deaths mark this area as dangerous.",
+        "moderate": "Combat activity is elevated in {region}. The adventurer has taken repeated damage here.",
+        "minor": "Some combat encounters in {region}."
+      },
+      "description": "Detects when an area becomes more or less dangerous based on combat damage and deaths."
+    },
+
+    "player_milestones": {
+      "enabled": true,
+      "kill_milestones": {
+        "1":  {"severity": "minor",       "template": "The adventurer has slain their first {enemy} in {region}."},
+        "5":  {"severity": "minor",       "template": "The adventurer is becoming experienced at hunting {enemy}s in {region}."},
+        "11": {"severity": "moderate",    "template": "The adventurer has become a proficient {enemy} hunter, with {count} kills in {region}."},
+        "29": {"severity": "significant", "template": "The adventurer is a seasoned {enemy} slayer. {count} have fallen in {region}."},
+        "97": {"severity": "major",       "template": "The adventurer is legendary among {enemy} hunters. {count} kills in {region}."}
+      },
+      "level_milestones": [5, 10, 15, 20, 25, 30],
+      "level_major_threshold": 20,
+      "craft_minimum_count": 3,
+      "craft_milestones": [5, 11, 29],
+      "high_quality_types": ["masterwork", "legendary"],
+      "description": "Detects notable player achievements: kill counts, levels, crafting quality."
+    },
+
+    "crafting_trends": {
+      "enabled": true,
+      "lookback_time": 100.0,
+      "minimum_event_count": 5,
+      "specialization_ratio": 0.6,
+      "quality_ratio_threshold": 0.3,
+      "high_quality_types": ["superior", "masterwork", "legendary"],
+      "moderate_craft_count": 20,
+      "description": "Detects crafting specialization and quality trends."
+    }
+  }
+}
