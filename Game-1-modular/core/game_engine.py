@@ -212,6 +212,10 @@ class GameEngine:
         self.combat_manager.dungeon_manager = self.dungeon_manager  # Link for 2x EXP, no drops
         self.world.dungeon_manager = self.dungeon_manager  # Link for dungeon tile walkability checks
         self.world.map_system = self.map_system  # Link for death chest map markers
+        self.world.register_chunk_unload_callback(self.combat_manager.on_chunk_unloaded)  # Clean up enemies on chunk unload
+
+        # Initialize action combat systems
+        self._init_action_combat()
 
         # Load character stat modifiers config for INT minigame effects
         self.stat_modifiers_config = self._load_stat_modifiers_config()
@@ -244,6 +248,10 @@ class GameEngine:
         self.npc_available_quests: List[str] = []
         self.npc_quest_to_turn_in: Optional[str] = None
         self.npc_dialogue_window_rect = None
+
+        # World Memory System (AI foundation — records events, detects patterns)
+        self.world_memory = None
+        self._init_world_memory()
 
         # Minigame state
         self.active_minigame = None  # Current minigame instance
@@ -294,6 +302,29 @@ class GameEngine:
 
         self.damage_numbers: List[DamageNumber] = []
         self.notifications: List[Notification] = []
+
+        # Enhanced visual systems (graceful fallback if unavailable)
+        try:
+            from rendering.visual_effects import DamageNumberManager, EnemyDeathManager
+            self._enhanced_damage_numbers = DamageNumberManager()
+            self._enemy_death_manager = EnemyDeathManager()
+            self._visual_effects_loaded = True
+        except ImportError:
+            self._enhanced_damage_numbers = None
+            self._enemy_death_manager = None
+            self._visual_effects_loaded = False
+
+        # Event-driven visual bridge (connects EventBus to visual managers)
+        self._visual_bridge = None
+        try:
+            from rendering.visual_effect_bridge import VisualEffectBridge
+            self._visual_bridge = VisualEffectBridge(
+                damage_number_manager=self._enhanced_damage_numbers,
+                death_effect_manager=self._enemy_death_manager,
+            )
+            self._visual_bridge.connect()
+        except ImportError:
+            pass
         self.crafting_window_rect = None
         self.crafting_recipes = []
         self.selected_recipe = None  # Currently selected recipe in crafting UI (for placement display)
@@ -504,6 +535,10 @@ class GameEngine:
                         self.map_system
                     ):
                         print("💾 Autosaved on quit")
+                    # Save World Memory System state
+                    if self.world_memory:
+                        self.world_memory.save()
+                        print("💾 World Memory saved on quit")
                 self.running = False
 
             # Block all input except quit when LLM overlay is active
@@ -714,6 +749,45 @@ class GameEngine:
                     # Drop item from inventory (Q = 1 item, Shift+Q = entire stack)
                     # Works regardless of chest state
                     self._handle_inventory_drop()
+
+                elif event.key == pygame.K_SPACE:
+                    # Action combat: dodge roll (Space bar)
+                    if self._action_combat and not self.active_minigame:
+                        from Combat.player_actions import FACING_TO_ANGLE
+                        pa = self._ac['player_actions']
+                        # Determine dodge direction from movement keys or facing
+                        dodge_dx, dodge_dy = 0.0, 0.0
+                        if pygame.K_w in self.keys_pressed:
+                            dodge_dy -= 1.0
+                        if pygame.K_s in self.keys_pressed:
+                            dodge_dy += 1.0
+                        if pygame.K_a in self.keys_pressed:
+                            dodge_dx -= 1.0
+                        if pygame.K_d in self.keys_pressed:
+                            dodge_dx += 1.0
+                        # Normalize
+                        if dodge_dx != 0 or dodge_dy != 0:
+                            length = (dodge_dx ** 2 + dodge_dy ** 2) ** 0.5
+                            dodge_dx /= length
+                            dodge_dy /= length
+                        facing_angle = FACING_TO_ANGLE.get(self.character.facing, 90.0)
+                        if pa.try_dodge((dodge_dx, dodge_dy), facing_angle):
+                            # Set i-frame invulnerability on player hurtbox
+                            player_hb = self._ac['hitbox'].get_hurtbox('player')
+                            if player_hb:
+                                player_hb.invulnerable = True
+                            # Track in stat tracker
+                            if hasattr(self.character, 'stat_tracker'):
+                                self.character.stat_tracker.record_dodge_roll()
+                            # Publish dodge event
+                            try:
+                                from rendering.visual_effect_bridge import publish_dodge_performed
+                                publish_dodge_performed(
+                                    position_x=self.character.position.x,
+                                    position_y=self.character.position.y,
+                                    direction=(dodge_dx, dodge_dy))
+                            except ImportError:
+                                pass
 
                 # Skill hotbar (keys 1-5)
                 elif event.key == pygame.K_1:
@@ -1239,39 +1313,8 @@ class GameEngine:
         wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
         wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
 
-        # Check for enemy at position
-        enemy = self.combat_manager.get_enemy_at_position((wx, wy))
-        if enemy and enemy.is_alive:
-            # Check if offhand can attack
-            if not self.character.can_attack('offHand'):
-                return  # Still on cooldown
-
-            # Check if in range (using offhand weapon's range)
-            weapon_range = self.character.equipment.get_weapon_range('offHand')
-            dist = enemy.distance_to((self.character.position.x, self.character.position.y))
-            if dist > weapon_range:
-                self.add_notification(f"Enemy too far (offhand range: {weapon_range})", (255, 100, 100))
-                return
-
-            # Attack with offhand (using tag system)
-            effect_tags, effect_params = self._get_weapon_effect_data('offHand')
-            damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
-                enemy, effect_tags, effect_params
-            )
-            self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
-            self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
-
-            if not enemy.is_alive:
-                self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
-                self.character.activities.record_activity('combat', 1)
-
-                # Show loot notifications (auto-looted)
-                if loot:
-                    mat_db = MaterialDatabase.get_instance()
-                    for material_id, qty in loot:
-                        mat = mat_db.get_material(material_id)
-                        item_name = mat.name if mat else material_id
-                        self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+        # Attack toward click position with offhand — hitbox system determines hits
+        self._initiate_attack_toward(wx, wy, 'offHand')
 
     def handle_npc_dialogue_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks on NPC dialogue buttons (accept/turn in quests)"""
@@ -1402,6 +1445,7 @@ class GameEngine:
                     self.world = WorldSystem(seed=saved_seed)
                     self.world.set_chunk_save_directory("autosave.json")
                     self.world.dungeon_manager = self.dungeon_manager
+                    self.world.register_chunk_unload_callback(self.combat_manager.on_chunk_unloaded)
                     # Update combat manager's world reference
                     self.combat_manager.world = self.world
                 else:
@@ -1458,6 +1502,9 @@ class GameEngine:
                 from systems.training_dummy import spawn_training_dummy
                 spawn_training_dummy(self.combat_manager, (10.0, 0.0))
 
+                # Re-initialize World Memory System with loaded character/world
+                self._init_world_memory()
+
                 print(f"✓ Loaded character: Level {self.character.leveling.level}")
                 self.add_notification("World loaded successfully!", (100, 255, 100))
             else:
@@ -1483,6 +1530,7 @@ class GameEngine:
                     self.world = WorldSystem(seed=saved_seed)
                     self.world.set_chunk_save_directory("default_save.json")
                     self.world.dungeon_manager = self.dungeon_manager
+                    self.world.register_chunk_unload_callback(self.combat_manager.on_chunk_unloaded)
                     # Update combat manager's world reference
                     self.combat_manager.world = self.world
                 else:
@@ -2120,90 +2168,18 @@ class GameEngine:
                     self._exit_dungeon_via_portal()
                     return
 
-            # Check for dungeon enemy click
-            enemy = self.combat_manager.get_dungeon_enemy_at_position((wx, wy))
-            if enemy and enemy.is_alive:
-                # Check if player can attack with mainhand
-                if not self.character.can_attack('mainHand'):
-                    return  # Still on cooldown
+            # In dungeon: always attack toward click position
+            # The hitbox/sweep system determines if any enemy gets hit
+            self._initiate_attack_toward(wx, wy, 'mainHand')
+            return  # Don't process world clicks when in dungeon
 
-                # Check if stunned or frozen
-                if hasattr(self.character, 'status_manager'):
-                    if self.character.status_manager.has_status('stun'):
-                        self.add_notification("Cannot attack while stunned!", (255, 100, 100))
-                        return
-                    if self.character.status_manager.has_status('freeze'):
-                        self.add_notification("Cannot attack while frozen!", (255, 100, 100))
-                        return
-
-                # Check if in range
-                weapon_range = self.character.equipment.get_weapon_range('mainHand')
-                dist = enemy.distance_to((self.character.position.x, self.character.position.y))
-                if dist > weapon_range:
-                    self.add_notification("Enemy too far away", (255, 100, 100))
-                    return
-
-                # Attack dungeon enemy
-                effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
-                damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
-                    enemy, effect_tags, effect_params
-                )
-                self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
-                self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
-
-                if not enemy.is_alive:
-                    # Track dungeon enemy kill (kill tracking already done in combat_manager)
-                    exp_reward = self.combat_manager._calculate_exp_reward(enemy)
-                    if hasattr(self.character, 'stat_tracker'):
-                        self.character.stat_tracker.record_dungeon_enemy_killed(exp_reward)
-                    # Note: on_dungeon_enemy_killed already called by player_attack_enemy_with_tags
-                    self.add_notification(f"Defeated {enemy.definition.name}! (+{exp_reward} EXP)", (255, 215, 0))
-                return  # Don't process world clicks when in dungeon
-
-        # Check for enemy click (living enemies)
+        # Attack toward click position — the hitbox/sweep system determines hits
+        # Only attack if not clicking on interactive objects (checked below)
+        # We check for interactive objects first, then fall through to attack
         enemy = self.combat_manager.get_enemy_at_position((wx, wy))
         if enemy and enemy.is_alive:
-            # Check if player can attack with mainhand
-            if not self.character.can_attack('mainHand'):
-                return  # Still on cooldown
-
-            # Check if stunned or frozen (cannot attack)
-            if hasattr(self.character, 'status_manager'):
-                if self.character.status_manager.has_status('stun'):
-                    self.add_notification("Cannot attack while stunned!", (255, 100, 100))
-                    return
-                if self.character.status_manager.has_status('freeze'):
-                    self.add_notification("Cannot attack while frozen!", (255, 100, 100))
-                    return
-
-            # Check if in range (using mainhand weapon's range)
-            weapon_range = self.character.equipment.get_weapon_range('mainHand')
-            dist = enemy.distance_to((self.character.position.x, self.character.position.y))
-            if dist > weapon_range:
-                weapon_name = self.character.equipment.slots.get('mainHand')
-                range_msg = f"Enemy too far (range: {weapon_range})" if weapon_name else "Enemy too far away"
-                self.add_notification(range_msg, (255, 100, 100))
-                return
-
-            # Attack enemy with mainhand (using tag system)
-            effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
-            damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
-                enemy, effect_tags, effect_params
-            )
-            self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
-            self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
-
-            if not enemy.is_alive:
-                self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
-                self.character.activities.record_activity('combat', 1)
-
-                # Show loot notifications (auto-looted)
-                if loot:
-                    mat_db = MaterialDatabase.get_instance()
-                    for material_id, qty in loot:
-                        mat = mat_db.get_material(material_id)
-                        item_name = mat.name if mat else material_id
-                        self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+            # Clicked directly on enemy — attack toward them
+            self._initiate_attack_toward(wx, wy, 'mainHand')
             return
 
         # Note: Corpse looting is now automatic when enemy dies
@@ -2379,6 +2355,20 @@ class GameEngine:
                         mat = mat_db.get_material(item_id)
                         item_name = mat.name if mat else item_id
                         self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+                        # Publish resource gathered event for World Memory System
+                        try:
+                            from events.event_bus import get_event_bus
+                            get_event_bus().publish("RESOURCE_GATHERED", {
+                                "resource_id": item_id,
+                                "material_id": item_id,
+                                "quantity": qty,
+                                "position_x": resource.position.x,
+                                "position_y": resource.position.y,
+                                "tool_used": self.character.selected_tool.tool_id if self.character.selected_tool else "hand",
+                                "biome": getattr(resource, 'biome', 'unknown'),
+                            }, source="gathering")
+                        except Exception:
+                            pass
             return
 
         # Check for placed entity that can be broken (barriers, etc.)
@@ -2412,6 +2402,11 @@ class GameEngine:
                 # Show remaining health percentage
                 health_pct = (placed_entity.health / placed_entity.max_health) * 100
                 print(f"   Block health: {placed_entity.health:.0f}/{placed_entity.max_health:.0f} ({health_pct:.0f}%)")
+            return
+
+        # No interactive object was clicked — attack toward cursor position
+        # The hitbox/sweep system will determine if anything gets hit
+        self._initiate_attack_toward(wx, wy, 'mainHand')
 
     def handle_enchantment_selection_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks on the enchantment selection UI"""
@@ -2732,6 +2727,642 @@ class GameEngine:
         self.waypoint_rename_slot = -1
         self.waypoint_rename_text = ""
         self.add_notification("Rename cancelled", (150, 150, 150))
+
+    # ========================================================================
+    # ACTION COMBAT SYSTEM
+    # ========================================================================
+
+    def _init_action_combat(self):
+        """Initialize action combat systems (hitboxes, projectiles, dodge, screen effects).
+
+        Sets self._action_combat = True on success. All systems are optional —
+        if imports fail or JSON is missing, falls back to legacy instant combat.
+        """
+        try:
+            from Combat import USE_ACTION_COMBAT
+            if not USE_ACTION_COMBAT:
+                self._action_combat = False
+                self._action_combat_systems = {}
+                print("⚙ Action combat disabled (USE_ACTION_COMBAT = False)")
+                return
+
+            from Combat.hitbox_system import HitboxSystem
+            from Combat.projectile_system import ProjectileSystem
+            from Combat.attack_state_machine import AttackStateMachine
+            from Combat.player_actions import PlayerActionSystem
+            from Combat.screen_effects import ScreenEffects
+            from Combat.combat_data_loader import CombatDataLoader
+            from animation.animation_manager import AnimationManager
+            from animation.combat_particles import CombatParticleSystem
+
+            # Load JSON data
+            combat_data = CombatDataLoader()
+            combat_data.load_all()
+
+            # Initialize systems
+            hitbox_system = HitboxSystem()
+            projectile_system = ProjectileSystem(hitbox_system)
+            player_actions = PlayerActionSystem()
+            screen_effects = ScreenEffects()
+            combat_particles = CombatParticleSystem()
+            animation_manager = AnimationManager.get_instance()
+            player_attack_sm = AttackStateMachine('player')
+
+            # Register player hurtbox
+            hitbox_system.register_hurtbox('player', radius=0.35)
+
+            # Wire up combat manager
+            self.combat_manager.setup_action_combat(hitbox_system, combat_data)
+
+            # Store all systems for easy access
+            self._action_combat = True
+            self._ac = {
+                'hitbox': hitbox_system,
+                'projectile': projectile_system,
+                'player_actions': player_actions,
+                'screen_effects': screen_effects,
+                'particles': combat_particles,
+                'animation': animation_manager,
+                'player_sm': player_attack_sm,
+                'data': combat_data,
+            }
+
+            print("✓ Action combat systems initialized")
+
+            # Wire visual bridge to screen effects and particles
+            if getattr(self, '_visual_bridge', None):
+                self._visual_bridge._screen_fx = screen_effects
+                self._visual_bridge._particles = combat_particles
+
+        except Exception as e:
+            self._action_combat = False
+            self._ac = {}
+            print(f"⚠ Action combat init failed (falling back to legacy): {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _update_action_combat(self, dt: float):
+        """Per-frame update for all action combat systems.
+
+        Called from the main update loop when action combat is active.
+        """
+        if not self._action_combat:
+            return
+
+        raw_dt_ms = dt * 1000.0
+        se = self._ac['screen_effects']
+        # Time is always constant — no freeze frames, no slow motion
+        effective_dt_ms = raw_dt_ms
+
+        pa = self._ac['player_actions']
+        player_sm = self._ac['player_sm']
+        hitbox = self._ac['hitbox']
+        proj = self._ac['projectile']
+        particles = self._ac['particles']
+        data = self._ac['data']
+
+        # Update player actions (dodge roll, cooldowns)
+        pa.update(effective_dt_ms)
+
+        # Apply dodge movement
+        if pa.is_dodging:
+            dodge_vel = pa.get_dodge_velocity(Config.PLAYER_SPEED)
+            new_x = self.character.position.x + dodge_vel[0]
+            new_y = self.character.position.y + dodge_vel[1]
+            self.character.position.x = new_x
+            self.character.position.y = new_y
+
+            # Spawn afterimage ghosts throughout the dodge roll
+            dodge_progress = 1.0 - (pa.dodge_timer / pa.dodge_duration_ms)
+            # Spawn every ~40ms worth of progress
+            if int(dodge_progress * 6) != int((dodge_progress - effective_dt_ms / pa.dodge_duration_ms) * 6):
+                alpha = int(200 * (1.0 - dodge_progress * 0.5))
+                se.add_afterimage(
+                    self.character.position.x, self.character.position.y,
+                    alpha=alpha, color=(150, 200, 255), size=1.0)
+
+            # Emit dust particles on first frame
+            if pa.dodge_timer > pa.dodge_duration_ms - 30:
+                particles.emit_dodge_dust(
+                    self.character.position.x, self.character.position.y)
+
+        # Set player hurtbox invulnerability
+        player_hb = hitbox.get_hurtbox('player')
+        if player_hb:
+            player_hb.invulnerable = pa.is_invulnerable
+
+        # Update player attack state machine
+        player_events = player_sm.update(effective_dt_ms)
+
+        # Process player ASM events
+        for event in player_events:
+            if event.event_type == "phase_change":
+                phase = event.data.get("phase")
+                if phase == "active":
+                    self._ac_spawn_player_attack()
+                elif phase == "recovery":
+                    # Unlock facing direction after active phase ends
+                    self.character._attack_facing_locked = False
+                elif phase in ("cooldown", "idle"):
+                    self._ac_check_combo()
+                    self.character._attack_facing_locked = False
+
+        # Update all hurtbox positions
+        positions = {'player': (self.character.position.x, self.character.position.y)}
+        for enemy in self.combat_manager.get_all_active_enemies():
+            if enemy.is_alive:
+                eid = self.combat_manager.get_enemy_entity_id(enemy)
+                positions[eid] = (enemy.position[0], enemy.position[1])
+        hitbox.update_hurtbox_positions(positions)
+
+        # Check hitbox collisions
+        from Combat.combat_event import HitEvent
+        hit_events = hitbox.update(effective_dt_ms)
+        for hit in hit_events:
+            self._ac_process_hit(hit)
+
+        # Update projectiles
+        proj_hits = proj.update(effective_dt_ms)
+        for hit in proj_hits:
+            self._ac_process_hit(hit)
+
+        # Always update screen effects and particles
+        se.update(raw_dt_ms)
+        self._ac['animation'].update_all(
+            effective_dt_ms)
+        particles.update(effective_dt_ms)
+
+    def _ac_spawn_player_attack(self):
+        """Spawn hitbox or projectile when player enters ACTIVE phase."""
+        import math as _math
+        player_sm = self._ac['player_sm']
+        data = self._ac['data']
+        attack_def = player_sm.current_attack
+        if not attack_def:
+            return
+
+        pos = (self.character.position.x, self.character.position.y)
+        facing = getattr(self, '_ac_attack_angle', getattr(self.character, 'facing_angle', 0.0))
+
+        if attack_def.projectile_id:
+            # Generate projectile definition dynamically from attack tags
+            weapon_type = self._get_weapon_type('mainHand')
+            proj_def = data.get_projectile(
+                attack_def.projectile_id, weapon_type, attack_def.tags)
+            if proj_def:
+                # Compute target position from facing angle at max range
+                facing_rad = _math.radians(facing)
+                target_pos = (
+                    pos[0] + _math.cos(facing_rad) * proj_def.max_range,
+                    pos[1] + _math.sin(facing_rad) * proj_def.max_range,
+                )
+                self._ac['projectile'].spawn(
+                    proj_def, pos, facing, 'player',
+                    player_sm.damage_context, target_pos)
+        else:
+            hitbox_def = data.hitbox_def_from_attack(attack_def)
+            hitbox_pos = hitbox_def.compute_world_position(pos[0], pos[1], facing)
+            self._ac['hitbox'].spawn_hitbox(
+                hitbox_def, hitbox_pos, facing, 'player',
+                attack_def.active_ms,
+                player_sm.damage_context)
+
+            # Emit slash particles
+            self._ac['particles'].emit_slash_trail(
+                hitbox_pos[0], hitbox_pos[1],
+                facing, attack_def.hitbox_arc_degrees,
+                attack_def.hitbox_radius)
+
+    def _ac_check_combo(self):
+        """Check input buffer for combo continuation."""
+        pa = self._ac['player_actions']
+        player_sm = self._ac['player_sm']
+        data = self._ac['data']
+
+        buffered = pa.input_buffer.consume()
+        if buffered and buffered[0] == "attack":
+            weapon_type = self._get_weapon_type('mainHand')
+            weapon_range = self.character.equipment.get_weapon_range('mainHand')
+            weapon_speed = self.character.equipment.get_weapon_attack_speed('mainHand')
+            weapon = self.character.equipment.slots.get('mainHand')
+            weapon_tags = weapon.get_metadata_tags() if weapon and hasattr(weapon, 'get_metadata_tags') else []
+            next_def = data.get_weapon_attack(
+                weapon_type, 0, weapon_range, weapon_speed, weapon_tags)
+            if next_def and player_sm.damage_context:
+                # Recompute attack direction toward mouse cursor for combo
+                mouse_pos = pygame.mouse.get_pos()
+                player_screen_x = Config.VIEWPORT_WIDTH // 2
+                player_screen_y = Config.VIEWPORT_HEIGHT // 2
+                dx = mouse_pos[0] - player_screen_x
+                dy = mouse_pos[1] - player_screen_y
+                import math
+                self._ac_attack_angle = math.degrees(math.atan2(dy, dx))
+                self.character.facing_angle = self._ac_attack_angle
+
+                player_sm.start_attack(next_def, player_sm.damage_context)
+
+    def _ac_process_hit(self, hit):
+        """Route a HitEvent to the appropriate damage pipeline."""
+        se = self._ac['screen_effects']
+        particles = self._ac['particles']
+        player_sm = self._ac['player_sm']
+        pa = self._ac['player_actions']
+
+        if hit.attacker_id == 'player':
+            # Player hit an enemy
+            enemy = self.combat_manager.find_enemy_by_entity_id(hit.target_id)
+            if not enemy or not enemy.is_alive:
+                return
+
+            # Prevent multi-hit per swing
+            if not player_sm.record_hit(hit.target_id):
+                return
+
+            ctx = hit.damage_context
+            effect_tags = ctx.get('effect_tags', ['physical', 'single'])
+            effect_params = ctx.get('effect_params', {})
+
+            # Route through existing damage pipeline.
+            # skip_visual: action combat has its own hit effects.
+            # skip_los: hitbox system already confirmed geometric collision,
+            # a second LOS check would incorrectly block hits near obstacles.
+            damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
+                enemy, effect_tags, effect_params, skip_visual=True, skip_los=True)
+
+            # Determine damage type from tags for visual feedback
+            damage_type = "physical"
+            for tag in effect_tags:
+                if tag in ("fire", "ice", "frost", "lightning", "poison",
+                           "arcane", "shadow", "holy"):
+                    damage_type = tag
+                    if tag == "frost":
+                        damage_type = "ice"
+                    break
+
+            # Tag-driven flash color
+            flash_colors = {
+                "physical": (255, 255, 255),
+                "fire": (255, 150, 50),
+                "ice": (100, 200, 255),
+                "lightning": (255, 255, 100),
+                "poison": (100, 255, 100),
+                "arcane": (200, 100, 255),
+                "shadow": (150, 100, 200),
+                "holy": (255, 255, 200),
+            }
+
+            # Visual feedback
+            if damage > 0:
+                # Legacy damage number (for non-enhanced fallback)
+                self.damage_numbers.append(DamageNumber(
+                    int(damage),
+                    Position(enemy.position[0], enemy.position[1], 0),
+                    is_crit))
+
+                # Enhanced damage number (type-colored, physics-based)
+                if self._enhanced_damage_numbers:
+                    self._enhanced_damage_numbers.spawn(
+                        int(damage), enemy.position[0], enemy.position[1],
+                        is_crit=is_crit, damage_type=damage_type)
+
+                flash_color = flash_colors.get(damage_type, (255, 255, 255))
+                se.flash_entity(hit.target_id, flash_color, 100)
+                particles.emit_hit_sparks(
+                    enemy.position[0], enemy.position[1],
+                    damage_type, min(damage / 50.0, 3.0))
+
+                if is_crit:
+                    se.hit_pause(40)
+
+                # Publish DAMAGE_DEALT event for other systems
+                try:
+                    from rendering.visual_effect_bridge import publish_damage_dealt
+                    publish_damage_dealt(
+                        target_id=hit.target_id, attacker_id="player",
+                        amount=damage, damage_type=damage_type, is_crit=is_crit,
+                        position_x=enemy.position[0], position_y=enemy.position[1],
+                        source="action_combat")
+                except ImportError:
+                    pass
+
+            if not enemy.is_alive:
+                se.hit_pause(60)
+                # Screen shake on all enemy kills — scales with tier
+                _kill_shake = {1: 2, 2: 3, 3: 5, 4: 8}.get(enemy.definition.tier, 2)
+                se.screen_shake(_kill_shake, 150)
+
+                # Spawn death effect (fade + shrink animation)
+                if self._enemy_death_manager:
+                    vis_size = getattr(enemy.definition, 'visual_size', 1.0)
+                    tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
+                    e_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
+                    self._enemy_death_manager.spawn(
+                        enemy.position[0], enemy.position[1],
+                        vis_size, enemy.definition.tier, e_color)
+
+                # Publish ENEMY_KILLED event
+                try:
+                    from rendering.visual_effect_bridge import publish_enemy_killed
+                    publish_enemy_killed(
+                        enemy_id=hit.target_id, killer_id="player",
+                        position_x=enemy.position[0], position_y=enemy.position[1],
+                        tier=enemy.definition.tier,
+                        visual_size=getattr(enemy.definition, 'visual_size', 1.0),
+                        is_boss=getattr(enemy.definition, 'is_boss', False),
+                        source="action_combat")
+                except ImportError:
+                    pass
+
+        else:
+            # Enemy hit the player
+            enemy = self.combat_manager.find_enemy_by_entity_id(hit.attacker_id)
+            if not enemy:
+                return
+
+            # Check dodge i-frames
+            if pa.is_invulnerable:
+                pa.record_dodge_success()
+                if hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_successful_dodge()
+                return
+
+            # Route through existing enemy damage pipeline
+            shield_blocking = getattr(self, '_shield_blocking', False)
+            self.combat_manager._enemy_attack_player(
+                enemy, shield_blocking=shield_blocking)
+
+            se.flash_entity('player', (255, 100, 100), 100)
+            # Screen shake on all enemy hits — intensity scales with tier
+            _shake_i = {1: 2, 2: 3, 3: 5, 4: 7}.get(enemy.definition.tier, 2)
+            _shake_d = {1: 80, 2: 120, 3: 180, 4: 250}.get(enemy.definition.tier, 80)
+            se.screen_shake(_shake_i, _shake_d)
+
+            # Publish PLAYER_HIT event
+            try:
+                from rendering.visual_effect_bridge import publish_player_hit
+                publish_player_hit(
+                    attacker_id=hit.attacker_id,
+                    amount=enemy.definition.damage_max,
+                    damage_type=getattr(enemy.definition, 'damage_type', 'physical'),
+                    player_x=self.character.position.x,
+                    player_y=self.character.position.y,
+                    source="action_combat")
+            except ImportError:
+                pass
+
+    def _initiate_attack_toward(self, world_x: float, world_y: float, hand: str = 'mainHand'):
+        """Initiate an attack toward a world position using the action combat state machine.
+
+        Instead of dealing instant damage, this starts the attack windup/sweep.
+        Damage is applied when the hitbox/projectile collides with an enemy.
+        """
+        import math
+
+        # Check if player can attack
+        if not self.character.can_attack(hand):
+            return
+
+        # Check if stunned or frozen
+        if hasattr(self.character, 'status_manager'):
+            if self.character.status_manager.has_status('stun'):
+                self.add_notification("Cannot attack while stunned!", (255, 100, 100))
+                return
+            if self.character.status_manager.has_status('freeze'):
+                self.add_notification("Cannot attack while frozen!", (255, 100, 100))
+                return
+
+        # Compute attack direction from player toward click position
+        player_x = self.character.position.x
+        player_y = self.character.position.y
+        dx = world_x - player_x
+        dy = world_y - player_y
+        attack_angle = math.degrees(math.atan2(dy, dx))
+        self.character.facing_angle = attack_angle
+        self._ac_attack_angle = attack_angle
+
+        if self._action_combat:
+            # Route through action combat state machine (windup → active → hit check)
+            player_sm = self._ac['player_sm']
+            pa = self._ac['player_actions']
+            data = self._ac['data']
+
+            if not player_sm.is_attacking and not pa.is_dodging:
+                weapon_type = self._get_weapon_type(hand)
+                weapon_range = self.character.equipment.get_weapon_range(hand)
+                weapon_speed = self.character.equipment.get_weapon_attack_speed(hand)
+                weapon = self.character.equipment.slots.get(hand)
+                weapon_tags = weapon.get_metadata_tags() if weapon and hasattr(weapon, 'get_metadata_tags') else []
+                attack_def = data.get_weapon_attack(
+                    weapon_type, 0, weapon_range, weapon_speed, weapon_tags)
+                if attack_def:
+                    effect_tags, effect_params = self._get_weapon_effect_data(hand)
+                    _w = weapon
+                    damage_context = {
+                        'effect_tags': effect_tags,
+                        'effect_params': effect_params,
+                        'weapon_type': weapon_type,
+                        'weapon_tags': weapon_tags,
+                        'weapon_tier': getattr(_w, 'tier', 1) if _w else 1,
+                        'weapon_weight': getattr(_w, 'weight', 1.0) if _w else 1.0,
+                    }
+                    player_sm.start_attack(attack_def, damage_context)
+                    self.character._attack_facing_locked = True
+                    self.character.reset_attack_cooldown(is_weapon=True, hand=hand)
+                    # Publish ATTACK_STARTED event
+                    try:
+                        from rendering.visual_effect_bridge import publish_attack_started
+                        publish_attack_started(
+                            entity_id="player",
+                            attack_id=attack_def.attack_id,
+                            weapon_type=weapon_type,
+                            tags=effect_tags)
+                    except ImportError:
+                        pass
+            elif player_sm.is_attacking:
+                pa.input_buffer.buffer("attack")
+        else:
+            # Legacy fallback: create a sweep effect that checks for hits
+            # Uses the attack effects system with a sweep that covers weapon range
+            weapon_range = self.character.equipment.get_weapon_range(hand)
+
+            # Check for enemies in range along the attack direction
+            enemies = self.combat_manager.get_all_active_enemies()
+            if self.combat_manager.dungeon_enemies:
+                enemies = list(enemies) + list(self.combat_manager.dungeon_enemies)
+
+            weapon_type = self._get_weapon_type(hand)
+            arc_half = 45.0  # Default arc half-width
+            if weapon_type in ('bow', 'staff'):
+                arc_half = 15.0
+            elif weapon_type in ('dagger', 'spear'):
+                arc_half = 20.0
+            elif weapon_type in ('axe', 'sword_2h', 'hammer_2h'):
+                arc_half = 55.0
+
+            hit_enemy = None
+            for enemy in enemies:
+                if not enemy.is_alive:
+                    continue
+                dist = enemy.distance_to((player_x, player_y))
+                if dist > weapon_range:
+                    continue
+                # Check if enemy is within the attack arc
+                ex, ey = enemy.position[0], enemy.position[1]
+                angle_to_enemy = math.degrees(math.atan2(ey - player_y, ex - player_x))
+                angle_diff = abs((angle_to_enemy - attack_angle + 180) % 360 - 180)
+                if angle_diff <= arc_half:
+                    hit_enemy = enemy
+                    break
+
+            # Create sweep visual effect
+            effect_tags, effect_params = self._get_weapon_effect_data(hand)
+            from systems.attack_effects import get_attack_effects_manager, AttackSourceType
+            attack_effects = get_attack_effects_manager()
+
+            target_x = player_x + math.cos(math.radians(attack_angle)) * weapon_range
+            target_y = player_y + math.sin(math.radians(attack_angle)) * weapon_range
+            attack_effects.add_attack_effect(
+                (player_x, player_y), (target_x, target_y),
+                AttackSourceType.PLAYER,
+                damage=effect_params.get('baseDamage', 0),
+                tags=effect_tags or ['physical'],
+                facing_angle=attack_angle,
+                arc_degrees=arc_half * 2,
+                radius=weapon_range)
+
+            # Apply damage if an enemy was in the sweep
+            if hit_enemy:
+                damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
+                    hit_enemy, effect_tags, effect_params, skip_visual=True
+                )
+                self.damage_numbers.append(DamageNumber(
+                    int(damage),
+                    Position(hit_enemy.position[0], hit_enemy.position[1], 0),
+                    is_crit))
+                if self._enhanced_damage_numbers:
+                    _dmg_type = "physical"
+                    for _t in (effect_tags or []):
+                        if _t in ("fire", "ice", "frost", "lightning", "poison", "arcane", "shadow", "holy"):
+                            _dmg_type = "ice" if _t == "frost" else _t
+                            break
+                    self._enhanced_damage_numbers.spawn(
+                        int(damage), hit_enemy.position[0], hit_enemy.position[1],
+                        is_crit=is_crit, damage_type=_dmg_type)
+
+                # Publish DAMAGE_DEALT event for legacy combat path
+                try:
+                    from rendering.visual_effect_bridge import publish_damage_dealt
+                    _dmg_type_evt = "physical"
+                    for _t in (effect_tags or []):
+                        if _t in ("fire", "ice", "frost", "lightning", "poison", "arcane", "shadow", "holy"):
+                            _dmg_type_evt = "ice" if _t == "frost" else _t
+                            break
+                    publish_damage_dealt(
+                        target_id=getattr(hit_enemy, 'entity_id', 'enemy'),
+                        attacker_id="player", amount=damage,
+                        damage_type=_dmg_type_evt, is_crit=is_crit,
+                        position_x=hit_enemy.position[0], position_y=hit_enemy.position[1],
+                        source="legacy_combat")
+                except ImportError:
+                    pass
+
+                if not hit_enemy.is_alive:
+                    if self._enemy_death_manager:
+                        _vis = getattr(hit_enemy.definition, 'visual_size', 1.0)
+                        _tc = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
+                        self._enemy_death_manager.spawn(
+                            hit_enemy.position[0], hit_enemy.position[1],
+                            _vis, hit_enemy.definition.tier,
+                            _tc.get(hit_enemy.definition.tier, (200, 100, 100)))
+                    self.add_notification(f"Defeated {hit_enemy.definition.name}!", (255, 215, 0))
+                    self.character.activities.record_activity('combat', 1)
+
+                    # Publish ENEMY_KILLED event
+                    try:
+                        from rendering.visual_effect_bridge import publish_enemy_killed
+                        publish_enemy_killed(
+                            enemy_id=getattr(hit_enemy, 'entity_id', 'enemy'),
+                            killer_id="player",
+                            position_x=hit_enemy.position[0], position_y=hit_enemy.position[1],
+                            tier=hit_enemy.definition.tier,
+                            visual_size=getattr(hit_enemy.definition, 'visual_size', 1.0),
+                            is_boss=getattr(hit_enemy.definition, 'is_boss', False),
+                            loot=loot if loot else [],
+                            source="legacy_combat")
+                    except ImportError:
+                        pass
+
+                    if loot:
+                        mat_db = MaterialDatabase.get_instance()
+                        for material_id, qty in loot:
+                            mat = mat_db.get_material(material_id)
+                            item_name = mat.name if mat else material_id
+                            self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+
+            self.character.reset_attack_cooldown(is_weapon=True, hand=hand)
+
+    def _get_weapon_type(self, hand: str = 'mainHand') -> str:
+        """Determine weapon type string from equipped weapon tags."""
+        weapon = self.character.equipment.slots.get(hand)
+        if not weapon:
+            return "unarmed"
+
+        tags = []
+        if hasattr(weapon, 'tags') and weapon.tags:
+            tags = weapon.tags
+        elif hasattr(weapon, 'get_metadata_tags'):
+            tags = weapon.get_metadata_tags()
+
+        tag_set = set(t.lower() if isinstance(t, str) else '' for t in tags)
+
+        # Also check subtype for direct mapping
+        subtype = ''
+        if hasattr(weapon, 'subtype'):
+            subtype = (weapon.subtype or '').lower()
+
+        if 'bow' in tag_set or 'ranged' in tag_set or subtype == 'bow':
+            return "bow"
+        elif 'staff' in tag_set or 'magic' in tag_set or subtype == 'staff':
+            return "staff"
+        elif 'dagger' in tag_set or subtype == 'dagger':
+            return "dagger"
+        elif 'spear' in tag_set or subtype == 'spear':
+            return "spear"
+        elif 'axe' in tag_set or subtype in ('axe', 'battleaxe'):
+            return "axe"
+        elif 'mace' in tag_set or subtype in ('mace', 'warhammer'):
+            return "mace"
+        elif 'two_handed' in tag_set and ('hammer' in tag_set):
+            return "hammer_2h"
+        elif 'two_handed' in tag_set:
+            return "sword_2h"
+        else:
+            return "sword_1h"
+
+    def _process_enemy_screen_shakes(self):
+        """Check all enemies for pending screen shake from attacks and apply them."""
+        if not self._action_combat or 'screen_effects' not in self._ac:
+            # Fallback: apply shake directly to camera for non-action-combat
+            for enemy in self.combat_manager.get_all_active_enemies():
+                shake = getattr(enemy, '_pending_screen_shake', None)
+                if shake:
+                    intensity, duration = shake
+                    # Apply directly via camera shake_offset for a few frames
+                    import random as _rng
+                    mag = int(intensity)
+                    if mag > 0:
+                        self.camera.shake_offset = (
+                            _rng.randint(-mag, mag), _rng.randint(-mag, mag))
+                    enemy._pending_screen_shake = None
+            return
+
+        se = self._ac['screen_effects']
+        for enemy in self.combat_manager.get_all_active_enemies():
+            shake = getattr(enemy, '_pending_screen_shake', None)
+            if shake:
+                intensity, duration = shake
+                se.screen_shake(intensity, duration)
+                enemy._pending_screen_shake = None
 
     # ========================================================================
     # CONFIGURATION LOADERS
@@ -3640,6 +4271,26 @@ class GameEngine:
             import traceback
             traceback.print_exc()
             self.add_notification("Item generation failed", (255, 100, 100))
+
+    def _init_world_memory(self):
+        """Initialize the World Memory System (AI foundation layer)."""
+        try:
+            from ai.memory.world_memory_system import WorldMemorySystem
+            from core.paths import PathManager
+            paths = PathManager()
+            save_dir = str(paths.save_path)
+            geo_map_path = str(paths.base_path / "AI-Config.JSON" / "geographic-map.json")
+
+            self.world_memory = WorldMemorySystem.get_instance()
+            self.world_memory.initialize(
+                save_dir=save_dir,
+                character=self.character,
+                world=self.world,
+                geo_map_path=geo_map_path,
+            )
+        except Exception as e:
+            print(f"[WorldMemory] Init failed (non-fatal): {e}")
+            self.world_memory = None
 
     def _check_background_generation(self):
         """Check if background LLM generation has completed and process the result."""
@@ -4802,6 +5453,22 @@ class GameEngine:
             }
             activity_type = activity_map.get(self.minigame_type, 'smithing')
             self.character.activities.record_activity(activity_type, 1)
+
+            # Publish crafting event for World Memory System
+            try:
+                from events.event_bus import get_event_bus
+                quality = craft_result.get('quality', 'normal')
+                get_event_bus().publish("ITEM_CRAFTED", {
+                    "recipe_id": recipe.recipe_id,
+                    "output_id": recipe.output_id,
+                    "discipline": activity_type,
+                    "quality": quality,
+                    "station_tier": recipe.station_tier,
+                    "position_x": self.character.position.x,
+                    "position_y": self.character.position.y,
+                }, source="crafting")
+            except Exception:
+                pass
 
             # Minigame gives XP (50% bonus over instant craft)
             xp_reward = int(20 * recipe.station_tier * 1.5)
@@ -6714,12 +7381,17 @@ class GameEngine:
                 # Track chunk exploration for map
                 self._update_chunk_exploration()
 
+            # Update World Memory System (AI event recording & interpretation)
+            if self.world_memory and self.character:
+                self.world_memory.update(dt, self.game_time, self.character)
+
             # Check if player is blocking with shield (right mouse held OR X key held)
             mouse_held = 3 in self.mouse_buttons_pressed
             x_key_held = pygame.K_x in self.keys_pressed
             has_shield = self.character.is_shield_active()
             shield_blocking = (mouse_held or x_key_held) and has_shield
             self.character.is_blocking = shield_blocking  # Update visual blocking state
+            self._shield_blocking = shield_blocking  # Stored for action combat hit processing
 
             # Debug output when trying to block
             if mouse_held or x_key_held:
@@ -6727,44 +7399,13 @@ class GameEngine:
 
             # Handle X key for offhand attacks (when not blocking)
             if pygame.K_x in self.keys_pressed and not shield_blocking:
-                # Get offhand weapon
                 offhand_weapon = self.character.equipment.slots.get('offHand')
                 if offhand_weapon and offhand_weapon.item_type != "shield":
-                    # Try to attack enemy at mouse position
                     mouse_pos = pygame.mouse.get_pos()
-                    if mouse_pos[0] < Config.VIEWPORT_WIDTH:  # In viewport
-                        # Convert to world coordinates
+                    if mouse_pos[0] < Config.VIEWPORT_WIDTH:
                         wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
                         wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
-
-                        # Check for enemy at position
-                        enemy = self.combat_manager.get_enemy_at_position((wx, wy))
-                        if enemy and enemy.is_alive:
-                            # Check if offhand can attack
-                            if self.character.can_attack('offHand'):
-                                # Check if in range
-                                weapon_range = self.character.equipment.get_weapon_range('offHand')
-                                dist = enemy.distance_to((self.character.position.x, self.character.position.y))
-                                if dist <= weapon_range:
-                                    # Attack with offhand (using tag system)
-                                    effect_tags, effect_params = self._get_weapon_effect_data('offHand')
-                                    damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
-                                        enemy, effect_tags, effect_params
-                                    )
-                                    self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
-                                    self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
-
-                                    if not enemy.is_alive:
-                                        self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
-                                        self.character.activities.record_activity('combat', 1)
-
-                                        # Show loot notifications
-                                        if loot:
-                                            mat_db = MaterialDatabase.get_instance()
-                                            for material_id, qty in loot:
-                                                mat = mat_db.get_material(material_id)
-                                                item_name = mat.name if mat else material_id
-                                                self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+                        self._initiate_attack_toward(wx, wy, 'offHand')
 
             # Handle continuous left-click (mainhand) attacks when mouse is held
             # This allows attacking while also blocking with right-click
@@ -6776,46 +7417,68 @@ class GameEngine:
                         can_attack = False
 
                 if can_attack:
-                    # Get mouse position and convert to world coordinates
-                    mouse_pos = pygame.mouse.get_pos()
-                    if mouse_pos[0] < Config.VIEWPORT_WIDTH:  # In viewport (not UI)
-                        wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
-                        wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
+                    if self._action_combat:
+                        # Action combat: route through attack state machine
+                        player_sm = self._ac['player_sm']
+                        pa = self._ac['player_actions']
+                        data = self._ac['data']
 
-                        # Check for enemy at mouse position
-                        if self.dungeon_manager.in_dungeon:
-                            enemy = self.combat_manager.get_dungeon_enemy_at_position((wx, wy))
-                        else:
-                            enemy = self.combat_manager.get_enemy_at_position((wx, wy))
-
-                        if enemy and enemy.is_alive:
-                            # Check if in range
+                        if not player_sm.is_attacking and not pa.is_dodging:
+                            # Generate attack from weapon properties
+                            weapon_type = self._get_weapon_type('mainHand')
                             weapon_range = self.character.equipment.get_weapon_range('mainHand')
-                            dist = enemy.distance_to((self.character.position.x, self.character.position.y))
-                            if dist <= weapon_range:
-                                # Attack with mainhand
+                            weapon_speed = self.character.equipment.get_weapon_attack_speed('mainHand')
+                            weapon = self.character.equipment.slots.get('mainHand')
+                            weapon_tags = weapon.get_metadata_tags() if weapon and hasattr(weapon, 'get_metadata_tags') else []
+                            attack_def = data.get_weapon_attack(
+                                weapon_type, 0, weapon_range, weapon_speed, weapon_tags)
+                            if attack_def:
                                 effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
-                                damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
-                                    enemy, effect_tags, effect_params
-                                )
-                                self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
-                                self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
+                                # Include weapon metadata for visual style resolution
+                                _w = self.character.equipment.slots.get('mainHand')
+                                damage_context = {
+                                    'effect_tags': effect_tags,
+                                    'effect_params': effect_params,
+                                    'weapon_type': weapon_type,
+                                    'weapon_tags': weapon_tags,
+                                    'weapon_tier': getattr(_w, 'tier', 1) if _w else 1,
+                                    'weapon_weight': getattr(_w, 'weight', 1.0) if _w else 1.0,
+                                }
+                                # Compute attack direction toward mouse cursor
+                                mouse_pos = pygame.mouse.get_pos()
+                                player_screen_x = Config.VIEWPORT_WIDTH // 2
+                                player_screen_y = Config.VIEWPORT_HEIGHT // 2
+                                dx = mouse_pos[0] - player_screen_x
+                                dy = mouse_pos[1] - player_screen_y
+                                import math
+                                self._ac_attack_angle = math.degrees(math.atan2(dy, dx))
+                                self.character.facing_angle = self._ac_attack_angle
 
-                                if not enemy.is_alive:
-                                    self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
-                                    self.character.activities.record_activity('combat', 1)
-                                    if loot:
-                                        mat_db = MaterialDatabase.get_instance()
-                                        for material_id, qty in loot:
-                                            mat = mat_db.get_material(material_id)
-                                            item_name = mat.name if mat else material_id
-                                            self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+                                player_sm.start_attack(attack_def, damage_context)
+                                self.character._attack_facing_locked = True
+                                self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
+                        elif player_sm.is_attacking:
+                            # Buffer the attack for combo continuation
+                            pa.input_buffer.buffer("attack")
+                    else:
+                        # Legacy path — route through _initiate_attack_toward
+                        mouse_pos = pygame.mouse.get_pos()
+                        if mouse_pos[0] < Config.VIEWPORT_WIDTH:
+                            wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
+                            wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
+                            self._initiate_attack_toward(wx, wy, 'mainHand')
 
             # Update combat based on whether in dungeon or world
             if self.dungeon_manager.in_dungeon:
                 self._update_dungeon(dt)
             else:
                 self.combat_manager.update(dt, shield_blocking=shield_blocking, is_night=self.is_night())
+
+            # Process pending screen shakes from enemy attacks
+            self._process_enemy_screen_shakes()
+
+            # Update action combat systems (hitboxes, projectiles, dodge, effects)
+            self._update_action_combat(dt)
 
             self.character.update_attack_cooldown(dt)
             self.character.update_health_regen(dt)
@@ -6843,6 +7506,13 @@ class GameEngine:
         self.damage_numbers = [d for d in self.damage_numbers if d.update(dt)]
         self.notifications = [n for n in self.notifications if n.update(dt)]
 
+        # Update enhanced visual systems
+        dt_ms = dt * 1000.0
+        if self._enhanced_damage_numbers:
+            self._enhanced_damage_numbers.update(dt_ms)
+        if self._enemy_death_manager:
+            self._enemy_death_manager.update(dt_ms)
+
     def render(self):
         self.screen.fill(Config.COLOR_BACKGROUND)
 
@@ -6862,8 +7532,26 @@ class GameEngine:
             pygame.display.flip()
             return
 
+        # Apply screen shake offset to camera for this frame
+        if self._action_combat and 'screen_effects' in self._ac:
+            self.camera.shake_offset = self._ac['screen_effects'].shake_offset
+        else:
+            self.camera.shake_offset = (0, 0)
+
+        # Pass enhanced visual managers to renderer for this frame
+        self.renderer._damage_number_manager = self._enhanced_damage_numbers
+        self.renderer._death_effect_manager = self._enemy_death_manager
+        self.renderer._debug_hitboxes = self.debug_mode_active.get('f1', False)
+
         # Render world or dungeon depending on state
         if self.dungeon_manager.in_dungeon:
+            # Pass action combat systems for dungeon rendering too
+            if self._action_combat:
+                self.renderer._temp_ac_systems = self._ac
+                self.renderer._temp_combat_manager = self.combat_manager
+            else:
+                self.renderer._temp_ac_systems = None
+                self.renderer._temp_combat_manager = None
             # Render dungeon
             self.renderer.render_dungeon(
                 self.dungeon_manager,
@@ -6875,7 +7563,17 @@ class GameEngine:
         else:
             # Pass NPCs to renderer via temporary attribute
             self.renderer._temp_npcs = self.npcs
+            # Pass action combat systems to renderer for visual overlays
+            if self._action_combat:
+                self.renderer._temp_ac_systems = self._ac
+                self.renderer._temp_combat_manager = self.combat_manager
+            else:
+                self.renderer._temp_ac_systems = None
+                self.renderer._temp_combat_manager = None
             self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers, self.combat_manager)
+
+        # Reset shake offset so UI elements are not affected
+        self.camera.shake_offset = (0, 0)
 
         # Render day/night cycle overlay
         time_phase, phase_progress = self.get_time_of_day()

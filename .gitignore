@@ -4,54 +4,97 @@ __pycache__/
 *$py.class
 *.so
 .Python
+*.egg-info/
+dist/
+build/
 
 # Virtual environments
 venv/
 env/
 ENV/
+.venv/
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Game-specific
-*.log
-*.db
+# Environment / secrets
+.env
+.env.*
+*.pem
+
+# =============================================================================
+# GAME RUNTIME - Save files, debug logs, caches
+# =============================================================================
+
+# Save game data (player-specific, not shared)
+Game-1-modular/saves/
+
+# LLM debug logs (generated at runtime, not useful in repo)
+Game-1-modular/llm_debug_logs/
+
+# Pytest
 .pytest_cache/
 
-# Test outputs and generated files
+# Game logs
+*.log
+
+# =============================================================================
+# TEST / GENERATED OUTPUT
+# =============================================================================
+
 **/test_output/
 **/generated_icons/
-**/__pycache__/
 
-# Generated training datasets (regenerated during training)
+# =============================================================================
+# ML / TRAINING - Regenerated artifacts
+# =============================================================================
+
+# Generated training datasets
 *.npz
 
 # Generated LLM/VLM training data output
 Scaled JSON Development/training_data/
 
-# =============================================================================
-# CLASSIFIER MODELS - Large binary files
-# =============================================================================
-# Production crafting_classifier_models are tracked (Scaled JSON Development/crafting_classifier_models/{discipline}/)
-# Training/archived crafting_classifier_models are NOT tracked (too large, regenerated)
+# Together.ai scripts (parameters change every run — FILE_ID, MODEL, hyperparams)
+Scaled JSON Development/LLM Training Data/together_finetune.py
+Scaled JSON Development/LLM Training Data/upload_together.py
 
-# Ignore archived crafting_classifier_models (old/backup versions)
-Scaled JSON Development/crafting_classifier_models/archived/
+# Together.ai fine-tuning outputs (JSONL is regenerated from source data)
+Scaled JSON Development/LLM Training Data/jsonl_outputs/
 
-# Ignore CNN training directories (large training crafting_classifier_models + datasets)
+# LLM few-shot test outputs (batch runs, results)
+Scaled JSON Development/LLM Training Data/Fewshot_llm/outputs/
+
+# Archived models (old/backup versions)
+Scaled JSON Development/models/archived/
+
+# CNN training artifacts (large, regenerated)
 Scaled JSON Development/Convolution Neural Network (CNN)/Smithing/*.keras
 Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/*.keras
 Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/best_model_variations/
 
-# Ignore LightGBM training artifacts (regenerated)
+# LightGBM training artifacts (regenerated)
 Scaled JSON Development/Simple Classifiers (LightGBM)/*.bin
 Scaled JSON Development/Simple Classifiers (LightGBM)/*.txt
 
-# Keep production crafting_classifier_models tracked - these are the ones the game uses
-# Located at: Scaled JSON Development/crafting_classifier_models/{smithing,adornment,alchemy,engineering,refining}/
-# These should be pushed to the repo
+# Feature extractor pickles (regenerated during training)
+Scaled JSON Development/models/**/*.pkl
+
+# Data hash caches (regenerated)
+Scaled JSON Development/.data_hashes.json
+
+# Template generation cache
+Scaled JSON Development/json_templates/
+
+# Keep production models tracked - these are the ones the game uses
+# Located at: Scaled JSON Development/models/{smithing,adornment,alchemy,engineering,refining}/
+# .keras and .json model files should be pushed to the repo

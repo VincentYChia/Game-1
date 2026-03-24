@@ -22,5 +22,15 @@ class LevelingSystem:
             self.level += 1
             self.unallocated_stat_points += 1
             print(f"🎉 LEVEL UP! Now level {self.level}")
+            # Publish level up event for World Memory System
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("LEVEL_UP", {
+                    "new_level": self.level,
+                    "stat_points": self.unallocated_stat_points,
+                    "source": source,
+                }, source="leveling")
+            except Exception:
+                pass
             return True
         return False

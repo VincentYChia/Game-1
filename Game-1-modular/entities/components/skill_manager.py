@@ -938,6 +938,11 @@ class SkillManager:
             )
             print(f"   ✓ Affected {len(context.targets)} target(s)")
 
+            # Generate tag-driven visual feedback from skill geometry
+            self._generate_skill_visual(
+                character, primary_target, skill_def.combat_tags,
+                scaled_params, context.targets)
+
             # Check for killed enemies and handle rewards/dungeon tracking
             if combat_manager:
                 for target in context.targets:
@@ -969,3 +974,118 @@ class SkillManager:
         except Exception as e:
             self.debugger.error(f"Combat skill execution failed: {e}")
             print(f"   ⚠ Skill execution failed: {e}")
+
+    def _generate_skill_visual(self, character, primary_target, combat_tags,
+                                params, affected_targets):
+        """Generate tag-driven visual effects for a skill activation.
+
+        Reads geometry tags (circle, cone, beam, chain, single) and damage
+        type tags (fire, ice, etc.) to produce the appropriate visual.
+        Uses the existing attack_effects system so visuals are consistent
+        with weapon attacks.
+        """
+        import math as _math
+        try:
+            from systems.attack_effects import get_attack_effects_manager, AttackSourceType
+        except ImportError:
+            return
+
+        effects = get_attack_effects_manager()
+        player_pos = (character.position.x, character.position.y)
+
+        # Determine geometry from tags
+        has_circle = 'circle' in combat_tags
+        has_cone = 'cone' in combat_tags
+        has_beam = 'beam' in combat_tags
+        has_chain = 'chain' in combat_tags
+        has_pierce = 'pierce' in combat_tags
+        has_single = 'single' in combat_tags or 'single_target' in combat_tags
+
+        # Get target position
+        target_pos = player_pos  # Default to self
+        if hasattr(primary_target, 'position'):
+            pos = primary_target.position
+            if hasattr(pos, 'x'):
+                target_pos = (pos.x, pos.y)
+            elif isinstance(pos, (list, tuple)):
+                target_pos = (pos[0], pos[1])
+        elif isinstance(primary_target, (list, tuple)):
+            target_pos = (primary_target[0], primary_target[1])
+
+        # Facing angle toward target
+        dx = target_pos[0] - player_pos[0]
+        dy = target_pos[1] - player_pos[1]
+        facing = _math.degrees(_math.atan2(dy, dx)) if (dx != 0 or dy != 0) else 0.0
+
+        if has_circle:
+            # AoE ring centered on source or target
+            radius = params.get('circle_radius', 3.0)
+            origin = params.get('origin', 'source')
+            center = player_pos if origin == 'source' else target_pos
+            effects.add_area_effect(center, radius, AttackSourceType.PLAYER,
+                                    tags=combat_tags)
+            effects.add_impact_burst(center, AttackSourceType.PLAYER,
+                                     tags=combat_tags)
+
+        elif has_cone:
+            cone_angle = params.get('cone_angle', 60.0)
+            cone_range = params.get('cone_range', 3.0)
+            effects.add_attack_effect(
+                player_pos, target_pos, AttackSourceType.PLAYER,
+                damage=params.get('baseDamage', 0),
+                tags=combat_tags, facing_angle=facing,
+                arc_degrees=cone_angle, radius=cone_range)
+
+        elif has_beam:
+            beam_range = params.get('beam_range', 5.0)
+            effects.add_attack_effect(
+                player_pos, target_pos, AttackSourceType.PLAYER,
+                damage=params.get('baseDamage', 0),
+                tags=combat_tags + ['thrust'],
+                facing_angle=facing, radius=beam_range)
+
+        elif has_chain:
+            # Chain effect: draw lines between affected targets
+            prev_pos = player_pos
+            for target in affected_targets:
+                t_pos = prev_pos
+                if hasattr(target, 'position'):
+                    pos = target.position
+                    if hasattr(pos, 'x'):
+                        t_pos = (pos.x, pos.y)
+                    elif isinstance(pos, (list, tuple)):
+                        t_pos = (pos[0], pos[1])
+                effects.add_attack_effect(
+                    prev_pos, t_pos, AttackSourceType.PLAYER,
+                    damage=params.get('baseDamage', 0),
+                    tags=combat_tags)
+                effects.add_impact_burst(t_pos, AttackSourceType.PLAYER,
+                                         tags=combat_tags)
+                prev_pos = t_pos
+
+        elif has_single or has_pierce:
+            # Single target slash or piercing thrust
+            _is_thrust = any(t in combat_tags for t in ('piercing', 'spear', 'thrust', 'dagger'))
+            effects.add_attack_effect(
+                player_pos, target_pos, AttackSourceType.PLAYER,
+                damage=params.get('baseDamage', 0),
+                tags=combat_tags, facing_angle=facing,
+                arc_degrees=15.0 if (_is_thrust or has_pierce) else 50.0,
+                radius=2.0)
+            for target in affected_targets:
+                t_pos = target_pos
+                if hasattr(target, 'position'):
+                    pos = target.position
+                    if hasattr(pos, 'x'):
+                        t_pos = (pos.x, pos.y)
+                    elif isinstance(pos, (list, tuple)):
+                        t_pos = (pos[0], pos[1])
+                effects.add_impact_burst(t_pos, AttackSourceType.PLAYER,
+                                         tags=combat_tags)
+
+        else:
+            # Fallback: slash arc toward target
+            effects.add_attack_effect(
+                player_pos, target_pos, AttackSourceType.PLAYER,
+                damage=params.get('baseDamage', 0),
+                tags=combat_tags, facing_angle=facing)

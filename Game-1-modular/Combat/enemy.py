@@ -70,6 +70,26 @@ class AIPattern:
     special_abilities: List[str] = field(default_factory=list)
 
 @dataclass
+class EnemyAttackDef:
+    """Per-enemy attack definition loaded from JSON.
+
+    Each enemy can have multiple attacks with different shapes, arcs, ranges,
+    and timing. The 'weight' field controls selection probability.
+    """
+    attack_id: str
+    shape: str                       # 'arc', 'circle', 'line', 'rect'
+    arc: float = 80.0                # Arc angle in degrees (for 'arc' shape)
+    range: float = 1.5               # Attack reach in tiles
+    windup: float = 500.0            # Windup phase duration (ms)
+    active: float = 200.0            # Active (damage) phase duration (ms)
+    recovery: float = 350.0          # Recovery phase duration (ms)
+    weight: int = 1                  # Selection weight (higher = more frequent)
+    tags: List[str] = field(default_factory=lambda: ['physical'])
+    screen_shake: bool = False
+    damage_multiplier: float = 1.0
+    status_tags: List[str] = field(default_factory=list)
+
+@dataclass
 class EnemyDefinition:
     enemy_id: str
     name: str
@@ -93,10 +113,53 @@ class EnemyDefinition:
     # Special abilities (tag-based attacks)
     special_abilities: List[SpecialAbility] = field(default_factory=list)
 
+    # Per-enemy attack definitions (loaded from JSON)
+    attacks: List[EnemyAttackDef] = field(default_factory=list)
+
     # Metadata
     narrative: str = ""
     tags: List[str] = field(default_factory=list)
     icon_path: Optional[str] = None  # Optional path to enemy icon image (PNG/JPG)
+
+    # --- Computed visual size system ---
+    # Category defines a base size, tier multiplies it. Always >= 1.0, max 8.0.
+    # This replaces the old JSON-driven visual_size field.
+
+    # Category base sizes (minimum 1.0 for all)
+    _CATEGORY_BASE_SIZE = {
+        'beast': 1.0,
+        'ooze': 1.0,
+        'insect': 1.0,
+        'construct': 1.2,
+        'undead': 1.0,
+        'elemental': 1.1,
+        'aberration': 1.3,
+        'dragon': 1.5,
+        'humanoid': 1.0,
+    }
+
+    # Tier multipliers (only scale UP)
+    _TIER_SIZE_MULTIPLIER = {
+        1: 1.0,
+        2: 1.4,
+        3: 2.0,
+        4: 3.0,
+    }
+
+    @property
+    def visual_size(self) -> float:
+        """Compute visual size from category base × tier multiplier.
+
+        Always >= 1.0, max 8.0. Sizes only go UP with tier, never down.
+        """
+        base = self._CATEGORY_BASE_SIZE.get(self.category, 1.0)
+        multiplier = self._TIER_SIZE_MULTIPLIER.get(self.tier, 1.0)
+        return min(8.0, max(1.0, base * multiplier))
+
+    @property
+    def hurtbox_radius(self) -> float:
+        """Hurtbox radius scales with visual size. Proportional to visual_size."""
+        return max(0.4, self.visual_size * 0.4)
 
 
 # ============================================================================
@@ -202,14 +265,15 @@ class EnemyDatabase:
                 if not icon_path and enemy_id:
                     icon_path = f"enemies/{enemy_id}.png"
 
-                # Create definition
+                # Create definition (visual_size and hurtbox_radius are computed
+                # from category + tier, not loaded from JSON)
                 enemy_def = EnemyDefinition(
                     enemy_id=enemy_id,
                     name=enemy_data.get('name', 'Unknown Enemy'),
                     tier=enemy_data.get('tier', 1),
                     category=enemy_data.get('category', 'beast'),
                     behavior=enemy_data.get('behavior', 'passive_patrol'),
-                    max_health=stats.get('health', 50) * 0.1,  # Reduced by 90% for testing
+                    max_health=stats.get('health', 50),
                     damage_min=damage[0] if isinstance(damage, list) else damage,
                     damage_max=damage[1] if isinstance(damage, list) else damage,
                     defense=stats.get('defense', 0),
@@ -223,6 +287,11 @@ class EnemyDatabase:
                     tags=metadata.get('tags', []),
                     icon_path=icon_path
                 )
+
+                # Generate attack profiles from existing fields (category, tier,
+                # behavior, stats, abilities) — no JSON modification needed.
+                from Combat.attack_profile_generator import generate_attack_profile
+                enemy_def.attacks = generate_attack_profile(enemy_def)
 
                 self.enemies[enemy_def.enemy_id] = enemy_def
                 if enemy_def.tier in self.enemies_by_tier:
@@ -314,14 +383,14 @@ class EnemyDatabase:
                 if not icon_path and enemy_id:
                     icon_path = f"enemies/{enemy_id}.png"
 
-                # Create definition
+                # Create definition (visual_size/hurtbox_radius computed from category+tier)
                 enemy_def = EnemyDefinition(
                     enemy_id=enemy_id,
                     name=enemy_data.get('name', 'Unknown Enemy'),
                     tier=enemy_data.get('tier', 1),
                     category=enemy_data.get('category', 'beast'),
                     behavior=enemy_data.get('behavior', 'passive_patrol'),
-                    max_health=stats.get('health', 50) * 0.1,
+                    max_health=stats.get('health', 50),
                     damage_min=damage[0] if isinstance(damage, list) else damage,
                     damage_max=damage[1] if isinstance(damage, list) else damage,
                     defense=stats.get('defense', 0),
@@ -335,6 +404,10 @@ class EnemyDatabase:
                     tags=metadata.get('tags', []),
                     icon_path=icon_path
                 )
+
+                # Generate attack profiles from existing fields
+                from Combat.attack_profile_generator import generate_attack_profile
+                enemy_def.attacks = generate_attack_profile(enemy_def)
 
                 self.enemies[enemy_def.enemy_id] = enemy_def
                 if enemy_def.tier in self.enemies_by_tier:
@@ -448,6 +521,32 @@ class Enemy:
         self.ability_uses_this_fight: Dict[str, int] = {
             ability.ability_id: 0 for ability in definition.special_abilities
         }
+
+        # Action combat fields (used when combat.USE_ACTION_COMBAT is True)
+        self.facing_angle: float = 0.0          # Degrees, 0=right, 90=down
+        self.attack_state_machine = None         # Set by game engine when action combat is active
+        self.hurtbox_radius: float = self.definition.hurtbox_radius  # From definition
+
+        # Attack animation state (for visual feedback in renderer)
+        self.attack_anim_timer: float = 0.0     # Counts down during attack animation
+        self.attack_anim_duration: float = 1.0  # Total animation time (seconds, slower for visibility)
+        self.attack_anim_angle: float = 0.0     # Direction of attack
+        self.attack_anim_tags: List[str] = []   # Damage type tags for color (e.g. ['fire','circle'])
+        self.attack_anim_lunge: bool = False    # True only for leap/charge abilities
+
+        # Phased attack system — windup (telegraph) → active (damage) → recovery
+        # This gives the player a dodge/react window before damage lands.
+        self.attack_phase: str = 'idle'         # 'idle', 'windup', 'active', 'recovery'
+        self.attack_phase_timer: float = 0.0    # Counts down within current phase
+        self.attack_target_pos: Optional[Tuple[float, float]] = None  # Locked target position
+        self.attack_pending_data: Optional[Dict] = None  # Stored data for when damage fires
+        # Phase durations derived from category + attack_speed
+        self._attack_windup_ms: float = 0.0
+        self._attack_active_ms: float = 0.0
+        self._attack_recovery_ms: float = 0.0
+        # Attack geometry (set by start_phased_attack, read by renderer)
+        self._attack_arc_degrees: float = 80.0
+        self._attack_radius: float = 1.0
 
     def _get_initial_state(self) -> AIState:
         """Map behavior string to initial AI state"""
@@ -582,6 +681,10 @@ class Enemy:
         if self.attack_cooldown > 0:
             self.attack_cooldown -= dt
 
+        # Update attack animation timer
+        if self.attack_anim_timer > 0:
+            self.attack_anim_timer -= dt
+
         # Update ability cooldowns
         for ability_id in self.ability_cooldowns:
             if self.ability_cooldowns[ability_id] > 0:
@@ -589,6 +692,18 @@ class Enemy:
 
         # Get distance to player
         dist_to_player = self.distance_to(player_position)
+
+        # Update facing angle toward player when in combat states
+        if self.ai_state in (AIState.CHASE, AIState.ATTACK):
+            dx = player_position[0] - self.position[0]
+            dy = player_position[1] - self.position[1]
+            if abs(dx) > 0.01 or abs(dy) > 0.01:
+                import math
+                self.facing_angle = math.degrees(math.atan2(dy, dx))
+
+        # Update action combat attack state machine if present
+        if self.attack_state_machine is not None:
+            self.attack_state_machine.update(dt * 1000)  # ASM expects ms
 
         # State machine
         if self.ai_state == AIState.IDLE:
@@ -833,12 +948,171 @@ class Enemy:
                 self.position[1] = new_y
 
     def can_attack(self) -> bool:
-        """Check if enemy can attack (cooldown ready and not CC'd)"""
+        """Check if enemy can attack (cooldown ready, not CC'd, not mid-attack)"""
         # Check if stunned/silenced
         if hasattr(self, 'status_manager') and self.status_manager.is_silenced():
             return False
 
+        # Can't start new attack while in a phased attack
+        if self.attack_phase != 'idle':
+            return False
+
         return self.attack_cooldown <= 0 and self.ai_state == AIState.ATTACK
+
+    def _select_attack(self) -> Optional['EnemyAttackDef']:
+        """Select a random attack from the enemy's attack pool using weights."""
+        attacks = self.definition.attacks
+        if not attacks:
+            return None
+        weights = [atk.weight for atk in attacks]
+        return random.choices(attacks, weights=weights, k=1)[0]
+
+    def start_phased_attack(self, target_pos: Tuple[float, float],
+                            tags: Optional[List[str]] = None,
+                            is_ability: bool = False,
+                            ability: Optional['SpecialAbility'] = None) -> bool:
+        """Begin a phased attack: windup → active → recovery.
+
+        During windup the enemy telegraphs visually but deals no damage.
+        The player can dodge during this window. Damage fires at the
+        start of the active phase. Recovery prevents the next attack.
+
+        Uses per-enemy attack definitions from JSON when available,
+        otherwise falls back to category-based profiles.
+        """
+        import math as _math
+
+        if self.attack_phase != 'idle':
+            return False
+
+        # Try to select a per-enemy attack definition (JSON-driven)
+        selected_attack = None if is_ability else self._select_attack()
+
+        if selected_attack:
+            # Use per-enemy attack definition — full variety from JSON
+            speed_factor = 1.0 / max(0.3, self.definition.attack_speed)
+            tier_speed = {1: 1.0, 2: 0.95, 3: 0.9, 4: 0.85}.get(self.definition.tier, 1.0)
+
+            self._attack_windup_ms = selected_attack.windup * speed_factor * tier_speed
+            self._attack_active_ms = selected_attack.active * speed_factor * tier_speed
+            self._attack_recovery_ms = selected_attack.recovery * speed_factor * tier_speed
+
+            self._attack_arc_degrees = selected_attack.arc if selected_attack.shape == 'arc' else 360
+            self._attack_radius = selected_attack.range
+            self._attack_shape = selected_attack.shape
+            self._attack_screen_shake = selected_attack.screen_shake
+            self._attack_damage_mult = selected_attack.damage_multiplier
+
+            attack_tags = selected_attack.tags
+        else:
+            # Ability-only fallback: use the primary generated attack's timing
+            # as a baseline for ability windups (abilities skip _select_attack).
+            primary = self.definition.attacks[0] if self.definition.attacks else None
+            if primary:
+                speed_factor = 1.0 / max(0.3, self.definition.attack_speed)
+                tier_speed = {1: 1.0, 2: 0.95, 3: 0.9, 4: 0.85}.get(self.definition.tier, 1.0)
+
+                self._attack_windup_ms = primary.windup * speed_factor * tier_speed
+                self._attack_active_ms = primary.active * speed_factor * tier_speed
+                self._attack_recovery_ms = primary.recovery * speed_factor * tier_speed
+
+                self._attack_arc_degrees = primary.arc if primary.shape == 'arc' else 360
+                self._attack_radius = primary.range
+                self._attack_shape = primary.shape
+                self._attack_screen_shake = False
+                self._attack_damage_mult = 1.0
+            else:
+                # Absolute last resort (should never happen with generator)
+                self._attack_windup_ms = 600
+                self._attack_active_ms = 240
+                self._attack_recovery_ms = 400
+                self._attack_arc_degrees = 80
+                self._attack_radius = 1.5
+                self._attack_shape = 'arc'
+                self._attack_screen_shake = False
+                self._attack_damage_mult = 1.0
+
+            attack_tags = tags or ['physical']
+
+        # Enter windup phase
+        self.attack_phase = 'windup'
+        self.attack_phase_timer = self._attack_windup_ms
+        self.attack_target_pos = target_pos
+
+        # Compute facing toward target
+        dx = target_pos[0] - self.position[0]
+        dy = target_pos[1] - self.position[1]
+        self.facing_angle = _math.degrees(_math.atan2(dy, dx))
+
+        # Store pending data — combat_manager will read this when active phase starts
+        self.attack_pending_data = {
+            'tags': attack_tags,
+            'is_ability': is_ability,
+            'ability': ability,
+            'damage_multiplier': getattr(self, '_attack_damage_mult', 1.0),
+            'screen_shake': getattr(self, '_attack_screen_shake', False),
+        }
+
+        # Set animation data for renderer (reads _attack_arc_degrees, _attack_radius, _attack_shape)
+        self.attack_anim_angle = self.facing_angle
+        self.attack_anim_tags = list(attack_tags)
+        self.attack_anim_lunge = (ability is not None and
+            ability.ability_id in ('leap_attack', 'charge_attack', 'pounce'))
+        total_dur = (self._attack_windup_ms + self._attack_active_ms +
+                     self._attack_recovery_ms) / 1000.0
+        self.attack_anim_timer = total_dur
+        self.attack_anim_duration = total_dur
+
+        # Set attack cooldown so can_attack() blocks until full cycle + cooldown
+        self.attack_cooldown = total_dur + (1.0 / self.definition.attack_speed)
+
+        return True
+
+    def update_attack_phase(self, dt_ms: float) -> Optional[str]:
+        """Advance the phased attack timer. Returns phase transition event or None.
+
+        Returns:
+            'active_start' when windup ends and damage should fire
+            'recovery_start' when active ends
+            'idle' when recovery ends
+            None when no transition
+        """
+        if self.attack_phase == 'idle':
+            return None
+
+        self.attack_phase_timer -= dt_ms
+        if self.attack_phase_timer <= 0:
+            if self.attack_phase == 'windup':
+                self.attack_phase = 'active'
+                self.attack_phase_timer = self._attack_active_ms
+                return 'active_start'
+            elif self.attack_phase == 'active':
+                self.attack_phase = 'recovery'
+                self.attack_phase_timer = self._attack_recovery_ms
+                return 'recovery_start'
+            elif self.attack_phase == 'recovery':
+                self.attack_phase = 'idle'
+                self.attack_phase_timer = 0
+                self.attack_pending_data = None
+                self.attack_target_pos = None
+                return 'idle'
+        return None
+
+    @property
+    def windup_progress(self) -> float:
+        """0.0 to 1.0 progress through windup. 0 if not in windup."""
+        if self.attack_phase != 'windup' or self._attack_windup_ms <= 0:
+            return 0.0
+        elapsed = self._attack_windup_ms - self.attack_phase_timer
+        return min(1.0, elapsed / self._attack_windup_ms)
+
+    @property
+    def is_in_windup(self) -> bool:
+        return self.attack_phase == 'windup'
+
+    @property
+    def is_in_recovery(self) -> bool:
+        return self.attack_phase == 'recovery'
 
     def perform_attack(self) -> float:
         """Perform attack, return damage amount"""
@@ -932,12 +1206,96 @@ class Enemy:
             )
             print(f"   ✓ Affected {len(context.targets)} target(s)")
 
+            # Generate tag-driven visual feedback for this ability
+            self._generate_ability_visual(target, tags, params, context.targets)
+
             return True
 
         except Exception as e:
             self.debugger.error(f"Enemy special ability failed: {e}")
             print(f"   ⚠ Ability failed: {e}")
             return False
+
+    def _generate_ability_visual(self, target, tags, params, affected_targets):
+        """Generate tag-driven visual effects for enemy special abilities.
+
+        Reads geometry tags (circle, cone, beam, chain) from the ability
+        and creates corresponding visual effects using the attack_effects system.
+        """
+        import math as _math
+        try:
+            from systems.attack_effects import get_attack_effects_manager, AttackSourceType
+        except ImportError:
+            return
+
+        effects = get_attack_effects_manager()
+        enemy_pos = (self.position[0], self.position[1])
+
+        # Get target position
+        target_pos = enemy_pos
+        if hasattr(target, 'position'):
+            pos = target.position
+            if hasattr(pos, 'x'):
+                target_pos = (pos.x, pos.y)
+            elif isinstance(pos, (list, tuple)):
+                target_pos = (pos[0], pos[1])
+
+        dx = target_pos[0] - enemy_pos[0]
+        dy = target_pos[1] - enemy_pos[1]
+        facing = _math.degrees(_math.atan2(dy, dx)) if (dx != 0 or dy != 0) else 0.0
+
+        has_circle = 'circle' in tags
+        has_cone = 'cone' in tags
+        has_beam = 'beam' in tags
+        has_chain = 'chain' in tags
+
+        if has_circle:
+            radius = params.get('circle_radius', 3.0)
+            origin = params.get('origin', 'source')
+            center = enemy_pos if origin == 'source' else target_pos
+            effects.add_area_effect(center, radius, AttackSourceType.ENEMY,
+                                    tags=tags)
+            effects.add_impact_burst(center, AttackSourceType.ENEMY, tags=tags)
+
+        elif has_cone:
+            cone_angle = params.get('cone_angle', 60.0)
+            cone_range = params.get('cone_range', 3.0)
+            effects.add_attack_effect(
+                enemy_pos, target_pos, AttackSourceType.ENEMY,
+                damage=params.get('baseDamage', 0), tags=tags,
+                facing_angle=facing, arc_degrees=cone_angle, radius=cone_range)
+
+        elif has_beam:
+            beam_range = params.get('beam_range', 5.0)
+            effects.add_attack_effect(
+                enemy_pos, target_pos, AttackSourceType.ENEMY,
+                damage=params.get('baseDamage', 0),
+                tags=tags + ['thrust'],
+                facing_angle=facing, radius=beam_range)
+
+        elif has_chain:
+            prev_pos = enemy_pos
+            for t in affected_targets:
+                t_pos = prev_pos
+                if hasattr(t, 'position'):
+                    pos = t.position
+                    if hasattr(pos, 'x'):
+                        t_pos = (pos.x, pos.y)
+                    elif isinstance(pos, (list, tuple)):
+                        t_pos = (pos[0], pos[1])
+                effects.add_attack_effect(
+                    prev_pos, t_pos, AttackSourceType.ENEMY,
+                    damage=params.get('baseDamage', 0), tags=tags)
+                effects.add_impact_burst(t_pos, AttackSourceType.ENEMY, tags=tags)
+                prev_pos = t_pos
+
+        else:
+            # Default: slash arc toward target
+            effects.add_attack_effect(
+                enemy_pos, target_pos, AttackSourceType.ENEMY,
+                damage=params.get('baseDamage', 0), tags=tags,
+                facing_angle=facing, arc_degrees=55.0,
+                radius=max(1.0, self.definition.visual_size * 0.8))
 
     def use_special_ability(self, ability: SpecialAbility, target: Any, available_targets: List[Any] = None) -> bool:
         """
@@ -965,6 +1323,21 @@ class Enemy:
 
             # Track usage (for once-per-fight and max-uses-per-fight limitations)
             self.ability_uses_this_fight[ability.ability_id] = self.ability_uses_this_fight.get(ability.ability_id, 0) + 1
+
+            # Trigger attack animation with ability tags
+            import math as _math
+            target_pos = getattr(target, 'position', None)
+            if target_pos:
+                tx = target_pos.x if hasattr(target_pos, 'x') else target_pos[0]
+                ty = target_pos.y if hasattr(target_pos, 'y') else target_pos[1]
+                dx = tx - self.position[0]
+                dy = ty - self.position[1]
+                self.attack_anim_angle = _math.degrees(_math.atan2(dy, dx))
+            self.attack_anim_timer = self.attack_anim_duration
+            self.attack_anim_tags = list(ability.tags)
+            # Lunge only for leap/charge type abilities
+            _LUNGE_ABILITIES = {'leap_attack', 'charge_attack', 'pounce'}
+            self.attack_anim_lunge = ability.ability_id in _LUNGE_ABILITIES
 
             # VISIBLE FEEDBACK - Show enemy used ability!
             print(f"\n⚡💀 ENEMY ABILITY: {self.definition.name} used {ability.name}!")

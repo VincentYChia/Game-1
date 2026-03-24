@@ -156,6 +156,30 @@ class CombatManager:
         self.dungeon_manager = None  # Set by game_engine when dungeon system is active
         self.dungeon_enemies: List[Enemy] = []  # Enemies spawned in current dungeon
 
+        # Action combat references (set by game_engine when combat.USE_ACTION_COMBAT is True)
+        self._hitbox_system = None      # combat.HitboxSystem
+        self._combat_data = None        # combat.CombatDataLoader
+        self._action_combat = False     # Whether action combat is active
+
+    def on_chunk_unloaded(self, chunk_key: Tuple[int, int]):
+        """Clean up enemies and corpses belonging to an unloaded chunk.
+
+        Called by WorldSystem via callback when a chunk leaves the loaded set.
+        Prevents enemy objects from leaking in memory after their chunk is gone.
+        """
+        # Remove enemies tracked for this chunk
+        removed_enemies = self.enemies.pop(chunk_key, [])
+
+        # Unregister action combat hurtboxes and clean corpse references
+        if removed_enemies:
+            removed_set = set(id(e) for e in removed_enemies)
+            for enemy in removed_enemies:
+                self._unregister_enemy_action_combat(enemy)
+            self.corpses = [c for c in self.corpses if id(c) not in removed_set]
+
+        # Clear spawn timer for this chunk so it respawns fresh on reload
+        self.spawn_timers.pop(chunk_key, None)
+
     def load_config(self, config_path: str, enemies_path: str, chunk_templates_path: Optional[str] = None):
         """Load combat configuration, enemy definitions, and chunk templates"""
         self.config.load_from_file(config_path)
@@ -368,6 +392,9 @@ class CombatManager:
             enemy.corpse_lifetime = self.config.corpse_lifetime
             self.enemies[chunk_coords].append(enemy)
 
+            # Register with action combat systems if active
+            self._register_enemy_action_combat(enemy)
+
     def spawn_initial_enemies(self, player_position: Tuple[float, float], count: int = 5):
         """Spawn initial enemies for testing (around player but outside safe zone)"""
         print(f"🎮 Spawning {count} initial enemies for testing...")
@@ -429,6 +456,9 @@ class CombatManager:
                         self.enemies[chunk_coords] = []
                     self.enemies[chunk_coords].append(enemy)
 
+                    # Register with action combat systems (hurtbox + ASM)
+                    self._register_enemy_action_combat(enemy)
+
                     spawned += 1
                     print(f"   ✓ Spawned T{tier} {enemy_def.name} at ({spawn_x:.1f}, {spawn_y:.1f})")
 
@@ -482,23 +512,28 @@ class CombatManager:
                     dist = enemy.distance_to(player_pos)
                     special_ability = enemy.can_use_special_ability(dist_to_target=dist, target_position=player_pos)
                     if special_ability:
-                        # Build available targets list (player + turrets + other valid targets)
+                        # Execute special ability immediately with visual
                         available_targets = [self.character]
-
-                        # Include turrets so enemies can target them with abilities
                         if hasattr(self.world, 'placed_entities'):
+                            from systems.world_system import PlacedEntityType
                             turrets = [e for e in self.world.placed_entities
                                       if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
                             available_targets.extend(turrets)
-
-                        # Use special ability if in range (abilities define their own ranges via distance conditions)
                         enemy.use_special_ability(special_ability, self.character, available_targets)
+                        enemy.attack_cooldown = 1.0 / enemy.definition.attack_speed
 
-                    # Check if enemy can attack player normally
+                    # Update phased attack timer (windup → active → recovery)
+                    phase_event = enemy.update_attack_phase(dt * 1000.0)
+                    if phase_event == 'active_start':
+                        # Windup finished — now deal damage
+                        self._enemy_phased_damage(enemy, shield_blocking=shield_blocking)
+
+                    # Check if enemy can start a new attack
                     elif enemy.can_attack():
                         dist = enemy.distance_to(player_pos)
                         if dist <= 1.5:  # Melee range
-                            self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
+                            enemy_tags = getattr(enemy.definition, 'tags', []) or ['physical']
+                            enemy.start_phased_attack(player_pos, tags=enemy_tags)
 
                 else:
                     # Enemy is dead - handle corpse
@@ -507,6 +542,7 @@ class CombatManager:
                     if enemy.ai_state == AIState.DEAD:
                         enemy.ai_state = AIState.CORPSE
                         enemy.time_since_death = 0.0  # Reset timer when entering corpse state
+                        self._unregister_enemy_action_combat(enemy)
 
                     if enemy.ai_state == AIState.CORPSE:
                         # Increment corpse timer
@@ -662,6 +698,18 @@ class CombatManager:
         # Apply damage
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
+        # Publish DAMAGE_DEALT event
+        try:
+            from rendering.visual_effect_bridge import publish_damage_dealt
+            publish_damage_dealt(
+                target_id=getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                attacker_id="player", amount=final_damage,
+                damage_type="physical", is_crit=is_crit,
+                position_x=enemy.position[0], position_y=enemy.position[1],
+                source="combat_manager")
+        except ImportError:
+            pass
+
         loot = []
         if enemy_died:
             print(f"      ☠️ Killed!")
@@ -678,6 +726,20 @@ class CombatManager:
             # Notify dungeon manager of kill for wave tracking
             if self.dungeon_manager and self.dungeon_manager.in_dungeon:
                 self.on_dungeon_enemy_killed(enemy)
+
+            # Publish ENEMY_KILLED event
+            try:
+                from rendering.visual_effect_bridge import publish_enemy_killed
+                publish_enemy_killed(
+                    enemy_id=getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                    killer_id="player",
+                    position_x=enemy.position[0], position_y=enemy.position[1],
+                    tier=enemy.definition.tier,
+                    visual_size=getattr(enemy.definition, 'visual_size', 1.0),
+                    is_boss=getattr(enemy.definition, 'is_boss', False),
+                    loot=loot, source="combat_manager")
+            except ImportError:
+                pass
 
         return (final_damage, is_crit, loot)
 
@@ -1197,7 +1259,7 @@ class CombatManager:
             print(f"   ⚠️  Attack failed: {e}")
             return (0.0, False, [])
 
-    def player_attack_enemy_with_tags(self, enemy: Enemy, tags: List[str], params: dict = None) -> Tuple[float, bool, List[Tuple[str, int]]]:
+    def player_attack_enemy_with_tags(self, enemy: Enemy, tags: List[str], params: dict = None, skip_visual: bool = False, skip_los: bool = False) -> Tuple[float, bool, List[Tuple[str, int]]]:
         """
         Player attacks enemy using tag-based effects system
 
@@ -1223,9 +1285,11 @@ class CombatManager:
         player_pos = (self.character.position.x, self.character.position.y)
         enemy_pos = (enemy.position[0], enemy.position[1])
 
-        # Line-of-sight check (circle/AoE attacks bypass this)
+        # Line-of-sight check (circle/AoE attacks bypass this).
+        # skip_los=True when hitbox system already confirmed geometric collision
+        # (action combat path), so a second LOS check is redundant.
         bypass_tags = {'circle', 'aoe', 'ground'}
-        if not any(tag in bypass_tags for tag in tags):
+        if not skip_los and not any(tag in bypass_tags for tag in tags):
             los_result = collision_system.has_line_of_sight(
                 player_pos, enemy_pos, attack_tags=tags
             )
@@ -1252,12 +1316,58 @@ class CombatManager:
                 # Return 0 damage - cooldown is handled by caller
                 return (0.0, False, [])
 
-        # Add attack line visual effect (will be drawn by renderer)
-        attack_effects.add_attack_line(
-            player_pos, enemy_pos,
-            AttackSourceType.PLAYER,
-            damage=params.get('baseDamage', 0) if params else 0
-        )
+        # Add tag-driven attack visual — shape determined by weapon type
+        import math as _math
+        _dx = enemy_pos[0] - player_pos[0]
+        _dy = enemy_pos[1] - player_pos[1]
+        _facing = _math.degrees(_math.atan2(_dy, _dx))
+        _dist = _math.sqrt(_dx * _dx + _dy * _dy)
+
+        if not skip_visual:
+            # Use actual weapon range for effect radius (not capped at 2.0)
+            _weapon_range = self.character.equipment.get_weapon_range(
+                getattr(self.character, '_selected_slot', 'mainHand') or 'mainHand')
+            _weapon_range = max(_weapon_range, _dist + 0.3)
+
+            _base_damage = params.get('baseDamage', 0) if params else 0
+
+            # Determine visual type by weapon category
+            _is_thrust = any(t in tags for t in ('piercing', 'spear', 'thrust', 'dagger'))
+            _is_staff = any(t in tags for t in ('staff', 'wand', 'magic'))
+            _is_bow = any(t in tags for t in ('bow', 'ranged'))
+
+            if _is_bow:
+                # Bows don't create sweep/thrust — they use the projectile system
+                pass
+            elif _is_thrust or _is_staff:
+                # Thrust line — spears, daggers, staffs (no sweep, instant forward line)
+                attack_effects.add_attack_effect(
+                    player_pos, enemy_pos, AttackSourceType.PLAYER,
+                    damage=_base_damage,
+                    tags=list(tags) + (['thrust'] if 'thrust' not in tags else []),
+                    facing_angle=_facing, arc_degrees=15.0,
+                    radius=_weapon_range)
+            else:
+                # Slash arc — sweeping weapons (swords, axes, maces, hammers)
+                if any(t in tags for t in ('dagger', 'knife')):
+                    _arc = 25.0
+                elif any(t in tags for t in ('sword', 'blade')):
+                    _arc = 55.0
+                elif any(t in tags for t in ('axe',)):
+                    _arc = 65.0
+                elif any(t in tags for t in ('mace', 'hammer', 'crushing')):
+                    _arc = 50.0
+                elif any(t in tags for t in ('heavy', 'two_handed')):
+                    _arc = 75.0
+                else:
+                    _arc = 50.0
+
+                attack_effects.add_attack_effect(
+                    player_pos, enemy_pos, AttackSourceType.PLAYER,
+                    damage=_base_damage,
+                    tags=tags or ['physical'],
+                    facing_angle=_facing, arc_degrees=_arc,
+                    radius=_weapon_range)
 
         # Check for active devastate buffs (AoE attacks like Whirlwind Strike)
         # Must check BEFORE normal attack to trigger AoE
@@ -1369,6 +1479,21 @@ class CombatManager:
             if enemy.is_alive:
                 self._apply_weapon_enchantment_effects(enemy)
 
+            # Publish DAMAGE_DEALT event for tag-based attack
+            try:
+                from rendering.visual_effect_bridge import publish_damage_dealt
+                _dmg_type = next((t for t in tags if t in
+                    ('fire', 'ice', 'lightning', 'poison', 'arcane', 'shadow', 'holy')), 'physical')
+                publish_damage_dealt(
+                    target_id=getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                    attacker_id="player", amount=final_damage,
+                    damage_type=_dmg_type,
+                    is_crit=getattr(context, 'any_crit', False) if hasattr(context, 'any_crit') else False,
+                    position_x=enemy.position[0], position_y=enemy.position[1],
+                    source="combat_manager_tags")
+            except (ImportError, Exception):
+                pass
+
             # Track damage dealt
             total_damage = 0.0
             enemy_died = False
@@ -1413,6 +1538,20 @@ class CombatManager:
 
                 # Execute on-kill triggers
                 self._execute_triggers('on_kill', target=enemy, hand='mainHand')
+
+                # Publish ENEMY_KILLED event
+                try:
+                    from rendering.visual_effect_bridge import publish_enemy_killed
+                    publish_enemy_killed(
+                        enemy_id=getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                        killer_id="player",
+                        position_x=enemy.position[0], position_y=enemy.position[1],
+                        tier=enemy.definition.tier,
+                        visual_size=getattr(enemy.definition, 'visual_size', 1.0),
+                        is_boss=getattr(enemy.definition, 'is_boss', False),
+                        loot=loot, source="combat_manager_tags")
+                except ImportError:
+                    pass
             else:
                 print(f"   Enemy HP remaining: {enemy.current_health:.1f}/{enemy.max_health:.1f}")
 
@@ -1474,7 +1613,7 @@ class CombatManager:
                 if enemy_died:
                     self.character.stat_tracker.record_enemy_killed(
                         tier=enemy.definition.tier,
-                        is_boss=enemy.definition.is_boss,
+                        is_boss=enemy.is_boss,
                         is_dragon='dragon' in enemy.definition.enemy_id.lower(),
                         weapon_element=weapon_element
                     )
@@ -1493,6 +1632,29 @@ class CombatManager:
             print(f"   ⚠ Tag attack failed: {e}")
             # Fall back to 0 damage on error
             return (0.0, False, [])
+
+    def _enemy_phased_damage(self, enemy: Enemy, shield_blocking: bool = False):
+        """Called when an enemy's windup completes and the active phase begins.
+
+        Routes to either special ability execution or normal attack damage.
+        The windup phase gave the player time to react (dodge/block).
+        """
+        pending = enemy.attack_pending_data
+        if not pending:
+            return
+
+        if pending.get('is_ability') and pending.get('ability'):
+            # Execute the special ability through the tag system
+            ability = pending['ability']
+            available_targets = [self.character]
+            if hasattr(self.world, 'placed_entities'):
+                turrets = [e for e in self.world.placed_entities
+                          if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
+                available_targets.extend(turrets)
+            enemy.use_special_ability(ability, self.character, available_targets)
+        else:
+            # Normal melee attack — route through existing damage pipeline
+            self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
 
     def _enemy_attack_player(self, enemy: Enemy, shield_blocking: bool = False):
         """Enemy attacks player
@@ -1535,18 +1697,54 @@ class CombatManager:
             enemy.attack_cooldown = 1.0 / enemy.definition.attack_speed
             return
 
-        # Add attack line visual
-        attack_effects.add_attack_line(
+        # Read per-attack data from pending attack (set by start_phased_attack)
+        pending = getattr(enemy, 'attack_pending_data', None) or {}
+        _atk_dmg_mult = pending.get('damage_multiplier', 1.0)
+        _atk_screen_shake = pending.get('screen_shake', False)
+        _atk_tags = pending.get('tags', [])
+
+        # Add tag-driven attack visual (slash arc toward player)
+        import math as _math
+        dx = player_pos[0] - enemy_pos[0]
+        dy = player_pos[1] - enemy_pos[1]
+        facing = _math.degrees(_math.atan2(dy, dx))
+        _dist = _math.sqrt(dx * dx + dy * dy)
+
+        # Use per-enemy attack tags if available, else definition tags
+        enemy_tags = _atk_tags if _atk_tags else (getattr(enemy.definition, 'tags', []) or ['physical'])
+        # Use actual attack geometry from the enemy instance
+        _enemy_arc = getattr(enemy, '_attack_arc_degrees', 80.0)
+        _enemy_radius = getattr(enemy, '_attack_radius', max(1.5, _dist + 0.3))
+        attack_effects.add_attack_effect(
             enemy_pos, player_pos,
             AttackSourceType.ENEMY,
-            damage=enemy.definition.damage_max
+            damage=enemy.definition.damage_max * _atk_dmg_mult,
+            tags=enemy_tags,
+            facing_angle=facing,
+            arc_degrees=_enemy_arc,
+            radius=max(1.5, _enemy_radius),
         )
+
+        # Screen shake — controlled by per-attack flag + tier scaling
+        if _atk_screen_shake:
+            try:
+                _shake_intensity = {1: 2, 2: 4, 3: 6, 4: 9}.get(enemy.definition.tier, 2)
+                _shake_duration = {1: 100, 2: 150, 3: 200, 4: 280}.get(enemy.definition.tier, 100)
+                enemy._pending_screen_shake = (_shake_intensity, _shake_duration)
+            except Exception:
+                pass
+
+        # Trigger enemy attack animation
+        enemy.attack_anim_timer = enemy.attack_anim_duration
+        enemy.attack_anim_angle = facing
+        enemy.attack_anim_tags = list(enemy_tags)
+        enemy.attack_anim_lunge = False  # Basic attacks don't lunge
 
         print(f"\n👹 ENEMY ATTACK: {enemy.definition.name}")
 
-        # Calculate damage
-        damage = enemy.perform_attack()
-        print(f"   Base damage: {damage:.1f}")
+        # Calculate damage (apply per-attack multiplier from JSON definition)
+        damage = enemy.perform_attack() * _atk_dmg_mult
+        print(f"   Base damage: {damage:.1f} (x{_atk_dmg_mult:.1f})")
 
         # Calculate damage reduction
         defense_stat = self.character.stats.defense
@@ -1633,6 +1831,19 @@ class CombatManager:
                 attack_type=enemy_attack_type
             )
 
+        # Publish PLAYER_HIT event for visual/AI systems
+        try:
+            from rendering.visual_effect_bridge import publish_player_hit
+            publish_player_hit(
+                attacker_id=getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                amount=final_damage,
+                damage_type=getattr(enemy.definition, 'damage_type', 'physical'),
+                player_x=self.character.position.x,
+                player_y=self.character.position.y,
+                source="combat_manager")
+        except ImportError:
+            pass
+
         # REFLECT/THORNS: Check for reflect damage on armor (capped at 80%)
         if hasattr(self.character, 'equipment') and enemy.is_alive:
             reflect_percent = 0.0
@@ -1700,6 +1911,72 @@ class CombatManager:
             self.player_last_combat_time += dt
             if self.player_last_combat_time >= self.config.combat_timeout:
                 self.player_in_combat = False
+
+    # ========================================================================
+    # ACTION COMBAT INTEGRATION
+    # ========================================================================
+
+    def setup_action_combat(self, hitbox_system, combat_data):
+        """Called by game_engine to wire up action combat systems.
+
+        Args:
+            hitbox_system: combat.HitboxSystem instance
+            combat_data: combat.CombatDataLoader instance
+        """
+        self._hitbox_system = hitbox_system
+        self._combat_data = combat_data
+        self._action_combat = True
+
+    def _register_enemy_action_combat(self, enemy: Enemy) -> None:
+        """Register a newly spawned enemy with action combat systems."""
+        if not self._action_combat or not self._hitbox_system or not self._combat_data:
+            return
+
+        from Combat.attack_state_machine import AttackStateMachine
+
+        eid = f"enemy_{id(enemy)}"
+
+        # Set hurtbox radius: prefer definition field, fall back to combat data JSON
+        def_radius = getattr(enemy.definition, 'hurtbox_radius', 0.0)
+        if def_radius > 0:
+            enemy.hurtbox_radius = def_radius
+        else:
+            enemy.hurtbox_radius = self._combat_data.get_enemy_hurtbox_radius(
+                enemy.definition.enemy_id)
+
+        # Register hurtbox
+        self._hitbox_system.register_hurtbox(eid, enemy.hurtbox_radius)
+
+        # Create attack state machine
+        enemy.attack_state_machine = AttackStateMachine(eid)
+
+    def _unregister_enemy_action_combat(self, enemy: Enemy) -> None:
+        """Unregister a dying/despawning enemy from action combat systems."""
+        if not self._action_combat or not self._hitbox_system:
+            return
+
+        eid = f"enemy_{id(enemy)}"
+        self._hitbox_system.unregister_hurtbox(eid)
+
+        if enemy.attack_state_machine:
+            enemy.attack_state_machine.force_reset()
+            enemy.attack_state_machine = None
+
+    def get_enemy_entity_id(self, enemy: Enemy) -> str:
+        """Get the entity ID string for an enemy (used by hitbox system)."""
+        return f"enemy_{id(enemy)}"
+
+    def find_enemy_by_entity_id(self, entity_id: str) -> Optional[Enemy]:
+        """Find an enemy by its entity ID string."""
+        for enemy_list in self.enemies.values():
+            for enemy in enemy_list:
+                if f"enemy_{id(enemy)}" == entity_id and enemy.is_alive:
+                    return enemy
+        # Also check dungeon enemies
+        for enemy in self.dungeon_enemies:
+            if f"enemy_{id(enemy)}" == entity_id and enemy.is_alive:
+                return enemy
+        return None
 
     def get_enemies_in_range(self, position: Tuple[float, float], radius: float) -> List[Enemy]:
         """Get all living enemies within radius of position.
@@ -1915,6 +2192,9 @@ class CombatManager:
             enemy.ai_state = AIState.CHASE
             enemy.in_combat = True
 
+            # Register with action combat (hurtbox + attack state machine)
+            self._register_enemy_action_combat(enemy)
+
             self.dungeon_enemies.append(enemy)
             dungeon.spawned_enemy_ids.append(enemy.enemy_id if hasattr(enemy, 'enemy_id') else str(id(enemy)))
             spawned += 1
@@ -1924,6 +2204,9 @@ class CombatManager:
 
     def clear_dungeon_enemies(self):
         """Clear all dungeon enemies (when exiting dungeon)."""
+        # Unregister hurtboxes from action combat
+        for enemy in self.dungeon_enemies:
+            self._unregister_enemy_action_combat(enemy)
         self.dungeon_enemies.clear()
 
         # Also remove any dungeon enemy corpses
@@ -1978,14 +2261,25 @@ class CombatManager:
                 dist = enemy.distance_to(player_position)
                 special_ability = enemy.can_use_special_ability(dist_to_target=dist, target_position=player_position)
                 if special_ability:
-                    # Build available targets list (just player in dungeons)
                     available_targets = [self.character]
+                    if hasattr(self.world, 'placed_entities'):
+                        from systems.world_system import PlacedEntityType
+                        turrets = [e for e in self.world.placed_entities
+                                  if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
+                        available_targets.extend(turrets)
                     enemy.use_special_ability(special_ability, self.character, available_targets)
+                    enemy.attack_cooldown = 1.0 / enemy.definition.attack_speed
 
-                # Check if enemy can attack player normally
+                # Update phased attack timer (windup → active → recovery)
+                phase_event = enemy.update_attack_phase(dt * 1000.0)
+                if phase_event == 'active_start':
+                    self._enemy_phased_damage(enemy, shield_blocking=shield_blocking)
+
+                # Check if enemy can start a new attack
                 elif enemy.can_attack():
                     if dist <= 1.5:  # Melee range
-                        self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
+                        enemy_tags = getattr(enemy.definition, 'tags', []) or ['physical']
+                        enemy.start_phased_attack(player_position, tags=enemy_tags)
 
             else:
                 # Enemy is dead - handle corpse

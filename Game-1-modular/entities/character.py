@@ -82,6 +82,8 @@ class Character:
     def __init__(self, start_position: Position):
         self.position = start_position
         self.facing = "down"
+        self.facing_angle = 90.0  # Degrees: 0=right, 90=down, 180=left, 270=up
+        self._attack_facing_locked = False  # True during attacks to prevent movement overriding aim
         self.movement_speed = Config.PLAYER_SPEED
         self.interaction_range = Config.INTERACTION_RANGE
 
@@ -375,6 +377,8 @@ class Character:
         self.position.y = pos_data["y"]
         self.position.z = pos_data["z"]
         self.facing = player_data.get("facing", "down")
+        _facing_angles = {"right": 0.0, "down": 90.0, "left": 180.0, "up": 270.0}
+        self.facing_angle = _facing_angles.get(self.facing, 90.0)
 
         # Restore stats
         stats_data = player_data.get("stats", {})
@@ -846,6 +850,13 @@ class Character:
             # Update facing based on primary movement direction
             if abs(dx) > 0 or abs(dy) > 0:
                 self.facing = ("right" if dx > 0 else "left") if abs(dx) > abs(dy) else ("down" if dy > 0 else "up")
+                # Only update facing_angle from movement when NOT attacking.
+                # During attacks, facing_angle is locked to cursor direction
+                # by game_engine._ac_attack_angle to prevent movement from
+                # overriding the attack direction.
+                if not getattr(self, '_attack_facing_locked', False):
+                    _facing_angles = {"right": 0.0, "down": 90.0, "left": 180.0, "up": 270.0}
+                    self.facing_angle = _facing_angles.get(self.facing, 90.0)
 
             # Track movement in stat tracker
             if hasattr(self, 'stat_tracker') and distance_moved > 0:
