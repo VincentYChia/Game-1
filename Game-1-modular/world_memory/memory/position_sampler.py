@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from typing import Optional
 
-from ai.memory.config_loader import get_section
+from world_memory.memory.config_loader import get_section
 
 
 class PositionSampler:

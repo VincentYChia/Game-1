@@ -5,7 +5,7 @@ AI-Config.JSON/memory-config.json so they can be checked and modified
 without touching Python code.
 
 Usage:
-    from ai.memory.config_loader import get_memory_config
+    from world_memory.memory.config_loader import get_memory_config
     cfg = get_memory_config()
     lookback = cfg["evaluators"]["population_change"]["lookback_time"]
 """
@@ -25,11 +25,11 @@ _cached_path: Optional[str] = None
 
 def _find_config_path() -> Optional[str]:
     """Search for memory-config.json relative to common roots."""
-    # Try relative to this file: ai/memory/ → Game-1-modular/ → AI-Config.JSON/
+    # Try relative to this file: world_memory/memory/ → world_memory/config/
     this_dir = os.path.dirname(os.path.abspath(__file__))
     candidates = [
-        os.path.join(this_dir, "..", "..", "AI-Config.JSON", _CONFIG_FILENAME),
-        os.path.join(os.getcwd(), "AI-Config.JSON", _CONFIG_FILENAME),
+        os.path.join(this_dir, "..", "config", _CONFIG_FILENAME),
+        os.path.join(os.getcwd(), "world_memory", "config", _CONFIG_FILENAME),
     ]
     for path in candidates:
         resolved = os.path.normpath(path)

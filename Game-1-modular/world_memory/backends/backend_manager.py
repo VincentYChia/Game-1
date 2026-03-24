@@ -352,7 +352,7 @@ class BackendManager:
             module_dir = os.path.dirname(os.path.abspath(__file__))
             project_root = os.path.dirname(os.path.dirname(module_dir))
             cfg_path = os.path.join(
-                project_root, "AI-Config.JSON", "backend-config.json"
+                project_root, "world_memory", "config", "backend-config.json"
             )
 
         if os.path.exists(cfg_path):

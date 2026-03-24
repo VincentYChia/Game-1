@@ -21,14 +21,14 @@ import time
 import uuid
 from typing import Any, ClassVar, Dict, Optional
 
-from ai.memory.event_store import EventStore
-from ai.memory.geographic_registry import GeographicRegistry
-from ai.memory.entity_registry import EntityRegistry
-from ai.memory.event_recorder import EventRecorder
-from ai.memory.interpreter import WorldInterpreter
-from ai.memory.query import WorldQuery
-from ai.memory.retention import EventRetentionManager
-from ai.memory.position_sampler import PositionSampler
+from world_memory.memory.event_store import EventStore
+from world_memory.memory.geographic_registry import GeographicRegistry
+from world_memory.memory.entity_registry import EntityRegistry
+from world_memory.memory.event_recorder import EventRecorder
+from world_memory.memory.interpreter import WorldInterpreter
+from world_memory.memory.query import WorldQuery
+from world_memory.memory.retention import EventRetentionManager
+from world_memory.memory.position_sampler import PositionSampler
 
 
 class WorldMemorySystem:
@@ -165,7 +165,7 @@ class WorldMemorySystem:
 
     def _create_default_geography(self) -> None:
         """Create a minimal default geography when no other source is available."""
-        from ai.memory.geographic_registry import Region, RegionLevel
+        from world_memory.memory.geographic_registry import Region, RegionLevel
 
         realm = Region(
             region_id="known_lands",
@@ -248,7 +248,7 @@ class WorldMemorySystem:
         region_states = self.event_store.load_all_region_states()
         for region_id, state_data in region_states.items():
             if region_id in self.geo_registry.regions:
-                from ai.memory.geographic_registry import RegionState
+                from world_memory.memory.geographic_registry import RegionState
                 self.geo_registry.regions[region_id].state = RegionState.from_dict(state_data)
 
     # ── Per-frame update ─────────────────────────────────────────────

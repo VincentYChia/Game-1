@@ -27,19 +27,19 @@ def _reset_singletons():
     from events.event_bus import GameEventBus
     GameEventBus.reset()
 
-    from ai.backends.backend_manager import BackendManager
+    from world_memory.backends.backend_manager import BackendManager
     BackendManager.reset()
 
-    from ai.npc.npc_memory import NPCMemoryManager
+    from world_memory.npc.npc_memory import NPCMemoryManager
     NPCMemoryManager.reset()
 
-    from ai.npc.npc_agent import NPCAgentSystem
+    from world_memory.npc.npc_agent import NPCAgentSystem
     NPCAgentSystem.reset()
 
-    from ai.factions.faction_system import FactionSystem
+    from world_memory.factions.faction_system import FactionSystem
     FactionSystem.reset()
 
-    from ai.ecosystem.ecosystem_agent import EcosystemAgent
+    from world_memory.ecosystem.ecosystem_agent import EcosystemAgent
     EcosystemAgent.reset()
 
 
@@ -50,7 +50,7 @@ def _reset_singletons():
 def test_backend_manager_initialization():
     """Test BackendManager loads config and sets up backends."""
     _reset_singletons()
-    from ai.backends.backend_manager import BackendManager
+    from world_memory.backends.backend_manager import BackendManager
 
     manager = BackendManager.get_instance()
     manager.initialize()
@@ -66,7 +66,7 @@ def test_backend_manager_initialization():
 def test_mock_backend_generate():
     """Test MockBackend generates template responses."""
     _reset_singletons()
-    from ai.backends.backend_manager import MockBackend
+    from world_memory.backends.backend_manager import MockBackend
 
     mock = MockBackend()
     assert mock.is_available()
@@ -93,7 +93,7 @@ def test_mock_backend_generate():
 def test_backend_manager_generate_with_fallback():
     """Test BackendManager falls back to mock when other backends unavailable."""
     _reset_singletons()
-    from ai.backends.backend_manager import BackendManager
+    from world_memory.backends.backend_manager import BackendManager
 
     manager = BackendManager.get_instance()
     manager.initialize()
@@ -113,7 +113,7 @@ def test_backend_manager_generate_with_fallback():
 def test_backend_manager_singleton():
     """Test BackendManager singleton pattern."""
     _reset_singletons()
-    from ai.backends.backend_manager import BackendManager, get_backend_manager
+    from world_memory.backends.backend_manager import BackendManager, get_backend_manager
 
     m1 = BackendManager.get_instance()
     m2 = get_backend_manager()
@@ -125,7 +125,7 @@ def test_backend_manager_singleton():
 def test_backend_manager_stats():
     """Test BackendManager stats reporting."""
     _reset_singletons()
-    from ai.backends.backend_manager import BackendManager
+    from world_memory.backends.backend_manager import BackendManager
 
     manager = BackendManager.get_instance()
     manager.initialize()
@@ -142,7 +142,7 @@ def test_backend_manager_stats():
 def test_backend_manager_override():
     """Test generating with a specific backend override."""
     _reset_singletons()
-    from ai.backends.backend_manager import BackendManager
+    from world_memory.backends.backend_manager import BackendManager
 
     manager = BackendManager.get_instance()
     manager.initialize()
@@ -166,7 +166,7 @@ def test_backend_manager_override():
 def test_npc_memory_basic():
     """Test NPCMemory creation and manipulation."""
     _reset_singletons()
-    from ai.npc.npc_memory import NPCMemory
+    from world_memory.npc.npc_memory import NPCMemory
 
     mem = NPCMemory(npc_id="blacksmith_01")
     assert mem.relationship_score == 0.0
@@ -190,7 +190,7 @@ def test_npc_memory_basic():
 def test_npc_memory_knowledge():
     """Test NPCMemory knowledge management."""
     _reset_singletons()
-    from ai.npc.npc_memory import NPCMemory
+    from world_memory.npc.npc_memory import NPCMemory
 
     mem = NPCMemory(npc_id="test_npc")
     mem._max_knowledge = 5
@@ -212,7 +212,7 @@ def test_npc_memory_knowledge():
 def test_npc_memory_serialization():
     """Test NPCMemory serialization round-trip."""
     _reset_singletons()
-    from ai.npc.npc_memory import NPCMemory
+    from world_memory.npc.npc_memory import NPCMemory
 
     mem = NPCMemory(npc_id="test_npc")
     mem.adjust_relationship(0.5)
@@ -238,7 +238,7 @@ def test_npc_memory_serialization():
 def test_npc_memory_manager():
     """Test NPCMemoryManager singleton and bulk operations."""
     _reset_singletons()
-    from ai.npc.npc_memory import NPCMemoryManager
+    from world_memory.npc.npc_memory import NPCMemoryManager
 
     mgr = NPCMemoryManager.get_instance()
     mgr.initialize()
@@ -272,8 +272,8 @@ def test_npc_memory_manager():
 def test_npc_agent_fallback_dialogue():
     """Test NPCAgentSystem generates fallback dialogue without LLM."""
     _reset_singletons()
-    from ai.npc.npc_agent import NPCAgentSystem
-    from ai.npc.npc_memory import NPCMemoryManager
+    from world_memory.npc.npc_agent import NPCAgentSystem
+    from world_memory.npc.npc_memory import NPCMemoryManager
 
     mem_mgr = NPCMemoryManager.get_instance()
     mem_mgr.initialize()
@@ -295,9 +295,9 @@ def test_npc_agent_fallback_dialogue():
 def test_npc_agent_with_mock_backend():
     """Test NPCAgentSystem with mock backend for dialogue."""
     _reset_singletons()
-    from ai.npc.npc_agent import NPCAgentSystem
-    from ai.npc.npc_memory import NPCMemoryManager
-    from ai.backends.backend_manager import BackendManager
+    from world_memory.npc.npc_agent import NPCAgentSystem
+    from world_memory.npc.npc_memory import NPCMemoryManager
+    from world_memory.backends.backend_manager import BackendManager
 
     mem_mgr = NPCMemoryManager.get_instance()
     mem_mgr.initialize()
@@ -325,8 +325,8 @@ def test_npc_agent_with_mock_backend():
 def test_npc_gossip_propagation():
     """Test gossip propagation scheduling and delivery."""
     _reset_singletons()
-    from ai.npc.npc_agent import NPCAgentSystem
-    from ai.npc.npc_memory import NPCMemoryManager
+    from world_memory.npc.npc_agent import NPCAgentSystem
+    from world_memory.npc.npc_memory import NPCMemoryManager
 
     mem_mgr = NPCMemoryManager.get_instance()
     mem_mgr.initialize()
@@ -365,8 +365,8 @@ def test_npc_gossip_propagation():
 def test_npc_event_reactions():
     """Test NPCs reacting to world events."""
     _reset_singletons()
-    from ai.npc.npc_agent import NPCAgentSystem
-    from ai.npc.npc_memory import NPCMemoryManager
+    from world_memory.npc.npc_agent import NPCAgentSystem
+    from world_memory.npc.npc_memory import NPCMemoryManager
 
     mem_mgr = NPCMemoryManager.get_instance()
     mem_mgr.initialize()
@@ -393,7 +393,7 @@ def test_npc_event_reactions():
 def test_faction_initialization():
     """Test FactionSystem loads definitions correctly."""
     _reset_singletons()
-    from ai.factions.faction_system import FactionSystem
+    from world_memory.factions.faction_system import FactionSystem
 
     system = FactionSystem.get_instance()
     system.initialize()
@@ -410,7 +410,7 @@ def test_faction_initialization():
 def test_faction_modify_reputation():
     """Test basic reputation modification."""
     _reset_singletons()
-    from ai.factions.faction_system import FactionSystem
+    from world_memory.factions.faction_system import FactionSystem
 
     system = FactionSystem.get_instance()
     system.initialize()
@@ -432,7 +432,7 @@ def test_faction_modify_reputation():
 def test_faction_clamping():
     """Test reputation clamping to [-1.0, 1.0]."""
     _reset_singletons()
-    from ai.factions.faction_system import FactionSystem
+    from world_memory.factions.faction_system import FactionSystem
 
     system = FactionSystem.get_instance()
     system.initialize()
@@ -449,7 +449,7 @@ def test_faction_clamping():
 def test_faction_ripple_effects():
     """Test reputation ripple to allied/hostile factions."""
     _reset_singletons()
-    from ai.factions.faction_system import FactionSystem
+    from world_memory.factions.faction_system import FactionSystem
 
     system = FactionSystem.get_instance()
     system.initialize()
@@ -470,7 +470,7 @@ def test_faction_ripple_effects():
 def test_faction_milestones():
     """Test reputation milestone detection."""
     _reset_singletons()
-    from ai.factions.faction_system import FactionSystem
+    from world_memory.factions.faction_system import FactionSystem
     from events.event_bus import GameEventBus
 
     bus = GameEventBus.get_instance()
@@ -500,7 +500,7 @@ def test_faction_milestones():
 def test_faction_labels():
     """Test reputation label calculation."""
     _reset_singletons()
-    from ai.factions.faction_system import FactionSystem
+    from world_memory.factions.faction_system import FactionSystem
 
     system = FactionSystem.get_instance()
     system.initialize()
@@ -519,7 +519,7 @@ def test_faction_labels():
 def test_faction_bus_integration():
     """Test FactionSystem reacts to GameEventBus events."""
     _reset_singletons()
-    from ai.factions.faction_system import FactionSystem
+    from world_memory.factions.faction_system import FactionSystem
     from events.event_bus import GameEventBus, GameEvent
 
     bus = GameEventBus.get_instance()
@@ -540,7 +540,7 @@ def test_faction_bus_integration():
 def test_faction_serialization():
     """Test faction save/load round-trip."""
     _reset_singletons()
-    from ai.factions.faction_system import FactionSystem
+    from world_memory.factions.faction_system import FactionSystem
 
     system = FactionSystem.get_instance()
     system.initialize()
@@ -553,7 +553,7 @@ def test_faction_serialization():
 
     # Restore into new system
     _reset_singletons()
-    from ai.factions.faction_system import FactionSystem as FS2
+    from world_memory.factions.faction_system import FactionSystem as FS2
     system2 = FS2.get_instance()
     system2.initialize()
     system2.load(data)
@@ -572,7 +572,7 @@ def test_faction_serialization():
 def test_ecosystem_initialization():
     """Test EcosystemAgent loads config and biome defaults."""
     _reset_singletons()
-    from ai.ecosystem.ecosystem_agent import EcosystemAgent
+    from world_memory.ecosystem.ecosystem_agent import EcosystemAgent
 
     agent = EcosystemAgent.get_instance()
     agent.initialize()
@@ -592,7 +592,7 @@ def test_ecosystem_initialization():
 def test_ecosystem_resource_gathering():
     """Test resource depletion from gathering events."""
     _reset_singletons()
-    from ai.ecosystem.ecosystem_agent import EcosystemAgent
+    from world_memory.ecosystem.ecosystem_agent import EcosystemAgent
     from events.event_bus import GameEventBus
 
     bus = GameEventBus.get_instance()
@@ -622,7 +622,7 @@ def test_ecosystem_resource_gathering():
 def test_ecosystem_scarcity_detection():
     """Test scarcity flag triggers at thresholds."""
     _reset_singletons()
-    from ai.ecosystem.ecosystem_agent import EcosystemAgent
+    from world_memory.ecosystem.ecosystem_agent import EcosystemAgent
     from events.event_bus import GameEventBus
 
     bus = GameEventBus.get_instance()
@@ -666,7 +666,7 @@ def test_ecosystem_scarcity_detection():
 def test_ecosystem_regeneration():
     """Test resource regeneration over time."""
     _reset_singletons()
-    from ai.ecosystem.ecosystem_agent import EcosystemAgent
+    from world_memory.ecosystem.ecosystem_agent import EcosystemAgent
     from events.event_bus import GameEventBus
 
     bus = GameEventBus.get_instance()
@@ -698,7 +698,7 @@ def test_ecosystem_regeneration():
 def test_ecosystem_scarcity_report():
     """Test scarcity report API."""
     _reset_singletons()
-    from ai.ecosystem.ecosystem_agent import EcosystemAgent
+    from world_memory.ecosystem.ecosystem_agent import EcosystemAgent
     from events.event_bus import GameEventBus
 
     bus = GameEventBus.get_instance()
@@ -726,7 +726,7 @@ def test_ecosystem_scarcity_report():
 def test_ecosystem_serialization():
     """Test ecosystem save/load round-trip."""
     _reset_singletons()
-    from ai.ecosystem.ecosystem_agent import EcosystemAgent
+    from world_memory.ecosystem.ecosystem_agent import EcosystemAgent
     from events.event_bus import GameEventBus
 
     bus = GameEventBus.get_instance()
@@ -744,7 +744,7 @@ def test_ecosystem_serialization():
 
     # Restore
     _reset_singletons()
-    from ai.ecosystem.ecosystem_agent import EcosystemAgent as EA2
+    from world_memory.ecosystem.ecosystem_agent import EcosystemAgent as EA2
     bus2 = __import__("events.event_bus", fromlist=["GameEventBus"]).GameEventBus.get_instance()
     agent2 = EA2.get_instance()
     agent2.initialize()
@@ -760,7 +760,7 @@ def test_ecosystem_serialization():
 def test_ecosystem_dynamic_resource_tracking():
     """Test that unknown resources are tracked dynamically."""
     _reset_singletons()
-    from ai.ecosystem.ecosystem_agent import EcosystemAgent
+    from world_memory.ecosystem.ecosystem_agent import EcosystemAgent
     from events.event_bus import GameEventBus
 
     bus = GameEventBus.get_instance()
@@ -788,7 +788,7 @@ def test_ecosystem_dynamic_resource_tracking():
 def test_sql_npc_memory_tables():
     """Test NPC memory CRUD in EventStore."""
     _reset_singletons()
-    from ai.memory.event_store import EventStore
+    from world_memory.memory.event_store import EventStore
 
     with tempfile.TemporaryDirectory() as tmpdir:
         store = EventStore(save_dir=tmpdir)
@@ -838,7 +838,7 @@ def test_sql_npc_memory_tables():
 def test_sql_faction_tables():
     """Test faction state CRUD in EventStore."""
     _reset_singletons()
-    from ai.memory.event_store import EventStore
+    from world_memory.memory.event_store import EventStore
 
     with tempfile.TemporaryDirectory() as tmpdir:
         store = EventStore(save_dir=tmpdir)
@@ -871,7 +871,7 @@ def test_sql_faction_tables():
 def test_sql_biome_resource_tables():
     """Test biome resource state CRUD in EventStore."""
     _reset_singletons()
-    from ai.memory.event_store import EventStore
+    from world_memory.memory.event_store import EventStore
 
     with tempfile.TemporaryDirectory() as tmpdir:
         store = EventStore(save_dir=tmpdir)

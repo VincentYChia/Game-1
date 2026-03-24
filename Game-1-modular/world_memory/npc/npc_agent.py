@@ -25,7 +25,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
-from ai.npc.npc_memory import NPCMemory, NPCMemoryManager
+from world_memory.npc.npc_memory import NPCMemory, NPCMemoryManager
 
 
 @dataclass
@@ -105,7 +105,7 @@ class NPCAgentSystem:
             module_dir = os.path.dirname(os.path.abspath(__file__))
             project_root = os.path.dirname(os.path.dirname(module_dir))
             default_path = os.path.join(
-                project_root, "AI-Config.JSON", "npc-personalities.json"
+                project_root, "world_memory", "config", "npc-personalities.json"
             )
             if os.path.exists(default_path):
                 with open(default_path, "r") as f:

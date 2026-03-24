@@ -262,42 +262,41 @@ Not an autonomous agent — a service layer. Routes `generate(task, system, user
 ## File Map
 
 ```
-ai/
+world_memory/                           # Python package (importable)
 ├── backends/
-│   └── backend_manager.py          # LLM router: ollama→claude→mock
+│   └── backend_manager.py              # LLM router: ollama→claude→mock
 ├── npc/
-│   ├── npc_memory.py               # Per-NPC persistent state
-│   └── npc_agent.py                # Dialogue generation + gossip
+│   ├── npc_memory.py                   # Per-NPC persistent state
+│   └── npc_agent.py                    # Dialogue generation + gossip
 ├── factions/
-│   └── faction_system.py           # Reputation + ripple + milestones
+│   └── faction_system.py               # Reputation + ripple + milestones
 ├── ecosystem/
-│   └── ecosystem_agent.py          # Biome resource tracking + scarcity
+│   └── ecosystem_agent.py              # Biome resource tracking + scarcity
 ├── memory/
-│   ├── event_store.py              # SQLite (13 tables)
-│   ├── event_recorder.py           # Bus→SQLite bridge
-│   ├── event_schema.py             # Event types + dataclasses
-│   ├── interpreter.py              # Evaluator orchestrator
-│   ├── evaluators/                 # 5 pattern evaluators
-│   ├── geographic_registry.py      # Region hierarchy
-│   ├── entity_registry.py          # NPC/player/region entities
-│   ├── query.py                    # WorldQuery context assembly
-│   ├── config_loader.py            # JSON config loader
-│   ├── retention.py                # Event pruning
-│   ├── position_sampler.py         # Player breadcrumbs
-│   └── world_memory_system.py      # Facade/singleton
+│   ├── event_store.py                  # SQLite (13 tables)
+│   ├── event_recorder.py               # Bus→SQLite bridge
+│   ├── event_schema.py                 # Event types + dataclasses
+│   ├── interpreter.py                  # Evaluator orchestrator
+│   ├── evaluators/                     # 5 pattern evaluators
+│   ├── geographic_registry.py          # Region hierarchy
+│   ├── entity_registry.py              # NPC/player/region entities
+│   ├── query.py                        # WorldQuery context assembly
+│   ├── config_loader.py                # JSON config loader
+│   ├── retention.py                    # Event pruning
+│   ├── position_sampler.py             # Player breadcrumbs
+│   └── world_memory_system.py          # Facade/singleton
+├── config/                             # All JSON configuration (was AI-Config.JSON/)
+│   ├── memory-config.json              # Evaluator thresholds, query windows
+│   ├── geographic-map.json             # Region hierarchy definitions
+│   ├── backend-config.json             # LLM routing, rate limits
+│   ├── npc-personalities.json          # 6 NPC archetypes
+│   ├── faction-definitions.json        # 4 factions + relationships
+│   └── ecosystem-config.json           # Biome resource pools + regen rates
 └── tests/
-    └── test_phase2_systems.py      # 32 tests
+    └── test_phase2_systems.py          # 32 tests
 
-AI-Config.JSON/
-├── memory-config.json              # Evaluator thresholds, query windows
-├── geographic-map.json             # Region hierarchy definitions
-├── backend-config.json             # LLM routing, rate limits
-├── npc-personalities.json          # 6 NPC archetypes
-├── faction-definitions.json        # 4 factions + relationships
-└── ecosystem-config.json           # Biome resource pools + regen rates
-
-World System/
-├── README.md                       # This file
-├── LIVING_WORLD_AI.md              # Architecture deep dives
-└── AI_TOUCHPOINT_MAP.md            # Every inference/interpretation point
+World System/World Memory/              # Documentation
+├── README.md                           # This file
+├── LIVING_WORLD_AI.md                  # Architecture deep dives
+└── AI_TOUCHPOINT_MAP.md                # Every inference/interpretation point
 ```

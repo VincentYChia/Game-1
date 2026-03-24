@@ -4275,11 +4275,11 @@ class GameEngine:
     def _init_world_memory(self):
         """Initialize the World Memory System (AI foundation layer)."""
         try:
-            from ai.memory.world_memory_system import WorldMemorySystem
+            from world_memory.memory.world_memory_system import WorldMemorySystem
             from core.paths import PathManager
             paths = PathManager()
             save_dir = str(paths.save_path)
-            geo_map_path = str(paths.base_path / "AI-Config.JSON" / "geographic-map.json")
+            geo_map_path = str(paths.base_path / "world_memory" / "config" / "geographic-map.json")
 
             self.world_memory = WorldMemorySystem.get_instance()
             self.world_memory.initialize(

@@ -152,7 +152,7 @@ class EcosystemAgent:
         module_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(os.path.dirname(module_dir))
         default_path = os.path.join(
-            project_root, "AI-Config.JSON", "ecosystem-config.json"
+            project_root, "world_memory", "config", "ecosystem-config.json"
         )
         if os.path.exists(default_path):
             with open(default_path, "r") as f:

@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import Dict, List, Set
 
-from ai.memory.config_loader import get_section
-from ai.memory.event_recorder import is_prime_trigger
-from ai.memory.event_store import EventStore
+from world_memory.memory.config_loader import get_section
+from world_memory.memory.event_recorder import is_prime_trigger
+from world_memory.memory.event_store import EventStore
 
 
 class EventRetentionManager:

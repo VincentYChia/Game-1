@@ -12,12 +12,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, ClassVar, Dict, List, Optional
 
-from ai.memory.config_loader import get_section, get_query_window_config
-from ai.memory.event_schema import InterpretedEvent, WorldMemoryEvent
-from ai.memory.event_store import EventStore
-from ai.memory.geographic_registry import GeographicRegistry
-from ai.memory.entity_registry import EntityRegistry, WorldEntity
-from ai.memory.tag_relevance import calculate_relevance
+from world_memory.memory.config_loader import get_section, get_query_window_config
+from world_memory.memory.event_schema import InterpretedEvent, WorldMemoryEvent
+from world_memory.memory.event_store import EventStore
+from world_memory.memory.geographic_registry import GeographicRegistry
+from world_memory.memory.entity_registry import EntityRegistry, WorldEntity
+from world_memory.memory.tag_relevance import calculate_relevance
 
 
 @dataclass
