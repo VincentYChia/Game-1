@@ -249,6 +249,10 @@ class GameEngine:
         self.npc_quest_to_turn_in: Optional[str] = None
         self.npc_dialogue_window_rect = None
 
+        # World Memory System (AI foundation — records events, detects patterns)
+        self.world_memory = None
+        self._init_world_memory()
+
         # Minigame state
         self.active_minigame = None  # Current minigame instance
         self.minigame_type = None  # 'smithing', 'alchemy', 'fishing', etc.
@@ -531,6 +535,10 @@ class GameEngine:
                         self.map_system
                     ):
                         print("💾 Autosaved on quit")
+                    # Save World Memory System state
+                    if self.world_memory:
+                        self.world_memory.save()
+                        print("💾 World Memory saved on quit")
                 self.running = False
 
             # Block all input except quit when LLM overlay is active
@@ -1494,6 +1502,9 @@ class GameEngine:
                 from systems.training_dummy import spawn_training_dummy
                 spawn_training_dummy(self.combat_manager, (10.0, 0.0))
 
+                # Re-initialize World Memory System with loaded character/world
+                self._init_world_memory()
+
                 print(f"✓ Loaded character: Level {self.character.leveling.level}")
                 self.add_notification("World loaded successfully!", (100, 255, 100))
             else:
@@ -2344,6 +2355,20 @@ class GameEngine:
                         mat = mat_db.get_material(item_id)
                         item_name = mat.name if mat else item_id
                         self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+                        # Publish resource gathered event for World Memory System
+                        try:
+                            from events.event_bus import get_event_bus
+                            get_event_bus().publish("RESOURCE_GATHERED", {
+                                "resource_id": item_id,
+                                "material_id": item_id,
+                                "quantity": qty,
+                                "position_x": resource.position.x,
+                                "position_y": resource.position.y,
+                                "tool_used": self.character.selected_tool.tool_id if self.character.selected_tool else "hand",
+                                "biome": getattr(resource, 'biome', 'unknown'),
+                            }, source="gathering")
+                        except Exception:
+                            pass
             return
 
         # Check for placed entity that can be broken (barriers, etc.)
@@ -4247,6 +4272,26 @@ class GameEngine:
             traceback.print_exc()
             self.add_notification("Item generation failed", (255, 100, 100))
 
+    def _init_world_memory(self):
+        """Initialize the World Memory System (AI foundation layer)."""
+        try:
+            from ai.memory.world_memory_system import WorldMemorySystem
+            from core.paths import PathManager
+            paths = PathManager()
+            save_dir = str(paths.save_path)
+            geo_map_path = str(paths.base_path / "AI-Config.JSON" / "geographic-map.json")
+
+            self.world_memory = WorldMemorySystem.get_instance()
+            self.world_memory.initialize(
+                save_dir=save_dir,
+                character=self.character,
+                world=self.world,
+                geo_map_path=geo_map_path,
+            )
+        except Exception as e:
+            print(f"[WorldMemory] Init failed (non-fatal): {e}")
+            self.world_memory = None
+
     def _check_background_generation(self):
         """Check if background LLM generation has completed and process the result."""
         try:
@@ -5408,6 +5453,22 @@ class GameEngine:
             }
             activity_type = activity_map.get(self.minigame_type, 'smithing')
             self.character.activities.record_activity(activity_type, 1)
+
+            # Publish crafting event for World Memory System
+            try:
+                from events.event_bus import get_event_bus
+                quality = craft_result.get('quality', 'normal')
+                get_event_bus().publish("ITEM_CRAFTED", {
+                    "recipe_id": recipe.recipe_id,
+                    "output_id": recipe.output_id,
+                    "discipline": activity_type,
+                    "quality": quality,
+                    "station_tier": recipe.station_tier,
+                    "position_x": self.character.position.x,
+                    "position_y": self.character.position.y,
+                }, source="crafting")
+            except Exception:
+                pass
 
             # Minigame gives XP (50% bonus over instant craft)
             xp_reward = int(20 * recipe.station_tier * 1.5)
@@ -7319,6 +7380,10 @@ class GameEngine:
                 self.world.update_loaded_chunks(self.character.position)
                 # Track chunk exploration for map
                 self._update_chunk_exploration()
+
+            # Update World Memory System (AI event recording & interpretation)
+            if self.world_memory and self.character:
+                self.world_memory.update(dt, self.game_time, self.character)
 
             # Check if player is blocking with shield (right mouse held OR X key held)
             mouse_held = 3 in self.mouse_buttons_pressed
