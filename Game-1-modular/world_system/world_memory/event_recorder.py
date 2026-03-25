@@ -2,7 +2,10 @@
 WorldMemoryEvents, enriches with geographic context, and writes to SQLite.
 
 This is the bridge between Layer 0 (ephemeral bus) and Layer 2 (persistent SQLite).
-It also tracks occurrence counts and triggers the Interpreter at prime numbers.
+It tracks occurrence counts and triggers the Interpreter via the TriggerManager
+when counts hit threshold milestones (1, 3, 5, 10, 25, 50, 100, ...).
+
+Design authority: WORLD_MEMORY_SYSTEM.md §5 (Event Schema & Recording Pipeline)
 """
 
 from __future__ import annotations
@@ -17,49 +20,20 @@ from world_system.world_memory.event_schema import (
 from world_system.world_memory.event_store import EventStore
 from world_system.world_memory.geographic_registry import GeographicRegistry
 from world_system.world_memory.entity_registry import EntityRegistry
+from world_system.world_memory.trigger_manager import TriggerManager
 
 
-def _generate_primes(up_to: int) -> Set[int]:
-    """Sieve of Eratosthenes for prime trigger checking."""
-    sieve = [True] * (up_to + 1)
-    sieve[0] = sieve[1] = False
-    for i in range(2, int(up_to ** 0.5) + 1):
-        if sieve[i]:
-            for j in range(i * i, up_to + 1, i):
-                sieve[j] = False
-    return {i for i, is_prime in enumerate(sieve) if is_prime}
+# ── Intensity tag baselines (Design Doc §9.2) ──────────────────────
 
-
-# Pre-computed primes up to 10,000
-_PRIMES = _generate_primes(10000)
-
-
-def is_prime_trigger(count: int) -> bool:
-    """Check if a count is a prime number (interpretation trigger)."""
-    if count <= 1:
-        return count == 1  # First occurrence always triggers
-    if count <= 10000:
-        return count in _PRIMES
-    # For counts > 10000, do trial division (rare)
-    if count < 2:
-        return False
-    if count < 4:
-        return True
-    if count % 2 == 0 or count % 3 == 0:
-        return False
-    i = 5
-    while i * i <= count:
-        if count % i == 0 or count % (i + 2) == 0:
-            return False
-        i += 6
-    return True
+_TIER_BASELINES = {1: 10, 2: 25, 3: 60, 4: 150}
 
 
 class EventRecorder:
     """Subscribes to GameEventBus, records events to SQLite.
 
     Enriches each event with geographic context and occurrence counts.
-    Triggers the Interpreter when counts hit prime numbers.
+    Uses TriggerManager (threshold sequence + dual-track) to decide
+    when to notify the Interpreter.
     """
 
     _instance: ClassVar[Optional[EventRecorder]] = None
@@ -68,6 +42,7 @@ class EventRecorder:
         self.event_store: Optional[EventStore] = None
         self.geo_registry: Optional[GeographicRegistry] = None
         self.entity_registry: Optional[EntityRegistry] = None
+        self.trigger_manager: Optional[TriggerManager] = None
         self.session_id: str = ""
         self._game_time: float = 0.0
 
@@ -92,11 +67,13 @@ class EventRecorder:
     def initialize(self, event_store: EventStore,
                    geo_registry: GeographicRegistry,
                    entity_registry: EntityRegistry,
+                   trigger_manager: Optional[TriggerManager] = None,
                    session_id: str = "") -> None:
         """Wire up dependencies and subscribe to the event bus."""
         self.event_store = event_store
         self.geo_registry = geo_registry
         self.entity_registry = entity_registry
+        self.trigger_manager = trigger_manager or TriggerManager.get_instance()
         self.session_id = session_id or str(uuid.uuid4())[:8]
         self._connect_bus()
 
@@ -150,7 +127,7 @@ class EventRecorder:
             self.events_skipped += 1
             return
 
-        # Convert to WorldMemoryEvent
+        # Convert to WorldMemoryEvent (Phase 1 tags built here)
         memory_event = self._convert_event(event, mem_type)
         if memory_event is None:
             self.events_skipped += 1
@@ -159,14 +136,20 @@ class EventRecorder:
         # Enrich with geographic context
         self._enrich_geographic(memory_event)
 
-        # Update occurrence count and check for prime trigger
+        # Phase 2 tags: location, species, intensity (depend on enrichment)
+        self._add_derived_tags(memory_event)
+
+        # Update occurrence count
         count = self.event_store.increment_occurrence(
             memory_event.actor_id,
             memory_event.event_type,
             memory_event.event_subtype,
         )
         memory_event.interpretation_count = count
-        memory_event.triggered_interpretation = is_prime_trigger(count)
+
+        # Check threshold triggers (dual-track)
+        actions = self.trigger_manager.on_event(memory_event)
+        memory_event.triggered_interpretation = len(actions) > 0
 
         # Write to SQLite
         self.event_store.record(memory_event)
@@ -175,12 +158,13 @@ class EventRecorder:
         # Update entity activity logs
         self._update_activity_logs(memory_event)
 
-        # Notify interpreter if triggered
-        if memory_event.triggered_interpretation and self._interpreter_callback:
-            try:
-                self._interpreter_callback(memory_event)
-            except Exception as e:
-                print(f"[EventRecorder] Interpreter error: {e}")
+        # Notify interpreter for each trigger action
+        if self._interpreter_callback:
+            for action in actions:
+                try:
+                    self._interpreter_callback(action)
+                except Exception as e:
+                    print(f"[EventRecorder] Interpreter error: {e}")
 
     def _convert_event(self, event, mem_type: EventType) -> Optional[WorldMemoryEvent]:
         """Convert a GameEvent to a WorldMemoryEvent."""
@@ -201,7 +185,7 @@ class EventRecorder:
         # Derive subtype
         subtype = self._derive_subtype(event, mem_type)
 
-        # Build tags
+        # Build Phase 1 tags (from bus event data directly)
         tags = self._build_event_tags(event, mem_type)
 
         # Extract magnitude
@@ -279,7 +263,7 @@ class EventRecorder:
         return mem_type.value
 
     def _build_event_tags(self, event, mem_type: EventType) -> List[str]:
-        """Generate interest-matching tags from event data."""
+        """Phase 1 tags: generated from bus event data fields (Design Doc §9.2)."""
         tags = [f"event:{mem_type.value}"]
         data = event.data or {}
 
@@ -287,6 +271,14 @@ class EventRecorder:
         for key in ("resource_type", "material_id", "resource_id"):
             if key in data:
                 tags.append(f"resource:{data[key]}")
+
+        # Enemy / species tags
+        for key in ("enemy_type", "enemy_id"):
+            if key in data and data[key]:
+                base = str(data[key]).rstrip("0123456789").rstrip("_")
+                if base:
+                    tags.append(f"species:{base}")
+                break  # Only add one species tag
 
         # Combat tags
         if "damage_type" in data:
@@ -314,6 +306,14 @@ class EventRecorder:
         if "quality" in data:
             tags.append(f"quality:{data['quality']}")
 
+        # NPC tags
+        if "npc_id" in data and data["npc_id"]:
+            tags.append(f"npc:{data['npc_id']}")
+
+        # Quest tags
+        if "quest_id" in data and data["quest_id"]:
+            tags.append(f"quest:{data['quest_id']}")
+
         # Skill tags (from game tag system)
         if "tags" in data and isinstance(data["tags"], list):
             for tag in data["tags"]:
@@ -323,6 +323,31 @@ class EventRecorder:
                     tags.append(tag)
 
         return tags
+
+    def _add_derived_tags(self, event: WorldMemoryEvent) -> None:
+        """Phase 2 tags: depend on geographic enrichment and computed values.
+
+        Called AFTER _enrich_geographic() so locality/district are available.
+        Design Doc §9.2: location tags, intensity tags.
+        """
+        # Location tags
+        if event.locality_id:
+            event.tags.append(f"location:{event.locality_id}")
+        if event.district_id:
+            event.tags.append(f"location:{event.district_id}")
+
+        # Intensity tags (magnitude relative to tier baseline)
+        if event.magnitude > 0:
+            baseline = _TIER_BASELINES.get(event.tier or 1, 10)
+            ratio = event.magnitude / baseline
+            if ratio > 3.0:
+                event.tags.append("intensity:extreme")
+            elif ratio > 1.5:
+                event.tags.append("intensity:heavy")
+            elif ratio > 0.5:
+                event.tags.append("intensity:moderate")
+            else:
+                event.tags.append("intensity:light")
 
     def _extract_context(self, event) -> Dict[str, Any]:
         """Extract context snapshot from event data."""
@@ -395,7 +420,8 @@ class EventRecorder:
                       target_id: Optional[str] = None,
                       magnitude: float = 0.0,
                       tags: Optional[List[str]] = None,
-                      context: Optional[Dict[str, Any]] = None) -> Optional[WorldMemoryEvent]:
+                      context: Optional[Dict[str, Any]] = None,
+                      locality_id: Optional[str] = None) -> Optional[WorldMemoryEvent]:
         """Record an event directly (bypass bus). For testing or direct integration."""
         if not self.event_store:
             return None
@@ -415,22 +441,30 @@ class EventRecorder:
             session_id=self.session_id,
         )
         self._enrich_geographic(event)
+        # Allow explicit locality override (useful for testing without geo registry)
+        if locality_id and not event.locality_id:
+            event.locality_id = locality_id
+        self._add_derived_tags(event)
 
         count = self.event_store.increment_occurrence(
             actor_id, event_type, event_subtype
         )
         event.interpretation_count = count
-        event.triggered_interpretation = is_prime_trigger(count)
+
+        # Check threshold triggers (dual-track)
+        actions = self.trigger_manager.on_event(event)
+        event.triggered_interpretation = len(actions) > 0
 
         self.event_store.record(event)
         self.events_recorded += 1
         self._update_activity_logs(event)
 
-        if event.triggered_interpretation and self._interpreter_callback:
-            try:
-                self._interpreter_callback(event)
-            except Exception as e:
-                print(f"[EventRecorder] Interpreter error: {e}")
+        if self._interpreter_callback:
+            for action in actions:
+                try:
+                    self._interpreter_callback(action)
+                except Exception as e:
+                    print(f"[EventRecorder] Interpreter error: {e}")
 
         return event
 

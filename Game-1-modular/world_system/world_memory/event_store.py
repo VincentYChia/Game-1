@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS interpretation_tags (
 CREATE INDEX IF NOT EXISTS idx_interp_tags_tag ON interpretation_tags(tag);
 
 
--- Occurrence counters for prime trigger tracking
+-- Occurrence counters for threshold trigger tracking
 CREATE TABLE IF NOT EXISTS occurrence_counts (
     actor_id TEXT NOT NULL,
     event_type TEXT NOT NULL,
@@ -220,6 +220,140 @@ CREATE TABLE IF NOT EXISTS pacing_state (
     value_text TEXT DEFAULT '',
     updated_at REAL DEFAULT 0.0
 );
+
+
+-- ══════════════════════════════════════════════════════════════════
+-- Dual-track trigger counting (threshold-based, not prime-based)
+-- ══════════════════════════════════════════════════════════════════
+
+-- Regional accumulator for Track 2 counting
+CREATE TABLE IF NOT EXISTS regional_counters (
+    region_id TEXT NOT NULL,
+    event_category TEXT NOT NULL,
+    count INTEGER DEFAULT 0,
+    PRIMARY KEY (region_id, event_category)
+);
+
+-- Interpretation similarity counting for Layer 3→4 escalation
+CREATE TABLE IF NOT EXISTS interpretation_counters (
+    category TEXT NOT NULL,
+    primary_tag TEXT NOT NULL,
+    region_id TEXT NOT NULL,
+    count INTEGER DEFAULT 0,
+    PRIMARY KEY (category, primary_tag, region_id)
+);
+
+
+-- ══════════════════════════════════════════════════════════════════
+-- Time-based tracking (daily ledgers and meta-stats)
+-- ══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS daily_ledgers (
+    game_day INTEGER PRIMARY KEY,
+    game_time_start REAL,
+    game_time_end REAL,
+    data_json TEXT NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE IF NOT EXISTS meta_daily_stats (
+    stat_key TEXT PRIMARY KEY,
+    data_json TEXT NOT NULL DEFAULT '{}'
+);
+
+
+-- ══════════════════════════════════════════════════════════════════
+-- Layer 4: Connected Interpretations (cross-domain patterns)
+-- ══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS connected_interpretations (
+    id TEXT PRIMARY KEY,
+    created_at REAL NOT NULL,
+    narrative TEXT NOT NULL,
+    category TEXT NOT NULL,
+    severity TEXT NOT NULL,
+    source_interpretation_ids_json TEXT DEFAULT '[]',
+    affected_district_ids_json TEXT DEFAULT '[]',
+    affects_tags_json TEXT DEFAULT '[]',
+    is_ongoing INTEGER DEFAULT 0,
+    expires_at REAL,
+    archived INTEGER DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_connected_interp_category
+    ON connected_interpretations(category);
+CREATE INDEX IF NOT EXISTS idx_connected_interp_created
+    ON connected_interpretations(created_at);
+
+CREATE TABLE IF NOT EXISTS connected_interpretation_tags (
+    id TEXT NOT NULL,
+    tag TEXT NOT NULL,
+    FOREIGN KEY (id) REFERENCES connected_interpretations(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_connected_interp_tags_tag
+    ON connected_interpretation_tags(tag);
+
+
+-- ══════════════════════════════════════════════════════════════════
+-- Layer 5: Province Summaries
+-- ══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS province_summaries (
+    province_id TEXT PRIMARY KEY,
+    summary_text TEXT DEFAULT '',
+    dominant_activities_json TEXT DEFAULT '[]',
+    notable_event_ids_json TEXT DEFAULT '[]',
+    resource_state_json TEXT DEFAULT '{}',
+    threat_level TEXT DEFAULT 'low',
+    last_updated REAL DEFAULT 0.0
+);
+
+
+-- ══════════════════════════════════════════════════════════════════
+-- Layer 6: Realm State
+-- ══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS realm_state (
+    realm_id TEXT PRIMARY KEY,
+    faction_standings_json TEXT DEFAULT '{}',
+    economic_summary TEXT DEFAULT '',
+    player_reputation TEXT DEFAULT '',
+    major_events_json TEXT DEFAULT '[]',
+    last_updated REAL DEFAULT 0.0
+);
+
+
+-- ══════════════════════════════════════════════════════════════════
+-- Layer 7: World Narrative and Threads
+-- ══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS world_narrative (
+    id TEXT PRIMARY KEY DEFAULT 'singleton',
+    world_themes_json TEXT DEFAULT '[]',
+    world_epoch TEXT DEFAULT 'unknown',
+    active_thread_ids_json TEXT DEFAULT '[]',
+    resolved_thread_ids_json TEXT DEFAULT '[]',
+    world_history_json TEXT DEFAULT '[]',
+    last_updated REAL DEFAULT 0.0
+);
+
+CREATE TABLE IF NOT EXISTS narrative_threads (
+    thread_id TEXT PRIMARY KEY,
+    source TEXT NOT NULL,
+    theme TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    canonical_facts_json TEXT DEFAULT '[]',
+    unresolved_questions_json TEXT DEFAULT '[]',
+    status TEXT DEFAULT 'rumor',
+    significance REAL DEFAULT 0.0,
+    origin_region TEXT,
+    spread_radius REAL DEFAULT 0.0,
+    created_at REAL NOT NULL,
+    last_referenced REAL,
+    generation_hints_json TEXT DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS idx_narrative_threads_status
+    ON narrative_threads(status);
+CREATE INDEX IF NOT EXISTS idx_narrative_threads_significance
+    ON narrative_threads(significance);
 """
 
 
@@ -915,3 +1049,92 @@ class EventStore:
                 "is_critical": bool(row[7]),
             }
         return result
+
+    # ── Regional counter persistence (dual-track triggers) ──────────
+
+    def increment_regional_counter(self, region_id: str,
+                                   event_category: str) -> int:
+        """Increment and return the regional event category counter."""
+        conn = self.connection
+        conn.execute(
+            """INSERT INTO regional_counters (region_id, event_category, count)
+               VALUES (?, ?, 1)
+               ON CONFLICT(region_id, event_category)
+               DO UPDATE SET count = count + 1""",
+            (region_id, event_category),
+        )
+        conn.commit()
+        row = conn.execute(
+            "SELECT count FROM regional_counters WHERE region_id=? AND event_category=?",
+            (region_id, event_category),
+        ).fetchone()
+        return row[0] if row else 0
+
+    def get_regional_counter(self, region_id: str,
+                             event_category: str) -> int:
+        """Get the current regional counter value."""
+        row = self.connection.execute(
+            "SELECT count FROM regional_counters WHERE region_id=? AND event_category=?",
+            (region_id, event_category),
+        ).fetchone()
+        return row[0] if row else 0
+
+    def load_all_regional_counters(self) -> Dict[Tuple[str, str], int]:
+        """Load all regional counters. Returns {(region_id, category): count}."""
+        rows = self.connection.execute(
+            "SELECT region_id, event_category, count FROM regional_counters"
+        ).fetchall()
+        return {(r[0], r[1]): r[2] for r in rows}
+
+    # ── Daily ledger persistence ────────────────────────────────────
+
+    def store_daily_ledger(self, game_day: int, game_time_start: float,
+                           game_time_end: float, data_json: str) -> None:
+        """Store a daily ledger row."""
+        self.connection.execute(
+            """INSERT OR REPLACE INTO daily_ledgers
+               (game_day, game_time_start, game_time_end, data_json)
+               VALUES (?, ?, ?, ?)""",
+            (game_day, game_time_start, game_time_end, data_json),
+        )
+        self.connection.commit()
+
+    def load_daily_ledgers(self) -> List[Tuple[int, float, float, str]]:
+        """Load all daily ledgers. Returns [(game_day, start, end, json), ...]."""
+        rows = self.connection.execute(
+            "SELECT game_day, game_time_start, game_time_end, data_json "
+            "FROM daily_ledgers ORDER BY game_day"
+        ).fetchall()
+        return [(r[0], r[1], r[2], r[3]) for r in rows]
+
+    def store_meta_daily_stats(self, data_json: str) -> None:
+        """Store meta-daily stats (single row, keyed 'global')."""
+        self.connection.execute(
+            """INSERT OR REPLACE INTO meta_daily_stats (stat_key, data_json)
+               VALUES ('global', ?)""",
+            (data_json,),
+        )
+        self.connection.commit()
+
+    def load_meta_daily_stats(self) -> Optional[str]:
+        """Load meta-daily stats JSON string."""
+        row = self.connection.execute(
+            "SELECT data_json FROM meta_daily_stats WHERE stat_key='global'"
+        ).fetchone()
+        return row[0] if row else None
+
+    # ── Schema introspection (for testing) ──────────────────────────
+
+    def get_table_names(self) -> List[str]:
+        """Return all table names in the database."""
+        rows = self.connection.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+        ).fetchall()
+        return [r[0] for r in rows]
+
+    def get_index_names(self) -> List[str]:
+        """Return all index names in the database."""
+        rows = self.connection.execute(
+            "SELECT name FROM sqlite_master WHERE type='index' ORDER BY name"
+        ).fetchall()
+        return [r[0] for r in rows]

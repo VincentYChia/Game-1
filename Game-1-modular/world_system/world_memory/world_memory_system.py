@@ -25,6 +25,7 @@ from world_system.world_memory.event_store import EventStore
 from world_system.world_memory.geographic_registry import GeographicRegistry
 from world_system.world_memory.entity_registry import EntityRegistry
 from world_system.world_memory.event_recorder import EventRecorder
+from world_system.world_memory.trigger_manager import TriggerManager
 from world_system.world_memory.interpreter import WorldInterpreter
 from world_system.world_memory.query import WorldQuery
 from world_system.world_memory.retention import EventRetentionManager
@@ -40,6 +41,7 @@ class WorldMemorySystem:
         self.event_store: Optional[EventStore] = None
         self.geo_registry: Optional[GeographicRegistry] = None
         self.entity_registry: Optional[EntityRegistry] = None
+        self.trigger_manager: Optional[TriggerManager] = None
         self.event_recorder: Optional[EventRecorder] = None
         self.interpreter: Optional[WorldInterpreter] = None
         self.world_query: Optional[WorldQuery] = None
@@ -107,14 +109,17 @@ class WorldMemorySystem:
         if character:
             self.entity_registry.register_player(character)
 
-        # 4. Event Recorder (subscribes to bus)
+        # 4. Trigger Manager (threshold-based dual-track counting)
+        self.trigger_manager = TriggerManager.get_instance()
+
+        # 5. Event Recorder (subscribes to bus)
         self.event_recorder = EventRecorder.get_instance()
         self.event_recorder.initialize(
             self.event_store, self.geo_registry,
-            self.entity_registry, self._session_id
+            self.entity_registry, self.trigger_manager, self._session_id
         )
 
-        # 5. Interpreter
+        # 6. Interpreter
         self.interpreter = WorldInterpreter.get_instance()
         self.interpreter.initialize(
             self.event_store, self.geo_registry, self.entity_registry
@@ -122,16 +127,16 @@ class WorldMemorySystem:
         # Wire interpreter to recorder
         self.event_recorder.set_interpreter_callback(self.interpreter.on_trigger)
 
-        # 6. Query Interface
+        # 7. Query Interface
         self.world_query = WorldQuery.get_instance()
         self.world_query.initialize(
             self.entity_registry, self.geo_registry, self.event_store
         )
 
-        # 7. Retention Manager
+        # 8. Retention Manager
         self.retention_manager = EventRetentionManager()
 
-        # 8. Position Sampler
+        # 9. Position Sampler
         self.position_sampler = PositionSampler()
 
         # Restore persisted state
@@ -319,10 +324,16 @@ class WorldMemorySystem:
                 region.state.last_updated,
             )
 
+        # Save trigger manager state
+        trigger_state = {}
+        if self.trigger_manager:
+            trigger_state = self.trigger_manager.get_state()
+
         return {
             "memory_db_path": self.event_store.db_path,
             "session_id": self._session_id,
             "game_time": self._game_time,
+            "trigger_state": trigger_state,
         }
 
     def load(self, save_data: Dict[str, Any], save_dir: str,
@@ -363,6 +374,7 @@ class WorldMemorySystem:
         GeographicRegistry.reset()
         EntityRegistry.reset()
         EventRecorder.reset()
+        TriggerManager.reset()
         WorldInterpreter.reset()
         WorldQuery.reset()
 

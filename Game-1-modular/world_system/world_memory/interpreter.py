@@ -88,13 +88,23 @@ class WorldInterpreter:
         """Register an additional pattern evaluator."""
         self._evaluators.append(evaluator)
 
-    def on_trigger(self, trigger_event: WorldMemoryEvent) -> None:
-        """Called when a prime-number trigger fires.
+    def on_trigger(self, trigger_input) -> None:
+        """Called when a threshold trigger fires.
 
+        Accepts either a TriggerAction (from the new threshold system)
+        or a WorldMemoryEvent (for backward compatibility).
         Evaluates all relevant pattern evaluators and records interpretations.
         """
         if not self.event_store or not self.geo_registry:
             return
+
+        # Support both TriggerAction and direct WorldMemoryEvent
+        if hasattr(trigger_input, 'event'):
+            # TriggerAction from the new threshold system
+            trigger_event = trigger_input.event
+        else:
+            # Direct WorldMemoryEvent (backward compatibility)
+            trigger_event = trigger_input
 
         for evaluator in self._evaluators:
             if evaluator.is_relevant(trigger_event):
