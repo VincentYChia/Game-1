@@ -27,14 +27,17 @@ This is the source of truth for writing the implementation plan.
 - If more recent events than static window → capture ALL recent
 - This ensures you always have enough context, never too little
 
-### 3. Prime Number Triggers for Interpreter
-- Interpreter fires at prime-numbered occurrences: 1st (special), 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31...
+### 3. Threshold Sequence Triggers for Interpreter
+- Interpreter fires at threshold occurrences: 1, 3, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000
 - NOT exponential (too sparse at high counts)
 - NOT every occurrence (too expensive)
-- Heavy skew toward beginning (1st, 2nd, 3rd all trigger)
-- By 100 occurrences: ~25 interpretations
-- By 1000: ~168 interpretations
-- By 10000: ~1229 interpretations
+- Heavy skew toward beginning (1st, 3rd, 5th all trigger)
+- A trigger does NOT mean change — ignoring is valid
+- Dual-track: individual event streams + regional accumulators
+- Pass-through cascade: each layer can generate, ignore, or escalate
+- Interpreters are LLMs: tiny at Layer 3, bigger at Layer 5
+- Early game templates for count=1 events (no LLM needed)
+- See `TRIGGER_SYSTEM.md` for full design
 
 ### 4. Geographic System — Scalable
 - Static map defined and addable, OR procedural at world creation
@@ -45,7 +48,7 @@ This is the source of truth for writing the implementation plan.
 
 ### 5. Event Pruning with Milestone Preservation
 - ALWAYS keep: first occurrence of any event type per entity/location
-- ALWAYS keep: events at prime-number counts (interpretation triggers)
+- ALWAYS keep: events at threshold counts (1, 3, 5, 10, 25, 50, 100, 250, 500, 1000...)
 - ALWAYS keep: power-of-10 milestones (100th, 1000th, 10000th)
 - ALWAYS keep: events that triggered Layer 3 interpretations
 - KEEP: longitude/timeline markers (spread across time to preserve temporal shape)
