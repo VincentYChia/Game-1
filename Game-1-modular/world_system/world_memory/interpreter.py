@@ -1,10 +1,16 @@
-"""World Interpreter — transforms Layer 2 facts into Layer 3 narratives.
+"""World Interpreter — transforms Layer 2 facts into Layer 3 text narrations.
 
-Reads raw event patterns and generates text descriptions when prime-number
-occurrence counts trigger evaluation. Each PatternEvaluator covers a
-different "beat" (population changes, resource pressure, milestones, etc.).
+Each PatternEvaluator has a specific INPUT FRAME OF REFERENCE — defined by
+what data it queries and how it processes it. The same event can trigger
+multiple evaluators because each reads it through a different lens
+(e.g., regional vs global, per-species vs per-tier).
 
-Output is NARRATIVE TEXT ONLY — no JSON game effects.
+Output is MINIMAL NARRATION — data to text, not editorializing.
+Good: "Player has killed 10 wolves in Whispering Woods."
+Bad:  "The wolf population is declining in Whispering Woods."
+
+33 evaluators covering combat, gathering, crafting, progression,
+exploration, social, economy, and items.
 """
 
 from __future__ import annotations
@@ -69,20 +75,65 @@ class WorldInterpreter:
         self.geo_registry = geo_registry
         self.entity_registry = entity_registry
 
-        # Register built-in evaluators
-        from world_system.world_memory.evaluators.population import PopulationChangeEvaluator
-        from world_system.world_memory.evaluators.resources import ResourcePressureEvaluator
-        from world_system.world_memory.evaluators.player_milestones import PlayerMilestoneEvaluator
-        from world_system.world_memory.evaluators.area_danger import AreaDangerEvaluator
-        from world_system.world_memory.evaluators.crafting import CraftingTrendEvaluator
+        # Register all evaluators
+        self._evaluators = []
+        self._register_all_evaluators()
 
-        self._evaluators = [
-            PopulationChangeEvaluator(),
-            ResourcePressureEvaluator(),
-            PlayerMilestoneEvaluator(),
-            AreaDangerEvaluator(),
-            CraftingTrendEvaluator(),
+    def _register_all_evaluators(self) -> None:
+        """Register all built-in evaluators. Each handles a specific input frame."""
+        evaluator_modules = [
+            # Legacy evaluators (kept for backward compatibility)
+            ("world_system.world_memory.evaluators.population", "PopulationChangeEvaluator"),
+            ("world_system.world_memory.evaluators.resources", "ResourcePressureEvaluator"),
+            ("world_system.world_memory.evaluators.player_milestones", "PlayerMilestoneEvaluator"),
+            ("world_system.world_memory.evaluators.area_danger", "AreaDangerEvaluator"),
+            ("world_system.world_memory.evaluators.crafting", "CraftingTrendEvaluator"),
+            # Combat evaluators
+            ("world_system.world_memory.evaluators.combat_kills_regional_low_tier", "CombatKillsRegionalLowTierEvaluator"),
+            ("world_system.world_memory.evaluators.combat_kills_regional_high_tier", "CombatKillsRegionalHighTierEvaluator"),
+            ("world_system.world_memory.evaluators.combat_kills_global", "CombatKillsGlobalEvaluator"),
+            ("world_system.world_memory.evaluators.combat_boss_kills", "CombatBossKillsEvaluator"),
+            ("world_system.world_memory.evaluators.combat_damage_regional", "CombatDamageRegionalEvaluator"),
+            ("world_system.world_memory.evaluators.combat_style", "CombatStyleEvaluator"),
+            # Gathering evaluators
+            ("world_system.world_memory.evaluators.gathering_regional", "GatheringRegionalEvaluator"),
+            ("world_system.world_memory.evaluators.gathering_depletion", "GatheringDepletionEvaluator"),
+            ("world_system.world_memory.evaluators.gathering_global", "GatheringGlobalEvaluator"),
+            ("world_system.world_memory.evaluators.gathering_tools", "GatheringToolsEvaluator"),
+            # Crafting evaluators (per discipline)
+            ("world_system.world_memory.evaluators.crafting_smithing", "CraftingSmithingEvaluator"),
+            ("world_system.world_memory.evaluators.crafting_alchemy", "CraftingAlchemyEvaluator"),
+            ("world_system.world_memory.evaluators.crafting_refining", "CraftingRefiningEvaluator"),
+            ("world_system.world_memory.evaluators.crafting_engineering", "CraftingEngineeringEvaluator"),
+            ("world_system.world_memory.evaluators.crafting_enchanting", "CraftingEnchantingEvaluator"),
+            ("world_system.world_memory.evaluators.crafting_minigame", "CraftingMinigameEvaluator"),
+            ("world_system.world_memory.evaluators.crafting_inventions", "CraftingInventionsEvaluator"),
+            # Progression evaluators
+            ("world_system.world_memory.evaluators.progression_levels", "ProgressionLevelsEvaluator"),
+            ("world_system.world_memory.evaluators.progression_skills", "ProgressionSkillsEvaluator"),
+            ("world_system.world_memory.evaluators.progression_identity", "ProgressionIdentityEvaluator"),
+            ("world_system.world_memory.evaluators.progression_equipment", "ProgressionEquipmentEvaluator"),
+            # Exploration evaluators
+            ("world_system.world_memory.evaluators.exploration_territory", "ExplorationTerritoryEvaluator"),
+            ("world_system.world_memory.evaluators.exploration_dungeons", "ExplorationDungeonsEvaluator"),
+            # Social evaluators
+            ("world_system.world_memory.evaluators.social_npc", "SocialNpcEvaluator"),
+            ("world_system.world_memory.evaluators.social_quests", "SocialQuestsEvaluator"),
+            # Economy evaluators
+            ("world_system.world_memory.evaluators.economy_flow", "EconomyFlowEvaluator"),
+            # Items evaluators
+            ("world_system.world_memory.evaluators.items_equipment", "ItemsEquipmentEvaluator"),
+            ("world_system.world_memory.evaluators.items_inventory", "ItemsInventoryEvaluator"),
         ]
+
+        import importlib
+        for module_path, class_name in evaluator_modules:
+            try:
+                mod = importlib.import_module(module_path)
+                evaluator_cls = getattr(mod, class_name)
+                self._evaluators.append(evaluator_cls())
+            except Exception as e:
+                print(f"[Interpreter] Failed to load {class_name}: {e}")
 
     def add_evaluator(self, evaluator: PatternEvaluator) -> None:
         """Register an additional pattern evaluator."""
