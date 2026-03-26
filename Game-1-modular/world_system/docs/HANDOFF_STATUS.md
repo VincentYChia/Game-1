@@ -85,15 +85,20 @@ CREATE TABLE stats (
 | Tag Relevance | `tag_relevance.py` (69 lines) | Working — entity-event relevance scoring |
 | Config Loader | `config_loader.py` (80 lines) | Working — JSON config loading |
 
-### Living World Agents (PRE-EXISTING, NOT MODIFIED)
+### Consumer Systems (PRE-EXISTING, EXTERNAL TO WMS)
 
-| Agent | File | Status |
-|-------|------|--------|
-| Backend Manager | `living_world/backends/backend_manager.py` (553 lines) | Working — LLM routing (ollama→claude→mock) |
-| NPC Agent | `living_world/npc/npc_agent.py` (481 lines) | Working — dialogue generation, gossip |
-| NPC Memory | `living_world/npc/npc_memory.py` (184 lines) | Working — per-NPC persistent state |
-| Faction System | `living_world/factions/faction_system.py` (463 lines) | Working — reputation, ripple mechanics |
-| Ecosystem Agent | `living_world/ecosystem/ecosystem_agent.py` (398 lines) | Working — resource lifecycle |
+> These are **consumer systems** that live in `living_world/` for organizational convenience.
+> They are NOT part of the World Memory System — they READ WMS data to make outgoing decisions.
+> NPC dialogue generation, faction reputation decisions, and ecosystem lifecycle management
+> are consumer-side concerns, not WMS concerns.
+
+| Consumer | File | Relationship to WMS |
+|----------|------|---------------------|
+| Backend Manager | `living_world/backends/backend_manager.py` (553 lines) | LLM infrastructure — no WMS dependency |
+| NPC Agent | `living_world/npc/npc_agent.py` (481 lines) | Dialogue generation READS NPCMemory and WorldQuery |
+| NPC Memory | `living_world/npc/npc_memory.py` (184 lines) | WMS-owned data — gossip propagation writes here |
+| Faction System | `living_world/factions/faction_system.py` (463 lines) | READS events, WRITES reputation state |
+| Ecosystem Agent | `living_world/ecosystem/ecosystem_agent.py` (398 lines) | READS gathering events, WRITES resource state |
 
 ### Tests
 
@@ -109,18 +114,29 @@ CREATE TABLE stats (
 
 ## What's NOT Built Yet
 
-### Next Priority: Retrieval Mechanism
+### Next Priority: Layer 3 Evaluator Expansion
 
-The WorldQuery class exists (365 lines) but hasn't been connected to real consumers. The next task is making retrieval work — specifically:
+Only 5 of the designed 9+ Layer 3 evaluators exist. The core task is expanding evaluator coverage so that raw events (Layer 2) are consistently converted into text interpretations (Layer 3). This is the heart of the World Memory System — turning stats into meaningful narrative state.
 
-1. **Wire WorldQuery results into NPC dialogue generation** — The NPC agent system (`npc_agent.py`) generates dialogue via BackendManager but doesn't use WorldQuery to provide world context. The NPC should know about nearby events, regional conditions, resource scarcity, and player reputation.
+1. **Complete existing evaluators** — Fix incomplete event type handling in ResourcePressure (node_depleted), CraftingTrend (item_invented), PlayerMilestone (skill_learned)
 
-2. **Implement the 3 retrieval pathways** (Design doc §10):
+2. **Implement missing evaluators** — 7+ event categories have NO evaluator coverage:
+   - Combat Tactics (attack patterns, dodge effectiveness, status ailments)
+   - Equipment & Inventory (gear progression, repair frequency)
+   - Skill Progression (specialization, power-leveling)
+   - Exploration (territory discovery, backtracking)
+   - Social & Reputation (NPC interactions, quest patterns)
+   - Economy (item acquisition/consumption patterns)
+   - Dungeon Progress (completion rates, difficulty trends)
+
+3. **Retrieval pathways** (Design doc §10):
    - **Fast Path**: Layer 1 stat lookups (microsecond) — `stat_store.get()` — DONE
    - **Narrative Path**: Layer 3-5 interpretations (millisecond) — needs evaluators producing data first
    - **Detail Path**: Layer 2 raw events (millisecond) — `event_store.query()` — DONE
 
-3. **Entity-first query integration**: `world_query.query_entity("npc_gareth")` works but nobody calls it yet. Wire it into the NPC dialogue prompt assembly.
+> **NOTE**: Wiring WorldQuery into NPC dialogue is a **consumer integration task**, not a WMS task.
+> The WMS should focus on producing high-quality Layer 3 interpretations. Consumer systems
+> (NPC dialogue, quest generation) integrate with WorldQuery on their own schedule.
 
 ### Layer 3: Evaluators (DESIGNED, PARTIALLY IMPLEMENTED)
 
@@ -222,6 +238,6 @@ Game Loop:
 
 1. **Read** `world_system/docs/WORLD_MEMORY_SYSTEM.md` — the single source of truth
 2. **Run tests** to verify everything works: `python world_system/world_memory/test_stat_store.py && python world_system/world_memory/test_foundation_pipeline.py && python world_system/world_memory/test_memory_system.py`
-3. **Next task**: Wire WorldQuery into NPC dialogue (the retrieval mechanism)
-4. **After that**: Expand evaluators to produce Layer 3 interpretations from Layer 1+2 data
-5. **Then**: Layer 4 cross-domain patterns, Layer 5+ summaries
+3. **Next task**: Expand Layer 3 evaluators (the core of turning raw stats into text events)
+4. **After that**: Layer 4 cross-domain patterns, Layer 5+ summaries
+5. **Separately (consumer work, not WMS)**: Wire WorldQuery into NPC dialogue

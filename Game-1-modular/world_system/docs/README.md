@@ -5,7 +5,7 @@
 | Document | Purpose |
 |----------|---------|
 | **[HANDOFF_STATUS.md](HANDOFF_STATUS.md)** | Current implementation state — what's built, what's next, how to continue |
-| **[WORLD_MEMORY_SYSTEM.md](WORLD_MEMORY_SYSTEM.md)** | Single source of truth for the complete design (1,821 lines, 16 sections) |
+| **[WORLD_MEMORY_SYSTEM.md](WORLD_MEMORY_SYSTEM.md)** | Design document for the 7-layer data architecture. Also describes consumer systems (§12) for reference, but is NOT the source of truth for consumer implementations |
 | **[FOUNDATION_IMPLEMENTATION_PLAN.md](FOUNDATION_IMPLEMENTATION_PLAN.md)** | Detailed implementation plan for Layer 1-2 infrastructure (mostly executed) |
 
 ## Run Tests

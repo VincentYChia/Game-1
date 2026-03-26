@@ -32,7 +32,7 @@
 
 ## Design Principles
 
-1. **Information state only** — Records and interprets. Does NOT apply mechanical game effects. Narrative text, not JSON effects.
+1. **Information state only** — Records and interprets. Does NOT apply mechanical game effects, generate dialogue, or make gameplay decisions. Narrative text summaries, not JSON effects. Consumer systems (NPC dialogue, quest generation, faction decisions) are architecturally separate — they READ from WMS but are not part of it.
 2. **Entity-first queries** — Never search events directly. Find the entity, radiate outward through location, interests, awareness.
 3. **Interest tags are identity** — Overapplied by design. Tags ARE the entity's fingerprint in the information system.
 4. **Write-time processing** — Events enriched, propagated, aggregated at write time. Queries are fast reads.
@@ -1097,7 +1097,8 @@ Two windows that work together:
 
 ## 10.3 What Each Consumer Gets
 
-### NPC Dialogue (~500 token budget)
+### Context Budget: NPC Dialogue Consumer (~500 tokens)
+What the WMS provides when a consumer calls `query_entity(npc_id)`:
 1. NPC personality + role (from entity tags) — ~50 tokens
 2. Recent interactions with player (from activity log) — ~100 tokens
 3. Local knowledge summary (Layer 4) — ~100 tokens
@@ -1105,10 +1106,10 @@ Two windows that work together:
 5. Regional context (Layer 5, if notable) — ~50 tokens
 6. Gossip (distance-filtered interpretations) — ~100 tokens
 
-### Quest Generation (~1000 token budget)
+### Context Budget: Quest Generation Consumer (~1000 tokens)
 All of the above plus: player profile, resource state, active narrative threads, faction standings.
 
-### Content Generation (~500 token budget)
+### Context Budget: Content Generation Consumer (~500 tokens)
 Regional themes, active threads, player level/needs, scarcity data.
 
 ## 10.4 Distance-Based Information Quality
@@ -1135,7 +1136,7 @@ When a Layer 3+ interpretation is created, it's pushed to nearby NPC memory with
 | Same province | 420s | Rumor |
 | Cross-province | 24h+ | Only if severity ≥ "major" |
 
-Stored in `npc_memory.knowledge_json` for retrieval during dialogue generation.
+Stored in `npc_memory.knowledge_json` for retrieval by consumer systems (e.g., dialogue generation).
 
 ## 10.6 Convenience Query Methods
 
@@ -1361,36 +1362,49 @@ Player Action → EventBus (Layer 0)
 
 ---
 
-# 12. Living World Agents
+# 12. Consumer Systems (External to World Memory)
+
+> **IMPORTANT**: The systems below are **consumers** of the World Memory System, NOT part of it.
+> They live in `world_system/living_world/` for organizational convenience, but they are architecturally
+> separate. The World Memory System (Layers 1-7) collects, interprets, and serves data.
+> Consumer systems READ that data and take outgoing actions (dialogue, reputation changes, etc.).
+> The boundary: **World Memory writes information state. Consumers write game state.**
 
 ## 12.1 Architecture
 
-Five autonomous agents subscribe to the GameEventBus and use the World Memory System:
-
 ```
-GameEventBus ──→ EventRecorder (writes Layer 2)
-             ──→ FactionSystem (tracks reputation)
-             ──→ EcosystemAgent (manages resource lifecycle)
-             ──→ NPC Agent System (dialogue + gossip)
-             ──→ BackendManager (routes LLM calls)
-```
-
-## 12.2 BackendManager (Phase 2.2)
-
-Unified LLM router. Tries backends in order: ollama → claude → mock.
-
-```python
-class BackendManager:
-    """Routes LLM calls to available backend. Singleton."""
-    def generate(self, prompt: str, system: str = "", max_tokens: int = 200,
-                 temperature: float = 0.7) -> str: ...
+                     ┌─────────────────────────────────────────┐
+                     │         WORLD MEMORY SYSTEM             │
+                     │     (Data Collection & Interpretation)   │
+GameEventBus ──→     │  EventRecorder → SQLite (Layer 2)       │
+                     │  Evaluators → Interpretations (Layer 3+) │
+                     │  WorldQuery → EntityQueryResult (reads)  │
+                     └──────────────┬──────────────────────────┘
+                                    │ READS
+                     ┌──────────────▼──────────────────────────┐
+                     │         CONSUMER SYSTEMS                 │
+                     │     (Outgoing Actions & Decisions)       │
+                     │  BackendManager (LLM routing)            │
+                     │  NPC Dialogue (uses memory as context)   │
+                     │  Faction System (reputation decisions)   │
+                     │  Ecosystem Agent (resource lifecycle)    │
+                     └──────────────────────────────────────────┘
 ```
 
-All AI inference goes through BackendManager — no direct API calls elsewhere.
+## 12.2 What World Memory Provides to Consumers
 
-## 12.3 NPC Agent System (Phase 2.3)
+The World Memory System provides **context and state** that consumer systems use:
 
-### NPCMemory
+| Consumer | What WMS Provides | What the Consumer Does (NOT WMS) |
+|----------|-------------------|----------------------------------|
+| NPC Dialogue | NPCMemory (knowledge, relationship, emotion), EntityQueryResult, gossip | Generates dialogue text via LLM |
+| Faction System | Event history (kills, quests, crafting) | Decides reputation changes, applies ripple |
+| Ecosystem Agent | Resource gathering counts per biome | Manages regeneration, scarcity thresholds |
+| Quest Generator | Player profile, regional state, scarcity | Creates quest objectives and rewards |
+
+## 12.3 NPC Memory (WMS-Owned Data)
+
+The World Memory System owns and manages NPC memory state:
 
 ```python
 @dataclass
@@ -1402,19 +1416,9 @@ class NPCMemory:
     last_interaction: float
 ```
 
-### Dialogue Generation Flow
+**Gossip propagation** is a write-time WMS operation: when Layer 3+ interpretations are created, they're pushed to nearby NPC memory with distance-based delays (60s local, 180s district, 420s province). NPCs only receive gossip matching their interest tags (relevance > 0.2). This data is stored — how it's used for dialogue is a consumer concern.
 
-1. Player initiates conversation with NPC
-2. System calls `world_query.query_entity(npc_id)` → gets EntityQueryResult
-3. Assembles prompt: NPC personality + recent interactions + local knowledge + ongoing conditions + gossip
-4. BackendManager generates dialogue (~500 token budget)
-5. NPC memory updated with interaction record
-
-### Gossip Propagation
-
-When Layer 3+ interpretations are created, they're pushed to nearby NPCs with distance-based delays (60s local, 180s district, 420s province). NPCs only receive gossip matching their interest tags (relevance > 0.2).
-
-### 6 Personality Archetypes
+### 6 Personality Archetypes (Reference for Consumers)
 
 | Archetype | Style | Focus |
 |-----------|-------|-------|
@@ -1425,13 +1429,15 @@ When Layer 3+ interpretations are created, they're pushed to nearby NPCs with di
 | Scholar | Analytical, precise | Knowledge, discovery |
 | Recluse | Brief, wary | Minimal interaction |
 
-## 12.4 Faction System (Phase 2.4)
+## 12.4 Faction State (WMS-Owned Data)
 
-### The 4 Factions
+The World Memory System tracks faction reputation as information state:
 
-Each faction has reputation scale: Hostile → Unfriendly → Neutral → Friendly → Allied → Exalted.
+- 4 factions with reputation scale: Hostile → Unfriendly → Neutral → Friendly → Allied → Exalted
+- Reputation history with reasons and timestamps
+- Milestone thresholds (0.25, 0.5, 0.75) tracked for consumer use
 
-### Ripple Mechanics
+### Ripple Mechanics (Faction System Consumer Logic)
 
 When reputation changes with one faction, allied/hostile factions feel it:
 ```
@@ -1440,7 +1446,7 @@ Player gains +10 rep with Miners Guild
   → Forest Wardens (hostile) gains +10 × -0.3 = -3
 ```
 
-### Event→Reputation Mapping
+### Event→Reputation Mapping (Consumer Logic)
 
 | Event | Affected Faction | Rep Change |
 |-------|-----------------|-----------|
@@ -1449,9 +1455,9 @@ Player gains +10 rep with Miners Guild
 | Resource gathered (faction claim) | Claiming faction | -1 to -3 |
 | Trade with faction NPC | That faction | +1 to +3 |
 
-## 12.5 Ecosystem Agent (Phase 2.5)
+## 12.5 Ecosystem State (WMS-Owned Data)
 
-### Resource Lifecycle
+The World Memory System tracks biome resource levels as information state:
 
 ```
 Max Level (1.0) ──→ Player gathers ──→ Level decreases
@@ -1460,12 +1466,11 @@ Max Level (1.0) ──→ Player gathers ──→ Level decreases
                     (regen_rate per game-time-unit)
 ```
 
-When resource level drops below 0.3 → triggers "resource_pressure" evaluator.
-When it drops below 0.1 → "critical_scarcity" interpretation generated.
+Threshold tracking (data only, not outgoing actions):
+- Below 0.3 → flags "resource_pressure" for evaluators
+- Below 0.1 → flags "critical_scarcity" for evaluators
 
-### Biome Resource Pools
-
-Each biome has base resource levels and regeneration rates. The EcosystemAgent queries Layer 2 gathering events to track consumption vs. regeneration.
+Each biome has base resource levels and regeneration rates tracked in `biome_resource_state` table.
 
 ---
 
@@ -1493,22 +1498,22 @@ Event hits threshold → Evaluator selected → Context assembled (Layer 2 event
 
 **Templates vs LLM**: Layers 3-4 use templates by default (fast, deterministic). LLM only when template cannot capture the pattern complexity. Higher layers (5+) always use LLM.
 
-## 13.3 NPC Dialogue Enrichment (Touchpoint 14)
+## 13.3 Consumer Integration Gaps (NOT WMS Scope)
 
-**Currently working**: Basic personality + recent interactions.
-**Missing (ranked by impact)**:
-1. **Faction reputation** (HIGH) — NPC should reference player standing
-2. **NPC-specific world awareness** (MEDIUM) — query_entity results not yet in prompt
-3. **Ecosystem scarcity** (MEDIUM) — NPC should mention resource conditions
-4. **Gossip freshness** (LOW) — propagated knowledge not yet used
+The following are gaps in **consumer systems** that need WMS data but haven't integrated yet. These are listed for reference — fixing them is NOT part of World Memory System development:
 
-## 13.4 Known Gaps
+1. **NPC Dialogue** — `query_entity()` works but NPC dialogue system doesn't call it yet
+2. **Faction Milestones** — Events fire and log exists, but no consumer generates narrative feedback
+3. **Ecosystem Scarcity → NPC awareness** — `biome_resources` tracked, but gossip propagation bridge not wired
 
-| Gap | Data Available | Missing Bridge |
-|-----|---------------|---------------|
-| Faction milestones → player feedback | Events fire, log exists | No narrative generation |
-| Ecosystem scarcity → NPC awareness | biome_resources tracked | No gossip propagation |
-| WorldQuery → NPC prompts | query_entity works | Not integrated into dialogue flow |
+## 13.4 WMS Data Readiness
+
+| Data | WMS Layer | Available | Consumer Ready |
+|------|-----------|-----------|---------------|
+| NPC memory + gossip | Layer 2-3 | Yes | No (dialogue system not integrated) |
+| Faction reputation state | Layer 2 | Yes | No (milestone narratives not generated) |
+| Ecosystem scarcity flags | Layer 2 | Yes | No (gossip bridge not wired) |
+| Player profile/archetype | Layer 1 | Partial | No consumer exists yet |
 
 ## 13.5 Implementation Priority
 
