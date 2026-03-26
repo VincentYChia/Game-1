@@ -1,7 +1,7 @@
 """Event Recorder — subscribes to GameEventBus, converts events to
 WorldMemoryEvents, enriches with geographic context, and writes to SQLite.
 
-This is the bridge between Layer 0 (ephemeral bus) and Layer 2 (persistent SQLite).
+This is the bridge between Layer 0 (ephemeral bus) and the raw event pipeline (persistent SQLite).
 It tracks occurrence counts and triggers the Interpreter via the TriggerManager
 when counts hit threshold milestones (1, 3, 5, 10, 25, 50, 100, ...).
 

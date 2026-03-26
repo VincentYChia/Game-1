@@ -211,7 +211,7 @@ class WorldQuery:
                 for r, e in scored[:window.static_size]]
 
     def _get_local_context(self, entity: WorldEntity) -> Optional[Dict]:
-        """Get Layer 4 local knowledge for entity's home region."""
+        """Get Layer 3 local knowledge for entity's home region."""
         if not entity.home_region_id or not self.geo_registry:
             return None
 
@@ -240,7 +240,7 @@ class WorldQuery:
         }
 
     def _get_regional_context(self, entity: WorldEntity) -> Optional[Dict]:
-        """Get Layer 5 regional knowledge for entity's province."""
+        """Get Layer 4 regional knowledge for entity's province."""
         province_id = entity.home_province_id
         if not province_id or not self.geo_registry:
             return None
@@ -288,7 +288,7 @@ class WorldQuery:
                               window: Optional[EventWindow] = None,
                               current_game_time: float = 0.0,
                               tag_filter: Optional[List[str]] = None) -> List[Dict]:
-        """Raw Layer 2 query — events in a circular area."""
+        """Raw event pipeline query — events in a circular area."""
         if not self.event_store or not self.geo_registry:
             return []
 
@@ -322,7 +322,7 @@ class WorldQuery:
         return [self._event_to_summary(e) for e in events[:window.static_size * 2]]
 
     def query_interpretations(self, **kwargs) -> List[InterpretedEvent]:
-        """Direct Layer 3 query."""
+        """Direct Layer 2 query."""
         if not self.event_store:
             return []
         return self.event_store.query_interpretations(**kwargs)

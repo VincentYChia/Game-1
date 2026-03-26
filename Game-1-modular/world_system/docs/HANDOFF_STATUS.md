@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-26
 **Branch**: `claude/living-world-combat-phase-2-XBxdJ`
-**Phase**: 2.1 (Memory Layer) — Layer 1 complete, Layer 2 infrastructure complete
+**Phase**: 2.1 (Memory Layer) — Layer 1 complete, Raw Event Pipeline infrastructure complete
 **Tests**: 56 passing (0 failures)
 
 ---
@@ -52,7 +52,7 @@ CREATE TABLE stats (
 
 **Save system:** Stats live in `world_memory.db` (SQLite). `to_dict()` still works for backward compat with old JSON saves. `from_dict()` imports v1.0 legacy saves into SQL automatically.
 
-### Layer 2: Event Recording Infrastructure (COMPLETE)
+### Raw Event Pipeline: Event Recording Infrastructure (COMPLETE)
 
 **Core files:**
 - `world_system/world_memory/event_store.py` (~1,100 lines) — 20 SQL tables, full CRUD
@@ -114,7 +114,7 @@ CREATE TABLE stats (
 
 ## What's NOT Built Yet
 
-### Layer 3 Evaluators: IMPLEMENTED (33 evaluators, all passing)
+### Layer 2 Evaluators: IMPLEMENTED (33 evaluators, all passing)
 
 28 new granular evaluators + 5 legacy evaluators. Each evaluator has a specific
 **input frame of reference** — defined by what data it queries and how it processes it.
@@ -144,13 +144,13 @@ the narration is regional. If not, it's global.
 The retrieval system needs to:
 1. Catalog what evaluators exist and what they produce
 2. Auto-match stats/events to the right evaluator
-3. Work across layers (Layer 2 → Layer 3 → Layer 4+)
+3. Work across layers (Raw Event Pipeline → Layer 2 → Layer 3+)
 4. Let consumers find relevant interpretations by querying the catalog
 
 **Retrieval pathways** (Design doc §10):
 - **Fast Path**: Layer 1 stat lookups (microsecond) — `stat_store.get()` — DONE
-- **Narrative Path**: Layer 3 interpretations (millisecond) — evaluators now producing data
-- **Detail Path**: Layer 2 raw events (millisecond) — `event_store.query()` — DONE
+- **Narrative Path**: Layer 2 interpretations (millisecond) — evaluators now producing data
+- **Detail Path**: Raw Event Pipeline raw events (millisecond) — `event_store.query()` — DONE
 
 > **NOTE**: Wiring WorldQuery into NPC dialogue is a **consumer integration task**, not a WMS task.
 
@@ -160,9 +160,9 @@ The retrieval system needs to:
 - Legacy evaluators (population, area_danger, etc.) still use editorializing narration — should be updated to minimal data-to-text style
 - Config for new evaluators uses hardcoded defaults — should be added to memory-config.json
 
-### Layer 4-7: Higher Aggregation (SCHEMA ONLY, NOT IMPLEMENTED)
+### Layer 3-7: Higher Aggregation (SCHEMA ONLY, NOT IMPLEMENTED)
 
-### Layer 5-7: Higher Aggregation (SCHEMA ONLY)
+### Layer 4-7: Higher Aggregation (SCHEMA ONLY)
 
 SQL tables exist for province summaries, realm state, world narrative, and narrative threads. No code writes to them yet.
 
@@ -246,6 +246,6 @@ Game Loop:
 1. **Read** `world_system/docs/WORLD_MEMORY_SYSTEM.md` — the single source of truth
 2. **Run tests** to verify everything works: `python world_system/world_memory/test_stat_store.py && python world_system/world_memory/test_foundation_pipeline.py && python world_system/world_memory/test_memory_system.py`
 3. **Next task**: Build retrieval system (catalog evaluators, auto-match stats, serve consumers)
-4. **After that**: Layer 4 cross-domain patterns, Layer 5+ summaries
+4. **After that**: Layer 3 cross-domain patterns, Layer 4+ summaries
 5. **Polish**: Update legacy evaluator narration to minimal data-to-text style
 6. **Separately (consumer work, not WMS)**: Wire WorldQuery into NPC dialogue

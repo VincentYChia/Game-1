@@ -1,4 +1,4 @@
-"""World Interpreter — transforms Layer 2 facts into Layer 3 text narrations.
+"""World Interpreter — transforms Layer 1 stats into Layer 2 text events.
 
 Each PatternEvaluator has a specific INPUT FRAME OF REFERENCE — defined by
 what data it queries and how it processes it. The same event can trigger
@@ -43,7 +43,7 @@ class PatternEvaluator(ABC):
 
 
 class WorldInterpreter:
-    """Reads Layer 2 patterns, generates Layer 3 narrative interpretations.
+    """Reads raw event pipeline patterns, generates Layer 2 narrative interpretations.
 
     Called when EventRecorder detects a prime-number trigger.
     """

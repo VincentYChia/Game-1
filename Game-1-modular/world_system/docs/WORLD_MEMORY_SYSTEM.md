@@ -16,8 +16,8 @@
 3. [Geographic System](#3-geographic-system)
 4. [Entity Registry & Interest Tags](#4-entity-registry--interest-tags)
 5. [Event Schema & Recording Pipeline](#5-event-schema--recording-pipeline)
-6. [Interpreter & Evaluators (Layers 3-4)](#6-interpreter--evaluators)
-7. [Aggregation & World State (Layers 4-7)](#7-aggregation--world-state)
+6. [Interpreter & Evaluators (Layers 2-3)](#6-interpreter--evaluators)
+7. [Aggregation & World State (Layers 3-7)](#7-aggregation--world-state)
 8. [Time-Based Tracking & Recency](#8-time-based-tracking--recency)
 9. [Tagging Strategy](#9-tagging-strategy)
 10. [Retrieval Design](#10-retrieval-design)
@@ -36,7 +36,7 @@
 2. **Entity-first queries** — Never search events directly. Find the entity, radiate outward through location, interests, awareness.
 3. **Interest tags are identity** — Overapplied by design. Tags ARE the entity's fingerprint in the information system.
 4. **Write-time processing** — Events enriched, propagated, aggregated at write time. Queries are fast reads.
-5. **Compression upward** — Each layer condenses the one below. Layer 5 consumers never need Layer 2.
+5. **Compression upward** — Each layer condenses the one below. Layer 4 consumers never need the Raw Event Pipeline.
 6. **Threshold triggers** — Sequence `1, 3, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000`. Triggers evaluate; ignoring is valid.
 7. **Bounded context** — Every LLM call gets a fixed token budget. No unbounded accumulation.
 8. **The world has state beyond the player** — Resources deplete, populations shift, factions maneuver whether the player is present or not.
@@ -52,12 +52,13 @@ Data compresses upward. Each layer condenses the one below into better informati
 | Layer | Name | Scale | What It Stores | Trigger Cadence |
 |:---:|-------|-------|---------------|-----------------|
 | 1 | Numerical Stats | Global | 850+ cumulative counters (stat_tracker.py) | Every event |
-| 2 | Structured Events | Chunk/Locality | Timestamped facts in SQLite — WHO/WHAT/WHERE/WHEN | Every event |
-| 3 | Simple Interpretations | Locality/District | One-sentence narratives from 9 evaluators | Milestone series |
-| 4 | Connected Interpretations | District/Province | Cross-domain and cross-region pattern detection | Accumulation-based |
-| 5 | Principality Summaries | Province | Gross summaries of provincial state | Provincial triggers |
-| 6 | Regional/National State | Realm | Faction landscapes, economic state, player reputation | Multi-province |
-| 7 | World State | World | Narrative threads, world identity, themes, history | World-shaping only |
+| — | Raw Event Pipeline | Chunk/Locality | Timestamped facts in SQLite — WHO/WHAT/WHERE/WHEN | Every event |
+| 2 | Simple Text Events | Locality/District | One-sentence narratives from evaluators (evaluator output) | Milestone series |
+| 3 | Municipality/Local Consolidation | District/Province | Cross-domain and cross-region pattern detection | Accumulation-based |
+| 4 | Smaller Region Events | Province | Gross summaries of provincial state | Provincial triggers |
+| 5 | Larger Region/Country Events | Realm | Faction landscapes, economic state, player reputation | Multi-province |
+| 6 | Intercountry Events | Multi-Realm | Cross-realm patterns, trade routes, diplomatic state | Multi-realm |
+| 7 | World Events | World | Narrative threads, world identity, themes, history | World-shaping only |
 
 ### The Compression Principle
 
@@ -65,9 +66,9 @@ Data compresses upward. Each layer condenses the one below into better informati
 
 ### The Fact/Interpretation Boundary
 
-The critical line sits between Layers 2 and 3:
-- **Below** (Layers 1-2): **Facts** — immutable records of what happened
-- **Above** (Layers 3-7): **Interpretations** — derived meaning, narratives, summaries
+The critical line sits between the Raw Event Pipeline and Layer 2:
+- **Below** (Layer 1 + Raw Event Pipeline): **Facts** — immutable records of what happened
+- **Above** (Layers 2-7): **Interpretations** — derived meaning, narratives, summaries
 
 ### Data Flow Pipeline
 
@@ -79,7 +80,7 @@ GAME ACTION (player mines iron)
        │
        ├──→ Layer 1: stat_tracker.record(...)                 [existing, unchanged]
        │
-       └──→ Layer 2: EventRecorder.record(...)                [NEW — SQLite]
+       └──→ Raw Event Pipeline: EventRecorder.record(...)     [NEW — SQLite]
                 │     Structured event with geographic context + auto-tags
                 │
                 ▼
@@ -87,17 +88,17 @@ GAME ACTION (player mines iron)
                 │     Checks: individual stream + regional accumulator thresholds
                 │
                 ▼
-            Layer 3 Interpreter (if threshold hit)             [NEW]
-                │     9 evaluators check patterns
+            Layer 2 Interpreter (if threshold hit)             [NEW]
+                │     Evaluators check patterns
                 │     Generate one-sentence narrative (or ignore)
                 │
                 ▼
-            Layer 4 Aggregator (if accumulation threshold)     [NEW]
+            Layer 3 Aggregator (if accumulation threshold)     [NEW]
                 │     Cross-domain + cross-region patterns
                 │
                 ▼
-            Layers 5-7 (if significance warrants)              [NEW]
-                │     Provincial → Realm → World summaries
+            Layers 4-7 (if significance warrants)              [NEW]
+                │     Provincial → Realm → Intercountry → World summaries
                 │
                 ▼
             [Ready for downstream queries by NPC agents, quest gen, etc.]

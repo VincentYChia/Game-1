@@ -1,7 +1,7 @@
 """Event schema definitions for the World Memory System.
 
-Layer 2: WorldMemoryEvent — atomic structured facts stored in SQLite.
-Layer 3: InterpretedEvent — narrative descriptions derived from patterns.
+Raw Event Pipeline: WorldMemoryEvent — atomic structured facts stored in SQLite.
+Layer 2: InterpretedEvent — narrative descriptions derived from patterns (evaluator output).
 
 All dataclasses here are pure data with no dependencies on game systems.
 """
@@ -109,7 +109,7 @@ SKIP_BUS_EVENTS = frozenset({
 class WorldMemoryEvent:
     """Atomic unit of world memory — one thing that happened.
 
-    This is a Layer 2 record: an immutable structured fact.
+    This is a raw event pipeline record: an immutable structured fact.
     """
 
     # Identity
@@ -172,7 +172,7 @@ class WorldMemoryEvent:
 
 @dataclass
 class InterpretedEvent:
-    """A narrative description derived from Layer 2 patterns. Layer 3.
+    """A narrative description derived from raw event pipeline patterns. Layer 2.
 
     These are the "news stories" of the world: pattern-detected,
     threshold-triggered text descriptions. NOT JSON game effects.

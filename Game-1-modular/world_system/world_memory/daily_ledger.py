@@ -1,6 +1,6 @@
 """Daily aggregation and meta-stats for the World Memory System.
 
-At each game-day boundary, all Layer 2 events for that day are aggregated
+At each game-day boundary, all raw event pipeline events for that day are aggregated
 into a DailyLedger (one row, never pruned).  MetaDailyStats track streaks,
 records, and rolling averages across ledger history.
 

@@ -1,7 +1,7 @@
 """Event Retention Manager — prunes old events while preserving milestones.
 
 Keeps: first occurrences, threshold-indexed events, power-of-10 milestones,
-interpretation triggers, Layer 3 referenced events, and one event per
+interpretation triggers, Layer 2 referenced events, and one event per
 time window (timeline markers).
 
 Design authority: WORLD_MEMORY_SYSTEM.md §5.4 (Retention Policy)
@@ -28,7 +28,7 @@ class EventRetentionManager:
       2. Threshold-indexed events (count in THRESHOLD_SET)
       3. Power-of-10 milestones (count in {10, 100, 1000, 10000, 100000})
       4. Events that triggered interpretations (triggered_interpretation)
-      5. Events referenced by Layer 3 cause chains
+      5. Events referenced by Layer 2 cause chains
       6. One event per game-day per (actor, type, subtype) group
     """
 
@@ -88,7 +88,7 @@ class EventRetentionManager:
                 # Rule 4: Triggered interpretation
                 elif event.triggered_interpretation:
                     keep = True
-                # Rule 5: Referenced by Layer 3 cause chains
+                # Rule 5: Referenced by Layer 2 cause chains
                 elif event_store.is_referenced_by_interpretation(event.event_id):
                     keep = True
                 else:
