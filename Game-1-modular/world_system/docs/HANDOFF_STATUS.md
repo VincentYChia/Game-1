@@ -65,7 +65,7 @@ CREATE TABLE stats (
 - Auto-tagging: location, species, intensity, element, tier, discipline, quality
 - Threshold triggers: fires at `1, 3, 5, 10, 25, 50, 100, 250, 500, 1000...` (NOT primes)
 - Dual-track counting: individual streams + regional accumulators
-- 20 SQL tables covering Layers 2-7 (higher layers are empty schemas, ready for data)
+- 20 SQL tables covering Raw Event Pipeline through Layer 7 (higher layers are empty schemas, ready for data)
 
 **Bus events published (13 types):**
 `DAMAGE_DEALT`, `ENEMY_KILLED`, `PLAYER_HIT`, `DODGE_PERFORMED`, `RESOURCE_GATHERED`, `ITEM_CRAFTED`, `LEVEL_UP`, `SKILL_ACTIVATED`, `EQUIPMENT_CHANGED`, `PLAYER_DIED`, `STATUS_APPLIED`, `NPC_INTERACTION`, `QUEST_ACCEPTED`, `QUEST_COMPLETED`
@@ -160,11 +160,9 @@ The retrieval system needs to:
 - Legacy evaluators (population, area_danger, etc.) still use editorializing narration — should be updated to minimal data-to-text style
 - Config for new evaluators uses hardcoded defaults — should be added to memory-config.json
 
-### Layer 3-7: Higher Aggregation (SCHEMA ONLY, NOT IMPLEMENTED)
+### Layers 3-7: Higher Aggregation (SCHEMA ONLY, NOT IMPLEMENTED)
 
-### Layer 4-7: Higher Aggregation (SCHEMA ONLY)
-
-SQL tables exist for province summaries, realm state, world narrative, and narrative threads. No code writes to them yet.
+SQL tables exist for municipality consolidation, province summaries, realm state, intercountry state, world narrative, and narrative threads. No code writes to them yet.
 
 ### Known Coverage Gaps in Layer 1 (~15%)
 
@@ -246,6 +244,6 @@ Game Loop:
 1. **Read** `world_system/docs/WORLD_MEMORY_SYSTEM.md` — the single source of truth
 2. **Run tests** to verify everything works: `python world_system/world_memory/test_stat_store.py && python world_system/world_memory/test_foundation_pipeline.py && python world_system/world_memory/test_memory_system.py`
 3. **Next task**: Build retrieval system (catalog evaluators, auto-match stats, serve consumers)
-4. **After that**: Layer 3 cross-domain patterns, Layer 4+ summaries
+4. **After that**: Layer 3 cross-domain patterns, Layers 4-7 summaries
 5. **Polish**: Update legacy evaluator narration to minimal data-to-text style
 6. **Separately (consumer work, not WMS)**: Wire WorldQuery into NPC dialogue
