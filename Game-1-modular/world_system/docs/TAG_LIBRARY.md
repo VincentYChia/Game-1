@@ -18,9 +18,9 @@ Higher layers OVERRIDE and UPDATE tags from below. Two mechanisms:
 - **Significance is RECREATED** at each layer. Each layer makes its own judgment.
 - **Key tags are UPDATED** (scope, urgency, address). Higher layers have broader context.
 
-### 3. ~60 Categories, 5-10 Tags Per Item
+### 3. 65 Categories, 5-10 Tags Per Item
 - Layer 1: 30 categories (factual dimensions)
-- Layers 2-7: ~5 new categories each (progressive unlock)
+- Layers 2-7: 5-9 new categories each (progressive unlock, including per-layer significance)
 - Each stat/event carries 5-10 tags from available categories
 - Tags are the PRIMARY retrieval/indexing mechanism
 
@@ -100,20 +100,21 @@ Geographic address system and initial event assessment. Evaluators produce these
 
 ---
 
-## Layer 3: Municipality/Local — 8 new (44 total)
+## Layer 3: Municipality/Local — 9 new (45 total)
 
 Consolidation of Layer 2 events. Interpretation begins. Can OVERRIDE Layer 2 tags.
 
 | # | Category | Values | Notes |
 |---|----------|--------|-------|
-| 37 | `sentiment` | positive, negative, neutral, dangerous, fortunate, prosperous, declining, hopeful, grim | Emotional read of the consolidated event |
-| 38 | `alignment` | good, evil, just, unjust, chaotic, orderly, natural, unnatural, merciful, cruel | Moral/ethical dimension of the event |
-| 39 | `trend` | increasing, decreasing, stable, volatile, emerging, dying, cyclical, accelerating | Directional pattern over time |
-| 40 | `intensity` | light, moderate, heavy, extreme | Magnitude judgment — needs multi-event context |
-| 41 | `setting` | village, settlement, wilderness, dungeon, underground, ruins, crossroads, market, camp | Environmental context of event |
-| 42 | `terrain` | forest, hills, cave, clearing, path, rocky, dense, water, plains, swamp | Physical terrain where event occurred |
-| 43 | `population_status` | thriving, declining, extinct, migrating, stable, recovering | Creature population state from event patterns |
-| 44 | `resource_status` | abundant, steady, scarce, critical, depleted, recovering | Resource availability from event patterns |
+| 37 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** Layer 3 makes its own judgment with local consolidation context. |
+| 38 | `sentiment` | positive, negative, neutral, dangerous, fortunate, prosperous, declining, hopeful, grim | Emotional read of the consolidated event |
+| 39 | `alignment` | good, evil, just, unjust, chaotic, orderly, natural, unnatural, merciful, cruel | Moral/ethical dimension of the event |
+| 40 | `trend` | increasing, decreasing, stable, volatile, emerging, dying, cyclical, accelerating | Directional pattern over time |
+| 41 | `intensity` | light, moderate, heavy, extreme | Magnitude judgment — needs multi-event context |
+| 42 | `setting` | village, settlement, wilderness, dungeon, underground, ruins, crossroads, market, camp | Environmental context of event |
+| 43 | `terrain` | forest, hills, cave, clearing, path, rocky, dense, water, plains, swamp | Physical terrain where event occurred |
+| 44 | `population_status` | thriving, declining, extinct, migrating, stable, recovering | Creature population state from event patterns |
+| 45 | `resource_status` | abundant, steady, scarce, critical, depleted, recovering | Resource availability from event patterns |
 
 **Override behavior:** Layer 3 UPDATES these from Layer 2:
 - `significance` → recreated with local consolidation context
@@ -122,16 +123,17 @@ Consolidation of Layer 2 events. Interpretation begins. Can OVERRIDE Layer 2 tag
 
 ---
 
-## Layer 4: Smaller Region — 4 new (48 total)
+## Layer 4: Smaller Region — 5 new (50 total)
 
 District-level cross-domain patterns. Tags describe event characteristics.
 
 | # | Category | Values | Notes |
 |---|----------|--------|-------|
-| 45 | `faction` | village_guard, crafters_guild, forest_wardens, miners_collective | Which faction this event touches |
-| 46 | `urgency_level` | none, low, moderate, high, critical, emergency | **KEY TAG — updated at higher layers.** Broader than danger — any event type |
-| 47 | `event_status` | emerging, developing, ongoing, resolving, resolved, recurring, escalating | Lifecycle status of the event pattern |
-| 48 | `player_impact` | player_driven, partially_player, world_driven, mixed | Proportion of player vs world causation |
+| 46 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** District-level judgment — a locally major event may be minor at district scale. |
+| 47 | `faction` | village_guard, crafters_guild, forest_wardens, miners_collective | Which faction this event touches |
+| 48 | `urgency_level` | none, low, moderate, high, critical, emergency | **KEY TAG — updated at higher layers.** Broader than danger — any event type |
+| 49 | `event_status` | emerging, developing, ongoing, resolving, resolved, recurring, escalating | Lifecycle status of the event pattern |
+| 50 | `player_impact` | player_driven, partially_player, world_driven, mixed | Proportion of player vs world causation |
 
 **Override behavior:** Layer 4 UPDATES:
 - `significance` → recreated at district level
@@ -141,16 +143,17 @@ District-level cross-domain patterns. Tags describe event characteristics.
 
 ---
 
-## Layer 5: Larger Region / Country — 4 new (52 total)
+## Layer 5: Larger Region / Country — 5 new (55 total)
 
 Province-level event interpretation. How events interact with political/living conditions.
 
 | # | Category | Values | Notes |
 |---|----------|--------|-------|
-| 49 | `political` | stabilizing, destabilizing, neutral, provocative, unifying, divisive | Political dimension of the event |
-| 50 | `military` | peaceful, escalating, defensive, offensive, deterrent, provocative | Military dimension of the event |
-| 51 | `living_impact` | minimal, noticeable, significant, dire, nightmarish, beneficial, transformative | Impact on quality of life |
-| 52 | `migration` | causing_inflow, causing_outflow, displacement, attraction, neutral | Whether event drives population movement |
+| 51 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** Province-level judgment with full regional context. |
+| 52 | `political` | stabilizing, destabilizing, neutral, provocative, unifying, divisive | Political dimension of the event |
+| 53 | `military` | peaceful, escalating, defensive, offensive, deterrent, provocative | Military dimension of the event |
+| 54 | `living_impact` | minimal, noticeable, significant, dire, nightmarish, beneficial, transformative | Impact on quality of life |
+| 55 | `migration` | causing_inflow, causing_outflow, displacement, attraction, neutral | Whether event drives population movement |
 
 **Override behavior:** Layer 5 UPDATES:
 - `significance` → recreated at province level
@@ -160,16 +163,17 @@ Province-level event interpretation. How events interact with political/living c
 
 ---
 
-## Layer 6: Intercountry — 4 new (56 total)
+## Layer 6: Intercountry — 5 new (60 total)
 
 Cross-province event effects. How events ripple between regions.
 
 | # | Category | Values | Notes |
 |---|----------|--------|-------|
-| 53 | `relation_effect` | hostility, alliance, friendship, hatred, war, trade_disruption, cooperation, indifference | What the event triggers between provinces/factions |
-| 54 | `diplomacy` | treaty, embargo, negotiation, escalation, de_escalation, neutral | Diplomatic consequence of the event |
-| 55 | `regional_effect` | unifying, fragmenting, isolating, connecting, destabilizing, strengthening | How event affects regional cohesion |
-| 56 | `regional_significance` | negligible, minor, notable, major, defining | **NEW significance at cross-regional scope** |
+| 56 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** Intercountry-level judgment. |
+| 57 | `relation_effect` | hostility, alliance, friendship, hatred, war, trade_disruption, cooperation, indifference | What the event triggers between provinces/factions |
+| 58 | `diplomacy` | treaty, embargo, negotiation, escalation, de_escalation, neutral | Diplomatic consequence of the event |
+| 59 | `regional_effect` | unifying, fragmenting, isolating, connecting, destabilizing, strengthening | How event affects regional cohesion |
+| 60 | `regional_significance` | negligible, minor, notable, major, defining | **NEW significance at cross-regional scope** (separate from per-layer `significance`) |
 
 **Override behavior:** Layer 6 UPDATES:
 - `significance` → recreated at intercountry level
@@ -178,16 +182,17 @@ Cross-province event effects. How events ripple between regions.
 
 ---
 
-## Layer 7: World Level — 4 new (60 total)
+## Layer 7: World Level — 5 new (65 total)
 
 World-level event interpretation. How events shape the world narrative.
 
 | # | Category | Values | Notes |
 |---|----------|--------|-------|
-| 57 | `world_significance` | negligible, passing, notable, historic, epochal | Fresh significance at world scale. Most events are negligible or passing here. A Layer 4 `critical` event may be `passing` at world scale. |
-| 58 | `narrative_role` | catalyst, turning_point, escalation, resolution, echo, origin, consequence, climax | What role this event plays in the world story. Not what the world is — what this event DOES to the story. |
-| 59 | `era_effect` | no_effect, era_continuing, era_shifting, era_defining, era_ending, era_beginning | Does this event mark or affect a world epoch? Most are `no_effect`. Only world-shaping events are `era_defining`. |
-| 60 | `world_theme` | conflict, discovery, decline, growth, balance, chaos, order, renewal, stagnation | What thematic thread this event reinforces or introduces. |
+| 61 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** World-level judgment — most events are minor at world scale. |
+| 62 | `world_significance` | negligible, passing, notable, historic, epochal | **Scope-specific significance.** A Layer 4 `critical` event may be `world_significance:passing`. |
+| 63 | `narrative_role` | catalyst, turning_point, escalation, resolution, echo, origin, consequence, climax | What role this event plays in the world story. |
+| 64 | `era_effect` | no_effect, era_continuing, era_shifting, era_defining, era_ending, era_beginning | Does this event mark or affect a world epoch? |
+| 65 | `world_theme` | conflict, discovery, decline, growth, balance, chaos, order, renewal, stagnation | What thematic thread this event reinforces. |
 
 **Override behavior:** Layer 7 UPDATES:
 - `significance` → recreated at world level
@@ -292,11 +297,11 @@ CREATE INDEX idx_layer{N}_tags_cat_val ON layer{N}_tags(tag_category, tag_value)
 |-------|---------------|-------|-------|
 | 1 | 30 | 30 | Factual dimensions of numerical data |
 | 2 | 6 | 36 | Geographic address + initial assessment |
-| 3 | 8 | 44 | Local interpretation, sentiment, alignment |
-| 4 | 4 | 48 | District cross-domain, urgency, factions |
-| 5 | 4 | 52 | Province political/military/living impact |
-| 6 | 4 | 56 | Cross-province effects and relations |
-| 7 | 4 | 60 | World narrative, era, theme |
+| 3 | 9 (incl. significance) | 45 | Local interpretation, sentiment, alignment |
+| 4 | 5 (incl. significance) | 50 | District cross-domain, urgency, factions |
+| 5 | 5 (incl. significance) | 55 | Province political/military/living impact |
+| 6 | 5 (incl. significance) | 60 | Cross-province effects and relations |
+| 7 | 5 (incl. significance) | 65 | World narrative, era, theme |
 
 ---
 
