@@ -10748,9 +10748,8 @@ class GameEngine:
 
                 # Track fishing XP in stat tracker
                 if hasattr(self.character, 'stat_tracker'):
-                    self.character.stat_tracker.experience_stats["total_exp_earned"] += xp
-                    self.character.stat_tracker.experience_stats["exp_from_gathering"] += xp
-                    self.character.stat_tracker.experience_stats["exp_from_fishing"] += xp
+                    self.character.stat_tracker.record_exp_gained(xp, source="fishing")
+                    self.character.stat_tracker.record_exp_gained(xp, source="gathering")
 
             self.add_notification(f"{result.get('quality_tier', 'Good')} catch!", (100, 255, 150))
 

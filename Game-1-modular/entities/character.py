@@ -1248,14 +1248,12 @@ class Character:
                 )
 
             # Track gathering damage
-            self.stat_tracker.gathering_totals["total_gathering_damage_dealt"] += damage_dealt
+            self.stat_tracker.record_gathering_damage(damage_dealt)
 
             # Track tool usage
             tool_type_map = {"axe": "axe", "pickaxe": "pickaxe", "fishing_rod": "fishing_rod"}
             tool_type = tool_type_map.get(resource.required_tool, "pickaxe")
-            tool_swing_key = f"{tool_type}_swings" if tool_type != "fishing_rod" else "fishing_rod_casts"
-            if tool_swing_key in self.stat_tracker.gathering_totals:
-                self.stat_tracker.gathering_totals[tool_swing_key] += 1
+            self.stat_tracker.record_tool_swing(tool_type)
 
         # Reset damage dealt timer (harvesting counts as dealing damage)
         self.time_since_last_damage_dealt = 0.0

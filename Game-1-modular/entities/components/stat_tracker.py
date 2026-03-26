@@ -85,7 +85,8 @@ class StatTracker:
                                  tier: int = 1, category: str = "ore",
                                  element: Optional[str] = None,
                                  is_crit: bool = False,
-                                 is_rare_drop: bool = False) -> None:
+                                 is_rare_drop: bool = False,
+                                 location: str = "") -> None:
         """Record a resource gathering event with full dimensional breakdown."""
         dims = {
             "resource": resource_id,
@@ -94,6 +95,8 @@ class StatTracker:
         }
         if element:
             dims["element"] = element
+        if location:
+            dims["location"] = location
 
         # Quantity-based keys (total = quantity)
         keys = build_dimensional_keys("gathering.collected", dims)
@@ -140,6 +143,37 @@ class StatTracker:
         """Record a failed fishing attempt."""
         self._store.record_count("gathering.fishing.failed")
         self._current_fish_streak = 0
+
+    def record_gathering_damage(self, amount: float) -> None:
+        """Record damage dealt to resource nodes while gathering."""
+        self._store.record("gathering.damage_dealt", value=amount)
+
+    def record_tool_swing(self, tool_type: str) -> None:
+        """Record a tool swing (axe, pickaxe, fishing_rod)."""
+        self._store.record_count(f"gathering.tool_swings.{tool_type}")
+        self._store.record_count("gathering.tool_swings")
+
+    def record_tool_durability_lost(self, tool_type: str, amount: float) -> None:
+        """Record tool durability loss."""
+        self._store.record(f"gathering.tool_durability_lost.{tool_type}", value=amount)
+
+    def record_tool_broken(self, tool_type: str) -> None:
+        """Record a tool breaking."""
+        self._store.record_count(f"gathering.tools_broken.{tool_type}")
+        self._store.record_count("gathering.tools_broken")
+
+    def record_tool_repaired(self, tool_type: str) -> None:
+        """Record a tool repair."""
+        self._store.record_count(f"gathering.tools_repaired.{tool_type}")
+        self._store.record_count("gathering.tools_repaired")
+
+    def record_node_depleted(self, resource_type: str = "unknown",
+                             location: str = "") -> None:
+        """Record fully depleting a resource node."""
+        self._store.record_count(f"gathering.nodes_depleted.{resource_type}")
+        self._store.record_count("gathering.nodes_depleted")
+        if location:
+            self._store.record_count(f"gathering.nodes_depleted.location.{location}")
 
     # ══════════════════════════════════════════════════════════════════
     # CRAFTING
@@ -203,6 +237,27 @@ class StatTracker:
         if materials:
             for mat_id, qty in materials.items():
                 self._store.record(f"crafting.materials.{mat_id}", value=float(qty))
+            self._store.record("crafting.materials_consumed",
+                               value=float(sum(materials.values())))
+
+    def record_invention(self, discipline: str, item_id: str,
+                         recipe_id: str = "") -> None:
+        """Record inventing a new item via the LLM system."""
+        self._store.record_count(f"crafting.inventions.{discipline}")
+        self._store.record_count("crafting.inventions")
+        if item_id:
+            self._store.record_count(f"crafting.inventions.item.{item_id}")
+
+    def record_recipe_discovered(self, recipe_id: str,
+                                 discipline: str = "unknown") -> None:
+        """Record discovering a new recipe."""
+        self._store.record_count(f"crafting.recipes_discovered.{discipline}")
+        self._store.record_count("crafting.recipes_discovered")
+
+    def record_enchantment_applied(self, enchantment_id: str) -> None:
+        """Record applying an enchantment."""
+        self._store.record_count(f"crafting.enchantments.{enchantment_id}")
+        self._store.record_count("crafting.enchantments")
 
     # ══════════════════════════════════════════════════════════════════
     # COMBAT
@@ -210,7 +265,9 @@ class StatTracker:
 
     def record_damage_dealt(self, amount: float, damage_type: str = "physical",
                             attack_type: str = "melee", was_crit: bool = False,
-                            weapon_element: Optional[str] = None) -> None:
+                            weapon_element: Optional[str] = None,
+                            target_type: str = "",
+                            location: str = "") -> None:
         """Record damage dealt with full dimensional breakdown."""
         dims = {
             "type": damage_type,
@@ -218,6 +275,10 @@ class StatTracker:
         }
         if weapon_element:
             dims["weapon_element"] = weapon_element
+        if target_type:
+            dims["to"] = target_type
+        if location:
+            dims["location"] = location
 
         keys = build_dimensional_keys("combat.damage_dealt", dims)
         self._store.record_multi(keys, value=amount)
@@ -227,9 +288,15 @@ class StatTracker:
             self._store.record_count("combat.critical_hits")
 
     def record_damage_taken(self, amount: float, damage_type: str = "physical",
-                            attack_type: str = "melee") -> None:
+                            attack_type: str = "melee",
+                            source_type: str = "",
+                            location: str = "") -> None:
         """Record damage received."""
         dims = {"type": damage_type, "attack": attack_type}
+        if source_type:
+            dims["from"] = source_type
+        if location:
+            dims["location"] = location
         keys = build_dimensional_keys("combat.damage_taken", dims)
         self._store.record_multi(keys, value=amount)
 
@@ -313,6 +380,48 @@ class StatTracker:
     def record_projectile_hit(self) -> None:
         """Record a projectile hit."""
         self._store.record_count("combat.projectiles.hit")
+
+    def record_healing_received(self, amount: float, source: str = "unknown") -> None:
+        """Record healing received (potion, regen, lifesteal, etc)."""
+        self._store.record(f"combat.healing.{source}", value=amount)
+        self._store.record("combat.healing", value=amount)
+
+    def record_reflect_damage(self, amount: float, source: str = "thorns") -> None:
+        """Record damage reflected back to attacker."""
+        self._store.record(f"combat.reflect.{source}", value=amount)
+        self._store.record("combat.reflect", value=amount)
+
+    def record_damage_blocked(self, amount: float,
+                              block_type: str = "armor") -> None:
+        """Record damage prevented by armor/shield/barrier."""
+        self._store.record(f"combat.damage_blocked.{block_type}", value=amount)
+        self._store.record("combat.damage_blocked", value=amount)
+
+    def record_weapon_attack(self, weapon_type: str = "unarmed",
+                             weapon_id: str = "") -> None:
+        """Record an attack by weapon type (for weapon variety tracking)."""
+        self._store.record_count(f"combat.attacks.weapon_type.{weapon_type}")
+        self._store.record_count("combat.attacks")
+        if weapon_id:
+            self._store.record_count(f"combat.attacks.weapon_id.{weapon_id}")
+
+    def record_death_by_source(self, source_type: str = "unknown",
+                               damage_type: str = "physical",
+                               enemy_type: str = "",
+                               location: str = "") -> None:
+        """Record death with dimensional context."""
+        keys = ["combat.deaths"]
+        if source_type:
+            keys.append(f"combat.deaths.source.{source_type}")
+        if damage_type:
+            keys.append(f"combat.deaths.element.{damage_type}")
+        if enemy_type:
+            keys.append(f"combat.deaths.by.{enemy_type}")
+        if location:
+            keys.append(f"combat.deaths.location.{location}")
+        self._store.record_count_multi(keys)
+        self._current_killstreak = 0
+        self._current_no_damage_streak = 0
 
     # ══════════════════════════════════════════════════════════════════
     # ITEMS
@@ -579,6 +688,107 @@ class StatTracker:
                                value=durability_restored)
 
     # ══════════════════════════════════════════════════════════════════
+    # TIME TRACKING
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_activity_time(self, activity: str, seconds: float) -> None:
+        """Record time spent in an activity (combat, gathering, crafting, etc)."""
+        self._store.record(f"time.activity.{activity}", value=seconds)
+        self._store.record("time.activity", value=seconds)
+
+    def record_session_end(self) -> None:
+        """Record session ending — flush session duration."""
+        if self.session_start_time:
+            session_duration = time.time() - self.session_start_time
+            self._store.record("time.sessions.duration", value=session_duration)
+            self._store.set_value("time.total_playtime", self.total_playtime_seconds)
+            self._store.flush()
+
+    def record_menu_time(self, menu_type: str, seconds: float) -> None:
+        """Record time spent in a menu."""
+        self._store.record(f"time.menu.{menu_type}", value=seconds)
+        self._store.record("time.menu", value=seconds)
+
+    def record_idle_time(self, seconds: float) -> None:
+        """Record idle time (no input for extended period)."""
+        self._store.record("time.idle", value=seconds)
+
+    # ══════════════════════════════════════════════════════════════════
+    # RECORDS & PERSONAL BESTS
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_personal_best(self, record_key: str, value: float) -> None:
+        """Generic personal best tracker. Only updates if value > current max.
+
+        Examples: record_personal_best("dps_burst", 150.0)
+                  record_personal_best("fastest_boss_kill", 12.5)
+        """
+        self._store.record(f"records.{record_key}", value=value)
+
+    def record_combat_duration(self, seconds: float) -> None:
+        """Record a combat encounter duration (for longest combat tracking)."""
+        self._store.record("records.combat_duration", value=seconds)
+
+    def record_fastest_gather(self, resource_type: str,
+                              seconds: float) -> None:
+        """Record a resource gathering time (for fastest gather tracking)."""
+        # We use record() which tracks max — but we want MIN time.
+        # Invert: store as negative so max(negative) = closest to zero = fastest.
+        # Or: just record and query get_min separately. For now, use set_value
+        # which replaces total but preserves max. We track via a separate min key.
+        current_min = self._store.get_total(f"records.fastest_gather.{resource_type}")
+        if current_min <= 0 or seconds < current_min:
+            self._store.set_value(f"records.fastest_gather.{resource_type}", seconds)
+
+    def record_rate(self, rate_key: str, value: float) -> None:
+        """Record a rate (exp/hour, gold/hour, etc). Tracks max rate."""
+        self._store.record(f"records.rate.{rate_key}", value=value)
+
+    # ══════════════════════════════════════════════════════════════════
+    # ENCYCLOPEDIA / DISCOVERY
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_first_discovery(self, category: str, item_id: str) -> None:
+        """Record discovering something for the first time.
+
+        Examples: record_first_discovery("enemy", "dragon")
+                  record_first_discovery("recipe", "iron_sword")
+                  record_first_discovery("item", "mithril_ore")
+                  record_first_discovery("resource", "voidstone")
+        """
+        self._store.record_count(f"encyclopedia.discovered.{category}.{item_id}")
+        self._store.record_count(f"encyclopedia.discovered.{category}")
+        self._store.record_count("encyclopedia.discovered")
+
+    def record_encyclopedia_completion(self, category: str,
+                                       percent: float) -> None:
+        """Update encyclopedia completion percentage for a category."""
+        self._store.set_value(f"encyclopedia.completion.{category}", percent)
+
+    # ══════════════════════════════════════════════════════════════════
+    # UI & MISC
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_menu_opened(self, menu_type: str) -> None:
+        """Record opening a menu (inventory, crafting, skills, map, etc)."""
+        self._store.record_count(f"misc.menu_opened.{menu_type}")
+        self._store.record_count("misc.menu_opened")
+
+    def record_save(self, save_type: str = "manual") -> None:
+        """Record a game save (manual or auto)."""
+        self._store.record_count(f"misc.saves.{save_type}")
+        self._store.record_count("misc.saves")
+
+    def record_game_load(self) -> None:
+        """Record loading a game."""
+        self._store.record_count("misc.game_loads")
+
+    def record_debug_action(self, action: str = "generic") -> None:
+        """Record a debug mode action."""
+        self._store.record_count(f"misc.debug.{action}")
+        self._store.record_count("misc.debug")
+
+    # ══════════════════════════════════════════════════════════════════
     # SERIALIZATION (backward compatibility)
     # ══════════════════════════════════════════════════════════════════
 
@@ -638,6 +848,15 @@ class StatTracker:
             "tier_2_resources_gathered": self._store.get_count("gathering.collected.tier.2"),
             "tier_3_resources_gathered": self._store.get_count("gathering.collected.tier.3"),
             "tier_4_resources_gathered": self._store.get_count("gathering.collected.tier.4"),
+            "total_gathering_damage_dealt": self._store.get_total("gathering.damage_dealt"),
+            "axe_swings": self._store.get_count("gathering.tool_swings.axe"),
+            "pickaxe_swings": self._store.get_count("gathering.tool_swings.pickaxe"),
+            "fishing_rod_casts": self._store.get_count("gathering.tool_swings.fishing_rod"),
+            "total_critical_gathers": self._store.get_count("gathering.critical"),
+            "total_rare_drops_while_gathering": self._store.get_count("gathering.rare_drops"),
+            "tools_repaired": self._store.get_count("gathering.tools_repaired"),
+            "tools_broken": self._store.get_count("gathering.tools_broken"),
+            "nodes_depleted": self._store.get_count("gathering.nodes_depleted"),
         }
 
     def _build_legacy_combat_damage(self) -> Dict[str, Any]:
@@ -651,8 +870,20 @@ class StatTracker:
             "fire_damage_dealt": self._store.get_total("combat.damage_dealt.type.fire"),
             "ice_damage_dealt": self._store.get_total("combat.damage_dealt.type.ice"),
             "lightning_damage_dealt": self._store.get_total("combat.damage_dealt.type.lightning"),
+            "poison_damage_dealt": self._store.get_total("combat.damage_dealt.type.poison"),
+            "arcane_damage_dealt": self._store.get_total("combat.damage_dealt.type.arcane"),
+            "shadow_damage_dealt": self._store.get_total("combat.damage_dealt.type.shadow"),
+            "holy_damage_dealt": self._store.get_total("combat.damage_dealt.type.holy"),
             "highest_single_hit_dealt": self._store.get_max("combat.damage_dealt"),
             "total_damage_taken": self._store.get_total("combat.damage_taken"),
+            "highest_single_hit_taken": self._store.get_max("combat.damage_taken"),
+            "critical_hits": self._store.get_count("combat.critical_hits"),
+            "total_healing_received": self._store.get_total("combat.healing"),
+            "damage_blocked": self._store.get_total("combat.damage_blocked"),
+            "damage_reflected": self._store.get_total("combat.reflect"),
+            "total_attacks": self._store.get_count("combat.attacks"),
+            "dodge_rolls": self._store.get_count("combat.dodge_rolls"),
+            "successful_dodges": self._store.get_count("combat.dodge_rolls.successful"),
         }
 
     def _build_legacy_combat_kills(self) -> Dict[str, Any]:
