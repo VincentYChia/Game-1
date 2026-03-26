@@ -1596,11 +1596,15 @@ Game-1-modular/world_system/
 │   ├── tag_relevance.py              # calculate_relevance()
 │   ├── trigger_manager.py            # Dual-track threshold counting
 │   ├── interpreter.py                # WorldInterpreter + evaluator dispatch
-│   ├── evaluators/                   # Pattern evaluators
-│   │   ├── population.py, ecosystem.py, combat.py, crafting.py
-│   │   ├── milestones.py, exploration.py, social.py, economy.py, dungeon.py
-│   │   └── layer4/                   # Layer 4 evaluators
-│   │       ├── regional.py, cross_domain.py, player_identity.py, faction_narrative.py
+│   ├── evaluators/                   # 33 pattern evaluators (Layer 3)
+│   │   ├── # Combat (6): kills regional low/high tier, global, boss, damage, style
+│   │   ├── # Gathering (4): regional, depletion, global, tools
+│   │   ├── # Crafting (7): 5 disciplines + minigame + inventions
+│   │   ├── # Progression (4): levels, skills, identity, equipment
+│   │   ├── # Exploration (2): territory, dungeons
+│   │   ├── # Social (2): NPC, quests
+│   │   ├── # Economy/Items (3): flow, equipment, inventory
+│   │   └── # Legacy (5): population, resources, area_danger, crafting, milestones
 │   ├── aggregation.py                # Layers 4-5 maintenance
 │   ├── query.py                      # WorldQuery, EntityQueryResult, EventWindow
 │   ├── daily_ledger.py               # DailyLedger, MetaDailyStats

@@ -114,46 +114,53 @@ CREATE TABLE stats (
 
 ## What's NOT Built Yet
 
-### Next Priority: Layer 3 Evaluator Expansion
+### Layer 3 Evaluators: IMPLEMENTED (33 evaluators, all passing)
 
-Only 5 of the designed 9+ Layer 3 evaluators exist. The core task is expanding evaluator coverage so that raw events (Layer 2) are consistently converted into text interpretations (Layer 3). This is the heart of the World Memory System — turning stats into meaningful narrative state.
+28 new granular evaluators + 5 legacy evaluators. Each evaluator has a specific
+**input frame of reference** — defined by what data it queries and how it processes it.
+Same event can trigger multiple evaluators through different frames (e.g., a wolf kill
+triggers both `combat_kills_regional_low_tier` and `combat_kills_global`).
 
-1. **Complete existing evaluators** — Fix incomplete event type handling in ResourcePressure (node_depleted), CraftingTrend (item_invented), PlayerMilestone (skill_learned)
+Output is **minimal narration** — data to text, not editorializing:
+- GOOD: "Player has killed 10 wolves in Whispering Woods."
+- BAD: "The wolf population is declining in Whispering Woods."
 
-2. **Implement missing evaluators** — 7+ event categories have NO evaluator coverage:
-   - Combat Tactics (attack patterns, dodge effectiveness, status ailments)
-   - Equipment & Inventory (gear progression, repair frequency)
-   - Skill Progression (specialization, power-leveling)
-   - Exploration (territory discovery, backtracking)
-   - Social & Reputation (NPC interactions, quest patterns)
-   - Economy (item acquisition/consumption patterns)
-   - Dungeon Progress (completion rates, difficulty trends)
+Scope comes from the DATA, not from the evaluator. If the event has locality_id,
+the narration is regional. If not, it's global.
 
-3. **Retrieval pathways** (Design doc §10):
-   - **Fast Path**: Layer 1 stat lookups (microsecond) — `stat_store.get()` — DONE
-   - **Narrative Path**: Layer 3-5 interpretations (millisecond) — needs evaluators producing data first
-   - **Detail Path**: Layer 2 raw events (millisecond) — `event_store.query()` — DONE
+| Category | Count | Evaluators |
+|----------|-------|------------|
+| Combat | 6 | kills_regional_low_tier, kills_regional_high_tier, kills_global, boss_kills, damage_regional, combat_style |
+| Gathering | 4 | regional, depletion, global, tools |
+| Crafting | 7 | smithing, alchemy, refining, engineering, enchanting, minigame, inventions |
+| Progression | 4 | levels, skills, identity, equipment |
+| Exploration | 2 | territory, dungeons |
+| Social | 2 | npc, quests |
+| Economy/Items | 3 | economy_flow, items_equipment, items_inventory |
+| Legacy | 5 | population, resources, area_danger, crafting_trends, player_milestones |
+
+### Next Priority: Retrieval System
+
+The retrieval system needs to:
+1. Catalog what evaluators exist and what they produce
+2. Auto-match stats/events to the right evaluator
+3. Work across layers (Layer 2 → Layer 3 → Layer 4+)
+4. Let consumers find relevant interpretations by querying the catalog
+
+**Retrieval pathways** (Design doc §10):
+- **Fast Path**: Layer 1 stat lookups (microsecond) — `stat_store.get()` — DONE
+- **Narrative Path**: Layer 3 interpretations (millisecond) — evaluators now producing data
+- **Detail Path**: Layer 2 raw events (millisecond) — `event_store.query()` — DONE
 
 > **NOTE**: Wiring WorldQuery into NPC dialogue is a **consumer integration task**, not a WMS task.
-> The WMS should focus on producing high-quality Layer 3 interpretations. Consumer systems
-> (NPC dialogue, quest generation) integrate with WorldQuery on their own schedule.
 
-### Layer 3: Evaluators (DESIGNED, PARTIALLY IMPLEMENTED)
+### Known Issues / Touch-ups Needed
 
-5 evaluators exist but need updating for the new threshold trigger system:
-- `evaluators/population.py` — Population dynamics
-- `evaluators/resources.py` — Resource pressure
-- `evaluators/crafting.py` — Crafting trends
-- `evaluators/area_danger.py` — Area danger levels
-- `evaluators/player_milestones.py` — Player milestones
+- `gathering_depletion`: Needs total node count per chunk from Layer 1 to calculate percentages (currently just counts depletion events)
+- Legacy evaluators (population, area_danger, etc.) still use editorializing narration — should be updated to minimal data-to-text style
+- Config for new evaluators uses hardcoded defaults — should be added to memory-config.json
 
-4 more evaluators are designed but not implemented:
-- Exploration & Discovery
-- Social & Reputation
-- Economy & Items
-- Dungeon Progress
-
-4 Layer 4 evaluators (cross-domain pattern detection) are designed but not implemented.
+### Layer 4-7: Higher Aggregation (SCHEMA ONLY, NOT IMPLEMENTED)
 
 ### Layer 5-7: Higher Aggregation (SCHEMA ONLY)
 
@@ -238,6 +245,7 @@ Game Loop:
 
 1. **Read** `world_system/docs/WORLD_MEMORY_SYSTEM.md` — the single source of truth
 2. **Run tests** to verify everything works: `python world_system/world_memory/test_stat_store.py && python world_system/world_memory/test_foundation_pipeline.py && python world_system/world_memory/test_memory_system.py`
-3. **Next task**: Expand Layer 3 evaluators (the core of turning raw stats into text events)
+3. **Next task**: Build retrieval system (catalog evaluators, auto-match stats, serve consumers)
 4. **After that**: Layer 4 cross-domain patterns, Layer 5+ summaries
-5. **Separately (consumer work, not WMS)**: Wire WorldQuery into NPC dialogue
+5. **Polish**: Update legacy evaluator narration to minimal data-to-text style
+6. **Separately (consumer work, not WMS)**: Wire WorldQuery into NPC dialogue
