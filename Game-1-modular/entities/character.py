@@ -101,7 +101,7 @@ class Character:
         self.class_system = ClassSystem()
         self.class_system.register_on_class_set(self._on_class_selected)
         self.activities = ActivityTracker()
-        self.stat_tracker = StatTracker()  # Comprehensive stat tracking
+        self.stat_tracker = StatTracker()  # SQL-backed stat tracking (store wired later)
         self.stat_tracker.start_session()  # Start tracking session
         self.equipment = EquipmentManager()
         self.encyclopedia = Encyclopedia()

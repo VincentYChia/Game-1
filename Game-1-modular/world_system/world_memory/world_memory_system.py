@@ -30,6 +30,7 @@ from world_system.world_memory.interpreter import WorldInterpreter
 from world_system.world_memory.query import WorldQuery
 from world_system.world_memory.retention import EventRetentionManager
 from world_system.world_memory.position_sampler import PositionSampler
+from world_system.world_memory.stat_store import StatStore
 
 
 class WorldMemorySystem:
@@ -39,6 +40,7 @@ class WorldMemorySystem:
 
     def __init__(self):
         self.event_store: Optional[EventStore] = None
+        self.stat_store: Optional[StatStore] = None
         self.geo_registry: Optional[GeographicRegistry] = None
         self.entity_registry: Optional[EntityRegistry] = None
         self.trigger_manager: Optional[TriggerManager] = None
@@ -87,6 +89,9 @@ class WorldMemorySystem:
         # 1. Event Store (SQLite)
         self.event_store = EventStore(save_dir=save_dir)
 
+        # 1b. Stat Store (shares the same SQLite connection)
+        self.stat_store = StatStore(conn=self.event_store.connection)
+
         # 2. Geographic Registry
         self.geo_registry = GeographicRegistry.get_instance()
         if geo_map_path and os.path.exists(geo_map_path):
@@ -105,9 +110,12 @@ class WorldMemorySystem:
         self.entity_registry.load_from_regions(self.geo_registry)
         # Register NPCs if database is loaded
         self._register_npcs()
-        # Register player
+        # Register player and wire stat store
         if character:
             self.entity_registry.register_player(character)
+            # Wire SQL-backed stat store into the character's stat tracker
+            if hasattr(character, 'stat_tracker') and self.stat_store:
+                character.stat_tracker.set_store(self.stat_store)
 
         # 4. Trigger Manager (threshold-based dual-track counting)
         self.trigger_manager = TriggerManager.get_instance()
@@ -377,6 +385,7 @@ class WorldMemorySystem:
         TriggerManager.reset()
         WorldInterpreter.reset()
         WorldQuery.reset()
+        StatStore.reset()
 
     # ── Debug / Stats ────────────────────────────────────────────────
 
