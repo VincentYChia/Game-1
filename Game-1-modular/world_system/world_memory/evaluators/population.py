@@ -1,5 +1,4 @@
-"""Population Change Evaluator — detects when enemy kills in a region
-exceed natural recovery thresholds."""
+"""Population Change Evaluator — narrates enemy kill counts in a region."""
 
 from __future__ import annotations
 
@@ -28,17 +27,13 @@ class PopulationChangeEvaluator(PatternEvaluator):
         self.major_min = t.get("major_min", 50)
         templates = cfg.get("narrative_templates", {})
         self.tpl_major = templates.get("major",
-            "The {enemy} population has been devastated in {region}. "
-            "{count} have been killed in a short period. "
-            "The species may take significant time to recover in this area.")
+            "Player has killed {count} {enemy} in {region}.")
         self.tpl_significant = templates.get("significant",
-            "{enemy} numbers are noticeably declining in {region}. "
-            "{count} have been killed recently.")
+            "Player has killed {count} {enemy} in {region}.")
         self.tpl_moderate = templates.get("moderate",
-            "Increased hunting activity has thinned the {enemy} population "
-            "in {region}.")
+            "Player has killed {count} {enemy} in {region}.")
         self.tpl_minor = templates.get("minor",
-            "Several {enemy}s have been killed in {region}.")
+            "Player has killed {count} {enemy} in {region}.")
 
     def is_relevant(self, event: WorldMemoryEvent) -> bool:
         return event.event_type in self.RELEVANT_TYPES

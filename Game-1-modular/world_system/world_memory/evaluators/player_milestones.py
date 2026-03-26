@@ -1,4 +1,4 @@
-"""Player Milestone Evaluator — detects notable player achievements."""
+"""Player Milestone Evaluator — narrates player progression events."""
 
 from __future__ import annotations
 
@@ -23,11 +23,11 @@ class PlayerMilestoneEvaluator(PatternEvaluator):
         cfg = get_evaluator_config("player_milestones")
         # Build kill milestones from config
         raw_kills = cfg.get("kill_milestones", {
-            "1":  {"severity": "minor",       "template": "The adventurer has slain their first {enemy} in {region}."},
-            "5":  {"severity": "minor",       "template": "The adventurer is becoming experienced at hunting {enemy}s in {region}."},
-            "11": {"severity": "moderate",    "template": "The adventurer has become a proficient {enemy} hunter, with {count} kills in {region}."},
-            "29": {"severity": "significant", "template": "The adventurer is a seasoned {enemy} slayer. {count} have fallen in {region}."},
-            "97": {"severity": "major",       "template": "The adventurer is legendary among {enemy} hunters. {count} kills in {region}."},
+            "1":  {"severity": "minor",       "template": "Player has killed {count} {enemy} in {region}."},
+            "5":  {"severity": "minor",       "template": "Player has killed {count} {enemy} in {region}."},
+            "11": {"severity": "moderate",    "template": "Player has killed {count} {enemy} in {region}."},
+            "29": {"severity": "significant", "template": "Player has killed {count} {enemy} in {region}."},
+            "97": {"severity": "major",       "template": "Player has killed {count} {enemy} in {region}."},
         })
         self.kill_milestones: Dict[int, Tuple[str, str]] = {
             int(k): (v["severity"], v["template"]) for k, v in raw_kills.items()
@@ -68,15 +68,12 @@ class PlayerMilestoneEvaluator(PatternEvaluator):
 
         if level in self.level_milestones:
             severity = "significant" if level >= self.level_major_threshold else "moderate"
-            narrative = (
-                f"The adventurer has reached level {int(level)} in {region_name}. "
-                f"{'A major milestone of power.' if level >= self.level_major_threshold else 'Growing stronger with each challenge.'}"
-            )
+            narrative = f"Player has reached level {int(level)}."
         elif level == 1:
             return None
         else:
             severity = "minor"
-            narrative = f"The adventurer has grown to level {int(level)}."
+            narrative = f"Player has reached level {int(level)}."
 
         return InterpretedEvent.create(
             narrative=narrative,
@@ -94,7 +91,7 @@ class PlayerMilestoneEvaluator(PatternEvaluator):
     def _eval_title(self, event: WorldMemoryEvent,
                     geo: GeographicRegistry) -> Optional[InterpretedEvent]:
         title = event.context.get("title", event.event_subtype)
-        narrative = f"The adventurer has earned the title: {title}. Word of their deeds spreads."
+        narrative = f"Player has earned the title: {title}."
         return InterpretedEvent.create(
             narrative=narrative,
             category="player_milestone",
@@ -151,16 +148,10 @@ class PlayerMilestoneEvaluator(PatternEvaluator):
 
         if quality in self.high_quality_types:
             severity = "significant"
-            narrative = (
-                f"The adventurer has crafted a {quality} quality item. "
-                f"Such skill is rare and noteworthy."
-            )
+            narrative = f"Player has crafted a {quality} quality item."
         elif count in self.craft_milestones:
             severity = "minor"
-            narrative = (
-                f"The adventurer continues to hone their crafting skill, "
-                f"with {count} items of this type now created."
-            )
+            narrative = f"Player has crafted {count} items of this type."
         else:
             return None
 
@@ -180,7 +171,7 @@ class PlayerMilestoneEvaluator(PatternEvaluator):
     def _eval_class_change(self, event: WorldMemoryEvent,
                            geo: GeographicRegistry) -> Optional[InterpretedEvent]:
         new_class = event.context.get("class", event.event_subtype)
-        narrative = f"The adventurer has chosen the path of the {new_class}."
+        narrative = f"Player has changed class to {new_class}."
         return InterpretedEvent.create(
             narrative=narrative,
             category="player_milestone",

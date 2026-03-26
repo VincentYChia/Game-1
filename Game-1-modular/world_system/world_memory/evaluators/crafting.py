@@ -1,4 +1,4 @@
-"""Crafting Trend Evaluator — detects crafting specialization and quality trends."""
+"""Crafting Trend Evaluator — narrates crafting activity counts and quality breakdown."""
 
 from __future__ import annotations
 
@@ -71,20 +71,18 @@ class CraftingTrendEvaluator(PatternEvaluator):
         if quality_ratio > self.quality_ratio_threshold:
             severity = "significant"
             narrative = (
-                f"The adventurer is becoming a master {dominant} crafter. "
-                f"{dominant_count} of their last {total} crafts were {dominant}, "
-                f"and {high_quality} achieved exceptional quality."
+                f"Player has crafted {total} items, {dominant_count} in {dominant}. "
+                f"{high_quality} achieved high quality."
             )
         elif dominant_count >= self.moderate_craft_count:
             severity = "moderate"
             narrative = (
-                f"The adventurer specializes in {dominant}. "
-                f"{dominant_count} of their last {total} crafts focused on this discipline."
+                f"Player has crafted {total} items, {dominant_count} in {dominant}."
             )
         else:
             severity = "minor"
             narrative = (
-                f"The adventurer shows a preference for {dominant} crafting."
+                f"Player has crafted {total} items, {dominant_count} in {dominant}."
             )
 
         return InterpretedEvent.create(

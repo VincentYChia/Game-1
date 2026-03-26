@@ -1,5 +1,13 @@
 """Gathering Depletion Evaluator — narrates how many resource nodes the
-player has depleted in a locality."""
+player has depleted in a locality.
+
+LAYER 1 DEPENDENCY: Currently narrates raw depletion count. To narrate
+percentages (e.g., "45% of oak trees harvested in region"), needs total
+node count per chunk from Layer 1. Layer 1 tracks nodes_depleted counts
+but not total available nodes per chunk/region. This requires either:
+  1. WorldSystem to publish total node count per chunk on generation, or
+  2. A new stat_tracker method to record initial node counts per region.
+"""
 
 from __future__ import annotations
 
