@@ -184,7 +184,7 @@ These stats exist in design but can't be tracked yet because the game systems do
 | Document | Location | Purpose |
 |----------|----------|---------|
 | **WORLD_MEMORY_SYSTEM.md** | `world_system/docs/` | **Single source of truth** — 1,821 lines covering all 16 design sections |
-| **FOUNDATION_IMPLEMENTATION_PLAN.md** | `world_system/docs/` | Implementation plan for Layer 1-2 (1,263 lines) — mostly executed |
+| **FOUNDATION_IMPLEMENTATION_PLAN.md** | `world_system/docs/` | Implementation plan for Layer 1 + Raw Event Pipeline (1,263 lines) — mostly executed |
 | **HANDOFF_STATUS.md** | `world_system/docs/` | This file — current state for handoff |
 | **README.md** | `world_system/docs/` | Points to WORLD_MEMORY_SYSTEM.md |
 | **Archive** | `world_system/docs/archive/` | 7 superseded design docs (historical reference) |

@@ -1686,10 +1686,10 @@ Game-1-modular/world_system/
 - Add save/load hooks
 - End-to-end test: play 30+ minutes, verify full pipeline
 
-### Phase F: Layer 4 Evaluators & Higher Layers
-- Layer 4 evaluators (cross-domain, regional, player identity, faction)
-- Layer 5 province summaries
-- Layer 6-7 realm/world state (may be deferred)
+### Phase F: Layer 3 Consolidators & Higher Layers
+- Layer 3 consolidators (cross-domain, regional, player identity, faction)
+- Layer 4 smaller region summaries
+- Layers 5-7 realm/intercountry/world state (may be deferred)
 
 ## 14.5 Estimated Sizes
 
@@ -1717,7 +1717,7 @@ Plus ~400 lines JSON configs and ~800 lines tests.
 
 # 15. Future Design: Narrative Threads & Player Profile
 
-> These concepts are **designed but not yet in the implementation plan**. They depend on Layers 3-5 being stable first. Included here for completeness.
+> These concepts are **designed but not yet in the implementation plan**. They depend on Layers 2-4 being stable first. Included here for completeness.
 
 ## 15.1 Narrative Threads (Layer 7)
 
@@ -1751,7 +1751,7 @@ class PlayerProfile:
 
 Observable signals: quest completion speed, kill:death ratio, combat vs. crafting time ratio, resource hoarding vs. spending, NPC visit patterns, combat tier preferences.
 
-**Not stored directly** — computed periodically from Layer 2 events and DailyLedger history.
+**Not stored directly** — computed periodically from Raw Event Pipeline events and DailyLedger history.
 
 ## 15.3 Generation Context (Future)
 
@@ -1778,15 +1778,15 @@ A complete trace through the system showing how a player action ripples through 
 
 **Setup**: Player has been mining iron in the Iron Hills for several game-days.
 
-### Step 1: Player Mines Iron (Layer 0→2)
+### Step 1: Player Mines Iron (Bus→Raw Event Pipeline)
 ```
 GameEventBus.publish("RESOURCE_GATHERED", {resource_type: "iron_ore", quantity: 3, ...})
 → stat_tracker: iron_ore_gathered += 3 (Layer 1)
-→ EventRecorder: writes WorldMemoryEvent to SQLite (Layer 2)
+→ EventRecorder: writes WorldMemoryEvent to SQLite (Raw Event Pipeline)
    Tags: [event:resource_gathered, resource:iron, biome:quarry, location:iron_hills, tier:2]
 ```
 
-### Step 2: Threshold Hit (Layer 2→3)
+### Step 2: Threshold Hit (Raw Event Pipeline→Layer 2)
 ```
 TriggerManager: iron gathering in iron_hills count = 100 → THRESHOLD HIT
 → Interpreter dispatches to EcosystemPressureEvaluator
@@ -1811,7 +1811,7 @@ FactionSystem: mining in Miners Guild territory
 → Log: "Player contributing to guild mining output"
 ```
 
-### Step 5: NPC Gets Gossip (Layer 3→NPC)
+### Step 5: NPC Gets Gossip (Layer 2→NPC)
 ```
 Gareth the Blacksmith (same locality, 60s delay):
 → Receives full interpretation: "Iron deposits becoming strained in Iron Hills"
@@ -1820,13 +1820,13 @@ Gareth the Blacksmith (same locality, 60s delay):
    about my supply. You've been mining a lot — maybe ease up?"
 ```
 
-### Step 6: Layer 4 Pattern Detection
+### Step 6: Layer 3 Pattern Detection
 ```
-Iron Hills now has 3+ Layer 3 interpretations:
+Iron Hills now has 3+ Layer 2 interpretations:
   - "Resource pressure on iron" (ecosystem)
   - "Heavy gathering activity" (economy)
   - "Mining specialization detected" (crafting)
-→ Layer 4 Cross-Domain evaluator fires:
+→ Layer 3 Cross-Domain consolidator fires:
   "The Iron Hills are experiencing intensive resource extraction. Multiple
    systems show correlated pressure on iron supply."
 ```
