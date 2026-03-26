@@ -12,7 +12,7 @@ class LevelingSystem:
     def get_exp_for_next_level(self) -> int:
         return 0 if self.level >= self.max_level else self.exp_requirements.get(self.level + 1, 0)
 
-    def add_exp(self, amount: int, source: str = "") -> bool:
+    def add_exp(self, amount: int, source: str = "", character=None) -> bool:
         if self.level >= self.max_level:
             return False
         self.current_exp += amount
@@ -32,5 +32,7 @@ class LevelingSystem:
                 }, source="leveling")
             except Exception:
                 pass
+            if character and hasattr(character, 'stat_tracker'):
+                character.stat_tracker.record_level_up(self.level, self.unallocated_stat_points)
             return True
         return False

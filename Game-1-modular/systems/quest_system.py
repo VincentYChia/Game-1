@@ -213,6 +213,23 @@ class QuestManager:
             return False  # Already have this quest
 
         self.active_quests[quest_def.quest_id] = Quest(quest_def, character)
+
+        # Stat tracking and event bus publish
+        if character and hasattr(character, 'stat_tracker'):
+            character.stat_tracker.record_quest_accepted(
+                quest_id=quest_def.quest_id,
+                quest_type=quest_def.objectives.objective_type
+            )
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("QUEST_ACCEPTED", {
+                "quest_id": quest_def.quest_id,
+                "quest_type": quest_def.objectives.objective_type,
+                "npc_id": quest_def.npc_id,
+            })
+        except Exception:
+            pass
+
         return True
 
     def complete_quest(self, quest_id: str, character) -> Tuple[bool, List[str]]:
@@ -251,6 +268,27 @@ class QuestManager:
         del self.active_quests[quest_id]
         print(f"[QUEST DEBUG] Quest marked as complete and moved to completed list")
         print(f"[QUEST DEBUG] ========== QUEST COMPLETION FINISHED ==========")
+
+        # Stat tracking and event bus publish
+        if hasattr(character, 'stat_tracker'):
+            character.stat_tracker.record_quest_completed(
+                quest_id=quest_id,
+                quest_type=quest.quest_def.objectives.objective_type,
+                exp_reward=float(quest.quest_def.rewards.experience),
+                gold_reward=float(quest.quest_def.rewards.gold)
+            )
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("QUEST_COMPLETED", {
+                "quest_id": quest_id,
+                "quest_type": quest.quest_def.objectives.objective_type,
+                "rewards": {
+                    "experience": quest.quest_def.rewards.experience,
+                    "gold": quest.quest_def.rewards.gold,
+                },
+            })
+        except Exception:
+            pass
 
         return True, messages
 

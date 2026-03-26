@@ -1601,21 +1601,25 @@ class CombatManager:
 
                 # Track damage dealt
                 if final_damage > 0:
+                    enemy_base_id = enemy.definition.enemy_id.rstrip("0123456789").rstrip("_")
                     self.character.stat_tracker.record_damage_dealt(
                         amount=final_damage,
                         damage_type=damage_type,
                         attack_type=attack_type,
                         was_crit=context.any_crit if hasattr(context, 'any_crit') else False,
-                        weapon_element=weapon_element
+                        weapon_element=weapon_element,
+                        target_type=enemy_base_id,
                     )
 
                 # Track enemy kill
                 if enemy_died:
+                    enemy_base_id = enemy.definition.enemy_id.rstrip("0123456789").rstrip("_")
                     self.character.stat_tracker.record_enemy_killed(
                         tier=enemy.definition.tier,
                         is_boss=enemy.is_boss,
                         is_dragon='dragon' in enemy.definition.enemy_id.lower(),
-                        weapon_element=weapon_element
+                        weapon_element=weapon_element,
+                        enemy_type=enemy_base_id,
                     )
 
                 # Track status effects applied
@@ -1623,6 +1627,16 @@ class CombatManager:
                 for tag in tags:
                     if tag in status_effect_tags:
                         self.character.stat_tracker.record_status_effect(tag, applied_to_enemy=True)
+                        try:
+                            from events.event_bus import get_event_bus
+                            get_event_bus().publish("STATUS_APPLIED", {
+                                "effect_tag": tag,
+                                "applied_to_enemy": True,
+                                "position_x": enemy.position[0],
+                                "position_y": enemy.position[1],
+                            })
+                        except Exception:
+                            pass
 
             # Tag-based attacks don't use traditional crit system (handled by tags)
             return (total_damage, False, loot)

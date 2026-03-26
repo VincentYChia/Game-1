@@ -101,7 +101,7 @@ class Character:
         self.class_system = ClassSystem()
         self.class_system.register_on_class_set(self._on_class_selected)
         self.activities = ActivityTracker()
-        self.stat_tracker = StatTracker()  # Comprehensive stat tracking
+        self.stat_tracker = StatTracker()  # SQL-backed stat tracking (store wired later)
         self.stat_tracker.start_session()  # Start tracking session
         self.equipment = EquipmentManager()
         self.encyclopedia = Encyclopedia()
@@ -1248,14 +1248,12 @@ class Character:
                 )
 
             # Track gathering damage
-            self.stat_tracker.gathering_totals["total_gathering_damage_dealt"] += damage_dealt
+            self.stat_tracker.record_gathering_damage(damage_dealt)
 
             # Track tool usage
             tool_type_map = {"axe": "axe", "pickaxe": "pickaxe", "fishing_rod": "fishing_rod"}
             tool_type = tool_type_map.get(resource.required_tool, "pickaxe")
-            tool_swing_key = f"{tool_type}_swings" if tool_type != "fishing_rod" else "fishing_rod_casts"
-            if tool_swing_key in self.stat_tracker.gathering_totals:
-                self.stat_tracker.gathering_totals[tool_swing_key] += 1
+            self.stat_tracker.record_tool_swing(tool_type)
 
         # Reset damage dealt timer (harvesting counts as dealing damage)
         self.time_since_last_damage_dealt = 0.0
@@ -1874,6 +1872,14 @@ class Character:
         # Track death in stat tracker
         if hasattr(self, 'stat_tracker') and self.stat_tracker:
             self.stat_tracker.record_death()
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("PLAYER_DIED", {
+                "position_x": self.position.x if hasattr(self, 'position') and self.position else 0,
+                "position_y": self.position.y if hasattr(self, 'position') and self.position else 0,
+            })
+        except Exception:
+            pass
 
         # Reset health
         self.health = self.max_health

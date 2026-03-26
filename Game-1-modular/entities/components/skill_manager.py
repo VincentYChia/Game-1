@@ -227,6 +227,17 @@ class SkillManager:
                 targets=targets,
                 category=category
             )
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("SKILL_ACTIVATED", {
+                    "skill_id": skill_id,
+                    "mana_cost": mana_cost,
+                    "category": category,
+                    "value": value,
+                    "targets": targets,
+                })
+            except Exception:
+                pass
 
         # Award skill EXP (100 EXP per activation)
         leveled_up, new_level = player_skill.add_exp(100)
@@ -813,6 +824,17 @@ class SkillManager:
                     targets=targets,
                     category=category
                 )
+                try:
+                    from events.event_bus import get_event_bus
+                    get_event_bus().publish("SKILL_ACTIVATED", {
+                        "skill_id": skill_id,
+                        "mana_cost": mana_cost,
+                        "category": category,
+                        "value": value,
+                        "targets": targets,
+                    })
+                except Exception:
+                    pass
         else:
             self._apply_skill_effect(skill_def, character, player_skill)
 
@@ -827,6 +849,17 @@ class SkillManager:
                     targets=targets,
                     category=category
                 )
+                try:
+                    from events.event_bus import get_event_bus
+                    get_event_bus().publish("SKILL_ACTIVATED", {
+                        "skill_id": skill_id,
+                        "mana_cost": mana_cost,
+                        "category": category,
+                        "value": value,
+                        "targets": targets,
+                    })
+                except Exception:
+                    pass
 
         # Award skill EXP (100 EXP per activation)
         leveled_up, new_level = player_skill.add_exp(100)

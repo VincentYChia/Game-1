@@ -1,1755 +1,1149 @@
 """
-Comprehensive Stat Tracking System
-Tracks all player statistics at Minecraft-level detail for progression, analytics, and player profiling.
+Comprehensive Stat Tracking System — SQL-backed via StatStore.
+
+Tracks all player statistics at Minecraft-level detail using a single flat
+SQL table with hierarchical keys and automatic dimensional breakdowns.
+
+Every record_* method writes multiple stat keys in a single transaction.
+For example, record_damage_dealt(50, "fire", "melee", "wolf", "whispering_woods")
+writes keys like:
+    combat.damage_dealt              → total +50
+    combat.damage_dealt.type.fire    → total +50
+    combat.damage_dealt.attack.melee → total +50
+    combat.damage_dealt.to.wolf      → total +50
+    combat.damage_dealt.location.whispering_woods → total +50
+
+The record_* API is unchanged from the dict-based version — all 51 call sites
+in the game code work without modification.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Dict, Set, Tuple, Optional, Any, List
 from collections import defaultdict
 import time
 
-
-@dataclass
-class StatEntry:
-    """
-    Generic statistical tracking entry for counting and aggregating numeric values.
-
-    Used for tracking things like damage dealt, resources gathered, etc. where we want:
-    - Count: How many times this occurred
-    - Total: Sum of all values
-    - Max: Best single instance
-    - Last updated: When this was last modified
-    """
-    count: int = 0
-    total_value: float = 0.0
-    max_value: float = 0.0
-    last_updated: Optional[float] = None  # Unix timestamp
-
-    def record(self, value: float = 1.0):
-        """
-        Record a new occurrence.
-
-        Args:
-            value: The value to record (default 1.0 for simple counting)
-        """
-        self.count += 1
-        self.total_value += value
-        if value > self.max_value:
-            self.max_value = value
-        self.last_updated = time.time()
-
-    def get_average(self) -> float:
-        """Get average value (total / count)."""
-        return self.total_value / self.count if self.count > 0 else 0.0
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Serialize to dictionary for saving."""
-        return {
-            "count": self.count,
-            "total_value": self.total_value,
-            "max_value": self.max_value,
-            "last_updated": self.last_updated
-        }
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'StatEntry':
-        """Deserialize from dictionary."""
-        return cls(
-            count=data.get("count", 0),
-            total_value=data.get("total_value", 0.0),
-            max_value=data.get("max_value", 0.0),
-            last_updated=data.get("last_updated")
-        )
-
-
-@dataclass
-class CraftingEntry:
-    """
-    Specialized tracking for crafting recipes.
-
-    Tracks success/failure rates, quality scores, timing, and output rarity distribution.
-    """
-    # Attempts
-    total_attempts: int = 0
-    successful_crafts: int = 0
-    failed_crafts: int = 0
-
-    # Quality
-    perfect_crafts: int = 0
-    first_try_bonuses: int = 0
-    average_quality_score: float = 0.0
-    best_quality_score: float = 0.0
-
-    # Timing
-    total_crafting_time: float = 0.0  # seconds
-    fastest_craft_time: float = float('inf')
-
-    # Output Quality
-    common_crafted: int = 0
-    uncommon_crafted: int = 0
-    rare_crafted: int = 0
-    legendary_crafted: int = 0
-
-    # Materials Used
-    materials_consumed: Dict[str, int] = field(default_factory=dict)
-
-    def record_craft(self, success: bool, quality_score: float = 0.0,
-                     craft_time: float = 0.0, output_rarity: str = "common",
-                     is_perfect: bool = False, is_first_try: bool = False,
-                     materials: Optional[Dict[str, int]] = None):
-        """
-        Record a crafting attempt.
-
-        Args:
-            success: Whether the craft succeeded
-            quality_score: Minigame quality score (0.0-1.0)
-            craft_time: Time taken in seconds
-            output_rarity: Rarity of crafted item
-            is_perfect: Whether this was a perfect craft
-            is_first_try: Whether this got first-try bonus
-            materials: Materials consumed {material_id: quantity}
-        """
-        self.total_attempts += 1
-
-        if success:
-            self.successful_crafts += 1
-
-            # Quality tracking
-            if is_perfect:
-                self.perfect_crafts += 1
-            if is_first_try:
-                self.first_try_bonuses += 1
-
-            # Update average quality score
-            if quality_score > 0:
-                total_quality = self.average_quality_score * (self.successful_crafts - 1)
-                self.average_quality_score = (total_quality + quality_score) / self.successful_crafts
-                if quality_score > self.best_quality_score:
-                    self.best_quality_score = quality_score
-
-            # Timing
-            if craft_time > 0:
-                self.total_crafting_time += craft_time
-                if craft_time < self.fastest_craft_time:
-                    self.fastest_craft_time = craft_time
-
-            # Rarity tracking
-            rarity_lower = output_rarity.lower()
-            if rarity_lower == "common":
-                self.common_crafted += 1
-            elif rarity_lower == "uncommon":
-                self.uncommon_crafted += 1
-            elif rarity_lower == "rare":
-                self.rare_crafted += 1
-            elif rarity_lower == "legendary":
-                self.legendary_crafted += 1
-
-            # Materials
-            if materials:
-                for mat_id, qty in materials.items():
-                    self.materials_consumed[mat_id] = self.materials_consumed.get(mat_id, 0) + qty
-        else:
-            self.failed_crafts += 1
-
-    def get_success_rate(self) -> float:
-        """Calculate success rate as percentage."""
-        return (self.successful_crafts / self.total_attempts * 100.0) if self.total_attempts > 0 else 0.0
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "total_attempts": self.total_attempts,
-            "successful_crafts": self.successful_crafts,
-            "failed_crafts": self.failed_crafts,
-            "perfect_crafts": self.perfect_crafts,
-            "first_try_bonuses": self.first_try_bonuses,
-            "average_quality_score": self.average_quality_score,
-            "best_quality_score": self.best_quality_score,
-            "total_crafting_time": self.total_crafting_time,
-            "fastest_craft_time": self.fastest_craft_time if self.fastest_craft_time != float('inf') else 0.0,
-            "common_crafted": self.common_crafted,
-            "uncommon_crafted": self.uncommon_crafted,
-            "rare_crafted": self.rare_crafted,
-            "legendary_crafted": self.legendary_crafted,
-            "materials_consumed": dict(self.materials_consumed)
-        }
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'CraftingEntry':
-        """Deserialize from dictionary."""
-        entry = cls(
-            total_attempts=data.get("total_attempts", 0),
-            successful_crafts=data.get("successful_crafts", 0),
-            failed_crafts=data.get("failed_crafts", 0),
-            perfect_crafts=data.get("perfect_crafts", 0),
-            first_try_bonuses=data.get("first_try_bonuses", 0),
-            average_quality_score=data.get("average_quality_score", 0.0),
-            best_quality_score=data.get("best_quality_score", 0.0),
-            total_crafting_time=data.get("total_crafting_time", 0.0),
-            fastest_craft_time=data.get("fastest_craft_time", float('inf')),
-            common_crafted=data.get("common_crafted", 0),
-            uncommon_crafted=data.get("uncommon_crafted", 0),
-            rare_crafted=data.get("rare_crafted", 0),
-            legendary_crafted=data.get("legendary_crafted", 0),
-            materials_consumed=data.get("materials_consumed", {})
-        )
-        # Handle infinity properly
-        if entry.fastest_craft_time == 0.0:
-            entry.fastest_craft_time = float('inf')
-        return entry
-
-
-@dataclass
-class SkillStatEntry:
-    """
-    Specialized tracking for skill usage.
-
-    Tracks usage frequency, effectiveness, mana costs, and impact.
-    """
-    times_used: int = 0
-    total_value_delivered: float = 0.0  # damage, healing, buffs applied, etc.
-    mana_spent: float = 0.0
-    targets_affected: int = 0  # enemies hit, nodes harvested, etc.
-    best_single_use: float = 0.0
-
-    def record_use(self, value: float = 0.0, mana_cost: float = 0.0, targets: int = 0):
-        """
-        Record skill usage.
-
-        Args:
-            value: Value delivered (damage, healing, etc.)
-            mana_cost: Mana consumed
-            targets: Number of targets affected
-        """
-        self.times_used += 1
-        self.total_value_delivered += value
-        self.mana_spent += mana_cost
-        self.targets_affected += targets
-        if value > self.best_single_use:
-            self.best_single_use = value
-
-    def get_average_value(self) -> float:
-        """Get average value per use."""
-        return self.total_value_delivered / self.times_used if self.times_used > 0 else 0.0
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "times_used": self.times_used,
-            "total_value_delivered": self.total_value_delivered,
-            "mana_spent": self.mana_spent,
-            "targets_affected": self.targets_affected,
-            "best_single_use": self.best_single_use
-        }
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'SkillStatEntry':
-        """Deserialize from dictionary."""
-        return cls(
-            times_used=data.get("times_used", 0),
-            total_value_delivered=data.get("total_value_delivered", 0.0),
-            mana_spent=data.get("mana_spent", 0.0),
-            targets_affected=data.get("targets_affected", 0),
-            best_single_use=data.get("best_single_use", 0.0)
-        )
+from world_system.world_memory.stat_store import StatStore, build_dimensional_keys
 
 
 class StatTracker:
-    """
-    Comprehensive stat tracking system for player analytics and progression.
+    """SQL-backed stat tracking system for player analytics and progression.
 
-    Tracks 850-1000+ individual statistics across 13 categories:
-    1. Gathering (resources, nodes, tools)
-    2. Crafting (recipes, disciplines, quality)
-    3. Combat (damage, kills, actions)
-    4. Items (collection, usage, management)
-    5. Skills (usage, progression)
-    6. Exploration (distance, chunks, discovery)
-    7. Economy (gold, trading)
-    8. Progression (XP, titles, classes)
-    9. Time (playtime, sessions)
-    10. Records (streaks, bests)
-    11. Social (quests, NPCs)
-    12. Encyclopedia (discovery, completion)
-    13. Miscellaneous (UI, saves, etc.)
+    All stats stored in a single SQL table via StatStore.
+    record_* methods create automatic dimensional breakdowns.
     """
 
-    def __init__(self):
-        """Initialize all stat tracking categories."""
-        # Session tracking
-        self.session_start_time: Optional[float] = time.time()
+    def __init__(self, stat_store: Optional[StatStore] = None):
+        """Initialize stat tracking.
+
+        Args:
+            stat_store: SQL-backed stat store. If None, creates in-memory store.
+        """
+        self._store = stat_store or StatStore()
+
+        # Session tracking (kept in memory, flushed to SQL periodically)
+        self.session_start_time: Optional[float] = None
         self.total_playtime_seconds: float = 0.0
         self.session_count: int = 0
 
-        # CATEGORY 1: GATHERING STATISTICS
-        self._init_gathering_stats()
-
-        # CATEGORY 2: CRAFTING STATISTICS
-        self._init_crafting_stats()
-
-        # CATEGORY 3: COMBAT STATISTICS
-        self._init_combat_stats()
-
-        # CATEGORY 4: ITEM STATISTICS
-        self._init_item_stats()
-
-        # CATEGORY 5: SKILL STATISTICS
-        self._init_skill_stats()
-
-        # CATEGORY 6: EXPLORATION STATISTICS
-        self._init_exploration_stats()
-
-        # CATEGORY 7: ECONOMIC STATISTICS
-        self._init_economy_stats()
-
-        # CATEGORY 8: PROGRESSION STATISTICS
-        self._init_progression_stats()
-
-        # CATEGORY 9: TIME STATISTICS
-        self._init_time_stats()
-
-        # CATEGORY 10: RECORDS & STREAKS
-        self._init_records_stats()
-
-        # CATEGORY 11: SOCIAL STATISTICS
-        self._init_social_stats()
-
-        # CATEGORY 12: ENCYCLOPEDIA STATISTICS
-        self._init_encyclopedia_stats()
-
-        # CATEGORY 13: MISCELLANEOUS
-        self._init_misc_stats()
-
-        # CATEGORY 14: DUNGEON STATISTICS
-        self._init_dungeon_stats()
-
-    def _init_gathering_stats(self):
-        """Initialize gathering statistics tracking."""
-        # Per-resource tracking (will be populated dynamically)
-        self.resources_gathered: Dict[str, StatEntry] = {}
-
-        # Aggregate totals
-        self.gathering_totals = {
-            # By category
-            "total_trees_chopped": 0,
-            "total_ores_mined": 0,
-            "total_stones_mined": 0,
-            "total_plants_gathered": 0,
-            "total_fish_caught": 0,
-
-            # By tier
-            "tier_1_resources_gathered": 0,
-            "tier_2_resources_gathered": 0,
-            "tier_3_resources_gathered": 0,
-            "tier_4_resources_gathered": 0,
-
-            # By element (for elemental-specific titles)
-            "fire_resources_gathered": 0,
-            "ice_resources_gathered": 0,
-            "lightning_resources_gathered": 0,
-            "nature_resources_gathered": 0,
-            "shadow_resources_gathered": 0,
-            "holy_resources_gathered": 0,
-
-            # Quality metrics
-            "total_critical_gathers": 0,
-            "total_rare_drops_while_gathering": 0,
-            "total_gathering_damage_dealt": 0.0,
-
-            # Tool usage
-            "axe_swings": 0,
-            "pickaxe_swings": 0,
-            "fishing_rod_casts": 0,
-            "axe_durability_lost": 0.0,
-            "pickaxe_durability_lost": 0.0,
-            "fishing_rod_durability_lost": 0.0,
-            "tools_repaired": 0,
-            "tools_broken": 0
-        }
-
-        # Advanced gathering metrics
-        self.gathering_advanced = {
-            "fastest_tree_chop_time": float('inf'),
-            "fastest_ore_mine_time": float('inf'),
-            "most_resources_one_session": 0,
-            "current_gather_streak": 0,
-            "longest_gather_streak": 0,
-            "aoe_gathers_performed": 0,
-            "nodes_broken_via_aoe": 0,
-            "distance_traveled_to_resources": 0.0,
-            # Fishing-specific
-            "largest_fish_caught": 0,
-            "fish_catch_streak": 0,
-            "longest_fish_catch_streak": 0,
-            "rare_fish_caught": 0,
-            "legendary_fish_caught": 0
-        }
-
-    def _init_crafting_stats(self):
-        """Initialize crafting statistics tracking."""
-        # Per-recipe tracking (will be populated dynamically)
-        self.recipes_crafted: Dict[str, CraftingEntry] = {}
-
-        # By discipline
-        self.crafting_by_discipline = {
-            "smithing": {
-                "total_crafts": 0,
-                "total_attempts": 0,
-                "success_rate": 0.0,
-                "perfect_crafts": 0,
-                "first_try_bonuses": 0,
-                "tier_1_crafts": 0,
-                "tier_2_crafts": 0,
-                "tier_3_crafts": 0,
-                "tier_4_crafts": 0,
-                "legendary_crafts": 0,
-                "total_time_spent": 0.0,
-                "average_craft_time": 0.0
-            },
-            "alchemy": {
-                "total_crafts": 0,
-                "total_attempts": 0,
-                "success_rate": 0.0,
-                "perfect_crafts": 0,
-                "first_try_bonuses": 0,
-                "tier_1_crafts": 0,
-                "tier_2_crafts": 0,
-                "tier_3_crafts": 0,
-                "tier_4_crafts": 0,
-                "legendary_crafts": 0,
-                "total_time_spent": 0.0,
-                "average_craft_time": 0.0
-            },
-            "refining": {
-                "total_crafts": 0,
-                "total_attempts": 0,
-                "success_rate": 0.0,
-                "perfect_crafts": 0,
-                "first_try_bonuses": 0,
-                "tier_1_crafts": 0,
-                "tier_2_crafts": 0,
-                "tier_3_crafts": 0,
-                "tier_4_crafts": 0,
-                "legendary_crafts": 0,
-                "total_time_spent": 0.0,
-                "average_craft_time": 0.0,
-                "alloys_created": 0  # Special for refining
-            },
-            "engineering": {
-                "total_crafts": 0,
-                "total_attempts": 0,
-                "success_rate": 0.0,
-                "perfect_crafts": 0,
-                "first_try_bonuses": 0,
-                "tier_1_crafts": 0,
-                "tier_2_crafts": 0,
-                "tier_3_crafts": 0,
-                "tier_4_crafts": 0,
-                "legendary_crafts": 0,
-                "total_time_spent": 0.0,
-                "average_craft_time": 0.0,
-                "traps_created": 0,
-                "turrets_created": 0,
-                "bombs_created": 0
-            },
-            "enchanting": {
-                "total_crafts": 0,
-                "total_attempts": 0,
-                "success_rate": 0.0,
-                "perfect_crafts": 0,
-                "first_try_bonuses": 0,
-                "tier_1_crafts": 0,
-                "tier_2_crafts": 0,
-                "tier_3_crafts": 0,
-                "tier_4_crafts": 0,
-                "legendary_crafts": 0,
-                "total_time_spent": 0.0,
-                "average_craft_time": 0.0,
-                "enchantments_applied": 0
-            }
-        }
-
-        # Advanced crafting metrics
-        self.crafting_advanced = {
-            "total_crafts_all_disciplines": 0,
-            "total_crafting_time_all": 0.0,
-            "tier_1_crafts_total": 0,
-            "tier_2_crafts_total": 0,
-            "tier_3_crafts_total": 0,
-            "tier_4_crafts_total": 0,
-            "common_items_crafted": 0,
-            "uncommon_items_crafted": 0,
-            "rare_items_crafted": 0,
-            "legendary_items_crafted": 0,
-            "total_perfect_crafts": 0,
-            "total_first_try_bonuses": 0,
-            "consecutive_first_try_bonuses": 0,
-            "longest_first_try_streak": 0,
-            "average_minigame_score": 0.0,
-            "best_minigame_score": 0.0,
-            "worst_minigame_score": 1.0,
-            "total_materials_consumed": {},
-            "most_used_material": "",
-            "most_used_material_count": 0
-        }
-
-    def _init_combat_stats(self):
-        """Initialize combat statistics tracking."""
-        self.combat_damage = {
-            # Damage dealt
-            "total_damage_dealt": 0.0,
-            "melee_damage_dealt": 0.0,
-            "ranged_damage_dealt": 0.0,
-            "magic_damage_dealt": 0.0,
-
-            # Damage by element
-            "physical_damage_dealt": 0.0,
-            "fire_damage_dealt": 0.0,
-            "ice_damage_dealt": 0.0,
-            "lightning_damage_dealt": 0.0,
-            "poison_damage_dealt": 0.0,
-            "arcane_damage_dealt": 0.0,
-            "shadow_damage_dealt": 0.0,
-            "holy_damage_dealt": 0.0,
-
-            # Damage taken
-            "total_damage_taken": 0.0,
-            "melee_damage_taken": 0.0,
-            "ranged_damage_taken": 0.0,
-            "magic_damage_taken": 0.0,
-
-            # Damage by element received
-            "physical_damage_taken": 0.0,
-            "fire_damage_taken": 0.0,
-            "ice_damage_taken": 0.0,
-            "lightning_damage_taken": 0.0,
-            "poison_damage_taken": 0.0,
-            "arcane_damage_taken": 0.0,
-            "shadow_damage_taken": 0.0,
-            "holy_damage_taken": 0.0,
-
-            # Records
-            "highest_single_hit_dealt": 0.0,
-            "highest_single_hit_taken": 0.0,
-            "highest_dps_burst": 0.0
-        }
-
-        self.combat_kills = {
-            "total_enemies_defeated": 0,
-            "total_kills": 0,
-            "tier_1_enemies_killed": 0,
-            "tier_2_enemies_killed": 0,
-            "tier_3_enemies_killed": 0,
-            "tier_4_enemies_killed": 0,
-            "boss_enemies_killed": 0,
-            "dragon_boss_defeated": 0,
-            "elite_enemies_killed": 0,
-            "miniboss_enemies_killed": 0
-        }
-
-        self.combat_actions = {
-            "total_attacks": 0,
-            "melee_attacks": 0,
-            "ranged_attacks": 0,
-            "magic_attacks": 0,
-            "critical_hits": 0,
-            "critical_hit_rate": 0.0,
-            "perfect_dodges": 0,
-            "blocks": 0,
-            "parries": 0,
-            "sword_attacks": 0,
-            "axe_attacks": 0,
-            "bow_attacks": 0,
-            "staff_attacks": 0,
-            "dual_wield_attacks": 0,
-            "unarmed_attacks": 0,
-            "used_fire_weapon": False,
-            "used_ice_weapon": False,
-            "used_lightning_weapon": False,
-            "fire_weapon_kills": 0,
-            "ice_weapon_kills": 0,
-            "lightning_weapon_kills": 0,
-            # Action combat stats
-            "dodge_rolls": 0,
-            "successful_dodge_iframes": 0,
-            "combo_attacks": 0,
-            "longest_combo": 0,
-            "projectiles_fired": 0,
-            "projectiles_hit": 0,
-        }
-
-        self.combat_status_effects = {
-            "status_effects_applied": {
-                "burn": 0, "freeze": 0, "poison": 0, "stun": 0,
-                "root": 0, "slow": 0, "bleed": 0, "shock": 0,
-                "weaken": 0, "vulnerable": 0
-            },
-            "status_effects_received": {
-                "burn": 0, "freeze": 0, "poison": 0, "stun": 0,
-                "root": 0, "slow": 0, "bleed": 0, "shock": 0,
-                "weaken": 0, "vulnerable": 0
-            },
-            "dot_damage_dealt": 0.0,
-            "dot_damage_taken": 0.0,
-            "enemies_cc_duration": 0.0,
-            "player_cc_duration": 0.0
-        }
-
-        self.combat_survival = {
-            "total_deaths": 0,
-            "death_by_element": {},
-            "total_healing_received": 0.0,
-            "potions_consumed_in_combat": 0,
-            "health_regenerated": 0.0,
-            "lifesteal_healing": 0.0,
-            "damage_blocked_by_armor": 0.0,
-            "damage_blocked_by_shield": 0.0,
-            "damage_reflected": 0.0,
-            "longest_killstreak": 0,
-            "current_killstreak": 0,
-            "enemies_killed_without_damage": 0
-        }
-
-    def _init_item_stats(self):
-        """Initialize item statistics tracking."""
-        # Per-item tracking (populated dynamically)
-        self.items_collected: Dict[str, int] = {}
-        self.items_used: Dict[str, int] = {}
-
-        self.item_collection = {
-            "materials_collected": 0,
-            "equipment_collected": 0,
-            "consumables_collected": 0,
-            "tools_collected": 0,
-            "common_items_collected": 0,
-            "uncommon_items_collected": 0,
-            "rare_items_collected": 0,
-            "legendary_items_collected": 0,
-            "rare_drops_total": 0,
-            "first_time_discoveries": 0
-        }
-
-        self.item_usage = {
-            "total_potions_consumed": 0,
-            "total_food_consumed": 0,
-            "total_buffs_consumed": 0,
-            "potions_used_in_combat": 0,
-            "potions_used_out_combat": 0
-        }
-
-        self.item_management = {
-            "items_picked_up": 0,
-            "items_dropped": 0,
-            "items_destroyed": 0,
-            "inventory_sorts": 0,
-            "equipment_equipped": {},
-            "equipment_unequipped": {},
-            "total_equipment_swaps": 0,
-            "items_repaired": 0,
-            "durability_restored": 0.0,
-            "repair_materials_used": {}
-        }
-
-    def _init_skill_stats(self):
-        """Initialize skill statistics tracking."""
-        # Per-skill tracking (populated dynamically)
-        self.skills_used: Dict[str, SkillStatEntry] = {}
-
-        self.skill_usage = {
-            "total_skills_activated": 0,
-            "gathering_skills_used": 0,
-            "combat_skills_used": 0,
-            "crafting_skills_used": 0,
-            "utility_skills_used": 0,
-            "total_mana_spent": 0.0,
-            "total_mana_regenerated": 0.0,
-            "skills_on_cooldown_missed": 0
-        }
-
-        self.skill_progression = {
-            "skills_learned": 0,
-            "skills_unlocked_via_quest": 0,
-            "skills_unlocked_via_milestone": 0,
-            "skills_unlocked_via_level": 0,
-            "skills_unlocked_via_purchase": 0,
-            "skills_unlocked_via_title": 0,
-            "skill_levels_gained": 0,
-            "max_level_skills": 0,
-            "total_skill_exp_earned": {}
-        }
-
-    def _init_exploration_stats(self):
-        """Initialize exploration statistics tracking."""
-        self.distance_traveled = {
-            "total_distance": 0.0,
-            "distance_walked": 0.0,
-            "distance_sprinted": 0.0,
-            "distance_while_encumbered": 0.0,
-            "distance_in_forest": 0.0,
-            "distance_in_mountains": 0.0,
-            "distance_in_plains": 0.0,
-            "distance_in_caves": 0.0
-        }
-
-        # Use list for serialization (converted to set at runtime)
-        self._unique_chunks_visited_list: List[Tuple[int, int]] = []
+        # In-memory caches for hot-path data
         self._unique_chunks_visited: Set[Tuple[int, int]] = set()
+        self._current_killstreak: int = 0
+        self._current_gather_streak: int = 0
+        self._current_fish_streak: int = 0
+        self._current_first_try_streak: int = 0
+        self._current_no_damage_streak: int = 0
 
-        self.exploration = {
-            "unique_chunks_visited": 0,
-            "total_chunk_entries": 0,
-            "furthest_distance_from_spawn": 0.0,
-            "resource_nodes_discovered": 0,
-            "crafting_stations_discovered": 0,
-            "npcs_met": 0,
-            "landmarks_discovered": 0,
-            "dungeons_discovered": 0,
-            "bosses_discovered": 0
-        }
+    @property
+    def store(self) -> StatStore:
+        return self._store
 
-    def _init_economy_stats(self):
-        """Initialize economy statistics tracking."""
-        self.economy = {
-            "total_gold_earned": 0,
-            "total_gold_spent": 0,
-            "current_gold": 0,
-            "highest_gold_balance": 0,
-            "trades_made": 0,
-            "items_bought": 0,
-            "items_sold": 0,
-            "gold_from_combat": 0,
-            "gold_from_quests": 0,
-            "gold_from_selling": 0,
-            "gold_spent_on_skills": 0,
-            "gold_spent_on_items": 0,
-            "gold_spent_on_repairs": 0
-        }
+    def set_store(self, store: StatStore) -> None:
+        """Replace the stat store (used during initialization)."""
+        self._store = store
 
-    def _init_progression_stats(self):
-        """Initialize progression statistics tracking."""
-        self.experience_stats = {
-            "total_exp_earned": 0,
-            "total_exp_to_next_level": 0,
-            "exp_from_gathering": 0,
-            "exp_from_crafting": 0,
-            "exp_from_combat": 0,
-            "exp_from_quests": 0,
-            "exp_from_exploration": 0,
-            "exp_from_fishing": 0,
-            "total_levels_gained": 0,
-            "highest_level_reached": 0,
-            "stat_points_allocated": 0,
-            "stat_points_remaining": 0
-        }
+    # ══════════════════════════════════════════════════════════════════
+    # SESSION MANAGEMENT
+    # ══════════════════════════════════════════════════════════════════
 
-        self.progression_milestones = {
-            "titles_earned": 0,
-            "novice_titles": 0,
-            "apprentice_titles": 0,
-            "journeyman_titles": 0,
-            "expert_titles": 0,
-            "master_titles": 0,
-            "hidden_titles": 0,
-            "class_selected": "",
-            "class_changes": 0,
-            "achievements_unlocked": 0
-        }
-
-    def _init_time_stats(self):
-        """Initialize time statistics tracking."""
-        self.time_stats = {
-            "total_playtime_seconds": 0.0,
-            "session_count": 0,
-            "current_session_time": 0.0,
-            "longest_session": 0.0,
-            "average_session_length": 0.0,
-            "time_spent_gathering": 0.0,
-            "time_spent_crafting": 0.0,
-            "time_spent_in_combat": 0.0,
-            "time_spent_exploring": 0.0,
-            "time_spent_in_menus": 0.0,
-            "time_spent_idle": 0.0,
-            "first_played_timestamp": None,
-            "last_played_timestamp": None,
-            "days_since_first_played": 0
-        }
-
-    def _init_records_stats(self):
-        """Initialize records and streaks tracking."""
-        self.records = {
-            "highest_damage_single_hit": 0.0,
-            "highest_dps_5_seconds": 0.0,
-            "longest_combat_duration": 0.0,
-            "fastest_boss_kill": float('inf'),
-            "fastest_craft": float('inf'),
-            "best_minigame_score": 0.0,
-            "longest_crafting_session": 0,
-            "most_resources_single_node": 0,
-            "fastest_node_break": float('inf'),
-            "longest_gathering_session": 0,
-            "current_first_try_streak": 0,
-            "longest_first_try_streak": 0,
-            "current_no_damage_streak": 0,
-            "longest_killstreak": 0,
-            "best_exp_per_hour": 0.0,
-            "best_gold_per_hour": 0.0,
-            "best_crafts_per_hour": 0
-        }
-
-    def _init_social_stats(self):
-        """Initialize social/quest statistics tracking."""
-        self.social_stats = {
-            "npcs_met": 0,
-            "npc_dialogues_completed": 0,
-            "npc_reputation": {},
-            "quests_started": 0,
-            "quests_completed": 0,
-            "quests_failed": 0,
-            "quest_exp_earned": 0,
-            "quest_gold_earned": 0,
-            "gathering_quests_completed": 0,
-            "combat_quests_completed": 0,
-            "crafting_quests_completed": 0,
-            "exploration_quests_completed": 0
-        }
-
-    def _init_encyclopedia_stats(self):
-        """Initialize encyclopedia/discovery statistics tracking."""
-        self.encyclopedia_stats = {
-            "unique_items_discovered": 0,
-            "unique_recipes_discovered": 0,
-            "unique_enemies_encountered": 0,
-            "unique_resources_found": 0,
-            "encyclopedia_completion_percent": 0.0,
-            "materials_encyclopedia_complete": False,
-            "equipment_encyclopedia_complete": False,
-            "recipes_encyclopedia_complete": False,
-            "first_time_item_finds": 0,
-            "first_time_recipe_unlocks": 0
-        }
-
-    def _init_misc_stats(self):
-        """Initialize miscellaneous statistics tracking."""
-        self.misc_stats = {
-            "inventory_opens": 0,
-            "crafting_menu_opens": 0,
-            "skill_menu_opens": 0,
-            "map_opens": 0,
-            "manual_saves": 0,
-            "auto_saves": 0,
-            "game_loads": 0,
-            "debug_mode_activations": 0,
-            "debug_resources_spawned": 0,
-            "jumps": 0,
-            "emotes_used": 0,
-            "screenshots_taken": 0,
-            # Death statistics
-            "total_deaths": 0,
-            "items_lost_on_death": 0,
-            "soulbound_items_kept_on_death": 0
-        }
-
-        # Barrier and collision system stats
-        self.barrier_stats = {
-            "barriers_placed": 0,
-            "barriers_picked_up": 0,
-            "attacks_blocked_by_barriers": 0,
-            "enemy_attacks_blocked": 0,
-            "player_attacks_blocked": 0,
-            "turret_attacks_blocked": 0
-        }
-        # Per-material barrier placement tracking
-        self.barriers_by_material: Dict[str, int] = {}
-
-    def _init_dungeon_stats(self):
-        """Initialize dungeon statistics tracking."""
-        self.dungeon_stats = {
-            # Overall counts
-            "dungeons_entered": 0,
-            "dungeons_completed": 0,
-            "dungeons_abandoned": 0,
-
-            # By rarity
-            "common_dungeons_completed": 0,
-            "uncommon_dungeons_completed": 0,
-            "rare_dungeons_completed": 0,
-            "epic_dungeons_completed": 0,
-            "legendary_dungeons_completed": 0,
-            "unique_dungeons_completed": 0,
-
-            # Combat in dungeons
-            "dungeon_enemies_killed": 0,
-            "dungeon_deaths": 0,
-            "waves_completed": 0,
-
-            # Loot
-            "dungeon_chests_opened": 0,
-            "dungeon_items_received": 0,
-
-            # Records
-            "fastest_dungeon_clear": float('inf'),
-            "highest_rarity_cleared": "",
-            "most_enemies_killed_single_dungeon": 0,
-
-            # EXP from dungeons
-            "total_dungeon_exp_earned": 0
-        }
-
-    # =========================================================================
-    # RECORDING METHODS
-    # =========================================================================
-
-    def start_session(self):
-        """Start a new play session."""
+    def start_session(self) -> None:
+        """Called when a new play session starts."""
         self.session_start_time = time.time()
         self.session_count += 1
-        self.time_stats["session_count"] = self.session_count
+        self._store.record_count("session.started")
+        self._store.flush()
 
-        if self.time_stats["first_played_timestamp"] is None:
-            self.time_stats["first_played_timestamp"] = self.session_start_time
+    def update_playtime(self, dt: float) -> None:
+        """Called each frame with delta time."""
+        self.total_playtime_seconds += dt
+        # Don't write to SQL every frame — flush periodically
 
-    def update_playtime(self, dt: float):
-        """
-        Update session playtime.
-
-        Args:
-            dt: Delta time in seconds since last update
-        """
-        if self.session_start_time is not None:
-            self.total_playtime_seconds += dt
-            self.time_stats["total_playtime_seconds"] = self.total_playtime_seconds
-
-            current_session = time.time() - self.session_start_time
-            self.time_stats["current_session_time"] = current_session
-
-            if current_session > self.time_stats["longest_session"]:
-                self.time_stats["longest_session"] = current_session
-
-            if self.session_count > 0:
-                self.time_stats["average_session_length"] = self.total_playtime_seconds / self.session_count
-
-            self.time_stats["last_played_timestamp"] = time.time()
+    # ══════════════════════════════════════════════════════════════════
+    # GATHERING
+    # ══════════════════════════════════════════════════════════════════
 
     def record_resource_gathered(self, resource_id: str, quantity: int = 1,
-                                  tier: int = 1, category: str = "ore",
-                                  element: Optional[str] = None, is_crit: bool = False,
-                                  is_rare_drop: bool = False):
-        """
-        Record resource gathering event.
-
-        Args:
-            resource_id: Resource type identifier (e.g., "iron_ore_node")
-            quantity: Number of items obtained
-            tier: Resource tier (1-4)
-            category: Resource category (tree/ore/stone/plant)
-            element: Optional element type (fire/ice/lightning/etc)
-            is_crit: Whether this was a critical gather
-            is_rare_drop: Whether rare drop occurred
-        """
-        # Per-resource tracking
-        if resource_id not in self.resources_gathered:
-            self.resources_gathered[resource_id] = StatEntry()
-        self.resources_gathered[resource_id].record(quantity)
-
-        # Category totals
-        category_lower = category.lower()
-        if "tree" in category_lower or "wood" in category_lower:
-            self.gathering_totals["total_trees_chopped"] += 1
-        elif "ore" in category_lower:
-            self.gathering_totals["total_ores_mined"] += 1
-        elif "stone" in category_lower or "rock" in category_lower:
-            self.gathering_totals["total_stones_mined"] += 1
-        elif "plant" in category_lower or "herb" in category_lower:
-            self.gathering_totals["total_plants_gathered"] += 1
-        elif "fish" in category_lower or "fishing" in category_lower:
-            self.gathering_totals["total_fish_caught"] += quantity
-            self.gathering_totals["fishing_rod_casts"] += 1
-
-        # Tier tracking
-        tier_key = f"tier_{tier}_resources_gathered"
-        if tier_key in self.gathering_totals:
-            self.gathering_totals[tier_key] += 1
-
-        # Element tracking
+                                 tier: int = 1, category: str = "ore",
+                                 element: Optional[str] = None,
+                                 is_crit: bool = False,
+                                 is_rare_drop: bool = False,
+                                 location: str = "") -> None:
+        """Record a resource gathering event with full dimensional breakdown."""
+        dims = {
+            "resource": resource_id,
+            "tier": tier,
+            "category": category,
+        }
         if element:
-            element_key = f"{element.lower()}_resources_gathered"
-            if element_key in self.gathering_totals:
-                self.gathering_totals[element_key] += 1
+            dims["element"] = element
+        if location:
+            dims["location"] = location
+
+        # Quantity-based keys (total = quantity)
+        keys = build_dimensional_keys("gathering.collected", dims)
+        self._store.record_multi(keys, value=float(quantity))
+
+        # Count-based keys (how many gather actions)
+        count_keys = build_dimensional_keys("gathering.actions", dims)
+        self._store.record_count_multi(count_keys)
 
         # Quality tracking
         if is_crit:
-            self.gathering_totals["total_critical_gathers"] += 1
+            self._store.record_count("gathering.critical")
         if is_rare_drop:
-            self.gathering_totals["total_rare_drops_while_gathering"] += 1
-            self.item_collection["rare_drops_total"] += 1
+            self._store.record_count("gathering.rare_drops")
+
+        # Streak tracking
+        self._current_gather_streak += 1
+        if self._current_gather_streak > self._store.get_max("gathering.longest_streak"):
+            self._store.set_value("gathering.longest_streak",
+                                  float(self._current_gather_streak))
+
+    def record_fish_caught(self, fish_id: str, quantity: int = 1,
+                           tier: int = 1, rarity: str = "common",
+                           size: int = 0) -> None:
+        """Record a successful fish catch."""
+        dims = {"fish": fish_id, "tier": tier, "rarity": rarity}
+        keys = build_dimensional_keys("gathering.fishing.caught", dims)
+        self._store.record_multi(keys, value=float(quantity))
+
+        if size > 0:
+            self._store.record("gathering.fishing.largest", value=float(size))
+
+        self._current_fish_streak += 1
+        if self._current_fish_streak > self._store.get_max("gathering.fishing.longest_streak"):
+            self._store.set_value("gathering.fishing.longest_streak",
+                                  float(self._current_fish_streak))
+
+        if rarity == "rare":
+            self._store.record_count("gathering.fishing.rare")
+        elif rarity == "legendary":
+            self._store.record_count("gathering.fishing.legendary")
+
+    def record_fishing_failed(self) -> None:
+        """Record a failed fishing attempt."""
+        self._store.record_count("gathering.fishing.failed")
+        self._current_fish_streak = 0
+
+    def record_gathering_damage(self, amount: float) -> None:
+        """Record damage dealt to resource nodes while gathering."""
+        self._store.record("gathering.damage_dealt", value=amount)
+
+    def record_tool_swing(self, tool_type: str) -> None:
+        """Record a tool swing (axe, pickaxe, fishing_rod)."""
+        self._store.record_count(f"gathering.tool_swings.{tool_type}")
+        self._store.record_count("gathering.tool_swings")
+
+    def record_tool_durability_lost(self, tool_type: str, amount: float) -> None:
+        """Record tool durability loss."""
+        self._store.record(f"gathering.tool_durability_lost.{tool_type}", value=amount)
+
+    def record_tool_broken(self, tool_type: str) -> None:
+        """Record a tool breaking."""
+        self._store.record_count(f"gathering.tools_broken.{tool_type}")
+        self._store.record_count("gathering.tools_broken")
+
+    def record_tool_repaired(self, tool_type: str) -> None:
+        """Record a tool repair."""
+        self._store.record_count(f"gathering.tools_repaired.{tool_type}")
+        self._store.record_count("gathering.tools_repaired")
+
+    def record_node_depleted(self, resource_type: str = "unknown",
+                             location: str = "") -> None:
+        """Record fully depleting a resource node."""
+        self._store.record_count(f"gathering.nodes_depleted.{resource_type}")
+        self._store.record_count("gathering.nodes_depleted")
+        if location:
+            self._store.record_count(f"gathering.nodes_depleted.location.{location}")
+
+    # ══════════════════════════════════════════════════════════════════
+    # CRAFTING
+    # ══════════════════════════════════════════════════════════════════
 
     def record_crafting(self, recipe_id: str, discipline: str, success: bool,
                         tier: int = 1, quality_score: float = 0.0,
                         craft_time: float = 0.0, output_rarity: str = "common",
                         is_perfect: bool = False, is_first_try: bool = False,
-                        materials: Optional[Dict[str, int]] = None):
-        """
-        Record crafting event.
+                        materials: Optional[Dict[str, int]] = None) -> None:
+        """Record a crafting attempt with full dimensional breakdown."""
+        result = "success" if success else "failure"
+        dims = {
+            "discipline": discipline,
+            "tier": tier,
+            "result": result,
+        }
 
-        Args:
-            recipe_id: Recipe identifier
-            discipline: Crafting discipline (smithing/alchemy/refining/engineering/enchanting)
-            success: Whether craft succeeded
-            tier: Recipe tier (1-4)
-            quality_score: Minigame score (0.0-1.0)
-            craft_time: Time taken in seconds
-            output_rarity: Output item rarity
-            is_perfect: Perfect craft flag
-            is_first_try: First-try bonus flag
-            materials: Materials consumed {material_id: quantity}
-        """
-        # Per-recipe tracking
-        if recipe_id not in self.recipes_crafted:
-            self.recipes_crafted[recipe_id] = CraftingEntry()
-        self.recipes_crafted[recipe_id].record_craft(
-            success, quality_score, craft_time, output_rarity,
-            is_perfect, is_first_try, materials
-        )
-
-        # Discipline tracking
-        discipline_lower = discipline.lower()
-        if discipline_lower in self.crafting_by_discipline:
-            disc = self.crafting_by_discipline[discipline_lower]
-            disc["total_attempts"] += 1
-
-            if success:
-                disc["total_crafts"] += 1
-                disc["total_time_spent"] += craft_time
-
-                if disc["total_crafts"] > 0:
-                    disc["average_craft_time"] = disc["total_time_spent"] / disc["total_crafts"]
-                    disc["success_rate"] = (disc["total_crafts"] / disc["total_attempts"]) * 100.0
-
-                if is_perfect:
-                    disc["perfect_crafts"] += 1
-                if is_first_try:
-                    disc["first_try_bonuses"] += 1
-
-                # Tier tracking
-                tier_key = f"tier_{tier}_crafts"
-                if tier_key in disc:
-                    disc[tier_key] += 1
-
-                # Rarity tracking
-                if output_rarity.lower() == "legendary":
-                    disc["legendary_crafts"] += 1
-
-                # Special discipline tracking
-                if discipline_lower == "refining" and materials:
-                    # Check if this is an alloy (multiple metal inputs)
-                    metal_count = sum(1 for mat_id in materials.keys() if "ore" in mat_id.lower() or "ingot" in mat_id.lower())
-                    if metal_count >= 2:
-                        disc["alloys_created"] += 1
-
-        # Advanced totals
-        self.crafting_advanced["total_crafts_all_disciplines"] += 1 if success else 0
-        self.crafting_advanced["total_crafting_time_all"] += craft_time
+        # Attempt count
+        attempt_keys = build_dimensional_keys("crafting.attempts", dims)
+        self._store.record_count_multi(attempt_keys)
 
         if success:
-            tier_key = f"tier_{tier}_crafts_total"
-            if tier_key in self.crafting_advanced:
-                self.crafting_advanced[tier_key] += 1
+            # Success-specific breakdowns
+            success_dims = {
+                "discipline": discipline,
+                "tier": tier,
+                "rarity": output_rarity,
+                "recipe": recipe_id,
+            }
+            success_keys = build_dimensional_keys("crafting.success", success_dims)
+            self._store.record_count_multi(success_keys)
 
-            rarity_key = f"{output_rarity.lower()}_items_crafted"
-            if rarity_key in self.crafting_advanced:
-                self.crafting_advanced[rarity_key] += 1
-
-            if is_perfect:
-                self.crafting_advanced["total_perfect_crafts"] += 1
-            if is_first_try:
-                self.crafting_advanced["total_first_try_bonuses"] += 1
-                self.crafting_advanced["consecutive_first_try_bonuses"] += 1
-                if self.crafting_advanced["consecutive_first_try_bonuses"] > self.crafting_advanced["longest_first_try_streak"]:
-                    self.crafting_advanced["longest_first_try_streak"] = self.crafting_advanced["consecutive_first_try_bonuses"]
-            else:
-                self.crafting_advanced["consecutive_first_try_bonuses"] = 0
-
-            # Minigame score tracking
+            # Quality score
             if quality_score > 0:
-                if quality_score > self.crafting_advanced["best_minigame_score"]:
-                    self.crafting_advanced["best_minigame_score"] = quality_score
-                if quality_score < self.crafting_advanced["worst_minigame_score"]:
-                    self.crafting_advanced["worst_minigame_score"] = quality_score
+                self._store.record(f"crafting.quality.{discipline}", value=quality_score)
+                self._store.record("crafting.quality", value=quality_score)
 
-            # Material tracking
-            if materials:
-                for mat_id, qty in materials.items():
-                    self.crafting_advanced["total_materials_consumed"][mat_id] = \
-                        self.crafting_advanced["total_materials_consumed"].get(mat_id, 0) + qty
+            # Craft time
+            if craft_time > 0:
+                self._store.record(f"crafting.time.{discipline}", value=craft_time)
 
-                    # Track most used material
-                    if self.crafting_advanced["total_materials_consumed"][mat_id] > self.crafting_advanced["most_used_material_count"]:
-                        self.crafting_advanced["most_used_material"] = mat_id
-                        self.crafting_advanced["most_used_material_count"] = self.crafting_advanced["total_materials_consumed"][mat_id]
+            # Perfect / first-try
+            if is_perfect:
+                self._store.record_count(f"crafting.perfect.{discipline}")
+                self._store.record_count("crafting.perfect")
+            if is_first_try:
+                self._store.record_count(f"crafting.first_try.{discipline}")
+                self._store.record_count("crafting.first_try")
+                self._current_first_try_streak += 1
+                if self._current_first_try_streak > self._store.get_max("crafting.longest_first_try_streak"):
+                    self._store.set_value("crafting.longest_first_try_streak",
+                                          float(self._current_first_try_streak))
+            else:
+                self._current_first_try_streak = 0
+
+            # Rarity tracking
+            self._store.record_count(f"crafting.rarity.{output_rarity}")
+
+        # Materials consumed
+        if materials:
+            for mat_id, qty in materials.items():
+                self._store.record(f"crafting.materials.{mat_id}", value=float(qty))
+            self._store.record("crafting.materials_consumed",
+                               value=float(sum(materials.values())))
+
+    def record_invention(self, discipline: str, item_id: str,
+                         recipe_id: str = "") -> None:
+        """Record inventing a new item via the LLM system."""
+        self._store.record_count(f"crafting.inventions.{discipline}")
+        self._store.record_count("crafting.inventions")
+        if item_id:
+            self._store.record_count(f"crafting.inventions.item.{item_id}")
+
+    def record_recipe_discovered(self, recipe_id: str,
+                                 discipline: str = "unknown") -> None:
+        """Record discovering a new recipe."""
+        self._store.record_count(f"crafting.recipes_discovered.{discipline}")
+        self._store.record_count("crafting.recipes_discovered")
+
+    def record_enchantment_applied(self, enchantment_id: str) -> None:
+        """Record applying an enchantment."""
+        self._store.record_count(f"crafting.enchantments.{enchantment_id}")
+        self._store.record_count("crafting.enchantments")
+
+    # ══════════════════════════════════════════════════════════════════
+    # COMBAT
+    # ══════════════════════════════════════════════════════════════════
 
     def record_damage_dealt(self, amount: float, damage_type: str = "physical",
                             attack_type: str = "melee", was_crit: bool = False,
-                            weapon_element: Optional[str] = None):
-        """
-        Record damage dealt to enemy.
+                            weapon_element: Optional[str] = None,
+                            target_type: str = "",
+                            location: str = "") -> None:
+        """Record damage dealt with full dimensional breakdown."""
+        dims = {
+            "type": damage_type,
+            "attack": attack_type,
+        }
+        if weapon_element:
+            dims["weapon_element"] = weapon_element
+        if target_type:
+            dims["to"] = target_type
+        if location:
+            dims["location"] = location
 
-        Args:
-            amount: Damage amount
-            damage_type: Element type (physical/fire/ice/etc)
-            attack_type: Attack type (melee/ranged/magic)
-            was_crit: Whether this was a critical hit
-            weapon_element: Element of weapon used
-        """
-        # Total damage
-        self.combat_damage["total_damage_dealt"] += amount
-
-        # Attack type
-        attack_key = f"{attack_type.lower()}_damage_dealt"
-        if attack_key in self.combat_damage:
-            self.combat_damage[attack_key] += amount
-
-        # Element type
-        element_key = f"{damage_type.lower()}_damage_dealt"
-        if element_key in self.combat_damage:
-            self.combat_damage[element_key] += amount
-
-        # Records
-        if amount > self.combat_damage["highest_single_hit_dealt"]:
-            self.combat_damage["highest_single_hit_dealt"] = amount
-
-        # Actions
-        self.combat_actions["total_attacks"] += 1
-        attack_action_key = f"{attack_type.lower()}_attacks"
-        if attack_action_key in self.combat_actions:
-            self.combat_actions[attack_action_key] += 1
+        keys = build_dimensional_keys("combat.damage_dealt", dims)
+        self._store.record_multi(keys, value=amount)
 
         if was_crit:
-            self.combat_actions["critical_hits"] += 1
-
-        # Weapon element tracking
-        if weapon_element:
-            element_lower = weapon_element.lower()
-            if element_lower == "fire":
-                self.combat_actions["used_fire_weapon"] = True
-            elif element_lower == "ice":
-                self.combat_actions["used_ice_weapon"] = True
-            elif element_lower == "lightning":
-                self.combat_actions["used_lightning_weapon"] = True
-
-        # Update crit rate
-        if self.combat_actions["total_attacks"] > 0:
-            self.combat_actions["critical_hit_rate"] = \
-                (self.combat_actions["critical_hits"] / self.combat_actions["total_attacks"]) * 100.0
+            self._store.record("combat.damage_dealt.critical", value=amount)
+            self._store.record_count("combat.critical_hits")
 
     def record_damage_taken(self, amount: float, damage_type: str = "physical",
-                            attack_type: str = "melee"):
-        """
-        Record damage taken from enemy.
-
-        Args:
-            amount: Damage amount
-            damage_type: Element type
-            attack_type: Attack type
-        """
-        self.combat_damage["total_damage_taken"] += amount
-
-        attack_key = f"{attack_type.lower()}_damage_taken"
-        if attack_key in self.combat_damage:
-            self.combat_damage[attack_key] += amount
-
-        element_key = f"{damage_type.lower()}_damage_taken"
-        if element_key in self.combat_damage:
-            self.combat_damage[element_key] += amount
-
-        if amount > self.combat_damage["highest_single_hit_taken"]:
-            self.combat_damage["highest_single_hit_taken"] = amount
+                            attack_type: str = "melee",
+                            source_type: str = "",
+                            location: str = "") -> None:
+        """Record damage received."""
+        dims = {"type": damage_type, "attack": attack_type}
+        if source_type:
+            dims["from"] = source_type
+        if location:
+            dims["location"] = location
+        keys = build_dimensional_keys("combat.damage_taken", dims)
+        self._store.record_multi(keys, value=amount)
 
         # Reset no-damage streak
-        self.combat_survival["current_killstreak"] = 0
+        self._current_no_damage_streak = 0
 
     def record_enemy_killed(self, tier: int = 1, is_boss: bool = False,
-                            is_dragon: bool = False, weapon_element: Optional[str] = None):
-        """
-        Record enemy kill.
-
-        Args:
-            tier: Enemy tier (1-4)
-            is_boss: Whether this was a boss
-            is_dragon: Whether this was a dragon
-            weapon_element: Element of weapon used for kill
-        """
-        self.combat_kills["total_enemies_defeated"] += 1
-        self.combat_kills["total_kills"] += 1
-
-        tier_key = f"tier_{tier}_enemies_killed"
-        if tier_key in self.combat_kills:
-            self.combat_kills[tier_key] += 1
-
+                            is_dragon: bool = False,
+                            weapon_element: Optional[str] = None,
+                            enemy_type: str = "unknown",
+                            location: str = "") -> None:
+        """Record an enemy kill with full dimensional breakdown."""
+        dims = {
+            "tier": tier,
+            "species": enemy_type,
+        }
         if is_boss:
-            self.combat_kills["boss_enemies_killed"] += 1
+            dims["rank"] = "boss"
         if is_dragon:
-            self.combat_kills["dragon_boss_defeated"] += 1
+            dims["rank"] = "dragon"
+        if weapon_element:
+            dims["weapon_element"] = weapon_element
+        if location:
+            dims["location"] = location
+
+        keys = build_dimensional_keys("combat.kills", dims)
+        self._store.record_count_multi(keys)
 
         # Killstreak
-        self.combat_survival["current_killstreak"] += 1
-        if self.combat_survival["current_killstreak"] > self.combat_survival["longest_killstreak"]:
-            self.combat_survival["longest_killstreak"] = self.combat_survival["current_killstreak"]
+        self._current_killstreak += 1
+        if self._current_killstreak > self._store.get_max("combat.longest_killstreak"):
+            self._store.set_value("combat.longest_killstreak",
+                                  float(self._current_killstreak))
 
-        # Weapon element kills
-        if weapon_element:
-            element_lower = weapon_element.lower()
-            element_kill_key = f"{element_lower}_weapon_kills"
-            if element_kill_key in self.combat_actions:
-                self.combat_actions[element_kill_key] += 1
+        # No-damage streak tracking
+        self._current_no_damage_streak += 1
+        if self._current_no_damage_streak > self._store.get_max("combat.longest_no_damage_streak"):
+            self._store.set_value("combat.longest_no_damage_streak",
+                                  float(self._current_no_damage_streak))
 
-    def record_status_effect(self, effect_tag: str, applied_to_enemy: bool = True):
-        """
-        Record status effect application.
+    def record_status_effect(self, effect_tag: str,
+                             applied_to_enemy: bool = True) -> None:
+        """Record a status effect application."""
+        target = "applied" if applied_to_enemy else "received"
+        self._store.record_count(f"combat.status.{target}.{effect_tag}")
+        self._store.record_count(f"combat.status.{target}")
 
-        Args:
-            effect_tag: Status effect tag (burn/freeze/stun/etc)
-            applied_to_enemy: True if applied to enemy, False if received
-        """
-        effect_lower = effect_tag.lower()
+    def record_death(self) -> None:
+        """Record player death."""
+        self._store.record_count("combat.deaths")
+        self._current_killstreak = 0
+        self._current_no_damage_streak = 0
 
-        if applied_to_enemy:
-            if effect_lower in self.combat_status_effects["status_effects_applied"]:
-                self.combat_status_effects["status_effects_applied"][effect_lower] += 1
-        else:
-            if effect_lower in self.combat_status_effects["status_effects_received"]:
-                self.combat_status_effects["status_effects_received"][effect_lower] += 1
+    def record_items_lost_on_death(self, items_lost: int,
+                                   soulbound_kept: int) -> None:
+        """Record items lost on death."""
+        self._store.record("combat.deaths.items_lost", value=float(items_lost))
+        self._store.record("combat.deaths.soulbound_kept", value=float(soulbound_kept))
+
+    def record_attack_blocked(self, source: str = "unknown") -> None:
+        """Record a blocked attack."""
+        self._store.record_count(f"combat.blocks.{source}")
+        self._store.record_count("combat.blocks")
+
+    def record_dodge_roll(self) -> None:
+        """Record a dodge roll attempt."""
+        self._store.record_count("combat.dodge_rolls")
+
+    def record_successful_dodge(self) -> None:
+        """Record a successful i-frame dodge."""
+        self._store.record_count("combat.dodge_rolls.successful")
+
+    def record_combo_attack(self, combo_count: int) -> None:
+        """Record a combo attack."""
+        self._store.record("combat.combos", value=float(combo_count))
+
+    def record_projectile_fired(self) -> None:
+        """Record a projectile launch."""
+        self._store.record_count("combat.projectiles.fired")
+
+    def record_projectile_hit(self) -> None:
+        """Record a projectile hit."""
+        self._store.record_count("combat.projectiles.hit")
+
+    def record_healing_received(self, amount: float, source: str = "unknown") -> None:
+        """Record healing received (potion, regen, lifesteal, etc)."""
+        self._store.record(f"combat.healing.{source}", value=amount)
+        self._store.record("combat.healing", value=amount)
+
+    def record_reflect_damage(self, amount: float, source: str = "thorns") -> None:
+        """Record damage reflected back to attacker."""
+        self._store.record(f"combat.reflect.{source}", value=amount)
+        self._store.record("combat.reflect", value=amount)
+
+    def record_damage_blocked(self, amount: float,
+                              block_type: str = "armor") -> None:
+        """Record damage prevented by armor/shield/barrier."""
+        self._store.record(f"combat.damage_blocked.{block_type}", value=amount)
+        self._store.record("combat.damage_blocked", value=amount)
+
+    def record_weapon_attack(self, weapon_type: str = "unarmed",
+                             weapon_id: str = "") -> None:
+        """Record an attack by weapon type (for weapon variety tracking)."""
+        self._store.record_count(f"combat.attacks.weapon_type.{weapon_type}")
+        self._store.record_count("combat.attacks")
+        if weapon_id:
+            self._store.record_count(f"combat.attacks.weapon_id.{weapon_id}")
+
+    def record_death_by_source(self, source_type: str = "unknown",
+                               damage_type: str = "physical",
+                               enemy_type: str = "",
+                               location: str = "") -> None:
+        """Record death with dimensional context."""
+        keys = ["combat.deaths"]
+        if source_type:
+            keys.append(f"combat.deaths.source.{source_type}")
+        if damage_type:
+            keys.append(f"combat.deaths.element.{damage_type}")
+        if enemy_type:
+            keys.append(f"combat.deaths.by.{enemy_type}")
+        if location:
+            keys.append(f"combat.deaths.location.{location}")
+        self._store.record_count_multi(keys)
+        self._current_killstreak = 0
+        self._current_no_damage_streak = 0
+
+    # ══════════════════════════════════════════════════════════════════
+    # ITEMS
+    # ══════════════════════════════════════════════════════════════════
 
     def record_item_collected(self, item_id: str, quantity: int = 1,
-                              category: str = "material", rarity: str = "common",
-                              is_first_time: bool = False, is_rare_drop: bool = False):
-        """
-        Record item collection.
-
-        Args:
-            item_id: Item identifier
-            quantity: Quantity collected
-            category: Item category (material/equipment/consumable/tool)
-            rarity: Item rarity
-            is_first_time: First time discovering this item
-            is_rare_drop: Whether this was a rare drop
-        """
-        self.items_collected[item_id] = self.items_collected.get(item_id, 0) + quantity
-
-        category_key = f"{category.lower()}s_collected"
-        if category_key in self.item_collection:
-            self.item_collection[category_key] += quantity
-
-        rarity_key = f"{rarity.lower()}_items_collected"
-        if rarity_key in self.item_collection:
-            self.item_collection[rarity_key] += quantity
+                              category: str = "material",
+                              rarity: str = "common",
+                              is_first_time: bool = False,
+                              is_rare_drop: bool = False) -> None:
+        """Record item collection."""
+        dims = {"item": item_id, "category": category, "rarity": rarity}
+        keys = build_dimensional_keys("items.collected", dims)
+        self._store.record_multi(keys, value=float(quantity))
 
         if is_first_time:
-            self.item_collection["first_time_discoveries"] += 1
-            self.encyclopedia_stats["first_time_item_finds"] += 1
-
+            self._store.record_count("items.first_discoveries")
         if is_rare_drop:
-            self.item_collection["rare_drops_total"] += 1
-
-        self.item_management["items_picked_up"] += quantity
+            self._store.record_count("items.rare_drops")
 
     def record_item_used(self, item_id: str, quantity: int = 1,
-                         item_type: str = "consumable", in_combat: bool = False):
-        """
-        Record item usage/consumption.
+                         item_type: str = "consumable",
+                         in_combat: bool = False) -> None:
+        """Record item usage."""
+        dims = {"item": item_id, "type": item_type}
+        if in_combat:
+            dims["context"] = "combat"
+        keys = build_dimensional_keys("items.used", dims)
+        self._store.record_multi(keys, value=float(quantity))
 
-        Args:
-            item_id: Item identifier
-            quantity: Quantity used
-            item_type: Type of item (potion/food/buff/other)
-            in_combat: Whether item was used during combat
-        """
-        self.items_used[item_id] = self.items_used.get(item_id, 0) + quantity
+    def record_item_dropped(self, item_id: str, quantity: int = 1,
+                            destroyed: bool = False) -> None:
+        """Record item drop or destruction."""
+        action = "destroyed" if destroyed else "dropped"
+        self._store.record(f"items.{action}.{item_id}", value=float(quantity))
+        self._store.record_count(f"items.{action}")
 
-        # Update consumption stats by type
-        if "potion" in item_type.lower():
-            self.item_usage["total_potions_consumed"] += quantity
-            if in_combat:
-                self.item_usage["potions_used_in_combat"] += quantity
-            else:
-                self.item_usage["potions_used_out_combat"] += quantity
-        elif "food" in item_type.lower():
-            self.item_usage["total_food_consumed"] += quantity
-        elif "buff" in item_type.lower():
-            self.item_usage["total_buffs_consumed"] += quantity
-
-    def record_item_dropped(self, item_id: str, quantity: int = 1, destroyed: bool = False):
-        """
-        Record items dropped or destroyed.
-
-        Args:
-            item_id: Item identifier
-            quantity: Quantity dropped/destroyed
-            destroyed: True if destroyed, False if dropped
-        """
-        if destroyed:
-            self.item_management["items_destroyed"] += quantity
-        else:
-            self.item_management["items_dropped"] += quantity
+    # ══════════════════════════════════════════════════════════════════
+    # SKILLS
+    # ══════════════════════════════════════════════════════════════════
 
     def record_skill_used(self, skill_id: str, value: float = 0.0,
                           mana_cost: float = 0.0, targets: int = 0,
-                          category: str = "utility"):
-        """
-        Record skill usage.
+                          category: str = "utility") -> None:
+        """Record skill activation."""
+        dims = {"skill": skill_id, "category": category}
+        keys = build_dimensional_keys("skills.used", dims)
+        self._store.record_multi(keys, value=max(value, 1.0))
 
-        Args:
-            skill_id: Skill identifier
-            value: Value delivered (damage/healing/etc)
-            mana_cost: Mana consumed
-            targets: Number of targets affected
-            category: Skill category
-        """
-        if skill_id not in self.skills_used:
-            self.skills_used[skill_id] = SkillStatEntry()
-        self.skills_used[skill_id].record_use(value, mana_cost, targets)
+        if mana_cost > 0:
+            self._store.record("skills.mana_spent", value=mana_cost)
+            self._store.record(f"skills.mana_spent.{skill_id}", value=mana_cost)
+        if targets > 0:
+            self._store.record("skills.targets_affected", value=float(targets))
 
-        self.skill_usage["total_skills_activated"] += 1
-        self.skill_usage["total_mana_spent"] += mana_cost
+    # ══════════════════════════════════════════════════════════════════
+    # EXPLORATION
+    # ══════════════════════════════════════════════════════════════════
 
-        category_key = f"{category.lower()}_skills_used"
-        if category_key in self.skill_usage:
-            self.skill_usage[category_key] += 1
-
-    def record_dungeon_entered(self, rarity: str):
-        """
-        Record entering a dungeon.
-
-        Args:
-            rarity: Dungeon rarity (common, uncommon, rare, epic, legendary, unique)
-        """
-        self.dungeon_stats["dungeons_entered"] += 1
-
-    def record_dungeon_completed(self, rarity: str, enemies_killed: int,
-                                  time_taken: float, exp_earned: int):
-        """
-        Record completing a dungeon.
-
-        Args:
-            rarity: Dungeon rarity
-            enemies_killed: Total enemies killed in dungeon
-            time_taken: Time taken to clear in seconds
-            exp_earned: Total EXP earned in dungeon
-        """
-        self.dungeon_stats["dungeons_completed"] += 1
-
-        # Track by rarity
-        rarity_key = f"{rarity.lower()}_dungeons_completed"
-        if rarity_key in self.dungeon_stats:
-            self.dungeon_stats[rarity_key] += 1
-
-        # Update records
-        if time_taken < self.dungeon_stats["fastest_dungeon_clear"]:
-            self.dungeon_stats["fastest_dungeon_clear"] = time_taken
-
-        if enemies_killed > self.dungeon_stats["most_enemies_killed_single_dungeon"]:
-            self.dungeon_stats["most_enemies_killed_single_dungeon"] = enemies_killed
-
-        # Track highest rarity cleared
-        rarity_order = ["common", "uncommon", "rare", "epic", "legendary", "unique"]
-        current_highest = self.dungeon_stats["highest_rarity_cleared"]
-        if not current_highest or rarity_order.index(rarity.lower()) > rarity_order.index(current_highest.lower()):
-            self.dungeon_stats["highest_rarity_cleared"] = rarity.lower()
-
-        self.dungeon_stats["total_dungeon_exp_earned"] += exp_earned
-
-    def record_dungeon_abandoned(self):
-        """Record abandoning a dungeon (exiting without clearing)."""
-        self.dungeon_stats["dungeons_abandoned"] += 1
-
-    def record_dungeon_enemy_killed(self, exp_earned: int = 0):
-        """
-        Record killing an enemy in a dungeon.
-
-        Args:
-            exp_earned: EXP earned from this kill
-        """
-        self.dungeon_stats["dungeon_enemies_killed"] += 1
-        self.dungeon_stats["total_dungeon_exp_earned"] += exp_earned
-
-    def record_dungeon_wave_completed(self):
-        """Record completing a wave in a dungeon."""
-        self.dungeon_stats["waves_completed"] += 1
-
-    def record_dungeon_death(self):
-        """Record dying in a dungeon."""
-        self.dungeon_stats["dungeon_deaths"] += 1
-
-    # =========================================================================
-    # DEATH RECORDING METHODS
-    # =========================================================================
-
-    def record_death(self):
-        """Record a player death."""
-        self.misc_stats["total_deaths"] += 1
-
-    def record_items_lost_on_death(self, items_lost: int, soulbound_kept: int):
-        """
-        Record items lost/kept on death.
-
-        Args:
-            items_lost: Number of items dropped/lost on death
-            soulbound_kept: Number of soulbound items kept
-        """
-        self.misc_stats["items_lost_on_death"] += items_lost
-        self.misc_stats["soulbound_items_kept_on_death"] += soulbound_kept
-
-    def record_dungeon_chest_opened(self, items_received: int):
-        """
-        Record opening a dungeon chest.
-
-        Args:
-            items_received: Number of items received from the chest
-        """
-        self.dungeon_stats["dungeon_chests_opened"] += 1
-        self.dungeon_stats["dungeon_items_received"] += items_received
-
-    # =========================================================================
-    # FISHING RECORDING METHODS
-    # =========================================================================
-
-    def record_fish_caught(self, fish_id: str, quantity: int = 1, tier: int = 1,
-                           rarity: str = "common", size: int = 0):
-        """
-        Record catching a fish.
-
-        Args:
-            fish_id: Fish type identifier
-            quantity: Number of fish caught
-            tier: Fish tier (1-4)
-            rarity: Fish rarity (common/uncommon/rare/epic/legendary)
-            size: Fish size (for tracking largest catch)
-        """
-        # Update gathering totals
-        self.gathering_totals["total_fish_caught"] += quantity
-        self.gathering_totals["fishing_rod_casts"] += 1
-
-        # Track in resources_gathered
-        if fish_id not in self.resources_gathered:
-            self.resources_gathered[fish_id] = StatEntry()
-        self.resources_gathered[fish_id].record(quantity)
-
-        # Tier tracking
-        tier_key = f"tier_{tier}_resources_gathered"
-        if tier_key in self.gathering_totals:
-            self.gathering_totals[tier_key] += quantity
-
-        # Track largest fish
-        if size > self.gathering_advanced["largest_fish_caught"]:
-            self.gathering_advanced["largest_fish_caught"] = size
-
-        # Track catch streak
-        self.gathering_advanced["fish_catch_streak"] += 1
-        if self.gathering_advanced["fish_catch_streak"] > self.gathering_advanced["longest_fish_catch_streak"]:
-            self.gathering_advanced["longest_fish_catch_streak"] = self.gathering_advanced["fish_catch_streak"]
-
-        # Track rare/legendary catches
-        rarity_lower = rarity.lower()
-        if rarity_lower == "rare":
-            self.gathering_advanced["rare_fish_caught"] += 1
-        elif rarity_lower in ("legendary", "epic"):
-            self.gathering_advanced["legendary_fish_caught"] += 1
-
-    def record_fishing_failed(self):
-        """Record a failed fishing attempt (fish got away)."""
-        self.gathering_totals["fishing_rod_casts"] += 1
-        # Reset catch streak on failure
-        self.gathering_advanced["fish_catch_streak"] = 0
-
-    def record_movement(self, distance: float, chunk_coords: Tuple[int, int],
-                        is_sprinting: bool = False, is_encumbered: bool = False):
-        """
-        Record player movement.
-
-        Args:
-            distance: Distance traveled in tiles
-            chunk_coords: Current chunk coordinates
-            is_sprinting: Whether player is sprinting
-            is_encumbered: Whether player is encumbered
-        """
-        self.distance_traveled["total_distance"] += distance
-
+    def record_movement(self, distance: float,
+                        chunk_coords: Tuple[int, int],
+                        is_sprinting: bool = False,
+                        is_encumbered: bool = False) -> None:
+        """Record player movement."""
+        self._store.record("exploration.distance", value=distance)
         if is_sprinting:
-            self.distance_traveled["distance_sprinted"] += distance
-        else:
-            self.distance_traveled["distance_walked"] += distance
-
+            self._store.record("exploration.distance.sprinting", value=distance)
         if is_encumbered:
-            self.distance_traveled["distance_while_encumbered"] += distance
+            self._store.record("exploration.distance.encumbered", value=distance)
 
-        # Chunk tracking
+        # Track unique chunks
         if chunk_coords not in self._unique_chunks_visited:
             self._unique_chunks_visited.add(chunk_coords)
-            self._unique_chunks_visited_list = list(self._unique_chunks_visited)
-            self.exploration["unique_chunks_visited"] = len(self._unique_chunks_visited)
+            self._store.record_count("exploration.unique_chunks")
+        self._store.record_count("exploration.chunk_entries")
 
-        self.exploration["total_chunk_entries"] += 1
+    def record_chunk_entered(self, chunk_x: int, chunk_y: int,
+                             biome: str = "unknown") -> None:
+        """Record entering a new chunk (from bus event)."""
+        self._store.record_count(f"exploration.chunks.biome.{biome}")
+        coords = (chunk_x, chunk_y)
+        if coords not in self._unique_chunks_visited:
+            self._unique_chunks_visited.add(coords)
+            self._store.record_count("exploration.unique_chunks")
+            self._store.record_count("exploration.new_discoveries")
 
-    # =========================================================================
-    # BARRIER STATISTICS
-    # =========================================================================
+    def record_landmark_discovered(self, landmark_id: str,
+                                   landmark_type: str = "unknown") -> None:
+        """Record landmark discovery."""
+        self._store.record_count(f"exploration.landmarks.{landmark_type}")
+        self._store.record_count("exploration.landmarks")
 
-    def record_barrier_placed(self, material_id: str):
+    # ══════════════════════════════════════════════════════════════════
+    # ECONOMY
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_gold_earned(self, amount: float, source: str = "unknown") -> None:
+        """Record gold earned."""
+        self._store.record(f"economy.gold_earned.{source}", value=amount)
+        self._store.record("economy.gold_earned", value=amount)
+
+    def record_gold_spent(self, amount: float, sink: str = "unknown") -> None:
+        """Record gold spent."""
+        self._store.record(f"economy.gold_spent.{sink}", value=amount)
+        self._store.record("economy.gold_spent", value=amount)
+
+    def record_trade(self, trade_type: str = "buy",
+                     item_id: str = "", amount: float = 0.0) -> None:
+        """Record a trade transaction."""
+        self._store.record_count(f"economy.trades.{trade_type}")
+        self._store.record_count("economy.trades")
+        if item_id:
+            self._store.record_count(f"economy.trades.item.{item_id}")
+        if amount > 0:
+            self._store.record(f"economy.trades.{trade_type}.value", value=amount)
+
+    # ══════════════════════════════════════════════════════════════════
+    # PROGRESSION
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_level_up(self, new_level: int, stat_points: int = 0) -> None:
+        """Record a level up."""
+        self._store.record_count("progression.level_ups")
+        self._store.set_value("progression.current_level", float(new_level))
+        if stat_points > 0:
+            self._store.record("progression.stat_points_earned",
+                               value=float(stat_points))
+
+    def record_exp_gained(self, amount: float, source: str = "unknown") -> None:
+        """Record experience gained."""
+        self._store.record(f"progression.exp.{source}", value=amount)
+        self._store.record("progression.exp", value=amount)
+
+    def record_title_earned(self, title_id: str,
+                            tier: str = "novice") -> None:
+        """Record earning a title."""
+        self._store.record_count(f"progression.titles.tier.{tier}")
+        self._store.record_count(f"progression.titles.{title_id}")
+        self._store.record_count("progression.titles")
+
+    def record_class_changed(self, class_id: str) -> None:
+        """Record a class change."""
+        self._store.record_count(f"progression.class_changes.{class_id}")
+        self._store.record_count("progression.class_changes")
+
+    def record_skill_learned(self, skill_id: str,
+                             source: str = "level") -> None:
+        """Record learning a new skill."""
+        self._store.record_count(f"progression.skills_learned.{source}")
+        self._store.record_count(f"progression.skills_learned.{skill_id}")
+        self._store.record_count("progression.skills_learned")
+
+    # ══════════════════════════════════════════════════════════════════
+    # DUNGEONS
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_dungeon_entered(self, rarity: str) -> None:
+        """Record entering a dungeon."""
+        self._store.record_count(f"dungeon.entered.{rarity}")
+        self._store.record_count("dungeon.entered")
+
+    def record_dungeon_completed(self, rarity: str, enemies_killed: int,
+                                 time_taken: float,
+                                 exp_earned: int = 0) -> None:
+        """Record completing a dungeon."""
+        self._store.record_count(f"dungeon.completed.{rarity}")
+        self._store.record_count("dungeon.completed")
+        self._store.record("dungeon.enemies_killed_in_run",
+                           value=float(enemies_killed))
+        if time_taken > 0:
+            # Record time (lower is better, so we track via max inversion)
+            self._store.record(f"dungeon.clear_time.{rarity}", value=time_taken)
+        if exp_earned > 0:
+            self._store.record("dungeon.exp_earned", value=float(exp_earned))
+
+    def record_dungeon_abandoned(self) -> None:
+        self._store.record_count("dungeon.abandoned")
+
+    def record_dungeon_enemy_killed(self, exp_earned: int = 0) -> None:
+        self._store.record_count("dungeon.enemies_killed")
+        if exp_earned > 0:
+            self._store.record("dungeon.exp_earned", value=float(exp_earned))
+
+    def record_dungeon_wave_completed(self) -> None:
+        self._store.record_count("dungeon.waves_completed")
+
+    def record_dungeon_death(self) -> None:
+        self._store.record_count("dungeon.deaths")
+
+    def record_dungeon_chest_opened(self, items_received: int) -> None:
+        self._store.record_count("dungeon.chests_opened")
+        self._store.record("dungeon.items_received",
+                           value=float(items_received))
+
+    # ══════════════════════════════════════════════════════════════════
+    # SOCIAL / QUESTS
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_npc_interaction(self, npc_id: str) -> None:
+        """Record talking to an NPC."""
+        self._store.record_count(f"social.npc.{npc_id}")
+        self._store.record_count("social.npc_interactions")
+
+    def record_quest_accepted(self, quest_id: str,
+                              quest_type: str = "unknown") -> None:
+        """Record accepting a quest."""
+        self._store.record_count(f"social.quests.accepted.{quest_type}")
+        self._store.record_count("social.quests.accepted")
+
+    def record_quest_completed(self, quest_id: str,
+                               quest_type: str = "unknown",
+                               exp_reward: float = 0.0,
+                               gold_reward: float = 0.0) -> None:
+        """Record completing a quest."""
+        self._store.record_count(f"social.quests.completed.{quest_type}")
+        self._store.record_count("social.quests.completed")
+        if exp_reward > 0:
+            self._store.record("social.quests.exp_earned", value=exp_reward)
+        if gold_reward > 0:
+            self._store.record("social.quests.gold_earned", value=gold_reward)
+
+    def record_quest_failed(self, quest_id: str,
+                            quest_type: str = "unknown") -> None:
+        """Record failing a quest."""
+        self._store.record_count(f"social.quests.failed.{quest_type}")
+        self._store.record_count("social.quests.failed")
+
+    # ══════════════════════════════════════════════════════════════════
+    # BARRIERS
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_barrier_placed(self, material_id: str) -> None:
+        self._store.record_count(f"barriers.placed.{material_id}")
+        self._store.record_count("barriers.placed")
+
+    def record_barrier_picked_up(self, material_id: str = None) -> None:
+        self._store.record_count("barriers.picked_up")
+        if material_id:
+            self._store.record_count(f"barriers.picked_up.{material_id}")
+
+    # ══════════════════════════════════════════════════════════════════
+    # EQUIPMENT
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_equipment_changed(self, item_id: str, slot: str,
+                                 equipped: bool = True) -> None:
+        """Record equipping or unequipping an item."""
+        action = "equipped" if equipped else "unequipped"
+        self._store.record_count(f"items.{action}.{item_id}")
+        self._store.record_count(f"items.{action}.slot.{slot}")
+        self._store.record_count(f"items.{action}")
+        self._store.record_count("items.equipment_swaps")
+
+    # ══════════════════════════════════════════════════════════════════
+    # MISCELLANEOUS
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_repair(self, item_id: str, durability_restored: float = 0.0) -> None:
+        """Record repairing an item."""
+        self._store.record_count(f"items.repaired.{item_id}")
+        self._store.record_count("items.repaired")
+        if durability_restored > 0:
+            self._store.record("items.durability_restored",
+                               value=durability_restored)
+
+    # ══════════════════════════════════════════════════════════════════
+    # TIME TRACKING
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_activity_time(self, activity: str, seconds: float) -> None:
+        """Record time spent in an activity (combat, gathering, crafting, etc)."""
+        self._store.record(f"time.activity.{activity}", value=seconds)
+        self._store.record("time.activity", value=seconds)
+
+    def record_session_end(self) -> None:
+        """Record session ending — flush session duration."""
+        if self.session_start_time:
+            session_duration = time.time() - self.session_start_time
+            self._store.record("time.sessions.duration", value=session_duration)
+            self._store.set_value("time.total_playtime", self.total_playtime_seconds)
+            self._store.flush()
+
+    def record_menu_time(self, menu_type: str, seconds: float) -> None:
+        """Record time spent in a menu."""
+        self._store.record(f"time.menu.{menu_type}", value=seconds)
+        self._store.record("time.menu", value=seconds)
+
+    def record_idle_time(self, seconds: float) -> None:
+        """Record idle time (no input for extended period)."""
+        self._store.record("time.idle", value=seconds)
+
+    # ══════════════════════════════════════════════════════════════════
+    # RECORDS & PERSONAL BESTS
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_personal_best(self, record_key: str, value: float) -> None:
+        """Generic personal best tracker. Only updates if value > current max.
+
+        Examples: record_personal_best("dps_burst", 150.0)
+                  record_personal_best("fastest_boss_kill", 12.5)
         """
-        Record a barrier being placed in the world.
+        self._store.record(f"records.{record_key}", value=value)
 
-        Args:
-            material_id: ID of the stone material used
+    def record_combat_duration(self, seconds: float) -> None:
+        """Record a combat encounter duration (for longest combat tracking)."""
+        self._store.record("records.combat_duration", value=seconds)
+
+    def record_fastest_gather(self, resource_type: str,
+                              seconds: float) -> None:
+        """Record a resource gathering time (for fastest gather tracking)."""
+        # We use record() which tracks max — but we want MIN time.
+        # Invert: store as negative so max(negative) = closest to zero = fastest.
+        # Or: just record and query get_min separately. For now, use set_value
+        # which replaces total but preserves max. We track via a separate min key.
+        current_min = self._store.get_total(f"records.fastest_gather.{resource_type}")
+        if current_min <= 0 or seconds < current_min:
+            self._store.set_value(f"records.fastest_gather.{resource_type}", seconds)
+
+    def record_rate(self, rate_key: str, value: float) -> None:
+        """Record a rate (exp/hour, gold/hour, etc). Tracks max rate."""
+        self._store.record(f"records.rate.{rate_key}", value=value)
+
+    # ══════════════════════════════════════════════════════════════════
+    # ENCYCLOPEDIA / DISCOVERY
+    # ══════════════════════════════════════════════════════════════════
+
+    def record_first_discovery(self, category: str, item_id: str) -> None:
+        """Record discovering something for the first time.
+
+        Examples: record_first_discovery("enemy", "dragon")
+                  record_first_discovery("recipe", "iron_sword")
+                  record_first_discovery("item", "mithril_ore")
+                  record_first_discovery("resource", "voidstone")
         """
-        self.barrier_stats["barriers_placed"] += 1
+        self._store.record_count(f"encyclopedia.discovered.{category}.{item_id}")
+        self._store.record_count(f"encyclopedia.discovered.{category}")
+        self._store.record_count("encyclopedia.discovered")
 
-        # Track per-material
-        if material_id not in self.barriers_by_material:
-            self.barriers_by_material[material_id] = 0
-        self.barriers_by_material[material_id] += 1
+    def record_encyclopedia_completion(self, category: str,
+                                       percent: float) -> None:
+        """Update encyclopedia completion percentage for a category."""
+        self._store.set_value(f"encyclopedia.completion.{category}", percent)
 
-    def record_barrier_picked_up(self, material_id: str = None):
-        """Record a barrier being picked up."""
-        self.barrier_stats["barriers_picked_up"] += 1
+    # ══════════════════════════════════════════════════════════════════
+    # UI & MISC
+    # ══════════════════════════════════════════════════════════════════
 
-    def record_attack_blocked(self, source: str = "unknown"):
-        """
-        Record an attack being blocked by a barrier or obstacle.
+    def record_menu_opened(self, menu_type: str) -> None:
+        """Record opening a menu (inventory, crafting, skills, map, etc)."""
+        self._store.record_count(f"misc.menu_opened.{menu_type}")
+        self._store.record_count("misc.menu_opened")
 
-        Args:
-            source: Who was attacking ('player', 'enemy', 'turret')
-        """
-        self.barrier_stats["attacks_blocked_by_barriers"] += 1
+    def record_save(self, save_type: str = "manual") -> None:
+        """Record a game save (manual or auto)."""
+        self._store.record_count(f"misc.saves.{save_type}")
+        self._store.record_count("misc.saves")
 
-        if source == "player":
-            self.barrier_stats["player_attacks_blocked"] += 1
-        elif source == "enemy":
-            self.barrier_stats["enemy_attacks_blocked"] += 1
-        elif source == "turret":
-            self.barrier_stats["turret_attacks_blocked"] += 1
+    def record_game_load(self) -> None:
+        """Record loading a game."""
+        self._store.record_count("misc.game_loads")
 
-    # =========================================================================
-    # ACTION COMBAT STATS
-    # =========================================================================
+    def record_debug_action(self, action: str = "generic") -> None:
+        """Record a debug mode action."""
+        self._store.record_count(f"misc.debug.{action}")
+        self._store.record_count("misc.debug")
 
-    def record_dodge_roll(self):
-        """Record a dodge roll attempt."""
-        self.combat_actions["dodge_rolls"] += 1
-
-    def record_successful_dodge(self):
-        """Record a dodge that avoided damage via i-frames."""
-        self.combat_actions["successful_dodge_iframes"] += 1
-        self.combat_actions["perfect_dodges"] += 1
-
-    def record_combo_attack(self, combo_count: int):
-        """Record a combo hit and update longest combo."""
-        self.combat_actions["combo_attacks"] += 1
-        if combo_count > self.combat_actions["longest_combo"]:
-            self.combat_actions["longest_combo"] = combo_count
-
-    def record_projectile_fired(self):
-        """Record a projectile being launched."""
-        self.combat_actions["projectiles_fired"] += 1
-
-    def record_projectile_hit(self):
-        """Record a projectile connecting with a target."""
-        self.combat_actions["projectiles_hit"] += 1
-
-    # =========================================================================
-    # SERIALIZATION
-    # =========================================================================
+    # ══════════════════════════════════════════════════════════════════
+    # SERIALIZATION (backward compatibility)
+    # ══════════════════════════════════════════════════════════════════
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Serialize all stats to dictionary for saving.
+        """Serialize all stats to a dictionary.
 
-        Returns:
-            Complete stat data as dictionary
+        This reads from SQL and produces a dict compatible with the old format.
+        Used by the renderer and for backward-compatible save files.
         """
-        return {
-            "version": "1.0",
+        all_stats = self._store.get_all()
+
+        # Session info
+        result: Dict[str, Any] = {
+            "version": "2.0",
             "session_start_time": self.session_start_time,
             "total_playtime_seconds": self.total_playtime_seconds,
             "session_count": self.session_count,
-
-            # Per-entity tracking
-            "resources_gathered": {
-                res_id: entry.to_dict()
-                for res_id, entry in self.resources_gathered.items()
-            },
-            "recipes_crafted": {
-                recipe_id: entry.to_dict()
-                for recipe_id, entry in self.recipes_crafted.items()
-            },
-            "skills_used": {
-                skill_id: entry.to_dict()
-                for skill_id, entry in self.skills_used.items()
-            },
-            "items_collected": dict(self.items_collected),
-            "items_used": dict(self.items_used),
-
-            # Aggregate stats
-            "gathering_totals": dict(self.gathering_totals),
-            "gathering_advanced": self._serialize_dict_with_inf(self.gathering_advanced),
-            "crafting_by_discipline": self.crafting_by_discipline,
-            "crafting_advanced": self._serialize_dict_with_inf(self.crafting_advanced),
-            "combat_damage": dict(self.combat_damage),
-            "combat_kills": dict(self.combat_kills),
-            "combat_actions": dict(self.combat_actions),
-            "combat_status_effects": dict(self.combat_status_effects),
-            "combat_survival": dict(self.combat_survival),
-            "item_collection": dict(self.item_collection),
-            "item_usage": dict(self.item_usage),
-            "item_management": dict(self.item_management),
-            "skill_usage": dict(self.skill_usage),
-            "skill_progression": dict(self.skill_progression),
-            "distance_traveled": dict(self.distance_traveled),
-            "exploration": dict(self.exploration),
-            "unique_chunks_visited": self._unique_chunks_visited_list,
-            "economy": dict(self.economy),
-            "experience_stats": dict(self.experience_stats),
-            "progression_milestones": dict(self.progression_milestones),
-            "time_stats": dict(self.time_stats),
-            "records": self._serialize_dict_with_inf(self.records),
-            "social_stats": dict(self.social_stats),
-            "encyclopedia_stats": dict(self.encyclopedia_stats),
-            "misc_stats": dict(self.misc_stats),
-            "dungeon_stats": self._serialize_dict_with_inf(self.dungeon_stats),
-
-            # Barrier system
-            "barrier_stats": dict(self.barrier_stats),
-            "barriers_by_material": dict(self.barriers_by_material)
         }
 
-    def _serialize_dict_with_inf(self, data: Dict) -> Dict:
-        """Convert infinity values to None for JSON serialization."""
+        # Flatten all SQL stats into categorized dicts
+        # Group by top-level key prefix
+        categories: Dict[str, Dict] = {}
+        for key, (count, total, max_val) in all_stats.items():
+            parts = key.split(".", 1)
+            cat = parts[0]
+            subkey = parts[1] if len(parts) > 1 else key
+            if cat not in categories:
+                categories[cat] = {}
+            categories[cat][subkey] = {
+                "count": count,
+                "total": total,
+                "max_value": max_val,
+            }
+
+        result["stats"] = categories
+
+        # Legacy format fields for backward compat with renderer
+        result["gathering_totals"] = self._build_legacy_gathering()
+        result["combat_damage"] = self._build_legacy_combat_damage()
+        result["combat_kills"] = self._build_legacy_combat_kills()
+        result["crafting_by_discipline"] = self._build_legacy_crafting()
+
+        # Unique chunks as list
+        result["unique_chunks_visited"] = list(self._unique_chunks_visited)
+
+        return result
+
+    def _build_legacy_gathering(self) -> Dict[str, Any]:
+        """Build legacy gathering_totals dict from SQL stats."""
+        return {
+            "total_trees_chopped": self._store.get_count("gathering.collected.category.tree"),
+            "total_ores_mined": self._store.get_count("gathering.collected.category.ore"),
+            "total_stones_mined": self._store.get_count("gathering.collected.category.stone"),
+            "total_plants_gathered": self._store.get_count("gathering.collected.category.plant"),
+            "total_fish_caught": self._store.get_count("gathering.fishing.caught"),
+            "tier_1_resources_gathered": self._store.get_count("gathering.collected.tier.1"),
+            "tier_2_resources_gathered": self._store.get_count("gathering.collected.tier.2"),
+            "tier_3_resources_gathered": self._store.get_count("gathering.collected.tier.3"),
+            "tier_4_resources_gathered": self._store.get_count("gathering.collected.tier.4"),
+            "total_gathering_damage_dealt": self._store.get_total("gathering.damage_dealt"),
+            "axe_swings": self._store.get_count("gathering.tool_swings.axe"),
+            "pickaxe_swings": self._store.get_count("gathering.tool_swings.pickaxe"),
+            "fishing_rod_casts": self._store.get_count("gathering.tool_swings.fishing_rod"),
+            "total_critical_gathers": self._store.get_count("gathering.critical"),
+            "total_rare_drops_while_gathering": self._store.get_count("gathering.rare_drops"),
+            "tools_repaired": self._store.get_count("gathering.tools_repaired"),
+            "tools_broken": self._store.get_count("gathering.tools_broken"),
+            "nodes_depleted": self._store.get_count("gathering.nodes_depleted"),
+        }
+
+    def _build_legacy_combat_damage(self) -> Dict[str, Any]:
+        """Build legacy combat_damage dict from SQL stats."""
+        return {
+            "total_damage_dealt": self._store.get_total("combat.damage_dealt"),
+            "melee_damage_dealt": self._store.get_total("combat.damage_dealt.attack.melee"),
+            "ranged_damage_dealt": self._store.get_total("combat.damage_dealt.attack.ranged"),
+            "magic_damage_dealt": self._store.get_total("combat.damage_dealt.attack.magic"),
+            "physical_damage_dealt": self._store.get_total("combat.damage_dealt.type.physical"),
+            "fire_damage_dealt": self._store.get_total("combat.damage_dealt.type.fire"),
+            "ice_damage_dealt": self._store.get_total("combat.damage_dealt.type.ice"),
+            "lightning_damage_dealt": self._store.get_total("combat.damage_dealt.type.lightning"),
+            "poison_damage_dealt": self._store.get_total("combat.damage_dealt.type.poison"),
+            "arcane_damage_dealt": self._store.get_total("combat.damage_dealt.type.arcane"),
+            "shadow_damage_dealt": self._store.get_total("combat.damage_dealt.type.shadow"),
+            "holy_damage_dealt": self._store.get_total("combat.damage_dealt.type.holy"),
+            "highest_single_hit_dealt": self._store.get_max("combat.damage_dealt"),
+            "total_damage_taken": self._store.get_total("combat.damage_taken"),
+            "highest_single_hit_taken": self._store.get_max("combat.damage_taken"),
+            "critical_hits": self._store.get_count("combat.critical_hits"),
+            "total_healing_received": self._store.get_total("combat.healing"),
+            "damage_blocked": self._store.get_total("combat.damage_blocked"),
+            "damage_reflected": self._store.get_total("combat.reflect"),
+            "total_attacks": self._store.get_count("combat.attacks"),
+            "dodge_rolls": self._store.get_count("combat.dodge_rolls"),
+            "successful_dodges": self._store.get_count("combat.dodge_rolls.successful"),
+        }
+
+    def _build_legacy_combat_kills(self) -> Dict[str, Any]:
+        """Build legacy combat_kills dict from SQL stats."""
+        return {
+            "total_kills": self._store.get_count("combat.kills"),
+            "tier_1_enemies_killed": self._store.get_count("combat.kills.tier.1"),
+            "tier_2_enemies_killed": self._store.get_count("combat.kills.tier.2"),
+            "tier_3_enemies_killed": self._store.get_count("combat.kills.tier.3"),
+            "tier_4_enemies_killed": self._store.get_count("combat.kills.tier.4"),
+            "boss_enemies_killed": self._store.get_count("combat.kills.rank.boss"),
+        }
+
+    def _build_legacy_crafting(self) -> Dict[str, Any]:
+        """Build legacy crafting_by_discipline dict from SQL stats."""
         result = {}
-        for key, value in data.items():
-            if isinstance(value, float) and value == float('inf'):
-                result[key] = None
-            elif isinstance(value, dict):
-                result[key] = self._serialize_dict_with_inf(value)
-            else:
-                result[key] = value
+        for disc in ["smithing", "alchemy", "refining", "engineering", "enchanting"]:
+            result[disc] = {
+                "total_crafts": self._store.get_count(f"crafting.success.discipline.{disc}"),
+                "total_attempts": self._store.get_count(f"crafting.attempts.discipline.{disc}"),
+                "perfect_crafts": self._store.get_count(f"crafting.perfect.{disc}"),
+                "first_try_bonuses": self._store.get_count(f"crafting.first_try.{disc}"),
+            }
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'StatTracker':
+    def from_dict(cls, data: Dict[str, Any],
+                  stat_store: Optional[StatStore] = None) -> 'StatTracker':
+        """Deserialize from a saved dictionary.
+
+        Handles both v2.0 (SQL-native) and v1.0 (legacy dict) formats.
         """
-        Deserialize stats from dictionary.
+        tracker = cls(stat_store=stat_store)
 
-        Args:
-            data: Saved stat data
-
-        Returns:
-            Restored StatTracker instance
-        """
-        tracker = cls()
-
-        # Session info
+        version = data.get("version", "1.0")
         tracker.session_start_time = data.get("session_start_time")
         tracker.total_playtime_seconds = data.get("total_playtime_seconds", 0.0)
         tracker.session_count = data.get("session_count", 0)
 
-        # Per-entity tracking
-        resources_data = data.get("resources_gathered", {})
-        for res_id, entry_data in resources_data.items():
-            tracker.resources_gathered[res_id] = StatEntry.from_dict(entry_data)
-
-        recipes_data = data.get("recipes_crafted", {})
-        for recipe_id, entry_data in recipes_data.items():
-            tracker.recipes_crafted[recipe_id] = CraftingEntry.from_dict(entry_data)
-
-        skills_data = data.get("skills_used", {})
-        for skill_id, entry_data in skills_data.items():
-            tracker.skills_used[skill_id] = SkillStatEntry.from_dict(entry_data)
-
-        tracker.items_collected = data.get("items_collected", {})
-        tracker.items_used = data.get("items_used", {})
-
-        # Aggregate stats
-        tracker.gathering_totals.update(data.get("gathering_totals", {}))
-        tracker.gathering_advanced.update(tracker._deserialize_dict_with_inf(data.get("gathering_advanced", {})))
-        tracker.crafting_by_discipline.update(data.get("crafting_by_discipline", {}))
-        tracker.crafting_advanced.update(tracker._deserialize_dict_with_inf(data.get("crafting_advanced", {})))
-        tracker.combat_damage.update(data.get("combat_damage", {}))
-        tracker.combat_kills.update(data.get("combat_kills", {}))
-        tracker.combat_actions.update(data.get("combat_actions", {}))
-        tracker.combat_status_effects.update(data.get("combat_status_effects", {}))
-        tracker.combat_survival.update(data.get("combat_survival", {}))
-        tracker.item_collection.update(data.get("item_collection", {}))
-        tracker.item_usage.update(data.get("item_usage", {}))
-        tracker.item_management.update(data.get("item_management", {}))
-        tracker.skill_usage.update(data.get("skill_usage", {}))
-        tracker.skill_progression.update(data.get("skill_progression", {}))
-        tracker.distance_traveled.update(data.get("distance_traveled", {}))
-        tracker.exploration.update(data.get("exploration", {}))
-
         # Restore unique chunks
-        chunks_list = data.get("unique_chunks_visited", [])
-        tracker._unique_chunks_visited = set(tuple(chunk) for chunk in chunks_list)
-        tracker._unique_chunks_visited_list = chunks_list
+        chunks = data.get("unique_chunks_visited", [])
+        if isinstance(chunks, list):
+            tracker._unique_chunks_visited = {
+                tuple(c) if isinstance(c, list) else c
+                for c in chunks if c
+            }
 
-        tracker.economy.update(data.get("economy", {}))
-        tracker.experience_stats.update(data.get("experience_stats", {}))
-        tracker.progression_milestones.update(data.get("progression_milestones", {}))
-        tracker.time_stats.update(data.get("time_stats", {}))
-        tracker.records.update(tracker._deserialize_dict_with_inf(data.get("records", {})))
-        tracker.social_stats.update(data.get("social_stats", {}))
-        tracker.encyclopedia_stats.update(data.get("encyclopedia_stats", {}))
-        tracker.misc_stats.update(data.get("misc_stats", {}))
-
-        # Restore dungeon stats (backwards compatible - won't exist in older saves)
-        if "dungeon_stats" in data:
-            tracker.dungeon_stats.update(tracker._deserialize_dict_with_inf(data.get("dungeon_stats", {})))
-
-        # Restore barrier stats (backwards compatible - won't exist in older saves)
-        if "barrier_stats" in data:
-            tracker.barrier_stats.update(data.get("barrier_stats", {}))
-        if "barriers_by_material" in data:
-            tracker.barriers_by_material.update(data.get("barriers_by_material", {}))
+        if version == "2.0":
+            # v2.0 format: stats are already in SQL, just restore categories
+            categories = data.get("stats", {})
+            flat = {}
+            for cat, subkeys in categories.items():
+                for subkey, stat_data in subkeys.items():
+                    full_key = f"{cat}.{subkey}"
+                    flat[full_key] = stat_data
+            tracker._store.import_flat(flat)
+        else:
+            # v1.0 legacy format: import from old dict structure
+            tracker._import_legacy_data(data)
 
         return tracker
 
-    def _deserialize_dict_with_inf(self, data: Dict) -> Dict:
-        """Convert None values back to infinity."""
-        result = {}
-        for key, value in data.items():
-            if value is None:
-                result[key] = float('inf')
-            elif isinstance(value, dict):
-                result[key] = self._deserialize_dict_with_inf(value)
-            else:
-                result[key] = value
-        return result
+    def _import_legacy_data(self, data: Dict[str, Any]) -> None:
+        """Import old v1.0 dict-based stat tracker data into SQL."""
+        ts = time.time()
 
-    # =========================================================================
-    # UTILITY METHODS
-    # =========================================================================
+        # Import resources_gathered (Dict[str, StatEntry])
+        for res_id, entry in data.get("resources_gathered", {}).items():
+            if isinstance(entry, dict):
+                count = entry.get("count", 0)
+                total = entry.get("total_value", 0.0)
+                max_v = entry.get("max_value", 0.0)
+                self._store.import_flat({
+                    f"gathering.collected.resource.{res_id}": {
+                        "count": count, "total": total, "max_value": max_v
+                    }
+                }, timestamp=ts)
+
+        # Import gathering_totals
+        gt = data.get("gathering_totals", {})
+        for key, val in gt.items():
+            if isinstance(val, (int, float)) and val > 0:
+                self._store.import_flat({
+                    f"gathering.legacy.{key}": {"count": int(val), "total": float(val)}
+                }, timestamp=ts)
+
+        # Import combat stats
+        for cat_name in ["combat_damage", "combat_kills", "combat_actions",
+                         "combat_status_effects", "combat_survival"]:
+            cat_data = data.get(cat_name, {})
+            for key, val in cat_data.items():
+                if isinstance(val, (int, float)) and val > 0:
+                    self._store.import_flat({
+                        f"combat.legacy.{cat_name}.{key}": {
+                            "count": int(val) if isinstance(val, int) else 0,
+                            "total": float(val),
+                        }
+                    }, timestamp=ts)
+
+        # Import crafting stats
+        for disc, disc_data in data.get("crafting_by_discipline", {}).items():
+            if isinstance(disc_data, dict):
+                for key, val in disc_data.items():
+                    if isinstance(val, (int, float)) and val > 0:
+                        self._store.import_flat({
+                            f"crafting.legacy.{disc}.{key}": {
+                                "count": int(val) if isinstance(val, int) else 0,
+                                "total": float(val),
+                            }
+                        }, timestamp=ts)
+
+        # Import recipes_crafted (Dict[str, CraftingEntry])
+        for recipe_id, entry in data.get("recipes_crafted", {}).items():
+            if isinstance(entry, dict):
+                attempts = entry.get("total_attempts", 0)
+                successes = entry.get("successful_crafts", 0)
+                if attempts > 0:
+                    self._store.import_flat({
+                        f"crafting.legacy.recipe.{recipe_id}.attempts": {
+                            "count": attempts, "total": float(attempts)
+                        },
+                        f"crafting.legacy.recipe.{recipe_id}.successes": {
+                            "count": successes, "total": float(successes)
+                        },
+                    }, timestamp=ts)
+
+        # Import skills_used (Dict[str, SkillStatEntry])
+        for skill_id, entry in data.get("skills_used", {}).items():
+            if isinstance(entry, dict):
+                used = entry.get("times_used", 0)
+                total_val = entry.get("total_value_delivered", 0.0)
+                mana = entry.get("mana_spent", 0.0)
+                if used > 0:
+                    self._store.import_flat({
+                        f"skills.legacy.{skill_id}.used": {
+                            "count": used, "total": float(used)
+                        },
+                        f"skills.legacy.{skill_id}.value": {
+                            "total": total_val
+                        },
+                        f"skills.legacy.{skill_id}.mana": {
+                            "total": mana
+                        },
+                    }, timestamp=ts)
+
+        # Import remaining flat categories
+        for cat_name in ["economy", "experience_stats", "progression_milestones",
+                         "time_stats", "records", "social_stats",
+                         "encyclopedia_stats", "misc_stats",
+                         "dungeon_stats", "barrier_stats"]:
+            cat_data = data.get(cat_name, {})
+            if isinstance(cat_data, dict):
+                for key, val in cat_data.items():
+                    if isinstance(val, (int, float)) and val != 0:
+                        self._store.import_flat({
+                            f"{cat_name.replace('_stats', '')}.legacy.{key}": {
+                                "count": int(val) if isinstance(val, int) else 0,
+                                "total": float(val),
+                            }
+                        }, timestamp=ts)
+
+        self._store.flush()
+
+    # ══════════════════════════════════════════════════════════════════
+    # CONVENIENCE QUERY METHODS
+    # ══════════════════════════════════════════════════════════════════
 
     def get_summary(self) -> Dict[str, Any]:
-        """
-        Generate human-readable statistics summary.
-
-        Returns:
-            Summary dictionary with formatted stats
-        """
+        """Get a high-level summary of player stats."""
         return {
-            "playtime": self._format_time(self.total_playtime_seconds),
-            "sessions": self.session_count,
-            "level": self.experience_stats.get("highest_level_reached", 1),
-            "total_resources_gathered": sum(entry.count for entry in self.resources_gathered.values()),
-            "total_items_crafted": self.crafting_advanced["total_crafts_all_disciplines"],
-            "total_enemies_defeated": self.combat_kills["total_enemies_defeated"],
-            "total_damage_dealt": round(self.combat_damage["total_damage_dealt"], 2),
-            "total_distance_traveled": round(self.distance_traveled["total_distance"], 2),
-            "titles_earned": self.progression_milestones["titles_earned"],
-            "skills_learned": self.skill_progression["skills_learned"]
+            "total_stats_tracked": self._store.get_stat_count(),
+            "total_kills": self._store.get_count("combat.kills"),
+            "total_damage_dealt": self._store.get_total("combat.damage_dealt"),
+            "total_deaths": self._store.get_count("combat.deaths"),
+            "total_resources": self._store.get_total("gathering.collected"),
+            "total_crafts": self._store.get_count("crafting.success"),
+            "total_skills_used": self._store.get_count("skills.used"),
+            "unique_chunks": len(self._unique_chunks_visited),
+            "playtime_seconds": self.total_playtime_seconds,
+            "session_count": self.session_count,
         }
 
-    def _format_time(self, seconds: float) -> str:
-        """Format seconds as human-readable time string."""
-        hours = int(seconds // 3600)
-        minutes = int((seconds % 3600) // 60)
-        secs = int(seconds % 60)
-        return f"{hours}h {minutes}m {secs}s"
+    # ── Legacy property access for backward compat ──────────────────
+
+    @property
+    def gathering_totals(self) -> Dict[str, Any]:
+        return self._build_legacy_gathering()
+
+    @property
+    def combat_damage(self) -> Dict[str, Any]:
+        return self._build_legacy_combat_damage()
+
+    @property
+    def combat_kills(self) -> Dict[str, Any]:
+        return self._build_legacy_combat_kills()
+
+    @property
+    def combat_survival(self) -> Dict[str, Any]:
+        return {
+            "total_deaths": self._store.get_count("combat.deaths"),
+            "longest_killstreak": int(self._store.get_max("combat.longest_killstreak")),
+            "current_killstreak": self._current_killstreak,
+        }
+
+    @property
+    def crafting_by_discipline(self) -> Dict[str, Any]:
+        return self._build_legacy_crafting()
+
+    @property
+    def crafting_advanced(self) -> Dict[str, Any]:
+        return {
+            "consecutive_first_try_bonuses": self._current_first_try_streak,
+            "longest_first_try_streak": int(self._store.get_max("crafting.longest_first_try_streak")),
+            "best_minigame_score": self._store.get_max("crafting.quality"),
+        }
+
+    @property
+    def experience_stats(self) -> Dict[str, Any]:
+        return {
+            "total_exp_earned": self._store.get_total("progression.exp"),
+            "exp_from_gathering": self._store.get_total("progression.exp.gathering"),
+            "exp_from_crafting": self._store.get_total("progression.exp.crafting"),
+            "exp_from_combat": self._store.get_total("progression.exp.combat"),
+            "exp_from_quests": self._store.get_total("progression.exp.quests"),
+            "exp_from_fishing": self._store.get_total("progression.exp.fishing"),
+        }
+
+    @property
+    def item_management(self) -> Dict[str, Any]:
+        return {
+            "total_equipment_swaps": self._store.get_count("items.equipment_swaps"),
+            "items_repaired": self._store.get_count("items.repaired"),
+        }
+
+    @property
+    def exploration(self) -> Dict[str, Any]:
+        return {
+            "unique_chunks_visited": len(self._unique_chunks_visited),
+            "total_chunk_entries": self._store.get_count("exploration.chunk_entries"),
+        }
+
+    @property
+    def social_stats(self) -> Dict[str, Any]:
+        return {
+            "npcs_met": self._store.get_count("social.npc_interactions"),
+            "quests_completed": self._store.get_count("social.quests.completed"),
+            "quests_failed": self._store.get_count("social.quests.failed"),
+        }
+
+    @property
+    def dungeon_stats(self) -> Dict[str, Any]:
+        return {
+            "dungeons_entered": self._store.get_count("dungeon.entered"),
+            "dungeons_completed": self._store.get_count("dungeon.completed"),
+            "dungeons_abandoned": self._store.get_count("dungeon.abandoned"),
+            "dungeon_deaths": self._store.get_count("dungeon.deaths"),
+        }
+
+    @property
+    def misc_stats(self) -> Dict[str, Any]:
+        return {
+            "total_deaths": self._store.get_count("combat.deaths"),
+        }

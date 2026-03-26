@@ -18,6 +18,11 @@
 7. [SQLite Schema, Integration Points, File Structure, Build Order](#7-sqlite-schema-integration-points-file-structure-build-order)
 8. [Relationship to Existing Documents](#8-relationship-to-existing-documents)
 
+### Companion Documents (Expanded Designs)
+- **`TRIGGER_SYSTEM.md`** — Trigger thresholds, cascade model, LLM sizing, early-game templates
+- **`TIME_AND_RECENCY.md`** — Daily ledgers, meta-daily stats, time envelopes, recency weighting
+- **`RETRIEVAL_AND_TAGGING.md`** — Auto-tagging pipeline, layer-by-layer tagging, retrieval flows, similarity counting
+
 ---
 
 ## Design Principles
@@ -26,8 +31,10 @@
 2. **Entity-first queries** — You never search events directly. You find the entity first (NPC, region, player), then radiate outward through its location, interests, and awareness radius.
 3. **Interest tags are identity** — Tags are overapplied by design (species, location, affiliation, job, tendency, hobby, preference, etc.). They ARE the entity's fingerprint in the information system.
 4. **Write-time processing** — Events are enriched, propagated, and aggregated at write time, not query time. Queries are fast reads.
-5. **Prime number interpretation triggers** — The interpreter fires at prime-numbered occurrence counts (1, 2, 3, 5, 7, 11, 13...), giving heavy coverage at the start of patterns with natural thinning.
-6. **Milestone preservation** — Old events are pruned, but first occurrences, prime-indexed events, power-of-10 milestones, and timeline markers are always kept.
+5. **Dual-track trigger system** — Individual event streams trigger at the threshold sequence (1, 3, 5, 10, 25, 50, 100, 250, 500, 1000). Regional accumulators trigger at the same thresholds for aggregate patterns. Each trigger can generate, ignore, or absorb. See `TRIGGER_SYSTEM.md` for full design.
+6. **Milestone preservation** — Old events are pruned, but first occurrences, threshold-indexed events, power-of-10 milestones, and timeline markers are always kept.
+7. **Time-based tracking** — Daily ledgers aggregate per-day stats. Meta-daily stats track streaks, records, and patterns across days. Time envelopes provide compact temporal context for interpretations. See `TIME_AND_RECENCY.md`.
+8. **Layered tagging** — Layer 2 events are auto-tagged from data fields. Layer 3 inherits + derives tags. Tags enable similarity counting for trigger thresholds. See `RETRIEVAL_AND_TAGGING.md`.
 7. **Strict layer boundaries** — Writes flow downward (Layer 0→2→3→4→5). Reads flow upward. No circular dependencies within the data layers.
 
 ---
@@ -84,7 +91,7 @@ The line between Layers 2 and 3 is the critical boundary. Below it: **facts** (i
 
 **Key distinction from Layer 1**: Layer 1 says "47 wolves killed." Layer 2 has 47 individual records, each with position, time, weapon used, wolf tier, nearby NPCs, player health at the time, etc.
 
-**Retention**: Events are pruned over time using the milestone preservation policy (see Section 4). Old events are condensed but never fully lost — first occurrence, prime-number milestones, and timeline markers are always kept.
+**Retention**: Events are pruned over time using the milestone preservation policy (see Section 4). Old events are condensed but never fully lost — first occurrence, threshold milestones, and timeline markers are always kept.
 
 ### Layer 3: Interpreted Events (NEW — SQLite)
 
@@ -105,7 +112,7 @@ The line between Layers 2 and 3 is the critical boundary. Below it: **facts** (i
 - Each has a duration (ongoing vs. one-time) and severity
 - Each is spatially anchored to one or more geographic regions
 
-**Trigger mechanism**: The Interpreter checks Layer 2 at **prime-numbered occurrence counts** (see Section 5). The 1st wolf killed triggers interpretation. The 2nd, 3rd, 5th, 7th, 11th, 13th... also trigger. This creates heavy coverage at the start of any pattern with naturally thinning frequency.
+**Trigger mechanism**: The Interpreter checks Layer 2 at **threshold occurrence counts** (1, 3, 5, 10, 25, 50, 100, 250, 500, 1000 — see `TRIGGER_SYSTEM.md`). Both individual event streams and regional accumulators use these thresholds. Each trigger evaluates but can also ignore — not every threshold crossing produces an interpretation.
 
 ### Layer 4: Local Events (NEW — In-Memory with SQLite Backup)
 
@@ -153,10 +160,10 @@ GAME ACTION (player mines iron)
             Propagator                                            [NEW]
                 │     Routes event to affected entities/regions
                 │     Updates entity activity logs
-                │     Checks: does this event's count hit a prime number?
+                │     Checks: does this event's count hit a threshold?
                 │
                 ▼
-            Interpreter (if prime trigger hit)                    [NEW]
+            Interpreter (if threshold trigger hit)                 [NEW]
                 │     Evaluates patterns in Layer 2 data
                 │     Generates narrative description if threshold met
                 │     Creates Layer 3 interpreted event
@@ -1002,7 +1009,7 @@ class WorldMemoryEvent:
 
     # INTERPRETATION TRACKING
     interpretation_count: int = 0     # How many times this event TYPE+subtype has occurred for this actor
-                                      # Used for prime number trigger checking
+                                      # Used for threshold trigger checking
     triggered_interpretation: bool = False  # Did this event trigger a Layer 3 interpretation?
 ```
 
@@ -1085,9 +1092,9 @@ class EventRecorder:
         # Occurrence counters: (actor_id, event_type, event_subtype) → count
         self._occurrence_counts: Dict[Tuple[str, str, str], int] = {}
 
-        # Primes cache for trigger checking
-        self._primes_cache: Set[int] = set()
-        self._generate_primes(10000)  # Pre-generate primes up to 10K
+        # Threshold set for trigger checking
+        self._threshold_set: Set[int] = {1, 3, 5, 10, 25, 50, 100, 250, 500,
+                                          1000, 2500, 5000, 10000}
 
     def initialize(self, event_store: 'EventStore',
                    geo_registry: 'GeographicRegistry',
@@ -1124,9 +1131,9 @@ class EventRecorder:
         self._occurrence_counts[count_key] = self._occurrence_counts.get(count_key, 0) + 1
         memory_event.interpretation_count = self._occurrence_counts[count_key]
 
-        # Check if this count is a prime number (trigger interpretation)
+        # Check if this count hits a threshold (trigger interpretation)
         count = memory_event.interpretation_count
-        if count == 1 or count in self._primes_cache:
+        if count in self._threshold_set:
             memory_event.triggered_interpretation = True
 
         # Write to SQLite
@@ -1261,15 +1268,8 @@ class EventRecorder:
                 if len(region_entity.activity_log) > region_entity.activity_log_max:
                     region_entity.activity_log.pop(0)
 
-    def _generate_primes(self, up_to: int):
-        """Sieve of Eratosthenes for prime trigger checking"""
-        sieve = [True] * (up_to + 1)
-        sieve[0] = sieve[1] = False
-        for i in range(2, int(up_to ** 0.5) + 1):
-            if sieve[i]:
-                for j in range(i * i, up_to + 1, i):
-                    sieve[j] = False
-        self._primes_cache = {i for i, is_prime in enumerate(sieve) if is_prime}
+    # Note: _generate_primes removed — replaced by static threshold set
+    # See TRIGGER_SYSTEM.md for the dual-track trigger architecture
 ```
 
 ### Bus-to-Memory Event Mapping
@@ -1307,7 +1307,7 @@ For each unique combination of `(actor_id, event_type, event_subtype)`:
 
 **Always Keep:**
 1. **First occurrence** — the very first event of this type (historical baseline)
-2. **Prime-indexed events** — every event whose occurrence count is a prime number (these are the interpretation triggers). Sequence: 1st, 2nd, 3rd, 5th, 7th, 11th, 13th, 17th, 19th, 23rd, 29th, 31st...
+2. **Threshold-indexed events** — every event whose occurrence count matches a trigger threshold (1, 3, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000)
 3. **Power-of-10 milestones** — 100th, 1000th, 10000th occurrence
 4. **Events that triggered interpretations** — any event where `triggered_interpretation = True`
 5. **Events referenced by Layer 3** — any event_id in an interpreted event's cause chain
@@ -1325,7 +1325,7 @@ Player has mined 10,000 oak logs over 200 hours of play:
 | Kept | Why | Count |
 |------|-----|-------|
 | 1st oak log | First occurrence | 1 |
-| 2nd, 3rd, 5th, 7th, 11th, 13th... primes up to ~10000 | Prime triggers | ~1,229 |
+| 3rd, 5th, 10th, 25th, 50th, 100th... | Threshold triggers | ~12 |
 | 100th, 1000th, 10000th | Power-of-10 milestones | 3 |
 | Any that triggered interpretations | Interpretation anchors | varies |
 | One per game-day | Timeline longitude | ~200 |
@@ -1372,7 +1372,7 @@ class EventRetentionManager:
                     keep = True
 
                 # Rule 2: Prime-indexed
-                elif self._is_prime(event.interpretation_count):
+                elif event.interpretation_count in THRESHOLD_SET:
                     keep = True
 
                 # Rule 3: Power-of-10
@@ -1450,42 +1450,50 @@ class PositionSampler:
 
 The Interpreter transforms raw facts (Layer 2) into narrative meaning (Layer 3). It detects patterns, crosses thresholds, and generates **text descriptions** — not JSON effects. This is the "journalist" of the world: it reads the ledger and writes the news.
 
-## 5.2 Trigger Mechanism: Prime Numbers
+## 5.2 Trigger Mechanism: Threshold Sequence
 
-### Why Primes
+> **Full design**: See `TRIGGER_SYSTEM.md` for the complete trigger, cascade, and escalation system.
 
-The Interpreter doesn't run on every event (too expensive) or at fixed intervals (misses rare events). Instead, it fires when the **occurrence count** of an event type crosses a prime number.
+### The Threshold Sequence
 
-Prime sequence: **1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, ...**
+```
+1, 3, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000
+```
 
-Properties:
-- **Heavy coverage at the start**: 1st, 2nd, 3rd events all trigger. The beginning of any pattern gets maximum attention.
-- **Natural thinning**: Gaps grow but never become exponential. Between 90 and 100: three triggers (97, 101, 103). Between 990 and 1010: three triggers (997, 1009).
-- **Never stops**: Even at 10,000 occurrences, triggers still happen every 10-20 events.
+The Interpreter fires when the occurrence count of an event stream crosses one of these thresholds. This sequence provides:
+- **Heavy coverage at the start**: 1st, 3rd, 5th events all trigger
+- **Less aggressive growth than exponential**: good for filtered/cataloged counts
+- **Natural breakpoints**: 10, 100, 1000 feel meaningful
 
-### What Counts as an "Occurrence"
+### Dual-Track Counting
 
-The count is tracked per `(actor_id, event_type, event_subtype)`:
-- Player kills their 1st wolf → trigger (count=1, prime)
-- Player kills their 2nd wolf → trigger (count=2, prime)
-- Player kills their 3rd wolf → trigger (count=3, prime)
-- Player kills their 4th wolf → NO trigger (4 is not prime)
-- Player kills their 5th wolf → trigger (count=5, prime)
-- ...
-- Player kills their 97th wolf → trigger
-- Player kills their 100th wolf → NO trigger on prime (but 100 IS a power-of-10 milestone, so it's still kept in retention)
-- Player kills their 101st wolf → trigger
+**Track 1 — Individual streams**: Count per `(actor_id, event_type, event_subtype, locality_id)`.
+- Player kills 1st wolf in Whispering Woods → count=1 → TRIGGER
+- Player kills 3rd wolf → count=3 → TRIGGER
+- Player kills 4th wolf → NO trigger
+- Player kills 5th wolf → count=5 → TRIGGER
+
+**Track 2 — Regional accumulators**: Count per `(locality_id, event_category)`.
+- 3 wolf kills + 2 bear kills + 4 bandit kills in Whispering Woods → regional combat count=9 → NO trigger
+- 1 more kill → count=10 → TRIGGER (catches aggregate patterns individual streams miss)
+
+### A Trigger Does NOT Mean Change
+
+Hitting a threshold triggers **evaluation**, not automatic output. The interpreter can:
+- **Generate** — create/update an interpretation
+- **Ignore** — "not significant enough yet"
+- **Absorb** — merge into existing interpretation
 
 ### Coverage Analysis
 
-| Occurrences | Prime triggers | Coverage |
+| Occurrences | Thresholds hit | Coverage |
 |-------------|---------------|----------|
-| 1-10 | 1,2,3,5,7 = **5** | 50% |
-| 1-100 | **25** | 25% |
-| 1-1,000 | **168** | 16.8% |
-| 1-10,000 | **1,229** | 12.3% |
+| 1-10 | 1,3,5,10 = **4** | 40% |
+| 1-100 | **8** | 8% |
+| 1-1,000 | **10** | 1% |
+| 1-10,000 | **13** | 0.13% |
 
-Heavy at the start, gradually thinning, but always present.
+Much sparser than primes — but each trigger is backed by substantial evidence. The regional accumulator provides additional coverage for aggregate patterns.
 
 ## 5.3 Interpreted Event Schema
 
@@ -1511,7 +1519,7 @@ class InterpretedEvent:
 
     # What triggered this
     trigger_event_id: str             # The Layer 2 event that triggered interpretation
-    trigger_count: int                # The prime number count that triggered it
+    trigger_count: int                # The threshold count that triggered it
     cause_event_ids: List[str]        # Layer 2 events that form the evidence base
 
     # Spatial scope
@@ -1542,7 +1550,7 @@ class InterpretedEvent:
 class WorldInterpreter:
     """
     Reads Layer 2 patterns, generates Layer 3 narrative interpretations.
-    Called when EventRecorder detects a prime-number trigger.
+    Called when EventRecorder detects a threshold trigger.
     Singleton.
     """
     _instance = None
@@ -1575,7 +1583,7 @@ class WorldInterpreter:
 
     def on_trigger(self, trigger_event: WorldMemoryEvent):
         """
-        Called when a prime-number trigger fires.
+        Called when a threshold trigger fires.
         Evaluates all relevant pattern evaluators and generates interpretations.
         """
         for evaluator in self._evaluators:
@@ -2511,7 +2519,7 @@ CREATE INDEX IF NOT EXISTS idx_interp_tags_tag ON interpretation_tags(tag);
 
 
 -- ============================================
--- OCCURRENCE COUNTERS (for prime trigger tracking)
+-- OCCURRENCE COUNTERS (for threshold trigger tracking)
 -- ============================================
 CREATE TABLE IF NOT EXISTS occurrence_counts (
     actor_id TEXT NOT NULL,
@@ -2542,6 +2550,43 @@ CREATE TABLE IF NOT EXISTS region_state (
     recent_events_json TEXT DEFAULT '[]',
     summary_text TEXT DEFAULT '',
     last_updated REAL DEFAULT 0.0
+);
+
+
+-- ============================================
+-- DAILY LEDGERS (time-based tracking)
+-- See TIME_AND_RECENCY.md for full design
+-- ============================================
+CREATE TABLE IF NOT EXISTS daily_ledgers (
+    game_day INTEGER PRIMARY KEY,
+    game_time_start REAL,
+    game_time_end REAL,
+    data_json TEXT NOT NULL           -- Full DailyLedger serialized
+);
+
+CREATE TABLE IF NOT EXISTS meta_daily_stats (
+    stat_key TEXT PRIMARY KEY,        -- Single row: "player_meta_stats"
+    data_json TEXT NOT NULL           -- Full MetaDailyStats serialized
+);
+
+
+-- ============================================
+-- REGIONAL ACCUMULATION COUNTERS
+-- See TRIGGER_SYSTEM.md for dual-track triggers
+-- ============================================
+CREATE TABLE IF NOT EXISTS regional_counters (
+    region_id TEXT NOT NULL,
+    event_category TEXT NOT NULL,     -- "combat", "gathering", "crafting", etc.
+    count INTEGER DEFAULT 0,
+    PRIMARY KEY (region_id, event_category)
+);
+
+CREATE TABLE IF NOT EXISTS interpretation_counters (
+    category TEXT NOT NULL,
+    primary_tag TEXT NOT NULL,
+    region_id TEXT NOT NULL,
+    count INTEGER DEFAULT 0,
+    PRIMARY KEY (category, primary_tag, region_id)
 );
 ```
 
@@ -2680,6 +2725,11 @@ Game-1-modular/
 │       ├── retention.py              # EventRetentionManager (pruning)
 │       ├── position_sampler.py       # PositionSampler (periodic breadcrumbs)
 │       │
+│       │── # Trigger & Time Systems (see TRIGGER_SYSTEM.md, TIME_AND_RECENCY.md)
+│       ├── trigger_manager.py        # TriggerManager (dual-track threshold counting)
+│       ├── daily_ledger.py           # DailyLedger computation and MetaDailyStats
+│       ├── time_envelope.py          # TimeEnvelope computation for interpreter context
+│       │
 │       │── # Testing
 │       └── test_memory_system.py     # Unit tests for all components
 │
@@ -2722,11 +2772,11 @@ Wire up the recording and interpretation pipeline.
 - **Test**: Play the game briefly, verify events appear in SQLite
 
 **B2: Interpreter**
-- `interpreter.py` — WorldInterpreter base, prime number checking
+- `interpreter.py` — WorldInterpreter base, threshold checking
 - `evaluators/population.py` — first evaluator (wolf kills → population change)
 - `evaluators/resources.py` — second evaluator (mining → resource pressure)
 - `AI-Config.JSON/interpreter-thresholds.json` — configurable thresholds
-- **Test**: Generate enough events to trigger primes, verify interpretations created
+- **Test**: Generate enough events to trigger thresholds, verify interpretations created
 
 **B3: Aggregation**
 - `aggregation.py` — AggregationManager, Layer 4/5 compilation
@@ -2784,7 +2834,7 @@ Wire up the recording and interpretation pipeline.
 | `entity_registry.py` | 250-350 | Entity CRUD, tag index, loading from NPCs |
 | `tag_relevance.py` | 60-100 | Tag matching utility |
 | `event_recorder.py` | 300-400 | Bus subscriber, event conversion, enrichment |
-| `interpreter.py` | 200-300 | Base interpreter, prime checking, dispatch |
+| `interpreter.py` | 200-300 | Base interpreter, threshold checking, dispatch |
 | `evaluators/*.py` | 100-200 each | 7 evaluators × ~150 = ~1,050 |
 | `aggregation.py` | 200-300 | Layer 4/5 maintenance |
 | `query.py` | 300-400 | WorldQuery, dual window, result assembly |
@@ -2848,7 +2898,7 @@ Key differences from the original Part 2 spec:
 - **Entity-first queries** — Part 2 had a generic query interface. This design starts from entities and radiates outward.
 - **Geographic registry** — Not in Part 2. Added to support named regions and spatial context.
 - **Interest tag system** — Not in Part 2. Added as the core identity/filtering mechanism.
-- **Prime number triggers** — Part 2 used significance scoring. This design uses prime-numbered occurrence counts.
+- **Threshold triggers** — Part 2 used significance scoring. This design uses the threshold sequence (1, 3, 5, 10, 25, 50, 100...) with dual-track counting. See `TRIGGER_SYSTEM.md`.
 - **Narrative-only propagation** — Part 2 implied structured effects. This design is purely informational text.
 - **Retention policy** — Not in Part 2. Added to manage long-term database size.
 

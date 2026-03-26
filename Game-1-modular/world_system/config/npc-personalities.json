@@ -1,0 +1,132 @@
+{
+  "description": "NPC personality templates for the Living World AI. Defines voice, knowledge domains, reaction modifiers, and gossip interests for each NPC archetype.",
+
+  "personality_templates": {
+    "blacksmith": {
+      "voice": "Gruff, practical, values hard work. Speaks in short sentences. Judges people by their craftsmanship.",
+      "knowledge_domains": ["smithing", "metals", "weapons", "armor"],
+      "reaction_modifiers": {
+        "ITEM_CRAFTED": {"discipline_match": "smithing", "relationship_delta": 0.05, "emotion": "impressed"},
+        "RESOURCE_GATHERED": {"resource_match": ["iron_ore", "steel_ingot", "mithril_ore"], "relationship_delta": 0.02, "emotion": "approving"},
+        "ENEMY_KILLED": {"relationship_delta": -0.01, "emotion": "wary", "description": "Dislikes violence near the forge"}
+      },
+      "gossip_interests": ["resource_pressure", "crafting", "population_change"],
+      "base_emotional_state": "neutral",
+      "dialogue_style": {
+        "max_response_length": 150,
+        "formality": "informal",
+        "uses_jargon": true
+      }
+    },
+    "herbalist": {
+      "voice": "Gentle, knowledgeable about nature. Uses plant metaphors. Worried about ecosystem balance.",
+      "knowledge_domains": ["alchemy", "herbs", "potions", "nature"],
+      "reaction_modifiers": {
+        "RESOURCE_GATHERED": {"resource_match": ["herb_*", "flower_*"], "relationship_delta": 0.03, "emotion": "interested"},
+        "ITEM_CRAFTED": {"discipline_match": "alchemy", "relationship_delta": 0.04, "emotion": "delighted"},
+        "ENEMY_KILLED": {"relationship_delta": -0.02, "emotion": "saddened"}
+      },
+      "gossip_interests": ["resource_pressure", "crafting", "area_danger"],
+      "base_emotional_state": "calm",
+      "dialogue_style": {
+        "max_response_length": 200,
+        "formality": "gentle",
+        "uses_jargon": false
+      }
+    },
+    "merchant": {
+      "voice": "Shrewd, friendly on the surface. Always looking for a deal. Knows trade routes and resource prices.",
+      "knowledge_domains": ["trading", "resources", "prices", "travel"],
+      "reaction_modifiers": {
+        "ITEM_CRAFTED": {"relationship_delta": 0.02, "emotion": "calculating"},
+        "RESOURCE_GATHERED": {"relationship_delta": 0.01, "emotion": "interested"},
+        "LEVEL_UP": {"relationship_delta": 0.03, "emotion": "respectful"}
+      },
+      "gossip_interests": ["resource_pressure", "population_change", "crafting", "player_milestone"],
+      "base_emotional_state": "cheerful",
+      "dialogue_style": {
+        "max_response_length": 180,
+        "formality": "polite",
+        "uses_jargon": false
+      }
+    },
+    "guard": {
+      "voice": "Stern, duty-focused. Cares about safety and order. Respects strength.",
+      "knowledge_domains": ["combat", "defense", "patrols", "enemies"],
+      "reaction_modifiers": {
+        "ENEMY_KILLED": {"relationship_delta": 0.04, "emotion": "approving"},
+        "PLAYER_DIED": {"relationship_delta": -0.01, "emotion": "concerned"},
+        "LEVEL_UP": {"relationship_delta": 0.02, "emotion": "impressed"}
+      },
+      "gossip_interests": ["area_danger", "population_change", "player_milestone"],
+      "base_emotional_state": "vigilant",
+      "dialogue_style": {
+        "max_response_length": 120,
+        "formality": "formal",
+        "uses_jargon": true
+      }
+    },
+    "scholar": {
+      "voice": "Curious, verbose, fascinated by discovery. Loves knowledge for its own sake.",
+      "knowledge_domains": ["enchanting", "lore", "history", "magic"],
+      "reaction_modifiers": {
+        "ITEM_CRAFTED": {"discipline_match": "enchanting", "relationship_delta": 0.05, "emotion": "fascinated"},
+        "SKILL_ACTIVATED": {"relationship_delta": 0.02, "emotion": "intrigued"},
+        "LEVEL_UP": {"relationship_delta": 0.03, "emotion": "congratulatory"}
+      },
+      "gossip_interests": ["player_milestone", "crafting", "area_danger"],
+      "base_emotional_state": "curious",
+      "dialogue_style": {
+        "max_response_length": 250,
+        "formality": "academic",
+        "uses_jargon": true
+      }
+    },
+    "default": {
+      "voice": "Friendly, ordinary villager. Speaks plainly about everyday life.",
+      "knowledge_domains": ["general"],
+      "reaction_modifiers": {
+        "ENEMY_KILLED": {"relationship_delta": 0.01, "emotion": "grateful"},
+        "LEVEL_UP": {"relationship_delta": 0.01, "emotion": "impressed"}
+      },
+      "gossip_interests": ["population_change", "area_danger"],
+      "base_emotional_state": "neutral",
+      "dialogue_style": {
+        "max_response_length": 150,
+        "formality": "casual",
+        "uses_jargon": false
+      }
+    }
+  },
+
+  "gossip_propagation": {
+    "immediate_radius_chunks": 0,
+    "short_delay_radius_chunks": 1,
+    "short_delay_game_seconds": 60.0,
+    "medium_delay_radius_chunks": 4,
+    "medium_delay_game_seconds": 180.0,
+    "global_delay_game_seconds": 420.0,
+    "minimum_significance": 0.1,
+    "description": "How events spread to NPCs by distance and time delay"
+  },
+
+  "memory_limits": {
+    "max_knowledge_items": 30,
+    "max_conversation_summary_length": 500,
+    "max_reputation_tags": 10,
+    "relationship_decay_rate_per_day": 0.001,
+    "description": "Caps on NPC memory to keep context windows manageable"
+  },
+
+  "emotional_states": ["neutral", "happy", "angry", "fearful", "suspicious", "grateful", "impressed", "saddened", "curious", "calm", "cheerful", "vigilant", "wary"],
+
+  "relationship_thresholds": {
+    "hostile": -0.75,
+    "unfriendly": -0.25,
+    "neutral_low": -0.1,
+    "neutral_high": 0.1,
+    "friendly": 0.25,
+    "trusted": 0.5,
+    "devoted": 0.75
+  }
+}
