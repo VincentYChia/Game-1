@@ -6,6 +6,7 @@
 |----------|---------|
 | **[HANDOFF_STATUS.md](HANDOFF_STATUS.md)** | Current implementation state — what's built, what's next, how to continue |
 | **[WORLD_MEMORY_SYSTEM.md](WORLD_MEMORY_SYSTEM.md)** | Design document for the 7-layer data architecture. Also describes consumer systems (§12) for reference, but is NOT the source of truth for consumer implementations |
+| **[TAG_LIBRARY.md](TAG_LIBRARY.md)** | 60-category tag taxonomy across 7 layers — the primary indexing/retrieval system |
 | **[FOUNDATION_IMPLEMENTATION_PLAN.md](FOUNDATION_IMPLEMENTATION_PLAN.md)** | Detailed implementation plan for Layer 1-2 infrastructure (mostly executed) |
 
 ## Run Tests

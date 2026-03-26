@@ -139,13 +139,19 @@ the narration is regional. If not, it's global.
 | Economy/Items | 3 | economy_flow, items_equipment, items_inventory |
 | Legacy | 5 | population, resources, area_danger, crafting_trends, player_milestones |
 
-### Next Priority: Retrieval System
+### Next Priority: Tag Library + Retrieval System
 
-The retrieval system needs to:
-1. Catalog what evaluators exist and what they produce
-2. Auto-match stats/events to the right evaluator
-3. Work across layers (Raw Event Pipeline → Layer 2 → Layer 3+)
-4. Let consumers find relevant interpretations by querying the catalog
+**Tag Library** (`TAG_LIBRARY.md`): 60-category tag taxonomy across 7 layers.
+- Layer 1: 30 factual dimension tags
+- Layers 2-7: progressive unlock (~5 per layer)
+- Key design: significance RECREATED per layer, key tags (scope, urgency, address) UPDATED not inherited
+- Tags describe EVENTS not regions
+- Pending: procedural tag assignment implementation
+
+**Retrieval System**: Tag-intersection search across all layers.
+1. Each layer has its own SQL table with junction table for tags
+2. Query by combining tags: `[domain:combat, district:whispering_woods]`
+3. Work across layers (Layer 1 stats → Layer 2 events → Layer 3+ consolidated)
 
 **Retrieval pathways** (Design doc §10):
 - **Fast Path**: Layer 1 stat lookups (microsecond) — `stat_store.get()` — DONE
