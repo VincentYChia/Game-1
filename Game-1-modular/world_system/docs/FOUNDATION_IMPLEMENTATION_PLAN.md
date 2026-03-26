@@ -1,5 +1,9 @@
 # World Memory System — Foundation Implementation Plan
 
+> **STATUS: EXECUTED** — This plan was implemented on 2026-03-26. All phases completed.
+> See [HANDOFF_STATUS.md](HANDOFF_STATUS.md) for current state.
+> The Layer 1 scope was expanded beyond this plan to include full SQL stat migration.
+
 **Target**: Layer 2 infrastructure + plumbing for Layers 3-7. No interpreters/evaluators yet.
 **Approach**: Fix what's misaligned, add what's missing, test with mocks.
 **Design Authority**: `world_system/docs/WORLD_MEMORY_SYSTEM.md` (1,821 lines)

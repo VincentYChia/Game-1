@@ -1,9 +1,22 @@
 # World System Documentation
 
-**Single source of truth**: [WORLD_MEMORY_SYSTEM.md](WORLD_MEMORY_SYSTEM.md) (1,821 lines)
+## Start Here
 
-This file contains the complete design for the World Memory System — all 16 sections covering architecture, triggers, geographic system, entity registry, event schema, evaluators, aggregation, time tracking, tagging, retrieval, storage, agents, touchpoints, integration, and build order.
+| Document | Purpose |
+|----------|---------|
+| **[HANDOFF_STATUS.md](HANDOFF_STATUS.md)** | Current implementation state — what's built, what's next, how to continue |
+| **[WORLD_MEMORY_SYSTEM.md](WORLD_MEMORY_SYSTEM.md)** | Single source of truth for the complete design (1,821 lines, 16 sections) |
+| **[FOUNDATION_IMPLEMENTATION_PLAN.md](FOUNDATION_IMPLEMENTATION_PLAN.md)** | Detailed implementation plan for Layer 1-2 infrastructure (mostly executed) |
+
+## Run Tests
+
+```bash
+cd Game-1-modular
+python world_system/world_memory/test_stat_store.py          # 19 tests — SQL stat storage + dimensional breakdowns
+python world_system/world_memory/test_foundation_pipeline.py  # 27 tests — triggers, time envelopes, daily ledgers
+python world_system/world_memory/test_memory_system.py        # 10 tests — event store, registries, full pipeline
+```
 
 ## Archive
 
-The `archive/` directory contains the prior separate documents that were consolidated into the unified design doc. They are retained for historical reference but are **superseded** by WORLD_MEMORY_SYSTEM.md.
+The `archive/` directory contains prior separate design documents that were consolidated into `WORLD_MEMORY_SYSTEM.md`. They are retained for historical reference but are **superseded**.
