@@ -31,6 +31,7 @@ from world_system.world_memory.query import WorldQuery
 from world_system.world_memory.retention import EventRetentionManager
 from world_system.world_memory.position_sampler import PositionSampler
 from world_system.world_memory.stat_store import StatStore
+from world_system.world_memory.daily_ledger import DailyLedgerManager
 
 
 class WorldMemorySystem:
@@ -49,6 +50,7 @@ class WorldMemorySystem:
         self.world_query: Optional[WorldQuery] = None
         self.retention_manager: Optional[EventRetentionManager] = None
         self.position_sampler: Optional[PositionSampler] = None
+        self.daily_ledger_manager: Optional[DailyLedgerManager] = None
 
         self._initialized: bool = False
         self._game_time: float = 0.0
@@ -146,6 +148,9 @@ class WorldMemorySystem:
 
         # 9. Position Sampler
         self.position_sampler = PositionSampler()
+
+        # 10. Daily Ledger Manager (tracks game-day boundaries)
+        self.daily_ledger_manager = DailyLedgerManager()
 
         # Restore persisted state
         self._restore_persisted_state()
@@ -295,12 +300,40 @@ class WorldMemorySystem:
                 health_pct=health_pct,
             )
 
+        # Check game-day boundary for daily ledger computation
+        if self.daily_ledger_manager:
+            ended_day = self.daily_ledger_manager.check_day_boundary(game_time)
+            if ended_day is not None:
+                try:
+                    day_events = self.event_store.query(
+                        after_game_time=ended_day,
+                        before_game_time=ended_day + 1.0,
+                        limit=10000,
+                    )
+                    ledger = self.daily_ledger_manager.compute_ledger(
+                        ended_day, day_events
+                    )
+                    self.daily_ledger_manager.save_ledger(ledger, self.event_store)
+
+                    # Update meta-daily stats
+                    all_ledgers = self.daily_ledger_manager.load_ledgers(
+                        self.event_store
+                    )
+                    meta = self.daily_ledger_manager.update_meta_stats(all_ledgers)
+                    self.event_store.store_meta_daily_stats(meta.to_json())
+                except Exception as e:
+                    print(f"[WorldMemory] Daily ledger error: {e}")
+
         # Periodic retention pruning
         if self.retention_manager.should_prune(game_time):
             self.retention_manager.prune(self.event_store, game_time)
 
         # Expire old interpretations
         self.event_store.expire_old_interpretations(game_time)
+
+        # Periodic stat store flush (batch writes)
+        if self.stat_store:
+            self.stat_store.flush()
 
     # ── Save/Load ────────────────────────────────────────────────────
 

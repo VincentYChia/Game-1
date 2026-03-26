@@ -1399,6 +1399,20 @@ class GameEngine:
                 print(f"   📜 {len(self.npc_available_quests)} quest(s) available")
             if self.npc_quest_to_turn_in:
                 print(f"   ✅ Quest ready to turn in: {self.npc_quest_to_turn_in}")
+
+            # Stat tracking and event bus publish for NPC interaction
+            if hasattr(self.character, 'stat_tracker'):
+                self.character.stat_tracker.record_npc_interaction(nearby_npc.npc_def.npc_id)
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("NPC_INTERACTION", {
+                    "npc_id": nearby_npc.npc_def.npc_id,
+                    "npc_name": nearby_npc.npc_def.name,
+                    "position_x": nearby_npc.position.x,
+                    "position_y": nearby_npc.position.y,
+                })
+            except Exception:
+                pass
         else:
             self.add_notification("No one nearby to talk to", (200, 200, 200))
 

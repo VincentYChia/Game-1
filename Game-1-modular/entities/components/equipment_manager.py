@@ -88,6 +88,16 @@ class EquipmentManager:
                 character.stat_tracker.item_management["equipment_equipped"][equipment_key] = 0
             character.stat_tracker.item_management["equipment_equipped"][equipment_key] += 1
             character.stat_tracker.item_management["total_equipment_swaps"] += 1
+            character.stat_tracker.record_equipment_changed(item.item_id, slot, equipped=True)
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("EQUIPMENT_CHANGED", {
+                "item_id": item.item_id,
+                "slot": slot,
+                "equipped": True,
+            })
+        except Exception:
+            pass
 
         return old_item, "OK"
 
@@ -108,6 +118,17 @@ class EquipmentManager:
                 character.stat_tracker.item_management["equipment_unequipped"][equipment_key] = 0
             character.stat_tracker.item_management["equipment_unequipped"][equipment_key] += 1
             character.stat_tracker.item_management["total_equipment_swaps"] += 1
+            character.stat_tracker.record_equipment_changed(item.item_id, slot, equipped=False)
+        if item:
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("EQUIPMENT_CHANGED", {
+                    "item_id": item.item_id,
+                    "slot": slot,
+                    "equipped": False,
+                })
+            except Exception:
+                pass
 
         return item
 

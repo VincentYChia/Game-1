@@ -1623,6 +1623,16 @@ class CombatManager:
                 for tag in tags:
                     if tag in status_effect_tags:
                         self.character.stat_tracker.record_status_effect(tag, applied_to_enemy=True)
+                        try:
+                            from events.event_bus import get_event_bus
+                            get_event_bus().publish("STATUS_APPLIED", {
+                                "effect_tag": tag,
+                                "applied_to_enemy": True,
+                                "position_x": enemy.position[0],
+                                "position_y": enemy.position[1],
+                            })
+                        except Exception:
+                            pass
 
             # Tag-based attacks don't use traditional crit system (handled by tags)
             return (total_damage, False, loot)

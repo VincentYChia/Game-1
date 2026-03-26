@@ -1874,6 +1874,14 @@ class Character:
         # Track death in stat tracker
         if hasattr(self, 'stat_tracker') and self.stat_tracker:
             self.stat_tracker.record_death()
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("PLAYER_DIED", {
+                "position_x": self.position.x if hasattr(self, 'position') and self.position else 0,
+                "position_y": self.position.y if hasattr(self, 'position') and self.position else 0,
+            })
+        except Exception:
+            pass
 
         # Reset health
         self.health = self.max_health
