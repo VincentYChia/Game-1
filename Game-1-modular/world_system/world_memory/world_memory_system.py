@@ -42,6 +42,7 @@ class WorldMemorySystem:
     def __init__(self):
         self.event_store: Optional[EventStore] = None
         self.stat_store: Optional[StatStore] = None
+        self.layer_store = None  # LayerStore for per-layer tag-indexed storage
         self.geo_registry: Optional[GeographicRegistry] = None
         self.entity_registry: Optional[EntityRegistry] = None
         self.trigger_manager: Optional[TriggerManager] = None
@@ -93,6 +94,16 @@ class WorldMemorySystem:
 
         # 1b. Stat Store (shares the same SQLite connection)
         self.stat_store = StatStore(conn=self.event_store.connection)
+
+        # 1c. Layer Store (per-layer tag-indexed storage for Layers 1-7)
+        try:
+            from world_system.world_memory.layer_store import LayerStore
+            layer_db_path = os.path.join(save_dir, "layer_store.db")
+            self.layer_store = LayerStore(db_path=layer_db_path)
+            print(f"[WorldMemory] LayerStore initialized: {layer_db_path}")
+        except Exception as e:
+            print(f"[WorldMemory] LayerStore init failed (non-fatal): {e}")
+            self.layer_store = None
 
         # 2. Geographic Registry
         self.geo_registry = GeographicRegistry.get_instance()
