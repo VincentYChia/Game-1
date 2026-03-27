@@ -919,10 +919,13 @@
       "pattern": "crafting.attempts.*",
       "tags": [
         "domain:crafting",
-        "action:attempt",
+        "action:craft",
         "discipline:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:station",
+        "result:success",
+        "item_category:equipment"
       ]
     },
     {
@@ -932,7 +935,10 @@
         "action:craft",
         "result:success",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:station",
+        "item_category:equipment",
+        "source:crafting"
       ]
     },
     {
@@ -943,7 +949,10 @@
         "discipline:{dim}",
         "result:success",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:station",
+        "item_category:equipment",
+        "source:crafting"
       ]
     },
     {
@@ -951,9 +960,12 @@
       "tags": [
         "domain:crafting",
         "action:craft",
-        "metric:quality_total",
+        "metric:total",
         "actor:player",
-        "result:success"
+        "result:success",
+        "target:item",
+        "item_category:equipment",
+        "source:crafting"
       ]
     },
     {
@@ -963,7 +975,11 @@
         "action:craft",
         "quality:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "result:success",
+        "target:item",
+        "item_category:equipment",
+        "source:crafting"
       ]
     },
     {
@@ -973,7 +989,10 @@
         "action:craft",
         "discipline:{dim}",
         "metric:duration",
-        "actor:player"
+        "actor:player",
+        "target:station",
+        "item_category:equipment",
+        "source:crafting"
       ]
     },
     {
@@ -982,9 +1001,11 @@
         "domain:crafting",
         "action:craft",
         "result:perfect",
-        "quality:perfect",
+        "quality:legendary",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:item",
+        "source:crafting"
       ]
     },
     {
@@ -994,9 +1015,11 @@
         "action:craft",
         "discipline:{dim}",
         "result:perfect",
-        "quality:perfect",
+        "quality:legendary",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:station",
+        "source:crafting"
       ]
     },
     {
@@ -1006,7 +1029,10 @@
         "action:craft",
         "result:first_try",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:item",
+        "source:crafting",
+        "item_category:equipment"
       ]
     },
     {
@@ -1017,7 +1043,10 @@
         "discipline:{dim}",
         "result:first_try",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "item_category:equipment"
       ]
     },
     {
@@ -1026,8 +1055,11 @@
         "domain:crafting",
         "action:craft",
         "result:first_try",
-        "metric:streak_max",
-        "actor:player"
+        "metric:streak",
+        "actor:player",
+        "target:item",
+        "source:crafting",
+        "item_category:equipment"
       ]
     },
     {
@@ -1037,27 +1069,37 @@
         "action:craft",
         "rarity:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:item",
+        "result:success",
+        "item_category:equipment",
+        "source:crafting"
       ]
     },
     {
       "pattern": "crafting.materials.*",
       "tags": [
         "domain:crafting",
-        "action:consume_material",
+        "action:consume",
         "resource:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:item",
+        "item_category:material",
+        "source:crafting"
       ]
     },
     {
       "pattern": "crafting.materials_consumed",
       "tags": [
         "domain:crafting",
-        "action:consume_material",
+        "action:consume",
         "metric:count",
         "actor:player",
-        "resource:material"
+        "target:item",
+        "item_category:material",
+        "resource:material",
+        "source:crafting"
       ]
     },
     {
@@ -1067,7 +1109,10 @@
         "action:enchant",
         "discipline:enchanting",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:item",
+        "item_category:equipment",
+        "source:crafting"
       ]
     },
     {
@@ -1078,7 +1123,10 @@
         "item:{dim}",
         "discipline:enchanting",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:item",
+        "item_category:equipment",
+        "source:crafting"
       ]
     },
     {
@@ -1088,7 +1136,10 @@
         "action:invent",
         "metric:count",
         "actor:player",
-        "source:llm"
+        "target:item",
+        "source:crafting",
+        "result:success",
+        "item_category:equipment"
       ]
     },
     {
@@ -1099,7 +1150,9 @@
         "discipline:{dim}",
         "metric:count",
         "actor:player",
-        "source:llm"
+        "target:item",
+        "source:crafting",
+        "result:success"
       ]
     },
     {
@@ -1110,27 +1163,36 @@
         "item:{dim}",
         "metric:count",
         "actor:player",
-        "source:llm"
+        "target:item",
+        "source:crafting",
+        "result:success",
+        "rarity:rare"
       ]
     },
     {
       "pattern": "crafting.recipes_discovered",
       "tags": [
         "domain:crafting",
-        "action:discover_recipe",
+        "action:discover",
         "metric:count",
         "actor:player",
-        "result:first"
+        "target:item",
+        "result:first_try",
+        "source:crafting",
+        "item_category:equipment"
       ]
     },
     {
       "pattern": "crafting.recipes_discovered.*",
       "tags": [
         "domain:crafting",
-        "action:discover_recipe",
+        "action:discover",
         "discipline:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:item",
+        "source:crafting",
+        "result:success"
       ]
     },
     {
@@ -1280,57 +1342,525 @@
       ]
     },
     {
-      "_section": "=== SKILLS (5 patterns) ==="
+      "_section": "=== SKILLS (35 patterns: 5 aggregates + 30 individual skills) ==="
     },
     {
       "pattern": "skills.used",
       "tags": [
         "domain:skills",
-        "action:activate",
+        "action:use",
         "metric:count",
         "actor:player",
-        "target:enemy"
+        "target:enemy",
+        "resource:mana",
+        "result:success",
+        "item_category:skill"
       ]
     },
     {
       "pattern": "skills.used.*",
       "tags": [
         "domain:skills",
-        "action:activate",
+        "action:use",
         "skill:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:enemy",
+        "resource:mana",
+        "result:success"
       ]
     },
     {
       "pattern": "skills.mana_spent",
       "tags": [
         "domain:skills",
-        "action:spend_mana",
-        "metric:amount_total",
+        "action:use",
+        "metric:total",
         "actor:player",
-        "resource:mana"
+        "resource:mana",
+        "target:player",
+        "item_category:skill",
+        "result:success"
       ]
     },
     {
       "pattern": "skills.mana_spent.*",
       "tags": [
         "domain:skills",
-        "action:spend_mana",
+        "action:use",
         "skill:{dim}",
-        "metric:amount_total",
+        "metric:total",
         "actor:player",
-        "resource:mana"
+        "resource:mana",
+        "target:player",
+        "result:success"
       ]
     },
     {
       "pattern": "skills.targets_affected",
       "tags": [
         "domain:skills",
-        "action:activate",
-        "metric:targets_hit",
+        "action:use",
+        "metric:count",
         "actor:player",
-        "target:enemy"
+        "target:enemy",
+        "resource:mana",
+        "item_category:skill",
+        "result:success"
+      ]
+    },
+    {
+      "_comment": "--- Combat Skills (7) ---"
+    },
+    {
+      "pattern": "skills.used.power_strike",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:power_strike",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "tier:1",
+        "element:physical",
+        "domain:combat"
+      ]
+    },
+    {
+      "pattern": "skills.used.battle_stance",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:battle_stance",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:1",
+        "domain:combat",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.used.combat_rush",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:combat_rush",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "tier:1",
+        "domain:combat",
+        "element:physical"
+      ]
+    },
+    {
+      "pattern": "skills.used.battle_fury",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:battle_fury",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:2",
+        "domain:combat",
+        "attack_type:melee",
+        "element:physical"
+      ]
+    },
+    {
+      "pattern": "skills.used.whirlwind_strike",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:whirlwind_strike",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "tier:3",
+        "domain:combat",
+        "element:physical"
+      ]
+    },
+    {
+      "pattern": "skills.used.absolute_destruction",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:absolute_destruction",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "tier:3",
+        "domain:combat",
+        "element:physical"
+      ]
+    },
+    {
+      "pattern": "skills.used.omega_strike",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:omega_strike",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "tier:4",
+        "domain:combat",
+        "element:physical"
+      ]
+    },
+    {
+      "_comment": "--- Gathering Skills (5) ---"
+    },
+    {
+      "pattern": "skills.used.miners_fury",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:miners_fury",
+        "metric:count",
+        "actor:player",
+        "target:resource",
+        "tier:1",
+        "domain:gathering",
+        "tool:pickaxe",
+        "material_category:ore"
+      ]
+    },
+    {
+      "pattern": "skills.used.lumberjacks_rhythm",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:lumberjacks_rhythm",
+        "metric:count",
+        "actor:player",
+        "target:resource",
+        "tier:1",
+        "domain:gathering",
+        "tool:axe",
+        "material_category:tree"
+      ]
+    },
+    {
+      "pattern": "skills.used.bountiful_harvest",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:bountiful_harvest",
+        "metric:count",
+        "actor:player",
+        "target:resource",
+        "tier:1",
+        "domain:gathering",
+        "result:success",
+        "material_category:plant"
+      ]
+    },
+    {
+      "pattern": "skills.used.chain_harvest",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:chain_harvest",
+        "metric:count",
+        "actor:player",
+        "target:resource",
+        "tier:3",
+        "domain:gathering",
+        "result:success",
+        "material_category:plant"
+      ]
+    },
+    {
+      "pattern": "skills.used.endless_bounty",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:endless_bounty",
+        "metric:count",
+        "actor:player",
+        "target:resource",
+        "tier:3",
+        "domain:gathering",
+        "result:success"
+      ]
+    },
+    {
+      "_comment": "--- Crafting Skills (7) ---"
+    },
+    {
+      "pattern": "skills.used.smiths_focus",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:smiths_focus",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "tier:1",
+        "domain:crafting",
+        "discipline:smithing",
+        "tool:hammer"
+      ]
+    },
+    {
+      "pattern": "skills.used.alchemists_insight",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:alchemists_insight",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "tier:2",
+        "domain:crafting",
+        "discipline:alchemy",
+        "item_category:potion"
+      ]
+    },
+    {
+      "pattern": "skills.used.engineers_precision",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:engineers_precision",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "tier:2",
+        "domain:crafting",
+        "discipline:engineering",
+        "item_category:device"
+      ]
+    },
+    {
+      "pattern": "skills.used.refiners_touch",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:refiners_touch",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "tier:2",
+        "domain:crafting",
+        "discipline:refining",
+        "item_category:material"
+      ]
+    },
+    {
+      "pattern": "skills.used.enchanters_grace",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:enchanters_grace",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "tier:2",
+        "domain:crafting",
+        "discipline:enchanting",
+        "item_category:equipment"
+      ]
+    },
+    {
+      "pattern": "skills.used.master_craftsman",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:master_craftsman",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "tier:3",
+        "domain:crafting",
+        "quality:masterwork",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.used.time_dilation",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:time_dilation",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:3",
+        "domain:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "_comment": "--- Utility Skills (11) ---"
+    },
+    {
+      "pattern": "skills.used.sprint",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:sprint",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:1",
+        "domain:exploration"
+      ]
+    },
+    {
+      "pattern": "skills.used.quick_repair",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:quick_repair",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "tier:1",
+        "domain:items",
+        "item_category:equipment",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.used.field_medic",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:field_medic",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:1",
+        "domain:combat",
+        "element:holy",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.used.keen_eye",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:keen_eye",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:2",
+        "domain:combat",
+        "result:critical"
+      ]
+    },
+    {
+      "pattern": "skills.used.treasure_sense",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:treasure_sense",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:2",
+        "domain:exploration",
+        "rarity:rare",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.used.regenerative_aura",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:regenerative_aura",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:2",
+        "domain:combat",
+        "element:holy"
+      ]
+    },
+    {
+      "pattern": "skills.used.tool_preservation",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:tool_preservation",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "tier:2",
+        "domain:items",
+        "item_category:tool",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.used.second_wind",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:second_wind",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:2",
+        "domain:combat",
+        "resource:mana",
+        "element:holy"
+      ]
+    },
+    {
+      "pattern": "skills.used.fortunes_favor",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:fortunes_favor",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:3",
+        "domain:exploration",
+        "rarity:epic"
+      ]
+    },
+    {
+      "pattern": "skills.used.phoenix_resurrection",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:phoenix_resurrection",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:3",
+        "domain:combat",
+        "element:fire",
+        "element:holy"
+      ]
+    },
+    {
+      "pattern": "skills.used.reality_breach",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:reality_breach",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:4",
+        "element:arcane",
+        "rarity:legendary"
       ]
     },
     {
@@ -1463,7 +1993,10 @@
         "action:earn",
         "resource:gold",
         "metric:amount_total",
-        "actor:player"
+        "actor:player",
+        "target:item",
+        "result:success",
+        "source:any"
       ]
     },
     {
@@ -1474,7 +2007,9 @@
         "resource:gold",
         "source:{dim}",
         "metric:amount_total",
-        "actor:player"
+        "actor:player",
+        "target:item",
+        "result:success"
       ]
     },
     {
@@ -1484,7 +2019,10 @@
         "action:spend",
         "resource:gold",
         "metric:amount_total",
-        "actor:player"
+        "actor:player",
+        "target:npc",
+        "result:success",
+        "source:vendor"
       ]
     },
     {
@@ -1495,7 +2033,9 @@
         "resource:gold",
         "target:{dim}",
         "metric:amount_total",
-        "actor:player"
+        "actor:player",
+        "result:success",
+        "source:vendor"
       ]
     },
     {
@@ -1505,7 +2045,10 @@
         "action:trade",
         "metric:count",
         "actor:player",
-        "target:npc"
+        "target:npc",
+        "resource:gold",
+        "result:success",
+        "source:vendor"
       ]
     },
     {
@@ -1515,7 +2058,10 @@
         "action:trade",
         "npc:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:npc",
+        "resource:gold",
+        "result:success"
       ]
     },
     {
@@ -1526,7 +2072,10 @@
         "item:{dim}",
         "metric:count",
         "actor:player",
-        "target:npc"
+        "target:npc",
+        "resource:gold",
+        "source:vendor",
+        "item_category:any"
       ]
     },
     {
@@ -1537,7 +2086,9 @@
         "npc:{dim}",
         "metric:amount_total",
         "actor:player",
-        "resource:gold"
+        "target:npc",
+        "resource:gold",
+        "result:success"
       ]
     },
     {
