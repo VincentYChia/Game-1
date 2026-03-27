@@ -35,7 +35,7 @@
   ],
   "mappings": [
     {
-      "_section": "=== COMBAT (46 patterns) ==="
+      "_section": "=== COMBAT (47 patterns) ==="
     },
     {
       "pattern": "combat.attacks",
@@ -407,7 +407,218 @@
         "species:{dim}",
         "metric:count",
         "actor:player",
-        "target:enemy"
+        "target:enemy",
+        "result:success",
+        "rank:normal"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.wolf_grey",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:wolf_grey",
+        "tier:1",
+        "rank:normal",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.wolf_dire",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:wolf_dire",
+        "tier:2",
+        "rank:normal",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.wolf_elder",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:wolf_elder",
+        "tier:3",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "status_effect:bleed",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.slime_green",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:slime_green",
+        "tier:1",
+        "rank:normal",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.slime_acid",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:slime_acid",
+        "tier:2",
+        "rank:normal",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "element:poison",
+        "status_effect:poison",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.slime_crystal",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:slime_crystal",
+        "tier:3",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:magic",
+        "element:arcane",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.beetle_brown",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:beetle_brown",
+        "tier:1",
+        "rank:normal",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.beetle_armored",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:beetle_armored",
+        "tier:2",
+        "rank:normal",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "status_effect:stun",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.beetle_titan",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:beetle_titan",
+        "tier:4",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "status_effect:stun",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.golem_stone",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:golem_stone",
+        "tier:3",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.golem_crystal",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:golem_crystal",
+        "tier:4",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:magic",
+        "element:arcane",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.void_wraith",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:void_wraith",
+        "tier:4",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:magic",
+        "element:shadow",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.entity_primordial",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:entity_primordial",
+        "tier:4",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:magic",
+        "element:arcane",
+        "rarity:legendary",
+        "result:success"
       ]
     },
     {
@@ -539,7 +750,7 @@
       ]
     },
     {
-      "_section": "=== GATHERING (30 patterns) ==="
+      "_section": "=== GATHERING (35 patterns) ==="
     },
     {
       "pattern": "gathering.actions.*",
@@ -913,7 +1124,7 @@
       ]
     },
     {
-      "_section": "=== CRAFTING (22 patterns) ==="
+      "_section": "=== CRAFTING (21 patterns) ==="
     },
     {
       "pattern": "crafting.attempts.*",
@@ -1196,7 +1407,7 @@
       ]
     },
     {
-      "_section": "=== ITEMS (12 patterns) ==="
+      "_section": "=== ITEMS (11 patterns) ==="
     },
     {
       "pattern": "items.collected.*",
@@ -1342,7 +1553,7 @@
       ]
     },
     {
-      "_section": "=== SKILLS (35 patterns: 5 aggregates + 30 individual skills) ==="
+      "_section": "=== SKILLS (39 patterns: 5 aggregates + 30 individual skills) ==="
     },
     {
       "pattern": "skills.used",
@@ -2322,7 +2533,7 @@
       ]
     },
     {
-      "_section": "=== DUNGEON (11 patterns) ==="
+      "_section": "=== DUNGEON (25 patterns) ==="
     },
     {
       "pattern": "dungeon.entered",
@@ -2331,7 +2542,10 @@
         "action:enter",
         "metric:count",
         "actor:player",
-        "location:dungeon"
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon",
+        "rarity:any"
       ]
     },
     {
@@ -2339,9 +2553,97 @@
       "tags": [
         "domain:dungeon",
         "action:enter",
-        "location:{dim}",
+        "rarity:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.common",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:common",
+        "tier:1",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.uncommon",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:uncommon",
+        "tier:1",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.rare",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:rare",
+        "tier:2",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.epic",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:epic",
+        "tier:3",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.legendary",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:legendary",
+        "tier:4",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.unique",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:legendary",
+        "rank:unique",
+        "tier:4",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
       ]
     },
     {
@@ -2352,7 +2654,9 @@
         "result:success",
         "metric:count",
         "actor:player",
-        "location:dungeon"
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
       ]
     },
     {
@@ -2360,10 +2664,97 @@
       "tags": [
         "domain:dungeon",
         "action:complete",
-        "location:{dim}",
+        "rarity:{dim}",
         "result:success",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.common",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:common",
+        "tier:1",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.uncommon",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:uncommon",
+        "tier:1",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.rare",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:rare",
+        "tier:2",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.epic",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:epic",
+        "tier:3",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.legendary",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:legendary",
+        "tier:4",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.unique",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:legendary",
+        "rank:unique",
+        "tier:4",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
       ]
     },
     {
@@ -2371,10 +2762,12 @@
       "tags": [
         "domain:dungeon",
         "action:complete",
-        "location:{dim}",
+        "rarity:{dim}",
         "metric:duration",
         "actor:player",
-        "result:success"
+        "result:success",
+        "location:dungeon",
+        "source:dungeon"
       ]
     },
     {
@@ -2385,7 +2778,9 @@
         "metric:count",
         "actor:player",
         "target:enemy",
-        "location:dungeon"
+        "location:dungeon",
+        "source:dungeon",
+        "result:success"
       ]
     },
     {
@@ -2396,7 +2791,9 @@
         "metric:count_per_run",
         "actor:player",
         "target:enemy",
-        "location:dungeon"
+        "location:dungeon",
+        "source:dungeon",
+        "result:success"
       ]
     },
     {
@@ -2407,7 +2804,9 @@
         "resource:exp",
         "metric:amount_total",
         "actor:player",
-        "location:dungeon"
+        "location:dungeon",
+        "source:dungeon",
+        "target:player"
       ]
     },
     {
@@ -2418,7 +2817,9 @@
         "metric:count",
         "actor:player",
         "result:defeat",
-        "location:dungeon"
+        "location:dungeon",
+        "source:enemy",
+        "target:player"
       ]
     },
     {
@@ -2429,7 +2830,9 @@
         "metric:count",
         "actor:player",
         "result:abandon",
-        "location:dungeon"
+        "location:dungeon",
+        "source:dungeon",
+        "target:player"
       ]
     },
     {
@@ -2439,7 +2842,10 @@
         "action:complete_wave",
         "metric:count",
         "actor:player",
-        "location:dungeon"
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon",
+        "result:success"
       ]
     },
     {
@@ -2450,7 +2856,9 @@
         "metric:count",
         "actor:player",
         "location:dungeon",
-        "source:chest"
+        "source:chest",
+        "target:item",
+        "result:success"
       ]
     },
     {
@@ -2461,11 +2869,13 @@
         "metric:count",
         "actor:player",
         "location:dungeon",
-        "source:loot"
+        "source:loot",
+        "target:item",
+        "item_category:any"
       ]
     },
     {
-      "_section": "=== SOCIAL (10 patterns) ==="
+      "_section": "=== SOCIAL (13 patterns) ==="
     },
     {
       "pattern": "social.npc.*",
@@ -2475,7 +2885,54 @@
         "npc:{dim}",
         "metric:count",
         "actor:player",
-        "target:npc"
+        "target:npc",
+        "source:npc",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "social.npc.tutorial_guide",
+      "tags": [
+        "domain:social",
+        "action:interact",
+        "npc:tutorial_guide",
+        "metric:count",
+        "actor:player",
+        "target:npc",
+        "source:npc",
+        "rank:normal",
+        "quest:any",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "social.npc.mysterious_trader",
+      "tags": [
+        "domain:social",
+        "action:interact",
+        "npc:mysterious_trader",
+        "metric:count",
+        "actor:player",
+        "target:npc",
+        "source:vendor",
+        "resource:gold",
+        "item_category:any",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "social.npc.combat_trainer",
+      "tags": [
+        "domain:social",
+        "action:interact",
+        "npc:combat_trainer",
+        "metric:count",
+        "actor:player",
+        "target:npc",
+        "source:npc",
+        "skill:any",
+        "attack_type:melee",
+        "location:world"
       ]
     },
     {
@@ -2485,7 +2942,10 @@
         "action:interact",
         "metric:count",
         "actor:player",
-        "target:npc"
+        "target:npc",
+        "source:npc",
+        "location:world",
+        "result:success"
       ]
     },
     {
@@ -2495,7 +2955,10 @@
         "action:accept_quest",
         "metric:count",
         "actor:player",
-        "source:npc"
+        "source:npc",
+        "target:npc",
+        "quest:any",
+        "location:world"
       ]
     },
     {
@@ -2506,7 +2969,9 @@
         "quest:{dim}",
         "metric:count",
         "actor:player",
-        "source:npc"
+        "source:npc",
+        "target:npc",
+        "location:world"
       ]
     },
     {
@@ -2516,7 +2981,10 @@
         "action:complete_quest",
         "result:success",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "source:quest",
+        "target:npc",
+        "location:world"
       ]
     },
     {
@@ -2527,7 +2995,9 @@
         "quest:{dim}",
         "result:success",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "source:quest",
+        "target:npc"
       ]
     },
     {
@@ -2537,7 +3007,10 @@
         "action:fail_quest",
         "result:failure",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "source:quest",
+        "target:npc",
+        "location:world"
       ]
     },
     {
@@ -2548,7 +3021,9 @@
         "quest:{dim}",
         "result:failure",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "source:quest",
+        "target:npc"
       ]
     },
     {
@@ -2559,7 +3034,9 @@
         "resource:exp",
         "metric:amount_total",
         "actor:player",
-        "source:quest"
+        "source:quest",
+        "target:player",
+        "result:success"
       ]
     },
     {
@@ -2570,7 +3047,9 @@
         "resource:gold",
         "metric:amount_total",
         "actor:player",
-        "source:quest"
+        "source:quest",
+        "target:player",
+        "result:success"
       ]
     },
     {
@@ -2583,7 +3062,10 @@
         "action:place",
         "metric:count",
         "actor:player",
-        "item_category:barrier"
+        "item_category:barrier",
+        "target:node",
+        "location:world",
+        "source:inventory"
       ]
     },
     {
@@ -2594,7 +3076,9 @@
         "item:{dim}",
         "metric:count",
         "actor:player",
-        "item_category:barrier"
+        "item_category:barrier",
+        "target:node",
+        "location:world"
       ]
     },
     {
@@ -2604,7 +3088,10 @@
         "action:pick_up",
         "metric:count",
         "actor:player",
-        "item_category:barrier"
+        "item_category:barrier",
+        "target:item",
+        "location:world",
+        "source:world"
       ]
     },
     {
@@ -2615,7 +3102,9 @@
         "item:{dim}",
         "metric:count",
         "actor:player",
-        "item_category:barrier"
+        "item_category:barrier",
+        "target:item",
+        "location:world"
       ]
     },
     {
@@ -2628,7 +3117,10 @@
         "action:play",
         "metric:duration",
         "actor:player",
-        "location:world"
+        "location:world",
+        "source:session",
+        "target:player",
+        "result:success"
       ]
     },
     {
@@ -2638,7 +3130,10 @@
         "action:play",
         "location:{dim}",
         "metric:duration",
-        "actor:player"
+        "actor:player",
+        "source:session",
+        "target:player",
+        "result:success"
       ]
     },
     {
@@ -2648,7 +3143,10 @@
         "action:browse_menu",
         "metric:duration",
         "actor:player",
-        "location:menu"
+        "location:menu",
+        "source:session",
+        "target:player",
+        "result:success"
       ]
     },
     {
@@ -2658,7 +3156,10 @@
         "action:browse_menu",
         "location:{dim}",
         "metric:duration",
-        "actor:player"
+        "actor:player",
+        "source:session",
+        "target:player",
+        "result:success"
       ]
     },
     {
@@ -2668,7 +3169,10 @@
         "action:idle",
         "metric:duration",
         "actor:player",
-        "location:world"
+        "location:world",
+        "source:session",
+        "target:player",
+        "result:success"
       ]
     },
     {
@@ -2678,7 +3182,10 @@
         "action:play",
         "metric:duration_per_session",
         "actor:player",
-        "source:session"
+        "source:session",
+        "target:player",
+        "location:world",
+        "result:success"
       ]
     },
     {
@@ -2688,7 +3195,10 @@
         "action:play",
         "metric:duration_total",
         "actor:player",
-        "source:lifetime"
+        "source:lifetime",
+        "target:player",
+        "location:world",
+        "result:success"
       ]
     },
     {
@@ -2701,7 +3211,10 @@
         "action:achieve",
         "metric:record_value",
         "actor:player",
-        "result:record"
+        "result:record",
+        "source:any",
+        "target:player",
+        "location:world"
       ]
     },
     {
@@ -2711,7 +3224,10 @@
         "action:achieve",
         "metric:duration_max",
         "actor:player",
-        "source:combat"
+        "source:combat",
+        "target:enemy",
+        "location:world",
+        "result:record"
       ]
     },
     {
@@ -2722,7 +3238,9 @@
         "resource:{dim}",
         "metric:duration_min",
         "actor:player",
-        "source:gathering"
+        "source:gathering",
+        "target:resource",
+        "result:record"
       ]
     },
     {
@@ -2732,7 +3250,10 @@
         "action:achieve",
         "source:{dim}",
         "metric:rate_max",
-        "actor:player"
+        "actor:player",
+        "target:player",
+        "result:record",
+        "location:world"
       ]
     },
     {
@@ -2745,7 +3266,10 @@
         "action:discover",
         "metric:count",
         "actor:player",
-        "item_category:any"
+        "item_category:any",
+        "target:item",
+        "result:first",
+        "source:any"
       ]
     },
     {
@@ -2755,7 +3279,10 @@
         "action:discover",
         "item_category:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:item",
+        "result:first",
+        "source:any"
       ]
     },
     {
@@ -2766,7 +3293,9 @@
         "item_category:{dim}",
         "item:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:item",
+        "result:first"
       ]
     },
     {
@@ -2776,11 +3305,14 @@
         "action:complete",
         "item_category:{dim}",
         "metric:percentage",
-        "actor:player"
+        "actor:player",
+        "target:item",
+        "result:success",
+        "source:any"
       ]
     },
     {
-      "_section": "=== MISC (5 patterns) ==="
+      "_section": "=== MISC (7 patterns) ==="
     },
     {
       "pattern": "misc.menu_opened",
@@ -2789,7 +3321,10 @@
         "action:open_menu",
         "metric:count",
         "actor:player",
-        "location:menu"
+        "location:menu",
+        "source:session",
+        "target:player",
+        "result:success"
       ]
     },
     {
@@ -2799,7 +3334,10 @@
         "action:open_menu",
         "location:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "source:session",
+        "target:player",
+        "result:success"
       ]
     },
     {
@@ -2809,7 +3347,10 @@
         "action:save",
         "metric:count",
         "actor:player",
-        "result:success"
+        "result:success",
+        "source:session",
+        "target:player",
+        "location:world"
       ]
     },
     {
@@ -2819,7 +3360,10 @@
         "action:save",
         "slot:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "result:success",
+        "source:session",
+        "target:player"
       ]
     },
     {
@@ -2829,7 +3373,10 @@
         "action:load",
         "metric:count",
         "actor:player",
-        "result:success"
+        "result:success",
+        "source:session",
+        "target:player",
+        "location:world"
       ]
     },
     {
@@ -2839,7 +3386,10 @@
         "action:debug",
         "metric:count",
         "actor:player",
-        "source:debug_mode"
+        "source:debug_mode",
+        "target:player",
+        "location:world",
+        "result:success"
       ]
     },
     {
@@ -2849,7 +3399,10 @@
         "action:debug",
         "source:{dim}",
         "metric:count",
-        "actor:player"
+        "actor:player",
+        "target:player",
+        "location:world",
+        "result:success"
       ]
     },
     {
@@ -2862,7 +3415,10 @@
         "action:start",
         "metric:count",
         "actor:player",
-        "source:session"
+        "source:session",
+        "target:player",
+        "location:world",
+        "result:success"
       ]
     }
   ]

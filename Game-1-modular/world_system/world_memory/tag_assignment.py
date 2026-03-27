@@ -88,11 +88,16 @@ class Layer1TagMapper:
         return tags
 
     def _resolve(self, stat_key: str) -> List[str]:
-        """Find best matching pattern and resolve tags."""
+        """Find best matching pattern and resolve tags.
+
+        Prefers exact matches over wildcards. Among wildcard matches,
+        prefers more specific patterns (more non-wildcard segments).
+        """
         parts = stat_key.split(".")
 
         best_match = None
         best_specificity = -1
+        best_wildcard_count = 999
         captured_dims: List[str] = []
 
         for mapping in self._mappings:
@@ -101,9 +106,14 @@ class Layer1TagMapper:
 
             match, dims = self._match_pattern(parts, pattern_parts)
             if match:
-                specificity = sum(1 for p in pattern_parts if p != "*")
-                if specificity > best_specificity:
-                    best_specificity = specificity
+                non_wildcard = sum(1 for p in pattern_parts if p != "*")
+                wildcard_count = sum(1 for p in pattern_parts if p == "*")
+                # Prefer: more non-wildcards, then fewer wildcards
+                if (non_wildcard > best_specificity or
+                        (non_wildcard == best_specificity and
+                         wildcard_count < best_wildcard_count)):
+                    best_specificity = non_wildcard
+                    best_wildcard_count = wildcard_count
                     best_match = mapping
                     captured_dims = dims
 
