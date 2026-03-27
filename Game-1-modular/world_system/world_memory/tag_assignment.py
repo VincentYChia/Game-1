@@ -68,7 +68,9 @@ class Layer1TagMapper:
         with open(config_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        self._mappings = data.get("mappings", [])
+        raw = data.get("mappings", [])
+        # Filter out section headers and non-mapping entries
+        self._mappings = [m for m in raw if "pattern" in m and "tags" in m]
         # Sort by specificity: more segments = more specific = checked first
         self._mappings.sort(key=lambda m: -m["pattern"].count("."))
 

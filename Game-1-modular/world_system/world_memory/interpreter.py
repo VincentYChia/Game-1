@@ -144,7 +144,8 @@ class WorldInterpreter:
 
         Accepts either a TriggerAction (from the new threshold system)
         or a WorldMemoryEvent (for backward compatibility).
-        Evaluates all relevant pattern evaluators and records interpretations.
+        Evaluates all relevant pattern evaluators, enriches tags via
+        the tag assignment system, and records interpretations.
         """
         if not self.event_store or not self.geo_registry:
             return
@@ -174,6 +175,9 @@ class WorldInterpreter:
                 if interpretation is None:
                     continue
 
+                # Enrich tags via tag assignment system (Layer 2)
+                self._enrich_tags(interpretation, trigger_event)
+
                 # Check if this supersedes an existing interpretation
                 existing = self.event_store.find_supersedable(
                     category=interpretation.category,
@@ -190,6 +194,54 @@ class WorldInterpreter:
 
                 # Propagate to region states
                 self._propagate(interpretation)
+
+    def _enrich_tags(self, interpretation: InterpretedEvent,
+                     trigger_event: WorldMemoryEvent) -> None:
+        """Enrich interpretation tags using the Layer 2 tag assignment system.
+
+        Takes the evaluator's manually-set affects_tags as extra_tags,
+        then builds the full Layer 2 tag set by inheriting from the
+        origin stat's Layer 1 tags + adding geographic/scope/significance.
+
+        The evaluator's original affects_tags are preserved as extra_tags
+        that get merged into the full set.
+        """
+        try:
+            from world_system.world_memory.tag_assignment import assign_layer2_tags
+
+            # Derive the origin stat key from the trigger event
+            # The stat key pattern is: "{event_type}" or "{event_type}.{subtype}"
+            origin_stat_key = trigger_event.event_type
+            if trigger_event.event_subtype:
+                origin_stat_key = f"{trigger_event.event_type}.{trigger_event.event_subtype}"
+
+            # Determine scope from the interpretation's geographic coverage
+            if interpretation.affected_province_ids:
+                scope = "regional"
+            elif interpretation.affected_district_ids:
+                scope = "district"
+            elif interpretation.affected_locality_ids:
+                scope = "local"
+            else:
+                scope = "global"
+
+            # Build full Layer 2 tag set
+            enriched_tags = assign_layer2_tags(
+                origin_stat_key=origin_stat_key,
+                locality_id=trigger_event.locality_id or "",
+                district_id=trigger_event.district_id or "",
+                province_id=trigger_event.province_id or "",
+                biome=trigger_event.biome or "",
+                scope=scope,
+                significance=interpretation.severity,
+                evaluator_category=interpretation.category,
+                extra_tags=interpretation.affects_tags,
+            )
+
+            interpretation.affects_tags = enriched_tags
+        except Exception as e:
+            # If tag enrichment fails, keep original evaluator tags
+            print(f"[Interpreter] Tag enrichment failed: {e}")
 
     def _propagate(self, interpretation: InterpretedEvent) -> None:
         """Route interpretation to affected region states."""
