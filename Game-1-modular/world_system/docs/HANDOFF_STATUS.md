@@ -1,8 +1,8 @@
 # World Memory System — Handoff Status
 
-**Date**: 2026-03-26
-**Branch**: `claude/living-world-combat-phase-2-XBxdJ`
-**Phase**: 2.1 (Memory Layer) — Layer 1 complete, Raw Event Pipeline infrastructure complete
+**Date**: 2026-03-28
+**Branch**: `claude/integrate-world-system-layers-396nS`
+**Phase**: Layer 1-2 complete. Tag library designed. Retrieval system designed.
 **Tests**: 56 passing (0 failures)
 
 ---
@@ -245,11 +245,74 @@ Game Loop:
 
 ---
 
+## What Was Built This Session (2026-03-28)
+
+### Layer 2: 33 Evaluators
+28 new + 5 legacy evaluators producing minimal data-to-text narrations.
+All narrations are factual ("Player has killed 10 wolves in X") not editorial.
+Each evaluator has a specific input frame of reference (regional vs global,
+per-tier, per-discipline). Same event triggers multiple evaluators.
+
+### Tag Library (65 categories across 7 layers)
+- See `TAG_LIBRARY.md` for full specification
+- Layer 1: 30 factual dimension categories
+- Layer 2: 6 geographic/assessment categories
+- Layers 3-7: 5 new per layer (interpretation, regional, world)
+- `significance` RECREATED at each layer (fresh judgment)
+- Key tags (scope, urgency, address) UPDATED not inherited
+- Tags describe EVENTS not regions
+- Higher layers (4+) gain full tag rewrite capability (configurable)
+
+### Tag Assignment Engine
+- `tag_library.py`: 65 category definitions with layer unlock, validation
+- `tag_assignment.py`: Layer1TagMapper (manual mapping), Layer2TagAssigner
+  (inheritance + geographic), HigherLayerTagAssigner (inheritance + override)
+- `layer_store.py`: Per-layer SQL tables with junction tag tables for retrieval
+
+### Layer 1 Stat Patterns: 374 mapped
+- `layer1-stat-tags.json`: 374 patterns with 8-12 tags each
+- 13 enemy-specific entries, 30 skill-specific entries
+- Covers: per-enemy damage dealt/taken, enchantment procs (13 types),
+  all 9 status effects applied/received, turret/trap/bomb stats,
+  per-consumable usage, crafting station usage (5 disciplines × 4 tiers),
+  minigame performance, stat allocation, near-death events, overkill
+- `tag_browser.py`: CLI tool to search/browse all patterns
+
+### Pipeline Integration
+- Tag enrichment wired into interpreter (_enrich_tags on every evaluator output)
+- LayerStore initialized in WorldMemorySystem alongside EventStore/StatStore
+- Daily ledger bug fixed (after_game_time → since_game_time)
+
+### Documentation Cleanup
+- Layer renumbering: evaluator output = Layer 2, not Layer 3
+- Consumer systems (NPC dialogue, factions) clearly separated from WMS
+- WORLD_MEMORY_SYSTEM.md section 12 rewritten with proper boundaries
+- living_world/__init__.py annotated as consumer code
+
+---
+
+## Design Philosophy (From Session Discussions)
+
+1. **Tags are the only indexing system.** Everything is found by tag intersection.
+2. **Significance is recreated, not inherited.** Each layer makes its own judgment.
+3. **Tags describe events, not regions.** "This event has dire living_impact" not "this region is dire."
+4. **Layer 2 inherits Layer 1 tags.** LLM writes event name + can add optional tags.
+5. **Layer 3+ inherits + LLM adds layer-specific.** Layer 4+ can rewrite all tags.
+6. **Evaluators have input frames, not output categories.** Same event → multiple evaluators.
+7. **Comprehensive > minimal.** Better to have too many well-tagged stats than dark zones.
+8. **Game knowledge in tags.** wolf_grey gets tier:1/rank:normal/attack_type:melee. Not generic.
+9. **Templates for now, LLM later.** Everything has template fallbacks that prove the pipeline works.
+10. **Each layer has its own SQL table.** Not all in one DB. Each with junction tag tables.
+
+---
+
 ## How to Continue
 
-1. **Read** `world_system/docs/WORLD_MEMORY_SYSTEM.md` — the single source of truth
-2. **Run tests** to verify everything works: `python world_system/world_memory/test_stat_store.py && python world_system/world_memory/test_foundation_pipeline.py && python world_system/world_memory/test_memory_system.py`
-3. **Next task**: Build retrieval system (catalog evaluators, auto-match stats, serve consumers)
-4. **After that**: Layer 3 cross-domain patterns, Layers 4-7 summaries
-5. **Polish**: Update legacy evaluator narration to minimal data-to-text style
-6. **Separately (consumer work, not WMS)**: Wire WorldQuery into NPC dialogue
+1. **Read** `TAG_LIBRARY.md` — the tag taxonomy design
+2. **Browse patterns**: `python -m world_system.world_memory.tag_browser search "turret"`
+3. **Run tests**: `python world_system/world_memory/test_stat_store.py && python world_system/world_memory/test_foundation_pipeline.py && python world_system/world_memory/test_memory_system.py`
+4. **Next task**: Procedural tag assignment implementation (LLM wiring)
+5. **Then**: Build retrieval system (tag-intersection search across layers)
+6. **Then**: Layer 3+ evaluators (consolidation, interpretation)
+7. **Then**: Hook up to actual game code (ensure Layer 1 collection fires, Layer 2 events generate)
+8. **Separately (consumer work, not WMS)**: Wire WorldQuery into NPC dialogue
