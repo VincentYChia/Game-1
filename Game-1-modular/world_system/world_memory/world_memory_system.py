@@ -317,7 +317,7 @@ class WorldMemorySystem:
             if ended_day is not None:
                 try:
                     day_events = self.event_store.query(
-                        after_game_time=ended_day,
+                        since_game_time=ended_day,
                         before_game_time=ended_day + 1.0,
                         limit=10000,
                     )
