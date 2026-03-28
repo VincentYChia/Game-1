@@ -1,4 +1,5 @@
-"""Population Change Evaluator — narrates enemy kill counts in a region."""
+"""Combat Kills Regional High Tier Evaluator — narrates high-tier enemy kill
+counts within a specific region."""
 
 from __future__ import annotations
 
@@ -12,31 +13,27 @@ from world_system.world_memory.entity_registry import EntityRegistry
 from world_system.world_memory.interpreter import PatternEvaluator
 
 
-class PopulationChangeEvaluator(PatternEvaluator):
+class CombatKillsRegionalHighTierEvaluator(PatternEvaluator):
 
     RELEVANT_TYPES = {"enemy_killed"}
 
     def __init__(self):
-        cfg = get_evaluator_config("population_change")
-        self.lookback_time = cfg.get("lookback_time", 50.0)
-        self.expiration_offset = cfg.get("expiration_offset", 100.0)
+        cfg = get_evaluator_config("combat_kills_regional_high_tier")
+        self.lookback_time = cfg.get("lookback_time", 150.0)
+        self.expiration_offset = cfg.get("expiration_offset", 150.0)
         t = cfg.get("thresholds", {})
-        self.min_trigger = t.get("minimum_trigger", 5)
-        self.moderate_min = t.get("moderate_min", 10)
-        self.significant_min = t.get("significant_min", 20)
-        self.major_min = t.get("major_min", 50)
+        self.min_trigger = t.get("minimum_trigger", 1)
+        self.moderate_min = t.get("moderate_min", 3)
+        self.significant_min = t.get("significant_min", 5)
+        self.major_min = t.get("major_min", 10)
         templates = cfg.get("narrative_templates", {})
-        self.tpl_major = templates.get("major",
-            "Player has killed {count} {enemy} in {region}.")
-        self.tpl_significant = templates.get("significant",
-            "Player has killed {count} {enemy} in {region}.")
-        self.tpl_moderate = templates.get("moderate",
-            "Player has killed {count} {enemy} in {region}.")
-        self.tpl_minor = templates.get("minor",
-            "Player has killed {count} {enemy} in {region}.")
+        self.tpl = templates.get("default",
+            "Player has killed {count} {enemy} (tier {tier}) in {region}.")
 
     def is_relevant(self, event: WorldMemoryEvent) -> bool:
-        return event.event_type in self.RELEVANT_TYPES
+        if event.event_type not in self.RELEVANT_TYPES:
+            return False
+        return event.tier is not None and event.tier >= 3
 
     def evaluate(self, trigger_event: WorldMemoryEvent,
                  event_store: EventStore,
@@ -48,36 +45,32 @@ class PopulationChangeEvaluator(PatternEvaluator):
             return None
 
         enemy_subtype = trigger_event.event_subtype
-        recent_kills = event_store.count_filtered(
+        count = event_store.count_filtered(
             event_type="enemy_killed",
             event_subtype=enemy_subtype,
             locality_id=locality_id,
             since_game_time=trigger_event.game_time - self.lookback_time,
         )
 
-        if recent_kills < self.min_trigger:
+        if count < self.min_trigger:
             return None
 
         region = geo_registry.regions.get(locality_id)
         region_name = region.name if region else locality_id
         enemy_name = enemy_subtype.replace("killed_", "").replace("_", " ")
+        tier = trigger_event.tier or 3
 
-        if recent_kills >= self.major_min:
+        if count >= self.major_min:
             severity = "major"
-            narrative = self.tpl_major.format(
-                enemy=enemy_name, region=region_name, count=recent_kills)
-        elif recent_kills >= self.significant_min:
+        elif count >= self.significant_min:
             severity = "significant"
-            narrative = self.tpl_significant.format(
-                enemy=enemy_name, region=region_name, count=recent_kills)
-        elif recent_kills >= self.moderate_min:
+        elif count >= self.moderate_min:
             severity = "moderate"
-            narrative = self.tpl_moderate.format(
-                enemy=enemy_name, region=region_name, count=recent_kills)
         else:
             severity = "minor"
-            narrative = self.tpl_minor.format(
-                enemy=enemy_name, region=region_name, count=recent_kills)
+
+        narrative = self.tpl.format(
+            count=count, enemy=enemy_name, tier=tier, region=region_name)
 
         cause_events = event_store.query(
             event_type="enemy_killed",
@@ -90,7 +83,7 @@ class PopulationChangeEvaluator(PatternEvaluator):
         parent_id = region.parent_id if region else None
         return InterpretedEvent.create(
             narrative=narrative,
-            category="population_change",
+            category="combat_kills_regional",
             severity=severity,
             trigger_event_id=trigger_event.event_id,
             trigger_count=trigger_event.interpretation_count,
@@ -102,7 +95,9 @@ class PopulationChangeEvaluator(PatternEvaluator):
             epicenter_y=trigger_event.position_y,
             affects_tags=[
                 f"species:{enemy_name.replace(' ', '_')}",
+                f"tier:{tier}",
                 f"biome:{trigger_event.biome}",
+                "event:combat",
             ],
             is_ongoing=True,
             expires_at=trigger_event.game_time + self.expiration_offset,

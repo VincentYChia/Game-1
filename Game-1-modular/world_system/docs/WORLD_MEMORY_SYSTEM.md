@@ -16,8 +16,8 @@
 3. [Geographic System](#3-geographic-system)
 4. [Entity Registry & Interest Tags](#4-entity-registry--interest-tags)
 5. [Event Schema & Recording Pipeline](#5-event-schema--recording-pipeline)
-6. [Interpreter & Evaluators (Layers 3-4)](#6-interpreter--evaluators)
-7. [Aggregation & World State (Layers 4-7)](#7-aggregation--world-state)
+6. [Interpreter & Evaluators (Layers 2-3)](#6-interpreter--evaluators-layers-2-3)
+7. [Aggregation & World State (Layers 3-7)](#7-aggregation--world-state-layers-3-7)
 8. [Time-Based Tracking & Recency](#8-time-based-tracking--recency)
 9. [Tagging Strategy](#9-tagging-strategy)
 10. [Retrieval Design](#10-retrieval-design)
@@ -32,11 +32,11 @@
 
 ## Design Principles
 
-1. **Information state only** — Records and interprets. Does NOT apply mechanical game effects. Narrative text, not JSON effects.
+1. **Information state only** — Records and interprets. Does NOT apply mechanical game effects, generate dialogue, or make gameplay decisions. Narrative text summaries, not JSON effects. Consumer systems (NPC dialogue, quest generation, faction decisions) are architecturally separate — they READ from WMS but are not part of it.
 2. **Entity-first queries** — Never search events directly. Find the entity, radiate outward through location, interests, awareness.
 3. **Interest tags are identity** — Overapplied by design. Tags ARE the entity's fingerprint in the information system.
 4. **Write-time processing** — Events enriched, propagated, aggregated at write time. Queries are fast reads.
-5. **Compression upward** — Each layer condenses the one below. Layer 5 consumers never need Layer 2.
+5. **Compression upward** — Each layer condenses the one below. Layer 3 consumers never need the Raw Event Pipeline.
 6. **Threshold triggers** — Sequence `1, 3, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000`. Triggers evaluate; ignoring is valid.
 7. **Bounded context** — Every LLM call gets a fixed token budget. No unbounded accumulation.
 8. **The world has state beyond the player** — Resources deplete, populations shift, factions maneuver whether the player is present or not.
@@ -52,12 +52,13 @@ Data compresses upward. Each layer condenses the one below into better informati
 | Layer | Name | Scale | What It Stores | Trigger Cadence |
 |:---:|-------|-------|---------------|-----------------|
 | 1 | Numerical Stats | Global | 850+ cumulative counters (stat_tracker.py) | Every event |
-| 2 | Structured Events | Chunk/Locality | Timestamped facts in SQLite — WHO/WHAT/WHERE/WHEN | Every event |
-| 3 | Simple Interpretations | Locality/District | One-sentence narratives from 9 evaluators | Milestone series |
-| 4 | Connected Interpretations | District/Province | Cross-domain and cross-region pattern detection | Accumulation-based |
-| 5 | Principality Summaries | Province | Gross summaries of provincial state | Provincial triggers |
-| 6 | Regional/National State | Realm | Faction landscapes, economic state, player reputation | Multi-province |
-| 7 | World State | World | Narrative threads, world identity, themes, history | World-shaping only |
+| — | Raw Event Pipeline | Chunk/Locality | Timestamped facts in SQLite — WHO/WHAT/WHERE/WHEN | Every event |
+| 2 | Simple Text Events | Locality/District | One-sentence narratives from evaluators (evaluator output) | Milestone series |
+| 3 | Municipality/Local Consolidation | District/Province | Cross-domain and cross-region pattern detection | Accumulation-based |
+| 4 | Smaller Region Events | Province | Gross summaries of provincial state | Provincial triggers |
+| 5 | Larger Region/Country Events | Realm | Faction landscapes, economic state, player reputation | Multi-province |
+| 6 | Intercountry Events | Multi-Realm | Cross-realm patterns, trade routes, diplomatic state | Multi-realm |
+| 7 | World Events | World | Narrative threads, world identity, themes, history | World-shaping only |
 
 ### The Compression Principle
 
@@ -65,9 +66,9 @@ Data compresses upward. Each layer condenses the one below into better informati
 
 ### The Fact/Interpretation Boundary
 
-The critical line sits between Layers 2 and 3:
-- **Below** (Layers 1-2): **Facts** — immutable records of what happened
-- **Above** (Layers 3-7): **Interpretations** — derived meaning, narratives, summaries
+The critical line sits between the Raw Event Pipeline and Layer 2:
+- **Below** (Layer 1 + Raw Event Pipeline): **Facts** — immutable records of what happened
+- **Above** (Layers 2-7): **Interpretations** — derived meaning, narratives, summaries
 
 ### Data Flow Pipeline
 
@@ -79,7 +80,7 @@ GAME ACTION (player mines iron)
        │
        ├──→ Layer 1: stat_tracker.record(...)                 [existing, unchanged]
        │
-       └──→ Layer 2: EventRecorder.record(...)                [NEW — SQLite]
+       └──→ Raw Event Pipeline: EventRecorder.record(...)     [NEW — SQLite]
                 │     Structured event with geographic context + auto-tags
                 │
                 ▼
@@ -87,17 +88,17 @@ GAME ACTION (player mines iron)
                 │     Checks: individual stream + regional accumulator thresholds
                 │
                 ▼
-            Layer 3 Interpreter (if threshold hit)             [NEW]
-                │     9 evaluators check patterns
+            Layer 2 Evaluators (if threshold hit)               [NEW]
+                │     Evaluators check patterns
                 │     Generate one-sentence narrative (or ignore)
                 │
                 ▼
-            Layer 4 Aggregator (if accumulation threshold)     [NEW]
+            Layer 3 Aggregator (if accumulation threshold)     [NEW]
                 │     Cross-domain + cross-region patterns
                 │
                 ▼
-            Layers 5-7 (if significance warrants)              [NEW]
-                │     Provincial → Realm → World summaries
+            Layers 4-7 (if significance warrants)              [NEW]
+                │     Smaller Region → Larger Region → Intercountry → World summaries
                 │
                 ▼
             [Ready for downstream queries by NPC agents, quest gen, etc.]
@@ -116,30 +117,34 @@ Writes flow downward through the pipeline. Reads flow upward. The cycle goes thr
 - **Role**: Fast-path for aggregate queries. "How many wolves killed total?" answered instantly.
 - **No changes needed.**
 
-### Layer 2: Structured Events (NEW — SQLite)
+### Raw Event Pipeline: Structured Events (NEW — SQLite)
 - Every meaningful action recorded with full spatial, temporal, contextual data
 - One row per event, indexed for spatial/temporal queries
 - **Retention**: Pruned over time but first occurrences, threshold milestones, and timeline markers always kept
 
-### Layer 3: Simple Interpretations (NEW — SQLite)
-- Pattern-detected one-sentence narratives from 9 evaluators
+### Layer 2: Simple Text Events (NEW — SQLite)
+- Pattern-detected one-sentence narratives from evaluators
 - Each has cause chain, affected tags, severity, duration
 - **Narrative text only** — no JSON effects
 
-### Layer 4: Connected Interpretations (NEW — SQLite)
+### Layer 3: Municipality/Local Consolidation (NEW — SQLite)
 - Cross-domain patterns: "heavy combat AND resource depletion in same region"
 - Cross-region patterns: "iron scarce across multiple districts"
-- 4 evaluators synthesize Layer 3 interpretations
+- 4 evaluators synthesize Layer 2 interpretations
 
-### Layer 5: Principality Summaries (NEW — SQLite)
+### Layer 4: Smaller Region Events (NEW — SQLite)
 - Per-province gross summaries: dominant activities, notable events, resource state
-- Updated when Layer 4 changes significantly in child regions
+- Updated when Layer 3 changes significantly in child regions
 
-### Layer 6: Regional/National State (NEW — SQLite)
+### Layer 5: Larger Region/Country Events (NEW — SQLite)
 - Faction power balances, economic state, player reputation realm-wide
 - Single row per realm, updated on multi-province events
 
-### Layer 7: World State (NEW — SQLite)
+### Layer 6: Intercountry Events (NEW — SQLite)
+- Cross-realm patterns, trade routes, diplomatic state
+- Updated on multi-realm events
+
+### Layer 7: World Events (NEW — SQLite)
 - Narrative threads (persistent story elements with canonical facts)
 - World identity, themes, historical events
 - Updated only by world-shaping events
@@ -172,45 +177,45 @@ Event categories for Track 2: `combat`, `gathering`, `crafting`, `exploration`, 
 
 ## 2.3 Layer-by-Layer Trigger Logic
 
-**Layer 2→3**: Individual stream OR regional accumulator hits threshold → run relevant Layer 3 evaluators.
+**Raw Event Pipeline→Layer 2**: Individual stream OR regional accumulator hits threshold → run relevant Layer 2 evaluators.
 
-**Layer 3→4**: When a locality accumulates 3+ Layer 3 interpretations (or 2+ from different categories) → trigger Layer 4 connected interpretation evaluators.
+**Layer 2→3**: When a locality accumulates 3+ Layer 2 interpretations (or 2+ from different categories) → trigger Layer 3 consolidation evaluators.
 
-**Layer 4→5**: When a province's child districts accumulate 3+ Layer 4 interpretations → trigger Layer 5 summary regeneration.
+**Layer 3→4**: When a province's child districts accumulate 3+ Layer 3 interpretations → trigger Layer 4 summary regeneration.
 
-**Layer 5→6 and 6→7**: Multi-province patterns or world-shaping events (faction wars, resource crises, player legendary achievements).
+**Layer 4→5, 5→6, and 6→7**: Multi-province patterns or world-shaping events (faction wars, resource crises, player legendary achievements).
 
 ## 2.4 Pass-Through Cascade
 
 Each layer acts as a filter:
 
 ```
-Layer 2 event hits threshold
+Raw Event Pipeline event hits threshold
     │
     ▼
-Layer 3 Interpreter (tiny LLM / template)
+Layer 2 Evaluator (tiny LLM / template)
     ├── IGNORE — "5 wolf kills isn't notable" → stop
-    ├── GENERATE — create interpretation → pass to Layer 4 check
-    └── ABSORB — update existing interpretation → pass to Layer 4 check
+    ├── GENERATE — create interpretation → pass to Layer 3 check
+    └── ABSORB — update existing interpretation → pass to Layer 3 check
                     │
                     ▼
-              Layer 4 Evaluator (tiny LLM)
+              Layer 3 Consolidator (tiny LLM)
                   ├── ACCEPT — incorporate → stop
                   ├── IGNORE → stop
-                  └── ESCALATE → pass to Layer 5
+                  └── ESCALATE → pass to Layer 4
                                     │
                                     ▼
-                              Layer 5+ (medium LLM)
+                              Layer 4+ (medium LLM)
 ```
 
 ### LLM Sizing by Layer
 
 | Layer | LLM Size | Rationale |
 |-------|----------|-----------|
-| 3 | Template or Tiny (Haiku-class) | High volume, simple pattern recognition |
-| 4 | Tiny (Haiku-class) | Summarize a few interpretations |
-| 5 | Small-Medium (Sonnet-class) | Cross-locality trends, richer narrative |
-| 6-7 | Medium (Sonnet-class) | Rare, complex, world-scale |
+| 2 | Template or Tiny (Haiku-class) | High volume, simple pattern recognition |
+| 3 | Tiny (Haiku-class) | Summarize a few interpretations |
+| 4 | Small-Medium (Sonnet-class) | Cross-locality trends, richer narrative |
+| 5-7 | Medium (Sonnet-class) | Rare, complex, world-scale |
 
 No parallelism needed — events don't arrive faster than a small LLM can process.
 
@@ -230,7 +235,7 @@ FIRST_EVENT_TEMPLATES = {
 
 - Count=1: Templates (no LLM)
 - Count=3: Templates with locale context (string formatting)
-- Count=5+: Real LLM interpreter
+- Count=5+: Real LLM evaluator
 
 ## 2.6 Trigger Implementation
 
@@ -338,7 +343,7 @@ class GeographicRegistry:
     def get_nearby_regions(self, x, y, radius, level) -> List[Region]: ...
 ```
 
-Every Layer 2 event gets region IDs stamped from the chunk cache — zero per-event lookup cost.
+Every Raw Event Pipeline event gets region IDs stamped from the chunk cache — zero per-event lookup cost.
 
 ## 3.4 Map Definition
 
@@ -453,7 +458,7 @@ Tags update dynamically via `update_entity_tags(entity_id, add_tags, remove_tags
 
 # 5. Event Schema & Recording Pipeline
 
-## 5.1 Layer 2 Event Schema
+## 5.1 Raw Event Pipeline Event Schema
 
 ```python
 @dataclass
@@ -546,7 +551,7 @@ class EventType(Enum):
 
 ## 5.3 The EventRecorder
 
-Subscribes to Layer 0 (GameEventBus), converts events, enriches with geographic context, writes to SQLite:
+Subscribes to GameEventBus, converts events, enriches with geographic context, writes to Raw Event Pipeline SQLite:
 
 ```python
 class EventRecorder:
@@ -594,7 +599,7 @@ For each `(actor_id, event_type, event_subtype)`:
 2. Threshold-indexed events (1st, 3rd, 5th, 10th, 25th, 50th, 100th...)
 3. Power-of-10 milestones (100th, 1000th, 10000th)
 4. Events that triggered interpretations
-5. Events referenced by Layer 3 cause chains
+5. Events referenced by Layer 2 cause chains
 6. One event per game-day (timeline markers)
 
 **Prune everything else** after configurable age threshold (~50 game-time units).
@@ -607,17 +612,17 @@ Player position sampled every ~10 real seconds as `POSITION_SAMPLE` events. Incl
 
 ---
 
-# 6. Interpreter & Evaluators (Layers 3-4)
+# 6. Interpreter & Evaluators (Layers 2-3)
 
 ## 6.1 Design Philosophy
 
 1. **More evaluators is better** — Each covers a narrow domain. Overlap is expected.
 2. **Dual coverage is expected** — Killing 50 wolves fires both PopulationDynamics AND CombatProficiency. Different angles, different narratives.
 3. **Context prevents misclassification** — Each evaluator sees the trigger event AND surrounding context.
-4. **Templates first, LLM when needed** — Layer 3-4 evaluators use templates or tiny LLMs. Only higher layers justify larger models.
+4. **Templates first, LLM when needed** — Layer 2-3 evaluators use templates or tiny LLMs. Only higher layers justify larger models.
 5. **Every evaluator can return None** — "Not interesting enough" is a valid result.
 
-## 6.2 Layer 3 Evaluators (9 Total)
+## 6.2 Layer 2 Evaluators (9 Total)
 
 ### 1. Population Dynamics
 - **Question**: Are creature populations changing?
@@ -669,20 +674,20 @@ Player position sampled every ~10 real seconds as `POSITION_SAMPLE` events. Incl
 - **Triggers on**: `dungeon_entered`, `dungeon_completed`, enemy kills in dungeon localities
 - **Examples**: "Cleared Iron Mine dungeon (no deaths)" / "Struggling with cave encounters (2 deaths)"
 
-## 6.3 Layer 4 Evaluators (4 Total)
+## 6.3 Layer 3 Evaluators (4 Total)
 
-Layer 4 reads Layer 3 interpretations (full) and Layer 2 events (limited/summary). Triggers when a locality accumulates 3+ Layer 3 interpretations or 2+ from different categories.
+Layer 3 reads Layer 2 interpretations (full) and Raw Event Pipeline events (limited/summary). Triggers when a locality accumulates 3+ Layer 2 interpretations or 2+ from different categories.
 
 ### 1. Regional Activity Synthesizer
-- **Reads**: All Layer 3 interpretations for a district
+- **Reads**: All Layer 2 interpretations for a district
 - **Produces**: "The Iron Hills are experiencing heavy resource extraction, moderate combat, and growing trade activity."
 
 ### 2. Cross-Domain Pattern Detector
-- **Reads**: Layer 3 interpretations across categories
+- **Reads**: Layer 2 interpretations across categories
 - **Produces**: "Heavy combat AND resource depletion in the same area — possible connection" / "Crafting surge following exploration of new region"
 
 ### 3. Player Identity Consolidator
-- **Reads**: All player-related Layer 3 interpretations
+- **Reads**: All player-related Layer 2 interpretations
 - **Produces**: "The player is a combat-focused explorer with growing smithing expertise."
 
 ### 4. Faction Narrative Synthesizer
@@ -693,9 +698,9 @@ Layer 4 reads Layer 3 interpretations (full) and Layer 2 events (limited/summary
 
 | Evaluator Layer | Can See (Full) | Can See (Limited) | Cannot See |
 |:-:|:-:|:-:|:-:|
-| Layer 3 | Layer 2 events | Layer 1 stats | Layers 4-7 |
-| Layer 4 | Layer 3 interpretations | Layer 2 events | Layers 5-7 |
-| Layer 5 | Layer 4 connected | Layer 3 interpretations | Layers 6-7 |
+| Layer 2 | Raw Event Pipeline events | Layer 1 stats | Layers 3-7 |
+| Layer 3 | Layer 2 interpretations | Raw Event Pipeline events | Layers 4-7 |
+| Layer 4 | Layer 3 consolidated | Layer 2 interpretations | Layers 5-7 |
 
 ## 6.5 Dual Coverage Map
 
@@ -713,11 +718,11 @@ The same event type can trigger multiple evaluators:
 
 ---
 
-# 7. Aggregation & World State (Layers 4-7)
+# 7. Aggregation & World State (Layers 3-7)
 
-## 7.1 Layer 4: Connected Interpretations
+## 7.1 Layer 3: Municipality/Local Consolidation
 
-Each district maintains connected interpretations — cross-domain patterns detected by Layer 4 evaluators.
+Each district maintains consolidated interpretations — cross-domain patterns detected by Layer 3 evaluators.
 
 ```python
 @dataclass
@@ -725,16 +730,16 @@ class ConnectedInterpretation:
     interpretation_id: str
     created_at: float
     narrative: str                    # "Heavy combat AND resource depletion suggest..."
-    source_interpretation_ids: List[str]  # Layer 3 interpretations that fed this
+    source_interpretation_ids: List[str]  # Layer 2 interpretations that fed this
     category: str                     # "cross_domain", "regional_synthesis", "player_identity", "faction"
     severity: str                     # "minor"..."critical"
     affected_district_ids: List[str]
     affects_tags: List[str]
 ```
 
-## 7.2 Layer 5: Principality Summaries
+## 7.2 Layer 4: Smaller Region Events
 
-Per-province gross summaries. Updated when Layer 4 changes significantly.
+Per-province gross summaries. Updated when Layer 3 changes significantly.
 
 ```python
 @dataclass
@@ -748,7 +753,7 @@ class ProvinceSummary:
     last_updated: float
 ```
 
-## 7.3 Layer 6: Regional/National State
+## 7.3 Layer 5: Larger Region/Country Events
 
 Single row per realm capturing faction power, economic state, player reputation.
 
@@ -763,7 +768,22 @@ class RealmState:
     last_updated: float
 ```
 
-## 7.4 Layer 7: World State & Narrative Threads
+## 7.4 Layer 6: Intercountry Events
+
+Cross-realm patterns, trade routes, and diplomatic state. Updated on multi-realm events.
+
+```python
+@dataclass
+class IntercountryState:
+    id: str
+    narrative: str                       # "Trade tensions between eastern and western realms"
+    cross_realm_patterns: List[str]      # Detected patterns spanning realms
+    trade_route_state: Dict[str, str]    # route_id → "active"/"disrupted"/"closed"
+    diplomatic_state: Dict[str, str]     # realm_pair → "allied"/"neutral"/"hostile"
+    last_updated: float
+```
+
+## 7.5 Layer 7: World Events & Narrative Threads
 
 The "Heart of Memory" — persistent story elements and world identity.
 
@@ -797,20 +817,20 @@ class NarrativeThread:
 3. **Propagation with Distortion**: Distance from epicenter compresses information quality
 4. **Escalation or Decay**: Engaged → significance rises, new content generated. Ignored → decays → "forgotten"
 
-## 7.5 Aggregation Manager
+## 7.6 Aggregation Manager
 
 ```python
 class AggregationManager:
-    """Maintains Layers 4-5. Updated when Layer 3 events change. Singleton."""
+    """Maintains Layers 3-4. Updated when Layer 2 events change. Singleton."""
     def on_interpretation_created(self, interp: InterpretedEvent):
-        # Update Layer 4 for affected localities/districts
+        # Update Layer 3 for affected localities/districts
         for locality_id in interp.affected_locality_ids:
             knowledge = self._get_or_create_local(locality_id)
             knowledge.recent_interpretations.insert(0, interp.interpretation_id)
             if interp.is_ongoing:
                 knowledge.ongoing_conditions.append(interp.interpretation_id)
             knowledge.compile_summary()
-        # Propagate to Layer 5 if significant
+        # Propagate to Layer 4 if significant
         if interp.severity in ("significant", "major", "critical"):
             for province_id in interp.affected_province_ids:
                 self._refresh_province_summary(province_id)
@@ -847,7 +867,7 @@ class DailyLedger:
     active_playtime: float; primary_activity: str  # "combat"/"gathering"/"crafting"/etc.
 ```
 
-Computed by querying Layer 2 events for that day's time range. Stored in `daily_ledgers` SQLite table. **Never pruned** — one row per day is trivial.
+Computed by querying Raw Event Pipeline events for that day's time range. Stored in `daily_ledgers` SQLite table. **Never pruned** — one row per day is trivial.
 
 ## 8.2 Meta-Daily Stats (Streaks & Patterns)
 
@@ -932,9 +952,9 @@ STAT_KEY_TO_TAGS = {
 
 **No changes to stat_tracker.py.** This mapping lives in the query layer.
 
-## 9.2 Layer 2 Tagging (Auto-Generated from Event Data)
+## 9.2 Raw Event Pipeline Tagging (Auto-Generated from Event Data)
 
-Every Layer 2 event gets tags auto-generated at recording time via a **field-to-tag derivation map**:
+Every Raw Event Pipeline event gets tags auto-generated at recording time via a **field-to-tag derivation map**:
 
 ```python
 # Always: event type tag
@@ -986,9 +1006,9 @@ tags = [
 ]
 ```
 
-## 9.3 Layer 3 Tagging (Inherited + Derived)
+## 9.3 Layer 2 Tagging (Inherited + Derived)
 
-**Inherited** from cause events (Layer 2):
+**Inherited** from cause events (Raw Event Pipeline):
 ```python
 KEEP_CATEGORIES = {"species", "resource", "biome", "location", "domain", "element", "tier", "combat"}
 inherited = [t for t in all_cause_tags if t.split(":")[0] in KEEP_CATEGORIES]
@@ -1011,7 +1031,7 @@ else:                   tags.append("scope:regional")
 
 ## 9.4 Similarity Grouping for Threshold Counting
 
-The trigger system (§2) needs to count "similar" interpretations for Layer 3→4 escalation:
+The trigger system (§2) needs to count "similar" interpretations for Layer 2→3 escalation:
 
 ```python
 def get_similarity_key(interp) -> Tuple[str, str, str]:
@@ -1021,17 +1041,17 @@ def get_similarity_key(interp) -> Tuple[str, str, str]:
     return (interp.category, primary_tag, primary_region)
 ```
 
-Example: Three wolf-related interpretations in Whispering Woods → key `(population_change, species:wolf, whispering_woods)` → count=3 → threshold hit → Layer 4 triggered.
+Example: Three wolf-related interpretations in Whispering Woods → key `(population_change, species:wolf, whispering_woods)` → count=3 → threshold hit → Layer 3 triggered.
 
 ## 9.5 Tag Lifecycle
 
 ```
-Layer 0 (Bus)     → No tags
+GameEventBus      → No tags
 Layer 1 (Stats)   → Implicit (stat key structure)
-Layer 2 (Events)  → AUTO-TAGGED from fields + derived (location, intensity, quality)
-Layer 3 (Interp)  → INHERITED from Layer 2 + DERIVED (category, severity, trend, scope)
-Layer 4 (Connect) → Tags from constituent Layer 3 interpretations
-Layer 5-7         → Tags from notable lower-layer events
+Raw Event Pipeline → AUTO-TAGGED from fields + derived (location, intensity, quality)
+Layer 2 (Interp)  → INHERITED from Raw Event Pipeline + DERIVED (category, severity, trend, scope)
+Layer 3 (Consol)  → Tags from constituent Layer 2 interpretations
+Layers 4-7        → Tags from notable lower-layer events
 ```
 
 ---
@@ -1043,8 +1063,8 @@ Layer 5-7         → Tags from notable lower-layer events
 | Pathway | Source | Speed | Use Case |
 |---------|--------|-------|----------|
 | **Fast Path** | Layer 1 (stat_tracker) | Microseconds | "How many wolves killed total?" |
-| **Narrative Path** | Layers 3-5 (interpretations) | Milliseconds | "What's happening near the blacksmith?" |
-| **Detail Path** | Layer 2 (raw events) | Milliseconds | Evaluators needing evidence |
+| **Narrative Path** | Layers 2-4 (interpretations) | Milliseconds | "What's happening near the blacksmith?" |
+| **Detail Path** | Raw Event Pipeline (raw events) | Milliseconds | Evaluators needing evidence |
 
 ## 10.2 Entity-First Query Architecture
 
@@ -1067,10 +1087,10 @@ class WorldQuery:
         # 3. Nearby events filtered by interest tags (relevance > 0.2)
         nearby_events = self._get_nearby_relevant_events(entity, window, current_game_time)
 
-        # 4. Local knowledge (Layer 4 summary for home locality)
+        # 4. Local knowledge (Layer 3 summary for home locality)
         local_context = self._get_local_context(entity)
 
-        # 5. Regional knowledge (Layer 5 summary for province)
+        # 5. Regional knowledge (Layer 4 summary for province)
         regional_context = self._get_regional_context(entity)
 
         # 6. Ongoing conditions matching entity's tags (relevance > 0.3)
@@ -1097,18 +1117,19 @@ Two windows that work together:
 
 ## 10.3 What Each Consumer Gets
 
-### NPC Dialogue (~500 token budget)
+### Context Budget: NPC Dialogue Consumer (~500 tokens)
+What the WMS provides when a consumer calls `query_entity(npc_id)`:
 1. NPC personality + role (from entity tags) — ~50 tokens
 2. Recent interactions with player (from activity log) — ~100 tokens
-3. Local knowledge summary (Layer 4) — ~100 tokens
+3. Local knowledge summary (Layer 3) — ~100 tokens
 4. Relevant ongoing conditions (tag-filtered) — ~100 tokens
-5. Regional context (Layer 5, if notable) — ~50 tokens
+5. Regional context (Layer 4, if notable) — ~50 tokens
 6. Gossip (distance-filtered interpretations) — ~100 tokens
 
-### Quest Generation (~1000 token budget)
+### Context Budget: Quest Generation Consumer (~1000 tokens)
 All of the above plus: player profile, resource state, active narrative threads, faction standings.
 
-### Content Generation (~500 token budget)
+### Context Budget: Content Generation Consumer (~500 tokens)
 Regional themes, active threads, player level/needs, scarcity data.
 
 ## 10.4 Distance-Based Information Quality
@@ -1126,7 +1147,7 @@ This is NOT lying — it's **information compression and uncertainty**. An NPC 5
 
 ## 10.5 Gossip Propagation (Write-Time)
 
-When a Layer 3+ interpretation is created, it's pushed to nearby NPC memory with distance-based delays:
+When a Layer 2+ interpretation is created, it's pushed to nearby NPC memory with distance-based delays:
 
 | Distance | Delay | Detail Level |
 |----------|-------|-------------|
@@ -1135,7 +1156,7 @@ When a Layer 3+ interpretation is created, it's pushed to nearby NPC memory with
 | Same province | 420s | Rumor |
 | Cross-province | 24h+ | Only if severity ≥ "major" |
 
-Stored in `npc_memory.knowledge_json` for retrieval during dialogue generation.
+Stored in `npc_memory.knowledge_json` for retrieval by consumer systems (e.g., dialogue generation).
 
 ## 10.6 Convenience Query Methods
 
@@ -1146,10 +1167,10 @@ world_query.query_location("whispering_woods", window, time)
 # Fast Layer 1 lookup
 world_query.query_player_stat("combat_stats.wolf_kills")
 
-# Raw Layer 2 spatial query
+# Raw Event Pipeline spatial query
 world_query.query_events_in_area(x, y, radius, window, tag_filter=["species:wolf"])
 
-# Direct Layer 3 query
+# Direct Layer 2 query
 world_query.query_interpretations(category="population_change", severity_min="moderate")
 ```
 
@@ -1157,9 +1178,9 @@ world_query.query_interpretations(category="population_change", severity_min="mo
 
 # 11. Storage Schema
 
-All Layer 2-7 data lives in a single SQLite database per save file.
+All Raw Event Pipeline through Layer 7 data lives in a single SQLite database per save file.
 
-## 11.1 Layer 2: Raw Events
+## 11.1 Raw Event Pipeline: Raw Events
 
 ```sql
 CREATE TABLE events (
@@ -1193,7 +1214,7 @@ CREATE TABLE occurrence_counts (
 );
 ```
 
-## 11.2 Layer 3: Interpretations
+## 11.2 Layer 2: Interpretations
 
 ```sql
 CREATE TABLE interpretations (
@@ -1217,7 +1238,7 @@ CREATE TABLE interpretation_tags (
 );
 ```
 
-## 11.3 Layer 4: Connected Interpretations
+## 11.3 Layer 3: Municipality/Local Consolidation
 
 ```sql
 CREATE TABLE connected_interpretations (
@@ -1234,7 +1255,7 @@ CREATE TABLE connected_interpretation_tags (
 );
 ```
 
-## 11.4 Layer 5: Province Summaries
+## 11.4 Layer 4: Smaller Region Events
 
 ```sql
 CREATE TABLE province_summaries (
@@ -1248,7 +1269,7 @@ CREATE TABLE province_summaries (
 );
 ```
 
-## 11.5 Layer 6: Realm State
+## 11.5 Layer 5: Larger Region/Country Events
 
 ```sql
 CREATE TABLE realm_state (
@@ -1261,7 +1282,20 @@ CREATE TABLE realm_state (
 );
 ```
 
-## 11.6 Layer 7: World Narrative
+## 11.6 Layer 6: Intercountry Events
+
+```sql
+CREATE TABLE intercountry_state (
+    id TEXT PRIMARY KEY,
+    narrative TEXT DEFAULT '',
+    cross_realm_patterns_json TEXT DEFAULT '[]',
+    trade_route_state_json TEXT DEFAULT '{}',
+    diplomatic_state_json TEXT DEFAULT '{}',
+    last_updated REAL DEFAULT 0.0
+);
+```
+
+## 11.7 Layer 7: World Events
 
 ```sql
 CREATE TABLE world_narrative (
@@ -1286,7 +1320,7 @@ CREATE TABLE narrative_threads (
 );
 ```
 
-## 11.7 Supporting Tables
+## 11.8 Supporting Tables
 
 ```sql
 CREATE TABLE entity_state (
@@ -1345,52 +1379,66 @@ CREATE TABLE biome_resources (
 );
 ```
 
-## 11.8 Data Flow Summary
+## 11.9 Data Flow Summary
 
 ```
-Player Action → EventBus (Layer 0)
+Player Action → EventBus
     ├→ stat_tracker (Layer 1) — cumulative counters
-    └→ EventRecorder (Layer 2) — SQLite: events + event_tags + occurrence_counts
+    └→ EventRecorder (Raw Event Pipeline) — SQLite: events + event_tags + occurrence_counts
         └→ TriggerManager checks thresholds
-            └→ Layer 3 evaluators → interpretations + interpretation_tags
-                └→ Layer 4 evaluators → connected_interpretations
-                    └→ Layer 5 → province_summaries
-                        └→ Layer 6 → realm_state
-                            └→ Layer 7 → world_narrative + narrative_threads
+            └→ Layer 2 evaluators → interpretations + interpretation_tags
+                └→ Layer 3 consolidators → connected_interpretations
+                    └→ Layer 4 → province_summaries
+                        └→ Layer 5 → realm_state
+                            └→ Layer 6 → intercountry_state
+                                └→ Layer 7 → world_narrative + narrative_threads
 ```
 
 ---
 
-# 12. Living World Agents
+# 12. Consumer Systems (External to World Memory)
+
+> **IMPORTANT**: The systems below are **consumers** of the World Memory System, NOT part of it.
+> They live in `world_system/living_world/` for organizational convenience, but they are architecturally
+> separate. The World Memory System (Layer 1, Raw Event Pipeline, and Layers 2-7) collects, interprets, and serves data.
+> Consumer systems READ that data and take outgoing actions (dialogue, reputation changes, etc.).
+> The boundary: **World Memory writes information state. Consumers write game state.**
 
 ## 12.1 Architecture
 
-Five autonomous agents subscribe to the GameEventBus and use the World Memory System:
-
 ```
-GameEventBus ──→ EventRecorder (writes Layer 2)
-             ──→ FactionSystem (tracks reputation)
-             ──→ EcosystemAgent (manages resource lifecycle)
-             ──→ NPC Agent System (dialogue + gossip)
-             ──→ BackendManager (routes LLM calls)
-```
-
-## 12.2 BackendManager (Phase 2.2)
-
-Unified LLM router. Tries backends in order: ollama → claude → mock.
-
-```python
-class BackendManager:
-    """Routes LLM calls to available backend. Singleton."""
-    def generate(self, prompt: str, system: str = "", max_tokens: int = 200,
-                 temperature: float = 0.7) -> str: ...
+                     ┌─────────────────────────────────────────┐
+                     │         WORLD MEMORY SYSTEM             │
+                     │     (Data Collection & Interpretation)   │
+GameEventBus ──→     │  EventRecorder → SQLite (Raw Event Pipeline) │
+                     │  Evaluators → Interpretations (Layer 2+)    │
+                     │  WorldQuery → EntityQueryResult (reads)  │
+                     └──────────────┬──────────────────────────┘
+                                    │ READS
+                     ┌──────────────▼──────────────────────────┐
+                     │         CONSUMER SYSTEMS                 │
+                     │     (Outgoing Actions & Decisions)       │
+                     │  BackendManager (LLM routing)            │
+                     │  NPC Dialogue (uses memory as context)   │
+                     │  Faction System (reputation decisions)   │
+                     │  Ecosystem Agent (resource lifecycle)    │
+                     └──────────────────────────────────────────┘
 ```
 
-All AI inference goes through BackendManager — no direct API calls elsewhere.
+## 12.2 What World Memory Provides to Consumers
 
-## 12.3 NPC Agent System (Phase 2.3)
+The World Memory System provides **context and state** that consumer systems use:
 
-### NPCMemory
+| Consumer | What WMS Provides | What the Consumer Does (NOT WMS) |
+|----------|-------------------|----------------------------------|
+| NPC Dialogue | NPCMemory (knowledge, relationship, emotion), EntityQueryResult, gossip | Generates dialogue text via LLM |
+| Faction System | Event history (kills, quests, crafting) | Decides reputation changes, applies ripple |
+| Ecosystem Agent | Resource gathering counts per biome | Manages regeneration, scarcity thresholds |
+| Quest Generator | Player profile, regional state, scarcity | Creates quest objectives and rewards |
+
+## 12.3 NPC Memory (WMS-Owned Data)
+
+The World Memory System owns and manages NPC memory state:
 
 ```python
 @dataclass
@@ -1402,19 +1450,9 @@ class NPCMemory:
     last_interaction: float
 ```
 
-### Dialogue Generation Flow
+**Gossip propagation** is a write-time WMS operation: when Layer 2+ interpretations are created, they're pushed to nearby NPC memory with distance-based delays (60s local, 180s district, 420s province). NPCs only receive gossip matching their interest tags (relevance > 0.2). This data is stored — how it's used for dialogue is a consumer concern.
 
-1. Player initiates conversation with NPC
-2. System calls `world_query.query_entity(npc_id)` → gets EntityQueryResult
-3. Assembles prompt: NPC personality + recent interactions + local knowledge + ongoing conditions + gossip
-4. BackendManager generates dialogue (~500 token budget)
-5. NPC memory updated with interaction record
-
-### Gossip Propagation
-
-When Layer 3+ interpretations are created, they're pushed to nearby NPCs with distance-based delays (60s local, 180s district, 420s province). NPCs only receive gossip matching their interest tags (relevance > 0.2).
-
-### 6 Personality Archetypes
+### 6 Personality Archetypes (Reference for Consumers)
 
 | Archetype | Style | Focus |
 |-----------|-------|-------|
@@ -1425,13 +1463,15 @@ When Layer 3+ interpretations are created, they're pushed to nearby NPCs with di
 | Scholar | Analytical, precise | Knowledge, discovery |
 | Recluse | Brief, wary | Minimal interaction |
 
-## 12.4 Faction System (Phase 2.4)
+## 12.4 Faction State (WMS-Owned Data)
 
-### The 4 Factions
+The World Memory System tracks faction reputation as information state:
 
-Each faction has reputation scale: Hostile → Unfriendly → Neutral → Friendly → Allied → Exalted.
+- 4 factions with reputation scale: Hostile → Unfriendly → Neutral → Friendly → Allied → Exalted
+- Reputation history with reasons and timestamps
+- Milestone thresholds (0.25, 0.5, 0.75) tracked for consumer use
 
-### Ripple Mechanics
+### Ripple Mechanics (Faction System Consumer Logic)
 
 When reputation changes with one faction, allied/hostile factions feel it:
 ```
@@ -1440,7 +1480,7 @@ Player gains +10 rep with Miners Guild
   → Forest Wardens (hostile) gains +10 × -0.3 = -3
 ```
 
-### Event→Reputation Mapping
+### Event→Reputation Mapping (Consumer Logic)
 
 | Event | Affected Faction | Rep Change |
 |-------|-----------------|-----------|
@@ -1449,9 +1489,9 @@ Player gains +10 rep with Miners Guild
 | Resource gathered (faction claim) | Claiming faction | -1 to -3 |
 | Trade with faction NPC | That faction | +1 to +3 |
 
-## 12.5 Ecosystem Agent (Phase 2.5)
+## 12.5 Ecosystem State (WMS-Owned Data)
 
-### Resource Lifecycle
+The World Memory System tracks biome resource levels as information state:
 
 ```
 Max Level (1.0) ──→ Player gathers ──→ Level decreases
@@ -1460,12 +1500,11 @@ Max Level (1.0) ──→ Player gathers ──→ Level decreases
                     (regen_rate per game-time-unit)
 ```
 
-When resource level drops below 0.3 → triggers "resource_pressure" evaluator.
-When it drops below 0.1 → "critical_scarcity" interpretation generated.
+Threshold tracking (data only, not outgoing actions):
+- Below 0.3 → flags "resource_pressure" for evaluators
+- Below 0.1 → flags "critical_scarcity" for evaluators
 
-### Biome Resource Pools
-
-Each biome has base resource levels and regeneration rates. The EcosystemAgent queries Layer 2 gathering events to track consumption vs. regeneration.
+Each biome has base resource levels and regeneration rates tracked in `biome_resource_state` table.
 
 ---
 
@@ -1477,48 +1516,48 @@ Every place where AI inference or interpretation fires.
 
 | # | Touchpoint | Layer | Type | Status |
 |---|-----------|-------|------|--------|
-| 1-9 | Layer 3 Evaluators (Population, Ecosystem, Combat, Crafting, Milestones, Exploration, Social, Economy, Dungeon) | 3 | Template/Tiny LLM | Designed |
-| 10-13 | Layer 4 Evaluators (Regional Activity, Cross-Domain, Player Identity, Faction Narrative) | 4 | Tiny LLM | Designed |
+| 1-9 | Layer 2 Evaluators (Population, Ecosystem, Combat, Crafting, Milestones, Exploration, Social, Economy, Dungeon) | 2 | Template/Tiny LLM | Designed |
+| 10-13 | Layer 3 Evaluators (Regional Activity, Cross-Domain, Player Identity, Faction Narrative) | 3 | Tiny LLM | Designed |
 | 14 | NPC Dialogue Generation | Consumer | Medium LLM | Partially working |
 | 15 | Faction Milestone Narratives | Consumer | Template/Tiny LLM | Events fire, no narrative |
 | 16 | Ecosystem Scarcity → Gossip | Consumer | Template | Data exists, no bridge |
 | 17 | LLM Item Generator | External | Claude API | Working (separate system) |
 
-## 13.2 Layer 3 Flow
+## 13.2 Layer 2 Evaluator Flow
 
 ```
-Event hits threshold → Evaluator selected → Context assembled (Layer 2 events + TimeEnvelope)
+Event hits threshold → Evaluator selected → Context assembled (Raw Event Pipeline events + TimeEnvelope)
 → Template or LLM generates one-sentence narrative → InterpretedEvent created → Propagated to regions
 ```
 
-**Templates vs LLM**: Layers 3-4 use templates by default (fast, deterministic). LLM only when template cannot capture the pattern complexity. Higher layers (5+) always use LLM.
+**Templates vs LLM**: Layers 2-3 use templates by default (fast, deterministic). LLM only when template cannot capture the pattern complexity. Higher layers (4+) always use LLM.
 
-## 13.3 NPC Dialogue Enrichment (Touchpoint 14)
+## 13.3 Consumer Integration Gaps (NOT WMS Scope)
 
-**Currently working**: Basic personality + recent interactions.
-**Missing (ranked by impact)**:
-1. **Faction reputation** (HIGH) — NPC should reference player standing
-2. **NPC-specific world awareness** (MEDIUM) — query_entity results not yet in prompt
-3. **Ecosystem scarcity** (MEDIUM) — NPC should mention resource conditions
-4. **Gossip freshness** (LOW) — propagated knowledge not yet used
+The following are gaps in **consumer systems** that need WMS data but haven't integrated yet. These are listed for reference — fixing them is NOT part of World Memory System development:
 
-## 13.4 Known Gaps
+1. **NPC Dialogue** — `query_entity()` works but NPC dialogue system doesn't call it yet
+2. **Faction Milestones** — Events fire and log exists, but no consumer generates narrative feedback
+3. **Ecosystem Scarcity → NPC awareness** — `biome_resources` tracked, but gossip propagation bridge not wired
 
-| Gap | Data Available | Missing Bridge |
-|-----|---------------|---------------|
-| Faction milestones → player feedback | Events fire, log exists | No narrative generation |
-| Ecosystem scarcity → NPC awareness | biome_resources tracked | No gossip propagation |
-| WorldQuery → NPC prompts | query_entity works | Not integrated into dialogue flow |
+## 13.4 WMS Data Readiness
+
+| Data | WMS Layer | Available | Consumer Ready |
+|------|-----------|-----------|---------------|
+| NPC memory + gossip | Raw Event Pipeline + Layer 2 | Yes | No (dialogue system not integrated) |
+| Faction reputation state | Raw Event Pipeline | Yes | No (milestone narratives not generated) |
+| Ecosystem scarcity flags | Raw Event Pipeline | Yes | No (gossip bridge not wired) |
+| Player profile/archetype | Layer 1 | Partial | No consumer exists yet |
 
 ## 13.5 Implementation Priority
 
 ```
 1. Storage and retrieval layers (complete the pipeline)
-2. Triggers and evaluators (Layer 3 producing interpretations)
-3. Layer 4 evaluators (cross-domain patterns)
+2. Triggers and evaluators (Layer 2 producing interpretations)
+3. Layer 3 consolidators (cross-domain patterns)
 4. Retrieval integration into NPC prompts
 5. Gossip propagation plumbing
-6. Layer 5+ summaries
+6. Layer 4+ summaries
 ```
 
 ---
@@ -1584,19 +1623,23 @@ Game-1-modular/world_system/
 │
 ├── world_memory/                     # Memory system (Phase 2.1)
 │   ├── event_schema.py               # WorldMemoryEvent, EventType, InterpretedEvent
-│   ├── event_store.py                # SQLite Layer 2 CRUD
+│   ├── event_store.py                # SQLite Raw Event Pipeline CRUD
 │   ├── event_recorder.py             # Bus subscriber → SQLite writer
 │   ├── geographic_registry.py        # Region hierarchy, position lookup
 │   ├── entity_registry.py            # WorldEntity, EntityRegistry, tag index
 │   ├── tag_relevance.py              # calculate_relevance()
 │   ├── trigger_manager.py            # Dual-track threshold counting
 │   ├── interpreter.py                # WorldInterpreter + evaluator dispatch
-│   ├── evaluators/                   # Pattern evaluators
-│   │   ├── population.py, ecosystem.py, combat.py, crafting.py
-│   │   ├── milestones.py, exploration.py, social.py, economy.py, dungeon.py
-│   │   └── layer4/                   # Layer 4 evaluators
-│   │       ├── regional.py, cross_domain.py, player_identity.py, faction_narrative.py
-│   ├── aggregation.py                # Layers 4-5 maintenance
+│   ├── evaluators/                   # 33 pattern evaluators (Layer 2)
+│   │   ├── # Combat (6): kills regional low/high tier, global, boss, damage, style
+│   │   ├── # Gathering (4): regional, depletion, global, tools
+│   │   ├── # Crafting (7): 5 disciplines + minigame + inventions
+│   │   ├── # Progression (4): levels, skills, identity, equipment
+│   │   ├── # Exploration (2): territory, dungeons
+│   │   ├── # Social (2): NPC, quests
+│   │   ├── # Economy/Items (3): flow, equipment, inventory
+│   │   └── # Legacy (5): population, resources, area_danger, crafting, milestones
+│   ├── aggregation.py                # Layers 3-4 maintenance
 │   ├── query.py                      # WorldQuery, EntityQueryResult, EventWindow
 │   ├── daily_ledger.py               # DailyLedger, MetaDailyStats
 │   ├── time_envelope.py              # TimeEnvelope computation
@@ -1626,14 +1669,14 @@ Game-1-modular/world_system/
 - `position_sampler.py` — periodic breadcrumbs
 - **Test**: Play briefly, verify events in SQLite
 
-### Phase C: Interpreter (Layer 3)
+### Phase C: Evaluators (Layer 2)
 - `interpreter.py` + `evaluators/*.py` — 9 evaluators
 - `time_envelope.py` — temporal context
 - `daily_ledger.py` — daily aggregation
 - **Test**: Generate enough events to trigger thresholds, verify interpretations
 
 ### Phase D: Aggregation & Query
-- `aggregation.py` — Layer 4-5 maintenance
+- `aggregation.py` — Layer 3-4 maintenance
 - `query.py` — WorldQuery with dual window
 - **Test**: Query NPCs, regions — verify useful results
 
@@ -1643,10 +1686,10 @@ Game-1-modular/world_system/
 - Add save/load hooks
 - End-to-end test: play 30+ minutes, verify full pipeline
 
-### Phase F: Layer 4 Evaluators & Higher Layers
-- Layer 4 evaluators (cross-domain, regional, player identity, faction)
-- Layer 5 province summaries
-- Layer 6-7 realm/world state (may be deferred)
+### Phase F: Layer 3 Consolidators & Higher Layers
+- Layer 3 consolidators (cross-domain, regional, player identity, faction)
+- Layer 4 smaller region summaries
+- Layers 5-7 realm/intercountry/world state (may be deferred)
 
 ## 14.5 Estimated Sizes
 
@@ -1674,7 +1717,7 @@ Plus ~400 lines JSON configs and ~800 lines tests.
 
 # 15. Future Design: Narrative Threads & Player Profile
 
-> These concepts are **designed but not yet in the implementation plan**. They depend on Layers 3-5 being stable first. Included here for completeness.
+> These concepts are **designed but not yet in the implementation plan**. They depend on Layers 2-4 being stable first. Included here for completeness.
 
 ## 15.1 Narrative Threads (Layer 7)
 
@@ -1708,7 +1751,7 @@ class PlayerProfile:
 
 Observable signals: quest completion speed, kill:death ratio, combat vs. crafting time ratio, resource hoarding vs. spending, NPC visit patterns, combat tier preferences.
 
-**Not stored directly** — computed periodically from Layer 2 events and DailyLedger history.
+**Not stored directly** — computed periodically from Raw Event Pipeline events and DailyLedger history.
 
 ## 15.3 Generation Context (Future)
 
@@ -1735,15 +1778,15 @@ A complete trace through the system showing how a player action ripples through 
 
 **Setup**: Player has been mining iron in the Iron Hills for several game-days.
 
-### Step 1: Player Mines Iron (Layer 0→2)
+### Step 1: Player Mines Iron (Bus→Raw Event Pipeline)
 ```
 GameEventBus.publish("RESOURCE_GATHERED", {resource_type: "iron_ore", quantity: 3, ...})
 → stat_tracker: iron_ore_gathered += 3 (Layer 1)
-→ EventRecorder: writes WorldMemoryEvent to SQLite (Layer 2)
+→ EventRecorder: writes WorldMemoryEvent to SQLite (Raw Event Pipeline)
    Tags: [event:resource_gathered, resource:iron, biome:quarry, location:iron_hills, tier:2]
 ```
 
-### Step 2: Threshold Hit (Layer 2→3)
+### Step 2: Threshold Hit (Raw Event Pipeline→Layer 2)
 ```
 TriggerManager: iron gathering in iron_hills count = 100 → THRESHOLD HIT
 → Interpreter dispatches to EcosystemPressureEvaluator
@@ -1768,7 +1811,7 @@ FactionSystem: mining in Miners Guild territory
 → Log: "Player contributing to guild mining output"
 ```
 
-### Step 5: NPC Gets Gossip (Layer 3→NPC)
+### Step 5: NPC Gets Gossip (Layer 2→NPC)
 ```
 Gareth the Blacksmith (same locality, 60s delay):
 → Receives full interpretation: "Iron deposits becoming strained in Iron Hills"
@@ -1777,13 +1820,13 @@ Gareth the Blacksmith (same locality, 60s delay):
    about my supply. You've been mining a lot — maybe ease up?"
 ```
 
-### Step 6: Layer 4 Pattern Detection
+### Step 6: Layer 3 Pattern Detection
 ```
-Iron Hills now has 3+ Layer 3 interpretations:
+Iron Hills now has 3+ Layer 2 interpretations:
   - "Resource pressure on iron" (ecosystem)
   - "Heavy gathering activity" (economy)
   - "Mining specialization detected" (crafting)
-→ Layer 4 Cross-Domain evaluator fires:
+→ Layer 3 Cross-Domain consolidator fires:
   "The Iron Hills are experiencing intensive resource extraction. Multiple
    systems show correlated pressure on iron supply."
 ```

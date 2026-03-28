@@ -1,8 +1,8 @@
 # World Memory System — Handoff Status
 
-**Date**: 2026-03-26
-**Branch**: `claude/living-world-combat-phase-2-XBxdJ`
-**Phase**: 2.1 (Memory Layer) — Layer 1 complete, Layer 2 infrastructure complete
+**Date**: 2026-03-28
+**Branch**: `claude/integrate-world-system-layers-396nS`
+**Phase**: Layer 1-2 complete. Tag library designed. Retrieval system designed.
 **Tests**: 56 passing (0 failures)
 
 ---
@@ -52,7 +52,7 @@ CREATE TABLE stats (
 
 **Save system:** Stats live in `world_memory.db` (SQLite). `to_dict()` still works for backward compat with old JSON saves. `from_dict()` imports v1.0 legacy saves into SQL automatically.
 
-### Layer 2: Event Recording Infrastructure (COMPLETE)
+### Raw Event Pipeline: Event Recording Infrastructure (COMPLETE)
 
 **Core files:**
 - `world_system/world_memory/event_store.py` (~1,100 lines) — 20 SQL tables, full CRUD
@@ -65,7 +65,7 @@ CREATE TABLE stats (
 - Auto-tagging: location, species, intensity, element, tier, discipline, quality
 - Threshold triggers: fires at `1, 3, 5, 10, 25, 50, 100, 250, 500, 1000...` (NOT primes)
 - Dual-track counting: individual streams + regional accumulators
-- 20 SQL tables covering Layers 2-7 (higher layers are empty schemas, ready for data)
+- 20 SQL tables covering Raw Event Pipeline through Layer 7 (higher layers are empty schemas, ready for data)
 
 **Bus events published (13 types):**
 `DAMAGE_DEALT`, `ENEMY_KILLED`, `PLAYER_HIT`, `DODGE_PERFORMED`, `RESOURCE_GATHERED`, `ITEM_CRAFTED`, `LEVEL_UP`, `SKILL_ACTIVATED`, `EQUIPMENT_CHANGED`, `PLAYER_DIED`, `STATUS_APPLIED`, `NPC_INTERACTION`, `QUEST_ACCEPTED`, `QUEST_COMPLETED`
@@ -85,15 +85,20 @@ CREATE TABLE stats (
 | Tag Relevance | `tag_relevance.py` (69 lines) | Working — entity-event relevance scoring |
 | Config Loader | `config_loader.py` (80 lines) | Working — JSON config loading |
 
-### Living World Agents (PRE-EXISTING, NOT MODIFIED)
+### Consumer Systems (PRE-EXISTING, EXTERNAL TO WMS)
 
-| Agent | File | Status |
-|-------|------|--------|
-| Backend Manager | `living_world/backends/backend_manager.py` (553 lines) | Working — LLM routing (ollama→claude→mock) |
-| NPC Agent | `living_world/npc/npc_agent.py` (481 lines) | Working — dialogue generation, gossip |
-| NPC Memory | `living_world/npc/npc_memory.py` (184 lines) | Working — per-NPC persistent state |
-| Faction System | `living_world/factions/faction_system.py` (463 lines) | Working — reputation, ripple mechanics |
-| Ecosystem Agent | `living_world/ecosystem/ecosystem_agent.py` (398 lines) | Working — resource lifecycle |
+> These are **consumer systems** that live in `living_world/` for organizational convenience.
+> They are NOT part of the World Memory System — they READ WMS data to make outgoing decisions.
+> NPC dialogue generation, faction reputation decisions, and ecosystem lifecycle management
+> are consumer-side concerns, not WMS concerns.
+
+| Consumer | File | Relationship to WMS |
+|----------|------|---------------------|
+| Backend Manager | `living_world/backends/backend_manager.py` (553 lines) | LLM infrastructure — no WMS dependency |
+| NPC Agent | `living_world/npc/npc_agent.py` (481 lines) | Dialogue generation READS NPCMemory and WorldQuery |
+| NPC Memory | `living_world/npc/npc_memory.py` (184 lines) | WMS-owned data — gossip propagation writes here |
+| Faction System | `living_world/factions/faction_system.py` (463 lines) | READS events, WRITES reputation state |
+| Ecosystem Agent | `living_world/ecosystem/ecosystem_agent.py` (398 lines) | READS gathering events, WRITES resource state |
 
 ### Tests
 
@@ -109,39 +114,61 @@ CREATE TABLE stats (
 
 ## What's NOT Built Yet
 
-### Next Priority: Retrieval Mechanism
+### Layer 2 Evaluators: IMPLEMENTED (33 evaluators, all passing)
 
-The WorldQuery class exists (365 lines) but hasn't been connected to real consumers. The next task is making retrieval work — specifically:
+28 new granular evaluators + 5 legacy evaluators. Each evaluator has a specific
+**input frame of reference** — defined by what data it queries and how it processes it.
+Same event can trigger multiple evaluators through different frames (e.g., a wolf kill
+triggers both `combat_kills_regional_low_tier` and `combat_kills_global`).
 
-1. **Wire WorldQuery results into NPC dialogue generation** — The NPC agent system (`npc_agent.py`) generates dialogue via BackendManager but doesn't use WorldQuery to provide world context. The NPC should know about nearby events, regional conditions, resource scarcity, and player reputation.
+Output is **minimal narration** — data to text, not editorializing:
+- GOOD: "Player has killed 10 wolves in Whispering Woods."
+- BAD: "The wolf population is declining in Whispering Woods."
 
-2. **Implement the 3 retrieval pathways** (Design doc §10):
-   - **Fast Path**: Layer 1 stat lookups (microsecond) — `stat_store.get()` — DONE
-   - **Narrative Path**: Layer 3-5 interpretations (millisecond) — needs evaluators producing data first
-   - **Detail Path**: Layer 2 raw events (millisecond) — `event_store.query()` — DONE
+Scope comes from the DATA, not from the evaluator. If the event has locality_id,
+the narration is regional. If not, it's global.
 
-3. **Entity-first query integration**: `world_query.query_entity("npc_gareth")` works but nobody calls it yet. Wire it into the NPC dialogue prompt assembly.
+| Category | Count | Evaluators |
+|----------|-------|------------|
+| Combat | 6 | kills_regional_low_tier, kills_regional_high_tier, kills_global, boss_kills, damage_regional, combat_style |
+| Gathering | 4 | regional, depletion, global, tools |
+| Crafting | 7 | smithing, alchemy, refining, engineering, enchanting, minigame, inventions |
+| Progression | 4 | levels, skills, identity, equipment |
+| Exploration | 2 | territory, dungeons |
+| Social | 2 | npc, quests |
+| Economy/Items | 3 | economy_flow, items_equipment, items_inventory |
+| Legacy | 5 | population, resources, area_danger, crafting_trends, player_milestones |
 
-### Layer 3: Evaluators (DESIGNED, PARTIALLY IMPLEMENTED)
+### Next Priority: Tag Library + Retrieval System
 
-5 evaluators exist but need updating for the new threshold trigger system:
-- `evaluators/population.py` — Population dynamics
-- `evaluators/resources.py` — Resource pressure
-- `evaluators/crafting.py` — Crafting trends
-- `evaluators/area_danger.py` — Area danger levels
-- `evaluators/player_milestones.py` — Player milestones
+**Tag Library** (`TAG_LIBRARY.md`): 60-category tag taxonomy across 7 layers.
+- Layer 1: 30 factual dimension tags
+- Layers 2-7: progressive unlock (~5 per layer)
+- Key design: significance RECREATED per layer, key tags (scope, urgency, address) UPDATED not inherited
+- Tags describe EVENTS not regions
+- Pending: procedural tag assignment implementation
 
-4 more evaluators are designed but not implemented:
-- Exploration & Discovery
-- Social & Reputation
-- Economy & Items
-- Dungeon Progress
+**Retrieval System**: Tag-intersection search across all layers.
+1. Each layer has its own SQL table with junction table for tags
+2. Query by combining tags: `[domain:combat, district:whispering_woods]`
+3. Work across layers (Layer 1 stats → Layer 2 events → Layer 3+ consolidated)
 
-4 Layer 4 evaluators (cross-domain pattern detection) are designed but not implemented.
+**Retrieval pathways** (Design doc §10):
+- **Fast Path**: Layer 1 stat lookups (microsecond) — `stat_store.get()` — DONE
+- **Narrative Path**: Layer 2 interpretations (millisecond) — evaluators now producing data
+- **Detail Path**: Raw Event Pipeline raw events (millisecond) — `event_store.query()` — DONE
 
-### Layer 5-7: Higher Aggregation (SCHEMA ONLY)
+> **NOTE**: Wiring WorldQuery into NPC dialogue is a **consumer integration task**, not a WMS task.
 
-SQL tables exist for province summaries, realm state, world narrative, and narrative threads. No code writes to them yet.
+### Known Issues / Touch-ups Needed
+
+- `gathering_depletion`: Needs total node count per chunk from Layer 1 to calculate percentages (currently just counts depletion events)
+- Legacy evaluators (population, area_danger, etc.) still use editorializing narration — should be updated to minimal data-to-text style
+- Config for new evaluators uses hardcoded defaults — should be added to memory-config.json
+
+### Layers 3-7: Higher Aggregation (SCHEMA ONLY, NOT IMPLEMENTED)
+
+SQL tables exist for municipality consolidation, province summaries, realm state, intercountry state, world narrative, and narrative threads. No code writes to them yet.
 
 ### Known Coverage Gaps in Layer 1 (~15%)
 
@@ -163,7 +190,7 @@ These stats exist in design but can't be tracked yet because the game systems do
 | Document | Location | Purpose |
 |----------|----------|---------|
 | **WORLD_MEMORY_SYSTEM.md** | `world_system/docs/` | **Single source of truth** — 1,821 lines covering all 16 design sections |
-| **FOUNDATION_IMPLEMENTATION_PLAN.md** | `world_system/docs/` | Implementation plan for Layer 1-2 (1,263 lines) — mostly executed |
+| **FOUNDATION_IMPLEMENTATION_PLAN.md** | `world_system/docs/` | Implementation plan for Layer 1 + Raw Event Pipeline (1,263 lines) — mostly executed |
 | **HANDOFF_STATUS.md** | `world_system/docs/` | This file — current state for handoff |
 | **README.md** | `world_system/docs/` | Points to WORLD_MEMORY_SYSTEM.md |
 | **Archive** | `world_system/docs/archive/` | 7 superseded design docs (historical reference) |
@@ -218,10 +245,74 @@ Game Loop:
 
 ---
 
+## What Was Built This Session (2026-03-28)
+
+### Layer 2: 33 Evaluators
+28 new + 5 legacy evaluators producing minimal data-to-text narrations.
+All narrations are factual ("Player has killed 10 wolves in X") not editorial.
+Each evaluator has a specific input frame of reference (regional vs global,
+per-tier, per-discipline). Same event triggers multiple evaluators.
+
+### Tag Library (65 categories across 7 layers)
+- See `TAG_LIBRARY.md` for full specification
+- Layer 1: 30 factual dimension categories
+- Layer 2: 6 geographic/assessment categories
+- Layers 3-7: 5 new per layer (interpretation, regional, world)
+- `significance` RECREATED at each layer (fresh judgment)
+- Key tags (scope, urgency, address) UPDATED not inherited
+- Tags describe EVENTS not regions
+- Higher layers (4+) gain full tag rewrite capability (configurable)
+
+### Tag Assignment Engine
+- `tag_library.py`: 65 category definitions with layer unlock, validation
+- `tag_assignment.py`: Layer1TagMapper (manual mapping), Layer2TagAssigner
+  (inheritance + geographic), HigherLayerTagAssigner (inheritance + override)
+- `layer_store.py`: Per-layer SQL tables with junction tag tables for retrieval
+
+### Layer 1 Stat Patterns: 374 mapped
+- `layer1-stat-tags.json`: 374 patterns with 8-12 tags each
+- 13 enemy-specific entries, 30 skill-specific entries
+- Covers: per-enemy damage dealt/taken, enchantment procs (13 types),
+  all 9 status effects applied/received, turret/trap/bomb stats,
+  per-consumable usage, crafting station usage (5 disciplines × 4 tiers),
+  minigame performance, stat allocation, near-death events, overkill
+- `tag_browser.py`: CLI tool to search/browse all patterns
+
+### Pipeline Integration
+- Tag enrichment wired into interpreter (_enrich_tags on every evaluator output)
+- LayerStore initialized in WorldMemorySystem alongside EventStore/StatStore
+- Daily ledger bug fixed (after_game_time → since_game_time)
+
+### Documentation Cleanup
+- Layer renumbering: evaluator output = Layer 2, not Layer 3
+- Consumer systems (NPC dialogue, factions) clearly separated from WMS
+- WORLD_MEMORY_SYSTEM.md section 12 rewritten with proper boundaries
+- living_world/__init__.py annotated as consumer code
+
+---
+
+## Design Philosophy (From Session Discussions)
+
+1. **Tags are the only indexing system.** Everything is found by tag intersection.
+2. **Significance is recreated, not inherited.** Each layer makes its own judgment.
+3. **Tags describe events, not regions.** "This event has dire living_impact" not "this region is dire."
+4. **Layer 2 inherits Layer 1 tags.** LLM writes event name + can add optional tags.
+5. **Layer 3+ inherits + LLM adds layer-specific.** Layer 4+ can rewrite all tags.
+6. **Evaluators have input frames, not output categories.** Same event → multiple evaluators.
+7. **Comprehensive > minimal.** Better to have too many well-tagged stats than dark zones.
+8. **Game knowledge in tags.** wolf_grey gets tier:1/rank:normal/attack_type:melee. Not generic.
+9. **Templates for now, LLM later.** Everything has template fallbacks that prove the pipeline works.
+10. **Each layer has its own SQL table.** Not all in one DB. Each with junction tag tables.
+
+---
+
 ## How to Continue
 
-1. **Read** `world_system/docs/WORLD_MEMORY_SYSTEM.md` — the single source of truth
-2. **Run tests** to verify everything works: `python world_system/world_memory/test_stat_store.py && python world_system/world_memory/test_foundation_pipeline.py && python world_system/world_memory/test_memory_system.py`
-3. **Next task**: Wire WorldQuery into NPC dialogue (the retrieval mechanism)
-4. **After that**: Expand evaluators to produce Layer 3 interpretations from Layer 1+2 data
-5. **Then**: Layer 4 cross-domain patterns, Layer 5+ summaries
+1. **Read** `TAG_LIBRARY.md` — the tag taxonomy design
+2. **Browse patterns**: `python -m world_system.world_memory.tag_browser search "turret"`
+3. **Run tests**: `python world_system/world_memory/test_stat_store.py && python world_system/world_memory/test_foundation_pipeline.py && python world_system/world_memory/test_memory_system.py`
+4. **Next task**: Procedural tag assignment implementation (LLM wiring)
+5. **Then**: Build retrieval system (tag-intersection search across layers)
+6. **Then**: Layer 3+ evaluators (consolidation, interpretation)
+7. **Then**: Hook up to actual game code (ensure Layer 1 collection fires, Layer 2 events generate)
+8. **Separately (consumer work, not WMS)**: Wire WorldQuery into NPC dialogue

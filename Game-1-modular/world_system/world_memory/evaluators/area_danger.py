@@ -1,4 +1,4 @@
-"""Area Danger Evaluator — detects when an area becomes more or less dangerous."""
+"""Area Danger Evaluator — narrates combat damage and death counts in a region."""
 
 from __future__ import annotations
 
@@ -29,19 +29,15 @@ class AreaDangerEvaluator(PatternEvaluator):
         self.major_deaths = t.get("major_death_count", 3)
         templates = cfg.get("narrative_templates", {})
         self.tpl_major = templates.get("major",
-            "{region} is extremely dangerous. The adventurer has died "
-            "{deaths} times here recently. This area poses a serious threat.")
+            "Player has died {deaths} times in {region} and taken damage {damage} times.")
         self.tpl_significant_death = templates.get("significant_death",
-            "{region} has proven hazardous. Frequent combat injuries and "
-            "a death mark this area as dangerous.")
+            "Player has died 1 time in {region} and taken damage {damage} times.")
         self.tpl_significant_deaths = templates.get("significant_deaths",
-            "{region} has proven hazardous. Frequent combat injuries and "
-            "deaths mark this area as dangerous.")
+            "Player has died {deaths} times in {region} and taken damage {damage} times.")
         self.tpl_moderate = templates.get("moderate",
-            "Combat activity is elevated in {region}. "
-            "The adventurer has taken repeated damage here.")
+            "Player has taken damage {damage} times in {region}.")
         self.tpl_minor = templates.get("minor",
-            "Some combat encounters in {region}.")
+            "Player has taken damage {damage} times in {region}.")
 
     def is_relevant(self, event: WorldMemoryEvent) -> bool:
         return event.event_type in self.RELEVANT_TYPES
@@ -77,19 +73,23 @@ class AreaDangerEvaluator(PatternEvaluator):
         if death_events >= self.major_deaths:
             severity = "major"
             narrative = self.tpl_major.format(
-                region=region_name, deaths=death_events)
+                region=region_name, deaths=death_events, damage=damage_events)
         elif death_events >= self.significant_deaths or threat_score >= self.significant_threat:
             severity = "significant"
             if death_events == 1:
-                narrative = self.tpl_significant_death.format(region=region_name)
+                narrative = self.tpl_significant_death.format(
+                    region=region_name, damage=damage_events)
             else:
-                narrative = self.tpl_significant_deaths.format(region=region_name)
+                narrative = self.tpl_significant_deaths.format(
+                    region=region_name, deaths=death_events, damage=damage_events)
         elif threat_score >= self.moderate_threat:
             severity = "moderate"
-            narrative = self.tpl_moderate.format(region=region_name)
+            narrative = self.tpl_moderate.format(
+                region=region_name, damage=damage_events)
         else:
             severity = "minor"
-            narrative = self.tpl_minor.format(region=region_name)
+            narrative = self.tpl_minor.format(
+                region=region_name, damage=damage_events)
 
         parent_id = region.parent_id if region else None
         return InterpretedEvent.create(

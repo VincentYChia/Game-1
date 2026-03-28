@@ -1,6 +1,6 @@
 """SQLite-backed event storage for the World Memory System.
 
-Handles Layer 2 (raw events) and Layer 3 (interpreted events) persistence.
+Handles raw event pipeline (structured events) and Layer 2 (interpreted events) persistence.
 Designed for fast indexed queries by type, actor, location, time range, and tags.
 
 All writes are auto-committed. Queries are read-only and return dataclass instances.
@@ -21,7 +21,7 @@ from world_system.world_memory.event_schema import InterpretedEvent, WorldMemory
 # ──────────────────────────────────────────────────────────────────────
 
 _SCHEMA_SQL = """
--- Layer 2: Raw Event Records
+-- Raw Event Pipeline: Structured Event Records
 CREATE TABLE IF NOT EXISTS events (
     event_id TEXT PRIMARY KEY,
     event_type TEXT NOT NULL,
@@ -71,7 +71,7 @@ CREATE INDEX IF NOT EXISTS idx_event_tags_tag ON event_tags(tag);
 CREATE INDEX IF NOT EXISTS idx_event_tags_event ON event_tags(event_id);
 
 
--- Layer 3: Interpreted Events
+-- Layer 2: Interpreted Events
 CREATE TABLE IF NOT EXISTS interpretations (
     interpretation_id TEXT PRIMARY KEY,
     created_at REAL NOT NULL,
@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS entity_state (
     state_json TEXT DEFAULT '{}'
 );
 
--- Region state (Layer 4/5 aggregation)
+-- Region state (Layer 3/4 aggregation)
 CREATE TABLE IF NOT EXISTS region_state (
     region_id TEXT PRIMARY KEY,
     active_conditions_json TEXT DEFAULT '[]',
@@ -234,7 +234,7 @@ CREATE TABLE IF NOT EXISTS regional_counters (
     PRIMARY KEY (region_id, event_category)
 );
 
--- Interpretation similarity counting for Layer 3→4 escalation
+-- Interpretation similarity counting for Layer 2→3 escalation
 CREATE TABLE IF NOT EXISTS interpretation_counters (
     category TEXT NOT NULL,
     primary_tag TEXT NOT NULL,
@@ -262,7 +262,7 @@ CREATE TABLE IF NOT EXISTS meta_daily_stats (
 
 
 -- ══════════════════════════════════════════════════════════════════
--- Layer 4: Connected Interpretations (cross-domain patterns)
+-- Layer 3: Connected Interpretations (cross-domain patterns)
 -- ══════════════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS connected_interpretations (
@@ -293,7 +293,7 @@ CREATE INDEX IF NOT EXISTS idx_connected_interp_tags_tag
 
 
 -- ══════════════════════════════════════════════════════════════════
--- Layer 5: Province Summaries
+-- Layer 4: Province Summaries
 -- ══════════════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS province_summaries (
@@ -308,7 +308,7 @@ CREATE TABLE IF NOT EXISTS province_summaries (
 
 
 -- ══════════════════════════════════════════════════════════════════
--- Layer 6: Realm State
+-- Layer 5: Realm State
 -- ══════════════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS realm_state (
@@ -322,7 +322,7 @@ CREATE TABLE IF NOT EXISTS realm_state (
 
 
 -- ══════════════════════════════════════════════════════════════════
--- Layer 7: World Narrative and Threads
+-- Layer 6: World Narrative and Threads
 -- ══════════════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS world_narrative (
@@ -360,7 +360,7 @@ CREATE INDEX IF NOT EXISTS idx_narrative_threads_significance
 class EventStore:
     """Persistent event storage using SQLite.
 
-    Handles both Layer 2 (raw events) and Layer 3 (interpreted events).
+    Handles both raw event pipeline (structured events) and Layer 2 (interpreted events).
     One database file per save slot, stored alongside the save JSON.
     """
 
@@ -410,10 +410,10 @@ class EventStore:
         if self._conn:
             self._conn.commit()
 
-    # ── Layer 2: Raw event CRUD ──────────────────────────────────────
+    # ── Raw Event Pipeline: Event CRUD ──────────────────────────────
 
     def record(self, event: WorldMemoryEvent) -> None:
-        """Store a single Layer 2 event."""
+        """Store a single raw event pipeline event."""
         conn = self.connection
         conn.execute(
             """INSERT OR REPLACE INTO events (
@@ -528,7 +528,7 @@ class EventStore:
               tags: Optional[List[str]] = None,
               limit: int = 50,
               order_desc: bool = True) -> List[WorldMemoryEvent]:
-        """Flexible query for Layer 2 events."""
+        """Flexible query for raw event pipeline events."""
         conn = self.connection
         conn.row_factory = sqlite3.Row
         clauses: List[str] = []
@@ -676,10 +676,10 @@ class EventStore:
         ).fetchall()
         return {(r[0], r[1], r[2]): r[3] for r in rows}
 
-    # ── Layer 3: Interpretation CRUD ─────────────────────────────────
+    # ── Layer 2: Interpretation CRUD ─────────────────────────────────
 
     def record_interpretation(self, interp: InterpretedEvent) -> None:
-        """Store a Layer 3 interpreted event."""
+        """Store a Layer 2 interpreted event."""
         conn = self.connection
         conn.execute(
             """INSERT OR REPLACE INTO interpretations (
@@ -744,7 +744,7 @@ class EventStore:
                               ongoing_only: bool = False,
                               include_archived: bool = False,
                               limit: int = 50) -> List[InterpretedEvent]:
-        """Query Layer 3 interpretations."""
+        """Query Layer 2 interpretations."""
         from world_system.world_memory.event_schema import SEVERITY_ORDER
         conn = self.connection
         conn.row_factory = sqlite3.Row
@@ -816,7 +816,7 @@ class EventStore:
         return None
 
     def is_referenced_by_interpretation(self, event_id: str) -> bool:
-        """Check if a Layer 2 event is referenced by any Layer 3 interpretation."""
+        """Check if a raw event pipeline event is referenced by any Layer 2 interpretation."""
         row = self.connection.execute(
             "SELECT 1 FROM interpretations WHERE cause_event_ids_json LIKE ? LIMIT 1",
             (f"%{event_id}%",),

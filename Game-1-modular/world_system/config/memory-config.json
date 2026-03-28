@@ -78,12 +78,12 @@
         "major_min": 50
       },
       "narrative_templates": {
-        "major": "The {enemy} population has been devastated in {region}. {count} have been killed in a short period. The species may take significant time to recover in this area.",
-        "significant": "{enemy} numbers are noticeably declining in {region}. {count} have been killed recently.",
-        "moderate": "Increased hunting activity has thinned the {enemy} population in {region}.",
-        "minor": "Several {enemy}s have been killed in {region}."
+        "major": "Player has killed {count} {enemy} in {region}.",
+        "significant": "Player has killed {count} {enemy} in {region}.",
+        "moderate": "Player has killed {count} {enemy} in {region}.",
+        "minor": "Player has killed {count} {enemy} in {region}."
       },
-      "description": "Detects when enemy kills in a region exceed natural recovery thresholds."
+      "description": "Narrates enemy kill counts in a region."
     },
 
     "resource_pressure": {
@@ -98,12 +98,12 @@
         "major_min": 100
       },
       "narrative_templates": {
-        "major": "{resource} deposits are critically strained in {region}. Over {count} units have been harvested recently, far outpacing natural regeneration.",
-        "significant": "{resource} is becoming scarce in {region}. Heavy harvesting ({count} units) is depleting available nodes.",
-        "moderate": "Notable {resource} harvesting activity in {region}. Resource availability may be declining.",
-        "minor": "Steady {resource} gathering is underway in {region}."
+        "major": "Player has gathered {count} {resource} in {region}.",
+        "significant": "Player has gathered {count} {resource} in {region}.",
+        "moderate": "Player has gathered {count} {resource} in {region}.",
+        "minor": "Player has gathered {count} {resource} in {region}."
       },
-      "description": "Detects when gathering outpaces regeneration in an area."
+      "description": "Narrates resource gathering counts in a region."
     },
 
     "area_danger": {
@@ -119,23 +119,23 @@
         "major_death_count": 3
       },
       "narrative_templates": {
-        "major": "{region} is extremely dangerous. The adventurer has died {deaths} times here recently. This area poses a serious threat.",
-        "significant_death": "{region} has proven hazardous. Frequent combat injuries and a death mark this area as dangerous.",
-        "significant_deaths": "{region} has proven hazardous. Frequent combat injuries and deaths mark this area as dangerous.",
-        "moderate": "Combat activity is elevated in {region}. The adventurer has taken repeated damage here.",
-        "minor": "Some combat encounters in {region}."
+        "major": "Player has died {deaths} times in {region} and taken damage {damage} times.",
+        "significant_death": "Player has died 1 time in {region} and taken damage {damage} times.",
+        "significant_deaths": "Player has died {deaths} times in {region} and taken damage {damage} times.",
+        "moderate": "Player has taken damage {damage} times in {region}.",
+        "minor": "Player has taken damage {damage} times in {region}."
       },
-      "description": "Detects when an area becomes more or less dangerous based on combat damage and deaths."
+      "description": "Narrates combat damage and death counts in a region."
     },
 
     "player_milestones": {
       "enabled": true,
       "kill_milestones": {
-        "1":  {"severity": "minor",       "template": "The adventurer has slain their first {enemy} in {region}."},
-        "5":  {"severity": "minor",       "template": "The adventurer is becoming experienced at hunting {enemy}s in {region}."},
-        "11": {"severity": "moderate",    "template": "The adventurer has become a proficient {enemy} hunter, with {count} kills in {region}."},
-        "29": {"severity": "significant", "template": "The adventurer is a seasoned {enemy} slayer. {count} have fallen in {region}."},
-        "97": {"severity": "major",       "template": "The adventurer is legendary among {enemy} hunters. {count} kills in {region}."}
+        "1":  {"severity": "minor",       "template": "Player has killed {count} {enemy} in {region}."},
+        "5":  {"severity": "minor",       "template": "Player has killed {count} {enemy} in {region}."},
+        "11": {"severity": "moderate",    "template": "Player has killed {count} {enemy} in {region}."},
+        "29": {"severity": "significant", "template": "Player has killed {count} {enemy} in {region}."},
+        "97": {"severity": "major",       "template": "Player has killed {count} {enemy} in {region}."}
       },
       "level_milestones": [5, 10, 15, 20, 25, 30],
       "level_major_threshold": 20,
@@ -153,7 +153,146 @@
       "quality_ratio_threshold": 0.3,
       "high_quality_types": ["superior", "masterwork", "legendary"],
       "moderate_craft_count": 20,
-      "description": "Detects crafting specialization and quality trends."
+      "description": "Narrates crafting activity counts and quality breakdown."
+    },
+
+    "_comment_new_evaluators": "All new evaluators below use get_evaluator_config() with these defaults. If a key is missing, the evaluator falls back to its hardcoded default.",
+
+    "combat_kills_regional_low_tier": {
+      "enabled": true, "lookback_time": 50.0,
+      "thresholds": {"minimum_trigger": 3, "moderate_min": 5, "significant_min": 15, "major_min": 30},
+      "description": "Narrates T1-T2 enemy kill counts in a region."
+    },
+    "combat_kills_regional_high_tier": {
+      "enabled": true, "lookback_time": 50.0,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 3, "significant_min": 5, "major_min": 10},
+      "description": "Narrates T3-T4 enemy kill counts in a region."
+    },
+    "combat_kills_global": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 10, "moderate_min": 50, "significant_min": 100, "major_min": 500},
+      "description": "Narrates total enemy kill counts globally."
+    },
+    "combat_boss_kills": {
+      "enabled": true,
+      "description": "Narrates each boss kill individually."
+    },
+    "combat_damage_regional": {
+      "enabled": true, "lookback_time": 30.0,
+      "thresholds": {"minimum_threat_score": 3, "moderate_threat_score": 8, "significant_threat_score": 15, "major_death_count": 3},
+      "description": "Narrates damage taken and death counts in a region."
+    },
+    "combat_style": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 5, "moderate_min": 25, "significant_min": 100, "major_min": 500},
+      "description": "Narrates dodge, status effect, and attack counts."
+    },
+    "gathering_regional": {
+      "enabled": true, "lookback_time": 50.0,
+      "thresholds": {"minimum_trigger": 5, "moderate_min": 10, "significant_min": 30, "major_min": 60},
+      "description": "Narrates resource gathering counts in a region."
+    },
+    "gathering_depletion": {
+      "enabled": true, "lookback_time": 50.0,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 3, "significant_min": 8, "major_min": 15},
+      "description": "Narrates node depletion counts in a region. TODO: needs total node count per chunk from Layer 1 to calculate percentages."
+    },
+    "gathering_global": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 10, "moderate_min": 20, "significant_min": 100, "major_min": 500},
+      "description": "Narrates total resource gathering counts globally."
+    },
+    "gathering_tools": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 10, "moderate_min": 50, "significant_min": 200, "major_min": 1000},
+      "description": "Narrates total gathering action counts."
+    },
+    "crafting_smithing": {
+      "enabled": true, "lookback_time": 100.0,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 5, "significant_min": 15, "major_min": 30},
+      "description": "Narrates smithing crafting activity."
+    },
+    "crafting_alchemy": {
+      "enabled": true, "lookback_time": 100.0,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 5, "significant_min": 15, "major_min": 30},
+      "description": "Narrates alchemy crafting activity."
+    },
+    "crafting_refining": {
+      "enabled": true, "lookback_time": 100.0,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 5, "significant_min": 15, "major_min": 30},
+      "description": "Narrates refining crafting activity."
+    },
+    "crafting_engineering": {
+      "enabled": true, "lookback_time": 100.0,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 5, "significant_min": 15, "major_min": 30},
+      "description": "Narrates engineering crafting activity."
+    },
+    "crafting_enchanting": {
+      "enabled": true, "lookback_time": 100.0,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 5, "significant_min": 15, "major_min": 30},
+      "description": "Narrates enchanting crafting activity."
+    },
+    "crafting_minigame": {
+      "enabled": true, "lookback_time": 100.0,
+      "high_quality_types": ["superior", "masterwork", "legendary"],
+      "description": "Narrates crafting quality achievements across disciplines."
+    },
+    "crafting_inventions": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 1},
+      "description": "Narrates item inventions and recipe discoveries."
+    },
+    "progression_levels": {
+      "enabled": true,
+      "description": "Narrates player level-up events."
+    },
+    "progression_skills": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 10, "significant_min": 50, "major_min": 200},
+      "description": "Narrates skill learning and usage counts."
+    },
+    "progression_identity": {
+      "enabled": true,
+      "description": "Narrates title earned and class change events."
+    },
+    "progression_equipment": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 5, "significant_min": 20, "major_min": 50},
+      "description": "Narrates equipment changes and repairs."
+    },
+    "exploration_territory": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 10, "significant_min": 30, "major_min": 100},
+      "description": "Narrates chunk entries and area discoveries."
+    },
+    "exploration_dungeons": {
+      "enabled": true,
+      "description": "Narrates dungeon entries."
+    },
+    "social_npc": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 5, "significant_min": 15, "major_min": 50},
+      "description": "Narrates NPC interaction counts."
+    },
+    "social_quests": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 3, "significant_min": 10, "major_min": 25},
+      "description": "Narrates quest accept/complete/fail counts."
+    },
+    "economy_flow": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 10, "significant_min": 50, "major_min": 200},
+      "description": "Narrates item acquisition and consumption totals."
+    },
+    "items_equipment": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 5, "significant_min": 20, "major_min": 50},
+      "description": "Narrates equipment change counts."
+    },
+    "items_inventory": {
+      "enabled": true,
+      "thresholds": {"minimum_trigger": 1, "moderate_min": 5, "significant_min": 20, "major_min": 50},
+      "description": "Narrates per-item acquisition and consumption counts."
     }
   }
 }

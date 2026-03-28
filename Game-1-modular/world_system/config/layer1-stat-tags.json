@@ -1,0 +1,4934 @@
+{
+  "_description": "Layer 1 stat-to-tag mapping. Keys are stat patterns (* = any dimension value). Tags are ordered by relevance. {dim} = extract value from the * position in the stat key. More specific patterns override less specific ones.",
+  "_version": "1.0",
+  "_tag_categories": [
+    "domain",
+    "action",
+    "metric",
+    "actor",
+    "target",
+    "species",
+    "resource",
+    "item",
+    "skill",
+    "recipe",
+    "npc",
+    "quest",
+    "tier",
+    "element",
+    "quality",
+    "rarity",
+    "discipline",
+    "material_category",
+    "item_category",
+    "rank",
+    "attack_type",
+    "weapon_type",
+    "status_effect",
+    "slot",
+    "result",
+    "source",
+    "tool",
+    "class",
+    "title_tier",
+    "location"
+  ],
+  "mappings": [
+    {
+      "_section": "=== COMBAT (47 patterns) ==="
+    },
+    {
+      "pattern": "combat.attacks",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.attacks.weapon_type.*",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "weapon_type:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.attacks.weapon_id.*",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.blocks",
+      "tags": [
+        "domain:combat",
+        "action:block",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.blocks.*",
+      "tags": [
+        "domain:combat",
+        "action:block",
+        "species:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.combos",
+      "tags": [
+        "domain:combat",
+        "action:combo",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.critical_hits",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "attack_type:critical",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_blocked",
+      "tags": [
+        "domain:combat",
+        "action:block",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_blocked.*",
+      "tags": [
+        "domain:combat",
+        "action:block",
+        "species:{dim}",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.*",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "species:{dim}",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.attack.melee",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "attack_type:melee",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.attack.ranged",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "attack_type:ranged",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.attack.magic",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "attack_type:magic",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.critical",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "attack_type:critical",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.type.physical",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "element:physical",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.type.fire",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "element:fire",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.type.ice",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "element:ice",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.type.lightning",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "element:lightning",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.type.poison",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "element:poison",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.type.arcane",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "element:arcane",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.type.shadow",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "element:shadow",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.type.holy",
+      "tags": [
+        "domain:combat",
+        "action:attack",
+        "element:holy",
+        "metric:damage_total",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_taken",
+      "tags": [
+        "domain:combat",
+        "action:receive_damage",
+        "metric:damage_total",
+        "actor:player",
+        "source:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.damage_taken.*",
+      "tags": [
+        "domain:combat",
+        "action:receive_damage",
+        "species:{dim}",
+        "metric:damage_total",
+        "actor:player",
+        "source:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.deaths",
+      "tags": [
+        "domain:combat",
+        "action:die",
+        "metric:count",
+        "actor:player",
+        "result:defeat"
+      ]
+    },
+    {
+      "pattern": "combat.deaths.items_lost",
+      "tags": [
+        "domain:combat",
+        "action:die",
+        "metric:items_lost",
+        "actor:player",
+        "result:defeat"
+      ]
+    },
+    {
+      "pattern": "combat.deaths.soulbound_kept",
+      "tags": [
+        "domain:combat",
+        "action:die",
+        "metric:items_kept",
+        "actor:player",
+        "result:defeat",
+        "item_category:soulbound"
+      ]
+    },
+    {
+      "pattern": "combat.dodge_rolls",
+      "tags": [
+        "domain:combat",
+        "action:dodge",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.dodge_rolls.successful",
+      "tags": [
+        "domain:combat",
+        "action:dodge",
+        "result:success",
+        "metric:count",
+        "actor:player"
+      ]
+    },
+    {
+      "pattern": "combat.healing",
+      "tags": [
+        "domain:combat",
+        "action:heal",
+        "metric:amount_total",
+        "actor:player",
+        "target:player"
+      ]
+    },
+    {
+      "pattern": "combat.healing.*",
+      "tags": [
+        "domain:combat",
+        "action:heal",
+        "source:{dim}",
+        "metric:amount_total",
+        "actor:player",
+        "target:player"
+      ]
+    },
+    {
+      "pattern": "combat.kills",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.kills.*",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.*",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "rank:normal"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.wolf_grey",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:wolf_grey",
+        "tier:1",
+        "rank:normal",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.wolf_dire",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:wolf_dire",
+        "tier:2",
+        "rank:normal",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.wolf_elder",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:wolf_elder",
+        "tier:3",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "status_effect:bleed",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.slime_green",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:slime_green",
+        "tier:1",
+        "rank:normal",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.slime_acid",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:slime_acid",
+        "tier:2",
+        "rank:normal",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "element:poison",
+        "status_effect:poison",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.slime_crystal",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:slime_crystal",
+        "tier:3",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:magic",
+        "element:arcane",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.beetle_brown",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:beetle_brown",
+        "tier:1",
+        "rank:normal",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.beetle_armored",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:beetle_armored",
+        "tier:2",
+        "rank:normal",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "status_effect:stun",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.beetle_titan",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:beetle_titan",
+        "tier:4",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "status_effect:stun",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.golem_stone",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:golem_stone",
+        "tier:3",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.golem_crystal",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:golem_crystal",
+        "tier:4",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:magic",
+        "element:arcane",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.void_wraith",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:void_wraith",
+        "tier:4",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:magic",
+        "element:shadow",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.species.entity_primordial",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "species:entity_primordial",
+        "tier:4",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:magic",
+        "element:arcane",
+        "rarity:legendary",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.kills.rank.boss",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "rank:boss",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.kills.tier.1",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "tier:1",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.kills.tier.2",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "tier:2",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.kills.tier.3",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "tier:3",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.kills.tier.4",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "tier:4",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.longest_killstreak",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "metric:streak_max",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.longest_no_damage_streak",
+      "tags": [
+        "domain:combat",
+        "action:dodge",
+        "metric:streak_max",
+        "actor:player",
+        "result:no_damage"
+      ]
+    },
+    {
+      "pattern": "combat.projectiles.fired",
+      "tags": [
+        "domain:combat",
+        "action:fire_projectile",
+        "metric:count",
+        "actor:player",
+        "attack_type:ranged"
+      ]
+    },
+    {
+      "pattern": "combat.projectiles.hit",
+      "tags": [
+        "domain:combat",
+        "action:fire_projectile",
+        "result:hit",
+        "metric:count",
+        "actor:player",
+        "attack_type:ranged",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.reflect",
+      "tags": [
+        "domain:combat",
+        "action:reflect",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.reflect.*",
+      "tags": [
+        "domain:combat",
+        "action:reflect",
+        "source:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.status.*.*",
+      "tags": [
+        "domain:combat",
+        "action:apply_status",
+        "status_effect:{dim}",
+        "metric:count",
+        "actor:player"
+      ]
+    },
+    {
+      "_section": "=== GATHERING (35 patterns) ==="
+    },
+    {
+      "pattern": "gathering.actions.*",
+      "tags": [
+        "domain:gathering",
+        "action:{dim}",
+        "metric:count",
+        "actor:player",
+        "resource:node"
+      ]
+    },
+    {
+      "pattern": "gathering.collected",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "metric:count",
+        "actor:player",
+        "resource:node"
+      ]
+    },
+    {
+      "pattern": "gathering.collected.*",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "resource:{dim}",
+        "metric:count",
+        "actor:player"
+      ]
+    },
+    {
+      "pattern": "gathering.collected.category.ore",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "material_category:ore",
+        "metric:count",
+        "actor:player",
+        "tool:pickaxe"
+      ]
+    },
+    {
+      "pattern": "gathering.collected.category.tree",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "material_category:tree",
+        "metric:count",
+        "actor:player",
+        "tool:axe"
+      ]
+    },
+    {
+      "pattern": "gathering.collected.category.stone",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "material_category:stone",
+        "metric:count",
+        "actor:player",
+        "tool:pickaxe"
+      ]
+    },
+    {
+      "pattern": "gathering.collected.category.plant",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "material_category:plant",
+        "metric:count",
+        "actor:player"
+      ]
+    },
+    {
+      "pattern": "gathering.collected.tier.1",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "tier:1",
+        "metric:count",
+        "actor:player"
+      ]
+    },
+    {
+      "pattern": "gathering.collected.tier.2",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "tier:2",
+        "metric:count",
+        "actor:player"
+      ]
+    },
+    {
+      "pattern": "gathering.collected.tier.3",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "tier:3",
+        "metric:count",
+        "actor:player"
+      ]
+    },
+    {
+      "pattern": "gathering.collected.tier.4",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "tier:4",
+        "metric:count",
+        "actor:player"
+      ]
+    },
+    {
+      "pattern": "gathering.critical",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "result:critical",
+        "metric:count",
+        "actor:player"
+      ]
+    },
+    {
+      "pattern": "gathering.damage_dealt",
+      "tags": [
+        "domain:gathering",
+        "action:swing",
+        "metric:damage_total",
+        "actor:player",
+        "target:node"
+      ]
+    },
+    {
+      "pattern": "gathering.rare_drops",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "rarity:rare",
+        "metric:count",
+        "actor:player"
+      ]
+    },
+    {
+      "pattern": "gathering.longest_streak",
+      "tags": [
+        "domain:gathering",
+        "action:collect",
+        "metric:streak_max",
+        "actor:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "gathering.fishing.caught",
+      "tags": [
+        "domain:gathering",
+        "action:catch",
+        "metric:count",
+        "actor:player",
+        "tool:fishing_rod",
+        "material_category:fish"
+      ]
+    },
+    {
+      "pattern": "gathering.fishing.caught.*",
+      "tags": [
+        "domain:gathering",
+        "action:catch",
+        "resource:{dim}",
+        "metric:count",
+        "actor:player",
+        "tool:fishing_rod",
+        "material_category:fish"
+      ]
+    },
+    {
+      "pattern": "gathering.fishing.failed",
+      "tags": [
+        "domain:gathering",
+        "action:catch",
+        "result:failure",
+        "metric:count",
+        "actor:player",
+        "tool:fishing_rod"
+      ]
+    },
+    {
+      "pattern": "gathering.fishing.largest",
+      "tags": [
+        "domain:gathering",
+        "action:catch",
+        "metric:size_max",
+        "actor:player",
+        "tool:fishing_rod",
+        "material_category:fish"
+      ]
+    },
+    {
+      "pattern": "gathering.fishing.legendary",
+      "tags": [
+        "domain:gathering",
+        "action:catch",
+        "rarity:legendary",
+        "metric:count",
+        "actor:player",
+        "tool:fishing_rod",
+        "material_category:fish"
+      ]
+    },
+    {
+      "pattern": "gathering.fishing.rare",
+      "tags": [
+        "domain:gathering",
+        "action:catch",
+        "rarity:rare",
+        "metric:count",
+        "actor:player",
+        "tool:fishing_rod",
+        "material_category:fish"
+      ]
+    },
+    {
+      "pattern": "gathering.fishing.longest_streak",
+      "tags": [
+        "domain:gathering",
+        "action:catch",
+        "metric:streak_max",
+        "actor:player",
+        "tool:fishing_rod",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "gathering.nodes_depleted",
+      "tags": [
+        "domain:gathering",
+        "action:deplete",
+        "metric:count",
+        "actor:player",
+        "target:node"
+      ]
+    },
+    {
+      "pattern": "gathering.nodes_depleted.*",
+      "tags": [
+        "domain:gathering",
+        "action:deplete",
+        "resource:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:node"
+      ]
+    },
+    {
+      "pattern": "gathering.nodes_depleted.location.*",
+      "tags": [
+        "domain:gathering",
+        "action:deplete",
+        "location:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:node"
+      ]
+    },
+    {
+      "pattern": "gathering.tool_swings",
+      "tags": [
+        "domain:gathering",
+        "action:swing",
+        "metric:count",
+        "actor:player",
+        "item_category:tool"
+      ]
+    },
+    {
+      "pattern": "gathering.tool_swings.*",
+      "tags": [
+        "domain:gathering",
+        "action:swing",
+        "tool:{dim}",
+        "metric:count",
+        "actor:player"
+      ]
+    },
+    {
+      "pattern": "gathering.tool_swings.axe",
+      "tags": [
+        "domain:gathering",
+        "action:swing",
+        "tool:axe",
+        "metric:count",
+        "actor:player",
+        "material_category:tree"
+      ]
+    },
+    {
+      "pattern": "gathering.tool_swings.pickaxe",
+      "tags": [
+        "domain:gathering",
+        "action:swing",
+        "tool:pickaxe",
+        "metric:count",
+        "actor:player",
+        "material_category:ore"
+      ]
+    },
+    {
+      "pattern": "gathering.tool_swings.fishing_rod",
+      "tags": [
+        "domain:gathering",
+        "action:cast",
+        "tool:fishing_rod",
+        "metric:count",
+        "actor:player",
+        "material_category:fish"
+      ]
+    },
+    {
+      "pattern": "gathering.tool_durability_lost.*",
+      "tags": [
+        "domain:gathering",
+        "action:use_tool",
+        "tool:{dim}",
+        "metric:durability_lost",
+        "actor:player",
+        "item_category:tool"
+      ]
+    },
+    {
+      "pattern": "gathering.tools_broken",
+      "tags": [
+        "domain:gathering",
+        "action:break_tool",
+        "metric:count",
+        "actor:player",
+        "item_category:tool",
+        "result:broken"
+      ]
+    },
+    {
+      "pattern": "gathering.tools_broken.*",
+      "tags": [
+        "domain:gathering",
+        "action:break_tool",
+        "tool:{dim}",
+        "metric:count",
+        "actor:player",
+        "result:broken"
+      ]
+    },
+    {
+      "pattern": "gathering.tools_repaired",
+      "tags": [
+        "domain:gathering",
+        "action:repair",
+        "metric:count",
+        "actor:player",
+        "item_category:tool"
+      ]
+    },
+    {
+      "pattern": "gathering.tools_repaired.*",
+      "tags": [
+        "domain:gathering",
+        "action:repair",
+        "tool:{dim}",
+        "metric:count",
+        "actor:player"
+      ]
+    },
+    {
+      "_section": "=== CRAFTING (21 patterns) ==="
+    },
+    {
+      "pattern": "crafting.attempts.*",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "discipline:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "result:success",
+        "item_category:equipment"
+      ]
+    },
+    {
+      "pattern": "crafting.success",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "item_category:equipment",
+        "source:crafting"
+      ]
+    },
+    {
+      "pattern": "crafting.success.*",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "discipline:{dim}",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "item_category:equipment",
+        "source:crafting"
+      ]
+    },
+    {
+      "pattern": "crafting.quality",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "metric:total",
+        "actor:player",
+        "result:success",
+        "target:item",
+        "item_category:equipment",
+        "source:crafting"
+      ]
+    },
+    {
+      "pattern": "crafting.quality.*",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "quality:{dim}",
+        "metric:count",
+        "actor:player",
+        "result:success",
+        "target:item",
+        "item_category:equipment",
+        "source:crafting"
+      ]
+    },
+    {
+      "pattern": "crafting.time.*",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "discipline:{dim}",
+        "metric:duration",
+        "actor:player",
+        "target:station",
+        "item_category:equipment",
+        "source:crafting"
+      ]
+    },
+    {
+      "pattern": "crafting.perfect",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "result:perfect",
+        "quality:legendary",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "source:crafting"
+      ]
+    },
+    {
+      "pattern": "crafting.perfect.*",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "discipline:{dim}",
+        "result:perfect",
+        "quality:legendary",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting"
+      ]
+    },
+    {
+      "pattern": "crafting.first_try",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "result:first_try",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "source:crafting",
+        "item_category:equipment"
+      ]
+    },
+    {
+      "pattern": "crafting.first_try.*",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "discipline:{dim}",
+        "result:first_try",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "item_category:equipment"
+      ]
+    },
+    {
+      "pattern": "crafting.longest_first_try_streak",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "result:first_try",
+        "metric:streak",
+        "actor:player",
+        "target:item",
+        "source:crafting",
+        "item_category:equipment"
+      ]
+    },
+    {
+      "pattern": "crafting.rarity.*",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "rarity:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "result:success",
+        "item_category:equipment",
+        "source:crafting"
+      ]
+    },
+    {
+      "pattern": "crafting.materials.*",
+      "tags": [
+        "domain:crafting",
+        "action:consume",
+        "resource:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "item_category:material",
+        "source:crafting"
+      ]
+    },
+    {
+      "pattern": "crafting.materials_consumed",
+      "tags": [
+        "domain:crafting",
+        "action:consume",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "item_category:material",
+        "resource:material",
+        "source:crafting"
+      ]
+    },
+    {
+      "pattern": "crafting.enchantments",
+      "tags": [
+        "domain:crafting",
+        "action:enchant",
+        "discipline:enchanting",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "item_category:equipment",
+        "source:crafting"
+      ]
+    },
+    {
+      "pattern": "crafting.enchantments.*",
+      "tags": [
+        "domain:crafting",
+        "action:enchant",
+        "item:{dim}",
+        "discipline:enchanting",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "item_category:equipment",
+        "source:crafting"
+      ]
+    },
+    {
+      "pattern": "crafting.inventions",
+      "tags": [
+        "domain:crafting",
+        "action:invent",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "source:crafting",
+        "result:success",
+        "item_category:equipment"
+      ]
+    },
+    {
+      "pattern": "crafting.inventions.*",
+      "tags": [
+        "domain:crafting",
+        "action:invent",
+        "discipline:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.inventions.item.*",
+      "tags": [
+        "domain:crafting",
+        "action:invent",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "source:crafting",
+        "result:success",
+        "rarity:rare"
+      ]
+    },
+    {
+      "pattern": "crafting.recipes_discovered",
+      "tags": [
+        "domain:crafting",
+        "action:discover",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "result:first_try",
+        "source:crafting",
+        "item_category:equipment"
+      ]
+    },
+    {
+      "pattern": "crafting.recipes_discovered.*",
+      "tags": [
+        "domain:crafting",
+        "action:discover",
+        "discipline:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== ITEMS (11 patterns) ==="
+    },
+    {
+      "pattern": "items.collected.*",
+      "tags": [
+        "domain:items",
+        "action:collect",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "source:gathering",
+        "item_category:any"
+      ]
+    },
+    {
+      "pattern": "items.used.*",
+      "tags": [
+        "domain:items",
+        "action:use",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "item_category:consumable",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "items.*.*",
+      "tags": [
+        "domain:items",
+        "action:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "item_category:equipment",
+        "source:inventory",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "items.*.slot.*",
+      "tags": [
+        "domain:items",
+        "action:{dim}",
+        "slot:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "item_category:equipment",
+        "source:inventory"
+      ]
+    },
+    {
+      "pattern": "items.*",
+      "tags": [
+        "domain:items",
+        "action:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "item_category:any",
+        "source:inventory",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "items.equipment_swaps",
+      "tags": [
+        "domain:items",
+        "action:equip",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "item_category:equipment",
+        "source:inventory",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "items.repaired",
+      "tags": [
+        "domain:items",
+        "action:repair",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "item_category:equipment",
+        "tool:hammer",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "items.repaired.*",
+      "tags": [
+        "domain:items",
+        "action:repair",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "tool:hammer",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "items.durability_restored",
+      "tags": [
+        "domain:items",
+        "action:repair",
+        "metric:durability_restored",
+        "actor:player",
+        "target:item",
+        "item_category:equipment",
+        "tool:hammer",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "items.first_discoveries",
+      "tags": [
+        "domain:items",
+        "action:discover",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "result:first",
+        "item_category:any",
+        "source:loot"
+      ]
+    },
+    {
+      "pattern": "items.rare_drops",
+      "tags": [
+        "domain:items",
+        "action:collect",
+        "rarity:rare",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "source:drop",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== SKILLS (39 patterns: 5 aggregates + 30 individual skills) ==="
+    },
+    {
+      "pattern": "skills.used",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "resource:mana",
+        "result:success",
+        "item_category:skill"
+      ]
+    },
+    {
+      "pattern": "skills.used.*",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "resource:mana",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.mana_spent",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "metric:total",
+        "actor:player",
+        "resource:mana",
+        "target:player",
+        "item_category:skill",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.mana_spent.*",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:{dim}",
+        "metric:total",
+        "actor:player",
+        "resource:mana",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.targets_affected",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "resource:mana",
+        "item_category:skill",
+        "result:success"
+      ]
+    },
+    {
+      "_comment": "--- Combat Skills (7) ---"
+    },
+    {
+      "pattern": "skills.used.power_strike",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:power_strike",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "tier:1",
+        "element:physical",
+        "domain:combat"
+      ]
+    },
+    {
+      "pattern": "skills.used.battle_stance",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:battle_stance",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:1",
+        "domain:combat",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.used.combat_rush",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:combat_rush",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "tier:1",
+        "domain:combat",
+        "element:physical"
+      ]
+    },
+    {
+      "pattern": "skills.used.battle_fury",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:battle_fury",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:2",
+        "domain:combat",
+        "attack_type:melee",
+        "element:physical"
+      ]
+    },
+    {
+      "pattern": "skills.used.whirlwind_strike",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:whirlwind_strike",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "tier:3",
+        "domain:combat",
+        "element:physical"
+      ]
+    },
+    {
+      "pattern": "skills.used.absolute_destruction",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:absolute_destruction",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "tier:3",
+        "domain:combat",
+        "element:physical"
+      ]
+    },
+    {
+      "pattern": "skills.used.omega_strike",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:omega_strike",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "tier:4",
+        "domain:combat",
+        "element:physical"
+      ]
+    },
+    {
+      "_comment": "--- Gathering Skills (5) ---"
+    },
+    {
+      "pattern": "skills.used.miners_fury",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:miners_fury",
+        "metric:count",
+        "actor:player",
+        "target:resource",
+        "tier:1",
+        "domain:gathering",
+        "tool:pickaxe",
+        "material_category:ore"
+      ]
+    },
+    {
+      "pattern": "skills.used.lumberjacks_rhythm",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:lumberjacks_rhythm",
+        "metric:count",
+        "actor:player",
+        "target:resource",
+        "tier:1",
+        "domain:gathering",
+        "tool:axe",
+        "material_category:tree"
+      ]
+    },
+    {
+      "pattern": "skills.used.bountiful_harvest",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:bountiful_harvest",
+        "metric:count",
+        "actor:player",
+        "target:resource",
+        "tier:1",
+        "domain:gathering",
+        "result:success",
+        "material_category:plant"
+      ]
+    },
+    {
+      "pattern": "skills.used.chain_harvest",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:chain_harvest",
+        "metric:count",
+        "actor:player",
+        "target:resource",
+        "tier:3",
+        "domain:gathering",
+        "result:success",
+        "material_category:plant"
+      ]
+    },
+    {
+      "pattern": "skills.used.endless_bounty",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:endless_bounty",
+        "metric:count",
+        "actor:player",
+        "target:resource",
+        "tier:3",
+        "domain:gathering",
+        "result:success"
+      ]
+    },
+    {
+      "_comment": "--- Crafting Skills (7) ---"
+    },
+    {
+      "pattern": "skills.used.smiths_focus",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:smiths_focus",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "tier:1",
+        "domain:crafting",
+        "discipline:smithing",
+        "tool:hammer"
+      ]
+    },
+    {
+      "pattern": "skills.used.alchemists_insight",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:alchemists_insight",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "tier:2",
+        "domain:crafting",
+        "discipline:alchemy",
+        "item_category:potion"
+      ]
+    },
+    {
+      "pattern": "skills.used.engineers_precision",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:engineers_precision",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "tier:2",
+        "domain:crafting",
+        "discipline:engineering",
+        "item_category:device"
+      ]
+    },
+    {
+      "pattern": "skills.used.refiners_touch",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:refiners_touch",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "tier:2",
+        "domain:crafting",
+        "discipline:refining",
+        "item_category:material"
+      ]
+    },
+    {
+      "pattern": "skills.used.enchanters_grace",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:enchanters_grace",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "tier:2",
+        "domain:crafting",
+        "discipline:enchanting",
+        "item_category:equipment"
+      ]
+    },
+    {
+      "pattern": "skills.used.master_craftsman",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:master_craftsman",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "tier:3",
+        "domain:crafting",
+        "quality:masterwork",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.used.time_dilation",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:time_dilation",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:3",
+        "domain:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "_comment": "--- Utility Skills (11) ---"
+    },
+    {
+      "pattern": "skills.used.sprint",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:sprint",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:1",
+        "domain:exploration"
+      ]
+    },
+    {
+      "pattern": "skills.used.quick_repair",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:quick_repair",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "tier:1",
+        "domain:items",
+        "item_category:equipment",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.used.field_medic",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:field_medic",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:1",
+        "domain:combat",
+        "element:holy",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.used.keen_eye",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:keen_eye",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:2",
+        "domain:combat",
+        "result:critical"
+      ]
+    },
+    {
+      "pattern": "skills.used.treasure_sense",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:treasure_sense",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:2",
+        "domain:exploration",
+        "rarity:rare",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.used.regenerative_aura",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:regenerative_aura",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:2",
+        "domain:combat",
+        "element:holy"
+      ]
+    },
+    {
+      "pattern": "skills.used.tool_preservation",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:tool_preservation",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "tier:2",
+        "domain:items",
+        "item_category:tool",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.used.second_wind",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:second_wind",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:2",
+        "domain:combat",
+        "resource:mana",
+        "element:holy"
+      ]
+    },
+    {
+      "pattern": "skills.used.fortunes_favor",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:fortunes_favor",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:3",
+        "domain:exploration",
+        "rarity:epic"
+      ]
+    },
+    {
+      "pattern": "skills.used.phoenix_resurrection",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:phoenix_resurrection",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:3",
+        "domain:combat",
+        "element:fire",
+        "element:holy"
+      ]
+    },
+    {
+      "pattern": "skills.used.reality_breach",
+      "tags": [
+        "domain:skills",
+        "action:use",
+        "skill:reality_breach",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "tier:4",
+        "element:arcane",
+        "rarity:legendary"
+      ]
+    },
+    {
+      "_section": "=== EXPLORATION (9 patterns) ==="
+    },
+    {
+      "pattern": "exploration.distance",
+      "tags": [
+        "domain:exploration",
+        "action:move",
+        "metric:distance",
+        "actor:player",
+        "target:node",
+        "location:world",
+        "source:movement",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "exploration.distance.sprinting",
+      "tags": [
+        "domain:exploration",
+        "action:sprint",
+        "metric:distance",
+        "actor:player",
+        "location:world",
+        "source:movement",
+        "status_effect:haste",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "exploration.distance.encumbered",
+      "tags": [
+        "domain:exploration",
+        "action:move",
+        "status_effect:encumbered",
+        "metric:distance",
+        "actor:player",
+        "location:world",
+        "source:movement",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "exploration.unique_chunks",
+      "tags": [
+        "domain:exploration",
+        "action:discover",
+        "metric:count",
+        "actor:player",
+        "location:chunk",
+        "target:node",
+        "result:first",
+        "source:movement"
+      ]
+    },
+    {
+      "pattern": "exploration.chunk_entries",
+      "tags": [
+        "domain:exploration",
+        "action:enter_chunk",
+        "metric:count",
+        "actor:player",
+        "location:chunk",
+        "target:node",
+        "source:movement",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "exploration.new_discoveries",
+      "tags": [
+        "domain:exploration",
+        "action:discover",
+        "metric:count",
+        "actor:player",
+        "result:first",
+        "location:world",
+        "target:node",
+        "source:movement"
+      ]
+    },
+    {
+      "pattern": "exploration.chunks.biome.*",
+      "tags": [
+        "domain:exploration",
+        "action:enter_chunk",
+        "location:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:node",
+        "source:movement",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "exploration.landmarks",
+      "tags": [
+        "domain:exploration",
+        "action:discover",
+        "metric:count",
+        "actor:player",
+        "location:landmark",
+        "target:node",
+        "result:first",
+        "source:movement"
+      ]
+    },
+    {
+      "pattern": "exploration.landmarks.*",
+      "tags": [
+        "domain:exploration",
+        "action:discover",
+        "location:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:node",
+        "result:first",
+        "source:movement"
+      ]
+    },
+    {
+      "_section": "=== ECONOMY (8 patterns) ==="
+    },
+    {
+      "pattern": "economy.gold_earned",
+      "tags": [
+        "domain:economy",
+        "action:earn",
+        "resource:gold",
+        "metric:amount_total",
+        "actor:player",
+        "target:item",
+        "result:success",
+        "source:any"
+      ]
+    },
+    {
+      "pattern": "economy.gold_earned.*",
+      "tags": [
+        "domain:economy",
+        "action:earn",
+        "resource:gold",
+        "source:{dim}",
+        "metric:amount_total",
+        "actor:player",
+        "target:item",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "economy.gold_spent",
+      "tags": [
+        "domain:economy",
+        "action:spend",
+        "resource:gold",
+        "metric:amount_total",
+        "actor:player",
+        "target:npc",
+        "result:success",
+        "source:vendor"
+      ]
+    },
+    {
+      "pattern": "economy.gold_spent.*",
+      "tags": [
+        "domain:economy",
+        "action:spend",
+        "resource:gold",
+        "target:{dim}",
+        "metric:amount_total",
+        "actor:player",
+        "result:success",
+        "source:vendor"
+      ]
+    },
+    {
+      "pattern": "economy.trades",
+      "tags": [
+        "domain:economy",
+        "action:trade",
+        "metric:count",
+        "actor:player",
+        "target:npc",
+        "resource:gold",
+        "result:success",
+        "source:vendor"
+      ]
+    },
+    {
+      "pattern": "economy.trades.*",
+      "tags": [
+        "domain:economy",
+        "action:trade",
+        "npc:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:npc",
+        "resource:gold",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "economy.trades.item.*",
+      "tags": [
+        "domain:economy",
+        "action:trade",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:npc",
+        "resource:gold",
+        "source:vendor",
+        "item_category:any"
+      ]
+    },
+    {
+      "pattern": "economy.trades.*.value",
+      "tags": [
+        "domain:economy",
+        "action:trade",
+        "npc:{dim}",
+        "metric:amount_total",
+        "actor:player",
+        "target:npc",
+        "resource:gold",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== PROGRESSION (17 patterns) ==="
+    },
+    {
+      "pattern": "progression.level_ups",
+      "tags": [
+        "domain:progression",
+        "action:level_up",
+        "metric:count",
+        "actor:player",
+        "resource:exp",
+        "target:player",
+        "source:level_up",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.current_level",
+      "tags": [
+        "domain:progression",
+        "action:level_up",
+        "metric:current",
+        "actor:player",
+        "resource:exp",
+        "target:player",
+        "tier:1",
+        "source:level_up"
+      ]
+    },
+    {
+      "pattern": "progression.stat_points_earned",
+      "tags": [
+        "domain:progression",
+        "action:earn",
+        "resource:stat_points",
+        "metric:total",
+        "actor:player",
+        "target:player",
+        "source:level_up",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.exp",
+      "tags": [
+        "domain:progression",
+        "action:earn",
+        "resource:exp",
+        "metric:total",
+        "actor:player",
+        "target:player",
+        "source:level_up",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.exp.*",
+      "tags": [
+        "domain:progression",
+        "action:earn",
+        "resource:exp",
+        "source:{dim}",
+        "metric:total",
+        "actor:player",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.exp.combat",
+      "tags": [
+        "domain:progression",
+        "action:earn",
+        "resource:exp",
+        "source:combat",
+        "metric:total",
+        "actor:player",
+        "target:enemy",
+        "attack_type:melee",
+        "item_category:weapon"
+      ]
+    },
+    {
+      "pattern": "progression.exp.crafting",
+      "tags": [
+        "domain:progression",
+        "action:earn",
+        "resource:exp",
+        "source:crafting",
+        "metric:total",
+        "actor:player",
+        "domain:crafting",
+        "target:station",
+        "item_category:equipment"
+      ]
+    },
+    {
+      "pattern": "progression.exp.gathering",
+      "tags": [
+        "domain:progression",
+        "action:earn",
+        "resource:exp",
+        "source:gathering",
+        "metric:total",
+        "actor:player",
+        "domain:gathering",
+        "target:resource",
+        "item_category:material"
+      ]
+    },
+    {
+      "pattern": "progression.exp.quests",
+      "tags": [
+        "domain:progression",
+        "action:earn",
+        "resource:exp",
+        "source:quests",
+        "metric:total",
+        "actor:player",
+        "domain:social",
+        "target:npc",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.exp.fishing",
+      "tags": [
+        "domain:progression",
+        "action:earn",
+        "resource:exp",
+        "source:fishing",
+        "metric:total",
+        "actor:player",
+        "tool:fishing_rod",
+        "target:resource",
+        "material_category:fish",
+        "domain:gathering"
+      ]
+    },
+    {
+      "pattern": "progression.titles",
+      "tags": [
+        "domain:progression",
+        "action:earn",
+        "metric:count",
+        "actor:player",
+        "item_category:title",
+        "target:player",
+        "result:success",
+        "source:level_up"
+      ]
+    },
+    {
+      "pattern": "progression.titles.*",
+      "tags": [
+        "domain:progression",
+        "action:earn",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "item_category:title",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.titles.tier.*",
+      "tags": [
+        "domain:progression",
+        "action:earn",
+        "title_tier:{dim}",
+        "metric:count",
+        "actor:player",
+        "item_category:title",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.class_changes",
+      "tags": [
+        "domain:progression",
+        "action:change_class",
+        "metric:count",
+        "actor:player",
+        "item_category:class",
+        "target:player",
+        "result:success",
+        "source:level_up"
+      ]
+    },
+    {
+      "pattern": "progression.class_changes.*",
+      "tags": [
+        "domain:progression",
+        "action:change_class",
+        "class:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "item_category:class",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.skills_learned",
+      "tags": [
+        "domain:progression",
+        "action:learn",
+        "metric:count",
+        "actor:player",
+        "item_category:skill",
+        "target:player",
+        "source:level_up",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.skills_learned.*",
+      "tags": [
+        "domain:progression",
+        "action:learn",
+        "skill:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "item_category:skill",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== DUNGEON (25 patterns) ==="
+    },
+    {
+      "pattern": "dungeon.entered",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon",
+        "rarity:any"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.*",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:{dim}",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.common",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:common",
+        "tier:1",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.uncommon",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:uncommon",
+        "tier:1",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.rare",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:rare",
+        "tier:2",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.epic",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:epic",
+        "tier:3",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.legendary",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:legendary",
+        "tier:4",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.entered.unique",
+      "tags": [
+        "domain:dungeon",
+        "action:enter",
+        "rarity:legendary",
+        "rank:unique",
+        "tier:4",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.*",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:{dim}",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.common",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:common",
+        "tier:1",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.uncommon",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:uncommon",
+        "tier:1",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.rare",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:rare",
+        "tier:2",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.epic",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:epic",
+        "tier:3",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.legendary",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:legendary",
+        "tier:4",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.completed.unique",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:legendary",
+        "rank:unique",
+        "tier:4",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.clear_time.*",
+      "tags": [
+        "domain:dungeon",
+        "action:complete",
+        "rarity:{dim}",
+        "metric:duration",
+        "actor:player",
+        "result:success",
+        "location:dungeon",
+        "source:dungeon"
+      ]
+    },
+    {
+      "pattern": "dungeon.enemies_killed",
+      "tags": [
+        "domain:dungeon",
+        "action:kill",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "location:dungeon",
+        "source:dungeon",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "dungeon.enemies_killed_in_run",
+      "tags": [
+        "domain:dungeon",
+        "action:kill",
+        "metric:count_per_run",
+        "actor:player",
+        "target:enemy",
+        "location:dungeon",
+        "source:dungeon",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "dungeon.exp_earned",
+      "tags": [
+        "domain:dungeon",
+        "action:earn",
+        "resource:exp",
+        "metric:amount_total",
+        "actor:player",
+        "location:dungeon",
+        "source:dungeon",
+        "target:player"
+      ]
+    },
+    {
+      "pattern": "dungeon.deaths",
+      "tags": [
+        "domain:dungeon",
+        "action:die",
+        "metric:count",
+        "actor:player",
+        "result:defeat",
+        "location:dungeon",
+        "source:enemy",
+        "target:player"
+      ]
+    },
+    {
+      "pattern": "dungeon.abandoned",
+      "tags": [
+        "domain:dungeon",
+        "action:abandon",
+        "metric:count",
+        "actor:player",
+        "result:abandon",
+        "location:dungeon",
+        "source:dungeon",
+        "target:player"
+      ]
+    },
+    {
+      "pattern": "dungeon.waves_completed",
+      "tags": [
+        "domain:dungeon",
+        "action:complete_wave",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "target:enemy",
+        "source:dungeon",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "dungeon.chests_opened",
+      "tags": [
+        "domain:dungeon",
+        "action:open_chest",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:chest",
+        "target:item",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "dungeon.items_received",
+      "tags": [
+        "domain:dungeon",
+        "action:collect",
+        "metric:count",
+        "actor:player",
+        "location:dungeon",
+        "source:loot",
+        "target:item",
+        "item_category:any"
+      ]
+    },
+    {
+      "_section": "=== SOCIAL (13 patterns) ==="
+    },
+    {
+      "pattern": "social.npc.*",
+      "tags": [
+        "domain:social",
+        "action:interact",
+        "npc:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:npc",
+        "source:npc",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "social.npc.tutorial_guide",
+      "tags": [
+        "domain:social",
+        "action:interact",
+        "npc:tutorial_guide",
+        "metric:count",
+        "actor:player",
+        "target:npc",
+        "source:npc",
+        "rank:normal",
+        "quest:any",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "social.npc.mysterious_trader",
+      "tags": [
+        "domain:social",
+        "action:interact",
+        "npc:mysterious_trader",
+        "metric:count",
+        "actor:player",
+        "target:npc",
+        "source:vendor",
+        "resource:gold",
+        "item_category:any",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "social.npc.combat_trainer",
+      "tags": [
+        "domain:social",
+        "action:interact",
+        "npc:combat_trainer",
+        "metric:count",
+        "actor:player",
+        "target:npc",
+        "source:npc",
+        "skill:any",
+        "attack_type:melee",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "social.npc_interactions",
+      "tags": [
+        "domain:social",
+        "action:interact",
+        "metric:count",
+        "actor:player",
+        "target:npc",
+        "source:npc",
+        "location:world",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "social.quests.accepted",
+      "tags": [
+        "domain:social",
+        "action:accept_quest",
+        "metric:count",
+        "actor:player",
+        "source:npc",
+        "target:npc",
+        "quest:any",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "social.quests.accepted.*",
+      "tags": [
+        "domain:social",
+        "action:accept_quest",
+        "quest:{dim}",
+        "metric:count",
+        "actor:player",
+        "source:npc",
+        "target:npc",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "social.quests.completed",
+      "tags": [
+        "domain:social",
+        "action:complete_quest",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "source:quest",
+        "target:npc",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "social.quests.completed.*",
+      "tags": [
+        "domain:social",
+        "action:complete_quest",
+        "quest:{dim}",
+        "result:success",
+        "metric:count",
+        "actor:player",
+        "source:quest",
+        "target:npc"
+      ]
+    },
+    {
+      "pattern": "social.quests.failed",
+      "tags": [
+        "domain:social",
+        "action:fail_quest",
+        "result:failure",
+        "metric:count",
+        "actor:player",
+        "source:quest",
+        "target:npc",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "social.quests.failed.*",
+      "tags": [
+        "domain:social",
+        "action:fail_quest",
+        "quest:{dim}",
+        "result:failure",
+        "metric:count",
+        "actor:player",
+        "source:quest",
+        "target:npc"
+      ]
+    },
+    {
+      "pattern": "social.quests.exp_earned",
+      "tags": [
+        "domain:social",
+        "action:complete_quest",
+        "resource:exp",
+        "metric:amount_total",
+        "actor:player",
+        "source:quest",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "social.quests.gold_earned",
+      "tags": [
+        "domain:social",
+        "action:complete_quest",
+        "resource:gold",
+        "metric:amount_total",
+        "actor:player",
+        "source:quest",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== BARRIERS (4 patterns) ==="
+    },
+    {
+      "pattern": "barriers.placed",
+      "tags": [
+        "domain:barriers",
+        "action:place",
+        "metric:count",
+        "actor:player",
+        "item_category:barrier",
+        "target:node",
+        "location:world",
+        "source:inventory"
+      ]
+    },
+    {
+      "pattern": "barriers.placed.*",
+      "tags": [
+        "domain:barriers",
+        "action:place",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "item_category:barrier",
+        "target:node",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "barriers.picked_up",
+      "tags": [
+        "domain:barriers",
+        "action:pick_up",
+        "metric:count",
+        "actor:player",
+        "item_category:barrier",
+        "target:item",
+        "location:world",
+        "source:world"
+      ]
+    },
+    {
+      "pattern": "barriers.picked_up.*",
+      "tags": [
+        "domain:barriers",
+        "action:pick_up",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "item_category:barrier",
+        "target:item",
+        "location:world"
+      ]
+    },
+    {
+      "_section": "=== TIME (7 patterns) ==="
+    },
+    {
+      "pattern": "time.activity",
+      "tags": [
+        "domain:time",
+        "action:play",
+        "metric:duration",
+        "actor:player",
+        "location:world",
+        "source:session",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "time.activity.*",
+      "tags": [
+        "domain:time",
+        "action:play",
+        "location:{dim}",
+        "metric:duration",
+        "actor:player",
+        "source:session",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "time.menu",
+      "tags": [
+        "domain:time",
+        "action:browse_menu",
+        "metric:duration",
+        "actor:player",
+        "location:menu",
+        "source:session",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "time.menu.*",
+      "tags": [
+        "domain:time",
+        "action:browse_menu",
+        "location:{dim}",
+        "metric:duration",
+        "actor:player",
+        "source:session",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "time.idle",
+      "tags": [
+        "domain:time",
+        "action:idle",
+        "metric:duration",
+        "actor:player",
+        "location:world",
+        "source:session",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "time.sessions.duration",
+      "tags": [
+        "domain:time",
+        "action:play",
+        "metric:duration_per_session",
+        "actor:player",
+        "source:session",
+        "target:player",
+        "location:world",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "time.total_playtime",
+      "tags": [
+        "domain:time",
+        "action:play",
+        "metric:duration_total",
+        "actor:player",
+        "source:lifetime",
+        "target:player",
+        "location:world",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== RECORDS (4 patterns) ==="
+    },
+    {
+      "pattern": "records.*",
+      "tags": [
+        "domain:records",
+        "action:achieve",
+        "metric:record_value",
+        "actor:player",
+        "result:record",
+        "source:any",
+        "target:player",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "records.combat_duration",
+      "tags": [
+        "domain:records",
+        "action:achieve",
+        "metric:duration_max",
+        "actor:player",
+        "source:combat",
+        "target:enemy",
+        "location:world",
+        "result:record"
+      ]
+    },
+    {
+      "pattern": "records.fastest_gather.*",
+      "tags": [
+        "domain:records",
+        "action:achieve",
+        "resource:{dim}",
+        "metric:duration_min",
+        "actor:player",
+        "source:gathering",
+        "target:resource",
+        "result:record"
+      ]
+    },
+    {
+      "pattern": "records.rate.*",
+      "tags": [
+        "domain:records",
+        "action:achieve",
+        "source:{dim}",
+        "metric:rate_max",
+        "actor:player",
+        "target:player",
+        "result:record",
+        "location:world"
+      ]
+    },
+    {
+      "_section": "=== ENCYCLOPEDIA (4 patterns) ==="
+    },
+    {
+      "pattern": "encyclopedia.discovered",
+      "tags": [
+        "domain:encyclopedia",
+        "action:discover",
+        "metric:count",
+        "actor:player",
+        "item_category:any",
+        "target:item",
+        "result:first",
+        "source:any"
+      ]
+    },
+    {
+      "pattern": "encyclopedia.discovered.*",
+      "tags": [
+        "domain:encyclopedia",
+        "action:discover",
+        "item_category:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "result:first",
+        "source:any"
+      ]
+    },
+    {
+      "pattern": "encyclopedia.discovered.*.*",
+      "tags": [
+        "domain:encyclopedia",
+        "action:discover",
+        "item_category:{dim}",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "result:first"
+      ]
+    },
+    {
+      "pattern": "encyclopedia.completion.*",
+      "tags": [
+        "domain:encyclopedia",
+        "action:complete",
+        "item_category:{dim}",
+        "metric:percentage",
+        "actor:player",
+        "target:item",
+        "result:success",
+        "source:any"
+      ]
+    },
+    {
+      "_section": "=== MISC (7 patterns) ==="
+    },
+    {
+      "pattern": "misc.menu_opened",
+      "tags": [
+        "domain:misc",
+        "action:open_menu",
+        "metric:count",
+        "actor:player",
+        "location:menu",
+        "source:session",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "misc.menu_opened.*",
+      "tags": [
+        "domain:misc",
+        "action:open_menu",
+        "location:{dim}",
+        "metric:count",
+        "actor:player",
+        "source:session",
+        "target:player",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "misc.saves",
+      "tags": [
+        "domain:misc",
+        "action:save",
+        "metric:count",
+        "actor:player",
+        "result:success",
+        "source:session",
+        "target:player",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "misc.saves.*",
+      "tags": [
+        "domain:misc",
+        "action:save",
+        "slot:{dim}",
+        "metric:count",
+        "actor:player",
+        "result:success",
+        "source:session",
+        "target:player"
+      ]
+    },
+    {
+      "pattern": "misc.game_loads",
+      "tags": [
+        "domain:misc",
+        "action:load",
+        "metric:count",
+        "actor:player",
+        "result:success",
+        "source:session",
+        "target:player",
+        "location:world"
+      ]
+    },
+    {
+      "pattern": "misc.debug",
+      "tags": [
+        "domain:misc",
+        "action:debug",
+        "metric:count",
+        "actor:player",
+        "source:debug_mode",
+        "target:player",
+        "location:world",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "misc.debug.*",
+      "tags": [
+        "domain:misc",
+        "action:debug",
+        "source:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "location:world",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== SESSION (1 pattern) ==="
+    },
+    {
+      "pattern": "session.started",
+      "tags": [
+        "domain:session",
+        "action:start",
+        "metric:count",
+        "actor:player",
+        "source:session",
+        "target:player",
+        "location:world",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== COMBAT: Per-Enemy Damage (NEW) ==="
+    },
+    {
+      "pattern": "combat.damage_dealt.to.*",
+      "tags": [
+        "domain:combat",
+        "action:damage_deal",
+        "target:{dim}",
+        "metric:total",
+        "actor:player",
+        "attack_type:melee",
+        "element:physical",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.damage_taken.from.*",
+      "tags": [
+        "domain:combat",
+        "action:damage_take",
+        "source:{dim}",
+        "metric:total",
+        "actor:player",
+        "target:player",
+        "result:hit",
+        "element:physical"
+      ]
+    },
+    {
+      "pattern": "combat.damage_dealt.location.*",
+      "tags": [
+        "domain:combat",
+        "action:damage_deal",
+        "location:{dim}",
+        "metric:total",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "element:physical"
+      ]
+    },
+    {
+      "pattern": "combat.damage_taken.location.*",
+      "tags": [
+        "domain:combat",
+        "action:damage_take",
+        "location:{dim}",
+        "metric:total",
+        "actor:player",
+        "target:player",
+        "source:enemy",
+        "result:hit"
+      ]
+    },
+    {
+      "pattern": "combat.deaths.by.*",
+      "tags": [
+        "domain:combat",
+        "action:die",
+        "species:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "result:defeat",
+        "source:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.deaths.source.*",
+      "tags": [
+        "domain:combat",
+        "action:die",
+        "source:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "result:defeat"
+      ]
+    },
+    {
+      "pattern": "combat.deaths.element.*",
+      "tags": [
+        "domain:combat",
+        "action:die",
+        "element:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "result:defeat",
+        "source:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.deaths.location.*",
+      "tags": [
+        "domain:combat",
+        "action:die",
+        "location:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "result:defeat",
+        "source:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.kills.weapon_element.*",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "element:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.kills.location.*",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "location:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "_section": "=== COMBAT: Enchantment Procs (NEW) ==="
+    },
+    {
+      "pattern": "combat.enchant_proc.fire_aspect",
+      "tags": [
+        "domain:combat",
+        "action:enchant_proc",
+        "element:fire",
+        "status_effect:burn",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "source:enchantment",
+        "item_category:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.enchant_proc.frost_touch",
+      "tags": [
+        "domain:combat",
+        "action:enchant_proc",
+        "element:ice",
+        "status_effect:slow",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "source:enchantment",
+        "item_category:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.enchant_proc.poison",
+      "tags": [
+        "domain:combat",
+        "action:enchant_proc",
+        "element:poison",
+        "status_effect:poison",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "source:enchantment",
+        "item_category:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.enchant_proc.knockback",
+      "tags": [
+        "domain:combat",
+        "action:enchant_proc",
+        "status_effect:knockback",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "source:enchantment",
+        "attack_type:melee"
+      ]
+    },
+    {
+      "pattern": "combat.enchant_proc.lifesteal",
+      "tags": [
+        "domain:combat",
+        "action:enchant_proc",
+        "action:heal",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:enchantment",
+        "item_category:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.enchant_proc.lifesteal.healing",
+      "tags": [
+        "domain:combat",
+        "action:heal",
+        "metric:total",
+        "actor:player",
+        "target:player",
+        "source:enchantment",
+        "item_category:weapon",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.enchant_proc.chain_damage",
+      "tags": [
+        "domain:combat",
+        "action:enchant_proc",
+        "attack_type:chain",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "source:enchantment",
+        "item_category:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.enchant_proc.chain_damage.targets",
+      "tags": [
+        "domain:combat",
+        "action:enchant_proc",
+        "attack_type:chain",
+        "metric:targets_hit",
+        "actor:player",
+        "target:enemy",
+        "source:enchantment"
+      ]
+    },
+    {
+      "pattern": "combat.enchant_proc.thorns",
+      "tags": [
+        "domain:combat",
+        "action:reflect",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "source:enchantment",
+        "item_category:armor",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "combat.enchant_proc.thorns.damage",
+      "tags": [
+        "domain:combat",
+        "action:reflect",
+        "metric:total",
+        "actor:player",
+        "target:enemy",
+        "source:enchantment",
+        "item_category:armor"
+      ]
+    },
+    {
+      "pattern": "combat.enchant_proc.sharpness",
+      "tags": [
+        "domain:combat",
+        "action:enchant_proc",
+        "metric:damage_bonus",
+        "actor:player",
+        "target:enemy",
+        "source:enchantment",
+        "item_category:weapon",
+        "element:physical"
+      ]
+    },
+    {
+      "pattern": "combat.enchant_proc.protection",
+      "tags": [
+        "domain:combat",
+        "action:enchant_proc",
+        "metric:damage_reduced",
+        "actor:player",
+        "target:player",
+        "source:enchantment",
+        "item_category:armor"
+      ]
+    },
+    {
+      "pattern": "combat.enchant_proc.health_regen",
+      "tags": [
+        "domain:combat",
+        "action:heal",
+        "metric:total",
+        "actor:player",
+        "target:player",
+        "source:enchantment",
+        "result:passive",
+        "item_category:armor"
+      ]
+    },
+    {
+      "_section": "=== COMBAT: Status Effects Detail (NEW) ==="
+    },
+    {
+      "pattern": "combat.status.applied.burn",
+      "tags": [
+        "domain:combat",
+        "action:apply_status",
+        "status_effect:burn",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.status.received.burn",
+      "tags": [
+        "domain:combat",
+        "action:receive_status",
+        "status_effect:burn",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:enemy",
+        "result:hit"
+      ]
+    },
+    {
+      "pattern": "combat.status.applied.bleed",
+      "tags": [
+        "domain:combat",
+        "action:apply_status",
+        "status_effect:bleed",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.status.received.bleed",
+      "tags": [
+        "domain:combat",
+        "action:receive_status",
+        "status_effect:bleed",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:enemy",
+        "result:hit"
+      ]
+    },
+    {
+      "pattern": "combat.status.applied.poison",
+      "tags": [
+        "domain:combat",
+        "action:apply_status",
+        "status_effect:poison",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.status.received.poison",
+      "tags": [
+        "domain:combat",
+        "action:receive_status",
+        "status_effect:poison",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:enemy",
+        "result:hit"
+      ]
+    },
+    {
+      "pattern": "combat.status.applied.freeze",
+      "tags": [
+        "domain:combat",
+        "action:apply_status",
+        "status_effect:freeze",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.status.received.freeze",
+      "tags": [
+        "domain:combat",
+        "action:receive_status",
+        "status_effect:freeze",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:enemy",
+        "result:hit"
+      ]
+    },
+    {
+      "pattern": "combat.status.applied.stun",
+      "tags": [
+        "domain:combat",
+        "action:apply_status",
+        "status_effect:stun",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.status.received.stun",
+      "tags": [
+        "domain:combat",
+        "action:receive_status",
+        "status_effect:stun",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:enemy",
+        "result:hit"
+      ]
+    },
+    {
+      "pattern": "combat.status.applied.root",
+      "tags": [
+        "domain:combat",
+        "action:apply_status",
+        "status_effect:root",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.status.received.root",
+      "tags": [
+        "domain:combat",
+        "action:receive_status",
+        "status_effect:root",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:enemy",
+        "result:hit"
+      ]
+    },
+    {
+      "pattern": "combat.status.applied.slow",
+      "tags": [
+        "domain:combat",
+        "action:apply_status",
+        "status_effect:slow",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.status.received.slow",
+      "tags": [
+        "domain:combat",
+        "action:receive_status",
+        "status_effect:slow",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:enemy",
+        "result:hit"
+      ]
+    },
+    {
+      "pattern": "combat.status.applied.shock",
+      "tags": [
+        "domain:combat",
+        "action:apply_status",
+        "status_effect:shock",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.status.received.shock",
+      "tags": [
+        "domain:combat",
+        "action:receive_status",
+        "status_effect:shock",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:enemy",
+        "result:hit"
+      ]
+    },
+    {
+      "pattern": "combat.status.applied.chill",
+      "tags": [
+        "domain:combat",
+        "action:apply_status",
+        "status_effect:chill",
+        "metric:count",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.status.received.chill",
+      "tags": [
+        "domain:combat",
+        "action:receive_status",
+        "status_effect:chill",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:enemy",
+        "result:hit"
+      ]
+    },
+    {
+      "_section": "=== COMBAT: Survival Stats (NEW) ==="
+    },
+    {
+      "pattern": "combat.near_death",
+      "tags": [
+        "domain:combat",
+        "action:survive",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "result:near_death",
+        "source:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.near_death.by.*",
+      "tags": [
+        "domain:combat",
+        "action:survive",
+        "species:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "result:near_death",
+        "source:enemy"
+      ]
+    },
+    {
+      "pattern": "combat.max_hit_dealt",
+      "tags": [
+        "domain:combat",
+        "action:damage_deal",
+        "metric:maximum",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "pattern": "combat.max_hit_taken",
+      "tags": [
+        "domain:combat",
+        "action:damage_take",
+        "metric:maximum",
+        "actor:player",
+        "target:player",
+        "source:enemy",
+        "result:hit"
+      ]
+    },
+    {
+      "pattern": "combat.overkill_damage",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "metric:overkill_total",
+        "actor:player",
+        "target:enemy",
+        "result:success",
+        "source:weapon"
+      ]
+    },
+    {
+      "_section": "=== PLACED ENTITIES: Turrets, Traps, Bombs (NEW) ==="
+    },
+    {
+      "pattern": "turret.placed",
+      "tags": [
+        "domain:combat",
+        "action:place",
+        "metric:count",
+        "actor:player",
+        "item_category:turret",
+        "target:node",
+        "source:engineering",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "turret.placed.*",
+      "tags": [
+        "domain:combat",
+        "action:place",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "item_category:turret",
+        "source:engineering",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "turret.removed",
+      "tags": [
+        "domain:combat",
+        "action:remove",
+        "metric:count",
+        "actor:player",
+        "item_category:turret",
+        "target:node",
+        "source:inventory"
+      ]
+    },
+    {
+      "pattern": "turret.damage_dealt",
+      "tags": [
+        "domain:combat",
+        "action:damage_deal",
+        "metric:total",
+        "actor:turret",
+        "target:enemy",
+        "item_category:turret",
+        "source:engineering",
+        "attack_type:ranged"
+      ]
+    },
+    {
+      "pattern": "turret.damage_dealt.*",
+      "tags": [
+        "domain:combat",
+        "action:damage_deal",
+        "item:{dim}",
+        "metric:total",
+        "actor:turret",
+        "target:enemy",
+        "item_category:turret",
+        "attack_type:ranged"
+      ]
+    },
+    {
+      "pattern": "turret.kills",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "metric:count",
+        "actor:turret",
+        "target:enemy",
+        "item_category:turret",
+        "source:engineering",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "turret.kills.*",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "item:{dim}",
+        "metric:count",
+        "actor:turret",
+        "target:enemy",
+        "item_category:turret",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "trap.placed",
+      "tags": [
+        "domain:combat",
+        "action:place",
+        "metric:count",
+        "actor:player",
+        "item_category:trap",
+        "target:node",
+        "source:engineering",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "trap.placed.*",
+      "tags": [
+        "domain:combat",
+        "action:place",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "item_category:trap",
+        "source:engineering",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "trap.triggered",
+      "tags": [
+        "domain:combat",
+        "action:trigger",
+        "metric:count",
+        "actor:enemy",
+        "target:enemy",
+        "item_category:trap",
+        "source:engineering",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "trap.triggered.*",
+      "tags": [
+        "domain:combat",
+        "action:trigger",
+        "item:{dim}",
+        "metric:count",
+        "actor:enemy",
+        "target:enemy",
+        "item_category:trap",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "trap.damage_dealt",
+      "tags": [
+        "domain:combat",
+        "action:damage_deal",
+        "metric:total",
+        "actor:trap",
+        "target:enemy",
+        "item_category:trap",
+        "source:engineering"
+      ]
+    },
+    {
+      "pattern": "trap.kills",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "metric:count",
+        "actor:trap",
+        "target:enemy",
+        "item_category:trap",
+        "source:engineering",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "bomb.placed",
+      "tags": [
+        "domain:combat",
+        "action:place",
+        "metric:count",
+        "actor:player",
+        "item_category:bomb",
+        "source:engineering",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "bomb.detonated",
+      "tags": [
+        "domain:combat",
+        "action:detonate",
+        "metric:count",
+        "actor:player",
+        "item_category:bomb",
+        "source:engineering",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "bomb.damage_dealt",
+      "tags": [
+        "domain:combat",
+        "action:damage_deal",
+        "metric:total",
+        "actor:bomb",
+        "target:enemy",
+        "item_category:bomb",
+        "attack_type:aoe",
+        "source:engineering"
+      ]
+    },
+    {
+      "pattern": "bomb.kills",
+      "tags": [
+        "domain:combat",
+        "action:kill",
+        "metric:count",
+        "actor:bomb",
+        "target:enemy",
+        "item_category:bomb",
+        "source:engineering",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== ITEMS: Consumable Usage Detail (NEW) ==="
+    },
+    {
+      "pattern": "items.consumed.health_potion",
+      "tags": [
+        "domain:items",
+        "action:consume",
+        "item:health_potion",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "item_category:consumable",
+        "action:heal",
+        "source:potion"
+      ]
+    },
+    {
+      "pattern": "items.consumed.mana_potion",
+      "tags": [
+        "domain:items",
+        "action:consume",
+        "item:mana_potion",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "item_category:consumable",
+        "resource:mana",
+        "source:potion"
+      ]
+    },
+    {
+      "pattern": "items.consumed.*",
+      "tags": [
+        "domain:items",
+        "action:consume",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "item_category:consumable",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== ITEMS: Inventory Management (NEW) ==="
+    },
+    {
+      "pattern": "items.inventory_full",
+      "tags": [
+        "domain:items",
+        "action:inventory_full",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "result:failure",
+        "source:inventory"
+      ]
+    },
+    {
+      "pattern": "items.dropped.*",
+      "tags": [
+        "domain:items",
+        "action:drop",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "source:inventory",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "items.destroyed.*",
+      "tags": [
+        "domain:items",
+        "action:destroy",
+        "item:{dim}",
+        "metric:count",
+        "actor:player",
+        "target:item",
+        "source:inventory",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== CRAFTING: Station Usage (NEW) ==="
+    },
+    {
+      "pattern": "crafting.station.smithing.tier.1",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:smithing",
+        "tier:1",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.smithing.tier.2",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:smithing",
+        "tier:2",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.smithing.tier.3",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:smithing",
+        "tier:3",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.smithing.tier.4",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:smithing",
+        "tier:4",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.alchemy.tier.1",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:alchemy",
+        "tier:1",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.alchemy.tier.2",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:alchemy",
+        "tier:2",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.alchemy.tier.3",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:alchemy",
+        "tier:3",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.alchemy.tier.4",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:alchemy",
+        "tier:4",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.refining.tier.1",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:refining",
+        "tier:1",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.refining.tier.2",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:refining",
+        "tier:2",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.refining.tier.3",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:refining",
+        "tier:3",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.refining.tier.4",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:refining",
+        "tier:4",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.engineering.tier.1",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:engineering",
+        "tier:1",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.engineering.tier.2",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:engineering",
+        "tier:2",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.engineering.tier.3",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:engineering",
+        "tier:3",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.engineering.tier.4",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:engineering",
+        "tier:4",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.enchanting.tier.1",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:enchanting",
+        "tier:1",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.enchanting.tier.2",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:enchanting",
+        "tier:2",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.enchanting.tier.3",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:enchanting",
+        "tier:3",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.station.enchanting.tier.4",
+      "tags": [
+        "domain:crafting",
+        "action:use_station",
+        "discipline:enchanting",
+        "tier:4",
+        "metric:count",
+        "actor:player",
+        "target:station",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== CRAFTING: Material Consumption (NEW) ==="
+    },
+    {
+      "pattern": "crafting.materials.consumed.*",
+      "tags": [
+        "domain:crafting",
+        "action:consume",
+        "resource:{dim}",
+        "metric:total",
+        "actor:player",
+        "item_category:material",
+        "source:crafting",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== CRAFTING: Minigame Performance (NEW) ==="
+    },
+    {
+      "pattern": "crafting.minigame.score",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "metric:score",
+        "actor:player",
+        "source:minigame",
+        "result:success",
+        "target:item"
+      ]
+    },
+    {
+      "pattern": "crafting.minigame.score.*",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "discipline:{dim}",
+        "metric:score",
+        "actor:player",
+        "source:minigame",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "crafting.minigame.perfect_actions",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "metric:count",
+        "actor:player",
+        "source:minigame",
+        "result:perfect",
+        "quality:masterwork"
+      ]
+    },
+    {
+      "pattern": "crafting.minigame.failed",
+      "tags": [
+        "domain:crafting",
+        "action:craft",
+        "metric:count",
+        "actor:player",
+        "source:minigame",
+        "result:failure"
+      ]
+    },
+    {
+      "_section": "=== SKILLS: Damage/Healing Per Skill (NEW) ==="
+    },
+    {
+      "pattern": "skills.damage_dealt",
+      "tags": [
+        "domain:skills",
+        "action:damage_deal",
+        "metric:total",
+        "actor:player",
+        "target:enemy",
+        "source:skill",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.damage_dealt.*",
+      "tags": [
+        "domain:skills",
+        "action:damage_deal",
+        "skill:{dim}",
+        "metric:total",
+        "actor:player",
+        "target:enemy",
+        "source:skill",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.healing_done",
+      "tags": [
+        "domain:skills",
+        "action:heal",
+        "metric:total",
+        "actor:player",
+        "target:player",
+        "source:skill",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.healing_done.*",
+      "tags": [
+        "domain:skills",
+        "action:heal",
+        "skill:{dim}",
+        "metric:total",
+        "actor:player",
+        "target:player",
+        "source:skill",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "skills.cooldown_resets",
+      "tags": [
+        "domain:skills",
+        "action:reset_cooldown",
+        "metric:count",
+        "actor:player",
+        "source:skill",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== PROGRESSION: Stat Allocation (NEW) ==="
+    },
+    {
+      "pattern": "progression.stat_allocated.strength",
+      "tags": [
+        "domain:progression",
+        "action:allocate",
+        "class:strength",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:level_up",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.stat_allocated.defense",
+      "tags": [
+        "domain:progression",
+        "action:allocate",
+        "class:defense",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:level_up",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.stat_allocated.vitality",
+      "tags": [
+        "domain:progression",
+        "action:allocate",
+        "class:vitality",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:level_up",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.stat_allocated.luck",
+      "tags": [
+        "domain:progression",
+        "action:allocate",
+        "class:luck",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:level_up",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.stat_allocated.agility",
+      "tags": [
+        "domain:progression",
+        "action:allocate",
+        "class:agility",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:level_up",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "progression.stat_allocated.intelligence",
+      "tags": [
+        "domain:progression",
+        "action:allocate",
+        "class:intelligence",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "source:level_up",
+        "result:success"
+      ]
+    },
+    {
+      "_section": "=== PLAYER: Health/Mana (NEW) ==="
+    },
+    {
+      "pattern": "player.health_potions_used",
+      "tags": [
+        "domain:combat",
+        "action:heal",
+        "item:health_potion",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "item_category:consumable",
+        "source:potion"
+      ]
+    },
+    {
+      "pattern": "player.mana_potions_used",
+      "tags": [
+        "domain:combat",
+        "action:restore_mana",
+        "item:mana_potion",
+        "metric:count",
+        "actor:player",
+        "target:player",
+        "item_category:consumable",
+        "source:potion"
+      ]
+    },
+    {
+      "pattern": "player.total_healing_received",
+      "tags": [
+        "domain:combat",
+        "action:heal",
+        "metric:total",
+        "actor:player",
+        "target:player",
+        "source:any",
+        "result:success"
+      ]
+    },
+    {
+      "pattern": "player.total_mana_spent",
+      "tags": [
+        "domain:skills",
+        "action:spend_mana",
+        "metric:total",
+        "actor:player",
+        "resource:mana",
+        "source:skill"
+      ]
+    },
+    {
+      "_section": "=== ITEMS: Equipment Durability (NEW) ==="
+    },
+    {
+      "pattern": "items.durability_lost",
+      "tags": [
+        "domain:items",
+        "action:durability_loss",
+        "metric:total",
+        "actor:player",
+        "target:item",
+        "item_category:equipment",
+        "source:combat"
+      ]
+    },
+    {
+      "pattern": "items.durability_lost.slot.*",
+      "tags": [
+        "domain:items",
+        "action:durability_loss",
+        "slot:{dim}",
+        "metric:total",
+        "actor:player",
+        "target:item",
+        "item_category:equipment"
+      ]
+    },
+    {
+      "_section": "=== EXPLORATION: Biome Detail (NEW) ==="
+    },
+    {
+      "pattern": "exploration.time_in_biome.*",
+      "tags": [
+        "domain:exploration",
+        "action:explore",
+        "location:{dim}",
+        "metric:duration",
+        "actor:player",
+        "source:movement",
+        "target:node"
+      ]
+    },
+    {
+      "pattern": "exploration.distance.biome.*",
+      "tags": [
+        "domain:exploration",
+        "action:move",
+        "location:{dim}",
+        "metric:distance",
+        "actor:player",
+        "source:movement"
+      ]
+    }
+  ]
+}

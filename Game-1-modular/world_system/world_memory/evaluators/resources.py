@@ -1,5 +1,4 @@
-"""Resource Pressure Evaluator — detects when gathering outpaces
-regeneration in an area."""
+"""Resource Pressure Evaluator — narrates resource gathering counts in a region."""
 
 from __future__ import annotations
 
@@ -28,17 +27,13 @@ class ResourcePressureEvaluator(PatternEvaluator):
         self.major_min = t.get("major_min", 100)
         templates = cfg.get("narrative_templates", {})
         self.tpl_major = templates.get("major",
-            "{resource} deposits are critically strained in {region}. "
-            "Over {count} units have been harvested recently, far outpacing "
-            "natural regeneration.")
+            "Player has gathered {count} {resource} in {region}.")
         self.tpl_significant = templates.get("significant",
-            "{resource} is becoming scarce in {region}. "
-            "Heavy harvesting ({count} units) is depleting available nodes.")
+            "Player has gathered {count} {resource} in {region}.")
         self.tpl_moderate = templates.get("moderate",
-            "Notable {resource} harvesting activity in {region}. "
-            "Resource availability may be declining.")
+            "Player has gathered {count} {resource} in {region}.")
         self.tpl_minor = templates.get("minor",
-            "Steady {resource} gathering is underway in {region}.")
+            "Player has gathered {count} {resource} in {region}.")
 
     def is_relevant(self, event: WorldMemoryEvent) -> bool:
         return event.event_type in self.RELEVANT_TYPES

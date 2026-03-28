@@ -1,1 +1,1 @@
-# Pattern evaluator implementations for the World Interpreter (Layer 3)
+# Pattern evaluator implementations for the World Interpreter (Layer 2)
