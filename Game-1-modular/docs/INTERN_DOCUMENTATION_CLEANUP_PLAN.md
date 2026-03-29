@@ -27,7 +27,7 @@ Read these documents in order to understand the project:
 ### Step 1.2: Understand the Codebase Structure
 ```
 Game-1/
-├── Game-1-modular/     # Main game code (136 Python files)
+├── Game-1-modular/     # Main game code (239 Python files)
 ├── Scaled JSON Development/  # ML/LLM systems (39 Python files)
 ├── archive/            # Historical docs (87 files) - DO NOT MODIFY
 └── .claude/            # AI assistant guides

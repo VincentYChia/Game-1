@@ -6,7 +6,7 @@ Complete documentation of every Python module in Game-1-Modular.
 
 **Purpose**: Quick reference for understanding what each file does and how to use it.
 
-**Statistics**: 136 Python files, ~62,380 lines of code
+**Statistics**: 239 Python files, ~96,400 lines of code
 
 ---
 
@@ -1680,25 +1680,29 @@ python verify_imports.py
 
 ## Summary
 
-**Total Modules**: 136 Python files
-**Total Lines**: ~62,380
+**Total Modules**: 239 Python files
+**Total Lines**: ~96,400
 **Organization**: Layered by concern
-**Pattern**: Component-based + Singleton databases + Tag-driven effects
-**Testing**: 13 test files + manual testing
+**Pattern**: Component-based + Singleton databases + Tag-driven effects + Event-driven (GameEventBus)
+**Testing**: 24 test files + 56 WMS tests + manual testing
 
-### Key Systems by Lines of Code
+> **Note**: This module reference was written in January 2026 and does not cover modules added since then, including `world_system/` (71 files), `animation/` (7 files), `events/` (2 files), or expanded `Combat/` (11 files). See `.claude/CLAUDE.md` for the current architecture.
+
+### Key Systems by Lines of Code (Updated March 2026)
 | System | Lines | Purpose |
 |--------|-------|---------|
-| game_engine.py | 7,817 | Main loop, UI, event handling |
-| renderer.py | 2,782 | All visual rendering |
-| combat_manager.py | 1,655 | Damage pipeline, enchantments |
-| llm_item_generator.py | 1,393 | Claude API integration |
-| enchanting.py | 1,410 | Enchanting minigame |
-| engineering.py | 1,315 | Engineering minigame |
-| crafting_classifier.py | 1,256 | CNN + LightGBM validation |
-| alchemy.py | 1,052 | Alchemy minigame |
-| character.py | 1,008 | Player entity |
-| skill_manager.py | 709 | Skill system |
+| game_engine.py | 10,809 | Main loop, UI, event handling |
+| renderer.py | 7,931 | All visual rendering |
+| character.py | 2,593 | Player entity |
+| crafting_simulator.py | 2,337 | Crafting simulation |
+| combat_manager.py | 2,317 | Damage pipeline, enchantments |
+| enchanting.py | 1,408 | Enchanting minigame |
+| crafting_classifier.py | 1,419 | CNN + LightGBM validation |
+| llm_item_generator.py | 1,392 | Claude API integration |
+| enemy.py | 1,348 | Enemy AI, spawning |
+| engineering.py | 1,312 | Engineering minigame |
+| stat_tracker.py | 1,149 | SQL-backed player analytics |
+| skill_manager.py | 1,124 | Skill system |
 
 For architecture overview, see [ARCHITECTURE.md](ARCHITECTURE.md).
 For development guide, see [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md).

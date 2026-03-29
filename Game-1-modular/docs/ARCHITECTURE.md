@@ -152,17 +152,19 @@ core/game_engine.py (import everything)
 
 ## Directory Structure
 
+> **Note**: This directory listing is from January 2026. For the current structure (including `world_system/`, `animation/`, `events/`, expanded `Combat/`), see `.claude/CLAUDE.md` or `README.md`.
+
 ```
 Game-1-modular/
 ├── main.py                      # Entry point (~30 lines)
 │
-├── core/                        # Core game systems (23 files, 15,589 LOC)
+├── core/                        # Core game systems (23 files, 18,764 LOC)
 │   ├── __init__.py
 │   ├── config.py               # Global constants
-│   ├── game_engine.py          # Main game loop (7,817 lines)
-│   ├── interactive_crafting.py # 5 discipline crafting UIs (1,078 lines)
-│   ├── effect_executor.py      # Tag-based combat effects (624 lines)
-│   ├── difficulty_calculator.py # Material-based difficulty (802 lines)
+│   ├── game_engine.py          # Main game loop (10,809 lines)
+│   ├── interactive_crafting.py # 6 discipline crafting UIs (1,179 lines)
+│   ├── effect_executor.py      # Tag-based combat effects (623 lines)
+│   ├── difficulty_calculator.py # Material-based difficulty (808 lines)
 │   ├── reward_calculator.py    # Performance rewards (607 lines)
 │   ├── tag_system.py           # Tag registry
 │   ├── tag_parser.py           # Tag parsing
