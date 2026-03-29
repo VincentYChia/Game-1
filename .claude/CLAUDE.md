@@ -1,15 +1,16 @@
 # Claude.md - Game-1 Developer Guide
 
 **Quick Reference for AI Assistants & Developers**
-**Last Updated**: March 6, 2026
+**Last Updated**: March 29, 2026
 
 ## Project Summary
 
 **Game-1** is a production-ready crafting RPG built with Python/Pygame featuring:
 - 100x100 tile world with procedural chunk generation
-- 5 crafting disciplines (Smithing, Alchemy, Refining, Engineering, Enchanting) with unique minigames
-- **LLM-powered "Invented Items" system** for procedural content generation (NEW)
-- **ML classifiers** (CNN + LightGBM) for recipe validation (NEW)
+- 6 crafting disciplines (Smithing, Alchemy, Refining, Engineering, Enchanting, Fishing) with unique minigames
+- **LLM-powered "Invented Items" system** for procedural content generation
+- **ML classifiers** (CNN + LightGBM) for recipe validation
+- **World Memory System** — 7-layer event tracking, 33 evaluators, tag-based retrieval (SQLite)
 - Full combat system with enemies, damage pipeline, enchantments, and status effects
 - 100+ skills with mana, cooldowns, and level-based scaling
 - Character progression (30 levels, 6 stats, titles, classes)
@@ -17,12 +18,13 @@
 - Complete save/load system preserving all game state
 - Equipment system with durability, weight, and repairs
 
-**Architecture**: Modular (149 Python files, ~75,911 LOC, 398+ JSON data files, 3,749 asset images)
-**Master Reference**: `docs/GAME_MECHANICS_V6.md` (5,089 lines)
+**Architecture**: Modular (239 Python files, ~96,400 LOC, ~90 JSON game-definition files, 3,749 asset images)
+**Master Reference**: `docs/GAME_MECHANICS_V6.md` (5,154 lines)
 **Status Report**: `docs/REPOSITORY_STATUS_REPORT_2026-01-27.md`
 **Project Duration**: October 19, 2025 - Present (Python/Pygame — active development)
 **Development Plan**: `Development-Plan/OVERVIEW.md` (active roadmap — Living World + Combat Overhaul)
-**Migration Plan**: `Migration-Plan/COMPLETION_STATUS.md` (paused indefinitely — retained for reference)
+**World Memory System**: `world_system/docs/HANDOFF_STATUS.md` (current implementation state)
+**Migration Plan**: `archive/Migration-Plan/COMPLETION_STATUS.md` (paused indefinitely — retained for reference)
 
 ---
 
@@ -44,15 +46,19 @@ All development targets the **2D Python/Pygame version**. Unity migration is pau
 
 ### Key Architecture Additions
 - `animation/` — Frame-based animation system with procedural generation from static sprites
-- `combat/` — Attack state machine, hitbox system, projectile system (supplements existing `Combat/`)
-- `ai/` — Memory layer (SQLite), model backends (Ollama/Claude/Mock), NPC/faction/ecosystem agents
-- `events/` — GameEventBus pub/sub system connecting all new systems
+- `Combat/` — Attack state machine, hitbox system, projectile system (expanded from original 3 files to 11)
+- `world_system/` — World Memory System (SQLite-backed 7-layer event architecture, 14,269 LOC)
+  - `world_memory/` — StatStore, EventStore, evaluators, tag library, triggers, daily ledger
+  - `living_world/` — BackendManager (Ollama/Claude/Mock), NPC agents, factions, ecosystem
+  - `config/` — 7 JSON config files (memory, geographic, backend, faction, ecosystem, NPC, tags)
+- `events/` — GameEventBus pub/sub system connecting all systems
+- `entities/components/stat_tracker.py` — 65 `record_*` methods writing to SQL via StatStore (1,149 lines)
 
 ---
 
 ## Unity/C# Migration (PAUSED — February 2026)
 
-The Unity migration plan is retained in `Migration-Plan/` for reference but is **not being actively developed**. See `Migration-Plan/COMPLETION_STATUS.md` for the full plan if resuming later.
+The Unity migration plan is retained in `archive/Migration-Plan/` for reference but is **not being actively developed**. See `archive/Migration-Plan/COMPLETION_STATUS.md` for the full plan if resuming later.
 7. **Phase 7 — Polish & LLM Stub**: `IItemGenerator` interface, E2E testing, 3D verification (1,024 lines)
 
 ### Key Architecture Decisions (Migration)
@@ -94,20 +100,15 @@ Durability: 0% = 50% effectiveness, never breaks
 ### Directory Layout
 ```
 Game-1/
-├── Migration-Plan/          # Migration documentation (16,013 lines)
-│   ├── COMPLETION_STATUS.md # START HERE — central hub
-│   ├── MIGRATION_PLAN.md    # Master plan
-│   ├── IMPROVEMENTS.md      # Architecture improvements
-│   ├── CONVENTIONS.md       # Living conventions
-│   ├── PHASE_CONTRACTS.md   # Phase I/O contracts
-│   ├── MIGRATION_META_PLAN.md
-│   ├── phases/              # 7 phase documents
-│   └── reference/           # UNITY_PRIMER.md, PYTHON_TO_CSHARP.md
-├── Game-1-modular/          # Active Python source (read during migration)
-├── Unity/                   # Target Unity project (empty, to be populated)
-├── Python/                  # Symlink to Game-1-modular
+├── .claude/                 # AI assistant context (CLAUDE.md, INDEX.md, NAMING_CONVENTIONS.md)
+├── .github/                 # CI/CD (workflows/build-game.yml)
+├── Development-Plan/        # Active roadmap (19 files — Living World + Combat Overhaul)
+├── Game-1-modular/          # Active Python source (239 files, ~96,400 LOC)
 ├── Scaled JSON Development/ # ML training data/models
+├── Python/                  # Pointer directory (README.md only — not a symlink)
+├── Unity/                   # Placeholder (README.md only — migration paused)
 └── archive/                 # Historical docs
+    └── Migration-Plan/      # Paused Unity migration plan (16,013 lines)
 ```
 
 ---
@@ -119,31 +120,37 @@ Game-1/
 - Resource gathering with tool requirements
 - Inventory system (30 slots, drag-and-drop)
 - Equipment system (8 slots: weapons, armor, tools)
-- **All 5 crafting disciplines with minigames** (5,346 lines total)
-- **LLM Item Generation** via Claude API (systems/llm_item_generator.py - 1,393 lines) (NEW)
-- **Crafting Classifiers** - CNN for smithing/adornments, LightGBM for others (NEW)
-- **Invented Recipes** - Player-created content persisted across saves (NEW)
+- **All 6 crafting disciplines with minigames** (8,994 lines total)
+- **LLM Item Generation** via Claude API (systems/llm_item_generator.py - 1,392 lines)
+- **Crafting Classifiers** - CNN for smithing/adornments, LightGBM for others
+- **Invented Recipes** - Player-created content persisted across saves
 - Character progression (30 levels, 6 stats, EXP curves)
 - Class system (6 classes with tag-driven bonuses)
 - Title system (all tiers: Novice through Master)
 - **Full combat system** (damage pipeline, enchantments, dual wielding)
 - **100+ skills** with mana, cooldowns, effects
-- **Status effects** (DoT, CC, buffs, debuffs - 827 lines)
+- **Status effects** (DoT, CC, buffs, debuffs - 826 lines)
 - **14 Enchantments fully integrated** (see Combat section)
 - **Full save/load system** (complete state preservation)
 - **Durability, weight, and repair systems**
 - **Tag-driven effect system** (combat, skills, items)
 - **Difficulty/Reward calculators** (material-based scaling)
+- **World Memory System** — Layers 1-2 complete, 33 evaluators, 56 passing tests (14,269 LOC)
+- **GameEventBus** pub/sub system (events/event_bus.py)
+- **StatTracker** — 65 SQL-backed recording methods for comprehensive player analytics
+- **Living World consumers** — BackendManager, NPC agents, factions, ecosystem (pre-existing, external to WMS)
 
 ### Partially Implemented
 - World generation (basic chunks, detailed templates pending)
 - NPC/Quest system (basic functionality, needs expansion)
+- World Memory Layers 3-7 (SQL schemas exist, no code writes to them yet)
 
 ### Designed But NOT Implemented
 - Advanced skill evolution chains
 - Block/Parry combat mechanics (TODO in combat_manager.py)
 - Summon mechanics (TODO in effect_executor.py:233)
 - Advanced spell casting / combos
+- BalanceValidator (spec only in Development-Plan/SHARED_INFRASTRUCTURE.md)
 
 **Important**: Don't assume features from design docs exist in code. Check `GAME_MECHANICS_V6.md` for implementation status.
 
@@ -161,8 +168,8 @@ Players can **invent new items** by placing materials in unique arrangements. Th
 ### Key Files
 ```
 systems/
-├── llm_item_generator.py      # Claude API integration (1,393 lines)
-└── crafting_classifier.py     # CNN + LightGBM validation (1,256 lines)
+├── llm_item_generator.py      # Claude API integration (1,392 lines)
+└── crafting_classifier.py     # CNN + LightGBM validation (1,419 lines)
 
 Scaled JSON Development/
 ├── LLM Training Data/Fewshot_llm/    # System prompts & examples
@@ -204,20 +211,20 @@ All LLM API calls are logged to `llm_debug_logs/TIMESTAMP_discipline.json`
 
 ```
 Game-1-modular/
-├── main.py                      # Entry point (~30 lines)
-├── core/                        # Core game systems (23 files, 15,589 LOC)
+├── main.py                      # Entry point (39 lines)
+├── core/                        # Core game systems (23 files, 18,764 LOC)
 │   ├── config.py                # Game configuration constants
-│   ├── game_engine.py           # Main game engine (7,817 lines)
-│   ├── interactive_crafting.py  # 5 discipline crafting UIs (1,078 lines)
-│   ├── effect_executor.py       # Tag-based combat effects (624 lines)
-│   ├── difficulty_calculator.py # Material-based difficulty (803 lines)
-│   ├── reward_calculator.py     # Performance rewards (608 lines)
+│   ├── game_engine.py           # Main game engine (10,809 lines)
+│   ├── interactive_crafting.py  # 6 discipline crafting UIs (1,179 lines)
+│   ├── effect_executor.py       # Tag-based combat effects (623 lines)
+│   ├── difficulty_calculator.py # Material-based difficulty (808 lines)
+│   ├── reward_calculator.py     # Performance rewards (607 lines)
 │   ├── tag_system.py            # Tag registry
 │   ├── tag_parser.py            # Tag parsing
 │   ├── crafting_tag_processor.py # Discipline tag processing
-│   ├── minigame_effects.py      # Particle effects (~2,000 lines)
+│   ├── minigame_effects.py      # Particle effects (1,522 lines)
 │   └── testing.py               # Crafting system tester
-├── data/                        # Data layer (25 files, 3,745 LOC)
+├── data/                        # Data layer (30 files, 5,424 LOC)
 │   ├── models/                  # Pure data classes (dataclasses)
 │   │   ├── materials.py         # MaterialDefinition
 │   │   ├── equipment.py         # EquipmentItem
@@ -225,8 +232,9 @@ Game-1-modular/
 │   │   ├── recipes.py           # Recipe, PlacementData
 │   │   ├── world.py             # Position, TileType, WorldTile
 │   │   ├── titles.py            # TitleDefinition
-│   │   └── classes.py           # ClassDefinition with tags
-│   └── databases/               # Singleton database loaders (10 files)
+│   │   ├── classes.py           # ClassDefinition with tags
+│   │   └── (+ npcs, quests, resources, skill_unlocks, unlock_conditions)
+│   └── databases/               # Singleton database loaders (16 files)
 │       ├── material_db.py       # MaterialDatabase
 │       ├── equipment_db.py      # EquipmentDatabase
 │       ├── recipe_db.py         # RecipeDatabase
@@ -236,38 +244,77 @@ Game-1-modular/
 │       ├── npc_db.py            # NPCDatabase
 │       ├── placement_db.py      # PlacementDatabase
 │       ├── translation_db.py    # TranslationDatabase
-│       └── skill_unlock_db.py   # SkillUnlockDatabase
-├── entities/                    # Game entities (17 files, 6,909 LOC)
-│   ├── character.py             # Character class (1,008 lines)
+│       ├── skill_unlock_db.py   # SkillUnlockDatabase
+│       └── (+ map_waypoint_db, resource_node_db, update_loader, visual_config_db, world_generation_db)
+├── entities/                    # Game entities (17 files, 7,263 LOC)
+│   ├── character.py             # Character class (2,593 lines)
+│   ├── status_effect.py         # Status effects (826 lines)
+│   ├── status_manager.py        # Status management
 │   ├── tool.py                  # Tool class
 │   └── components/              # Character components
 │       ├── inventory.py         # Inventory, ItemStack
 │       ├── equipment_manager.py # EquipmentManager
-│       ├── skill_manager.py     # SkillManager (709 lines)
+│       ├── skill_manager.py     # SkillManager (1,124 lines)
+│       ├── stat_tracker.py      # SQL-backed player analytics (1,149 lines)
 │       ├── stats.py             # CharacterStats
 │       ├── buffs.py             # Buff/debuff tracking
-│       └── leveling.py          # LevelingSystem
-├── systems/                     # Game system managers (16 files, 5,856 LOC)
+│       ├── leveling.py          # LevelingSystem
+│       └── (+ activity_tracker, crafted_stats, weapon_tag_calculator)
+├── systems/                     # Game system managers (21 files, 10,631 LOC)
 │   ├── world_system.py          # WorldSystem (generation, chunks)
+│   ├── save_manager.py          # Full state persistence (634 lines)
 │   ├── title_system.py          # TitleSystem
 │   ├── class_system.py          # ClassSystem with tag bonuses
-│   ├── llm_item_generator.py    # LLM integration (1,393 lines) (NEW)
-│   └── crafting_classifier.py   # ML classifiers (1,256 lines) (NEW)
-├── rendering/                   # All rendering code (3 files, 5,679 LOC)
-│   └── renderer.py              # Renderer class (2,782 lines)
-├── Combat/                      # Combat system (3 files, 2,527 LOC)
-│   ├── combat_manager.py        # CombatManager (1,655 lines)
-│   └── enemy.py                 # Enemy, EnemyDatabase (867 lines)
-├── Crafting-subdisciplines/     # Crafting minigames (8 files, 5,346 LOC)
-│   ├── smithing.py              # Smithing minigame (749 lines)
-│   ├── alchemy.py               # Alchemy minigame (1,052 lines)
-│   ├── refining.py              # Refining minigame (820 lines)
-│   ├── engineering.py           # Engineering minigame (1,315 lines)
-│   └── enchanting.py            # Enchanting minigame (1,410 lines)
-├── save_system/                 # Save/load system
-│   └── save_manager.py          # Full state persistence
+│   ├── llm_item_generator.py    # LLM integration (1,392 lines)
+│   ├── crafting_classifier.py   # ML classifiers (1,419 lines)
+│   └── (+ biome_generator, chunk, collision_system, dungeon, encyclopedia,
+│        map_waypoint_system, npc_system, quest_system, turret_system, etc.)
+├── world_system/                # World Memory System (71 files, 14,269 LOC)
+│   ├── world_memory/            # Core WMS engine
+│   │   ├── world_memory_system.py # Facade (449 lines)
+│   │   ├── stat_store.py        # SQL-backed hierarchical stats (327 lines)
+│   │   ├── event_store.py       # 20 SQL tables (1,140 lines)
+│   │   ├── event_recorder.py    # Bus→SQLite bridge (481 lines)
+│   │   ├── trigger_manager.py   # Threshold-based dual-track triggers (194 lines)
+│   │   ├── tag_library.py       # 65-category taxonomy (559 lines)
+│   │   ├── tag_assignment.py    # Layer 1→7 tag engine (410 lines)
+│   │   ├── layer_store.py       # Per-layer SQL + tag junction tables (426 lines)
+│   │   ├── daily_ledger.py      # Daily aggregation (277 lines)
+│   │   ├── evaluators/          # 33 Layer 2 evaluators (1,700+ lines)
+│   │   └── (+ geographic_registry, entity_registry, query, interpreter,
+│   │        time_envelope, retention, position_sampler, tag_browser)
+│   ├── living_world/            # Consumer systems (NOT part of WMS)
+│   │   ├── backends/            # BackendManager — LLM abstraction (553 lines)
+│   │   ├── npc/                 # NPCAgentSystem + NPCMemory (665 lines)
+│   │   ├── factions/            # FactionSystem (463 lines)
+│   │   └── ecosystem/           # EcosystemAgent (398 lines)
+│   ├── config/                  # 7 JSON configs (memory, geographic, backend, etc.)
+│   ├── tests/                   # 56 passing tests across 4 test files
+│   └── docs/                    # WORLD_MEMORY_SYSTEM.md (canonical design doc)
+├── events/                      # Event system (2 files, 198 LOC)
+│   └── event_bus.py             # GameEventBus pub/sub
+├── animation/                   # Animation system (7 files, 1,008 LOC)
+│   └── (animation_manager, procedural, weapon_visuals, combat_particles, etc.)
+├── rendering/                   # All rendering code (5 files, 8,841 LOC)
+│   └── renderer.py              # Renderer class (7,931 lines)
+├── Combat/                      # Combat system (11 files, 5,562 LOC)
+│   ├── combat_manager.py        # CombatManager (2,317 lines)
+│   ├── enemy.py                 # Enemy, EnemyDatabase (1,348 lines)
+│   └── (+ attack_state_machine, hitbox_system, projectile_system,
+│        attack_profile_generator, combat_data_loader, player_actions, etc.)
+├── Crafting-subdisciplines/     # Crafting minigames (9 files, 8,994 LOC)
+│   ├── smithing.py              # Smithing minigame (909 lines)
+│   ├── alchemy.py               # Alchemy minigame (1,070 lines)
+│   ├── refining.py              # Refining minigame (826 lines)
+│   ├── engineering.py           # Engineering minigame (1,312 lines)
+│   ├── enchanting.py            # Enchanting minigame (1,408 lines)
+│   ├── fishing.py               # Fishing minigame (872 lines)
+│   └── crafting_simulator.py    # Crafting simulation (2,337 lines)
+├── tests/                       # Test suite (24 files, 6,594 LOC)
+├── tools/                       # Dev utilities (10 files — grid designers, icon audit, etc.)
+├── save_system/                 # Save system docs + create_default_save.py
 └── docs/                        # Technical documentation
-    ├── GAME_MECHANICS_V6.md     # MASTER REFERENCE (5,089 lines)
+    ├── GAME_MECHANICS_V6.md     # MASTER REFERENCE (5,154 lines)
     ├── REPOSITORY_STATUS_REPORT_2026-01-27.md # Current status
     └── tag-system/              # Tag system documentation
 ```
@@ -284,14 +331,18 @@ Game-1-modular/
 - `PlacementDatabase` - Minigame grid layouts
 
 **Core Systems**:
-- `Character` - Player entity with stats, inventory, equipment, skills
-- `CombatManager` - Full damage pipeline, enchantments, status effects
-- `SkillManager` - Skill activation, mana, cooldowns, affinity bonuses
+- `Character` - Player entity with stats, inventory, equipment, skills (2,593 lines)
+- `CombatManager` - Full damage pipeline, enchantments, status effects (2,317 lines)
+- `SkillManager` - Skill activation, mana, cooldowns, affinity bonuses (1,124 lines)
 - `WorldSystem` - 100x100 tiles, chunk-based generation
-- `Renderer` - All drawing logic (2,782 lines)
-- `GameEngine` - Main loop, event handling, UI (7,817 lines)
-- `LLMItemGenerator` - Claude API integration for invented items (NEW)
-- `CraftingClassifierManager` - CNN/LightGBM validation (NEW)
+- `Renderer` - All drawing logic (7,931 lines)
+- `GameEngine` - Main loop, event handling, UI (10,809 lines)
+- `LLMItemGenerator` - Claude API integration for invented items
+- `CraftingClassifierManager` - CNN/LightGBM validation
+- `WorldMemorySystem` - 7-layer event tracking facade (world_system/)
+- `StatTracker` - SQL-backed player analytics (65 record methods)
+- `GameEventBus` - Pub/sub event system (events/event_bus.py)
+- `BackendManager` - LLM abstraction layer (Ollama/Claude/Mock)
 
 ### Design Patterns
 
@@ -300,7 +351,8 @@ Game-1-modular/
 3. **Dataclasses**: Heavy use of `@dataclass` for data structures
 4. **Tag-Driven Effects**: Combat, skills, and items use composable tag system
 5. **JSON-Driven Content**: All items, recipes, materials, skills defined in JSON
-6. **Background Threading**: LLM generation runs async to avoid UI freeze (NEW)
+6. **Background Threading**: LLM generation runs async to avoid UI freeze
+7. **Pub/Sub Events**: GameEventBus decouples systems; WorldMemorySystem subscribes to ~60 event types
 
 ---
 
@@ -661,7 +713,7 @@ python -m json.tool recipes.JSON/recipes-smithing-3.json > /dev/null
 ### ALLOWED (Visual Overhaul Scope)
 
 1. **New configuration JSONs** — Animation configs, VFX configs, hitbox definitions, visual timing data. These are *system configuration*, not game content.
-2. **New Python modules** — `animation/`, `combat/` (lowercase, supplements existing `Combat/`), `events/` for visual systems.
+2. **New Python modules** — `animation/`, `events/`, and new files within `Combat/` for visual systems.
 3. **Sprite overhaul** — Entity/world sprites (NOT icon PNGs in `assets/`) can be replaced, enhanced, or supplemented with new animation sprite assets.
 4. **Procedural animation from static sprites** — Rotation, scaling, tinting, flashing, particle generation from existing sprites.
 5. **Minimal integration hooks** — Small additions to existing code (event publications, component attachments) to connect visual systems.
@@ -689,7 +741,7 @@ BalanceValidator is **designed but NOT implemented**. It exists only as a spec i
 
 ### JSON File Count Clarification
 
-The "398+ JSON files" count includes ~218 save/chunk files and ~80 ML training/debug logs. The actual game-definition JSON files number approximately **~60 files** across `items.JSON/`, `recipes.JSON/`, `placements.JSON/`, `Skills/`, `Definitions.JSON/`, `progression/`, and `Update-*/`.
+The ~90 JSON game-definition files are spread across `items.JSON/`, `recipes.JSON/`, `placements.JSON/`, `Skills/`, `Definitions.JSON/`, `progression/`, `Update-*/`, and `world_system/config/`. Save/chunk files and ML training logs are excluded from this count and are gitignored.
 
 ---
 
@@ -707,11 +759,13 @@ The "398+ JSON files" count includes ~218 save/chunk files and ~80 ML training/d
 ### For Living World / Combat Overhaul Work:
 - **Start with** `Development-Plan/OVERVIEW.md` — roadmap and dependency graph
 - **Read** the relevant Part document before implementing any phase
+- **Read** `world_system/docs/HANDOFF_STATUS.md` for current WMS implementation state
 - **Use** `GameEventBus` for all new inter-system communication
-- **Use** `BackendManager` for all LLM inference (never call APIs directly)
+- **Use** `BackendManager` (world_system/living_world/backends/) for all LLM inference (never call APIs directly)
 - **All timing, hitboxes, attack patterns in configuration JSON** — consistent with project philosophy
 - **Preserve** all game constants exactly (damage pipeline, EXP curve, tier multipliers)
-- **New modules** go in `animation/`, `combat/` (lowercase), `ai/`, `events/`
+- **New visual modules** go in `animation/`, `Combat/`, `events/`
+- **New world/AI modules** go in `world_system/` (world_memory/ for WMS, living_world/ for consumers)
 - **Existing code** modified minimally — add event publishing, don't restructure
 
 ### DON'T:
@@ -722,13 +776,13 @@ The "398+ JSON files" count includes ~218 save/chunk files and ~80 ML training/d
 - Skip checking tag documentation for combat/skill work
 - Change any game formula, constant, or balance number
 - Modify existing combat_manager.py logic — extend via new modules
-- Reference BalanceValidator or BackendManager as if they exist in code (they don't yet)
+- Reference BalanceValidator as if it exists in code (it doesn't yet — spec only in Development-Plan/SHARED_INFRASTRUCTURE.md)
 
 ---
 
 ## Documentation Index
 
-### Migration Plan (in `Migration-Plan/`)
+### Migration Plan (in `archive/Migration-Plan/`)
 | Document | Purpose |
 |----------|---------|
 | **COMPLETION_STATUS.md** | Central hub — start here for migration |
@@ -743,7 +797,7 @@ The "398+ JSON files" count includes ~218 save/chunk files and ~80 ML training/d
 ### Python Source Documentation (in `Game-1-modular/`)
 | Document | Purpose |
 |----------|---------|
-| **GAME_MECHANICS_V6.md** | Master reference - all mechanics (5,089 lines) |
+| **GAME_MECHANICS_V6.md** | Master reference - all mechanics (5,154 lines) |
 | **REPOSITORY_STATUS_REPORT_2026-01-27.md** | Current system state |
 | **MASTER_ISSUE_TRACKER.md** | Known bugs and improvements |
 | **docs/tag-system/TAG-GUIDE.md** | Comprehensive tag system guide |
@@ -752,10 +806,19 @@ The "398+ JSON files" count includes ~218 save/chunk files and ~80 ML training/d
 | **Fewshot_llm/README.md** | LLM system documentation |
 | **Fewshot_llm/MANUAL_TUNING_GUIDE.md** | LLM prompt editing guide |
 
+### World Memory System Documentation (in `Game-1-modular/world_system/docs/`)
+| Document | Purpose |
+|----------|---------|
+| **WORLD_MEMORY_SYSTEM.md** | Single source of truth — 1,864 lines covering all 16 design sections |
+| **HANDOFF_STATUS.md** | Implementation state as of 2026-03-28 |
+| **TAG_LIBRARY.md** | 65-category tag taxonomy across 7 layers |
+| **FOUNDATION_IMPLEMENTATION_PLAN.md** | Layer 1-2 build plan (mostly executed) |
+
 ---
 
 ## Version History
 
+- **v7.0** (March 29, 2026): Major accuracy update. Fixed all file/LOC counts against actual codebase (239 files, ~96,400 LOC). Added World Memory System (14,269 LOC, 71 files). Fixed directory layout (Migration-Plan moved to archive/, Python/ is not a symlink). Corrected ai/ → world_system/living_world/, combat/ → Combat/. Removed stale "BackendManager doesn't exist" warning. Added StatTracker, GameEventBus, fishing discipline. Updated all individual file line counts.
 - **v6.0** (March 8, 2026): Added Visual Overhaul Design Standards section. Clarified sacred boundaries (no content JSON, no icon PNGs, no formula changes). Corrected BalanceValidator status (designed, not implemented). Fixed JSON file count (60 game-definition files, not 398).
 - **v5.0** (March 6, 2026): Strategic pivot to Python/Pygame active development. Added Living World + Combat Overhaul development plan. Unity migration paused indefinitely.
 - **v4.0** (February 11, 2026): Added Unity/C# migration plan context (16,013 lines, 15 documents), updated stats, migration guidelines
@@ -765,6 +828,6 @@ The "398+ JSON files" count includes ~218 save/chunk files and ~80 ML training/d
 
 ---
 
-**Last Updated**: 2026-03-06
+**Last Updated**: 2026-03-29
 **For**: AI assistants and developers working on Game-1 (Python/Pygame active development)
 **Maintained By**: Project developers
