@@ -2,7 +2,7 @@
 
 **LIVING DOCUMENT**: This index should be modified to reflect changes as the project evolves. Update entries when files are added, removed, or significantly modified.
 
-**Last Updated**: January 27, 2026
+**Last Updated**: March 29, 2026
 
 ---
 
@@ -21,20 +21,24 @@ This directory contains curated developer context for AI assistants and human de
 - Project summary and current state assessment
 - What's implemented vs what's designed
 - Architecture overview with module paths
-- **LLM integration system** (NEW - January 2026)
+- World Memory System overview (world_system/ — 14,269 LOC)
+- LLM integration system
 - Tag system overview
 - Key classes and design patterns
+- Visual Overhaul Design Standards
 - Critical warnings about assuming features exist
 
 **When to Use**: First file to read when starting work on Game-1. Reference before implementing any feature to check if it's already built.
 
-**Status**: Current (January 27, 2026)
-- Reflects modular architecture (136 files, ~62,380 lines)
+**Status**: Current (March 29, 2026) — v7.0
+- Reflects modular architecture (239 files, ~96,400 lines)
+- World Memory System documented (Layers 1-2 complete, 33 evaluators)
 - LLM integration documented (llm_item_generator.py, crafting_classifier.py)
+- 6 crafting disciplines (including Fishing)
 - 14 enchantments fully working
 - Tag system documented
 - Combat, skills, save/load all marked as implemented
-- Class affinity system documented
+- GameEventBus, StatTracker, BackendManager documented
 
 ---
 
@@ -54,9 +58,9 @@ This directory contains curated developer context for AI assistants and human de
 - Save/load system methods
 - Common mistakes and corrections
 
-**When to Use**: Before calling ANY method on Character, CombatManager, SkillManager, LLMItemGenerator, or crafting modules. Reference when you get AttributeError or KeyError.
+**When to Use**: Before calling ANY method on Character, CombatManager, SkillManager, LLMItemGenerator, WorldMemorySystem, StatTracker, GameEventBus, or crafting modules. Reference when you get AttributeError or KeyError.
 
-**Status**: Current (January 27, 2026)
+**Status**: Current (March 29, 2026)
 
 **Key Learnings**:
 - `add_exp()` NOT `gain_exp()`
@@ -74,15 +78,16 @@ This directory contains curated developer context for AI assistants and human de
 - All stats, formulas, and calculations
 - Skill system with 100+ skills
 - Combat system with full damage pipeline
-- All 5 crafting disciplines
-- **LLM Invented Items System** (NEW - January 2026)
+- All 6 crafting disciplines (including Fishing)
+- LLM Invented Items System
 - Status effects system
 - Title and class systems
 - JSON schema specifications
 
 **When to Use**: Source of truth for what's actually implemented. Check before implementing any game mechanic.
 
-**Status**: Current (January 27, 2026) - v6.1 - 5,089+ lines
+**Status**: Current (January 27, 2026) - v6.1 - 5,154 lines
+**Note**: Does not yet cover World Memory System — see `world_system/docs/` for WMS documentation.
 
 ---
 
@@ -127,7 +132,6 @@ This directory contains curated developer context for AI assistants and human de
 **Path**: `Game-1-modular/docs/ARCHITECTURE.md`
 **Purpose**: System architecture overview
 **Contains**:
-- Modular architecture statistics (136 files, ~62,380 lines)
 - Design principles (composition, singleton, layered)
 - Directory structure breakdown
 - Layer architecture diagram
@@ -135,25 +139,25 @@ This directory contains curated developer context for AI assistants and human de
 - Database pattern explanation
 - Event and data flow diagrams
 - Rendering pipeline
-- **LLM Integration line counts** (NEW)
 
 **When to Use**: When understanding how systems connect, adding new modules, or debugging cross-system issues.
 
-**Status**: Current (January 27, 2026) - v3.0
+**Status**: Partially stale (January 27, 2026) - v3.0. Does not cover world_system/, events/, animation/, or expanded Combat/. See CLAUDE.md for current architecture.
 
 ---
 
-### 7. **DOCUMENTATION_INDEX.md**
-**Path**: `Game-1-modular/DOCUMENTATION_INDEX.md`
-**Purpose**: Master index of all documentation files
+### 7. **World Memory System Documentation**
+**Path**: `Game-1-modular/world_system/docs/`
+**Purpose**: Complete documentation for the 7-layer World Memory System
 **Contains**:
-- Links to all active documentation
-- Role-based quick reference (developer, content creator, bug fixer, playtester)
-- Documentation statistics
+- `WORLD_MEMORY_SYSTEM.md` — Single source of truth (1,864 lines, 16 design sections)
+- `HANDOFF_STATUS.md` — Current implementation state (March 28, 2026)
+- `TAG_LIBRARY.md` — 65-category tag taxonomy across 7 layers
+- `FOUNDATION_IMPLEMENTATION_PLAN.md` — Layer 1-2 build plan (mostly executed)
 
-**When to Use**: When looking for specific documentation not listed here.
+**When to Use**: When working on the Living World system, event tracking, NPC agents, factions, or any world_system/ code.
 
-**Status**: Current (December 30, 2025)
+**Status**: Current (March 28, 2026) — Layers 1-2 complete, 33 evaluators, 56 passing tests
 
 ---
 
@@ -206,35 +210,41 @@ Previous version of Claude context from November 17, 2025. Historical reference 
 
 ## Key Architectural Principles
 
-### Current System Status (January 27, 2026):
+### Current System Status (March 29, 2026):
 
 **Fully Functional:**
 - World generation & rendering (100x100, chunk-based)
 - Resource gathering with tool requirements
 - Inventory system (30 slots, drag-and-drop)
 - Equipment system (8 slots, durability, weight, repair)
-- All 5 crafting disciplines with minigames (5,346 lines)
+- All 6 crafting disciplines with minigames (8,994 lines)
 - Character progression (30 levels, 6 stats)
 - Class system (6 classes with tag-driven bonuses)
 - Title system (all tiers: Novice through Master)
 - **Skill system** (100+ skills, mana, cooldowns, affinity bonuses)
-- **Combat system** (full damage pipeline, enchantments, dual wielding)
+- **Combat system** (full damage pipeline, enchantments, dual wielding, hitboxes, projectiles)
 - **Status effects** (DoT, CC, buffs, debuffs)
 - **Enchantments** (14 types active in combat)
 - **Full save/load system** (complete state preservation)
 - **Tag-driven effect system** (combat, skills, equipment)
-- **LLM Integration** (Claude API for invented items) - NEW
-- **ML Classifiers** (CNN + LightGBM for recipe validation) - NEW
+- **LLM Integration** (Claude API for invented items)
+- **ML Classifiers** (CNN + LightGBM for recipe validation)
+- **World Memory System** (Layers 1-2, 33 evaluators, 56 tests — 14,269 LOC)
+- **GameEventBus** (pub/sub connecting all systems)
+- **StatTracker** (65 SQL-backed recording methods)
+- **Living World consumers** (BackendManager, NPC agents, factions, ecosystem)
 
 **Partially Implemented:**
 - World generation (basic chunks, detailed templates pending)
 - NPC/Quest system (basic functionality)
+- World Memory Layers 3-7 (SQL schemas exist, no code writes to them yet)
 
 **Designed But Not Implemented:**
 - Advanced skill evolution chains
 - Block/Parry combat mechanics
 - Summon mechanics
 - Advanced spell casting / combos
+- BalanceValidator (spec only)
 
 ---
 
@@ -302,5 +312,5 @@ When encountering issues:
 
 ---
 
-**Last Updated**: January 27, 2026
+**Last Updated**: March 29, 2026
 **Maintained By**: Development Team
