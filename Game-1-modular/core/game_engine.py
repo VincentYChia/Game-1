@@ -4390,6 +4390,21 @@ class GameEngine:
             self.add_notification("New enchantment recipe available!", (180, 130, 220))
             print(f"  ✓ Discovered enchantment: {enchantment_name}")
 
+            # Publish ITEM_INVENTED for enchantment discovery
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("ITEM_INVENTED", {
+                    "actor_id": "player",
+                    "item_id": item_id,
+                    "item_name": enchantment_name,
+                    "discipline": discipline,
+                    "category": "enchantment",
+                    "position_x": self.character.position.x,
+                    "position_y": self.character.position.y,
+                })
+            except Exception:
+                pass
+
             # Store the invented recipe (happens in _process_invention_result)
             # which then calls _store_invented_recipe
             self._store_invented_recipe(gen_result, discipline)
@@ -4462,6 +4477,23 @@ class GameEngine:
                 print(f"  ✓ Added {item_name} to inventory")
             else:
                 self.add_notification("Inventory full!", (255, 100, 100))
+
+        # Publish ITEM_INVENTED to GameEventBus for World Memory System
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("ITEM_INVENTED", {
+                "actor_id": "player",
+                "item_id": item_id,
+                "item_name": item_name,
+                "discipline": discipline,
+                "category": item_data.get('category', 'equipment'),
+                "tier": item_data.get('tier', 1),
+                "rarity": item_data.get('rarity', 'uncommon'),
+                "position_x": self.character.position.x,
+                "position_y": self.character.position.y,
+            })
+        except Exception:
+            pass
 
         # Store the invented recipe for Phase 3 save system
         self._store_invented_recipe(gen_result, discipline)
@@ -4769,6 +4801,19 @@ class GameEngine:
         }
 
         self.character.invented_recipes.append(recipe_record)
+
+        # Publish RECIPE_DISCOVERED to GameEventBus for World Memory System
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("RECIPE_DISCOVERED", {
+                "actor_id": "player",
+                "recipe_id": f"invented_{gen_result.item_id}",
+                "discipline": discipline,
+                "item_id": gen_result.item_id,
+                "tier": calculated_tier,
+            })
+        except Exception:
+            pass
 
         # Register with RecipeDatabase
         recipe_id = f"invented_{gen_result.item_id}"
@@ -6616,8 +6661,36 @@ class GameEngine:
                 # Check for dungeon entrance
                 has_dungeon = chunk.dungeon_entrance is not None
 
+                # Check if this is a first-time visit
+                was_explored = self.map_system.is_chunk_explored(chunk_x, chunk_y) if hasattr(self.map_system, 'is_chunk_explored') else True
+
                 # Mark as explored
                 self.map_system.mark_chunk_explored(chunk_x, chunk_y, chunk_type, has_dungeon)
+
+                # Publish CHUNK_ENTERED to GameEventBus for World Memory System
+                try:
+                    from events.event_bus import get_event_bus
+                    get_event_bus().publish("CHUNK_ENTERED", {
+                        "actor_id": "player",
+                        "chunk_x": chunk_x,
+                        "chunk_y": chunk_y,
+                        "biome": chunk_type,
+                        "position_x": self.character.position.x,
+                        "position_y": self.character.position.y,
+                    })
+                    # Publish AREA_DISCOVERED if first time visiting this chunk
+                    if not was_explored:
+                        get_event_bus().publish("AREA_DISCOVERED", {
+                            "actor_id": "player",
+                            "chunk_x": chunk_x,
+                            "chunk_y": chunk_y,
+                            "biome": chunk_type,
+                            "has_dungeon": has_dungeon,
+                            "position_x": self.character.position.x,
+                            "position_y": self.character.position.y,
+                        })
+                except Exception:
+                    pass
 
     # =========================================================================
     # DUNGEON SYSTEM METHODS

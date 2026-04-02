@@ -15,6 +15,20 @@ class TitleSystem:
         self.earned_titles: List[TitleDefinition] = []
         self.title_db = TitleDatabase.get_instance()
 
+    def _award_title(self, title_def: TitleDefinition) -> TitleDefinition:
+        """Award a title and publish to GameEventBus."""
+        self.earned_titles.append(title_def)
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("TITLE_EARNED", {
+                "actor_id": "player",
+                "title_id": title_def.title_id,
+                "tier": getattr(title_def, 'tier', 'novice'),
+            })
+        except Exception:
+            pass
+        return title_def
+
     def check_for_title(self, character: 'Character', activity_type: Optional[str] = None, count: Optional[int] = None) -> Optional[TitleDefinition]:
         """
         Check if any new titles should be awarded based on character state.
@@ -38,26 +52,18 @@ class TitleSystem:
 
             # Requirements met - handle acquisition method
             if title_def.acquisition_method == "guaranteed_milestone":
-                # Automatically granted
-                self.earned_titles.append(title_def)
-                return title_def
+                return self._award_title(title_def)
 
             elif title_def.acquisition_method == "event_based_rng":
-                # RNG-based acquisition using generationChance from JSON
                 if random.random() < title_def.generation_chance:
-                    self.earned_titles.append(title_def)
-                    return title_def
+                    return self._award_title(title_def)
 
             elif title_def.acquisition_method == "hidden_discovery":
-                # Hidden titles auto-granted when conditions met (like guaranteed but hidden)
-                self.earned_titles.append(title_def)
-                return title_def
+                return self._award_title(title_def)
 
             elif title_def.acquisition_method == "special_achievement":
-                # Special achievements auto-granted (usually with very low chance from JSON)
                 if random.random() < title_def.generation_chance:
-                    self.earned_titles.append(title_def)
-                    return title_def
+                    return self._award_title(title_def)
 
             # Legacy fallback: random_drop (deprecated in favor of event_based_rng)
             elif title_def.acquisition_method == "random_drop":
@@ -70,8 +76,7 @@ class TitleSystem:
                 }
                 chance = tier_chances.get(title_def.tier, 0.10)
                 if random.random() < chance:
-                    self.earned_titles.append(title_def)
-                    return title_def
+                    return self._award_title(title_def)
 
         return None
 

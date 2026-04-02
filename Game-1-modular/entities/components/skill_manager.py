@@ -109,6 +109,17 @@ class SkillManager:
 
         # Learn the skill
         self.known_skills[skill_id] = PlayerSkill(skill_id=skill_id)
+
+        # Publish SKILL_LEARNED to GameEventBus for World Memory System
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("SKILL_LEARNED", {
+                "actor_id": "player",
+                "skill_id": skill_id,
+            })
+        except Exception:
+            pass
+
         return True
 
     def unlock_skill(self, skill_id: str) -> bool:
@@ -676,6 +687,11 @@ class SkillManager:
                         repaired = item.repair(percent=percent)
                         if repaired > 0:
                             repaired_items.append(item.name)
+                            if hasattr(character, 'stat_tracker'):
+                                character.stat_tracker.record_repair(
+                                    item_id=getattr(item, 'item_id', item.name),
+                                    durability_restored=float(repaired)
+                                )
 
         # Repair tools (axe, pickaxe) - tools are stored in equipment slots
         if hasattr(character, 'equipment') and character.equipment:
@@ -688,6 +704,22 @@ class SkillManager:
                             tool.durability_current + repair_amount)
                         if repair_amount > 0:
                             repaired_items.append(tool.name)
+                            if hasattr(character, 'stat_tracker'):
+                                character.stat_tracker.record_repair(
+                                    item_id=getattr(tool, 'item_id', tool.name),
+                                    durability_restored=float(repair_amount)
+                                )
+
+        # Publish REPAIR_PERFORMED if anything was repaired
+        if repaired_items:
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("REPAIR_PERFORMED", {
+                    "actor_id": "player",
+                    "items_repaired": len(repaired_items),
+                })
+            except Exception:
+                pass
 
         return repaired_items
 

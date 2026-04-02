@@ -292,6 +292,28 @@ class QuestManager:
 
         return True, messages
 
+    def abandon_quest(self, quest_id: str, character=None) -> bool:
+        """Abandon an active quest."""
+        if quest_id not in self.active_quests:
+            return False
+        quest = self.active_quests.pop(quest_id)
+        quest_type = quest.quest_def.objectives.objective_type if quest.quest_def else "unknown"
+
+        if character and hasattr(character, 'stat_tracker'):
+            character.stat_tracker.record_quest_failed(
+                quest_id=quest_id,
+                quest_type=quest_type
+            )
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("QUEST_FAILED", {
+                "quest_id": quest_id,
+                "quest_type": quest_type,
+            })
+        except Exception:
+            pass
+        return True
+
     def has_completed(self, quest_id: str) -> bool:
         """Check if quest has been completed and turned in"""
         return quest_id in self.completed_quests

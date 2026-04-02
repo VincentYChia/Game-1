@@ -698,6 +698,24 @@ class CombatManager:
         # Apply damage
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
+        # Publish DAMAGE_DEALT to GameEventBus for World Memory System
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("DAMAGE_DEALT", {
+                "attacker_id": "player",
+                "target_id": getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                "amount": final_damage,
+                "damage_type": "physical",
+                "attack_type": "melee",
+                "is_crit": is_crit,
+                "tier": getattr(enemy.definition, 'tier', 1),
+                "enemy_type": enemy.definition.enemy_id,
+                "position_x": enemy.position[0],
+                "position_y": enemy.position[1],
+            })
+        except Exception:
+            pass
+
         # Publish DAMAGE_DEALT event
         try:
             from rendering.visual_effect_bridge import publish_damage_dealt
@@ -715,6 +733,22 @@ class CombatManager:
             print(f"      ☠️ Killed!")
             exp_reward = self._calculate_exp_reward(enemy)
             self.character.leveling.add_exp(exp_reward)
+
+            # Publish ENEMY_KILLED to GameEventBus for World Memory System
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("ENEMY_KILLED", {
+                    "killer_id": "player",
+                    "enemy_id": enemy.definition.enemy_id,
+                    "enemy_type": enemy.definition.enemy_id,
+                    "tier": getattr(enemy.definition, 'tier', 1),
+                    "is_boss": getattr(enemy.definition, 'is_boss', False),
+                    "amount": exp_reward,
+                    "position_x": enemy.position[0],
+                    "position_y": enemy.position[1],
+                })
+            except Exception:
+                pass
 
             # No loot drops in dungeons - only EXP (2x already applied in _calculate_exp_reward)
             if not (self.dungeon_manager and self.dungeon_manager.in_dungeon):
@@ -914,6 +948,32 @@ class CombatManager:
         # Apply damage to enemy
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
+        # Publish DAMAGE_DEALT to GameEventBus for World Memory System
+        try:
+            from events.event_bus import get_event_bus
+            weapon_element = None
+            if equipped_weapon and hasattr(equipped_weapon, 'attackTags'):
+                for tag in (equipped_weapon.attackTags or []):
+                    if tag in ('fire', 'ice', 'lightning', 'poison', 'arcane', 'shadow', 'holy'):
+                        weapon_element = tag
+                        break
+            get_event_bus().publish("DAMAGE_DEALT", {
+                "attacker_id": "player",
+                "target_id": getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                "amount": final_damage,
+                "damage_type": damage_type if damage_type else "physical",
+                "attack_type": "melee",
+                "is_crit": is_crit,
+                "weapon_type": getattr(equipped_weapon, 'equipmentType', 'unarmed') if equipped_weapon else 'unarmed',
+                "weapon_element": weapon_element,
+                "tier": getattr(enemy.definition, 'tier', 1),
+                "enemy_type": enemy.definition.enemy_id,
+                "position_x": enemy.position[0],
+                "position_y": enemy.position[1],
+            })
+        except Exception:
+            pass
+
         # LIFESTEAL ENCHANTMENT: Heal for % of damage dealt (capped at 50%)
         if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
             for ench in equipped_weapon.enchantments:
@@ -992,6 +1052,22 @@ class CombatManager:
             exp_reward = self._calculate_exp_reward(enemy)
             self.character.leveling.add_exp(exp_reward)
             print(f"   +{exp_reward} EXP")
+
+            # Publish ENEMY_KILLED to GameEventBus for World Memory System
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("ENEMY_KILLED", {
+                    "killer_id": "player",
+                    "enemy_id": enemy.definition.enemy_id,
+                    "enemy_type": enemy.definition.enemy_id,
+                    "tier": getattr(enemy.definition, 'tier', 1),
+                    "is_boss": getattr(enemy.definition, 'is_boss', False),
+                    "amount": exp_reward,
+                    "position_x": enemy.position[0],
+                    "position_y": enemy.position[1],
+                })
+            except Exception:
+                pass
 
             # No loot drops in dungeons - only EXP (2x already applied)
             if not (self.dungeon_manager and self.dungeon_manager.in_dungeon):
@@ -1844,6 +1920,22 @@ class CombatManager:
                 damage_type=enemy_damage_type,
                 attack_type=enemy_attack_type
             )
+
+        # Publish PLAYER_HIT to GameEventBus for World Memory System
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("PLAYER_HIT", {
+                "attacker_id": getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                "enemy_type": enemy.definition.enemy_id,
+                "amount": final_damage,
+                "damage_type": getattr(enemy.definition, 'damage_type', 'physical'),
+                "attack_type": 'melee',
+                "tier": getattr(enemy.definition, 'tier', 1),
+                "position_x": self.character.position.x,
+                "position_y": self.character.position.y,
+            })
+        except Exception:
+            pass
 
         # Publish PLAYER_HIT event for visual/AI systems
         try:

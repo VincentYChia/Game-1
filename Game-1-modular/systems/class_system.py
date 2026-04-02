@@ -12,6 +12,15 @@ class ClassSystem:
 
     def set_class(self, class_def: ClassDefinition):
         self.current_class = class_def
+        # Publish CLASS_CHANGED to GameEventBus for World Memory System
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("CLASS_CHANGED", {
+                "actor_id": "player",
+                "class_id": class_def.class_id,
+            })
+        except Exception:
+            pass
         # Notify any registered callbacks
         for callback in self._on_class_set_callbacks:
             callback(class_def)
