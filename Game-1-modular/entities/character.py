@@ -1117,6 +1117,13 @@ class Character:
 
             equipped_tool.durability_current = max(0, equipped_tool.durability_current - durability_loss)
 
+            if hasattr(self, 'stat_tracker'):
+                self.stat_tracker.record_tool_durability_lost(
+                    getattr(equipped_tool, 'equipmentType', 'tool'), durability_loss)
+                if equipped_tool.durability_current == 0:
+                    self.stat_tracker.record_tool_broken(
+                        getattr(equipped_tool, 'equipmentType', 'tool'))
+
             # Only warn about improper use, low, or broken
             if base_durability_loss >= 2.0:
                 print(f"   ⚠️ Improper tool use! {equipped_tool.name} loses extra durability ({equipped_tool.durability_current:.0f}/{equipped_tool.durability_max})")
@@ -1342,6 +1349,13 @@ class Character:
                         durability_loss *= (1.0 - reduction)
 
             equipped_tool.durability_current = max(0, equipped_tool.durability_current - durability_loss)
+
+            if hasattr(self, 'stat_tracker'):
+                self.stat_tracker.record_tool_durability_lost(
+                    getattr(equipped_tool, 'equipmentType', 'tool'), durability_loss)
+                if equipped_tool.durability_current == 0:
+                    self.stat_tracker.record_tool_broken(
+                        getattr(equipped_tool, 'equipmentType', 'tool'))
 
         return (was_destroyed, damage, is_crit)
 
@@ -1830,6 +1844,13 @@ class Character:
                                     piece_loss *= (1.0 - reduction)
 
                         armor_piece.durability_current = max(0, armor_piece.durability_current - piece_loss)
+
+                        if hasattr(self, 'stat_tracker'):
+                            self.stat_tracker.record_tool_durability_lost(
+                                getattr(armor_piece, 'equipmentType', slot), piece_loss)
+                            if armor_piece.durability_current == 0:
+                                self.stat_tracker.record_tool_broken(
+                                    getattr(armor_piece, 'equipmentType', slot))
 
                         # Warn if armor is breaking (use effective max with VIT bonus)
                         effective_max = self.get_effective_max_durability(armor_piece)

@@ -696,6 +696,7 @@ class SkillManager:
                                     item_id=getattr(item, 'item_id', item.name),
                                     durability_restored=float(repaired)
                                 )
+                                character.stat_tracker.record_tool_repaired(slot_name)
 
         # Repair tools (axe, pickaxe) - tools are stored in equipment slots
         if hasattr(character, 'equipment') and character.equipment:
@@ -713,6 +714,7 @@ class SkillManager:
                                     item_id=getattr(tool, 'item_id', tool.name),
                                     durability_restored=float(repair_amount)
                                 )
+                                character.stat_tracker.record_tool_repaired(tool_slot)
 
         # Publish REPAIR_PERFORMED if anything was repaired
         if repaired_items:

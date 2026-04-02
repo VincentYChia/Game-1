@@ -1044,6 +1044,13 @@ class CombatManager:
 
                 equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
 
+                if hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_tool_durability_lost(
+                        getattr(equipped_weapon, 'equipmentType', 'weapon'), durability_loss)
+                    if equipped_weapon.durability_current == 0:
+                        self.character.stat_tracker.record_tool_broken(
+                            getattr(equipped_weapon, 'equipmentType', 'weapon'))
+
                 # Only warn about low/broken durability (use effective max with VIT bonus)
                 effective_max = self.character.get_effective_max_durability(equipped_weapon)
                 if equipped_weapon.durability_current == 0:
@@ -1116,6 +1123,13 @@ class CombatManager:
                 # -1 durability for proper use (weapon), -2 for improper use (tool)
                 durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
                 equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
+
+                if hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_tool_durability_lost(
+                        getattr(equipped_weapon, 'equipmentType', 'weapon'), durability_loss)
+                    if equipped_weapon.durability_current == 0:
+                        self.character.stat_tracker.record_tool_broken(
+                            getattr(equipped_weapon, 'equipmentType', 'weapon'))
 
                 # Only warn about improper use, low, or broken
                 if durability_loss == 2:
@@ -1659,6 +1673,13 @@ class CombatManager:
                     tool_type_effectiveness = self.character.get_tool_effectiveness_for_action(equipped_weapon, 'combat')
                     durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
                     equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
+
+                    if hasattr(self.character, 'stat_tracker'):
+                        self.character.stat_tracker.record_tool_durability_lost(
+                            getattr(equipped_weapon, 'equipmentType', 'weapon'), durability_loss)
+                        if equipped_weapon.durability_current == 0:
+                            self.character.stat_tracker.record_tool_broken(
+                                getattr(equipped_weapon, 'equipmentType', 'weapon'))
 
                     # Only warn about improper use, low, or broken
                     if durability_loss == 2:

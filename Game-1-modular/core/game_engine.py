@@ -404,6 +404,17 @@ class GameEngine:
         self.last_clicked_slot = None
         self.last_f_press_time = 0  # For double-tap F to exit dungeon
 
+        # Activity time tracking for stat_tracker
+        self._activity_time_accum = {}  # {activity: accumulated_seconds}
+        self._activity_flush_interval = 30.0  # Flush every 30 seconds
+        self._activity_flush_timer = 0.0
+        self._idle_time_accum = 0.0
+        self._idle_threshold = 10.0  # seconds of no input before considered idle
+        self._last_input_time = pygame.time.get_ticks() / 1000.0
+
+        # Menu open timestamps for menu_time tracking
+        self._menu_open_times = {}  # {menu_type: open_timestamp}
+
         # Day/Night Cycle (16 min day + 8 min night = 24 min total)
         # Time breakdown: 0-480s Night, 480-600s Dawn, 600-1320s Day, 1320-1440s Dusk
         # New worlds start at noon (960s = middle of day phase)
@@ -722,19 +733,54 @@ class GameEngine:
                     if tool_name:
                         self.add_notification(f"Switched to {tool_name}", (100, 200, 255))
                 elif event.key == pygame.K_c:
+                    was_open = self.character.stats_ui_open
                     self.character.toggle_stats_ui()
+                    if not was_open and self.character.stats_ui_open:
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_menu_opened("stats")
+                        self._menu_open_times["stats"] = pygame.time.get_ticks() / 1000.0
+                    elif was_open and not self.character.stats_ui_open:
+                        self._record_menu_close_time("stats")
                 elif event.key == pygame.K_e:
+                    was_open = self.character.equipment_ui_open
                     self.character.toggle_equipment_ui()
+                    if not was_open and self.character.equipment_ui_open:
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_menu_opened("equipment")
+                        self._menu_open_times["equipment"] = pygame.time.get_ticks() / 1000.0
+                    elif was_open and not self.character.equipment_ui_open:
+                        self._record_menu_close_time("equipment")
                 elif event.key == pygame.K_k:
+                    was_open = self.character.skills_ui_open
                     self.character.toggle_skills_ui()
+                    if not was_open and self.character.skills_ui_open:
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_menu_opened("skills")
+                        self._menu_open_times["skills"] = pygame.time.get_ticks() / 1000.0
+                    elif was_open and not self.character.skills_ui_open:
+                        self._record_menu_close_time("skills")
                 elif event.key == pygame.K_l:
+                    was_open = self.character.encyclopedia.is_open
                     self.character.encyclopedia.toggle()
+                    if not was_open and self.character.encyclopedia.is_open:
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_menu_opened("encyclopedia")
+                        self._menu_open_times["encyclopedia"] = pygame.time.get_ticks() / 1000.0
+                    elif was_open and not self.character.encyclopedia.is_open:
+                        self._record_menu_close_time("encyclopedia")
                 elif event.key == pygame.K_m:
                     # Toggle world map
+                    was_open = self.map_system.map_open
                     self.map_system.toggle_map()
                     if self.map_system.map_open:
                         # Center on player when opening
                         self.map_system.center_on_position(self.character.position)
+                    if not was_open and self.map_system.map_open:
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_menu_opened("map")
+                        self._menu_open_times["map"] = pygame.time.get_ticks() / 1000.0
+                    elif was_open and not self.map_system.map_open:
+                        self._record_menu_close_time("map")
                 elif event.key == pygame.K_p:
                     # Place waypoint when map is open
                     if self.map_system.map_open and not self.waypoint_renaming:
@@ -851,6 +897,8 @@ class GameEngine:
                         self.character.leveling.level = self.character.leveling.max_level
                         self.character.leveling.unallocated_stat_points = 100
                         self.debug_mode_active['f1'] = True
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_debug_action("f1_infinite_resources")
 
                         print(f"🔧 DEBUG MODE F1 ENABLED:")
                         print(f"   • Infinite resources (no materials consumed)")
@@ -893,6 +941,8 @@ class GameEngine:
                                     skills_equipped += 1
 
                             self.debug_mode_active['f2'] = True
+                            if hasattr(self.character, 'stat_tracker'):
+                                self.character.stat_tracker.record_debug_action("f2_learn_all_skills")
                             print(f"🔧 DEBUG F2 ENABLED: Learned {skills_learned} skills, equipped {skills_equipped}")
                             self.add_notification(f"Debug F2: Learned {skills_learned} skills!", (100, 255, 100))
                         else:
@@ -925,6 +975,8 @@ class GameEngine:
                                     titles_granted += 1
 
                             self.debug_mode_active['f3'] = True
+                            if hasattr(self.character, 'stat_tracker'):
+                                self.character.stat_tracker.record_debug_action("f3_grant_all_titles")
                             print(f"🔧 DEBUG F3 ENABLED: Granted {titles_granted} titles!")
                             self.add_notification(f"Debug F3: Granted {titles_granted} titles!", (100, 255, 100))
                         else:
@@ -2347,6 +2399,9 @@ class GameEngine:
 
         if station:
             self.character.interact_with_station(station)
+            if hasattr(self.character, 'stat_tracker'):
+                self.character.stat_tracker.record_menu_opened("crafting")
+            self._menu_open_times["crafting"] = pygame.time.get_ticks() / 1000.0
             self.active_station_tier = station.tier  # Capture tier for placement UI
             self.user_placement = {}  # Clear any previous placement
             self.selected_recipe = None  # Clear selected recipe
@@ -3694,6 +3749,9 @@ class GameEngine:
 
         if self.interactive_ui:
             self.interactive_crafting_active = True
+            if hasattr(self.character, 'stat_tracker'):
+                self.character.stat_tracker.record_menu_opened("interactive_crafting")
+            self._menu_open_times["interactive_crafting"] = pygame.time.get_ticks() / 1000.0
             print(f"✓ Opened interactive crafting UI for {station_type} (T{station_tier})")
             self.add_notification("Interactive Mode Activated", (100, 255, 100))
 
@@ -7395,6 +7453,9 @@ class GameEngine:
 
         self.world.placed_entities.append(dropped_entity)
 
+        if hasattr(self.character, 'stat_tracker'):
+            self.character.stat_tracker.record_item_dropped(item_id, drop_qty, destroyed=False)
+
         self.add_notification(f"Dropped {drop_qty}x {item_name}", (200, 200, 150))
         print(f"🎒 Dropped {drop_qty}x {item_id} at ({drop_x:.1f}, {drop_y:.1f})")
 
@@ -7578,6 +7639,8 @@ class GameEngine:
                                 self.character.facing_angle = self._ac_attack_angle
 
                                 player_sm.start_attack(attack_def, damage_context)
+                                if player_sm.combo_count > 1 and hasattr(self.character, 'stat_tracker'):
+                                    self.character.stat_tracker.record_combo_attack(player_sm.combo_count)
                                 self.character._attack_facing_locked = True
                                 self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
                         elif player_sm.is_attacking:
