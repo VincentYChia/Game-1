@@ -2947,6 +2947,8 @@ class GameEngine:
                 self._ac['projectile'].spawn(
                     proj_def, pos, facing, 'player',
                     player_sm.damage_context, target_pos)
+                if hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_projectile_fired()
         else:
             hitbox_def = data.hitbox_def_from_attack(attack_def)
             hitbox_pos = hitbox_def.compute_world_position(pos[0], pos[1], facing)
@@ -8012,6 +8014,11 @@ class GameEngine:
                 message = craft_result.get('message', 'Applied enchantment')
                 self.add_notification(message, (100, 255, 255))
                 print(f"✅ Enchantment applied: {message}")
+
+                # Track enchantment application in stat tracker
+                if hasattr(self.character, 'stat_tracker'):
+                    enchantment_id = craft_result.get('enchantment', {}).get('enchantmentId', recipe.recipe_id)
+                    self.character.stat_tracker.record_enchantment_applied(enchantment_id)
 
                 # Clear enchantment selection
                 if hasattr(self, 'enchantment_selected_item'):
