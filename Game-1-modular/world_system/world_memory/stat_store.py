@@ -110,6 +110,46 @@ class StatStore:
         self._conn.executescript(_STATS_SCHEMA)
         self._conn.commit()
 
+    def prepopulate_from_manifest(self, manifest_path: str) -> int:
+        """Pre-populate stats table with all known keys from the manifest.
+
+        Uses INSERT OR IGNORE so existing data is preserved.  Only runs
+        on databases that haven't been populated yet (checks row count).
+
+        Args:
+            manifest_path: Path to stat-key-manifest.json
+
+        Returns:
+            Number of keys inserted (0 if already populated).
+        """
+        import json as _json
+        import os
+
+        if not os.path.exists(manifest_path):
+            return 0
+
+        # Skip if table already has substantial data
+        cursor = self._conn.execute("SELECT COUNT(*) FROM stats")
+        existing = cursor.fetchone()[0]
+        if existing > 100:
+            return 0
+
+        with open(manifest_path) as f:
+            manifest = _json.load(f)
+
+        keys = manifest.get("keys", [])
+        if not keys:
+            return 0
+
+        now = 0.0  # Use 0.0 as sentinel for "pre-populated, never written"
+        self._conn.executemany(
+            "INSERT OR IGNORE INTO stats (key, count, total, max_value, updated_at) "
+            "VALUES (?, 0, 0.0, 0.0, ?)",
+            [(k, now) for k in keys]
+        )
+        self._conn.commit()
+        return len(keys)
+
     @classmethod
     def get_instance(cls) -> StatStore:
         if cls._instance is None:

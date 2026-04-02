@@ -95,6 +95,15 @@ class WorldMemorySystem:
         # 1b. Stat Store (shares the same SQLite connection)
         self.stat_store = StatStore(conn=self.event_store.connection)
 
+        # Pre-populate stat keys from manifest (only on fresh databases)
+        manifest_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "config", "stat-key-manifest.json"
+        )
+        prepop_count = self.stat_store.prepopulate_from_manifest(manifest_path)
+        if prepop_count > 0:
+            print(f"[WorldMemory] Pre-populated {prepop_count} stat keys from manifest")
+
         # 1c. Layer Store (per-layer tag-indexed storage for Layers 1-7)
         try:
             from world_system.world_memory.layer_store import LayerStore
