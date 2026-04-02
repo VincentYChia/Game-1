@@ -945,6 +945,12 @@ class CombatManager:
             print(f"   Enemy defense: {enemy.definition.defense} (reduction: {defense_reduction*100:.1f}%)")
         print(f"   ➜ Final damage: {final_damage:.1f}")
 
+        # Track weapon attack in stat tracker
+        if hasattr(self.character, 'stat_tracker'):
+            weapon_type = getattr(equipped_weapon, 'equipmentType', 'unarmed') if equipped_weapon else 'unarmed'
+            weapon_id = getattr(equipped_weapon, 'item_id', '') if equipped_weapon else ''
+            self.character.stat_tracker.record_weapon_attack(weapon_type=weapon_type, weapon_id=weapon_id)
+
         # Apply damage to enemy
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
@@ -986,6 +992,8 @@ class CombatManager:
                     new_health = self.character.health
                     print(f"   💚 LIFESTEAL ENCHANT ({lifesteal_percent*100:.0f}%, capped at 50%): Healed {heal_amount:.1f} HP")
                     print(f"      HP: {old_health:.1f} → {new_health:.1f}")
+                    if hasattr(self.character, 'stat_tracker'):
+                        self.character.stat_tracker.record_healing_received(heal_amount, source="lifesteal")
 
         # CHAIN DAMAGE ENCHANTMENT: Damage nearby enemies
         if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
@@ -1546,6 +1554,8 @@ class CombatManager:
                         new_health = self.character.health
                         print(f"   💚 LIFESTEAL ENCHANT ({lifesteal_percent*100:.0f}%, capped at 50%): Healed {heal_amount:.1f} HP")
                         print(f"      HP: {old_health:.1f} → {new_health:.1f}")
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_healing_received(heal_amount, source="lifesteal")
 
             # Consume any consume-on-use buffs (Power Strike, etc.)
             if hasattr(self.character, 'buffs'):
@@ -1885,8 +1895,11 @@ class CombatManager:
         # SHIELD BLOCKING: Apply shield damage reduction if actively blocking
         if shield_blocking and self.character.is_shield_active():
             shield_reduction = self.character.get_shield_damage_reduction()
+            blocked_amount = final_damage * shield_reduction
             final_damage = final_damage * (1.0 - shield_reduction)
             print(f"   🛡️ Shield blocking: -{shield_reduction*100:.0f}% damage reduction")
+            if hasattr(self.character, 'stat_tracker'):
+                self.character.stat_tracker.record_damage_blocked(blocked_amount, block_type="shield")
 
         # SKILL BUFF BONUSES: Check for fortify buffs (flat damage reduction)
         fortify_reduction = 0.0
@@ -1901,11 +1914,15 @@ class CombatManager:
         print(f"   ➜ Final damage to player: {final_damage:.1f}")
 
         # Apply to player (pass dungeon_manager and world_system for death handling)
+        enemy_base_id = enemy.definition.enemy_id.rstrip("0123456789").rstrip("_")
         self.character.take_damage(
             final_damage,
             from_attack=True,
             dungeon_manager=self.dungeon_manager,
-            world_system=self.world
+            world_system=self.world,
+            source_type="enemy",
+            damage_type=getattr(enemy.definition, 'damage_type', 'physical'),
+            enemy_type=enemy_base_id,
         )
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
 
@@ -1982,6 +1999,8 @@ class CombatManager:
                 print(f"   ⚡ THORNS ({reflect_percent*100:.0f}%{cap_indicator}): Reflected {reflect_damage:.1f} damage to {enemy.definition.name}")
                 print(f"      Sources: {', '.join(thorns_pieces)}")
                 print(f"      Enemy HP: {old_enemy_health:.1f} → {enemy.current_health:.1f}")
+                if hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_reflect_damage(reflect_damage, source="thorns")
 
                 if enemy.current_health <= 0:
                     enemy.is_alive = False
@@ -2204,6 +2223,8 @@ class CombatManager:
                         heal_amount = effect.get('value', 10.0)
                         self.character.heal(heal_amount)
                         print(f"      💚 Healed {heal_amount:.1f} HP")
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_healing_received(heal_amount, source="heal_on_kill")
 
                     elif effect_type == 'explosion' and trigger_type == 'on_kill':
                         # Would trigger an AOE explosion effect

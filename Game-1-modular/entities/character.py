@@ -1872,6 +1872,16 @@ class Character:
         # Track death in stat tracker
         if hasattr(self, 'stat_tracker') and self.stat_tracker:
             self.stat_tracker.record_death()
+            # Record death with dimensional context
+            location = ""
+            if dungeon_manager and dungeon_manager.in_dungeon:
+                location = "dungeon"
+            self.stat_tracker.record_death_by_source(
+                source_type=kwargs.get('source_type', 'unknown'),
+                damage_type=kwargs.get('damage_type', 'physical'),
+                enemy_type=kwargs.get('enemy_type', ''),
+                location=location,
+            )
         try:
             from events.event_bus import get_event_bus
             get_event_bus().publish("PLAYER_DIED", {
