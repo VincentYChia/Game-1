@@ -1246,12 +1246,13 @@ class Character:
 
             # Track individual item collection
             for item_id, qty in loot:
+                is_first = self.stat_tracker.check_and_record_first_discovery("material", item_id)
                 self.stat_tracker.record_item_collected(
                     item_id=item_id,
                     quantity=qty,
                     category="material",
                     rarity="common",  # TODO: Get from MaterialDatabase
-                    is_first_time=False  # TODO: Check encyclopedia
+                    is_first_time=is_first
                 )
 
             # Track gathering damage

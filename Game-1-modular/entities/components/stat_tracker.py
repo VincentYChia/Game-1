@@ -52,6 +52,7 @@ class StatTracker:
         self._current_fish_streak: int = 0
         self._current_first_try_streak: int = 0
         self._current_no_damage_streak: int = 0
+        self._discovered_items: Set[str] = set()  # Tracks first-time item discoveries
 
     @property
     def store(self) -> StatStore:
@@ -759,6 +760,16 @@ class StatTracker:
         self._store.record_count(f"encyclopedia.discovered.{category}.{item_id}")
         self._store.record_count(f"encyclopedia.discovered.{category}")
         self._store.record_count("encyclopedia.discovered")
+        self._discovered_items.add(f"{category}:{item_id}")
+
+    def check_and_record_first_discovery(self, category: str, item_id: str) -> bool:
+        """Check if this is a first discovery and record it if so.
+        Returns True if it was a first-time discovery."""
+        key = f"{category}:{item_id}"
+        if key not in self._discovered_items:
+            self.record_first_discovery(category, item_id)
+            return True
+        return False
 
     def record_encyclopedia_completion(self, category: str,
                                        percent: float) -> None:

@@ -151,6 +151,7 @@ class CombatManager:
         # Combat state
         self.player_last_combat_time = 0.0
         self.player_in_combat = False
+        self._combat_start_elapsed = 0.0  # Tracks total elapsed time in current combat encounter
 
         # Dungeon integration
         self.dungeon_manager = None  # Set by game_engine when dungeon system is active
@@ -759,7 +760,7 @@ class CombatManager:
 
             # Notify dungeon manager of kill for wave tracking
             if self.dungeon_manager and self.dungeon_manager.in_dungeon:
-                self.on_dungeon_enemy_killed(enemy)
+                self.on_dungeon_enemy_killed(enemy, exp_earned=exp_reward)
 
             # Publish ENEMY_KILLED event
             try:
@@ -1104,7 +1105,7 @@ class CombatManager:
 
             # Notify dungeon manager of kill for wave tracking
             if self.dungeon_manager and self.dungeon_manager.in_dungeon:
-                self.on_dungeon_enemy_killed(enemy)
+                self.on_dungeon_enemy_killed(enemy, exp_earned=exp_reward)
 
             # Track combat activity
             if hasattr(self.character, 'activity_tracker'):
@@ -1348,7 +1349,7 @@ class CombatManager:
 
                     # Notify dungeon manager of kill for wave tracking
                     if self.dungeon_manager and self.dungeon_manager.in_dungeon:
-                        self.on_dungeon_enemy_killed(target)
+                        self.on_dungeon_enemy_killed(target, exp_earned=exp_reward)
 
             return (total_damage, False, loot)
 
@@ -1630,7 +1631,7 @@ class CombatManager:
 
                 # Notify dungeon manager of kill for wave tracking
                 if self.dungeon_manager and self.dungeon_manager.in_dungeon:
-                    self.on_dungeon_enemy_killed(enemy)
+                    self.on_dungeon_enemy_killed(enemy, exp_earned=exp_reward)
 
                 # Track combat activity
                 if hasattr(self.character, 'activity_tracker'):
@@ -1728,6 +1729,8 @@ class CombatManager:
                         weapon_element=weapon_element,
                         enemy_type=enemy_base_id,
                     )
+                    # Track first-time enemy discovery
+                    self.character.stat_tracker.check_and_record_first_discovery("enemy", enemy_base_id)
 
                 # Track status effects applied
                 status_effect_tags = ['burn', 'freeze', 'poison', 'stun', 'root', 'slow', 'bleed', 'shock', 'weaken', 'vulnerable']
@@ -2055,7 +2058,12 @@ class CombatManager:
         """Track if player is in combat (for health regen)"""
         if self.player_in_combat:
             self.player_last_combat_time += dt
+            self._combat_start_elapsed += dt
             if self.player_last_combat_time >= self.config.combat_timeout:
+                # Combat encounter ended — record duration
+                if self._combat_start_elapsed > 0 and hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_combat_duration(self._combat_start_elapsed)
+                self._combat_start_elapsed = 0.0
                 self.player_in_combat = False
 
     # ========================================================================
@@ -2360,10 +2368,14 @@ class CombatManager:
         # Also remove any dungeon enemy corpses
         self.corpses = [c for c in self.corpses if not getattr(c, 'is_dungeon_enemy', False)]
 
-    def on_dungeon_enemy_killed(self, enemy: Enemy):
+    def on_dungeon_enemy_killed(self, enemy: Enemy, exp_earned: int = 0):
         """Handle dungeon enemy death - notify dungeon manager."""
         if self.dungeon_manager and self.dungeon_manager.in_dungeon:
             self.dungeon_manager.on_enemy_killed()
+
+        # Track dungeon enemy kill in stat tracker
+        if hasattr(self.character, 'stat_tracker'):
+            self.character.stat_tracker.record_dungeon_enemy_killed(exp_earned=exp_earned)
 
         # Remove from dungeon enemies list
         if enemy in self.dungeon_enemies:

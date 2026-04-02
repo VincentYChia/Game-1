@@ -142,6 +142,9 @@ class Quest:
                 character.gold += rewards.gold
                 print(f"[REWARD DEBUG] Gold: {old_gold} + {rewards.gold} = {character.gold}")
                 messages.append(f"+{rewards.gold} Gold")
+                # Track gold earned from quest reward
+                if hasattr(character, 'stat_tracker'):
+                    character.stat_tracker.record_gold_earned(rewards.gold, source="quest")
             else:
                 print(f"[REWARD DEBUG] Character has no gold attribute - skipping gold reward")
 
