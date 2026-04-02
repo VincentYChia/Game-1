@@ -535,10 +535,14 @@ class GameEngine:
                         self.map_system
                     ):
                         print("💾 Autosaved on quit")
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_save("autosave")
                     # Save World Memory System state
                     if self.world_memory:
                         self.world_memory.save()
                         print("💾 World Memory saved on quit")
+                    if hasattr(self.character, 'stat_tracker'):
+                        self.character.stat_tracker.record_session_end()
                 self.running = False
 
             # Block all input except quit when LLM overlay is active
@@ -571,6 +575,8 @@ class GameEngine:
                                 self.map_system
                             ):
                                 print("💾 Autosaved on start menu quit")
+                                if hasattr(self.character, 'stat_tracker'):
+                                    self.character.stat_tracker.record_save("autosave")
                         self.running = False
                     continue  # Skip other event handling
 
@@ -708,6 +714,8 @@ class GameEngine:
                                 self.map_system
                             ):
                                 print("💾 Autosaved on ESC quit")
+                                if hasattr(self.character, 'stat_tracker'):
+                                    self.character.stat_tracker.record_save("autosave")
                         self.running = False
                 elif event.key == pygame.K_TAB:
                     tool_name = self.character.switch_tool()
@@ -1005,6 +1013,8 @@ class GameEngine:
                             self.map_system
                         ):
                             self.add_notification(f"Saved!", (100, 255, 100))
+                            if hasattr(self.character, 'stat_tracker'):
+                                self.character.stat_tracker.record_save("manual")
 
                 elif event.key == pygame.K_F7:
                     # Toggle infinite durability (separate from F1 resources)
@@ -1072,6 +1082,10 @@ class GameEngine:
                         # Reset camera
                         self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
                         self.add_notification(load_message, (100, 255, 100))
+
+                        # Track game load in stat tracker
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_game_load()
                     else:
                         if shift_held:
                             self.add_notification("Default save not found! Run: python save_system/create_default_save.py", (255, 100, 100))
@@ -4478,6 +4492,10 @@ class GameEngine:
             else:
                 self.add_notification("Inventory full!", (255, 100, 100))
 
+        # Track invention in stat tracker
+        if hasattr(self.character, 'stat_tracker'):
+            self.character.stat_tracker.record_invention(discipline, item_id)
+
         # Publish ITEM_INVENTED to GameEventBus for World Memory System
         try:
             from events.event_bus import get_event_bus
@@ -4801,6 +4819,10 @@ class GameEngine:
         }
 
         self.character.invented_recipes.append(recipe_record)
+
+        # Track recipe discovery in stat tracker
+        if hasattr(self.character, 'stat_tracker'):
+            self.character.stat_tracker.record_recipe_discovered(f"invented_{gen_result.item_id}", discipline)
 
         # Publish RECIPE_DISCOVERED to GameEventBus for World Memory System
         try:
@@ -6666,6 +6688,10 @@ class GameEngine:
 
                 # Mark as explored
                 self.map_system.mark_chunk_explored(chunk_x, chunk_y, chunk_type, has_dungeon)
+
+                # Track chunk entry in stat tracker
+                if hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_chunk_entered(chunk_x, chunk_y, biome=chunk_type)
 
                 # Publish CHUNK_ENTERED to GameEventBus for World Memory System
                 try:

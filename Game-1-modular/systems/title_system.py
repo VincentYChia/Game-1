@@ -15,9 +15,14 @@ class TitleSystem:
         self.earned_titles: List[TitleDefinition] = []
         self.title_db = TitleDatabase.get_instance()
 
-    def _award_title(self, title_def: TitleDefinition) -> TitleDefinition:
+    def _award_title(self, title_def: TitleDefinition, character=None) -> TitleDefinition:
         """Award a title and publish to GameEventBus."""
         self.earned_titles.append(title_def)
+
+        # Track in stat tracker
+        if character and hasattr(character, 'stat_tracker'):
+            character.stat_tracker.record_title_earned(title_def.title_id, tier=getattr(title_def, 'tier', 'novice'))
+
         try:
             from events.event_bus import get_event_bus
             get_event_bus().publish("TITLE_EARNED", {
@@ -52,18 +57,18 @@ class TitleSystem:
 
             # Requirements met - handle acquisition method
             if title_def.acquisition_method == "guaranteed_milestone":
-                return self._award_title(title_def)
+                return self._award_title(title_def, character)
 
             elif title_def.acquisition_method == "event_based_rng":
                 if random.random() < title_def.generation_chance:
-                    return self._award_title(title_def)
+                    return self._award_title(title_def, character)
 
             elif title_def.acquisition_method == "hidden_discovery":
-                return self._award_title(title_def)
+                return self._award_title(title_def, character)
 
             elif title_def.acquisition_method == "special_achievement":
                 if random.random() < title_def.generation_chance:
-                    return self._award_title(title_def)
+                    return self._award_title(title_def, character)
 
             # Legacy fallback: random_drop (deprecated in favor of event_based_rng)
             elif title_def.acquisition_method == "random_drop":
@@ -76,7 +81,7 @@ class TitleSystem:
                 }
                 chance = tier_chances.get(title_def.tier, 0.10)
                 if random.random() < chance:
-                    return self._award_title(title_def)
+                    return self._award_title(title_def, character)
 
         return None
 

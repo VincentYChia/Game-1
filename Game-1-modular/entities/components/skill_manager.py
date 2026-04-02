@@ -110,6 +110,10 @@ class SkillManager:
         # Learn the skill
         self.known_skills[skill_id] = PlayerSkill(skill_id=skill_id)
 
+        # Track in stat tracker
+        if character and hasattr(character, 'stat_tracker'):
+            character.stat_tracker.record_skill_learned(skill_id, source="level" if not skip_checks else "system")
+
         # Publish SKILL_LEARNED to GameEventBus for World Memory System
         try:
             from events.event_bus import get_event_bus
