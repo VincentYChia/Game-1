@@ -2990,6 +2990,8 @@ class GameEngine:
                 self.character.facing_angle = self._ac_attack_angle
 
                 player_sm.start_attack(next_def, player_sm.damage_context)
+                if player_sm.combo_count > 1 and hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_combo_attack(player_sm.combo_count)
 
     def _ac_process_hit(self, hit):
         """Route a HitEvent to the appropriate damage pipeline."""
@@ -3003,6 +3005,10 @@ class GameEngine:
             enemy = self.combat_manager.find_enemy_by_entity_id(hit.target_id)
             if not enemy or not enemy.is_alive:
                 return
+
+            # Track projectile hit in stat tracker
+            if hit.is_projectile and hasattr(self.character, 'stat_tracker'):
+                self.character.stat_tracker.record_projectile_hit()
 
             # Prevent multi-hit per swing
             if not player_sm.record_hit(hit.target_id):
@@ -3196,6 +3202,8 @@ class GameEngine:
                         'weapon_weight': getattr(_w, 'weight', 1.0) if _w else 1.0,
                     }
                     player_sm.start_attack(attack_def, damage_context)
+                    if player_sm.combo_count > 1 and hasattr(self.character, 'stat_tracker'):
+                        self.character.stat_tracker.record_combo_attack(player_sm.combo_count)
                     self.character._attack_facing_locked = True
                     self.character.reset_attack_cooldown(is_weapon=True, hand=hand)
                     # Publish ATTACK_STARTED event
