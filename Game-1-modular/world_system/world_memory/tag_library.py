@@ -206,13 +206,13 @@ LAYER_1_CATEGORIES = {
     ),
     "class": TagCategory(
         "class",
-        frozenset({"warrior", "mage", "ranger", "healer", "rogue", "paladin"}),
+        frozenset({"warrior", "ranger", "scholar", "artisan", "scavenger", "adventurer"}),
         layer_unlocked=1,
         description="Player class",
     ),
     "title_tier": TagCategory(
         "title_tier",
-        frozenset({"novice", "intermediate", "advanced", "master"}),
+        frozenset({"novice", "apprentice", "journeyman", "expert", "master", "special"}),
         layer_unlocked=1,
         description="Title rank tier",
     ),
