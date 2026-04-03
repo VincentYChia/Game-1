@@ -3,7 +3,7 @@
 **Purpose:** Establish consistent naming patterns across all modules to prevent API mismatches and improve code maintainability.
 
 **Reference:** This document is referenced in Game Mechanics v6 (see top of document)
-**Last Updated:** January 27, 2026
+**Last Updated:** March 29, 2026
 
 ---
 
@@ -23,7 +23,7 @@
 |--------|------|---------|
 | Config | `core/config.py` | Game constants |
 | GameEngine | `core/game_engine.py` | Main game loop |
-| Camera | `rendering/camera.py` | Viewport/camera |
+| Camera | `core/camera.py` | Viewport/camera |
 | Renderer | `rendering/renderer.py` | All rendering |
 
 ### Data Layer
@@ -48,6 +48,7 @@
 | CharacterStats | `entities/components/stats.py` | Stat calculations |
 | LevelingSystem | `entities/components/leveling.py` | XP and levels |
 | BuffManager | `entities/components/buffs.py` | Active buffs |
+| StatTracker | `entities/components/stat_tracker.py` | SQL-backed player analytics |
 
 ### Systems
 | Module | Path | Purpose |
@@ -56,8 +57,17 @@
 | TitleSystem | `systems/title_system.py` | Title acquisition |
 | ClassSystem | `systems/class_system.py` | Class bonuses |
 | CombatManager | `Combat/combat_manager.py` | Combat system |
-| LLMItemGenerator | `systems/llm_item_generator.py` | LLM-powered item generation (NEW) |
-| CraftingClassifierManager | `systems/crafting_classifier.py` | CNN/LightGBM validation (NEW) |
+| SaveManager | `systems/save_manager.py` | Save/load persistence |
+| LLMItemGenerator | `systems/llm_item_generator.py` | LLM-powered item generation |
+| CraftingClassifierManager | `systems/crafting_classifier.py` | CNN/LightGBM validation |
+| GameEventBus | `events/event_bus.py` | Pub/sub event system |
+| WorldMemorySystem | `world_system/world_memory/world_memory_system.py` | 7-layer event tracking facade |
+| StatStore | `world_system/world_memory/stat_store.py` | SQL-backed hierarchical stats |
+| StatTracker | `entities/components/stat_tracker.py` | 65 `record_*` methods for player analytics |
+| BackendManager | `world_system/living_world/backends/backend_manager.py` | LLM abstraction (Ollama/Claude/Mock) |
+| NPCAgentSystem | `world_system/living_world/npc/npc_agent.py` | NPC dialogue generation |
+| FactionSystem | `world_system/living_world/factions/faction_system.py` | Faction reputation tracking |
+| EcosystemAgent | `world_system/living_world/ecosystem/ecosystem_agent.py` | Resource depletion tracking |
 
 ---
 
@@ -133,6 +143,48 @@
 | Alchemy | N/A | `AlchemyLightGBM` |
 | Refining | N/A | `RefiningLightGBM` |
 | Engineering | N/A | `EngineeringLightGBM` |
+
+### World Memory System (March 2026)
+
+| Concept | Correct Name | Avoid | Location |
+|---------|--------------|-------|----------|
+| Get WMS instance | `WorldMemorySystem.get_instance()` | `get_memory()` | WorldMemorySystem |
+| Initialize WMS | `initialize(save_dir, character, world, geo_map_path)` | `setup()`, `init()` | WorldMemorySystem |
+| Update WMS | `update(dt, game_time, character)` | `tick()` | WorldMemorySystem |
+| Record stat | `stat_store.record(key, value)` | `add_stat()` | StatStore |
+| Record count | `stat_store.record_count(key, delta)` | `increment()` | StatStore |
+| Get stat | `stat_store.get(key)` | `read()` | StatStore |
+| Query prefix | `stat_store.get_prefix(prefix, limit)` | `search()` | StatStore |
+| Record event | `event_store.record_event(event)` | `add_event()` | EventStore |
+| Query events | `event_store.query_events(...)` | `search_events()` | EventStore |
+
+### GameEventBus
+
+| Concept | Correct Name | Avoid | Location |
+|---------|--------------|-------|----------|
+| Get bus instance | `GameEventBus.get_instance()` | `get_bus()` | GameEventBus |
+| Subscribe | `bus.subscribe(event_type, callback)` | `on()`, `listen()` | GameEventBus |
+| Publish | `bus.publish(event_type, data)` | `emit()`, `fire()` | GameEventBus |
+| Unsubscribe | `bus.unsubscribe(event_type, callback)` | `off()` | GameEventBus |
+
+### StatTracker Recording Methods
+
+All methods follow the pattern `record_<category>_<action>(...)`. Key examples:
+
+| Concept | Method | Location |
+|---------|--------|----------|
+| Resource gathered | `record_resource_gathered(resource_id, amount, tier, ...)` | StatTracker |
+| Enemy killed | `record_enemy_killed(enemy_type, tier, rank, ...)` | StatTracker |
+| Damage dealt | `record_damage_dealt(amount, damage_type, element, ...)` | StatTracker |
+| Item crafted | `record_crafting(discipline, recipe_id, tier, ...)` | StatTracker |
+| Skill used | `record_skill_used(skill_id, category, mana_cost, ...)` | StatTracker |
+
+### BackendManager (LLM Abstraction)
+
+| Concept | Correct Name | Avoid | Location |
+|---------|--------------|-------|----------|
+| Get instance | `BackendManager.get_instance()` | `get_backend()` | BackendManager |
+| Generate text | `generate(task, system_prompt, user_prompt, max_tokens)` | `call()`, `infer()` | BackendManager |
 
 ### Minigame Actions
 
@@ -219,6 +271,7 @@ mat_id = inp.get('materialId') or inp.get('itemId')  # Defensive programming
 | alchemy.py | `AlchemyCrafter` | `AlchemyMinigame` |
 | engineering.py | `EngineeringCrafter` | `EngineeringMinigame` |
 | enchanting.py | `EnchantingCrafter` | `EnchantingMinigame` |
+| fishing.py | `FishingManager` | `FishingMinigame` |
 
 ### Database Classes
 
@@ -533,6 +586,6 @@ for (x, y), material in ui_grid.items():
 
 ---
 
-**Last Updated:** January 27, 2026
+**Last Updated:** March 29, 2026
 **Maintained By:** Development Team
 **Status:** Living Document - Update as patterns evolve

@@ -1,0 +1,266 @@
+# World Memory System — Tools & Simulation Reference
+
+## Available Tools
+
+### Stat Tracking
+
+| Tool | Path | Usage |
+|------|------|-------|
+| **Stat Catalog** | `tools/stat_catalog.py` | Audit all 74 `record_*` methods, show wired vs orphaned, search by prefix |
+| **Stat Schema Generator** | `tools/generate_stat_schema.py` | Generate all 2,166 possible stat keys from game JSON data |
+| **Stat Key Manifest** | `world_system/config/stat-key-manifest.json` | Pre-computed key list, loaded at startup for SQL pre-population |
+
+```bash
+python tools/stat_catalog.py --summary        # 70/74 wired (94%)
+python tools/stat_catalog.py --orphans        # Show 4 unwired methods
+python tools/stat_catalog.py --search combat  # Search keys by prefix
+python tools/generate_stat_schema.py --count  # 2,166 keys across 16 categories
+python tools/generate_stat_schema.py --write-json  # Regenerate manifest after content changes
+```
+
+### Tag System
+
+| Tool | Path | Usage |
+|------|------|-------|
+| **Tag Browser** | `world_system/world_memory/tag_browser.py` | Search/browse Layer 1 stat-to-tag mappings (374 patterns) |
+| **Tag Collector** | `tools/tag_collector.py` | Scan ALL game JSON for tags, detect typos, categorize |
+| **Tag Library** | `world_system/world_memory/tag_library.py` | 61 tag categories with layer unlock rules (source of truth) |
+| **Tag Assignment** | `world_system/world_memory/tag_assignment.py` | Layer 1→7 tag propagation engine |
+| **Layer 1 Tag Map** | `world_system/config/layer1-stat-tags.json` | 374 stat key → tag mappings with 8-12 tags each |
+
+```bash
+python -m world_system.world_memory.tag_browser search "combat.kills"
+python -m world_system.world_memory.tag_browser search "turret"
+python -m world_system.world_memory.tag_browser stats
+python tools/tag_collector.py    # Scans all JSON, detects typos, generates report
+```
+
+### Simulation
+
+| Tool | Path | Usage |
+|------|------|-------|
+| **WMS Simulation** | `tools/simulate_world_memory.py` | Build SQLite database with all 7 layers populated |
+| **Simulation DB** | `tools/wms_simulation.db` | Generated database (gitignored, regenerate with above) |
+
+```bash
+python tools/simulate_world_memory.py --dump   # Build + print full summary
+sqlite3 tools/wms_simulation.db                # Inspect directly
+```
+
+### Configuration
+
+| File | Path | What It Controls |
+|------|------|-----------------|
+| **Memory Config** | `world_system/config/memory-config.json` | Evaluator thresholds, retention rules, event types |
+| **Geographic Map** | `world_system/config/geographic-map.json` | Region hierarchy (realm → province → district → locality) |
+| **Backend Config** | `world_system/config/backend-config.json` | LLM backend routing (Ollama/Claude/Mock) |
+| **Faction Defs** | `world_system/config/faction-definitions.json` | Faction list, reputation ranges, NPC dispositions |
+| **Ecosystem Config** | `world_system/config/ecosystem-config.json` | Resource tiers, depletion thresholds, regen rates |
+| **NPC Personalities** | `world_system/config/npc-personalities.json` | Per-NPC personality profiles |
+
+### Design Documentation
+
+| Doc | Path | Lines |
+|-----|------|-------|
+| **Canonical Design** | `world_system/docs/WORLD_MEMORY_SYSTEM.md` | 1,864 — All 16 sections of WMS design |
+| **Implementation Status** | `world_system/docs/HANDOFF_STATUS.md` | 318 — What's built, what's not |
+| **Tag Taxonomy** | `world_system/docs/TAG_LIBRARY.md` | 314 — 61 categories across 7 layers |
+| **Build Plan** | `world_system/docs/FOUNDATION_IMPLEMENTATION_PLAN.md` | 1,267 — Layer 1-2 execution plan |
+
+---
+
+## Tag Categories by Layer (61 Total)
+
+Tags use structured `(tag_category, tag_value)` pairs in the `layerN_tags` junction tables.
+
+### Layer 1: 30 Factual Dimensions
+| Group | Categories |
+|-------|-----------|
+| Identity (5) | `domain`, `action`, `metric`, `actor`, `target` |
+| Entity (7) | `species`, `resource`, `item`, `skill`, `recipe`, `npc`, `quest` |
+| Classification (8) | `tier`, `element`, `quality`, `rarity`, `discipline`, `material_category`, `item_category`, `rank` |
+| Combat (4) | `attack_type`, `weapon_type`, `status_effect`, `slot` |
+| Context (6) | `result`, `source`, `tool`, `class`, `title_tier`, `location` |
+
+### Layer 2: +6 = 36 Total
+`locality`*, `district`*, `province`*, `biome`, `scope`*, `significance`**
+
+### Layer 3: +9 = 45 Total
+`sentiment`, `alignment`, `trend`, `intensity`, `setting`, `terrain`, `population_status`, `resource_status`
+
+### Layer 4: +4 = 49 Total
+`faction`, `urgency_level`*, `event_status`, `player_impact`
+
+### Layer 5: +4 = 53 Total
+`political`, `military`, `living_impact`, `migration`
+
+### Layer 6: +4 = 57 Total
+`relation_effect`, `diplomacy`, `regional_effect`, `regional_significance`
+
+### Layer 7: +4 = 61 Total
+`world_significance`, `narrative_role`, `era_effect`, `world_theme`
+
+\* = Key tag (UPDATED at higher layers, not inherited blindly)
+\** = RECREATED fresh at every layer
+
+---
+
+## Simulated Database — Layer by Layer (Top Down)
+
+Simulation: ~2 hour play session. Level 9 warrior. 120 kills, 300 resources, 50 crafts.
+
+### Layer 7: World Narrative (1 entry)
+
+```
+Narrative: A newcomer arrived and began shaping the known lands.
+           Iron deposits strained under heavy mining.
+           The adventurer chose the warrior path.
+Severity:  notable
+Tags:      scope:world, significance:notable, world_significance:notable,
+           narrative_role:origin, era_effect:era_continuing,
+           world_theme:discovery, world_theme:growth
+```
+
+**Available Layer 7 tags NOT used**: `world_theme:conflict`, `world_theme:balance`, `world_theme:chaos`, `world_theme:decline`, `era_effect:era_shifting`, `era_effect:era_defining`, `narrative_role:catalyst`, `narrative_role:turning_point`, `narrative_role:escalation`
+
+### Layer 6: Intercountry (1 entry)
+
+```
+Narrative: Cross-realm: Single realm active (Known Lands). No inter-realm patterns yet.
+Severity:  minor
+Tags:      scope:world, significance:minor, regional_significance:minor
+```
+
+**Available Layer 6 tags NOT used**: `relation_effect:*`, `diplomacy:*`, `regional_effect:*` (all unused — single realm, no inter-realm dynamics)
+
+### Layer 5: Realm State (1 entry)
+
+```
+Narrative: Realm Known Lands: Active resource extraction and crafting economy.
+           Rising adventurer with combat and crafting focus.
+           2 provincial patterns tracked.
+Severity:  moderate
+Tags:      scope:global, significance:moderate, political:stabilizing,
+           living_impact:noticeable
+```
+
+**Available Layer 5 tags NOT used**: `military:*` (no military events), `migration:*` (no migration), `political:destabilizing`, `living_impact:dire`
+
+### Layer 4: Province Summaries (2 entries)
+
+```
+[1] Province Northeastern Highlands: 3 notable regional patterns. Threat: moderate.
+    Tags: province:northeastern_highlands, scope:regional, significance:moderate,
+          urgency_level:moderate, event_status:ongoing, player_impact:player_driven
+
+[2] Province Northwestern Reaches: 3 notable regional patterns. Threat: moderate.
+    Tags: province:northwestern_reaches, scope:regional, significance:moderate,
+          urgency_level:moderate, event_status:ongoing, player_impact:player_driven
+```
+
+**Available Layer 4 tags NOT used**: `faction:*` (no faction events), `event_status:resolving`, `event_status:escalating`, `player_impact:world_driven`, `urgency_level:high`, `urgency_level:critical`
+
+### Layer 3: Cross-Domain Patterns (6 entries)
+
+```
+[1] The Deep Caverns: 3 domains (area_danger, combat_proficiency, population_change)
+    Tags: location:deep_caverns, district:iron_hills, province:northeastern_highlands,
+          scope:district, significance:significant, trend:accelerating, intensity:heavy
+
+[2] The East Path: 4 domains (ecosystem_pressure, player_milestones, population_change, resource_pressure)
+    Tags: location:east_path, district:iron_hills, province:northeastern_highlands,
+          scope:district, significance:significant, trend:accelerating, intensity:heavy
+
+[3] The Elder Grove: 5 domains (area_danger, ecosystem_pressure, player_milestones, population_change, resource_pressure)
+    Tags: location:elder_grove, district:whispering_woods, province:northwestern_reaches, ...
+
+[4] The South Clearing: 4 domains (area_danger, exploration_discovery, player_milestones, population_change)
+[5] The Spawn Crossroads: 4 domains (ecosystem_pressure, player_milestones, population_change, resource_pressure)
+[6] The Traders Corner: 5 domains (crafting_mastery, ecosystem_pressure, player_milestones, population_change, resource_pressure)
+```
+
+**Available Layer 3 tags NOT used**: `sentiment:*` (no sentiment assigned), `alignment:*`, `setting:*`, `terrain:*`, `population_status:*`, `resource_status:*` (all Layer 3 categories except trend/intensity unused)
+
+### Layer 2: Evaluator Outputs (94 entries)
+
+By category:
+| Category | Count | Sample |
+|----------|-------|--------|
+| population_change | 38 | "Significant hunting pressure in traders_corner. 25 creatures killed." |
+| ecosystem_pressure | 36 | "Critical harvesting pressure in traders_corner. 50 resources — deposits strained." |
+| player_milestones | 8 | "Reached a new level in elder_grove." |
+| resource_pressure | 5 | "Under resource pressure: traders_corner. 25 gathering events." |
+| crafting_mastery | 3 | "Crafting hub emerging at traders_corner." |
+| area_danger | 2 | "Heavy combat zone: deep_caverns. 25 combat events." |
+| combat_proficiency | 1 | "Fell in combat in deep_caverns." |
+| exploration_discovery | 1 | "Exploring the region around south_clearing." |
+
+Tag categories present: `domain`, `location`, `district`, `province`, `biome`, `scope`, `significance`
+
+**Available Layer 2 tags NOT used in any entry**: `locality` (used `location` instead — potential inconsistency with tag_library which defines `locality`)
+
+### Layer 1: Stats (500 rows, 615 structured tags)
+
+Top 20 by count:
+```
+combat.damage_dealt                                count=  850  total=   15234.0
+combat.attacks                                     count=  850
+combat.damage_dealt.attack.melee                   count=  700  total=   12000.0
+combat.attacks.weapon_type.sword                   count=  500
+gathering.tool_swings                              count=  450
+gathering.collected                                count=  300  total=     300.0
+gathering.actions                                  count=  300
+combat.damage_taken                                count=  200
+skills.used                                        count=  200
+combat.kills                                       count=  120
+```
+
+Tag categories in layer1_tags: `action` (8 values), `domain` (12 values), `metric` (3 values), `species` (3 values), `tier` (3 values), `type` (5 values), `attack` (3 values), `weapon_element` (2 values), `category` (3 values), `resource` (9 values), `location` (4 values)
+
+### Raw Event Pipeline: 176 timestamped events
+
+By type: resource_gathered (70), enemy_killed (61), craft_attempted (12), skill_used (8), chunk_entered (7), level_up (4), area_discovered (2), node_depleted (2), plus singles.
+
+Dual-track counters: 56 stream counters + 22 regional accumulators.
+
+---
+
+## Known Issues in Simulation Data
+
+These are areas where the simulation diverges from what the full tag system supports. Use this to fix framing:
+
+1. **Layer 2 uses `location` not `locality`** — tag_library.py defines `locality` as a Layer 2 key tag but simulation uses `location`. The production event_recorder also uses `location:` prefix. Need to decide which is canonical.
+
+2. **Layer 3 missing most categories** — 8 of 9 Layer 3 tag categories unused (sentiment, alignment, setting, terrain, population_status, resource_status). These need evaluator logic to assign.
+
+3. **Layer 2 missing `action` tags** — Layer 1 has `action:kill`, `action:gather`, etc. but Layer 2 doesn't inherit these. The tag_assignment should propagate relevant Layer 1 tags upward.
+
+4. **Layer 2 evaluator categories don't match design doc** — Simulation uses `population_change`, `ecosystem_pressure`, `combat_proficiency`, `crafting_mastery`, `player_milestones`, `area_danger`, `resource_pressure`, `exploration_discovery`. Design doc §6.2 defines 9 evaluators: PopulationDynamics, EcosystemPressure, CombatProficiency, CraftingMastery, PlayerMilestones, ExplorationDiscovery, SocialReputation, EconomyItems, DungeonProgress. Missing: SocialReputation, EconomyItems, DungeonProgress.
+
+5. **No `species` tags at Layer 2+** — Enemy kills generate `species:wolf_grey` at Layer 1 but this doesn't propagate to Layer 2 evaluator outputs. Population change evaluators should include species information.
+
+6. **All Layer 3 entries show `trend:accelerating`** — No `trend:stable`, `trend:emerging`, `trend:dampening` variety. Need time envelope analysis to vary this.
+
+7. **Layer 4 missing `faction` tags** — No faction system integration in simulation.
+
+8. **`significance` identical to `severity` at every layer** — Should be recreated independently per the design doc. Currently just copied.
+
+---
+
+## Data Sources for Tag Validation
+
+To check what tags SHOULD exist vs what the simulation generates:
+
+| What | Command | Count |
+|------|---------|-------|
+| All possible stat keys | `python tools/generate_stat_schema.py --count` | 2,166 |
+| All Layer 1 tag mappings | `python -m world_system.world_memory.tag_browser stats` | 374 patterns |
+| All tag categories | Read `world_system/world_memory/tag_library.py` | 61 categories |
+| All game tags in JSON | `python tools/tag_collector.py` | scans all JSON |
+| Stat tracking coverage | `python tools/stat_catalog.py --summary` | 70/74 wired |
+| Evaluator list | `ls world_system/world_memory/evaluators/` | 34 files, 33 evaluators |
+| Geographic regions | Read `world_system/config/geographic-map.json` | 13 regions, 7 biomes |
+| Enemy IDs | `Definitions.JSON/hostiles-1.JSON` | 16 enemies |
+| Material IDs | `items.JSON/items-materials-1.JSON` | 77 materials |
+| Skill IDs | `Skills/skills-skills-1.JSON` | 41 skills |
+| Recipe IDs | `recipes.JSON/*.json` | 170 recipes |

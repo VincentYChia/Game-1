@@ -1117,6 +1117,13 @@ class Character:
 
             equipped_tool.durability_current = max(0, equipped_tool.durability_current - durability_loss)
 
+            if hasattr(self, 'stat_tracker'):
+                self.stat_tracker.record_tool_durability_lost(
+                    getattr(equipped_tool, 'equipmentType', 'tool'), durability_loss)
+                if equipped_tool.durability_current == 0:
+                    self.stat_tracker.record_tool_broken(
+                        getattr(equipped_tool, 'equipmentType', 'tool'))
+
             # Only warn about improper use, low, or broken
             if base_durability_loss >= 2.0:
                 print(f"   ⚠️ Improper tool use! {equipped_tool.name} loses extra durability ({equipped_tool.durability_current:.0f}/{equipped_tool.durability_max})")
@@ -1239,12 +1246,13 @@ class Character:
 
             # Track individual item collection
             for item_id, qty in loot:
+                is_first = self.stat_tracker.check_and_record_first_discovery("material", item_id)
                 self.stat_tracker.record_item_collected(
                     item_id=item_id,
                     quantity=qty,
                     category="material",
                     rarity="common",  # TODO: Get from MaterialDatabase
-                    is_first_time=False  # TODO: Check encyclopedia
+                    is_first_time=is_first
                 )
 
             # Track gathering damage
@@ -1342,6 +1350,13 @@ class Character:
                         durability_loss *= (1.0 - reduction)
 
             equipped_tool.durability_current = max(0, equipped_tool.durability_current - durability_loss)
+
+            if hasattr(self, 'stat_tracker'):
+                self.stat_tracker.record_tool_durability_lost(
+                    getattr(equipped_tool, 'equipmentType', 'tool'), durability_loss)
+                if equipped_tool.durability_current == 0:
+                    self.stat_tracker.record_tool_broken(
+                        getattr(equipped_tool, 'equipmentType', 'tool'))
 
         return (was_destroyed, damage, is_crit)
 
@@ -1831,6 +1846,13 @@ class Character:
 
                         armor_piece.durability_current = max(0, armor_piece.durability_current - piece_loss)
 
+                        if hasattr(self, 'stat_tracker'):
+                            self.stat_tracker.record_tool_durability_lost(
+                                getattr(armor_piece, 'equipmentType', slot), piece_loss)
+                            if armor_piece.durability_current == 0:
+                                self.stat_tracker.record_tool_broken(
+                                    getattr(armor_piece, 'equipmentType', slot))
+
                         # Warn if armor is breaking (use effective max with VIT bonus)
                         effective_max = self.get_effective_max_durability(armor_piece)
                         if armor_piece.durability_current == 0:
@@ -1872,6 +1894,16 @@ class Character:
         # Track death in stat tracker
         if hasattr(self, 'stat_tracker') and self.stat_tracker:
             self.stat_tracker.record_death()
+            # Record death with dimensional context
+            location = ""
+            if dungeon_manager and dungeon_manager.in_dungeon:
+                location = "dungeon"
+            self.stat_tracker.record_death_by_source(
+                source_type=kwargs.get('source_type', 'unknown'),
+                damage_type=kwargs.get('damage_type', 'physical'),
+                enemy_type=kwargs.get('enemy_type', ''),
+                location=location,
+            )
         try:
             from events.event_bus import get_event_bus
             get_event_bus().publish("PLAYER_DIED", {

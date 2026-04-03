@@ -54,6 +54,7 @@ class WorldInterpreter:
         self.event_store: Optional[EventStore] = None
         self.geo_registry: Optional[GeographicRegistry] = None
         self.entity_registry: Optional[EntityRegistry] = None
+        self.layer_store = None  # LayerStore for per-layer tag-indexed storage
         self._evaluators: List[PatternEvaluator] = []
         self._interpretations_created: int = 0
 
@@ -69,11 +70,13 @@ class WorldInterpreter:
 
     def initialize(self, event_store: EventStore,
                    geo_registry: GeographicRegistry,
-                   entity_registry: EntityRegistry) -> None:
+                   entity_registry: EntityRegistry,
+                   layer_store=None) -> None:
         """Wire dependencies and register built-in evaluators."""
         self.event_store = event_store
         self.geo_registry = geo_registry
         self.entity_registry = entity_registry
+        self.layer_store = layer_store
 
         # Register all evaluators
         self._evaluators = []
@@ -191,6 +194,28 @@ class WorldInterpreter:
 
                 self.event_store.record_interpretation(interpretation)
                 self._interpretations_created += 1
+
+                # Write to LayerStore (tag-indexed read-path)
+                if self.layer_store:
+                    try:
+                        origin_key = trigger_event.event_type
+                        if trigger_event.event_subtype:
+                            origin_key = f"{trigger_event.event_type}.{trigger_event.event_subtype}"
+                        self.layer_store.insert_event(
+                            layer=2,
+                            narrative=interpretation.narrative,
+                            game_time=interpretation.created_at,
+                            category=interpretation.category,
+                            severity=interpretation.severity,
+                            significance=interpretation.severity,
+                            tags=interpretation.affects_tags or [],
+                            origin_ref=origin_key,
+                            evaluator_id=type(evaluator).__name__,
+                            real_time=interpretation.created_at,
+                            event_id=interpretation.interpretation_id,
+                        )
+                    except Exception as e:
+                        print(f"[Interpreter] LayerStore write failed: {e}")
 
                 # Propagate to region states
                 self._propagate(interpretation)

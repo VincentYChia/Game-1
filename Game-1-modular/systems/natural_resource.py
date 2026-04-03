@@ -142,6 +142,17 @@ class NaturalResource:
         if self.current_hp <= 0:
             self.current_hp = 0
             self.depleted = True
+            # Publish NODE_DEPLETED to GameEventBus for World Memory System
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("NODE_DEPLETED", {
+                    "resource_id": getattr(self, 'resource_id', 'unknown'),
+                    "resource_type": getattr(self, 'resource_type', 'unknown'),
+                    "position_x": self.position[0] if hasattr(self, 'position') else 0,
+                    "position_y": self.position[1] if hasattr(self, 'position') else 0,
+                })
+            except Exception:
+                pass
             return actual_damage, True
         return actual_damage, False
 

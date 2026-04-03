@@ -124,6 +124,17 @@ class PlayerActionSystem:
         self.dodge_cooldown = self.dodge_cooldown_ms
         self.total_dodges += 1
 
+        # Publish DODGE_PERFORMED to GameEventBus for World Memory System
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("DODGE_PERFORMED", {
+                "actor_id": "player",
+                "position_x": position[0] if position else 0,
+                "position_y": position[1] if position else 0,
+            })
+        except Exception:
+            pass
+
         return True
 
     def update(self, dt_ms: float) -> None:

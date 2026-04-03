@@ -139,6 +139,8 @@ class PotionEffectExecutor:
             base_heal = params.get('heal_amount', 50)
             heal_amount = min(int(base_heal * potency), character.max_health - character.health)
             character.health += heal_amount
+            if hasattr(character, 'stat_tracker'):
+                character.stat_tracker.record_healing_received(heal_amount, source="potion")
             return True, f"Restored {heal_amount:.0f} HP"
 
         elif 'over_time' in tags:

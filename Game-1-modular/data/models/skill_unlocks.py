@@ -58,6 +58,8 @@ class UnlockCost:
         # Deduct gold
         if hasattr(character, 'gold'):
             character.gold -= self.gold
+            if self.gold > 0 and hasattr(character, 'stat_tracker'):
+                character.stat_tracker.record_gold_spent(float(self.gold), sink="skill_unlock")
 
         # Remove materials
         for mat_req in self.materials:

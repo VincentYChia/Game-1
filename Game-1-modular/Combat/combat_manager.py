@@ -151,6 +151,7 @@ class CombatManager:
         # Combat state
         self.player_last_combat_time = 0.0
         self.player_in_combat = False
+        self._combat_start_elapsed = 0.0  # Tracks total elapsed time in current combat encounter
 
         # Dungeon integration
         self.dungeon_manager = None  # Set by game_engine when dungeon system is active
@@ -698,6 +699,24 @@ class CombatManager:
         # Apply damage
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
+        # Publish DAMAGE_DEALT to GameEventBus for World Memory System
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("DAMAGE_DEALT", {
+                "attacker_id": "player",
+                "target_id": getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                "amount": final_damage,
+                "damage_type": "physical",
+                "attack_type": "melee",
+                "is_crit": is_crit,
+                "tier": getattr(enemy.definition, 'tier', 1),
+                "enemy_type": enemy.definition.enemy_id,
+                "position_x": enemy.position[0],
+                "position_y": enemy.position[1],
+            })
+        except Exception:
+            pass
+
         # Publish DAMAGE_DEALT event
         try:
             from rendering.visual_effect_bridge import publish_damage_dealt
@@ -716,6 +735,22 @@ class CombatManager:
             exp_reward = self._calculate_exp_reward(enemy)
             self.character.leveling.add_exp(exp_reward)
 
+            # Publish ENEMY_KILLED to GameEventBus for World Memory System
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("ENEMY_KILLED", {
+                    "killer_id": "player",
+                    "enemy_id": enemy.definition.enemy_id,
+                    "enemy_type": enemy.definition.enemy_id,
+                    "tier": getattr(enemy.definition, 'tier', 1),
+                    "is_boss": getattr(enemy.definition, 'is_boss', False),
+                    "amount": exp_reward,
+                    "position_x": enemy.position[0],
+                    "position_y": enemy.position[1],
+                })
+            except Exception:
+                pass
+
             # No loot drops in dungeons - only EXP (2x already applied in _calculate_exp_reward)
             if not (self.dungeon_manager and self.dungeon_manager.in_dungeon):
                 loot = enemy.generate_loot()
@@ -725,7 +760,7 @@ class CombatManager:
 
             # Notify dungeon manager of kill for wave tracking
             if self.dungeon_manager and self.dungeon_manager.in_dungeon:
-                self.on_dungeon_enemy_killed(enemy)
+                self.on_dungeon_enemy_killed(enemy, exp_earned=exp_reward)
 
             # Publish ENEMY_KILLED event
             try:
@@ -911,8 +946,40 @@ class CombatManager:
             print(f"   Enemy defense: {enemy.definition.defense} (reduction: {defense_reduction*100:.1f}%)")
         print(f"   ➜ Final damage: {final_damage:.1f}")
 
+        # Track weapon attack in stat tracker
+        if hasattr(self.character, 'stat_tracker'):
+            weapon_type = getattr(equipped_weapon, 'equipmentType', 'unarmed') if equipped_weapon else 'unarmed'
+            weapon_id = getattr(equipped_weapon, 'item_id', '') if equipped_weapon else ''
+            self.character.stat_tracker.record_weapon_attack(weapon_type=weapon_type, weapon_id=weapon_id)
+
         # Apply damage to enemy
         enemy_died = enemy.take_damage(final_damage, from_player=True)
+
+        # Publish DAMAGE_DEALT to GameEventBus for World Memory System
+        try:
+            from events.event_bus import get_event_bus
+            weapon_element = None
+            if equipped_weapon and hasattr(equipped_weapon, 'attackTags'):
+                for tag in (equipped_weapon.attackTags or []):
+                    if tag in ('fire', 'ice', 'lightning', 'poison', 'arcane', 'shadow', 'holy'):
+                        weapon_element = tag
+                        break
+            get_event_bus().publish("DAMAGE_DEALT", {
+                "attacker_id": "player",
+                "target_id": getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                "amount": final_damage,
+                "damage_type": damage_type if damage_type else "physical",
+                "attack_type": "melee",
+                "is_crit": is_crit,
+                "weapon_type": getattr(equipped_weapon, 'equipmentType', 'unarmed') if equipped_weapon else 'unarmed',
+                "weapon_element": weapon_element,
+                "tier": getattr(enemy.definition, 'tier', 1),
+                "enemy_type": enemy.definition.enemy_id,
+                "position_x": enemy.position[0],
+                "position_y": enemy.position[1],
+            })
+        except Exception:
+            pass
 
         # LIFESTEAL ENCHANTMENT: Heal for % of damage dealt (capped at 50%)
         if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
@@ -926,6 +993,8 @@ class CombatManager:
                     new_health = self.character.health
                     print(f"   💚 LIFESTEAL ENCHANT ({lifesteal_percent*100:.0f}%, capped at 50%): Healed {heal_amount:.1f} HP")
                     print(f"      HP: {old_health:.1f} → {new_health:.1f}")
+                    if hasattr(self.character, 'stat_tracker'):
+                        self.character.stat_tracker.record_healing_received(heal_amount, source="lifesteal")
 
         # CHAIN DAMAGE ENCHANTMENT: Damage nearby enemies
         if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
@@ -976,6 +1045,13 @@ class CombatManager:
 
                 equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
 
+                if hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_tool_durability_lost(
+                        getattr(equipped_weapon, 'equipmentType', 'weapon'), durability_loss)
+                    if equipped_weapon.durability_current == 0:
+                        self.character.stat_tracker.record_tool_broken(
+                            getattr(equipped_weapon, 'equipmentType', 'weapon'))
+
                 # Only warn about low/broken durability (use effective max with VIT bonus)
                 effective_max = self.character.get_effective_max_durability(equipped_weapon)
                 if equipped_weapon.durability_current == 0:
@@ -992,6 +1068,22 @@ class CombatManager:
             exp_reward = self._calculate_exp_reward(enemy)
             self.character.leveling.add_exp(exp_reward)
             print(f"   +{exp_reward} EXP")
+
+            # Publish ENEMY_KILLED to GameEventBus for World Memory System
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("ENEMY_KILLED", {
+                    "killer_id": "player",
+                    "enemy_id": enemy.definition.enemy_id,
+                    "enemy_type": enemy.definition.enemy_id,
+                    "tier": getattr(enemy.definition, 'tier', 1),
+                    "is_boss": getattr(enemy.definition, 'is_boss', False),
+                    "amount": exp_reward,
+                    "position_x": enemy.position[0],
+                    "position_y": enemy.position[1],
+                })
+            except Exception:
+                pass
 
             # No loot drops in dungeons - only EXP (2x already applied)
             if not (self.dungeon_manager and self.dungeon_manager.in_dungeon):
@@ -1013,7 +1105,7 @@ class CombatManager:
 
             # Notify dungeon manager of kill for wave tracking
             if self.dungeon_manager and self.dungeon_manager.in_dungeon:
-                self.on_dungeon_enemy_killed(enemy)
+                self.on_dungeon_enemy_killed(enemy, exp_earned=exp_reward)
 
             # Track combat activity
             if hasattr(self.character, 'activity_tracker'):
@@ -1032,6 +1124,13 @@ class CombatManager:
                 # -1 durability for proper use (weapon), -2 for improper use (tool)
                 durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
                 equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
+
+                if hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_tool_durability_lost(
+                        getattr(equipped_weapon, 'equipmentType', 'weapon'), durability_loss)
+                    if equipped_weapon.durability_current == 0:
+                        self.character.stat_tracker.record_tool_broken(
+                            getattr(equipped_weapon, 'equipmentType', 'weapon'))
 
                 # Only warn about improper use, low, or broken
                 if durability_loss == 2:
@@ -1250,7 +1349,7 @@ class CombatManager:
 
                     # Notify dungeon manager of kill for wave tracking
                     if self.dungeon_manager and self.dungeon_manager.in_dungeon:
-                        self.on_dungeon_enemy_killed(target)
+                        self.on_dungeon_enemy_killed(target, exp_earned=exp_reward)
 
             return (total_damage, False, loot)
 
@@ -1470,6 +1569,8 @@ class CombatManager:
                         new_health = self.character.health
                         print(f"   💚 LIFESTEAL ENCHANT ({lifesteal_percent*100:.0f}%, capped at 50%): Healed {heal_amount:.1f} HP")
                         print(f"      HP: {old_health:.1f} → {new_health:.1f}")
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_healing_received(heal_amount, source="lifesteal")
 
             # Consume any consume-on-use buffs (Power Strike, etc.)
             if hasattr(self.character, 'buffs'):
@@ -1530,7 +1631,7 @@ class CombatManager:
 
                 # Notify dungeon manager of kill for wave tracking
                 if self.dungeon_manager and self.dungeon_manager.in_dungeon:
-                    self.on_dungeon_enemy_killed(enemy)
+                    self.on_dungeon_enemy_killed(enemy, exp_earned=exp_reward)
 
                 # Track combat activity
                 if hasattr(self.character, 'activity_tracker'):
@@ -1573,6 +1674,13 @@ class CombatManager:
                     tool_type_effectiveness = self.character.get_tool_effectiveness_for_action(equipped_weapon, 'combat')
                     durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
                     equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
+
+                    if hasattr(self.character, 'stat_tracker'):
+                        self.character.stat_tracker.record_tool_durability_lost(
+                            getattr(equipped_weapon, 'equipmentType', 'weapon'), durability_loss)
+                        if equipped_weapon.durability_current == 0:
+                            self.character.stat_tracker.record_tool_broken(
+                                getattr(equipped_weapon, 'equipmentType', 'weapon'))
 
                     # Only warn about improper use, low, or broken
                     if durability_loss == 2:
@@ -1621,6 +1729,8 @@ class CombatManager:
                         weapon_element=weapon_element,
                         enemy_type=enemy_base_id,
                     )
+                    # Track first-time enemy discovery
+                    self.character.stat_tracker.check_and_record_first_discovery("enemy", enemy_base_id)
 
                 # Track status effects applied
                 status_effect_tags = ['burn', 'freeze', 'poison', 'stun', 'root', 'slow', 'bleed', 'shock', 'weaken', 'vulnerable']
@@ -1809,8 +1919,11 @@ class CombatManager:
         # SHIELD BLOCKING: Apply shield damage reduction if actively blocking
         if shield_blocking and self.character.is_shield_active():
             shield_reduction = self.character.get_shield_damage_reduction()
+            blocked_amount = final_damage * shield_reduction
             final_damage = final_damage * (1.0 - shield_reduction)
             print(f"   🛡️ Shield blocking: -{shield_reduction*100:.0f}% damage reduction")
+            if hasattr(self.character, 'stat_tracker'):
+                self.character.stat_tracker.record_damage_blocked(blocked_amount, block_type="shield")
 
         # SKILL BUFF BONUSES: Check for fortify buffs (flat damage reduction)
         fortify_reduction = 0.0
@@ -1825,11 +1938,15 @@ class CombatManager:
         print(f"   ➜ Final damage to player: {final_damage:.1f}")
 
         # Apply to player (pass dungeon_manager and world_system for death handling)
+        enemy_base_id = enemy.definition.enemy_id.rstrip("0123456789").rstrip("_")
         self.character.take_damage(
             final_damage,
             from_attack=True,
             dungeon_manager=self.dungeon_manager,
-            world_system=self.world
+            world_system=self.world,
+            source_type="enemy",
+            damage_type=getattr(enemy.definition, 'damage_type', 'physical'),
+            enemy_type=enemy_base_id,
         )
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
 
@@ -1844,6 +1961,22 @@ class CombatManager:
                 damage_type=enemy_damage_type,
                 attack_type=enemy_attack_type
             )
+
+        # Publish PLAYER_HIT to GameEventBus for World Memory System
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("PLAYER_HIT", {
+                "attacker_id": getattr(enemy, 'entity_id', enemy.definition.enemy_id),
+                "enemy_type": enemy.definition.enemy_id,
+                "amount": final_damage,
+                "damage_type": getattr(enemy.definition, 'damage_type', 'physical'),
+                "attack_type": 'melee',
+                "tier": getattr(enemy.definition, 'tier', 1),
+                "position_x": self.character.position.x,
+                "position_y": self.character.position.y,
+            })
+        except Exception:
+            pass
 
         # Publish PLAYER_HIT event for visual/AI systems
         try:
@@ -1890,6 +2023,8 @@ class CombatManager:
                 print(f"   ⚡ THORNS ({reflect_percent*100:.0f}%{cap_indicator}): Reflected {reflect_damage:.1f} damage to {enemy.definition.name}")
                 print(f"      Sources: {', '.join(thorns_pieces)}")
                 print(f"      Enemy HP: {old_enemy_health:.1f} → {enemy.current_health:.1f}")
+                if hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_reflect_damage(reflect_damage, source="thorns")
 
                 if enemy.current_health <= 0:
                     enemy.is_alive = False
@@ -1923,7 +2058,12 @@ class CombatManager:
         """Track if player is in combat (for health regen)"""
         if self.player_in_combat:
             self.player_last_combat_time += dt
+            self._combat_start_elapsed += dt
             if self.player_last_combat_time >= self.config.combat_timeout:
+                # Combat encounter ended — record duration
+                if self._combat_start_elapsed > 0 and hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_combat_duration(self._combat_start_elapsed)
+                self._combat_start_elapsed = 0.0
                 self.player_in_combat = False
 
     # ========================================================================
@@ -2112,6 +2252,8 @@ class CombatManager:
                         heal_amount = effect.get('value', 10.0)
                         self.character.heal(heal_amount)
                         print(f"      💚 Healed {heal_amount:.1f} HP")
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_healing_received(heal_amount, source="heal_on_kill")
 
                     elif effect_type == 'explosion' and trigger_type == 'on_kill':
                         # Would trigger an AOE explosion effect
@@ -2226,10 +2368,14 @@ class CombatManager:
         # Also remove any dungeon enemy corpses
         self.corpses = [c for c in self.corpses if not getattr(c, 'is_dungeon_enemy', False)]
 
-    def on_dungeon_enemy_killed(self, enemy: Enemy):
+    def on_dungeon_enemy_killed(self, enemy: Enemy, exp_earned: int = 0):
         """Handle dungeon enemy death - notify dungeon manager."""
         if self.dungeon_manager and self.dungeon_manager.in_dungeon:
             self.dungeon_manager.on_enemy_killed()
+
+        # Track dungeon enemy kill in stat tracker
+        if hasattr(self.character, 'stat_tracker'):
+            self.character.stat_tracker.record_dungeon_enemy_killed(exp_earned=exp_earned)
 
         # Remove from dungeon enemies list
         if enemy in self.dungeon_enemies:

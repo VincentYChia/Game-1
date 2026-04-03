@@ -1,16 +1,17 @@
 # Game-1 Modular Architecture
 
-**Last Updated**: 2026-01-27
+**Last Updated**: 2026-03-29
 
-This is the **modular refactored version** of Game-1, featuring a production-ready crafting RPG with **LLM-powered item generation** and **ML-based recipe validation**.
+This is the **modular refactored version** of Game-1, featuring a production-ready crafting RPG with **LLM-powered item generation**, **ML-based recipe validation**, and a **World Memory System** for Living World AI.
 
 ## Key Features
 
-- 🎮 **136 Python files** (~62,380 lines of code)
+- 🎮 **239 Python files** (~96,400 lines of code)
+- 🌍 **World Memory System** - 7-layer event tracking with 33 evaluators (SQLite)
 - 🤖 **LLM Integration** - Claude API for procedural item generation
 - 🧠 **ML Classifiers** - CNN + LightGBM for recipe validation
-- ⚔️ **Full Combat System** - Damage pipeline, enchantments, status effects
-- 🛠️ **5 Crafting Disciplines** - Each with unique minigames
+- ⚔️ **Full Combat System** - Damage pipeline, enchantments, hitboxes, projectiles
+- 🛠️ **6 Crafting Disciplines** - Each with unique minigames (including Fishing)
 - 💾 **Complete Save/Load** - Full state preservation
 
 ## Purpose
@@ -20,148 +21,180 @@ The modular architecture provides:
 - **Easier maintenance**: Isolated changes with minimal risk
 - **Parallel development**: Multiple developers can work simultaneously
 - **Scalable JSON production**: Clear data models with ML validation
-- **Testing**: 13 test files with automated crafting tests
+- **Testing**: 24 test files with automated crafting tests + 56 WMS tests
 
 ## Architecture Overview
 
 ```
 Game-1-modular/
-├── main.py                          # Entry point (~30 lines)
+├── main.py                          # Entry point (39 lines)
 │
-├── core/                            # Core game systems (23 files, ~15,589 LOC)
+├── core/                            # Core game systems (23 files, ~18,764 LOC)
 │   ├── config.py                    # Game configuration constants
 │   ├── camera.py                    # Camera/viewport system
-│   ├── game_engine.py               # Main game engine (7,817 lines)
-│   ├── interactive_crafting.py      # 5 discipline crafting UIs (1,078 lines)
-│   ├── effect_executor.py           # Tag-based combat effects (624 lines)
-│   ├── difficulty_calculator.py     # Material-based difficulty (803 lines)
-│   ├── reward_calculator.py         # Performance rewards (608 lines)
+│   ├── game_engine.py               # Main game engine (10,809 lines)
+│   ├── interactive_crafting.py      # 6 discipline crafting UIs (1,179 lines)
+│   ├── effect_executor.py           # Tag-based combat effects (623 lines)
+│   ├── difficulty_calculator.py     # Material-based difficulty (808 lines)
+│   ├── reward_calculator.py         # Performance rewards (607 lines)
 │   ├── tag_system.py                # Tag registry
 │   ├── tag_parser.py                # Tag parsing
 │   └── testing.py                   # Crafting system tester
 │
-├── data/                            # Data layer (25 files, ~3,745 LOC)
+├── data/                            # Data layer (30 files, ~5,424 LOC)
 │   ├── models/                      # Pure data classes (dataclasses)
 │   │   ├── materials.py, equipment.py, skills.py, recipes.py
 │   │   ├── world.py, quests.py, npcs.py, titles.py, classes.py
-│   └── databases/                   # Singleton database loaders (10 files)
+│   │   └── resources.py, skill_unlocks.py, unlock_conditions.py
+│   └── databases/                   # Singleton database loaders (16 files)
 │       ├── material_db.py, equipment_db.py, skill_db.py
 │       ├── recipe_db.py, placement_db.py, npc_db.py
-│       └── title_db.py, class_db.py, translation_db.py
+│       ├── title_db.py, class_db.py, translation_db.py
+│       └── skill_unlock_db.py, resource_node_db.py, visual_config_db.py, etc.
 │
-├── entities/                        # Game entities (17 files, ~6,909 LOC)
-│   ├── character.py                 # Character class (1,008 lines)
-│   ├── status_effect.py             # Status effects (827 lines)
+├── entities/                        # Game entities (17 files, ~7,263 LOC)
+│   ├── character.py                 # Character class (2,593 lines)
+│   ├── status_effect.py             # Status effects (826 lines)
 │   └── components/                  # Character components
-│       ├── skill_manager.py         # SkillManager (709 lines)
+│       ├── skill_manager.py         # SkillManager (1,124 lines)
+│       ├── stat_tracker.py          # SQL-backed player analytics (1,149 lines)
 │       ├── inventory.py, equipment_manager.py, buffs.py
-│       └── stats.py, leveling.py, activity_tracker.py
+│       └── stats.py, leveling.py, activity_tracker.py, crafted_stats.py
 │
-├── systems/                         # Game system managers (16 files, ~5,856 LOC)
+├── systems/                         # Game system managers (21 files, ~10,631 LOC)
 │   ├── world_system.py              # WorldSystem (generation, chunks)
-│   ├── llm_item_generator.py        # LLM integration (1,393 lines) [NEW]
-│   ├── crafting_classifier.py       # ML classifiers (1,256 lines) [NEW]
+│   ├── save_manager.py              # Full state persistence (634 lines)
+│   ├── llm_item_generator.py        # LLM integration (1,392 lines)
+│   ├── crafting_classifier.py       # ML classifiers (1,419 lines)
 │   ├── title_system.py, class_system.py, quest_system.py
-│   └── npc_system.py, encyclopedia.py, natural_resource.py
+│   └── npc_system.py, dungeon.py, turret_system.py, etc.
 │
-├── rendering/                       # All rendering code (3 files, ~5,679 LOC)
-│   └── renderer.py                  # Renderer class (2,782 lines)
+├── world_system/                    # World Memory System (71 files, ~14,269 LOC)
+│   ├── world_memory/                # Core WMS (stat_store, event_store, evaluators, tags)
+│   ├── living_world/                # Consumer systems (backends, NPC, factions, ecosystem)
+│   ├── config/                      # 7 JSON configs
+│   ├── tests/                       # 56 passing tests
+│   └── docs/                        # Canonical WMS design doc (1,864 lines)
 │
-├── Combat/                          # Combat system (3 files, ~2,527 LOC)
-│   ├── combat_manager.py            # CombatManager (1,655 lines)
-│   └── enemy.py                     # Enemy, EnemyDatabase (867 lines)
+├── events/                          # Event system (2 files, ~194 LOC)
+│   └── event_bus.py                 # GameEventBus pub/sub
 │
-├── Crafting-subdisciplines/         # Crafting minigames (8 files, ~5,346 LOC)
-│   ├── smithing.py                  # Smithing minigame (749 lines)
-│   ├── alchemy.py                   # Alchemy minigame (1,052 lines)
-│   ├── refining.py                  # Refining minigame (820 lines)
-│   ├── engineering.py               # Engineering minigame (1,315 lines)
-│   ├── enchanting.py                # Enchanting minigame (1,410 lines)
+├── animation/                       # Animation system (7 files, ~1,008 LOC)
+│   └── animation_manager.py, procedural.py, weapon_visuals.py, etc.
+│
+├── rendering/                       # All rendering code (5 files, ~8,841 LOC)
+│   └── renderer.py                  # Renderer class (7,931 lines)
+│
+├── Combat/                          # Combat system (11 files, ~5,562 LOC)
+│   ├── combat_manager.py            # CombatManager (2,317 lines)
+│   ├── enemy.py                     # Enemy, EnemyDatabase (1,348 lines)
+│   └── attack_state_machine.py, hitbox_system.py, projectile_system.py, etc.
+│
+├── Crafting-subdisciplines/         # Crafting minigames (9 files, ~8,994 LOC)
+│   ├── smithing.py                  # Smithing minigame (909 lines)
+│   ├── alchemy.py                   # Alchemy minigame (1,070 lines)
+│   ├── refining.py                  # Refining minigame (826 lines)
+│   ├── engineering.py               # Engineering minigame (1,312 lines)
+│   ├── enchanting.py                # Enchanting minigame (1,408 lines)
+│   ├── fishing.py                   # Fishing minigame (872 lines)
+│   ├── crafting_simulator.py        # Crafting simulation (2,337 lines)
 │   └── rarity_utils.py              # Shared rarity system
 │
-├── tests/                           # Test files (13 files)
-│   └── test_*.py                    # Unit and integration tests
+├── tests/                           # Test files (24 files, ~6,594 LOC)
+│   └── test_*.py, crafting/, save/  # Unit and integration tests
 │
-├── assets/                          # Game assets
-│   ├── icons/                       # Item and UI icons
-│   └── items/                       # Item sprites
+├── tools/                           # Development tools (10 files)
 │
-├── tools/                           # Development tools
-│   ├── smithing-grid-designer.py    # Smithing pattern designer
-│   └── enchanting-pattern-designer.py
+├── assets/                          # Game assets (3,749 images)
 │
-└── [JSON Directories]               # Game data files
+└── [JSON Directories]               # Game data files (~90 files)
     ├── items.JSON/                  # Item definitions (57+ materials)
     ├── recipes.JSON/                # Crafting recipes (100+ recipes)
     ├── placements.JSON/             # Minigame grid layouts
     ├── Definitions.JSON/            # Game configuration, tags
-    ├── progression/                 # Classes, titles, NPCs
+    ├── progression/                 # Classes, titles, NPCs, quests
     └── Skills/                      # 100+ skill definitions
 ```
 
 ## Module Breakdown
 
-### Core (`core/`) - 23 files, ~15,589 LOC
+### Core (`core/`) - 23 files, ~18,764 LOC
 **Purpose**: Fundamental game systems
 
-- **game_engine.py** (7,817 lines): Main game loop, event handling, UI, minigames
-- **interactive_crafting.py** (1,078 lines): 5 discipline crafting UIs
-- **effect_executor.py** (624 lines): Tag-based combat effect execution
-- **difficulty_calculator.py** (803 lines): Material-based difficulty scaling
-- **reward_calculator.py** (608 lines): Performance-based reward calculation
-- **config.py** (77 lines): Game constants (screen size, colors, speeds)
+- **game_engine.py** (10,809 lines): Main game loop, event handling, UI, minigames
+- **interactive_crafting.py** (1,179 lines): 6 discipline crafting UIs
+- **effect_executor.py** (623 lines): Tag-based combat effect execution
+- **difficulty_calculator.py** (808 lines): Material-based difficulty scaling
+- **reward_calculator.py** (607 lines): Performance-based reward calculation
+- **config.py**: Game constants (screen size, colors, speeds)
 - **tag_system.py**: Tag registry and synergy system
-- **testing.py** (195 lines): Automated crafting system tests
+- **testing.py**: Automated crafting system tests
 
-### Data Layer (`data/`) - 25 files, ~3,745 LOC
+### Data Layer (`data/`) - 30 files, ~5,424 LOC
 **Purpose**: Clean separation between data models and business logic
 
 **Models** (`data/models/`): Pure dataclasses (no logic)
-- Materials, Equipment, Skills, Recipes, World, Quests, NPCs, Titles, Classes
+- Materials, Equipment, Skills, Recipes, World, Quests, NPCs, Titles, Classes, Resources, SkillUnlocks
 
-**Databases** (`data/databases/`): Singleton loaders for JSON files
+**Databases** (`data/databases/`): Singleton loaders for JSON files (16 files)
 - Load from JSON, provide lookup methods, cache data
 
-### Entities (`entities/`) - 17 files, ~6,909 LOC
+### Entities (`entities/`) - 17 files, ~7,263 LOC
 **Purpose**: Game entities and their components
 
-- **character.py** (1,008 lines): Player character integrating all components
-- **status_effect.py** (827 lines): All status effect implementations
+- **character.py** (2,593 lines): Player character integrating all components
+- **status_effect.py** (826 lines): All status effect implementations
 - **components/**: Pluggable character systems (stats, inventory, skills, etc.)
-- **skill_manager.py** (709 lines): Skill activation, mana, cooldowns, affinity bonuses
+- **skill_manager.py** (1,124 lines): Skill activation, mana, cooldowns, affinity bonuses
+- **stat_tracker.py** (1,149 lines): 65 SQL-backed recording methods for player analytics
 
-### Systems (`systems/`) - 16 files, ~5,856 LOC
+### Systems (`systems/`) - 21 files, ~10,631 LOC
 **Purpose**: Game system managers
 
-- **llm_item_generator.py** (1,393 lines): Claude API integration for invented items
-- **crafting_classifier.py** (1,256 lines): CNN + LightGBM recipe validation
-- World generation and management
-- Quest and NPC systems
+- **llm_item_generator.py** (1,392 lines): Claude API integration for invented items
+- **crafting_classifier.py** (1,419 lines): CNN + LightGBM recipe validation
+- **save_manager.py** (634 lines): Full state persistence
+- World generation, biomes, chunks, dungeons
+- Quest, NPC, turret, encyclopedia systems
 - Title and class systems
 
-### Rendering (`rendering/`) - 3 files, ~5,679 LOC
+### World Memory System (`world_system/`) - 71 files, ~14,269 LOC
+**Purpose**: 7-layer event tracking and Living World AI infrastructure
+
+- **world_memory/**: Core WMS engine (StatStore, EventStore, evaluators, tags, triggers)
+- **living_world/**: Consumer systems (BackendManager, NPC agents, factions, ecosystem)
+- **config/**: 7 JSON configuration files
+- **tests/**: 56 passing tests across 4 test files
+- See `world_system/docs/HANDOFF_STATUS.md` for current state
+
+### Rendering (`rendering/`) - 5 files, ~8,841 LOC
 **Purpose**: All visual rendering
 
-- **renderer.py** (2,782 lines): Complete rendering pipeline
+- **renderer.py** (7,931 lines): Complete rendering pipeline
   - World rendering (tiles, resources, stations, NPCs, enemies)
   - UI rendering (health, mana, buffs, notifications)
   - Inventory, equipment, skills, crafting interfaces
 
-### Combat (`Combat/`) - 3 files, ~2,527 LOC
+### Combat (`Combat/`) - 11 files, ~5,562 LOC
 **Purpose**: Full combat system with damage pipeline
 
-- **combat_manager.py** (1,655 lines): Damage pipeline, enchantments, status effects
-- **enemy.py** (867 lines): Enemy AI, spawning, loot drops
-- 9 enchantments fully integrated (Sharpness, Protection, Fire Aspect, etc.)
+- **combat_manager.py** (2,317 lines): Damage pipeline, enchantments, status effects
+- **enemy.py** (1,348 lines): Enemy AI, spawning, loot drops
+- **attack_state_machine.py**: Phased attack states (IDLE→WINDUP→ACTIVE→RECOVERY)
+- **hitbox_system.py**: Hitbox/hurtbox collision detection
+- **projectile_system.py**: Projectile entities
+- 14 enchantments fully integrated
 
-### Crafting (`Crafting-subdisciplines/`) - 8 files, ~5,346 LOC
-**Purpose**: 5 crafting disciplines with unique minigames
+### Crafting (`Crafting-subdisciplines/`) - 9 files, ~8,994 LOC
+**Purpose**: 6 crafting disciplines with unique minigames
 
-- **smithing.py** (749 lines): Hammer timing minigame
-- **alchemy.py** (1,052 lines): Chain/stabilize reaction minigame
-- **refining.py** (820 lines): Temperature control minigame
-- **engineering.py** (1,315 lines): Wire puzzle minigame
-- **enchanting.py** (1,410 lines): Spinning wheel minigame
+- **smithing.py** (909 lines): Hammer timing minigame
+- **alchemy.py** (1,070 lines): Chain/stabilize reaction minigame
+- **refining.py** (826 lines): Temperature control minigame
+- **engineering.py** (1,312 lines): Wire puzzle minigame
+- **enchanting.py** (1,408 lines): Spinning wheel minigame
+- **fishing.py** (872 lines): Fishing minigame
+- **crafting_simulator.py** (2,337 lines): Crafting simulation engine
 
 ## Running the Game
 
@@ -187,8 +220,8 @@ Players can **invent new items** by placing materials in unique arrangements:
 ### Key Files
 ```
 systems/
-├── llm_item_generator.py      # Claude API integration (1,393 lines)
-└── crafting_classifier.py     # CNN + LightGBM validation (1,256 lines)
+├── llm_item_generator.py      # Claude API integration (1,392 lines)
+└── crafting_classifier.py     # CNN + LightGBM validation (1,419 lines)
 
 Scaled JSON Development/       # ML training data and models
 ├── LLM Training Data/Fewshot_llm/    # System prompts & examples
@@ -220,35 +253,38 @@ All LLM API calls are logged to `llm_debug_logs/TIMESTAMP_discipline.json`
 ## Statistics
 
 ### Code Organization
-- **Total Files**: 136 Python files
-- **Total Lines**: ~62,380 lines of code
+- **Total Files**: 239 Python files
+- **Total Lines**: ~96,400 lines of code
 - **Original**: 1 file (10,327 lines) - monolithic main.py
-- **Modular**: 136 files with clean separation of concerns
+- **Modular**: 239 files with clean separation of concerns
 
 ### Largest Modules
-1. **game_engine.py**: 7,817 lines (main loop, UI, event handling)
-2. **renderer.py**: 2,782 lines (all rendering)
-3. **combat_manager.py**: 1,655 lines (damage pipeline, enchantments)
-4. **llm_item_generator.py**: 1,393 lines (Claude API integration)
-5. **enchanting.py**: 1,410 lines (enchanting minigame)
-6. **engineering.py**: 1,315 lines (engineering minigame)
-7. **crafting_classifier.py**: 1,256 lines (CNN + LightGBM)
-8. **alchemy.py**: 1,052 lines (alchemy minigame)
-9. **character.py**: 1,008 lines (player entity)
-10. **skill_manager.py**: 709 lines (skill system)
+1. **game_engine.py**: 10,809 lines (main loop, UI, event handling)
+2. **renderer.py**: 7,931 lines (all rendering)
+3. **character.py**: 2,593 lines (player entity)
+4. **crafting_simulator.py**: 2,337 lines (crafting simulation)
+5. **combat_manager.py**: 2,317 lines (damage pipeline, enchantments)
+6. **enchanting.py**: 1,408 lines (enchanting minigame)
+7. **llm_item_generator.py**: 1,392 lines (Claude API integration)
+8. **crafting_classifier.py**: 1,419 lines (CNN + LightGBM)
+9. **enemy.py**: 1,348 lines (enemy AI, spawning)
+10. **engineering.py**: 1,312 lines (engineering minigame)
 
 ### Module Sizes
-- **core/**: ~15,589 lines (23 files)
-- **data/**: ~3,745 lines (25 files)
-- **entities/**: ~6,909 lines (17 files)
-- **systems/**: ~5,856 lines (16 files)
-- **rendering/**: ~5,679 lines (3 files)
-- **Combat/**: ~2,527 lines (3 files)
-- **Crafting-subdisciplines/**: ~5,346 lines (8 files)
+- **world_system/**: ~14,269 lines (71 files)
+- **core/**: ~18,764 lines (23 files)
+- **systems/**: ~10,631 lines (21 files)
+- **Crafting-subdisciplines/**: ~8,994 lines (9 files)
+- **rendering/**: ~8,841 lines (5 files)
+- **entities/**: ~7,263 lines (17 files)
+- **tests/**: ~6,594 lines (24 files)
+- **Combat/**: ~5,562 lines (11 files)
+- **data/**: ~5,424 lines (30 files)
+- **animation/**: ~1,008 lines (7 files)
 
 ## Validation
 
-All 136 Python files compile successfully:
+All 239 Python files compile successfully:
 
 ```bash
 cd Game-1-modular
@@ -264,15 +300,16 @@ Game-1-singular/
     main.py                    # 10,327 lines, 62 classes
 ```
 
-### Game-1-modular (Current - January 2026)
+### Game-1-modular (Current - March 2026)
 ```
 Game-1-modular/
-    136 Python files (~62,380 lines)
+    239 Python files (~96,400 lines)
     Clean separation of concerns
     No circular dependencies
+    World Memory System (7-layer event architecture)
     LLM-powered item generation
     ML-validated crafting system
-    13 test files for validation
+    24 test files + 56 WMS tests
     Ready for team development
 ```
 
@@ -292,7 +329,7 @@ Players can invent new items:
 
 ### 3. Database Layer
 Centralized loading with error handling:
-- 10 singleton database loaders
+- 16 singleton database loaders
 - Graceful fallbacks for missing files
 - Clear error messages
 
@@ -350,7 +387,7 @@ python3 main.py
 
 | Document | Purpose |
 |----------|---------|
-| **docs/GAME_MECHANICS_V6.md** | Master reference - all mechanics (5,089 lines) |
+| **docs/GAME_MECHANICS_V6.md** | Master reference - all mechanics (5,154 lines) |
 | **docs/REPOSITORY_STATUS_REPORT_2026-01-27.md** | Current system state |
 | **.claude/CLAUDE.md** | Developer guide for AI assistants |
 | **MASTER_ISSUE_TRACKER.md** | Known bugs and improvements |
@@ -359,6 +396,6 @@ python3 main.py
 ---
 
 **Original**: 10,327 lines in 1 file (October 2025)
-**Modular**: 136 files, ~62,380 lines (January 2026)
-**Features**: LLM item generation, ML validation, full combat, 5 crafting disciplines
-**Last Updated**: 2026-01-27
+**Modular**: 239 files, ~96,400 lines (March 2026)
+**Features**: World Memory System, LLM item generation, ML validation, full combat, 6 crafting disciplines
+**Last Updated**: 2026-03-29

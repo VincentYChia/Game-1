@@ -25,24 +25,27 @@ This plan is split into focused documents for maintainability:
 
 ---
 
-## Current State Summary (Updated 2026-03-09)
+## Current State Summary (Updated 2026-03-29)
 
 | System | State | Key Files | LOC |
 |--------|-------|-----------|-----|
-| Combat | **Action combat with hitboxes, projectiles, dodge, attack state machine** | `Combat/` (8 files), `systems/attack_effects.py` | ~2,000+ |
-| Animation | **Procedural animation framework, combat particles, weapon visuals** | `animation/` (6 files) | ~900+ |
-| Rendering | **Enhanced renderer with tag-driven VFX, damage numbers, death effects, visual config** | `rendering/renderer.py`, `rendering/visual_effects.py`, `rendering/visual_effect_bridge.py` | 7,400+ |
-| Enemy AI | FSM (patrol/chase/attack/retreat), phased attacks with windup/active/recovery | `Combat/enemy.py`, `Combat/attack_profile_generator.py` | ~1,400 |
-| World | Infinite chunks, static resource nodes, seed-based | `systems/world_system.py` | ~1,200 |
-| NPCs | Static quest dispensers, JSON dialogue, no memory | `systems/npc_system.py`, `quest_system.py` | ~800 |
-| AI/ML | LLM item gen (Claude API), CNN/LightGBM classifiers | `systems/llm_item_generator.py`, `crafting_classifier.py` | 2,649 |
-| Events | **GameEventBus pub/sub connecting combat → visuals** | `events/event_bus.py` | ~150 |
+| Combat | **Action combat with hitboxes, projectiles, dodge, attack state machine** | `Combat/` (11 files) | ~5,562 |
+| Animation | **Procedural animation framework, combat particles, weapon visuals** | `animation/` (7 files) | ~1,008 |
+| Rendering | **Enhanced renderer with tag-driven VFX, damage numbers, death effects, visual config** | `rendering/` (5 files) | ~8,841 |
+| Enemy AI | FSM (patrol/chase/attack/retreat), phased attacks with windup/active/recovery | `Combat/enemy.py`, `Combat/attack_profile_generator.py` | ~1,690 |
+| World | Infinite chunks, static resource nodes, seed-based | `systems/world_system.py` | ~1,125 |
+| NPCs | Static quest dispensers, JSON dialogue, no memory | `systems/npc_system.py`, `quest_system.py` | ~378 |
+| AI/ML | LLM item gen (Claude API), CNN/LightGBM classifiers | `systems/llm_item_generator.py`, `crafting_classifier.py` | ~2,811 |
+| Events | **GameEventBus pub/sub connecting all systems** | `events/event_bus.py` | ~194 |
+| **World Memory** | **Layers 1-2 complete, 33 evaluators, tag library, 56 tests** | `world_system/` (71 files) | **~14,269** |
+| **Living World** | **BackendManager, NPC agents, factions, ecosystem (consumers)** | `world_system/living_world/` | ~2,079 |
+| **StatTracker** | **65 SQL-backed recording methods wired into Character** | `entities/components/stat_tracker.py` | ~1,149 |
 | Assets | 3,749 PNGs, all enemy sprites 1024x1024, no sprite sheets | `assets/` | — |
 
 ### Technical Constraints
 - **Engine**: Pygame (SDL2 wrapper) — no built-in animation, physics, or scene graph
 - **Resolution**: 1600x900 base, 32px tiles, 60 FPS target
-- **Architecture**: Monolithic GameEngine (10K lines), singleton databases, component-based Character
+- **Architecture**: Monolithic GameEngine (~10,809 lines), singleton databases, component-based Character
 - **Threading**: Background threading exists for LLM calls — pattern available for AI agents
 
 ---
@@ -60,11 +63,11 @@ PART 1: Combat Visuals
   Phase 1.7: Integration & Polish ─────────────────────┘  ⚠️ NEEDS OVERHAUL (visual quality insufficient — new plan needed)
 
 PART 2: Living World (starts after Phase 1.3 complete)
-  Phase 2.1: Memory Layer (FOUNDATION) ────────────────┐
-  Phase 2.2: Model Backend Abstraction ────────────────┤
-  Phase 2.3: NPC Agent System ─────────────────────────┤──→ Phase 2.7: Quest Generator
-  Phase 2.4: Faction System ───────────────────────────┤
-  Phase 2.5: Ecosystem Model ──────────────────────────┤──→ Phase 2.6: World Events
+  Phase 2.1: Memory Layer (FOUNDATION) ────────────────┐  ✅ COMPLETE (world_system/world_memory/ — Layers 1-2, 33 evaluators)
+  Phase 2.2: Model Backend Abstraction ────────────────┤  ✅ COMPLETE (world_system/living_world/backends/backend_manager.py)
+  Phase 2.3: NPC Agent System ─────────────────────────┤──→ Phase 2.7: Quest Generator  ⚠️ SCAFFOLDED (npc_agent.py exists, needs game integration)
+  Phase 2.4: Faction System ───────────────────────────┤  ⚠️ SCAFFOLDED (faction_system.py exists, needs game integration)
+  Phase 2.5: Ecosystem Model ──────────────────────────┤──→ Phase 2.6: World Events  ⚠️ SCAFFOLDED (ecosystem_agent.py exists, needs game integration)
 
 PART 3: Player Intelligence (starts after Phase 2.1)
   Phase 3.1: Behavior Classifier ──────────────────────┐
@@ -89,55 +92,64 @@ PART 3: Player Intelligence (starts after Phase 2.1)
 
 ---
 
-## File Organization (New)
+## File Organization (Actual — Updated 2026-03-29)
+
+> **Note**: The original plan proposed `ai/`, `combat/` (lowercase), `Animation-Data.JSON/`, and `AI-Config.JSON/` directories. The actual implementation diverged — Living World code lives in `world_system/`, combat stayed in `Combat/` (uppercase), and config JSONs live in `world_system/config/`.
 
 ```
 Game-1-modular/
-├── combat/                          # Replaces Combat/ (lowercase, new structure)
-│   ├── combat_manager.py            # Refactored — uses new systems
-│   ├── enemy.py                     # Refactored — tier scaling, attack patterns
-│   ├── attack_state_machine.py      # NEW: Phased attack states
-│   ├── hitbox_system.py             # NEW: Hitbox/hurtbox collision
-│   ├── projectile_system.py         # NEW: Projectile entities
-│   └── damage_numbers.py            # NEW: Floating damage text
-├── animation/                       # NEW: Animation framework
-│   ├── sprite_animation.py          # Frame-based animation player
+├── Combat/                          # Expanded from 3 → 11 files (uppercase retained)
+│   ├── combat_manager.py            # CombatManager (2,317 lines)
+│   ├── enemy.py                     # Enemy, EnemyDatabase (1,348 lines)
+│   ├── attack_state_machine.py      # Phased attack states
+│   ├── hitbox_system.py             # Hitbox/hurtbox collision
+│   ├── projectile_system.py         # Projectile entities
+│   ├── attack_profile_generator.py  # Tier-based attack patterns
+│   ├── combat_data_loader.py        # Combat data loading
+│   ├── player_actions.py            # Dodge, combo actions
+│   ├── screen_effects.py            # Screen shake, flash
+│   └── combat_event.py              # Combat event types
+├── animation/                       # Animation framework (7 files, 1,008 LOC)
 │   ├── animation_manager.py         # Global animation registry & update
+│   ├── sprite_animation.py          # Frame-based animation player
 │   ├── animation_data.py            # Data classes for animation definitions
-│   └── effects.py                   # Screen shake, flash, trails
-├── ai/                              # NEW: Living World AI
-│   ├── memory/                      # Memory layer
-│   │   ├── event_store.py           # SQLite event storage
-│   │   ├── event_schema.py          # Event type definitions
-│   │   └── query.py                 # Agent query interface
-│   ├── agents/                      # AI agents
-│   │   ├── base_agent.py            # Agent base class
-│   │   ├── npc_agent.py             # NPC dialogue & behavior
-│   │   ├── quest_agent.py           # Quest generation
-│   │   ├── ecosystem_agent.py       # Resource tracking
-│   │   ├── event_agent.py           # World event triggers
-│   │   └── faction_agent.py         # Faction relationships
-│   ├── backends/                    # Model inference backends
-│   │   ├── base_backend.py          # Abstract backend interface
-│   │   ├── claude_backend.py        # Anthropic API (existing, refactored)
-│   │   ├── ollama_backend.py        # Ollama local inference
-│   │   ├── mock_backend.py          # Testing/fallback
-│   │   └── backend_config.py        # Backend selection & config
-│   └── player/                      # Player intelligence
-│       ├── behavior_classifier.py   # Archetype classification
-│       ├── preference_model.py      # Engagement tracking
-│       └── arc_tracker.py           # Narrative stage tracking
-├── events/                          # NEW: Event bus
-│   ├── event_bus.py                 # Pub/sub event system
-│   └── game_events.py              # Event type definitions
-├── Animation-Data.JSON/             # NEW: Animation definitions
-│   ├── attack-animations.json       # Weapon swing timing & hitboxes
-│   ├── enemy-animations.json        # Enemy attack patterns
-│   ├── effect-animations.json       # VFX timing
-│   └── projectile-definitions.json  # Projectile properties
-└── AI-Config.JSON/                  # NEW: AI agent configuration
-    ├── npc-personalities.json       # NPC personality templates
-    ├── faction-definitions.json     # Faction graph seed data
-    ├── ecosystem-config.json        # Resource pressure thresholds
-    └── event-triggers.json          # World event trigger conditions
+│   ├── procedural.py                # Procedural animation generation
+│   ├── weapon_visuals.py            # Weapon swing visuals
+│   └── combat_particles.py          # Combat particle effects
+├── world_system/                    # Living World + World Memory (71 files, 14,269 LOC)
+│   ├── world_memory/                # Core WMS engine
+│   │   ├── world_memory_system.py   # Facade coordinating all subsystems (449 lines)
+│   │   ├── stat_store.py            # SQL-backed hierarchical stats (327 lines)
+│   │   ├── event_store.py           # 20 SQL tables (1,140 lines)
+│   │   ├── event_recorder.py        # Bus→SQLite bridge (481 lines)
+│   │   ├── trigger_manager.py       # Threshold-based triggers (194 lines)
+│   │   ├── tag_library.py           # 65-category taxonomy (559 lines)
+│   │   ├── tag_assignment.py        # Layer 1→7 tag engine (410 lines)
+│   │   ├── evaluators/              # 33 Layer 2 evaluators (1,700+ lines)
+│   │   └── (+ query, interpreter, geographic_registry, entity_registry,
+│   │        daily_ledger, time_envelope, retention, layer_store, etc.)
+│   ├── living_world/                # Consumer systems (NOT part of WMS)
+│   │   ├── backends/                # BackendManager — LLM abstraction (553 lines)
+│   │   ├── npc/                     # NPCAgentSystem + NPCMemory (665 lines)
+│   │   ├── factions/                # FactionSystem (463 lines)
+│   │   └── ecosystem/               # EcosystemAgent (398 lines)
+│   ├── config/                      # 7 JSON configs
+│   │   ├── memory-config.json       # Event types, evaluator config, retention rules
+│   │   ├── backend-config.json      # LLM backend routing
+│   │   ├── geographic-map.json      # World region hierarchy
+│   │   ├── npc-personalities.json   # Per-NPC personality profiles
+│   │   ├── faction-definitions.json # Faction list, rep ranges
+│   │   ├── ecosystem-config.json    # Resource tiers, depletion thresholds
+│   │   └── layer1-stat-tags.json    # 374 stat patterns with tag mappings
+│   ├── tests/                       # 56 passing tests
+│   └── docs/                        # WORLD_MEMORY_SYSTEM.md (canonical design doc)
+├── events/                          # Event bus (2 files, 194 LOC)
+│   └── event_bus.py                 # GameEventBus pub/sub
+├── entities/components/
+│   └── stat_tracker.py              # 65 record_* methods writing to StatStore (1,149 lines)
+└── Definitions.JSON/
+    └── visual-config.JSON           # Visual effect configuration
 ```
+
+### Player Intelligence (Part 3 — NOT YET STARTED)
+The `ai/player/` directory from the original plan does not exist. Behavior classifier, preference model, and arc tracker remain future work.

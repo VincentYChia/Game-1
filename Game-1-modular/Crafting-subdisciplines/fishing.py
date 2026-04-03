@@ -849,6 +849,13 @@ class FishingManager:
                 final_loss = durability_loss * loss_mult
                 equipped_rod.durability_current = max(0, equipped_rod.durability_current - final_loss)
 
+                if hasattr(character, 'stat_tracker'):
+                    character.stat_tracker.record_tool_durability_lost(
+                        getattr(equipped_rod, 'equipmentType', 'fishing_rod'), final_loss)
+                    if equipped_rod.durability_current == 0:
+                        character.stat_tracker.record_tool_broken(
+                            getattr(equipped_rod, 'equipmentType', 'fishing_rod'))
+
                 if result_data['success']:
                     print(f"   🎣 Rod durability: {equipped_rod.durability_current:.0f}/{equipped_rod.durability_max}")
                 else:

@@ -124,6 +124,19 @@ class Inventory:
         # This handles invented equipment that isn't in the database
         is_equip = equipment_instance is not None or equip_db.is_equipment(item_id)
 
+        # Publish ITEM_ACQUIRED to GameEventBus for World Memory System
+        try:
+            from events.event_bus import get_event_bus
+            get_event_bus().publish("ITEM_ACQUIRED", {
+                "actor_id": "player",
+                "item_id": item_id,
+                "quantity": quantity,
+                "category": "equipment" if is_equip else "material",
+                "rarity": rarity,
+            })
+        except Exception:
+            pass
+
         if is_equip:
             for i in range(quantity):
                 empty = self.get_empty_slot()

@@ -1,10 +1,12 @@
 # Game-1-Modular Architecture Documentation
 
-**Version**: 3.0 (Modular + LLM Integration)
+**Version**: 4.0 (Modular + LLM + World Memory System)
 **Original Version**: 1.0 (10,327 lines, single file)
-**Modular Version**: ~62,380 lines, 136 Python files
-**Architecture Pattern**: Component-Based, Layered, Singleton Databases
-**Last Updated**: 2026-01-27
+**Modular Version**: ~96,400 lines, 239 Python files
+**Architecture Pattern**: Component-Based, Layered, Singleton Databases, Event-Driven
+**Last Updated**: 2026-03-29
+
+> **Note**: This document was largely written in January 2026. The header stats and major systems table have been updated, but some directory listings and line counts in lower sections may be outdated. For the most current architecture overview, see `.claude/CLAUDE.md` (v7.0).
 
 ---
 
@@ -29,25 +31,31 @@ Game-1-Modular is a refactored version of a single-file Python/Pygame game (Game
 
 ### Key Statistics
 
-| Metric | Singular | Modular (Jan 2026) |
+| Metric | Singular | Modular (Mar 2026) |
 |--------|----------|---------|
-| **Total Lines** | 10,327 | ~62,380 |
-| **Files** | 1 | 136 |
-| **Classes** | 62 | 150+ |
-| **Avg Lines/File** | 10,327 | ~459 |
+| **Total Lines** | 10,327 | ~96,400 |
+| **Files** | 1 | 239 |
+| **Classes** | 62 | 200+ |
+| **Avg Lines/File** | 10,327 | ~403 |
 | **Import Depth** | N/A | Max 3 levels |
 | **Circular Imports** | N/A | 0 |
 
 ### Major Systems (Line Counts)
 | System | Lines | Key Files |
 |--------|-------|-----------|
-| Game Engine | 7,817 | `core/game_engine.py` |
-| Crafting Minigames | 5,341 | `Crafting-subdisciplines/*.py` |
-| Rendering | 5,679 | `rendering/renderer.py` |
-| Combat | 2,527 | `Combat/combat_manager.py`, `enemy.py` |
-| LLM Integration | 2,649 | `systems/llm_item_generator.py`, `crafting_classifier.py` |
-| Entities | 6,909 | `entities/` |
-| Core Systems | 15,589 | `core/` |
+| Game Engine | 10,809 | `core/game_engine.py` |
+| World Memory System | 14,269 | `world_system/` (71 files) |
+| Crafting Minigames | 8,994 | `Crafting-subdisciplines/*.py` (9 files) |
+| Rendering | 8,841 | `rendering/` (5 files) |
+| Entities | 7,263 | `entities/` (17 files) |
+| Combat | 5,562 | `Combat/` (11 files) |
+| Core Systems | 18,764 | `core/` (23 files) |
+| Systems | 10,631 | `systems/` (21 files) |
+| Data Layer | 5,424 | `data/` (30 files) |
+| Tests | 6,594 | `tests/` (24 files) |
+| LLM Integration | 2,811 | `systems/llm_item_generator.py`, `crafting_classifier.py` |
+| Animation | 1,008 | `animation/` (7 files) |
+| Events | 194 | `events/event_bus.py` |
 
 ### Refactoring Benefits
 
@@ -144,17 +152,19 @@ core/game_engine.py (import everything)
 
 ## Directory Structure
 
+> **Note**: This directory listing is from January 2026. For the current structure (including `world_system/`, `animation/`, `events/`, expanded `Combat/`), see `.claude/CLAUDE.md` or `README.md`.
+
 ```
 Game-1-modular/
 ├── main.py                      # Entry point (~30 lines)
 │
-├── core/                        # Core game systems (23 files, 15,589 LOC)
+├── core/                        # Core game systems (23 files, 18,764 LOC)
 │   ├── __init__.py
 │   ├── config.py               # Global constants
-│   ├── game_engine.py          # Main game loop (7,817 lines)
-│   ├── interactive_crafting.py # 5 discipline crafting UIs (1,078 lines)
-│   ├── effect_executor.py      # Tag-based combat effects (624 lines)
-│   ├── difficulty_calculator.py # Material-based difficulty (802 lines)
+│   ├── game_engine.py          # Main game loop (10,809 lines)
+│   ├── interactive_crafting.py # 6 discipline crafting UIs (1,179 lines)
+│   ├── effect_executor.py      # Tag-based combat effects (623 lines)
+│   ├── difficulty_calculator.py # Material-based difficulty (808 lines)
 │   ├── reward_calculator.py    # Performance rewards (607 lines)
 │   ├── tag_system.py           # Tag registry
 │   ├── tag_parser.py           # Tag parsing
