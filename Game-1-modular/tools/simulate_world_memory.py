@@ -127,7 +127,9 @@ def _safe_key(value: Any) -> str:
 
 
 # ══════════════════════════════════════════════════════════════════════
-# DATABASE CREATION — mirrors actual event_store.py + layer_store.py + stat_store.py schemas
+# DATABASE CREATION — mirrors layer_store.py (canonical) + event_store.py (raw pipeline)
+# layer_store.py is the newer, tag-indexed design (March 26).
+# event_store.py provides the raw event pipeline + occurrence counters.
 # ══════════════════════════════════════════════════════════════════════
 
 def create_database(db_path: str) -> sqlite3.Connection:
@@ -136,9 +138,10 @@ def create_database(db_path: str) -> sqlite3.Connection:
         os.remove(db_path)
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA foreign_keys=ON")
 
+    # ── stat_store.py: Layer 1 flat counters (write-path) ────────
     conn.executescript("""
-    -- Layer 1: Stats (from stat_store.py)
     CREATE TABLE IF NOT EXISTS stats (
         key TEXT PRIMARY KEY,
         count INTEGER DEFAULT 0,
@@ -146,8 +149,11 @@ def create_database(db_path: str) -> sqlite3.Connection:
         max_value REAL DEFAULT 0.0,
         updated_at REAL DEFAULT 0.0
     );
+    CREATE INDEX IF NOT EXISTS idx_stats_prefix ON stats(key COLLATE NOCASE);
+    """)
 
-    -- Raw Event Pipeline (from event_store.py)
+    # ── event_store.py: Raw Event Pipeline + tracking ────────────
+    conn.executescript("""
     CREATE TABLE IF NOT EXISTS events (
         event_id TEXT PRIMARY KEY,
         event_type TEXT NOT NULL,
@@ -181,11 +187,13 @@ def create_database(db_path: str) -> sqlite3.Connection:
 
     CREATE TABLE IF NOT EXISTS event_tags (
         event_id TEXT NOT NULL,
-        tag TEXT NOT NULL
+        tag TEXT NOT NULL,
+        FOREIGN KEY (event_id) REFERENCES events(event_id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_event_tags_tag ON event_tags(tag);
+    CREATE INDEX IF NOT EXISTS idx_event_tags_event ON event_tags(event_id);
 
-    -- Occurrence counters (threshold tracking)
+    -- Dual-track threshold counting
     CREATE TABLE IF NOT EXISTS occurrence_counts (
         actor_id TEXT NOT NULL,
         event_type TEXT NOT NULL,
@@ -194,106 +202,104 @@ def create_database(db_path: str) -> sqlite3.Connection:
         PRIMARY KEY (actor_id, event_type, event_subtype)
     );
 
-    -- Regional counters (Track 2)
     CREATE TABLE IF NOT EXISTS regional_counters (
         region_id TEXT NOT NULL,
         event_category TEXT NOT NULL,
         count INTEGER DEFAULT 0,
         PRIMARY KEY (region_id, event_category)
     );
-
-    -- Layer 2: Interpretations (from event_store.py)
-    CREATE TABLE IF NOT EXISTS interpretations (
-        interpretation_id TEXT PRIMARY KEY,
-        created_at REAL NOT NULL,
-        narrative TEXT NOT NULL,
-        category TEXT NOT NULL,
-        severity TEXT NOT NULL,
-        trigger_event_id TEXT,
-        trigger_count INTEGER,
-        cause_event_ids_json TEXT DEFAULT '[]',
-        affected_locality_ids_json TEXT DEFAULT '[]',
-        affected_district_ids_json TEXT DEFAULT '[]',
-        epicenter_x REAL,
-        epicenter_y REAL,
-        affects_tags_json TEXT DEFAULT '[]',
-        is_ongoing INTEGER DEFAULT 0,
-        update_count INTEGER DEFAULT 1,
-        archived INTEGER DEFAULT 0
-    );
-    CREATE INDEX IF NOT EXISTS idx_interp_category ON interpretations(category);
-
-    CREATE TABLE IF NOT EXISTS interpretation_tags (
-        interpretation_id TEXT NOT NULL,
-        tag TEXT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_interp_tags_tag ON interpretation_tags(tag);
-
-    -- Layer 3: Connected Interpretations (from event_store.py)
-    CREATE TABLE IF NOT EXISTS connected_interpretations (
-        id TEXT PRIMARY KEY,
-        created_at REAL NOT NULL,
-        narrative TEXT NOT NULL,
-        category TEXT NOT NULL,
-        severity TEXT NOT NULL,
-        source_interpretation_ids_json TEXT DEFAULT '[]',
-        affected_district_ids_json TEXT DEFAULT '[]',
-        affects_tags_json TEXT DEFAULT '[]',
-        is_ongoing INTEGER DEFAULT 0,
-        archived INTEGER DEFAULT 0
-    );
-
-    CREATE TABLE IF NOT EXISTS connected_interpretation_tags (
-        id TEXT NOT NULL,
-        tag TEXT NOT NULL
-    );
-
-    -- Layer 4: Province Summaries (from event_store.py)
-    CREATE TABLE IF NOT EXISTS province_summaries (
-        province_id TEXT PRIMARY KEY,
-        summary_text TEXT DEFAULT '',
-        dominant_activities_json TEXT DEFAULT '[]',
-        notable_event_ids_json TEXT DEFAULT '[]',
-        resource_state_json TEXT DEFAULT '{}',
-        threat_level TEXT DEFAULT 'low',
-        last_updated REAL DEFAULT 0.0
-    );
-
-    -- Layer 5: Realm State (from event_store.py)
-    CREATE TABLE IF NOT EXISTS realm_state (
-        realm_id TEXT PRIMARY KEY,
-        faction_standings_json TEXT DEFAULT '{}',
-        economic_summary TEXT DEFAULT '',
-        player_reputation TEXT DEFAULT '',
-        major_events_json TEXT DEFAULT '[]',
-        last_updated REAL DEFAULT 0.0
-    );
-
-    -- Layer 6-7: World Narrative (from event_store.py)
-    CREATE TABLE IF NOT EXISTS world_narrative (
-        id TEXT PRIMARY KEY DEFAULT 'singleton',
-        world_themes_json TEXT DEFAULT '[]',
-        world_epoch TEXT DEFAULT 'unknown',
-        active_thread_ids_json TEXT DEFAULT '[]',
-        resolved_thread_ids_json TEXT DEFAULT '[]',
-        world_history_json TEXT DEFAULT '[]',
-        last_updated REAL DEFAULT 0.0
-    );
-
-    CREATE TABLE IF NOT EXISTS narrative_threads (
-        thread_id TEXT PRIMARY KEY,
-        source TEXT NOT NULL,
-        theme TEXT NOT NULL,
-        summary TEXT NOT NULL,
-        canonical_facts_json TEXT DEFAULT '[]',
-        status TEXT DEFAULT 'rumor',
-        significance REAL DEFAULT 0.0,
-        origin_region TEXT,
-        created_at REAL NOT NULL
-    );
     """)
+
+    # ── layer_store.py: Per-layer tag-indexed tables (canonical) ─
+    # Layer 1: Stats with structured tag junction
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS layer1_stats (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        key TEXT NOT NULL UNIQUE,
+        count INTEGER DEFAULT 0,
+        total REAL DEFAULT 0.0,
+        max_value REAL DEFAULT 0.0,
+        tags_json TEXT DEFAULT '[]',
+        updated_at REAL DEFAULT 0.0
+    );
+    CREATE TABLE IF NOT EXISTS layer1_tags (
+        stat_id INTEGER NOT NULL,
+        tag_category TEXT NOT NULL,
+        tag_value TEXT NOT NULL,
+        FOREIGN KEY (stat_id) REFERENCES layer1_stats(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_l1_tags ON layer1_tags(tag_category, tag_value);
+    CREATE INDEX IF NOT EXISTS idx_l1_tags_id ON layer1_tags(stat_id);
+
+    -- Layer 2: Evaluator outputs with structured tags
+    CREATE TABLE IF NOT EXISTS layer2_events (
+        id TEXT PRIMARY KEY,
+        narrative TEXT NOT NULL,
+        origin_stat_key TEXT NOT NULL,
+        game_time REAL NOT NULL,
+        real_time REAL NOT NULL,
+        category TEXT NOT NULL,
+        severity TEXT NOT NULL,
+        significance TEXT NOT NULL DEFAULT 'minor',
+        tags_json TEXT DEFAULT '[]',
+        evaluator_id TEXT
+    );
+    CREATE TABLE IF NOT EXISTS layer2_tags (
+        event_id TEXT NOT NULL,
+        tag_category TEXT NOT NULL,
+        tag_value TEXT NOT NULL,
+        FOREIGN KEY (event_id) REFERENCES layer2_events(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_l2_tags ON layer2_tags(tag_category, tag_value);
+    CREATE INDEX IF NOT EXISTS idx_l2_tags_id ON layer2_tags(event_id);
+    CREATE INDEX IF NOT EXISTS idx_l2_time ON layer2_events(game_time);
+    CREATE INDEX IF NOT EXISTS idx_l2_cat ON layer2_events(category);
+    """)
+
+    # Layers 3-7: Same schema pattern with origin column pointing to previous layer
+    for layer_num in range(3, 8):
+        origin_col = f"origin_layer{layer_num - 1}_ids"
+        table = f"layer{layer_num}_events"
+        tag_table = f"layer{layer_num}_tags"
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS {table} (
+                id TEXT PRIMARY KEY,
+                narrative TEXT NOT NULL,
+                {origin_col} TEXT NOT NULL DEFAULT '[]',
+                game_time REAL NOT NULL,
+                category TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                significance TEXT NOT NULL DEFAULT 'minor',
+                tags_json TEXT DEFAULT '[]'
+            )
+        """)
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS {tag_table} (
+                event_id TEXT NOT NULL,
+                tag_category TEXT NOT NULL,
+                tag_value TEXT NOT NULL,
+                FOREIGN KEY (event_id) REFERENCES {table}(id)
+            )
+        """)
+        conn.execute(f"CREATE INDEX IF NOT EXISTS idx_l{layer_num}_tags "
+                     f"ON {tag_table}(tag_category, tag_value)")
+        conn.execute(f"CREATE INDEX IF NOT EXISTS idx_l{layer_num}_tags_id "
+                     f"ON {tag_table}(event_id)")
+        conn.execute(f"CREATE INDEX IF NOT EXISTS idx_l{layer_num}_time "
+                     f"ON {table}(game_time)")
+
     conn.commit()
     return conn
+
+
+def _insert_tags(conn: sqlite3.Connection, table: str, id_col: str,
+                 id_val, tags: List[str]):
+    """Insert structured (tag_category, tag_value) pairs into a tag junction table."""
+    for tag in tags:
+        if ":" in tag:
+            cat, val = tag.split(":", 1)
+            conn.execute(f"INSERT INTO {table} ({id_col}, tag_category, tag_value) "
+                        "VALUES (?, ?, ?)", (id_val, cat, val))
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -479,8 +485,85 @@ def populate_layer1(conn: sqlite3.Connection) -> int:
         "INSERT OR REPLACE INTO stats (key, count, total, max_value, updated_at) VALUES (?, ?, ?, ?, ?)",
         rows
     )
+
+    # Also populate layer1_stats + layer1_tags (layer_store.py canonical schema)
+    conn.execute("PRAGMA defer_foreign_keys=ON")
+    for key, count, total, mx, updated in rows:
+        if key.startswith("_padding"):
+            continue
+        tags = _derive_tags_for_stat(key)
+        conn.execute(
+            "INSERT OR REPLACE INTO layer1_stats (key, count, total, max_value, tags_json, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (key, count, total, max(mx, total), json.dumps(tags), updated)
+        )
+    conn.commit()
+    # Now insert tags (foreign keys satisfied)
+    for key, count, total, mx, updated in rows:
+        if key.startswith("_padding"):
+            continue
+        row_id = conn.execute("SELECT id FROM layer1_stats WHERE key = ?", (key,)).fetchone()
+        if row_id is None:
+            continue
+        row_id = row_id[0]
+        for tag in _derive_tags_for_stat(key):
+            if ":" in tag:
+                cat, val = tag.split(":", 1)
+                conn.execute("INSERT INTO layer1_tags (stat_id, tag_category, tag_value) VALUES (?, ?, ?)",
+                            (row_id, cat, val))
     conn.commit()
     return len(rows)
+
+
+def _derive_tags_for_stat(key: str) -> List[str]:
+    """Derive structured tags from a stat key. Mirrors layer1-stat-tags.json logic."""
+    tags = []
+    parts = key.split(".")
+
+    # Domain tag from top-level
+    domain_map = {
+        "combat": "combat", "gathering": "gathering", "crafting": "crafting",
+        "items": "items", "skills": "skills", "exploration": "exploration",
+        "economy": "economy", "progression": "progression", "dungeon": "dungeon",
+        "social": "social", "time": "time", "misc": "misc",
+        "barriers": "items", "records": "records", "encyclopedia": "encyclopedia",
+    }
+    if parts[0] in domain_map:
+        tags.append(f"domain:{domain_map[parts[0]]}")
+
+    # Action tag from second level
+    action_map = {
+        "kills": "kill", "damage_dealt": "damage_deal", "damage_taken": "damage_take",
+        "collected": "gather", "actions": "gather", "fishing": "fish",
+        "attempts": "craft", "success": "craft", "inventions": "invent",
+        "used": "use", "equipped": "equip", "dropped": "drop",
+        "distance": "move", "deaths": "die", "healing": "heal",
+        "dodge_rolls": "dodge", "blocks": "block", "level_ups": "level_up",
+    }
+    if len(parts) > 1 and parts[1] in action_map:
+        tags.append(f"action:{action_map[parts[1]]}")
+
+    # Dimensional tags from deeper parts (e.g., combat.kills.species.wolf → species:wolf)
+    i = 2
+    while i < len(parts) - 1:
+        dim_name = parts[i]
+        dim_value = parts[i + 1]
+        if dim_name in ("species", "resource", "tier", "type", "attack",
+                        "weapon_element", "to", "from", "location", "category",
+                        "discipline", "rarity", "recipe", "fish", "skill",
+                        "biome", "item", "slot", "element", "rank"):
+            tags.append(f"{dim_name}:{dim_value}")
+        i += 2
+
+    # Metric tag
+    if any(p in key for p in ["longest_streak", "longest_killstreak", "current_level"]):
+        tags.append("metric:maximum")
+    elif ".count" in key or parts[-1] in ("critical", "rare_drops"):
+        tags.append("metric:count")
+    else:
+        tags.append("metric:total")
+
+    return tags
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -734,9 +817,9 @@ SEVERITY_BY_COUNT = {1: "minor", 3: "minor", 5: "moderate", 10: "moderate",
 
 
 def populate_layer2(conn: sqlite3.Connection, threshold_hits: list) -> int:
-    """Generate Layer 2 interpretations from threshold hits."""
-    interp_rows = []
-    tag_rows = []
+    """Generate Layer 2 interpretations from threshold hits.
+    Writes to layer2_events + layer2_tags (layer_store.py canonical schema)."""
+    entries = []  # List of (iid, narrative, origin_key, gt, category, severity, tags)
 
     for hit in threshold_hits:
         eid, etype, subtype, locality, count, gt = hit
@@ -758,18 +841,7 @@ def populate_layer2(conn: sqlite3.Connection, threshold_hits: list) -> int:
         iid = _uid()
         region = REGIONS.get(locality, REGIONS["spawn_crossroads"])
 
-        interp_rows.append((
-            iid, gt, narrative, category, severity,
-            eid, count, json.dumps([eid]),
-            json.dumps([locality]), json.dumps([region["district"]]),
-            random.uniform(10, 90), random.uniform(10, 90),
-            json.dumps([f"domain:{EVENT_CATEGORIES.get(etype.replace('regional_',''), 'other')}",
-                        f"location:{locality}"]),
-            0, 1, 0
-        ))
-
-        # Tags: inherit from event + add Layer 2 geographic tags
-        base_tags = [
+        tags = [
             f"domain:{EVENT_CATEGORIES.get(etype.replace('regional_',''), 'other')}",
             f"location:{locality}",
             f"district:{region['district']}",
@@ -777,26 +849,21 @@ def populate_layer2(conn: sqlite3.Connection, threshold_hits: list) -> int:
             f"biome:{region['biome']}",
             f"scope:local",
             f"significance:{severity}",
-            f"category:{category}",
         ]
-        for tag in base_tags:
-            tag_rows.append((iid, tag))
+        entries.append((iid, narrative, eid, gt, category, severity, tags))
 
-    conn.executemany("""
-        INSERT INTO interpretations (interpretation_id, created_at, narrative,
-            category, severity, trigger_event_id, trigger_count,
-            cause_event_ids_json, affected_locality_ids_json,
-            affected_district_ids_json, epicenter_x, epicenter_y,
-            affects_tags_json, is_ongoing, update_count, archived)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, interp_rows)
-
-    conn.executemany(
-        "INSERT INTO interpretation_tags (interpretation_id, tag) VALUES (?, ?)",
-        tag_rows)
+    # Write to layer2_events + layer2_tags
+    for iid, narrative, origin_key, gt, category, severity, tags in entries:
+        conn.execute("""
+            INSERT INTO layer2_events (id, narrative, origin_stat_key, game_time,
+                real_time, category, severity, significance, tags_json, evaluator_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (iid, narrative, str(origin_key), gt, gt,
+              category, severity, severity, json.dumps(tags), category))
+        _insert_tags(conn, "layer2_tags", "event_id", iid, tags)
 
     conn.commit()
-    return len(interp_rows)
+    return len(entries)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -805,35 +872,33 @@ def populate_layer2(conn: sqlite3.Connection, threshold_hits: list) -> int:
 # ══════════════════════════════════════════════════════════════════════
 
 def populate_layer3(conn: sqlite3.Connection) -> int:
-    """Generate Layer 3 connected interpretations from Layer 2 accumulation."""
-    # Group Layer 2 interpretations by locality
+    """Generate Layer 3 from Layer 2 accumulation.
+    Reads layer2_events + layer2_tags, writes to layer3_events + layer3_tags."""
+    # Group Layer 2 by locality using structured tags
     cursor = conn.execute("""
-        SELECT i.interpretation_id, i.narrative, i.category, i.severity, i.created_at,
-               it.tag
-        FROM interpretations i
-        JOIN interpretation_tags it ON it.interpretation_id = i.interpretation_id
-        WHERE it.tag LIKE 'location:%'
+        SELECT e.id, e.narrative, e.category, e.severity, e.game_time,
+               t.tag_value
+        FROM layer2_events e
+        JOIN layer2_tags t ON t.event_id = e.id
+        WHERE t.tag_category = 'location'
     """)
     by_locality = {}
     for row in cursor:
-        iid, narrative, category, severity, created_at, tag = row
-        locality = tag.replace("location:", "")
+        eid, narrative, category, severity, game_time, locality = row
         by_locality.setdefault(locality, []).append({
-            "id": iid, "narrative": narrative, "category": category,
-            "severity": severity, "created_at": created_at
+            "id": eid, "narrative": narrative, "category": category,
+            "severity": severity, "game_time": game_time
         })
 
-    rows = []
-    tag_rows = []
+    count = 0
     for locality, interps in by_locality.items():
         categories = set(i["category"] for i in interps)
         # Trigger: 3+ interpretations OR 2+ different categories
         if len(interps) >= 3 or len(categories) >= 2:
             region = REGIONS.get(locality, REGIONS["spawn_crossroads"])
             source_ids = [i["id"] for i in interps]
-            latest_time = max(i["created_at"] for i in interps)
+            latest_time = max(i["game_time"] for i in interps)
 
-            # Synthesize cross-domain narrative
             activity_summary = ", ".join(sorted(categories))
             severity = "significant" if len(interps) >= 5 else "moderate"
             narrative = (f"The {locality.replace('_', ' ').title()} is experiencing "
@@ -841,16 +906,7 @@ def populate_layer3(conn: sqlite3.Connection) -> int:
                         f"{activity_summary}. {len(interps)} notable events recorded.")
 
             cid = _uid()
-            rows.append((
-                cid, latest_time, narrative, "cross_domain_synthesis", severity,
-                json.dumps(source_ids),
-                json.dumps([region["district"]]),
-                json.dumps([f"domain:multiple", f"location:{locality}",
-                           f"district:{region['district']}"]),
-                1, 0
-            ))
-
-            # Tags: merge from sources + add Layer 3 tags
+            # Layer 3 tags: inherited + new Layer 3 categories
             tags = [
                 f"location:{locality}",
                 f"district:{region['district']}",
@@ -862,20 +918,18 @@ def populate_layer3(conn: sqlite3.Connection) -> int:
             ]
             for cat in categories:
                 tags.append(f"domain:{EVENT_CATEGORIES.get(cat, cat)}")
-            for tag in tags:
-                tag_rows.append((cid, tag))
 
-    conn.executemany("""
-        INSERT INTO connected_interpretations (id, created_at, narrative,
-            category, severity, source_interpretation_ids_json,
-            affected_district_ids_json, affects_tags_json, is_ongoing, archived)
-        VALUES (?,?,?,?,?,?,?,?,?,?)
-    """, rows)
-    conn.executemany(
-        "INSERT INTO connected_interpretation_tags (id, tag) VALUES (?, ?)",
-        tag_rows)
+            conn.execute("""
+                INSERT INTO layer3_events (id, narrative, origin_layer2_ids,
+                    game_time, category, severity, significance, tags_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (cid, narrative, json.dumps(source_ids), latest_time,
+                  "cross_domain_synthesis", severity, severity, json.dumps(tags)))
+            _insert_tags(conn, "layer3_tags", "event_id", cid, tags)
+            count += 1
+
     conn.commit()
-    return len(rows)
+    return count
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -884,58 +938,45 @@ def populate_layer3(conn: sqlite3.Connection) -> int:
 # ══════════════════════════════════════════════════════════════════════
 
 def populate_layer4(conn: sqlite3.Connection) -> int:
-    """Generate Layer 4 province summaries from Layer 3 consolidation."""
-    # Group Layer 3 by province (via district tags)
+    """Generate Layer 4 from Layer 3. Reads layer3_tags, writes to layer4_events + layer4_tags."""
+    # Group Layer 3 by province using structured tags
     cursor = conn.execute("""
-        SELECT ci.id, ci.narrative, ci.category, ci.severity, ci.created_at,
-               cit.tag
-        FROM connected_interpretations ci
-        JOIN connected_interpretation_tags cit ON cit.id = ci.id
-        WHERE cit.tag LIKE 'province:%'
+        SELECT e.id, e.narrative, e.severity, e.game_time, t.tag_value
+        FROM layer3_events e
+        JOIN layer3_tags t ON t.event_id = e.id
+        WHERE t.tag_category = 'province'
     """)
     by_province = {}
     for row in cursor:
-        cid, narrative, category, severity, created_at, tag = row
-        province = tag.replace("province:", "")
+        eid, narrative, severity, game_time, province = row
         by_province.setdefault(province, []).append({
-            "id": cid, "narrative": narrative, "severity": severity
+            "id": eid, "narrative": narrative, "severity": severity, "game_time": game_time
         })
-
-    # Also gather from district tags if province tags are missing
-    if not by_province:
-        cursor = conn.execute("""
-            SELECT ci.id, ci.narrative, ci.severity, cit.tag
-            FROM connected_interpretations ci
-            JOIN connected_interpretation_tags cit ON cit.id = ci.id
-            WHERE cit.tag LIKE 'district:%'
-        """)
-        for row in cursor:
-            cid, narrative, severity, tag = row
-            district = tag.replace("district:", "")
-            # Map district to province
-            for loc, reg in REGIONS.items():
-                if reg["district"] == district:
-                    by_province.setdefault(reg["province"], []).append({
-                        "id": cid, "narrative": narrative, "severity": severity
-                    })
-                    break
 
     count = 0
     for province, events in by_province.items():
-        dominant = ["combat", "gathering", "crafting"][:min(3, len(events))]
+        source_ids = [e["id"] for e in events]
+        latest_time = max(e["game_time"] for e in events)
         threat = "moderate" if any(e["severity"] in ("significant", "major") for e in events) else "low"
         summary = (f"Province {province.replace('_', ' ').title()}: "
-                  f"{len(events)} notable regional pattern(s). "
-                  f"Dominant activities: {', '.join(dominant)}. Threat level: {threat}.")
+                  f"{len(events)} notable regional pattern(s). Threat level: {threat}.")
 
+        l4id = _uid()
+        tags = [
+            f"province:{province}",
+            f"scope:regional",
+            f"significance:{threat}",
+            f"urgency_level:{'moderate' if threat == 'moderate' else 'low'}",
+            f"event_status:ongoing",
+            f"player_impact:player_driven",
+        ]
         conn.execute("""
-            INSERT OR REPLACE INTO province_summaries
-                (province_id, summary_text, dominant_activities_json,
-                 notable_event_ids_json, threat_level, last_updated)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (province, summary, json.dumps(dominant),
-              json.dumps([e["id"] for e in events]), threat,
-              max(0, *(e.get("created_at", 0) for e in events)) if events else 0))
+            INSERT INTO layer4_events (id, narrative, origin_layer3_ids,
+                game_time, category, severity, significance, tags_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (l4id, summary, json.dumps(source_ids), latest_time,
+              "provincial_summary", threat, threat, json.dumps(tags)))
+        _insert_tags(conn, "layer4_tags", "event_id", l4id, tags)
         count += 1
 
     conn.commit()
@@ -947,29 +988,33 @@ def populate_layer4(conn: sqlite3.Connection) -> int:
 # ══════════════════════════════════════════════════════════════════════
 
 def populate_layer5(conn: sqlite3.Connection) -> int:
-    """Generate Layer 5 realm state from province summaries."""
-    cursor = conn.execute("SELECT province_id, summary_text, threat_level FROM province_summaries")
-    provinces = cursor.fetchall()
-    if not provinces:
+    """Generate Layer 5 from Layer 4. Reads layer4_events, writes to layer5_events + layer5_tags."""
+    cursor = conn.execute("SELECT id, narrative, severity, game_time FROM layer4_events")
+    l4_events = cursor.fetchall()
+    if not l4_events:
         return 0
 
-    threat_counts = {"low": 0, "moderate": 0, "high": 0}
-    summaries = []
-    for pid, summary, threat in provinces:
-        threat_counts[threat] = threat_counts.get(threat, 0) + 1
-        summaries.append(summary)
+    source_ids = [r[0] for r in l4_events]
+    latest_time = max(r[3] for r in l4_events)
+    narrative = ("Realm Known Lands: Active resource extraction and crafting economy. "
+                "Rising adventurer with combat and crafting focus. "
+                f"{len(l4_events)} provincial patterns tracked.")
 
-    overall_threat = "moderate" if threat_counts.get("moderate", 0) > 0 else "low"
-    econ_summary = "Active resource extraction and crafting economy. Gold flow from quests."
-    player_rep = "Rising adventurer with combat and crafting focus. Level 9, warrior class."
-
+    l5id = _uid()
+    tags = [
+        "scope:global",
+        "significance:moderate",
+        "political:stabilizing",
+        "living_impact:noticeable",
+    ]
     conn.execute("""
-        INSERT OR REPLACE INTO realm_state
-            (realm_id, faction_standings_json, economic_summary,
-             player_reputation, major_events_json, last_updated)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, ("known_lands", json.dumps({"village_guard": 0.3, "crafters_guild": 0.5}),
-          econ_summary, player_rep, json.dumps(summaries), time.time()))
+        INSERT INTO layer5_events (id, narrative, origin_layer4_ids,
+            game_time, category, severity, significance, tags_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (l5id, narrative, json.dumps(source_ids), latest_time,
+          "realm_summary", "moderate", "moderate", json.dumps(tags)))
+    _insert_tags(conn, "layer5_tags", "event_id", l5id, tags)
+
     conn.commit()
     return 1
 
@@ -979,42 +1024,56 @@ def populate_layer5(conn: sqlite3.Connection) -> int:
 # ══════════════════════════════════════════════════════════════════════
 
 def populate_layers_6_7(conn: sqlite3.Connection) -> int:
-    """Generate world narrative and threads from realm state."""
-    # Create a narrative thread from the iron mining pressure
-    thread_id = _uid()
-    conn.execute("""
-        INSERT INTO narrative_threads
-            (thread_id, source, theme, summary, canonical_facts_json,
-             status, significance, origin_region, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (thread_id, "ecosystem_pressure",
-          "resource_depletion",
-          "Iron deposits in the Iron Hills are being heavily mined. "
-          "Local supply is strained and node depletion events are increasing.",
-          json.dumps(["Player mined 50+ iron ore in Iron Hills",
-                      "2 iron nodes fully depleted",
-                      "Gathering rate exceeds regeneration"]),
-          "developing", 0.6, "iron_hills", time.time()))
+    """Generate Layers 6-7 from Layer 5. Writes to layer6/7_events + tags."""
+    count = 0
 
-    # World narrative singleton
-    conn.execute("""
-        INSERT OR REPLACE INTO world_narrative
-            (id, world_themes_json, world_epoch, active_thread_ids_json,
-             world_history_json, last_updated)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, ("singleton",
-          json.dumps(["discovery", "growth", "conflict"]),
-          "early_exploration",
-          json.dumps([thread_id]),
-          json.dumps([
-              "A newcomer arrived and began exploring the known lands.",
-              "Heavy iron mining activity detected in the Iron Hills region.",
-              "The adventurer chose the warrior path and grew to level 9.",
-          ]),
-          time.time()))
+    # Layer 6: Cross-realm (only 1 realm, so this is a pass-through)
+    cursor = conn.execute("SELECT id, narrative, game_time FROM layer5_events")
+    l5_events = cursor.fetchall()
+    if l5_events:
+        l6id = _uid()
+        latest = max(r[2] for r in l5_events)
+        l6_narrative = ("Cross-realm: Single realm active (Known Lands). "
+                       "No inter-realm patterns yet.")
+        l6_tags = [
+            "scope:world",
+            "significance:minor",
+            "regional_significance:minor",
+        ]
+        conn.execute("""
+            INSERT INTO layer6_events (id, narrative, origin_layer5_ids,
+                game_time, category, severity, significance, tags_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (l6id, l6_narrative, json.dumps([r[0] for r in l5_events]),
+              latest, "intercountry_state", "minor", "minor", json.dumps(l6_tags)))
+        _insert_tags(conn, "layer6_tags", "event_id", l6id, l6_tags)
+        count += 1
+
+        # Layer 7: World narrative thread
+        l7id = _uid()
+        l7_narrative = ("World narrative: A newcomer arrived and began shaping the known lands. "
+                       "Iron deposits strained under heavy mining. "
+                       "The adventurer chose the warrior path.")
+        l7_tags = [
+            "scope:world",
+            "significance:notable",
+            "world_significance:notable",
+            "narrative_role:origin",
+            "era_effect:era_continuing",
+            "world_theme:discovery",
+            "world_theme:growth",
+        ]
+        conn.execute("""
+            INSERT INTO layer7_events (id, narrative, origin_layer6_ids,
+                game_time, category, severity, significance, tags_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (l7id, l7_narrative, json.dumps([l6id]),
+              latest, "world_narrative", "notable", "notable", json.dumps(l7_tags)))
+        _insert_tags(conn, "layer7_tags", "event_id", l7id, l7_tags)
+        count += 1
 
     conn.commit()
-    return 2
+    return count
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -1022,19 +1081,29 @@ def populate_layers_6_7(conn: sqlite3.Connection) -> int:
 # ══════════════════════════════════════════════════════════════════════
 
 def dump_summary(conn: sqlite3.Connection):
-    """Print summary of all layers."""
+    """Print summary of all layers using layer_store.py canonical tables."""
     print("=" * 70)
     print("WORLD MEMORY SYSTEM — SIMULATION DATABASE SUMMARY")
     print("=" * 70)
 
-    # Layer 1
+    # Layer 1: stats table (write-path) + layer1_stats (read-path)
     row = conn.execute("SELECT COUNT(*), SUM(count), SUM(total) FROM stats").fetchone()
+    l1_tagged = conn.execute("SELECT COUNT(*) FROM layer1_stats").fetchone()[0]
+    l1_tags = conn.execute("SELECT COUNT(*) FROM layer1_tags").fetchone()[0]
     print(f"\nLayer 1 (Stats): {row[0]} keys, {int(row[1] or 0)} total counts, {row[2] or 0:.0f} total values")
-
-    # Top stats
-    print("  Top 10 stats by count:")
+    print(f"  layer1_stats: {l1_tagged} rows with {l1_tags} structured tags")
+    print("  Top 10 by count:")
     for r in conn.execute("SELECT key, count, total FROM stats ORDER BY count DESC LIMIT 10"):
         print(f"    {r[0]:45s} count={r[1]:>6d}  total={r[2]:>10.1f}")
+    # Sample tag query
+    print("  Tag query example (domain:combat):")
+    for r in conn.execute("""
+        SELECT s.key, s.count FROM layer1_stats s
+        JOIN layer1_tags t ON t.stat_id = s.id
+        WHERE t.tag_category = 'domain' AND t.tag_value = 'combat'
+        ORDER BY s.count DESC LIMIT 5
+    """):
+        print(f"    {r[0]:45s} count={r[1]}")
 
     # Raw events
     row = conn.execute("SELECT COUNT(*) FROM events").fetchone()
@@ -1042,47 +1111,44 @@ def dump_summary(conn: sqlite3.Connection):
     for r in conn.execute("SELECT event_type, COUNT(*) c FROM events GROUP BY event_type ORDER BY c DESC LIMIT 8"):
         print(f"    {r[0]:25s}: {r[1]}")
 
-    # Threshold hits
+    # Threshold tracking
     row = conn.execute("SELECT COUNT(*) FROM occurrence_counts WHERE count > 0").fetchone()
-    print(f"\n  Stream counters: {row[0]}")
+    print(f"  Stream counters: {row[0]}")
     row = conn.execute("SELECT COUNT(*) FROM regional_counters WHERE count > 0").fetchone()
     print(f"  Regional counters: {row[0]}")
 
-    # Layer 2
-    row = conn.execute("SELECT COUNT(*) FROM interpretations").fetchone()
-    print(f"\nLayer 2 (Interpretations): {row[0]} evaluator outputs")
-    for r in conn.execute("SELECT category, COUNT(*) c FROM interpretations GROUP BY category ORDER BY c DESC"):
-        print(f"    {r[0]:30s}: {r[1]}")
-    print("  Sample narratives:")
-    for r in conn.execute("SELECT narrative, severity FROM interpretations ORDER BY created_at LIMIT 5"):
-        print(f"    [{r[1]:>12s}] {r[0][:80]}")
+    # Layers 2-7: all use layerN_events + layerN_tags
+    for layer in range(2, 8):
+        table = f"layer{layer}_events"
+        tag_table = f"layer{layer}_tags"
+        try:
+            row = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()
+            tag_count = conn.execute(f"SELECT COUNT(*) FROM {tag_table}").fetchone()[0]
+        except Exception:
+            continue
+        if row[0] == 0:
+            print(f"\nLayer {layer}: 0 entries")
+            continue
 
-    # Layer 3
-    row = conn.execute("SELECT COUNT(*) FROM connected_interpretations").fetchone()
-    print(f"\nLayer 3 (Consolidated): {row[0]} cross-domain patterns")
-    for r in conn.execute("SELECT narrative FROM connected_interpretations"):
-        print(f"    {r[0][:90]}")
+        layer_names = {2: "Evaluator Outputs", 3: "Cross-Domain Patterns",
+                      4: "Province Summaries", 5: "Realm State",
+                      6: "Intercountry", 7: "World Narrative"}
+        print(f"\nLayer {layer} ({layer_names.get(layer, '')}): {row[0]} entries, {tag_count} structured tags")
 
-    # Layer 4
-    row = conn.execute("SELECT COUNT(*) FROM province_summaries").fetchone()
-    print(f"\nLayer 4 (Province Summaries): {row[0]} provinces")
-    for r in conn.execute("SELECT province_id, summary_text, threat_level FROM province_summaries"):
-        print(f"    [{r[2]:>8s}] {r[0]}: {r[1][:80]}")
+        if layer == 2:
+            for r in conn.execute(f"SELECT category, COUNT(*) c FROM {table} GROUP BY category ORDER BY c DESC"):
+                print(f"    {r[0]:30s}: {r[1]}")
+            print("  Sample narratives:")
+            for r in conn.execute(f"SELECT narrative, severity FROM {table} ORDER BY game_time LIMIT 3"):
+                print(f"    [{r[1]:>12s}] {r[0][:80]}")
+        else:
+            for r in conn.execute(f"SELECT narrative, severity FROM {table}"):
+                print(f"    [{r[1]:>12s}] {r[0][:85]}")
 
-    # Layer 5
-    row = conn.execute("SELECT COUNT(*) FROM realm_state").fetchone()
-    print(f"\nLayer 5 (Realm State): {row[0]} realm(s)")
-    for r in conn.execute("SELECT realm_id, economic_summary, player_reputation FROM realm_state"):
-        print(f"    {r[0]}: {r[1][:60]}")
-        print(f"    Player: {r[2][:60]}")
-
-    # Layers 6-7
-    row = conn.execute("SELECT COUNT(*) FROM narrative_threads").fetchone()
-    print(f"\nLayers 6-7 (World Narrative): {row[0]} thread(s)")
-    for r in conn.execute("SELECT theme, summary, status, significance FROM narrative_threads"):
-        print(f"    [{r[2]}] {r[0]}: {r[1][:70]}")
-    for r in conn.execute("SELECT world_epoch, world_themes_json FROM world_narrative"):
-        print(f"    Epoch: {r[0]}, Themes: {r[1]}")
+        # Show unique tag categories at this layer
+        cats = conn.execute(f"SELECT DISTINCT tag_category FROM {tag_table} ORDER BY tag_category").fetchall()
+        if cats:
+            print(f"  Tag categories: {', '.join(r[0] for r in cats)}")
 
     print(f"\n{'=' * 70}")
 
