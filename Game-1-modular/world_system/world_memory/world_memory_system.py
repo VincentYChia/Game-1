@@ -152,7 +152,8 @@ class WorldMemorySystem:
         # 6. Interpreter
         self.interpreter = WorldInterpreter.get_instance()
         self.interpreter.initialize(
-            self.event_store, self.geo_registry, self.entity_registry
+            self.event_store, self.geo_registry, self.entity_registry,
+            layer_store=self.layer_store
         )
         # Wire interpreter to recorder
         self.event_recorder.set_interpreter_callback(self.interpreter.on_trigger)
