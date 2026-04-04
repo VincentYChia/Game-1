@@ -13,8 +13,8 @@ from dataclasses import dataclass, field
 @dataclass
 class MapDisplayConfig:
     """Configuration for map display settings."""
-    default_zoom: float = 1.0
-    min_zoom: float = 0.05
+    default_zoom: float = 0.5
+    min_zoom: float = 0.01
     max_zoom: float = 4.0
     zoom_step: float = 0.25
     chunk_render_size: int = 12

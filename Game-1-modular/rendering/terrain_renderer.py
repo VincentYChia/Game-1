@@ -70,36 +70,36 @@ def _fbm(x: float, y: float, octaves: int = 3, seed: int = 0) -> float:
 # Variance is max ± deviation from base
 TILE_PALETTES = {
     "GRASS": {
-        "base": (58, 135, 52),
-        "warm": (72, 142, 48),     # Sunlit patches
-        "cool": (40, 118, 55),     # Shaded areas
-        "accent": (45, 148, 42),   # Lush spots
-        "dark": (32, 95, 38),      # Under-canopy
-        "variance": 18,            # Per-pixel color jitter
+        "base": (52, 128, 48),
+        "warm": (60, 135, 46),     # Sunlit patches
+        "cool": (44, 118, 50),     # Shaded areas
+        "accent": (48, 140, 44),   # Lush spots
+        "dark": (38, 105, 40),     # Under-canopy
+        "variance": 8,             # Subtle per-pixel jitter
     },
     "STONE": {
-        "base": (118, 118, 112),
-        "warm": (132, 125, 108),   # Sandstone tint
-        "cool": (105, 108, 118),   # Blue-grey
-        "accent": (140, 135, 120), # Lighter veins
-        "dark": (85, 82, 78),      # Crevices
-        "variance": 12,
+        "base": (115, 115, 110),
+        "warm": (125, 120, 108),   # Sandstone tint
+        "cool": (108, 110, 118),   # Blue-grey
+        "accent": (130, 128, 118), # Lighter veins
+        "dark": (95, 92, 88),      # Crevices
+        "variance": 6,
     },
     "WATER": {
-        "base": (38, 100, 168),
-        "warm": (45, 115, 175),    # Shallow / lit
-        "cool": (28, 78, 148),     # Deep
-        "accent": (65, 140, 195),  # Highlights
+        "base": (35, 95, 160),
+        "warm": (42, 108, 168),    # Shallow / lit
+        "cool": (28, 78, 145),     # Deep
+        "accent": (55, 125, 185),  # Highlights
         "dark": (22, 62, 125),     # Depths
-        "variance": 10,
+        "variance": 5,
     },
     "DIRT": {
-        "base": (120, 85, 55),
-        "warm": (138, 95, 58),     # Dry
-        "cool": (105, 78, 52),     # Damp
-        "accent": (145, 108, 68),  # Sandy patches
-        "dark": (82, 60, 40),      # Rich soil
-        "variance": 14,
+        "base": (115, 88, 58),
+        "warm": (125, 95, 62),     # Dry
+        "cool": (108, 82, 55),     # Damp
+        "accent": (130, 100, 68),  # Sandy patches
+        "dark": (92, 72, 48),      # Rich soil
+        "variance": 7,
     },
 }
 

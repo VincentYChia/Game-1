@@ -1262,7 +1262,7 @@ class Renderer:
 
             can_harvest, reason = character.can_harvest_resource(resource) if in_range else (False, "")
 
-            size = Config.TILE_SIZE - 4
+            size = Config.TILE_SIZE * 2 - 4
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
 
             # Get icon path from ResourceNodeDatabase (handles name mapping)
@@ -3668,10 +3668,16 @@ class Renderer:
         config = MapWaypointConfig.get_instance()
         s = Config.scale
 
-        # Window dimensions
-        ww, wh = s(config.ui.map_window_size[0]), s(config.ui.map_window_size[1])
+        # Window dimensions — expand to fill viewport for geographic maps
+        has_geo = hasattr(world_system, 'geographic_map') and world_system.geographic_map is not None
+        if has_geo:
+            # Large map window for geographic world view
+            ww = min(Config.VIEWPORT_WIDTH - s(20), s(1200))
+            wh = min(Config.VIEWPORT_HEIGHT - s(60), s(900))
+        else:
+            ww, wh = s(config.ui.map_window_size[0]), s(config.ui.map_window_size[1])
         wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)
-        wy = s(40)
+        wy = s(20)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         bg_color = config.ui.background_color
@@ -3702,8 +3708,10 @@ class Renderer:
         pygame.draw.rect(surf, tuple(config.ui.border_color), map_rect, s(2))
 
         # Calculate chunk rendering parameters
-        chunk_size = s(config.map_display.chunk_render_size) * map_system.map_zoom
-        chunk_size = max(1, int(chunk_size))  # Allow down to 1px per chunk for full world view
+        # Use float chunk_size for accurate positioning at extreme zoom out
+        chunk_size_f = s(config.map_display.chunk_render_size) * map_system.map_zoom
+        chunk_size = max(1, int(chunk_size_f))  # Pixel size for drawing
+        # For positioning, use the float to avoid cumulative rounding errors
 
         # Get player chunk position
         player_chunk_x = math.floor(character.position.x) // Config.CHUNK_SIZE
@@ -3717,9 +3725,9 @@ class Renderer:
             center_chunk_x = map_system.map_scroll_x
             center_chunk_y = map_system.map_scroll_y
 
-        # Calculate visible chunk range
-        visible_chunks_x = int(map_area_w / chunk_size) + 2
-        visible_chunks_y = int(map_area_h / chunk_size) + 2
+        # Calculate visible chunk range using float for accuracy at extreme zoom
+        visible_chunks_x = int(map_area_w / max(0.5, chunk_size_f)) + 2
+        visible_chunks_y = int(map_area_h / max(0.5, chunk_size_f)) + 2
 
         start_chunk_x = int(center_chunk_x - visible_chunks_x // 2)
         start_chunk_y = int(center_chunk_y - visible_chunks_y // 2)
@@ -3735,9 +3743,9 @@ class Renderer:
                 chunk_x = int(center_chunk_x) + dx
                 chunk_y = int(center_chunk_y) + dy
 
-                # Calculate pixel position on map
-                px = map_area_x + map_center_x + int((chunk_x - center_chunk_x) * chunk_size)
-                py = map_area_y + map_center_y + int((chunk_y - center_chunk_y) * chunk_size)
+                # Calculate pixel position on map (float for sub-pixel accuracy)
+                px = map_area_x + map_center_x + int((chunk_x - center_chunk_x) * chunk_size_f)
+                py = map_area_y + map_center_y + int((chunk_y - center_chunk_y) * chunk_size_f)
 
                 # Skip if outside map area
                 if px + chunk_size < map_area_x or px > map_area_x + map_area_w:
@@ -3838,8 +3846,8 @@ class Renderer:
                 for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 1):
                     cx_ = int(center_chunk_x) + dx
                     cy_ = int(center_chunk_y) + dy
-                    px_ = map_area_x + map_center_x + int((cx_ - center_chunk_x) * chunk_size)
-                    py_ = map_area_y + map_center_y + int((cy_ - center_chunk_y) * chunk_size)
+                    px_ = map_area_x + map_center_x + int((cx_ - center_chunk_x) * chunk_size_f)
+                    py_ = map_area_y + map_center_y + int((cy_ - center_chunk_y) * chunk_size_f)
 
                     if px_ + chunk_size < map_area_x or px_ > map_area_x + map_area_w:
                         continue
@@ -3885,8 +3893,8 @@ class Renderer:
             # ── MAP LABELS — progressive LOD with background pills ──
             # Helper: draw a label with semi-transparent background pill
             def _draw_map_label(text, cx_world, cy_world, font, fg_color, bg_alpha=160, y_offset=0):
-                lpx = map_area_x + map_center_x + int((cx_world - center_chunk_x) * chunk_size)
-                lpy = map_area_y + map_center_y + int((cy_world - center_chunk_y) * chunk_size) + y_offset
+                lpx = map_area_x + map_center_x + int((cx_world - center_chunk_x) * chunk_size_f)
+                lpy = map_area_y + map_center_y + int((cy_world - center_chunk_y) * chunk_size_f) + y_offset
                 if not (map_area_x - 50 <= lpx <= map_area_x + map_area_w + 50):
                     return None
                 if not (map_area_y - 20 <= lpy <= map_area_y + map_area_h + 20):
@@ -3969,11 +3977,11 @@ class Renderer:
         if config.map_display.show_grid and chunk_size >= s(8):
             grid_color = (50, 50, 70)
             for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 2):
-                x = map_area_x + map_center_x + int((int(center_chunk_x) + dx - center_chunk_x - 0.5) * chunk_size)
+                x = map_area_x + map_center_x + int((int(center_chunk_x) + dx - center_chunk_x - 0.5) * chunk_size_f)
                 if map_area_x <= x <= map_area_x + map_area_w:
                     pygame.draw.line(surf, grid_color, (x, map_area_y), (x, map_area_y + map_area_h), 1)
             for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 2):
-                y = map_area_y + map_center_y + int((int(center_chunk_y) + dy - center_chunk_y - 0.5) * chunk_size)
+                y = map_area_y + map_center_y + int((int(center_chunk_y) + dy - center_chunk_y - 0.5) * chunk_size_f)
                 if map_area_y <= y <= map_area_y + map_area_h:
                     pygame.draw.line(surf, grid_color, (map_area_x, y), (map_area_x + map_area_w, y), 1)
 
@@ -3986,8 +3994,8 @@ class Renderer:
             player_offset_y = (player_tile_y % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
 
             # Player position on map with sub-chunk precision
-            player_px = map_area_x + map_center_x + int((player_chunk_x - center_chunk_x + player_offset_x) * chunk_size)
-            player_py = map_area_y + map_center_y + int((player_chunk_y - center_chunk_y + player_offset_y) * chunk_size)
+            player_px = map_area_x + map_center_x + int((player_chunk_x - center_chunk_x + player_offset_x) * chunk_size_f)
+            player_py = map_area_y + map_center_y + int((player_chunk_y - center_chunk_y + player_offset_y) * chunk_size_f)
 
             # Only draw if in visible area
             if map_area_x <= player_px <= map_area_x + map_area_w and map_area_y <= player_py <= map_area_y + map_area_h:
@@ -4007,8 +4015,8 @@ class Renderer:
         if config.map_display.show_waypoint_markers:
             for wp in map_system.get_all_waypoints():
                 wp_chunk_x, wp_chunk_y = wp.chunk_coords
-                wp_px = map_area_x + map_center_x + int((wp_chunk_x - center_chunk_x) * chunk_size) + chunk_size // 2
-                wp_py = map_area_y + map_center_y + int((wp_chunk_y - center_chunk_y) * chunk_size) + chunk_size // 2
+                wp_px = map_area_x + map_center_x + int((wp_chunk_x - center_chunk_x + 0.5) * chunk_size_f)
+                wp_py = map_area_y + map_center_y + int((wp_chunk_y - center_chunk_y + 0.5) * chunk_size_f)
 
                 if map_area_x <= wp_px <= map_area_x + map_area_w and map_area_y <= wp_py <= map_area_y + map_area_h:
                     marker_size = config.waypoint_marker.size

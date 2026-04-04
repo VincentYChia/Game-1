@@ -634,7 +634,7 @@ class WorldSystem:
                 if not resource.depleted:
                     dx = abs(resource.position.x - position.x)
                     dy = abs(resource.position.y - position.y)
-                    if dx < 0.5 and dy < 0.5:
+                    if dx < 0.8 and dy < 0.8:
                         return False
 
         # Check for blocking placed barriers using distance-based collision
