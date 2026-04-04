@@ -454,8 +454,10 @@ class EffectExecutor:
             target: Target position or entity
             params: Dash parameters
         """
-        dash_distance = params.get('dash_distance', 5.0)
-        dash_speed = params.get('dash_speed', 20.0)
+        from core.config import Config
+        scale = getattr(Config, 'ENTITY_VISUAL_SCALE', 1.0)
+        dash_distance = params.get('dash_distance', 5.0) * scale
+        dash_speed = params.get('dash_speed', 20.0) * scale
         damage_on_contact = params.get('damage_on_contact', False)
 
         # Get source position

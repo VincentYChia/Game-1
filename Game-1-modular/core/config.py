@@ -147,10 +147,10 @@ class Config:
         """Scale a value by UI_SCALE (returns float)"""
         return value * cls.UI_SCALE
 
-    # Character/Movement
-    PLAYER_SPEED = 0.15
-    INTERACTION_RANGE = 3.5
-    CLICK_TOLERANCE = 0.7
+    # Character/Movement — scaled by ENTITY_VISUAL_SCALE for proportional feel
+    PLAYER_SPEED = 0.15 * ENTITY_VISUAL_SCALE
+    INTERACTION_RANGE = 3.5 * ENTITY_VISUAL_SCALE
+    CLICK_TOLERANCE = 0.7 * ENTITY_VISUAL_SCALE
 
     # Debug Mode
     DEBUG_INFINITE_RESOURCES = False  # Toggle with F1 - no material consumption

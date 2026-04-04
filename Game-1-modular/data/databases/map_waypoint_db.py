@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 class MapDisplayConfig:
     """Configuration for map display settings."""
     default_zoom: float = 0.5
-    min_zoom: float = 0.01
+    min_zoom: float = 0.08
     max_zoom: float = 4.0
     zoom_step: float = 0.25
     chunk_render_size: int = 12
@@ -135,7 +135,7 @@ class MapWaypointConfig:
         """Parse map display configuration."""
         self.map_display = MapDisplayConfig(
             default_zoom=data.get('default_zoom', 0.5),
-            min_zoom=data.get('min_zoom', 0.01),
+            min_zoom=data.get('min_zoom', 0.08),
             max_zoom=data.get('max_zoom', 4.0),
             zoom_step=data.get('zoom_step', 0.25),
             chunk_render_size=data.get('chunk_render_size', 12),

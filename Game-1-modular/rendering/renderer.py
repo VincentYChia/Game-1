@@ -1506,14 +1506,18 @@ class Renderer:
                         _wu_timer = getattr(enemy, 'attack_phase_timer', 0)
                         _windup_t = 1.0 - (_wu_timer / max(1, _wu_total))
 
-                    icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2)) if enemy.definition.icon_path else None
+                    icon_size = size * 2
+                    icon = image_cache.get_image(enemy.definition.icon_path, (icon_size, icon_size)) if enemy.definition.icon_path else None
                     if icon:
-                        # Scale up slightly during windup (1.0 → 1.12)
+                        # Scale up slightly during windup (1.0 → 1.12) — use transform on cached base
                         if _is_winding and _windup_t > 0.1:
                             _wu_scale = 1.0 + 0.12 * _windup_t
-                            _new_w = int(icon.get_width() * _wu_scale)
-                            _new_h = int(icon.get_height() * _wu_scale)
-                            icon = pygame.transform.smoothscale(icon, (_new_w, _new_h))
+                            _new_w = int(icon_size * _wu_scale)
+                            _new_h = int(icon_size * _wu_scale)
+                            try:
+                                icon = pygame.transform.smoothscale(icon, (_new_w, _new_h))
+                            except (pygame.error, ValueError):
+                                pass  # Keep original icon on transform failure
                         icon_rect = icon.get_rect(center=(ex, ey))
                         self.screen.blit(icon, icon_rect)
                         # Windup tint overlay on sprite
@@ -2380,7 +2384,8 @@ class Renderer:
 
                     icon = None
                     if enemy.definition.icon_path:
-                        icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2))
+                        icon_size = size * 2
+                        icon = image_cache.get_image(enemy.definition.icon_path, (icon_size, icon_size))
 
                     if icon:
                         icon_rect = icon.get_rect(center=(ex, ey))
