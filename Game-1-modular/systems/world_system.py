@@ -105,16 +105,35 @@ class WorldSystem:
             print(f"🌍 World initialized with seed: {self.seed} (legacy mode)")
             print(f"   Loaded {len(self.loaded_chunks)} initial chunks")
 
+    def _get_geo_cache_path(self) -> str:
+        """Get the cache file path for the geographic map."""
+        from core.paths import PathManager
+        save_path = PathManager().save_path
+        return str(Path(save_path) / f"world_map_seed_{self.seed}.gz")
+
     def _init_geographic_system(self):
         """Initialize the geographic system for finite world generation.
 
-        Generates the full world map (nations, regions, provinces, etc.)
-        or falls back gracefully to legacy BiomeGenerator if it fails.
+        First tries to load a cached map from disk. If not found,
+        generates the full world map and saves it for next time.
         """
         try:
             import time
+            from systems.geography.models import WorldMap
+
+            cache_path = self._get_geo_cache_path()
+
+            # Try loading from cache first
             t_start = time.time()
-            print("🗺️  Generating geographic world map...")
+            cached = WorldMap.load(cache_path)
+            if cached and cached.seed == self.seed:
+                self.geographic_map = cached
+                elapsed = time.time() - t_start
+                print(f"🗺️  Geographic map loaded from cache in {elapsed:.1f}s")
+                return
+
+            # Generate fresh
+            print("🗺️  Generating geographic world map (first time)...")
             from systems.geography.world_generator import WorldGenerator
             from systems.geography.config import GeographicConfig
 
@@ -123,6 +142,12 @@ class WorldSystem:
             self.geographic_map = gen.generate(verbose=False)
             elapsed = time.time() - t_start
             print(f"🗺️  Geographic map generated in {elapsed:.1f}s")
+
+            # Save to cache for next startup
+            try:
+                self.geographic_map.save(cache_path)
+            except Exception as e:
+                print(f"[Geographic] Cache save failed (non-fatal): {e}")
         except Exception as e:
             print(f"[Geographic] Init failed (falling back to legacy): {e}")
             import traceback

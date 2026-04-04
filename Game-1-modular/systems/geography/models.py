@@ -9,6 +9,9 @@ World → Nation → Region → Province → District
 
 from __future__ import annotations
 
+import gzip
+import json
+import os
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple
@@ -422,3 +425,159 @@ class WorldMap:
         result["danger"] = data.danger_level.display_name
         result["chunk_type"] = data.chunk_type.value
         return result
+
+    # ── Persistence ─────────────────────────────────────────────────
+
+    def save(self, filepath: str) -> None:
+        """Save the world map to a compressed file.
+
+        Uses gzip-compressed JSON. Chunk data is stored as a flat list
+        of compact tuples for efficiency (~5-10MB compressed for 512x512).
+        """
+        data = {
+            "seed": self.seed,
+            "world_size": self.world_size,
+            "nations": {
+                str(k): {
+                    "nation_id": v.nation_id, "name": v.name,
+                    "naming_flavor": v.naming_flavor.value,
+                    "chunk_count": v.chunk_count,
+                    "region_ids": v.region_ids,
+                    "color": list(v.color),
+                } for k, v in self.nations.items()
+            },
+            "regions": {
+                str(k): {
+                    "region_id": v.region_id, "name": v.name,
+                    "nation_id": v.nation_id,
+                    "identity": v.identity.value,
+                    "chunk_count": v.chunk_count,
+                    "province_ids": v.province_ids,
+                    "bounds": list(v.bounds),
+                } for k, v in self.regions.items()
+            },
+            "provinces": {
+                str(k): {
+                    "province_id": v.province_id, "name": v.name,
+                    "region_id": v.region_id, "nation_id": v.nation_id,
+                    "chunk_count": v.chunk_count,
+                    "district_ids": v.district_ids,
+                    "bounds": list(v.bounds),
+                } for k, v in self.provinces.items()
+            },
+            "districts": {
+                str(k): {
+                    "district_id": v.district_id, "name": v.name,
+                    "province_id": v.province_id, "region_id": v.region_id,
+                    "nation_id": v.nation_id,
+                    "chunk_count": v.chunk_count,
+                    "bounds": list(v.bounds),
+                } for k, v in self.districts.items()
+            },
+            "ecosystems": {
+                str(k): {
+                    "ecosystem_id": v.ecosystem_id,
+                    "danger_level": v.danger_level.value,
+                    "eco_x": v.eco_x, "eco_y": v.eco_y,
+                } for k, v in self.ecosystems.items()
+            },
+        }
+
+        # Chunk data as compact rows: [x, y, nation, region, province, district, chunk_type, biome, ecosystem, danger]
+        chunk_rows = []
+        for (cx, cy), geo in self.chunk_data.items():
+            chunk_rows.append([
+                cx, cy,
+                geo.nation_id, geo.region_id, geo.province_id, geo.district_id,
+                geo.chunk_type.value, geo.biome_id, geo.ecosystem_id,
+                geo.danger_level.value,
+            ])
+        data["chunk_data"] = chunk_rows
+
+        with gzip.open(filepath, "wt", encoding="utf-8", compresslevel=6) as f:
+            json.dump(data, f, separators=(",", ":"))
+
+        size_mb = os.path.getsize(filepath) / (1024 * 1024)
+        print(f"[WorldMap] Saved to {filepath} ({size_mb:.1f}MB, {len(chunk_rows):,} chunks)")
+
+    @classmethod
+    def load(cls, filepath: str) -> Optional[WorldMap]:
+        """Load a world map from a compressed file.
+
+        Returns None if the file doesn't exist or can't be parsed.
+        """
+        if not os.path.exists(filepath):
+            return None
+
+        try:
+            with gzip.open(filepath, "rt", encoding="utf-8") as f:
+                data = json.load(f)
+        except (gzip.BadGzipFile, json.JSONDecodeError, IOError) as e:
+            print(f"[WorldMap] Failed to load {filepath}: {e}")
+            return None
+
+        wm = cls(seed=data["seed"], world_size=data["world_size"])
+
+        # Restore nations
+        for k, v in data.get("nations", {}).items():
+            wm.nations[int(k)] = NationData(
+                nation_id=v["nation_id"], name=v["name"],
+                naming_flavor=NamingFlavor(v["naming_flavor"]),
+                chunk_count=v["chunk_count"],
+                region_ids=v["region_ids"],
+                color=tuple(v["color"]),
+            )
+
+        # Restore regions
+        for k, v in data.get("regions", {}).items():
+            wm.regions[int(k)] = RegionData(
+                region_id=v["region_id"], name=v["name"],
+                nation_id=v["nation_id"],
+                identity=RegionIdentity(v["identity"]),
+                chunk_count=v["chunk_count"],
+                province_ids=v["province_ids"],
+                bounds=tuple(v["bounds"]),
+            )
+
+        # Restore provinces
+        for k, v in data.get("provinces", {}).items():
+            wm.provinces[int(k)] = ProvinceData(
+                province_id=v["province_id"], name=v["name"],
+                region_id=v["region_id"], nation_id=v["nation_id"],
+                chunk_count=v["chunk_count"],
+                district_ids=v["district_ids"],
+                bounds=tuple(v["bounds"]),
+            )
+
+        # Restore districts
+        for k, v in data.get("districts", {}).items():
+            wm.districts[int(k)] = DistrictData(
+                district_id=v["district_id"], name=v["name"],
+                province_id=v["province_id"], region_id=v["region_id"],
+                nation_id=v["nation_id"],
+                chunk_count=v["chunk_count"],
+                bounds=tuple(v["bounds"]),
+            )
+
+        # Restore ecosystems
+        for k, v in data.get("ecosystems", {}).items():
+            wm.ecosystems[int(k)] = EcosystemData(
+                ecosystem_id=v["ecosystem_id"],
+                danger_level=DangerLevel(v["danger_level"]),
+                eco_x=v["eco_x"], eco_y=v["eco_y"],
+            )
+
+        # Restore chunk data from compact rows
+        for row in data.get("chunk_data", []):
+            cx, cy = row[0], row[1]
+            wm.chunk_data[(cx, cy)] = GeographicData(
+                nation_id=row[2], region_id=row[3],
+                province_id=row[4], district_id=row[5],
+                chunk_type=NewChunkType(row[6]),
+                biome_id=row[7], ecosystem_id=row[8],
+                danger_level=DangerLevel(row[9]),
+            )
+
+        print(f"[WorldMap] Loaded from {filepath}: {len(wm.chunk_data):,} chunks, "
+              f"{len(wm.nations)} nations, {len(wm.regions)} regions")
+        return wm

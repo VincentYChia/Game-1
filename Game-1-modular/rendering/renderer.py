@@ -969,11 +969,70 @@ class Renderer:
         # Get image cache once at the start for all icon rendering
         image_cache = ImageCache.get_instance()
 
+        # Pre-compute chunk boundary blend data for smooth tile transitions
+        _blend_cache = {}
+
         for tile in world.get_visible_tiles(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(tile.position)
             if -Config.TILE_SIZE <= sx <= Config.VIEWPORT_WIDTH and -Config.TILE_SIZE <= sy <= Config.VIEWPORT_HEIGHT:
+                base_color = tile.get_color()
+
+                # Tile-level chunk boundary blending
+                # Check if this tile is near a chunk edge and blend with neighbor
+                tx = int(tile.position.x)
+                ty = int(tile.position.y)
+                local_x = tx % Config.CHUNK_SIZE
+                local_y = ty % Config.CHUNK_SIZE
+                blend_color = None
+
+                # Edge tiles: blend with neighbor chunk's corresponding tile
+                if local_x <= 1 or local_x >= Config.CHUNK_SIZE - 2 or local_y <= 1 or local_y >= Config.CHUNK_SIZE - 2:
+                    # Determine which neighbor to check
+                    check_x, check_y = tx, ty
+                    blend_factor = 0.0
+                    if local_x == 0:
+                        check_x = tx - 1
+                        blend_factor = 0.4
+                    elif local_x == 1:
+                        check_x = tx - 1
+                        blend_factor = 0.15
+                    elif local_x == Config.CHUNK_SIZE - 1:
+                        check_x = tx + 1
+                        blend_factor = 0.4
+                    elif local_x == Config.CHUNK_SIZE - 2:
+                        check_x = tx + 1
+                        blend_factor = 0.15
+
+                    if local_y == 0:
+                        check_y = ty - 1
+                        blend_factor = max(blend_factor, 0.4)
+                    elif local_y == 1:
+                        check_y = ty - 1
+                        blend_factor = max(blend_factor, 0.15)
+                    elif local_y == Config.CHUNK_SIZE - 1:
+                        check_y = ty + 1
+                        blend_factor = max(blend_factor, 0.4)
+                    elif local_y == Config.CHUNK_SIZE - 2:
+                        check_y = ty + 1
+                        blend_factor = max(blend_factor, 0.15)
+
+                    if blend_factor > 0 and (check_x != tx or check_y != ty):
+                        cache_key = (check_x, check_y)
+                        if cache_key not in _blend_cache:
+                            n_tile = world.get_tile(Position(check_x, check_y))
+                            _blend_cache[cache_key] = n_tile.get_color() if n_tile else None
+                        n_color = _blend_cache[cache_key]
+
+                        if n_color and n_color != base_color:
+                            bf = blend_factor
+                            blend_color = (
+                                int(base_color[0] * (1 - bf) + n_color[0] * bf),
+                                int(base_color[1] * (1 - bf) + n_color[1] * bf),
+                                int(base_color[2] * (1 - bf) + n_color[2] * bf),
+                            )
+
                 rect = pygame.Rect(sx, sy, Config.TILE_SIZE, Config.TILE_SIZE)
-                pygame.draw.rect(self.screen, tile.get_color(), rect)
+                pygame.draw.rect(self.screen, blend_color or base_color, rect)
                 pygame.draw.rect(self.screen, Config.COLOR_GRID, rect, 1)
 
         for station in world.get_visible_stations(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
@@ -3697,7 +3756,7 @@ class Renderer:
 
         # Calculate chunk rendering parameters
         chunk_size = s(config.map_display.chunk_render_size) * map_system.map_zoom
-        chunk_size = max(s(4), int(chunk_size))  # Minimum size
+        chunk_size = max(1, int(chunk_size))  # Allow down to 1px per chunk for full world view
 
         # Get player chunk position
         player_chunk_x = math.floor(character.position.x) // Config.CHUNK_SIZE
