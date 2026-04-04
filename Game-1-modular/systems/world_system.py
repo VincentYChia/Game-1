@@ -26,16 +26,16 @@ from core.paths import get_save_path
 
 
 class WorldSystem:
-    """Manages the infinite game world with lazy chunk loading.
+    """Manages the finite game world with lazy chunk loading.
+
+    The world is generated from a seed using the geographic system:
+    World -> Nations -> Regions -> Provinces -> Districts -> Biomes -> Ecosystems
 
     Attributes:
         seed: World seed for deterministic generation
-        biome_generator: BiomeGenerator for chunk type determination
+        biome_generator: BiomeGenerator for chunk type determination (legacy)
+        geographic_map: WorldMap from the geographic system (new)
         loaded_chunks: Dictionary of currently loaded chunks
-        crafting_stations: Fixed crafting stations at spawn
-        placed_entities: Player-placed entities (turrets, traps, etc.)
-        discovered_dungeon_entrances: Dungeons discovered during exploration
-        game_time: Current game time for respawn calculations
     """
 
     def __init__(self, seed: Optional[int] = None):
@@ -48,8 +48,12 @@ class WorldSystem:
         self.seed = seed if seed is not None else random.randint(0, 2**32 - 1)
         self._world_rng = random.Random(self.seed)
 
-        # Initialize biome generator for chunk type determination
+        # Initialize biome generator (legacy fallback)
         self.biome_generator = BiomeGenerator(self.seed)
+
+        # Initialize geographic system (new finite world)
+        self.geographic_map = None
+        self._init_geographic_system()
 
         # Chunk management
         self.loaded_chunks: Dict[Tuple[int, int], Chunk] = {}
@@ -89,8 +93,41 @@ class WorldSystem:
         self.spawn_starting_stations()
         self.spawn_spawn_storage_chest()
 
-        print(f"🌍 World initialized with seed: {self.seed}")
-        print(f"   Loaded {len(self.loaded_chunks)} initial chunks")
+        if self.geographic_map:
+            nm = len(self.geographic_map.nations)
+            nr = len(self.geographic_map.regions)
+            np_ = len(self.geographic_map.provinces)
+            nd = len(self.geographic_map.districts)
+            print(f"🌍 World initialized with seed: {self.seed}")
+            print(f"   Geographic: {nm} nations, {nr} regions, {np_} provinces, {nd} districts")
+            print(f"   Loaded {len(self.loaded_chunks)} initial chunks")
+        else:
+            print(f"🌍 World initialized with seed: {self.seed} (legacy mode)")
+            print(f"   Loaded {len(self.loaded_chunks)} initial chunks")
+
+    def _init_geographic_system(self):
+        """Initialize the geographic system for finite world generation.
+
+        Generates the full world map (nations, regions, provinces, etc.)
+        or falls back gracefully to legacy BiomeGenerator if it fails.
+        """
+        try:
+            import time
+            t_start = time.time()
+            print("🗺️  Generating geographic world map...")
+            from systems.geography.world_generator import WorldGenerator
+            from systems.geography.config import GeographicConfig
+
+            cfg = GeographicConfig.load()
+            gen = WorldGenerator(seed=self.seed, config=cfg)
+            self.geographic_map = gen.generate(verbose=False)
+            elapsed = time.time() - t_start
+            print(f"🗺️  Geographic map generated in {elapsed:.1f}s")
+        except Exception as e:
+            print(f"[Geographic] Init failed (falling back to legacy): {e}")
+            import traceback
+            traceback.print_exc()
+            self.geographic_map = None
 
     def _load_initial_chunks(self):
         """Load chunks around spawn that should always be loaded."""
@@ -101,9 +138,16 @@ class WorldSystem:
             for cy in range(-spawn_radius, spawn_radius + 1):
                 self.get_chunk(cx, cy)
 
-    def get_chunk(self, chunk_x: int, chunk_y: int) -> Chunk:
+    def in_world_bounds(self, chunk_x: int, chunk_y: int) -> bool:
+        """Check if chunk coordinates are within the finite world."""
+        if self.geographic_map:
+            return self.geographic_map.in_bounds(chunk_x, chunk_y)
+        return True  # Legacy: infinite world
+
+    def get_chunk(self, chunk_x: int, chunk_y: int) -> Optional[Chunk]:
         """Get or generate a chunk at the given coordinates.
 
+        Returns None if out of world bounds (finite world).
         This is the primary method for accessing chunks. It handles:
         - Loading from cache if already loaded
         - Loading from save file if previously saved
@@ -118,6 +162,10 @@ class WorldSystem:
         """
         key = (chunk_x, chunk_y)
 
+        # Enforce finite world boundaries
+        if not self.in_world_bounds(chunk_x, chunk_y):
+            return None
+
         # Return cached chunk if loaded
         if key in self.loaded_chunks:
             return self.loaded_chunks[key]
@@ -126,8 +174,13 @@ class WorldSystem:
         chunk = self._load_chunk_from_file(chunk_x, chunk_y)
 
         if chunk is None:
-            # Generate new chunk
-            chunk = Chunk(chunk_x, chunk_y, biome_generator=self.biome_generator)
+            # Generate new chunk — pass geographic data if available
+            geo_data = None
+            if self.geographic_map:
+                geo_data = self.geographic_map.get_chunk_data(chunk_x, chunk_y)
+            chunk = Chunk(chunk_x, chunk_y,
+                          biome_generator=self.biome_generator,
+                          geographic_data=geo_data)
 
             # Check if dungeon should spawn in this chunk
             self._maybe_spawn_dungeon(chunk)
@@ -354,10 +407,12 @@ class WorldSystem:
             for dy in range(-spawn_radius, spawn_radius + 1):
                 should_be_loaded.add((dx, dy))
 
-        # Player vicinity
+        # Player vicinity (filtered by world bounds)
         for dx in range(-load_radius, load_radius + 1):
             for dy in range(-load_radius, load_radius + 1):
-                should_be_loaded.add((player_chunk_x + dx, player_chunk_y + dy))
+                pos = (player_chunk_x + dx, player_chunk_y + dy)
+                if self.in_world_bounds(pos[0], pos[1]):
+                    should_be_loaded.add(pos)
 
         # Load missing chunks
         for key in should_be_loaded:
@@ -512,6 +567,8 @@ class WorldSystem:
         chunk_y = tile_y // Config.CHUNK_SIZE
 
         chunk = self.get_chunk(chunk_x, chunk_y)
+        if chunk is None:
+            return None
         return chunk.tiles.get(position.snap_to_grid().to_key())
 
     def is_walkable(self, position: Position) -> bool:

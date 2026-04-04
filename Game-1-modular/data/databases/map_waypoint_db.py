@@ -148,8 +148,9 @@ class MapWaypointConfig:
 
     def _parse_biome_colors(self, data: Dict) -> None:
         """Parse biome color mapping."""
-        # Default colors for all biome types
+        # Default colors for all biome types (legacy + new geographic system)
         default_colors = {
+            # Legacy chunk types (kept for save compatibility)
             'peaceful_forest': (34, 139, 34),
             'dangerous_forest': (0, 100, 0),
             'rare_hidden_forest': (50, 205, 50),
@@ -162,6 +163,23 @@ class MapWaypointConfig:
             'water_lake': (65, 105, 225),
             'water_river': (70, 130, 180),
             'water_cursed_swamp': (75, 0, 130),
+            # New geographic system chunk types (15)
+            'forest': (46, 139, 50),
+            'dense_thicket': (22, 100, 30),
+            'cave': (95, 95, 100),
+            'deep_cave': (60, 55, 80),
+            'quarry': (155, 120, 85),
+            'rocky_highlands': (130, 130, 120),
+            'wetland': (60, 110, 90),
+            'lake': (55, 100, 200),
+            'river': (65, 120, 185),
+            'flooded_cave': (70, 85, 130),
+            'rocky_forest': (75, 115, 65),
+            'crystal_cavern': (120, 80, 180),
+            'overgrown_ruins': (100, 110, 75),
+            'barren_waste': (140, 130, 110),
+            'cursed_marsh': (55, 70, 55),
+            # UI colors
             'unexplored': (30, 30, 40),
             'spawn_area': (255, 215, 0)
         }

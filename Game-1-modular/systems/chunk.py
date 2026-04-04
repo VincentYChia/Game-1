@@ -66,7 +66,8 @@ class Chunk:
 
     def __init__(self, chunk_x: int, chunk_y: int,
                  seed: Optional[int] = None,
-                 biome_generator: Optional['BiomeGenerator'] = None):
+                 biome_generator: Optional['BiomeGenerator'] = None,
+                 geographic_data=None):
         """Initialize a chunk at the given coordinates.
 
         Args:
@@ -74,12 +75,15 @@ class Chunk:
             chunk_y: Chunk Y coordinate
             seed: Deterministic seed for this chunk (optional, for legacy support)
             biome_generator: BiomeGenerator instance for chunk type determination
+            geographic_data: GeographicData from the geographic system (new)
         """
         self.chunk_x = chunk_x
         self.chunk_y = chunk_y
 
         # Store biome generator reference
         self._biome_generator = biome_generator
+        # Store geographic data from new system
+        self._geographic_data = geographic_data
 
         # Get seed - either from biome generator, passed directly, or generate random
         if biome_generator:
@@ -108,13 +112,38 @@ class Chunk:
         self.generate_tiles()
         self.spawn_resources()
 
+    # Bridge: map new geographic chunk types to existing ChunkType enum
+    _GEO_TO_CHUNK_TYPE = {
+        'forest': ChunkType.PEACEFUL_FOREST,
+        'dense_thicket': ChunkType.RARE_HIDDEN_FOREST,
+        'cave': ChunkType.PEACEFUL_CAVE,
+        'deep_cave': ChunkType.RARE_DEEP_CAVE,
+        'quarry': ChunkType.PEACEFUL_QUARRY,
+        'rocky_highlands': ChunkType.DANGEROUS_QUARRY,
+        'wetland': ChunkType.WATER_CURSED_SWAMP,
+        'lake': ChunkType.WATER_LAKE,
+        'river': ChunkType.WATER_RIVER,
+        'flooded_cave': ChunkType.DANGEROUS_CAVE,
+        'rocky_forest': ChunkType.DANGEROUS_FOREST,
+        'crystal_cavern': ChunkType.RARE_ANCIENT_QUARRY,
+        'overgrown_ruins': ChunkType.RARE_ANCIENT_QUARRY,
+        'barren_waste': ChunkType.DANGEROUS_QUARRY,
+        'cursed_marsh': ChunkType.WATER_CURSED_SWAMP,
+    }
+
     def _determine_chunk_type(self) -> ChunkType:
-        """Determine chunk type using BiomeGenerator or legacy random.
+        """Determine chunk type using geographic data, BiomeGenerator, or legacy.
 
         Returns:
             ChunkType for this chunk
         """
-        # Use BiomeGenerator if available (new infinite world system)
+        # New: use geographic system data if available
+        if self._geographic_data is not None:
+            geo_ct = self._geographic_data.chunk_type
+            ct_value = geo_ct.value if hasattr(geo_ct, 'value') else str(geo_ct)
+            return self._GEO_TO_CHUNK_TYPE.get(ct_value, ChunkType.PEACEFUL_FOREST)
+
+        # Use BiomeGenerator if available (legacy infinite world)
         if self._biome_generator:
             return self._biome_generator.get_chunk_type(self.chunk_x, self.chunk_y)
 

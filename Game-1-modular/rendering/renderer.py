@@ -3739,9 +3739,28 @@ class Renderer:
                 if py + chunk_size < map_area_y or py > map_area_y + map_area_h:
                     continue
 
-                # Get chunk color based on exploration status
+                # Get chunk color — use geographic map if available, else exploration
                 explored = map_system.get_explored_chunk(chunk_x, chunk_y)
-                if explored:
+                geo_data = None
+                if hasattr(world_system, 'geographic_map') and world_system.geographic_map:
+                    geo_data = world_system.geographic_map.get_chunk_data(chunk_x, chunk_y)
+
+                if geo_data is not None:
+                    # Geographic system: show all chunks with biome color
+                    ct_value = geo_data.chunk_type.value if hasattr(geo_data.chunk_type, 'value') else str(geo_data.chunk_type)
+                    color = config.get_biome_color(ct_value)
+                    # Tint by nation for visual differentiation
+                    nation = world_system.geographic_map.get_nation(geo_data.nation_id) if world_system.geographic_map else None
+                    if nation and nation.color:
+                        # Blend chunk color with nation color (subtle 15% tint)
+                        nr, ng, nb = nation.color
+                        cr, cg, cb = color
+                        color = (
+                            int(cr * 0.85 + nr * 0.15),
+                            int(cg * 0.85 + ng * 0.15),
+                            int(cb * 0.85 + nb * 0.15),
+                        )
+                elif explored:
                     chunk_type = explored.chunk_type.lower().replace(' ', '_')
                     color = config.get_biome_color(chunk_type)
                 else:
@@ -3801,6 +3820,101 @@ class Renderer:
                 if chunk_rect.collidepoint(rx, ry):
                     hovered_chunk = (chunk_x, chunk_y, explored)
                     pygame.draw.rect(surf, (255, 255, 255), chunk_rect, s(1))
+
+        # Draw geographic borders and labels if geographic map is available
+        if hasattr(world_system, 'geographic_map') and world_system.geographic_map:
+            geo_map = world_system.geographic_map
+            # Draw nation borders — check each chunk pair for different nations
+            border_color_nation = (220, 200, 160)  # Gold-ish for nation borders
+            border_color_region = (160, 160, 180)  # Silver for region borders
+            for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 1):
+                for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 1):
+                    cx_ = int(center_chunk_x) + dx
+                    cy_ = int(center_chunk_y) + dy
+                    px_ = map_area_x + map_center_x + int((cx_ - center_chunk_x) * chunk_size)
+                    py_ = map_area_y + map_center_y + int((cy_ - center_chunk_y) * chunk_size)
+
+                    if px_ + chunk_size < map_area_x or px_ > map_area_x + map_area_w:
+                        continue
+                    if py_ + chunk_size < map_area_y or py_ > map_area_y + map_area_h:
+                        continue
+
+                    gd = geo_map.get_chunk_data(cx_, cy_)
+                    if not gd:
+                        continue
+
+                    # Check right neighbor for nation/region border
+                    gd_right = geo_map.get_chunk_data(cx_ + 1, cy_)
+                    if gd_right:
+                        if gd.nation_id != gd_right.nation_id:
+                            x_line = px_ + chunk_size - 1
+                            pygame.draw.line(surf, border_color_nation,
+                                             (x_line, py_), (x_line, py_ + chunk_size), max(s(2), 2))
+                        elif gd.region_id != gd_right.region_id and chunk_size >= s(4):
+                            x_line = px_ + chunk_size - 1
+                            pygame.draw.line(surf, border_color_region,
+                                             (x_line, py_), (x_line, py_ + chunk_size), 1)
+
+                    # Check bottom neighbor
+                    gd_bottom = geo_map.get_chunk_data(cx_, cy_ + 1)
+                    if gd_bottom:
+                        if gd.nation_id != gd_bottom.nation_id:
+                            y_line = py_ + chunk_size - 1
+                            pygame.draw.line(surf, border_color_nation,
+                                             (px_, y_line), (px_ + chunk_size, y_line), max(s(2), 2))
+                        elif gd.region_id != gd_bottom.region_id and chunk_size >= s(4):
+                            y_line = py_ + chunk_size - 1
+                            pygame.draw.line(surf, border_color_region,
+                                             (px_, y_line), (px_ + chunk_size, y_line), 1)
+
+            # Draw nation labels at low zoom (visible when zoomed out)
+            if chunk_size >= s(2):
+                for nid, nation in geo_map.nations.items():
+                    if not nation.region_ids:
+                        continue
+                    # Find center of nation (average of region centers)
+                    sum_x, sum_y, count = 0, 0, 0
+                    for rid in nation.region_ids:
+                        region = geo_map.regions.get(rid)
+                        if region:
+                            bx1, by1, bx2, by2 = region.bounds
+                            sum_x += (bx1 + bx2) / 2
+                            sum_y += (by1 + by2) / 2
+                            count += 1
+                    if count == 0:
+                        continue
+                    avg_x = sum_x / count
+                    avg_y = sum_y / count
+                    label_px = map_area_x + map_center_x + int((avg_x - center_chunk_x) * chunk_size)
+                    label_py = map_area_y + map_center_y + int((avg_y - center_chunk_y) * chunk_size)
+
+                    if map_area_x <= label_px <= map_area_x + map_area_w:
+                        if map_area_y <= label_py <= map_area_y + map_area_h:
+                            name_surf = self.font.render(nation.name, True, (255, 240, 200))
+                            lx = label_px - name_surf.get_width() // 2
+                            ly = label_py - name_surf.get_height() // 2
+                            # Drop shadow
+                            shadow = self.font.render(nation.name, True, (0, 0, 0))
+                            surf.blit(shadow, (lx + 1, ly + 1))
+                            surf.blit(name_surf, (lx, ly))
+
+            # Draw region labels at medium zoom
+            if chunk_size >= s(5):
+                for rid, region in geo_map.regions.items():
+                    bx1, by1, bx2, by2 = region.bounds
+                    avg_x = (bx1 + bx2) / 2
+                    avg_y = (by1 + by2) / 2
+                    label_px = map_area_x + map_center_x + int((avg_x - center_chunk_x) * chunk_size)
+                    label_py = map_area_y + map_center_y + int((avg_y - center_chunk_y) * chunk_size)
+
+                    if map_area_x <= label_px <= map_area_x + map_area_w:
+                        if map_area_y <= label_py <= map_area_y + map_area_h:
+                            name_surf = self.small_font.render(region.name, True, (200, 210, 230))
+                            lx = label_px - name_surf.get_width() // 2
+                            ly = label_py - name_surf.get_height() // 2 + s(14)
+                            shadow = self.small_font.render(region.name, True, (0, 0, 0))
+                            surf.blit(shadow, (lx + 1, ly + 1))
+                            surf.blit(name_surf, (lx, ly))
 
         # Draw grid if enabled
         if config.map_display.show_grid and chunk_size >= s(8):
@@ -3864,16 +3978,36 @@ class Renderer:
         if hovered_chunk and config.map_display.show_coordinates:
             cx, cy, explored = hovered_chunk
             info_y = map_area_y + map_area_h + s(5)
-            coord_text = f"Chunk: ({cx}, {cy})"
-            if explored:
+
+            # Geographic info if available
+            geo_info = ""
+            if hasattr(world_system, 'geographic_map') and world_system.geographic_map:
+                addr = world_system.geographic_map.get_full_address(cx, cy)
+                if addr:
+                    parts = []
+                    if 'nation' in addr:
+                        parts.append(addr['nation'])
+                    if 'region' in addr:
+                        parts.append(addr['region'])
+                    if 'province' in addr:
+                        parts.append(addr['province'])
+                    geo_info = " > ".join(parts)
+                    geo_info += f"  [{addr.get('danger', '?')}]  {addr.get('chunk_type', '').replace('_', ' ').title()}"
+
+            coord_text = f"({cx}, {cy})"
+            if geo_info:
+                coord_text += f"  {geo_info}"
+            elif explored:
                 type_name = explored.chunk_type.replace('_', ' ').title()
                 coord_text += f" - {type_name}"
+            else:
+                coord_text += " - Unexplored"
+
+            if explored:
                 if explored.has_dungeon:
                     coord_text += " [DUNGEON]"
                 if explored.has_death_chest:
-                    coord_text += " [💀 DEATH CHEST]"
-            else:
-                coord_text += " - Unexplored"
+                    coord_text += " [DEATH CHEST]"
             surf.blit(self.small_font.render(coord_text, True, (200, 200, 200)), (map_area_x, info_y))
 
         # ========== WAYPOINT PANEL ==========

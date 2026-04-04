@@ -1,12 +1,12 @@
 """Political generator — provinces and districts.
 
 Subdivides regions into provinces, and provinces into districts.
-Both use the same Voronoi + deformation pattern at different scales.
+Uses noise-perturbed Voronoi for organic boundaries at all scales.
+Optimized for 512x512 worlds.
 """
 
 from __future__ import annotations
 
-import math
 from typing import Dict, List, Set, Tuple
 
 from systems.geography.config import GeographicConfig
@@ -17,12 +17,18 @@ from systems.geography.models import (
     RegionData,
 )
 from systems.geography.noise import (
-    deform_border,
     find_components,
     hash_2d_int,
     voronoi_subdivide,
 )
-from systems.geography.region_generator import _compute_bounds, _fix_contiguity
+
+
+def _compute_bounds(chunks: Set[Tuple[int, int]]) -> Tuple[int, int, int, int]:
+    if not chunks:
+        return (0, 0, 0, 0)
+    xs = [c[0] for c in chunks]
+    ys = [c[1] for c in chunks]
+    return (min(xs), min(ys), max(xs), max(ys))
 
 
 def _determine_subdivision_count(
@@ -32,42 +38,94 @@ def _determine_subdivision_count(
     parent_id: int,
     seed: int,
 ) -> int:
-    """Determine how many children a parent territory should have.
-
-    Uses min/max child area to compute a valid range of child counts,
-    then picks within that range using seed-based randomness.
-    """
+    """Determine how many children a parent territory should have."""
     if min_child_area <= 0:
         return 1
 
-    # min_count: fewest children (each child at max size)
     min_count = max(2, parent_chunk_count // max_child_area)
-    # max_count: most children (each child at min size)
     max_count = max(min_count, parent_chunk_count // min_child_area)
 
     if min_count >= max_count:
         return min_count
 
-    # Pick within range using seed
     range_size = max_count - min_count + 1
     offset = hash_2d_int(parent_id, 0, seed, range_size)
     return min_count + offset
 
 
-def _subdivide_territory(
+def _fix_contiguity(regions: List[Set[Tuple[int, int]]]) -> List[Set[Tuple[int, int]]]:
+    """Ensure each region is contiguous."""
+    result = list(regions)
+    for i in range(len(result)):
+        components = find_components(result[i])
+        if len(components) <= 1:
+            continue
+        components.sort(key=len, reverse=True)
+        main = components[0]
+        result[i] = main
+        for fragment in components[1:]:
+            # Find adjacent sibling
+            merged = False
+            for cx, cy in fragment:
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    neighbor = (cx + dx, cy + dy)
+                    for j, other in enumerate(result):
+                        if j != i and neighbor in other:
+                            result[j] |= fragment
+                            merged = True
+                            break
+                    if merged:
+                        break
+                if merged:
+                    break
+            if not merged:
+                result[i] |= fragment
+    return result
+
+
+def _merge_tiny(children: List[Set[Tuple[int, int]]], min_area: int) -> List[Set[Tuple[int, int]]]:
+    """Merge children smaller than min_area into adjacent siblings."""
+    result = list(children)
+    changed = True
+    max_iter = 5
+    while changed and max_iter > 0:
+        changed = False
+        max_iter -= 1
+        i = 0
+        while i < len(result):
+            if len(result[i]) < min_area and len(result) > 1:
+                # Find adjacent sibling with most shared border
+                best_idx = -1
+                for cx, cy in result[i]:
+                    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                        neighbor = (cx + dx, cy + dy)
+                        for j, other in enumerate(result):
+                            if j != i and neighbor in other:
+                                best_idx = j
+                                break
+                        if best_idx >= 0:
+                            break
+                    if best_idx >= 0:
+                        break
+                if best_idx >= 0:
+                    result[best_idx] |= result[i]
+                    result.pop(i)
+                    changed = True
+                    continue
+            i += 1
+    return result
+
+
+def _subdivide_territories(
     territories: Dict[int, Set[Tuple[int, int]]],
-    parent_metadata: dict,
-    seed_offset: int,
     seed: int,
+    seed_offset: int,
     min_area: int,
     max_area: int,
-    deform_amplitude: float,
-    deform_frequency: float,
+    noise_amplitude: float,
+    noise_frequency: float,
 ) -> Tuple[Dict[Tuple[int, int], int], List]:
-    """Generic subdivision: split each parent territory into children.
-
-    Returns mapping of chunk → child_id and list of (child_id, parent_id, chunks).
-    """
+    """Generic subdivision using noise-perturbed Voronoi."""
     child_map: Dict[Tuple[int, int], int] = {}
     child_records = []
     next_id = 0
@@ -77,14 +135,11 @@ def _subdivide_territory(
             continue
 
         child_seed = seed + parent_id * 500 + seed_offset
-
-        # Determine how many children
         count = _determine_subdivision_count(
             len(territory), min_area, max_area, parent_id, child_seed,
         )
 
         if count <= 1:
-            # Single child = entire territory
             cid = next_id
             next_id += 1
             for pos in territory:
@@ -92,57 +147,17 @@ def _subdivide_territory(
             child_records.append((cid, parent_id, set(territory)))
             continue
 
-        # Voronoi subdivide
-        raw_children = voronoi_subdivide(territory, count, child_seed)
+        # Voronoi with noise perturbation
+        raw_children = voronoi_subdivide(
+            territory, count, child_seed,
+            noise_amplitude=noise_amplitude,
+            noise_frequency=noise_frequency,
+        )
 
-        # Deform boundaries
-        deformed_children = []
-        for i, child_chunks in enumerate(raw_children):
-            deformed = deform_border(
-                child_chunks, child_chunks, child_seed + i * 77,
-                amplitude=deform_amplitude,
-                frequency=deform_frequency,
-            )
-            deformed &= territory
-            deformed_children.append(deformed)
-
-        # Reassign unassigned chunks
-        all_assigned = set()
-        for c in deformed_children:
-            all_assigned |= c
-        unassigned = territory - all_assigned
-        if unassigned and deformed_children:
-            for cx, cy in unassigned:
-                best_idx = 0
-                best_dist = float('inf')
-                for idx, child in enumerate(deformed_children):
-                    if not child:
-                        continue
-                    for rx, ry in child:
-                        d = (cx - rx) ** 2 + (cy - ry) ** 2
-                        if d < best_dist:
-                            best_dist = d
-                            best_idx = idx
-                        if d <= 1:
-                            break
-                    if best_dist <= 1:
-                        break
-                deformed_children[best_idx].add((cx, cy))
-
-        # Remove overlaps
-        seen = set()
-        for i, child in enumerate(deformed_children):
-            overlap = child & seen
-            deformed_children[i] -= overlap
-            seen |= child
-
-        # Fix contiguity
-        fixed = _fix_contiguity(deformed_children)
-
-        # Merge children that are too small
+        # Fix contiguity and merge tiny regions
+        fixed = _fix_contiguity(raw_children)
         merged = _merge_tiny(fixed, min_area)
 
-        # Record results
         for child_chunks in merged:
             if not child_chunks:
                 continue
@@ -153,49 +168,6 @@ def _subdivide_territory(
             child_records.append((cid, parent_id, child_chunks))
 
     return child_map, child_records
-
-
-def _merge_tiny(
-    children: List[Set[Tuple[int, int]]],
-    min_area: int,
-) -> List[Set[Tuple[int, int]]]:
-    """Merge children smaller than min_area into adjacent siblings."""
-    result = list(children)
-    changed = True
-    max_iter = 10
-
-    while changed and max_iter > 0:
-        changed = False
-        max_iter -= 1
-        i = 0
-        while i < len(result):
-            if len(result[i]) < min_area and len(result) > 1:
-                # Find adjacent sibling to merge into
-                best_idx = -1
-                best_border = 0
-                for cx, cy in result[i]:
-                    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                        neighbor = (cx + dx, cy + dy)
-                        for j, other in enumerate(result):
-                            if j != i and neighbor in other:
-                                border = sum(
-                                    1 for ax, ay in result[i]
-                                    for ddx, ddy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
-                                    if (ax + ddx, ay + ddy) in other
-                                )
-                                if border > best_border:
-                                    best_border = border
-                                    best_idx = j
-                                break
-
-                if best_idx >= 0:
-                    result[best_idx] |= result[i]
-                    result.pop(i)
-                    changed = True
-                    continue
-            i += 1
-
-    return result
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -209,29 +181,21 @@ def generate_provinces(
     seed: int,
     config: GeographicConfig,
 ) -> Tuple[Dict[Tuple[int, int], int], Dict[int, ProvinceData]]:
-    """Generate provinces within all regions.
-
-    Returns:
-        - province_map: (chunk_x, chunk_y) → province_id
-        - province_metadata: province_id → ProvinceData
-    """
-    # Build per-region territories
+    """Generate provinces within all regions."""
     region_territories: Dict[int, Set[Tuple[int, int]]] = {}
     for pos, rid in region_map.items():
         region_territories.setdefault(rid, set()).add(pos)
 
-    province_map, records = _subdivide_territory(
+    province_map, records = _subdivide_territories(
         territories=region_territories,
-        parent_metadata=region_metadata,
-        seed_offset=200000,
         seed=seed,
+        seed_offset=200000,
         min_area=config.province.min_area,
         max_area=config.province.max_area,
-        deform_amplitude=config.province.deform_amplitude,
-        deform_frequency=config.province.deform_frequency,
+        noise_amplitude=config.province.deform_amplitude,
+        noise_frequency=config.province.deform_frequency,
     )
 
-    # Build province metadata
     province_metadata: Dict[int, ProvinceData] = {}
     for pid, parent_rid, chunks in records:
         region = region_metadata.get(parent_rid)
@@ -239,14 +203,13 @@ def generate_provinces(
 
         province_metadata[pid] = ProvinceData(
             province_id=pid,
-            name="",  # Name assigned later
+            name="",
             region_id=parent_rid,
             nation_id=nation_id,
             chunk_count=len(chunks),
             bounds=_compute_bounds(chunks),
         )
 
-        # Update region metadata
         if region:
             region.province_ids.append(pid)
 
@@ -259,29 +222,21 @@ def generate_districts(
     seed: int,
     config: GeographicConfig,
 ) -> Tuple[Dict[Tuple[int, int], int], Dict[int, DistrictData]]:
-    """Generate districts within all provinces.
-
-    Returns:
-        - district_map: (chunk_x, chunk_y) → district_id
-        - district_metadata: district_id → DistrictData
-    """
-    # Build per-province territories
+    """Generate districts within all provinces."""
     province_territories: Dict[int, Set[Tuple[int, int]]] = {}
     for pos, pid in province_map.items():
         province_territories.setdefault(pid, set()).add(pos)
 
-    district_map, records = _subdivide_territory(
+    district_map, records = _subdivide_territories(
         territories=province_territories,
-        parent_metadata=province_metadata,
-        seed_offset=300000,
         seed=seed,
+        seed_offset=300000,
         min_area=config.district.min_area,
         max_area=config.district.max_area,
-        deform_amplitude=config.district.deform_amplitude,
-        deform_frequency=config.district.deform_frequency,
+        noise_amplitude=config.district.deform_amplitude,
+        noise_frequency=config.district.deform_frequency,
     )
 
-    # Build district metadata
     district_metadata: Dict[int, DistrictData] = {}
     for did, parent_pid, chunks in records:
         province = province_metadata.get(parent_pid)
@@ -290,7 +245,7 @@ def generate_districts(
 
         district_metadata[did] = DistrictData(
             district_id=did,
-            name="",  # Name assigned later
+            name="",
             province_id=parent_pid,
             region_id=region_id,
             nation_id=nation_id,
@@ -298,7 +253,6 @@ def generate_districts(
             bounds=_compute_bounds(chunks),
         )
 
-        # Update province metadata
         if province:
             province.district_ids.append(did)
 
