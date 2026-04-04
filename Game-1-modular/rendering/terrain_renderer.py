@@ -1,0 +1,270 @@
+"""Procedural terrain renderer — generates beautiful tile surfaces.
+
+Replaces flat-color tile rendering with noise-varied, textured surfaces.
+Chunk boundaries are invisible because tile colors are computed from
+world-space noise, not chunk-local data.
+
+Key principles:
+- Every tile's visual is determined by (tile_type, world_x, world_y)
+- World-space noise ensures seamless transitions across chunk boundaries
+- Surfaces are cached after first generation for performance
+- Detail layers add procedural texture (grass blades, stone cracks, etc.)
+"""
+
+from __future__ import annotations
+
+import math
+from typing import Dict, Tuple
+
+import pygame
+
+from core.config import Config
+
+
+# ══════════════════════════════════════════════════════════════════
+# WORLD-SPACE NOISE (deterministic from position)
+# ══════════════════════════════════════════════════════════════════
+
+def _hash(x: int, y: int, seed: int = 0) -> float:
+    """Fast deterministic hash → [0, 1)."""
+    h = seed
+    h = ((h ^ (x * 374761393)) + (y * 668265263)) & 0xFFFFFFFF
+    h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF
+    h = (h ^ (h >> 16)) & 0xFFFFFFFF
+    return (h & 0x7FFFFFFF) / 0x7FFFFFFF
+
+
+def _smooth_noise(x: float, y: float, seed: int = 0) -> float:
+    """Smooth interpolated noise → [-1, 1]."""
+    ix, iy = int(math.floor(x)), int(math.floor(y))
+    fx, fy = x - ix, y - iy
+    # Smoothstep
+    fx = fx * fx * (3.0 - 2.0 * fx)
+    fy = fy * fy * (3.0 - 2.0 * fy)
+    v00 = _hash(ix, iy, seed) * 2 - 1
+    v10 = _hash(ix + 1, iy, seed) * 2 - 1
+    v01 = _hash(ix, iy + 1, seed) * 2 - 1
+    v11 = _hash(ix + 1, iy + 1, seed) * 2 - 1
+    return (v00 * (1 - fx) + v10 * fx) * (1 - fy) + (v01 * (1 - fx) + v11 * fx) * fy
+
+
+def _fbm(x: float, y: float, octaves: int = 3, seed: int = 0) -> float:
+    """Fractal Brownian Motion noise → approximately [-1, 1]."""
+    total = 0.0
+    amp = 1.0
+    freq = 1.0
+    max_amp = 0.0
+    for i in range(octaves):
+        total += _smooth_noise(x * freq, y * freq, seed + i * 7919) * amp
+        max_amp += amp
+        amp *= 0.5
+        freq *= 2.0
+    return total / max_amp
+
+
+# ══════════════════════════════════════════════════════════════════
+# COLOR PALETTES — rich, natural color ranges per tile type
+# ══════════════════════════════════════════════════════════════════
+
+# Each palette: (base_r, base_g, base_b, hue_variance, sat_variance, val_variance)
+# Variance is max ± deviation from base
+TILE_PALETTES = {
+    "GRASS": {
+        "base": (58, 135, 52),
+        "warm": (72, 142, 48),     # Sunlit patches
+        "cool": (40, 118, 55),     # Shaded areas
+        "accent": (45, 148, 42),   # Lush spots
+        "dark": (32, 95, 38),      # Under-canopy
+        "variance": 18,            # Per-pixel color jitter
+    },
+    "STONE": {
+        "base": (118, 118, 112),
+        "warm": (132, 125, 108),   # Sandstone tint
+        "cool": (105, 108, 118),   # Blue-grey
+        "accent": (140, 135, 120), # Lighter veins
+        "dark": (85, 82, 78),      # Crevices
+        "variance": 12,
+    },
+    "WATER": {
+        "base": (38, 100, 168),
+        "warm": (45, 115, 175),    # Shallow / lit
+        "cool": (28, 78, 148),     # Deep
+        "accent": (65, 140, 195),  # Highlights
+        "dark": (22, 62, 125),     # Depths
+        "variance": 10,
+    },
+    "DIRT": {
+        "base": (120, 85, 55),
+        "warm": (138, 95, 58),     # Dry
+        "cool": (105, 78, 52),     # Damp
+        "accent": (145, 108, 68),  # Sandy patches
+        "dark": (82, 60, 40),      # Rich soil
+        "variance": 14,
+    },
+}
+
+
+def _get_tile_color(tile_type_name: str, world_x: int, world_y: int) -> Tuple[int, int, int]:
+    """Compute a tile's color from its type and world position.
+
+    Uses multi-octave noise for natural variation. Two grass tiles
+    next to each other (even across chunk boundaries) will have
+    similar colors because the noise is world-space continuous.
+    """
+    palette = TILE_PALETTES.get(tile_type_name, TILE_PALETTES["GRASS"])
+    base = palette["base"]
+
+    # Large-scale terrain variation (every ~8 tiles)
+    n1 = _fbm(world_x * 0.12, world_y * 0.12, octaves=2, seed=1000)
+
+    # Medium-scale detail (every ~3 tiles)
+    n2 = _fbm(world_x * 0.33, world_y * 0.33, octaves=2, seed=2000)
+
+    # Per-tile micro-variation
+    n3 = _hash(world_x, world_y, 3000) * 2 - 1
+
+    # Blend between warm/cool based on large-scale noise
+    if n1 > 0.15:
+        target = palette["warm"]
+        blend = min(1.0, (n1 - 0.15) * 2.5)
+    elif n1 < -0.15:
+        target = palette["cool"]
+        blend = min(1.0, (-n1 - 0.15) * 2.5)
+    else:
+        target = base
+        blend = 0.0
+
+    r = base[0] + (target[0] - base[0]) * blend
+    g = base[1] + (target[1] - base[1]) * blend
+    b = base[2] + (target[2] - base[2]) * blend
+
+    # Add accent spots from medium noise
+    if n2 > 0.4:
+        accent = palette["accent"]
+        a_blend = (n2 - 0.4) * 1.5
+        r = r + (accent[0] - r) * a_blend
+        g = g + (accent[1] - g) * a_blend
+        b = b + (accent[2] - b) * a_blend
+    elif n2 < -0.4:
+        dark = palette["dark"]
+        d_blend = (-n2 - 0.4) * 1.5
+        r = r + (dark[0] - r) * d_blend
+        g = g + (dark[1] - g) * d_blend
+        b = b + (dark[2] - b) * d_blend
+
+    # Micro jitter
+    v = palette["variance"]
+    jitter = n3 * v
+    r = max(0, min(255, int(r + jitter)))
+    g = max(0, min(255, int(g + jitter * 0.8)))
+    b = max(0, min(255, int(b + jitter * 0.6)))
+
+    return (r, g, b)
+
+
+# ══════════════════════════════════════════════════════════════════
+# TILE SURFACE CACHE
+# ══════════════════════════════════════════════════════════════════
+
+# Cache: (world_x, world_y, tile_type) → pygame.Surface
+_surface_cache: Dict[Tuple[int, int, str], pygame.Surface] = {}
+_CACHE_MAX = 4096  # Max cached surfaces (fits ~64x64 viewport easily)
+
+
+def get_tile_surface(tile_type_name: str, world_x: int, world_y: int,
+                     tile_size: int) -> pygame.Surface:
+    """Get or generate a textured surface for a tile.
+
+    Surfaces are cached for performance. Each tile gets a unique
+    procedurally generated surface based on its world position.
+    """
+    cache_key = (world_x, world_y, tile_type_name)
+    if cache_key in _surface_cache:
+        return _surface_cache[cache_key]
+
+    # Evict oldest if cache is full
+    if len(_surface_cache) >= _CACHE_MAX:
+        # Remove ~25% of cache (LRU would be better but this is simpler)
+        keys = list(_surface_cache.keys())
+        for k in keys[:_CACHE_MAX // 4]:
+            del _surface_cache[k]
+
+    surf = pygame.Surface((tile_size, tile_size))
+
+    # Base color from world-space noise
+    base_color = _get_tile_color(tile_type_name, world_x, world_y)
+    surf.fill(base_color)
+
+    # Add procedural detail pixels for texture
+    if tile_size >= 16:
+        _add_tile_detail(surf, tile_type_name, world_x, world_y, tile_size)
+
+    _surface_cache[cache_key] = surf
+    return surf
+
+
+def _add_tile_detail(surf: pygame.Surface, tile_type: str,
+                     wx: int, wy: int, size: int) -> None:
+    """Add procedural detail to a tile surface for visual richness."""
+
+    if tile_type == "GRASS":
+        # Scatter grass blade dots and small highlights
+        for i in range(size // 4):
+            px = int(_hash(wx * 100 + i, wy, 5000) * size)
+            py = int(_hash(wx, wy * 100 + i, 5001) * size)
+            brightness = _hash(wx + i, wy + i, 5002)
+            if brightness > 0.6:
+                # Light grass blade
+                c = (60, 155, 50)
+                surf.set_at((min(px, size - 1), min(py, size - 1)), c)
+                if py + 1 < size:
+                    surf.set_at((min(px, size - 1), py + 1), c)
+            elif brightness < 0.2:
+                # Dark spot
+                c = (28, 85, 30)
+                surf.set_at((min(px, size - 1), min(py, size - 1)), c)
+
+    elif tile_type == "STONE":
+        # Subtle crack lines and mineral specks
+        for i in range(size // 6):
+            px = int(_hash(wx * 100 + i, wy, 6000) * size)
+            py = int(_hash(wx, wy * 100 + i, 6001) * size)
+            val = _hash(wx + i * 3, wy + i * 7, 6002)
+            if val > 0.75:
+                # Light mineral speck
+                surf.set_at((min(px, size - 1), min(py, size - 1)), (155, 150, 140))
+            elif val < 0.15:
+                # Dark crack pixel
+                surf.set_at((min(px, size - 1), min(py, size - 1)), (70, 68, 65))
+                # Extend crack slightly
+                if px + 1 < size:
+                    surf.set_at((px + 1, min(py, size - 1)), (75, 72, 68))
+
+    elif tile_type == "WATER":
+        # Subtle wave highlights
+        for i in range(size // 5):
+            px = int(_hash(wx * 100 + i, wy, 7000) * size)
+            py = int(_hash(wx, wy * 100 + i, 7001) * size)
+            if _hash(wx + i, wy + i, 7002) > 0.7:
+                c = (75, 155, 210)
+                surf.set_at((min(px, size - 1), min(py, size - 1)), c)
+                if px + 1 < size:
+                    surf.set_at((px + 1, min(py, size - 1)), c)
+
+    elif tile_type == "DIRT":
+        # Pebbles and soil texture
+        for i in range(size // 5):
+            px = int(_hash(wx * 100 + i, wy, 8000) * size)
+            py = int(_hash(wx, wy * 100 + i, 8001) * size)
+            val = _hash(wx + i * 5, wy + i * 3, 8002)
+            if val > 0.8:
+                # Small pebble (light)
+                surf.set_at((min(px, size - 1), min(py, size - 1)), (155, 130, 95))
+            elif val < 0.1:
+                # Dark soil
+                surf.set_at((min(px, size - 1), min(py, size - 1)), (72, 50, 32))
+
+
+def clear_terrain_cache() -> None:
+    """Clear the terrain surface cache (call on resolution change)."""
+    _surface_cache.clear()

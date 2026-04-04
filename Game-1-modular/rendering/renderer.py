@@ -969,71 +969,18 @@ class Renderer:
         # Get image cache once at the start for all icon rendering
         image_cache = ImageCache.get_instance()
 
-        # Pre-compute chunk boundary blend data for smooth tile transitions
-        _blend_cache = {}
+        # Import terrain renderer for procedural tile surfaces
+        from rendering.terrain_renderer import get_tile_surface
 
         for tile in world.get_visible_tiles(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(tile.position)
             if -Config.TILE_SIZE <= sx <= Config.VIEWPORT_WIDTH and -Config.TILE_SIZE <= sy <= Config.VIEWPORT_HEIGHT:
-                base_color = tile.get_color()
-
-                # Tile-level chunk boundary blending
-                # Check if this tile is near a chunk edge and blend with neighbor
-                tx = int(tile.position.x)
-                ty = int(tile.position.y)
-                local_x = tx % Config.CHUNK_SIZE
-                local_y = ty % Config.CHUNK_SIZE
-                blend_color = None
-
-                # Edge tiles: blend with neighbor chunk's corresponding tile
-                if local_x <= 1 or local_x >= Config.CHUNK_SIZE - 2 or local_y <= 1 or local_y >= Config.CHUNK_SIZE - 2:
-                    # Determine which neighbor to check
-                    check_x, check_y = tx, ty
-                    blend_factor = 0.0
-                    if local_x == 0:
-                        check_x = tx - 1
-                        blend_factor = 0.4
-                    elif local_x == 1:
-                        check_x = tx - 1
-                        blend_factor = 0.15
-                    elif local_x == Config.CHUNK_SIZE - 1:
-                        check_x = tx + 1
-                        blend_factor = 0.4
-                    elif local_x == Config.CHUNK_SIZE - 2:
-                        check_x = tx + 1
-                        blend_factor = 0.15
-
-                    if local_y == 0:
-                        check_y = ty - 1
-                        blend_factor = max(blend_factor, 0.4)
-                    elif local_y == 1:
-                        check_y = ty - 1
-                        blend_factor = max(blend_factor, 0.15)
-                    elif local_y == Config.CHUNK_SIZE - 1:
-                        check_y = ty + 1
-                        blend_factor = max(blend_factor, 0.4)
-                    elif local_y == Config.CHUNK_SIZE - 2:
-                        check_y = ty + 1
-                        blend_factor = max(blend_factor, 0.15)
-
-                    if blend_factor > 0 and (check_x != tx or check_y != ty):
-                        cache_key = (check_x, check_y)
-                        if cache_key not in _blend_cache:
-                            n_tile = world.get_tile(Position(check_x, check_y))
-                            _blend_cache[cache_key] = n_tile.get_color() if n_tile else None
-                        n_color = _blend_cache[cache_key]
-
-                        if n_color and n_color != base_color:
-                            bf = blend_factor
-                            blend_color = (
-                                int(base_color[0] * (1 - bf) + n_color[0] * bf),
-                                int(base_color[1] * (1 - bf) + n_color[1] * bf),
-                                int(base_color[2] * (1 - bf) + n_color[2] * bf),
-                            )
-
-                rect = pygame.Rect(sx, sy, Config.TILE_SIZE, Config.TILE_SIZE)
-                pygame.draw.rect(self.screen, blend_color or base_color, rect)
-                pygame.draw.rect(self.screen, Config.COLOR_GRID, rect, 1)
+                # Procedural textured tile — world-space noise makes chunk boundaries invisible
+                tile_type_name = tile.tile_type.name  # "GRASS", "STONE", etc.
+                wx = int(tile.position.x)
+                wy = int(tile.position.y)
+                tile_surf = get_tile_surface(tile_type_name, wx, wy, Config.TILE_SIZE)
+                self.screen.blit(tile_surf, (sx, sy))
 
         for station in world.get_visible_stations(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(station.position)
@@ -3825,43 +3772,9 @@ class Renderer:
                 else:
                     color = config.biome_colors.get('unexplored', (30, 30, 40))
 
-                # Draw chunk with edge blending for smooth transitions
-                chunk_rect = pygame.Rect(px, py, chunk_size - 1, chunk_size - 1)
+                # Draw chunk
+                chunk_rect = pygame.Rect(px, py, max(1, chunk_size - 1), max(1, chunk_size - 1))
                 pygame.draw.rect(surf, color, chunk_rect)
-
-                # Edge blending: smooth color transitions with neighbors
-                if chunk_size >= 6 and geo_data is not None and world_system.geographic_map:
-                    blend_w = max(1, chunk_size // 5)  # 20% of chunk for blend zone
-                    # Check each edge neighbor and blend if different color
-                    for edge_dx, edge_dy, bx, by, bw, bh in [
-                        (1, 0, px + chunk_size - blend_w - 1, py, blend_w, chunk_size - 1),   # right
-                        (-1, 0, px, py, blend_w, chunk_size - 1),                              # left
-                        (0, 1, px, py + chunk_size - blend_w - 1, chunk_size - 1, blend_w),   # bottom
-                        (0, -1, px, py, chunk_size - 1, blend_w),                              # top
-                    ]:
-                        n_geo = world_system.geographic_map.get_chunk_data(chunk_x + edge_dx, chunk_y + edge_dy)
-                        if n_geo is None:
-                            continue
-                        n_ct = n_geo.chunk_type.value if hasattr(n_geo.chunk_type, 'value') else str(n_geo.chunk_type)
-                        n_color = config.get_biome_color(n_ct)
-                        # Apply nation tint to neighbor too
-                        n_nation = world_system.geographic_map.get_nation(n_geo.nation_id)
-                        if n_nation and n_nation.color:
-                            nnr, nng, nnb = n_nation.color
-                            ncr, ncg, ncb = n_color
-                            n_color = (int(ncr * 0.85 + nnr * 0.15), int(ncg * 0.85 + nng * 0.15), int(ncb * 0.85 + nnb * 0.15))
-                        # Only blend if colors differ noticeably
-                        if abs(color[0] - n_color[0]) + abs(color[1] - n_color[1]) + abs(color[2] - n_color[2]) > 30:
-                            # 50/50 blend for the edge strip
-                            blend = (
-                                (color[0] + n_color[0]) // 2,
-                                (color[1] + n_color[1]) // 2,
-                                (color[2] + n_color[2]) // 2,
-                            )
-                            blend_rect = pygame.Rect(bx, by, bw, bh)
-                            blend_rect = blend_rect.clip(chunk_rect)
-                            if blend_rect.width > 0 and blend_rect.height > 0:
-                                pygame.draw.rect(surf, blend, blend_rect)
 
                 # At high zoom, add subtle texture to explored chunks
                 if explored and map_system.map_zoom >= 1.5 and chunk_size >= s(20):
@@ -3969,72 +3882,88 @@ class Renderer:
                             pygame.draw.line(surf, border_color_province,
                                              (px_, y_line), (px_ + chunk_size, y_line), 1)
 
-            # Draw nation labels at low zoom (visible when zoomed out)
-            if chunk_size >= s(2):
-                for nid, nation in geo_map.nations.items():
-                    if not nation.region_ids:
-                        continue
-                    # Find center of nation (average of region centers)
-                    sum_x, sum_y, count = 0, 0, 0
-                    for rid in nation.region_ids:
-                        region = geo_map.regions.get(rid)
-                        if region:
-                            bx1, by1, bx2, by2 = region.bounds
-                            sum_x += (bx1 + bx2) / 2
-                            sum_y += (by1 + by2) / 2
-                            count += 1
-                    if count == 0:
-                        continue
-                    avg_x = sum_x / count
-                    avg_y = sum_y / count
-                    label_px = map_area_x + map_center_x + int((avg_x - center_chunk_x) * chunk_size)
-                    label_py = map_area_y + map_center_y + int((avg_y - center_chunk_y) * chunk_size)
+            # ── MAP LABELS — progressive LOD with background pills ──
+            # Helper: draw a label with semi-transparent background pill
+            def _draw_map_label(text, cx_world, cy_world, font, fg_color, bg_alpha=160, y_offset=0):
+                lpx = map_area_x + map_center_x + int((cx_world - center_chunk_x) * chunk_size)
+                lpy = map_area_y + map_center_y + int((cy_world - center_chunk_y) * chunk_size) + y_offset
+                if not (map_area_x - 50 <= lpx <= map_area_x + map_area_w + 50):
+                    return None
+                if not (map_area_y - 20 <= lpy <= map_area_y + map_area_h + 20):
+                    return None
+                text_surf = font.render(text, True, fg_color)
+                tw, th = text_surf.get_width(), text_surf.get_height()
+                pad_x, pad_y = 4, 2
+                bg_rect = pygame.Rect(lpx - tw // 2 - pad_x, lpy - th // 2 - pad_y,
+                                      tw + pad_x * 2, th + pad_y * 2)
+                # Semi-transparent background
+                bg_surf = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
+                bg_surf.fill((12, 12, 20, bg_alpha))
+                surf.blit(bg_surf, bg_rect.topleft)
+                # Text centered
+                surf.blit(text_surf, (lpx - tw // 2, lpy - th // 2))
+                return bg_rect
 
-                    if map_area_x <= label_px <= map_area_x + map_area_w:
-                        if map_area_y <= label_py <= map_area_y + map_area_h:
-                            name_surf = self.font.render(nation.name, True, (255, 240, 200))
-                            lx = label_px - name_surf.get_width() // 2
-                            ly = label_py - name_surf.get_height() // 2
-                            # Drop shadow
-                            shadow = self.font.render(nation.name, True, (0, 0, 0))
-                            surf.blit(shadow, (lx + 1, ly + 1))
-                            surf.blit(name_surf, (lx, ly))
+            # Collect placed label rects to avoid overlap
+            _placed_labels = []
+            def _no_overlap(rect):
+                if rect is None:
+                    return False
+                for placed in _placed_labels:
+                    if rect.colliderect(placed):
+                        return False
+                _placed_labels.append(rect)
+                return True
 
-            # Draw region labels at medium zoom
-            if chunk_size >= s(5):
+            # TIER 1: Nation labels — always visible, large font
+            for nid, nation in geo_map.nations.items():
+                if not nation.region_ids:
+                    continue
+                sum_x, sum_y, count = 0, 0, 0
+                for rid in nation.region_ids:
+                    region = geo_map.regions.get(rid)
+                    if region:
+                        bx1, by1, bx2, by2 = region.bounds
+                        sum_x += (bx1 + bx2) / 2
+                        sum_y += (by1 + by2) / 2
+                        count += 1
+                if count == 0:
+                    continue
+                rect = _draw_map_label(
+                    nation.name.upper(), sum_x / count, sum_y / count,
+                    self.font, (255, 240, 210), bg_alpha=180,
+                )
+                _no_overlap(rect)
+
+            # TIER 2: Region labels — visible at medium zoom
+            if chunk_size >= s(3):
                 for rid, region in geo_map.regions.items():
                     bx1, by1, bx2, by2 = region.bounds
-                    avg_x = (bx1 + bx2) / 2
-                    avg_y = (by1 + by2) / 2
-                    label_px = map_area_x + map_center_x + int((avg_x - center_chunk_x) * chunk_size)
-                    label_py = map_area_y + map_center_y + int((avg_y - center_chunk_y) * chunk_size)
+                    rect = _draw_map_label(
+                        region.name, (bx1 + bx2) / 2, (by1 + by2) / 2,
+                        self.small_font, (195, 205, 225), bg_alpha=140, y_offset=s(16),
+                    )
+                    _no_overlap(rect)
 
-                    if map_area_x <= label_px <= map_area_x + map_area_w:
-                        if map_area_y <= label_py <= map_area_y + map_area_h:
-                            name_surf = self.small_font.render(region.name, True, (200, 210, 230))
-                            lx = label_px - name_surf.get_width() // 2
-                            ly = label_py - name_surf.get_height() // 2 + s(14)
-                            shadow = self.small_font.render(region.name, True, (0, 0, 0))
-                            surf.blit(shadow, (lx + 1, ly + 1))
-                            surf.blit(name_surf, (lx, ly))
-
-            # Draw province labels at higher zoom
-            if chunk_size >= s(12):
+            # TIER 3: Province labels — visible at higher zoom
+            if chunk_size >= s(8):
                 for pid, province in geo_map.provinces.items():
                     bx1, by1, bx2, by2 = province.bounds
-                    avg_x = (bx1 + bx2) / 2
-                    avg_y = (by1 + by2) / 2
-                    label_px = map_area_x + map_center_x + int((avg_x - center_chunk_x) * chunk_size)
-                    label_py = map_area_y + map_center_y + int((avg_y - center_chunk_y) * chunk_size)
+                    rect = _draw_map_label(
+                        province.name, (bx1 + bx2) / 2, (by1 + by2) / 2,
+                        self.small_font, (165, 170, 185), bg_alpha=120,
+                    )
+                    _no_overlap(rect)
 
-                    if map_area_x <= label_px <= map_area_x + map_area_w:
-                        if map_area_y <= label_py <= map_area_y + map_area_h:
-                            name_surf = self.small_font.render(province.name, True, (180, 180, 200, 200))
-                            lx = label_px - name_surf.get_width() // 2
-                            ly = label_py - name_surf.get_height() // 2
-                            shadow = self.small_font.render(province.name, True, (0, 0, 0))
-                            surf.blit(shadow, (lx + 1, ly + 1))
-                            surf.blit(name_surf, (lx, ly))
+            # TIER 4: District labels — visible at close zoom
+            if chunk_size >= s(18):
+                for did, district in geo_map.districts.items():
+                    bx1, by1, bx2, by2 = district.bounds
+                    rect = _draw_map_label(
+                        district.name, (bx1 + bx2) / 2, (by1 + by2) / 2,
+                        self.small_font, (145, 145, 160), bg_alpha=100,
+                    )
+                    _no_overlap(rect)
 
         # Draw grid if enabled
         if config.map_display.show_grid and chunk_size >= s(8):

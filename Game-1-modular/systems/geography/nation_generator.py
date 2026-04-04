@@ -306,13 +306,20 @@ _DEFAULT_FLAVORS = [
     NamingFlavor.ETHEREAL,
 ]
 
-# Default nation colors for map rendering
+# Default nation colors for map rendering — vivid and distinct
 _DEFAULT_COLORS = [
-    (90, 120, 160),   # Stoic: steel blue
-    (100, 160, 100),  # Flowing: forest green
-    (180, 140, 80),   # Imperial: golden
-    (140, 100, 80),   # Stoneworn: earthy brown
-    (140, 120, 180),  # Ethereal: soft purple
+    (70, 110, 170),   # Stoic: deep steel blue
+    (80, 155, 80),    # Flowing: rich forest green
+    (190, 155, 60),   # Imperial: warm gold
+    (155, 95, 70),    # Stoneworn: burnt umber
+    (130, 100, 175),  # Ethereal: amethyst purple
+    (170, 80, 80),    # Extra: muted crimson
+    (80, 155, 150),   # Extra: teal
+    (160, 140, 90),   # Extra: sand
+    (100, 80, 140),   # Extra: deep violet
+    (140, 160, 80),   # Extra: olive
+    (180, 120, 100),  # Extra: terracotta
+    (90, 130, 120),   # Extra: sage
 ]
 
 
