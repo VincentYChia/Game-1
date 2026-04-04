@@ -281,9 +281,19 @@ Danger is organized into **ecosystems** — groups of 3×3 chunks that share the
 | District | Named area | "The Hollows", "Greystone Quarter" |
 | Locality | Feature-based | "Dragon's Maw", "Elder's Grove" |
 
-- Each nation has a distinct naming flavor/bank (one sounds Norse, another Latin, etc.)
+### Naming Flavors (5 — Pure Fantasy, No Real Culture Stereotypes)
+
+| Flavor | Style | Adjective Examples | Province Examples |
+|--------|-------|-------------------|-------------------|
+| **Stoic** | Heavy, northern, grim | Ashen, Iron, Storm, Grim, Frost | Stormcrest, Ironhold, Greywatch |
+| **Flowing** | Soft, musical, nature-touched | Verdant, Silver, Misty, Wild | Silvervale, Moonhaven, Dewbrook |
+| **Imperial** | Formal, grand, structured | Grand, Golden, Crimson, Noble | Aurelium, Valdris, Corvanta |
+| **Stoneworn** | Weathered, ancient, deep | Bitter, Deep, Hollow, Ember | Duskmere, Cindervault, Bleakhaven |
+| **Ethereal** | Mystical, luminous, otherworldly | Luminous, Twilight, Opal, Veiled | Aelindra, Lumareth, Orivane |
+
 - Names generated deterministically from world seed
-- Name banks are configurable data (JSON), not hardcoded
+- Name banks are configurable data, not hardcoded
+- Each nation gets one flavor assigned randomly per seed
 
 ---
 

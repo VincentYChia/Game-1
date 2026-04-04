@@ -227,6 +227,16 @@ LAYER_1_CATEGORIES = {
 # ══════════════════════════════════════════════════════════════════
 
 LAYER_2_CATEGORIES = {
+    "nation": TagCategory(
+        "nation", frozenset(), layer_unlocked=2, is_dynamic=True,
+        is_key_tag=True,
+        description="Nation-level geographic address (largest sovereign division)",
+    ),
+    "region": TagCategory(
+        "region", frozenset(), layer_unlocked=2, is_dynamic=True,
+        is_key_tag=True,
+        description="Region-level geographic address (geographic identity within nation)",
+    ),
     "locality": TagCategory(
         "locality", frozenset(), layer_unlocked=2, is_dynamic=True,
         is_key_tag=True,
@@ -244,12 +254,12 @@ LAYER_2_CATEGORIES = {
     ),
     "biome": TagCategory(
         "biome",
-        frozenset({"peaceful_forest", "dangerous_forest", "rare_forest",
-                   "peaceful_quarry", "dangerous_quarry", "rare_quarry",
-                   "peaceful_cave", "dangerous_cave", "rare_cave",
-                   "water_lake", "water_river", "water_cursed_swamp"}),
+        frozenset({"forest", "dense_thicket", "cave", "deep_cave", "quarry",
+                   "rocky_highlands", "wetland", "lake", "river", "flooded_cave",
+                   "rocky_forest", "crystal_cavern", "overgrown_ruins",
+                   "barren_waste", "cursed_marsh"}),
         layer_unlocked=2,
-        description="Chunk biome type",
+        description="Chunk biome type (15 types derived from region identity)",
     ),
     "scope": TagCategory(
         "scope",
