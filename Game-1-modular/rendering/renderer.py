@@ -979,7 +979,16 @@ class Renderer:
                 tile_type_name = tile.tile_type.name  # "GRASS", "STONE", etc.
                 wx = int(tile.position.x)
                 wy = int(tile.position.y)
-                tile_surf = get_tile_surface(tile_type_name, wx, wy, Config.TILE_SIZE)
+
+                # Get neighbor tile types for edge dithering
+                neighbors = {}
+                for d, (ndx, ndy) in [('n', (0, -1)), ('s', (0, 1)), ('e', (1, 0)), ('w', (-1, 0))]:
+                    n_pos = Position(wx + ndx, wy + ndy)
+                    n_tile = world.get_tile(n_pos)
+                    if n_tile and n_tile.tile_type.name != tile_type_name:
+                        neighbors[d] = n_tile.tile_type.name
+
+                tile_surf = get_tile_surface(tile_type_name, wx, wy, Config.TILE_SIZE, neighbors or None)
                 self.screen.blit(tile_surf, (sx, sy))
 
         for station in world.get_visible_stations(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
@@ -1262,7 +1271,7 @@ class Renderer:
 
             can_harvest, reason = character.can_harvest_resource(resource) if in_range else (False, "")
 
-            size = Config.TILE_SIZE * 2 - 4
+            size = int(Config.TILE_SIZE * 1.5)
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
 
             # Get icon path from ResourceNodeDatabase (handles name mapping)
@@ -3692,7 +3701,7 @@ class Renderer:
         surf.blit(self.small_font.render(controls, True, (180, 180, 180)), (s(20), s(40)))
 
         # Zoom indicator
-        zoom_text = f"Zoom: {map_system.map_zoom:.1f}x"
+        zoom_text = f"Zoom: {map_system.map_zoom:.2f}x"
         surf.blit(self.small_font.render(zoom_text, True, (150, 200, 255)), (ww - s(100), s(15)))
 
         # Map area dimensions

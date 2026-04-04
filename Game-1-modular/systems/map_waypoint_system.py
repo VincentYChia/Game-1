@@ -575,8 +575,8 @@ class MapWaypointSystem:
         Args:
             delta: Direction to zoom (+1 in, -1 out)
         """
-        # Proportional step: 20% of current zoom level (min 0.02)
-        step = max(0.02, self.map_zoom * 0.2)
+        # Proportional step: 25% of current zoom level (min 0.005)
+        step = max(0.005, self.map_zoom * 0.25)
         self.map_zoom += delta * step
         self.map_zoom = max(self._config.map_display.min_zoom,
                            min(self._config.map_display.max_zoom, self.map_zoom))

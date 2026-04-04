@@ -172,19 +172,28 @@ _CACHE_MAX = 4096  # Max cached surfaces (fits ~64x64 viewport easily)
 
 
 def get_tile_surface(tile_type_name: str, world_x: int, world_y: int,
-                     tile_size: int) -> pygame.Surface:
+                     tile_size: int,
+                     neighbors: dict = None) -> pygame.Surface:
     """Get or generate a textured surface for a tile.
 
     Surfaces are cached for performance. Each tile gets a unique
     procedurally generated surface based on its world position.
+
+    Args:
+        neighbors: Optional dict of {direction: tile_type_name} for edge
+                   dithering. Keys: 'n','s','e','w' for cardinal neighbors.
     """
-    cache_key = (world_x, world_y, tile_type_name)
+    # Include neighbor types in cache key for edge dithering
+    n_key = None
+    if neighbors:
+        n_key = tuple(sorted((k, v) for k, v in neighbors.items() if v != tile_type_name))
+    cache_key = (world_x, world_y, tile_type_name, n_key)
+
     if cache_key in _surface_cache:
         return _surface_cache[cache_key]
 
     # Evict oldest if cache is full
     if len(_surface_cache) >= _CACHE_MAX:
-        # Remove ~25% of cache (LRU would be better but this is simpler)
         keys = list(_surface_cache.keys())
         for k in keys[:_CACHE_MAX // 4]:
             del _surface_cache[k]
@@ -198,6 +207,11 @@ def get_tile_surface(tile_type_name: str, world_x: int, world_y: int,
     # Add procedural detail pixels for texture
     if tile_size >= 16:
         _add_tile_detail(surf, tile_type_name, world_x, world_y, tile_size)
+
+    # Edge dithering — scatter neighbor-colored pixels at tile borders
+    # Creates organic transitions instead of hard lines between tile types
+    if tile_size >= 8 and neighbors:
+        _add_edge_dither(surf, tile_type_name, world_x, world_y, tile_size, neighbors)
 
     _surface_cache[cache_key] = surf
     return surf
@@ -263,6 +277,69 @@ def _add_tile_detail(surf: pygame.Surface, tile_type: str,
             elif val < 0.1:
                 # Dark soil
                 surf.set_at((min(px, size - 1), min(py, size - 1)), (72, 50, 32))
+
+
+def _add_edge_dither(surf: pygame.Surface, tile_type: str,
+                     wx: int, wy: int, size: int,
+                     neighbors: dict) -> None:
+    """Scatter neighbor-colored pixels at tile edges for organic transitions.
+
+    Instead of hard lines between grass and stone, dithers the boundary
+    with scattered pixels that fade in density toward the center.
+    """
+    dither_depth = max(2, size // 4)  # How far dithering reaches into tile
+
+    for direction, n_type in neighbors.items():
+        if n_type == tile_type:
+            continue
+
+        n_palette = TILE_PALETTES.get(n_type, TILE_PALETTES["GRASS"])
+        n_color = n_palette["base"]
+        # Darken slightly for a natural shadow at transitions
+        shadow = (max(0, n_color[0] - 10), max(0, n_color[1] - 10), max(0, n_color[2] - 10))
+
+        for i in range(size * dither_depth // 3):
+            # Hash-based deterministic pixel placement
+            h = _hash(wx * 200 + i, wy * 200 + ord(direction[0]), 4444)
+            h2 = _hash(wx + i * 7, wy + i * 3, 4445)
+
+            if direction == 'n':
+                px = int(h * size)
+                py = int(h2 * dither_depth)
+                density = 1.0 - (py / dither_depth)  # Denser near edge
+            elif direction == 's':
+                px = int(h * size)
+                py = size - 1 - int(h2 * dither_depth)
+                density = 1.0 - ((size - 1 - py) / dither_depth)
+            elif direction == 'w':
+                px = int(h2 * dither_depth)
+                py = int(h * size)
+                density = 1.0 - (px / dither_depth)
+            elif direction == 'e':
+                px = size - 1 - int(h2 * dither_depth)
+                py = int(h * size)
+                density = 1.0 - ((size - 1 - px) / dither_depth)
+            else:
+                continue
+
+            # Probabilistic placement — denser near edge, sparser toward center
+            if _hash(wx + i, wy + i * 11, 4446) < density * 0.6:
+                px = max(0, min(size - 1, px))
+                py = max(0, min(size - 1, py))
+                # Blend with existing pixel for softer look
+                existing = surf.get_at((px, py))
+                blended = (
+                    (existing[0] + shadow[0]) // 2,
+                    (existing[1] + shadow[1]) // 2,
+                    (existing[2] + shadow[2]) // 2,
+                )
+                surf.set_at((px, py), blended)
+
+
+def _get_tile_color_with_offset(tile_type_name, wx, wy, seed_offset=0):
+    """Variant of _get_tile_color for neighbor color lookup."""
+    palette = TILE_PALETTES.get(tile_type_name, TILE_PALETTES["GRASS"])
+    return palette["base"]
 
 
 def clear_terrain_cache() -> None:
