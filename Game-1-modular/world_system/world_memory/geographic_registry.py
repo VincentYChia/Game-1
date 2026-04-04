@@ -167,6 +167,108 @@ class GeographicRegistry:
             tags=data.get("tags", []),
         )
 
+    def load_from_world_map(self, world_map) -> None:
+        """Load region hierarchy from the geographic system's WorldMap.
+
+        Converts WorldMap nations/regions/provinces/districts into
+        GeographicRegistry Region objects with proper hierarchy.
+
+        Args:
+            world_map: WorldMap from systems.geography.models
+        """
+        self.regions.clear()
+        self._invalidate_cache()
+        chunk_size = 16
+
+        # Create realm
+        half = world_map.world_size // 2
+        realm_bounds = [-half * chunk_size, -half * chunk_size,
+                        half * chunk_size, half * chunk_size]
+        realm = Region(
+            region_id="realm_0",
+            name="The Known Lands",
+            level=RegionLevel.REALM,
+            bounds_x1=realm_bounds[0], bounds_y1=realm_bounds[1],
+            bounds_x2=realm_bounds[2], bounds_y2=realm_bounds[3],
+        )
+        self.regions["realm_0"] = realm
+        self.realm = realm
+
+        # Register nations as provinces (highest named division in WMS)
+        for nid, nation in world_map.nations.items():
+            nation_id = f"nation_{nid}"
+            # Find bounds from regions
+            child_ids = []
+            min_x, min_y = float('inf'), float('inf')
+            max_x, max_y = float('-inf'), float('-inf')
+            for rid in nation.region_ids:
+                region = world_map.regions.get(rid)
+                if region:
+                    bx1, by1, bx2, by2 = region.bounds
+                    min_x = min(min_x, bx1 * chunk_size)
+                    min_y = min(min_y, by1 * chunk_size)
+                    max_x = max(max_x, bx2 * chunk_size)
+                    max_y = max(max_y, by2 * chunk_size)
+                    child_ids.append(f"region_{rid}")
+
+            self.regions[nation_id] = Region(
+                region_id=nation_id,
+                name=nation.name,
+                level=RegionLevel.PROVINCE,
+                bounds_x1=int(min_x) if min_x != float('inf') else 0,
+                bounds_y1=int(min_y) if min_y != float('inf') else 0,
+                bounds_x2=int(max_x) if max_x != float('-inf') else 0,
+                bounds_y2=int(max_y) if max_y != float('-inf') else 0,
+                parent_id="realm_0",
+                child_ids=child_ids,
+                tags=[f"nation:{nation.name.lower()}", f"flavor:{nation.naming_flavor.value}"],
+            )
+            realm.child_ids.append(nation_id)
+
+        # Register regions as districts
+        for rid, region in world_map.regions.items():
+            region_id = f"region_{rid}"
+            bx1, by1, bx2, by2 = region.bounds
+            nation = world_map.nations.get(region.nation_id)
+            parent_id = f"nation_{region.nation_id}"
+
+            # Collect province child IDs
+            child_ids = [f"province_{pid}" for pid in region.province_ids]
+
+            self.regions[region_id] = Region(
+                region_id=region_id,
+                name=region.name,
+                level=RegionLevel.DISTRICT,
+                bounds_x1=bx1 * chunk_size, bounds_y1=by1 * chunk_size,
+                bounds_x2=bx2 * chunk_size, bounds_y2=by2 * chunk_size,
+                parent_id=parent_id,
+                child_ids=child_ids,
+                biome_primary=region.identity.value,
+                tags=[f"identity:{region.identity.value}",
+                      f"nation:{nation.name.lower()}" if nation else ""],
+            )
+
+        # Register provinces as localities (for position lookup)
+        for pid, province in world_map.provinces.items():
+            province_id = f"province_{pid}"
+            bx1, by1, bx2, by2 = province.bounds
+            parent_id = f"region_{province.region_id}"
+
+            self.regions[province_id] = Region(
+                region_id=province_id,
+                name=province.name,
+                level=RegionLevel.LOCALITY,
+                bounds_x1=bx1 * chunk_size, bounds_y1=by1 * chunk_size,
+                bounds_x2=bx2 * chunk_size, bounds_y2=by2 * chunk_size,
+                parent_id=parent_id,
+            )
+
+        self._invalidate_cache()
+        nr = len(world_map.regions)
+        np_ = len(world_map.provinces)
+        nn = len(world_map.nations)
+        print(f"[GeoRegistry] Loaded from WorldMap: {nn} nations, {nr} regions, {np_} provinces")
+
     def generate_from_biomes(self, chunk_biomes: Dict[Tuple[int, int], str],
                              chunk_size: int = 16) -> None:
         """Generate a basic region hierarchy from chunk biome data.

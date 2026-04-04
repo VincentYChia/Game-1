@@ -3827,6 +3827,7 @@ class Renderer:
             # Draw nation borders — check each chunk pair for different nations
             border_color_nation = (220, 200, 160)  # Gold-ish for nation borders
             border_color_region = (160, 160, 180)  # Silver for region borders
+            border_color_province = (120, 120, 140)  # Subtle for province borders
             for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 1):
                 for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 1):
                     cx_ = int(center_chunk_x) + dx
@@ -3843,7 +3844,7 @@ class Renderer:
                     if not gd:
                         continue
 
-                    # Check right neighbor for nation/region border
+                    # Check right neighbor for borders (nation > region > province)
                     gd_right = geo_map.get_chunk_data(cx_ + 1, cy_)
                     if gd_right:
                         if gd.nation_id != gd_right.nation_id:
@@ -3854,8 +3855,12 @@ class Renderer:
                             x_line = px_ + chunk_size - 1
                             pygame.draw.line(surf, border_color_region,
                                              (x_line, py_), (x_line, py_ + chunk_size), 1)
+                        elif gd.province_id != gd_right.province_id and chunk_size >= s(6):
+                            x_line = px_ + chunk_size - 1
+                            pygame.draw.line(surf, border_color_province,
+                                             (x_line, py_), (x_line, py_ + chunk_size), 1)
 
-                    # Check bottom neighbor
+                    # Check bottom neighbor for borders
                     gd_bottom = geo_map.get_chunk_data(cx_, cy_ + 1)
                     if gd_bottom:
                         if gd.nation_id != gd_bottom.nation_id:
@@ -3865,6 +3870,10 @@ class Renderer:
                         elif gd.region_id != gd_bottom.region_id and chunk_size >= s(4):
                             y_line = py_ + chunk_size - 1
                             pygame.draw.line(surf, border_color_region,
+                                             (px_, y_line), (px_ + chunk_size, y_line), 1)
+                        elif gd.province_id != gd_bottom.province_id and chunk_size >= s(6):
+                            y_line = py_ + chunk_size - 1
+                            pygame.draw.line(surf, border_color_province,
                                              (px_, y_line), (px_ + chunk_size, y_line), 1)
 
             # Draw nation labels at low zoom (visible when zoomed out)
@@ -3913,6 +3922,24 @@ class Renderer:
                             lx = label_px - name_surf.get_width() // 2
                             ly = label_py - name_surf.get_height() // 2 + s(14)
                             shadow = self.small_font.render(region.name, True, (0, 0, 0))
+                            surf.blit(shadow, (lx + 1, ly + 1))
+                            surf.blit(name_surf, (lx, ly))
+
+            # Draw province labels at higher zoom
+            if chunk_size >= s(12):
+                for pid, province in geo_map.provinces.items():
+                    bx1, by1, bx2, by2 = province.bounds
+                    avg_x = (bx1 + bx2) / 2
+                    avg_y = (by1 + by2) / 2
+                    label_px = map_area_x + map_center_x + int((avg_x - center_chunk_x) * chunk_size)
+                    label_py = map_area_y + map_center_y + int((avg_y - center_chunk_y) * chunk_size)
+
+                    if map_area_x <= label_px <= map_area_x + map_area_w:
+                        if map_area_y <= label_py <= map_area_y + map_area_h:
+                            name_surf = self.small_font.render(province.name, True, (180, 180, 200, 200))
+                            lx = label_px - name_surf.get_width() // 2
+                            ly = label_py - name_surf.get_height() // 2
+                            shadow = self.small_font.render(province.name, True, (0, 0, 0))
                             surf.blit(shadow, (lx + 1, ly + 1))
                             surf.blit(name_surf, (lx, ly))
 

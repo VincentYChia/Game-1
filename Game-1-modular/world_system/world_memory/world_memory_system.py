@@ -116,7 +116,10 @@ class WorldMemorySystem:
 
         # 2. Geographic Registry
         self.geo_registry = GeographicRegistry.get_instance()
-        if geo_map_path and os.path.exists(geo_map_path):
+        # Prefer new geographic system's WorldMap if available
+        if world and hasattr(world, 'geographic_map') and world.geographic_map:
+            self.geo_registry.load_from_world_map(world.geographic_map)
+        elif geo_map_path and os.path.exists(geo_map_path):
             self.geo_registry.load_base_map(geo_map_path)
         elif world:
             # Generate from world biome data if available

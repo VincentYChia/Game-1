@@ -23,30 +23,57 @@
   },
 
   "spawnRates": {
+    "tranquil": {
+      "minEnemies": 0,
+      "maxEnemies": 1,
+      "spawnInterval": 180,
+      "tierWeights": {"tier1": 1.0, "tier2": 0.0, "tier3": 0.0, "tier4": 0.0},
+      "comment": "Geographic system: safest areas, almost no enemies"
+    },
     "peaceful": {
       "minEnemies": 0,
       "maxEnemies": 2,
       "spawnInterval": 120,
-      "tierWeights": {"tier1": 0.9, "tier2": 0.1, "tier3": 0.0, "tier4": 0.0}
+      "tierWeights": {"tier1": 0.80, "tier2": 0.15, "tier3": 0.05, "tier4": 0.0}
+    },
+    "moderate": {
+      "minEnemies": 1,
+      "maxEnemies": 3,
+      "spawnInterval": 90,
+      "tierWeights": {"tier1": 0.60, "tier2": 0.30, "tier3": 0.10, "tier4": 0.0}
+    },
+    "dangerous": {
+      "minEnemies": 2,
+      "maxEnemies": 5,
+      "spawnInterval": 60,
+      "tierWeights": {"tier1": 0.25, "tier2": 0.35, "tier3": 0.30, "tier4": 0.10}
+    },
+    "perilous": {
+      "minEnemies": 3,
+      "maxEnemies": 6,
+      "spawnInterval": 45,
+      "tierWeights": {"tier1": 0.15, "tier2": 0.20, "tier3": 0.45, "tier4": 0.20}
+    },
+    "lethal": {
+      "minEnemies": 4,
+      "maxEnemies": 8,
+      "spawnInterval": 30,
+      "tierWeights": {"tier1": 0.0, "tier2": 0.15, "tier3": 0.45, "tier4": 0.40},
+      "comment": "Geographic system: most dangerous areas, high tier dominance"
     },
     "normal": {
       "minEnemies": 2,
       "maxEnemies": 5,
       "spawnInterval": 90,
-      "tierWeights": {"tier1": 0.7, "tier2": 0.25, "tier3": 0.05, "tier4": 0.0}
-    },
-    "dangerous": {
-      "minEnemies": 4,
-      "maxEnemies": 8,
-      "spawnInterval": 60,
-      "tierWeights": {"tier1": 0.4, "tier2": 0.4, "tier3": 0.15, "tier4": 0.05}
+      "tierWeights": {"tier1": 0.7, "tier2": 0.25, "tier3": 0.05, "tier4": 0.0},
+      "comment": "Legacy fallback"
     },
     "rare": {
       "minEnemies": 1,
       "maxEnemies": 3,
       "spawnInterval": 180,
       "tierWeights": {"tier1": 0.2, "tier2": 0.3, "tier3": 0.3, "tier4": 0.2},
-      "comment": "Rare chunks have fewer but higher tier enemies"
+      "comment": "Legacy: rare chunks"
     }
   },
 
