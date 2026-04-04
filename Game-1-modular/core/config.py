@@ -23,6 +23,7 @@ class Config:
     # Infinite world - no fixed size, chunks generated on demand
     CHUNK_SIZE = 16  # Tiles per chunk side (also in world_generation.JSON)
     TILE_SIZE = 32   # Pixels per tile
+    ENTITY_VISUAL_SCALE = 1.5  # Visual scale multiplier for all game entities
 
     # Chunk loading configuration
     # NOTE: These are default values. Actual values are loaded from

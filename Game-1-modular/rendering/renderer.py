@@ -921,7 +921,7 @@ class Renderer:
             is_near = npc.is_near(character.position)
 
             # NPC body (square sprite)
-            size = Config.TILE_SIZE - 4
+            size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE)
             npc_rect = pygame.Rect(nx - size // 2, ny - size // 2, size, size)
 
             # Try to load NPC icon
@@ -994,7 +994,7 @@ class Renderer:
         for station in world.get_visible_stations(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(station.position)
             in_range = character.is_in_range(station.position)
-            size = Config.TILE_SIZE + 8  # Larger than before (was - 8, now + 8)
+            size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE) + 8
 
             # Map station type to icon name
             station_icon_map = {
@@ -1038,7 +1038,7 @@ class Renderer:
         from data.models import PlacedEntityType
         for entity in world.get_visible_placed_entities(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(entity.position)
-            size = Config.TILE_SIZE
+            size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE)
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
 
             # Construct icon path based on entity type
@@ -1136,7 +1136,7 @@ class Renderer:
         if hasattr(world, 'spawn_storage_chest') and world.spawn_storage_chest:
             chest = world.spawn_storage_chest
             sx, sy = camera.world_to_screen(chest.position)
-            size = Config.TILE_SIZE
+            size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE)
 
             # Check if player is in range
             in_range = character.is_in_range(chest.position) if character else False
@@ -1169,7 +1169,7 @@ class Renderer:
         if hasattr(world, 'death_chests') and world.death_chests:
             for death_chest in world.death_chests:
                 sx, sy = camera.world_to_screen(death_chest.position)
-                size = Config.TILE_SIZE
+                size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE)
 
                 # Check if player is in range
                 in_range = character.is_in_range(death_chest.position) if character else False
@@ -1223,7 +1223,7 @@ class Renderer:
         for entrance in world.get_visible_dungeon_entrances(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(entrance.position)
             in_range = character.is_in_range(entrance.position)
-            size = Config.TILE_SIZE
+            size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE)
 
             # Get rarity color for the entrance
             rarity_color = entrance.get_rarity_color()
@@ -1369,8 +1369,8 @@ class Renderer:
 
                 if enemy.is_alive:
                     vis_size = getattr(enemy.definition, 'visual_size', 1.0)
-                    base_size = Config.TILE_SIZE // 2
-                    size = max(4, int(base_size * vis_size))
+                    base_size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE * 0.5)
+                    size = max(6, int(base_size * vis_size))
                     tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
                     enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
                     if enemy.is_boss:
@@ -1597,7 +1597,7 @@ class Renderer:
 
                     # --- Health bar ---
                     health_percent = enemy.current_health / enemy.max_health
-                    bar_w = max(Config.TILE_SIZE, int(Config.TILE_SIZE * vis_size))
+                    bar_w = max(int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE), int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE * vis_size))
                     bar_h = 4
                     bar_y = ey - size - 12
                     pygame.draw.rect(self.screen, Config.COLOR_HP_BAR_BG, (ex - bar_w // 2, bar_y, bar_w, bar_h))
@@ -1618,7 +1618,7 @@ class Renderer:
                 else:
                     # Corpse (greyed out, scaled)
                     vis_size = getattr(enemy.definition, 'visual_size', 1.0)
-                    corpse_size = max(3, int(Config.TILE_SIZE // 3 * vis_size))
+                    corpse_size = max(4, int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE // 3 * vis_size))
                     pygame.draw.circle(self.screen, (100, 100, 100), (ex, ey), corpse_size)
                     loot_text = self.tiny_font.render("LOOT", True, (255, 255, 0))
                     self.screen.blit(loot_text, (ex - loot_text.get_width() // 2, ey - 10))
@@ -1629,11 +1629,13 @@ class Renderer:
         # Render player (enhanced: facing indicator, shadow, idle bob)
         try:
             from rendering.visual_effects import render_player_enhanced
-            render_player_enhanced(self.screen, camera, character, Config.TILE_SIZE,
+            render_player_enhanced(self.screen, camera, character,
+                                   int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE),
                                    getattr(self, '_temp_ac_systems', None))
         except Exception:
             center_x, center_y = camera.world_to_screen(character.position)
-            pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
+            pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y),
+                               int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE // 3))
 
         # Render action combat overlays (hitboxes, projectiles, particles, flashes)
         ac_systems = getattr(self, '_temp_ac_systems', None)
@@ -2373,8 +2375,8 @@ class Renderer:
             if -50 <= ex <= Config.VIEWPORT_WIDTH + 50 and -50 <= ey <= Config.VIEWPORT_HEIGHT + 50:
                 if enemy.is_alive:
                     vis_size = getattr(enemy.definition, 'visual_size', 1.0)
-                    base_size = Config.TILE_SIZE // 2
-                    size = max(4, int(base_size * vis_size))
+                    base_size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE * 0.5)
+                    size = max(6, int(base_size * vis_size))
 
                     icon = None
                     if enemy.definition.icon_path:
@@ -2393,7 +2395,7 @@ class Renderer:
 
                     # Health bar (scaled)
                     health_percent = enemy.current_health / enemy.max_health
-                    bar_w = max(Config.TILE_SIZE, int(Config.TILE_SIZE * vis_size))
+                    bar_w = max(int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE), int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE * vis_size))
                     bar_h = 4
                     bar_y = ey - size - 8
                     pygame.draw.rect(self.screen, (60, 60, 60), (ex - bar_w // 2, bar_y, bar_w, bar_h))
@@ -2413,11 +2415,13 @@ class Renderer:
         # Render player (enhanced: facing indicator, shadow, idle bob)
         try:
             from rendering.visual_effects import render_player_enhanced
-            render_player_enhanced(self.screen, camera, character, Config.TILE_SIZE,
+            render_player_enhanced(self.screen, camera, character,
+                                   int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE),
                                    getattr(self, '_temp_ac_systems', None))
         except Exception:
             center_x, center_y = camera.world_to_screen(character.position)
-            pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
+            pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y),
+                               int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE // 3))
             pygame.draw.circle(self.screen, (0, 0, 0), (center_x, center_y), Config.TILE_SIZE // 3, 2)
 
         # Render action combat overlays in dungeon (hitboxes, projectiles, particles, flashes)

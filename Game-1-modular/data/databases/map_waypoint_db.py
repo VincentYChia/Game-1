@@ -134,8 +134,8 @@ class MapWaypointConfig:
     def _parse_map_display(self, data: Dict) -> None:
         """Parse map display configuration."""
         self.map_display = MapDisplayConfig(
-            default_zoom=data.get('default_zoom', 1.0),
-            min_zoom=data.get('min_zoom', 0.25),
+            default_zoom=data.get('default_zoom', 0.5),
+            min_zoom=data.get('min_zoom', 0.01),
             max_zoom=data.get('max_zoom', 4.0),
             zoom_step=data.get('zoom_step', 0.25),
             chunk_render_size=data.get('chunk_render_size', 12),
