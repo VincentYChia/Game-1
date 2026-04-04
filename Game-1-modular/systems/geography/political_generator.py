@@ -34,20 +34,24 @@ def _determine_subdivision_count(
 ) -> int:
     """Determine how many children a parent territory should have.
 
-    Divides parent area by target child size with seed-based variance.
+    Uses min/max child area to compute a valid range of child counts,
+    then picks within that range using seed-based randomness.
     """
-    target_area = (min_child_area + max_child_area) // 2
-    base_count = max(1, parent_chunk_count // target_area)
+    if min_child_area <= 0:
+        return 1
 
-    # Add some variance
-    variance = hash_2d_int(parent_id, 0, seed, 3) - 1  # -1, 0, or 1
-    count = base_count + variance
+    # min_count: fewest children (each child at max size)
+    min_count = max(2, parent_chunk_count // max_child_area)
+    # max_count: most children (each child at min size)
+    max_count = max(min_count, parent_chunk_count // min_child_area)
 
-    # Ensure we don't create children smaller than minimum
-    max_possible = parent_chunk_count // min_child_area if min_child_area > 0 else base_count
-    count = max(1, min(count, max_possible))
+    if min_count >= max_count:
+        return min_count
 
-    return count
+    # Pick within range using seed
+    range_size = max_count - min_count + 1
+    offset = hash_2d_int(parent_id, 0, seed, range_size)
+    return min_count + offset
 
 
 def _subdivide_territory(
