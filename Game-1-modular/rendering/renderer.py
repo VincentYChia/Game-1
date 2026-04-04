@@ -3766,9 +3766,43 @@ class Renderer:
                 else:
                     color = config.biome_colors.get('unexplored', (30, 30, 40))
 
-                # Draw chunk
+                # Draw chunk with edge blending for smooth transitions
                 chunk_rect = pygame.Rect(px, py, chunk_size - 1, chunk_size - 1)
                 pygame.draw.rect(surf, color, chunk_rect)
+
+                # Edge blending: smooth color transitions with neighbors
+                if chunk_size >= 6 and geo_data is not None and world_system.geographic_map:
+                    blend_w = max(1, chunk_size // 5)  # 20% of chunk for blend zone
+                    # Check each edge neighbor and blend if different color
+                    for edge_dx, edge_dy, bx, by, bw, bh in [
+                        (1, 0, px + chunk_size - blend_w - 1, py, blend_w, chunk_size - 1),   # right
+                        (-1, 0, px, py, blend_w, chunk_size - 1),                              # left
+                        (0, 1, px, py + chunk_size - blend_w - 1, chunk_size - 1, blend_w),   # bottom
+                        (0, -1, px, py, chunk_size - 1, blend_w),                              # top
+                    ]:
+                        n_geo = world_system.geographic_map.get_chunk_data(chunk_x + edge_dx, chunk_y + edge_dy)
+                        if n_geo is None:
+                            continue
+                        n_ct = n_geo.chunk_type.value if hasattr(n_geo.chunk_type, 'value') else str(n_geo.chunk_type)
+                        n_color = config.get_biome_color(n_ct)
+                        # Apply nation tint to neighbor too
+                        n_nation = world_system.geographic_map.get_nation(n_geo.nation_id)
+                        if n_nation and n_nation.color:
+                            nnr, nng, nnb = n_nation.color
+                            ncr, ncg, ncb = n_color
+                            n_color = (int(ncr * 0.85 + nnr * 0.15), int(ncg * 0.85 + nng * 0.15), int(ncb * 0.85 + nnb * 0.15))
+                        # Only blend if colors differ noticeably
+                        if abs(color[0] - n_color[0]) + abs(color[1] - n_color[1]) + abs(color[2] - n_color[2]) > 30:
+                            # 50/50 blend for the edge strip
+                            blend = (
+                                (color[0] + n_color[0]) // 2,
+                                (color[1] + n_color[1]) // 2,
+                                (color[2] + n_color[2]) // 2,
+                            )
+                            blend_rect = pygame.Rect(bx, by, bw, bh)
+                            blend_rect = blend_rect.clip(chunk_rect)
+                            if blend_rect.width > 0 and blend_rect.height > 0:
+                                pygame.draw.rect(surf, blend, blend_rect)
 
                 # At high zoom, add subtle texture to explored chunks
                 if explored and map_system.map_zoom >= 1.5 and chunk_size >= s(20):
