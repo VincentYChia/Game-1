@@ -1274,7 +1274,7 @@ class Renderer:
 
             can_harvest, reason = character.can_harvest_resource(resource) if in_range else (False, "")
 
-            size = int(Config.TILE_SIZE * 1.5)
+            size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE)
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
 
             # Get icon path from ResourceNodeDatabase (handles name mapping)
@@ -3878,9 +3878,11 @@ class Renderer:
                     hovered_chunk = (chunk_x, chunk_y, explored)
                     pygame.draw.rect(surf, (255, 255, 255), chunk_rect, s(1))
 
-        # Draw geographic borders and labels (skip borders when chunks too small)
+        # Geographic map reference for borders and labels
+        geo_map = world_system.geographic_map if _has_geo else None
+
+        # Draw geographic borders (skip when chunks too small to see borders)
         if _has_geo and chunk_size >= 3:
-            geo_map = world_system.geographic_map
             # Draw nation borders — check each chunk pair for different nations
             border_color_nation = (220, 200, 160)  # Gold-ish for nation borders
             border_color_region = (160, 160, 180)  # Silver for region borders
