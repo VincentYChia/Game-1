@@ -3766,358 +3766,150 @@ class Renderer:
         map_center_y = map_area_h // 2
 
         # ══════════════════════════════════════════════════════════════
-        # MAP CHUNK RENDERING
-        # Two paths: pre-rendered image (zoomed out) or per-chunk (zoomed in)
+        # MAP RENDERING — single pre-rendered image + label overlays
         # ══════════════════════════════════════════════════════════════
-        hovered_chunk = None
-        _has_geo = hasattr(world_system, 'geographic_map') and world_system.geographic_map is not None
+        geo_map = None
+        if hasattr(world_system, 'geographic_map') and world_system.geographic_map:
+            geo_map = world_system.geographic_map
         _map_images = getattr(world_system, 'map_images', {})
-        _used_lod = False
-        geo_map = world_system.geographic_map if _has_geo else None
+        hovered_chunk = None
 
-        if _has_geo and _map_images and chunk_size <= 6:
-            # ── FAST PATH: blit from pre-rendered map image ──
-            # Always use highest resolution available for best quality
-            best_ppc = max(_map_images.keys())
-            best_surf = _map_images[best_ppc]
+        # Helper: chunk world coords → pixel position on surf
+        def _c2p(cx, cy):
+            return (
+                map_area_x + map_center_x + int((cx - center_chunk_x) * chunk_size_f),
+                map_area_y + map_center_y + int((cy - center_chunk_y) * chunk_size_f),
+            )
 
-            if best_surf:
-                half = geo_map.world_size // 2
-                img_w, img_h = best_surf.get_size()
+        # ── DRAW MAP IMAGE (always from pre-rendered surface) ──
+        if geo_map and _map_images:
+            ppc = max(_map_images.keys())
+            img = _map_images[ppc]
+            half = geo_map.world_size // 2
+            iw, ih = img.get_size()
 
-                # How many chunks fit in the viewport at current zoom
-                chunks_visible_w = map_area_w / max(0.1, chunk_size_f)
-                chunks_visible_h = map_area_h / max(0.1, chunk_size_f)
+            vw = map_area_w / max(0.1, chunk_size_f)  # chunks visible horizontally
+            vh = map_area_h / max(0.1, chunk_size_f)
 
-                # Source rect in image pixels
-                src_w = chunks_visible_w * best_ppc
-                src_h = chunks_visible_h * best_ppc
-                src_cx = (center_chunk_x + half) * best_ppc
-                src_cy = (center_chunk_y + half) * best_ppc
-                src_x = src_cx - src_w / 2
-                src_y = src_cy - src_h / 2
+            sx = max(0.0, (center_chunk_x + half - vw / 2) * ppc)
+            sy = max(0.0, (center_chunk_y + half - vh / 2) * ppc)
+            sw = min(float(iw) - sx, vw * ppc)
+            sh = min(float(ih) - sy, vh * ppc)
 
-                # Clamp to image bounds
-                if src_x < 0:
-                    src_x = 0
-                if src_y < 0:
-                    src_y = 0
-                if src_x + src_w > img_w:
-                    src_w = img_w - src_x
-                if src_y + src_h > img_h:
-                    src_h = img_h - src_y
-
-                src_w = max(1, int(src_w))
-                src_h = max(1, int(src_h))
-                src_x = max(0, int(src_x))
-                src_y = max(0, int(src_y))
-
+            if sw > 0 and sh > 0:
                 try:
-                    src_rect = pygame.Rect(src_x, src_y, src_w, src_h)
-                    portion = best_surf.subsurface(src_rect)
+                    sr = pygame.Rect(int(sx), int(sy), max(1, int(sw)), max(1, int(sh)))
+                    portion = img.subsurface(sr)
                     scaled = pygame.transform.scale(portion, (map_area_w, map_area_h))
                     surf.blit(scaled, (map_area_x, map_area_y))
-                    _used_lod = True
                 except (ValueError, pygame.error):
-                    _used_lod = False
+                    pass
 
-        if not _used_lod:
-            # ── DETAIL PATH: per-chunk rendering (zoomed in, few chunks visible) ──
-            _geo_chunks = geo_map.chunk_data if geo_map else {}
-            _biome_color_fn = config.get_biome_color
-            _unexplored_color = config.biome_colors.get('unexplored', (30, 30, 40))
-            _nation_lookup = {}
-            if geo_map:
-                for nid, nd in geo_map.nations.items():
-                    if nd.color:
-                        _nation_lookup[nid] = nd.color
-
-            for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 1):
-                for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 1):
-                    chunk_x = int(center_chunk_x) + dx
-                    chunk_y = int(center_chunk_y) + dy
-                    px = map_area_x + map_center_x + int((chunk_x - center_chunk_x) * chunk_size_f)
-                    py = map_area_y + map_center_y + int((chunk_y - center_chunk_y) * chunk_size_f)
-                    if px + chunk_size < map_area_x or px > map_area_x + map_area_w:
-                        continue
-                    if py + chunk_size < map_area_y or py > map_area_y + map_area_h:
-                        continue
-
-                    geo_data = _geo_chunks.get((chunk_x, chunk_y))
-                    explored = None
-                    if geo_data is not None:
-                        ct_val = geo_data.chunk_type.value if hasattr(geo_data.chunk_type, 'value') else str(geo_data.chunk_type)
-                        color = _biome_color_fn(ct_val)
-                        nc = _nation_lookup.get(geo_data.nation_id)
-                        if nc:
-                            color = (int(color[0]*0.85+nc[0]*0.15), int(color[1]*0.85+nc[1]*0.15), int(color[2]*0.85+nc[2]*0.15))
-                    else:
-                        explored = map_system.get_explored_chunk(chunk_x, chunk_y)
-                        if explored:
-                            color = _biome_color_fn(explored.chunk_type.lower().replace(' ', '_'))
-                        else:
-                            color = _unexplored_color
-
-                    chunk_rect = pygame.Rect(px, py, max(1, chunk_size), max(1, chunk_size))
-                    pygame.draw.rect(surf, color, chunk_rect)
-
-                    # Highlight spawn
-                    if chunk_x == 0 and chunk_y == 0:
-                        pygame.draw.rect(surf, config.biome_colors.get('spawn_area', (255, 215, 0)), chunk_rect, s(2))
-
-                    # Dungeon marker
-                    if explored and explored.has_dungeon:
-                        dcx, dcy = px + chunk_size // 2, py + chunk_size // 2
-                        pygame.draw.circle(surf, config.dungeon_marker.color, (dcx, dcy), max(s(3), chunk_size // 4))
-
-                    # Hover
-                    rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
-                    if chunk_rect.collidepoint(rx, ry):
-                        hovered_chunk = (chunk_x, chunk_y, explored)
-                        pygame.draw.rect(surf, (255, 255, 255), chunk_rect, 1)
-
-        # Hover detection for LOD mode
-        if _used_lod and _has_geo:
-            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
-            if map_area_x <= rx <= map_area_x + map_area_w and map_area_y <= ry <= map_area_y + map_area_h:
-                hover_cx = int(center_chunk_x + (rx - map_area_x - map_center_x) / chunk_size_f)
-                hover_cy = int(center_chunk_y + (ry - map_area_y - map_center_y) / chunk_size_f)
-                hovered_chunk = (hover_cx, hover_cy, map_system.get_explored_chunk(hover_cx, hover_cy))
-
-        # Geographic map reference for borders and labels
-        geo_map = world_system.geographic_map if _has_geo else None
-
-        # Draw geographic borders (skip when using LOD image — borders are baked in)
-        if _has_geo and not _used_lod and chunk_size >= 3:
-            # Draw nation borders — check each chunk pair for different nations
-            border_color_nation = (220, 200, 160)  # Gold-ish for nation borders
-            border_color_region = (160, 160, 180)  # Silver for region borders
-            border_color_province = (120, 120, 140)  # Subtle for province borders
-            for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 1):
-                for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 1):
-                    cx_ = int(center_chunk_x) + dx
-                    cy_ = int(center_chunk_y) + dy
-                    px_ = map_area_x + map_center_x + int((cx_ - center_chunk_x) * chunk_size_f)
-                    py_ = map_area_y + map_center_y + int((cy_ - center_chunk_y) * chunk_size_f)
-
-                    if px_ + chunk_size < map_area_x or px_ > map_area_x + map_area_w:
-                        continue
-                    if py_ + chunk_size < map_area_y or py_ > map_area_y + map_area_h:
-                        continue
-
-                    gd = geo_map.get_chunk_data(cx_, cy_)
-                    if not gd:
-                        continue
-
-                    # Check right neighbor for borders (nation > region > province)
-                    gd_right = geo_map.get_chunk_data(cx_ + 1, cy_)
-                    if gd_right:
-                        if gd.nation_id != gd_right.nation_id:
-                            x_line = px_ + chunk_size - 1
-                            pygame.draw.line(surf, border_color_nation,
-                                             (x_line, py_), (x_line, py_ + chunk_size), max(s(2), 2))
-                        elif gd.region_id != gd_right.region_id and chunk_size >= s(4):
-                            x_line = px_ + chunk_size - 1
-                            pygame.draw.line(surf, border_color_region,
-                                             (x_line, py_), (x_line, py_ + chunk_size), 1)
-                        elif gd.province_id != gd_right.province_id and chunk_size >= s(6):
-                            x_line = px_ + chunk_size - 1
-                            pygame.draw.line(surf, border_color_province,
-                                             (x_line, py_), (x_line, py_ + chunk_size), 1)
-
-                    # Check bottom neighbor for borders
-                    gd_bottom = geo_map.get_chunk_data(cx_, cy_ + 1)
-                    if gd_bottom:
-                        if gd.nation_id != gd_bottom.nation_id:
-                            y_line = py_ + chunk_size - 1
-                            pygame.draw.line(surf, border_color_nation,
-                                             (px_, y_line), (px_ + chunk_size, y_line), max(s(2), 2))
-                        elif gd.region_id != gd_bottom.region_id and chunk_size >= s(4):
-                            y_line = py_ + chunk_size - 1
-                            pygame.draw.line(surf, border_color_region,
-                                             (px_, y_line), (px_ + chunk_size, y_line), 1)
-                        elif gd.province_id != gd_bottom.province_id and chunk_size >= s(6):
-                            y_line = py_ + chunk_size - 1
-                            pygame.draw.line(surf, border_color_province,
-                                             (px_, y_line), (px_ + chunk_size, y_line), 1)
-
-        # ── MAP LABELS (always drawn when geo available, independent of border rendering) ──
-        if _has_geo:
-            # Helper: draw a label with semi-transparent background pill
-            def _draw_map_label(text, cx_world, cy_world, font, fg_color, bg_alpha=160, y_offset=0):
-                lpx = map_area_x + map_center_x + int((cx_world - center_chunk_x) * chunk_size_f)
-                lpy = map_area_y + map_center_y + int((cy_world - center_chunk_y) * chunk_size_f) + y_offset
-                if not (map_area_x - 50 <= lpx <= map_area_x + map_area_w + 50):
+        # ── LABELS (fresh each frame, zoom-dependent tiers) ──
+        if geo_map:
+            def _lbl(text, cx, cy, font, color, bg_a=160, yoff=0):
+                px, py = _c2p(cx, cy)
+                py += yoff
+                if px < map_area_x - 80 or px > map_area_x + map_area_w + 80:
                     return None
-                if not (map_area_y - 20 <= lpy <= map_area_y + map_area_h + 20):
+                if py < map_area_y - 30 or py > map_area_y + map_area_h + 30:
                     return None
-                text_surf = font.render(text, True, fg_color)
-                tw, th = text_surf.get_width(), text_surf.get_height()
-                pad_x, pad_y = 4, 2
-                bg_rect = pygame.Rect(lpx - tw // 2 - pad_x, lpy - th // 2 - pad_y,
-                                      tw + pad_x * 2, th + pad_y * 2)
-                # Semi-transparent background
-                bg_surf = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
-                bg_surf.fill((12, 12, 20, bg_alpha))
-                surf.blit(bg_surf, bg_rect.topleft)
-                # Text centered
-                surf.blit(text_surf, (lpx - tw // 2, lpy - th // 2))
-                return bg_rect
+                ts = font.render(text, True, color)
+                tw, th = ts.get_width(), ts.get_height()
+                bx, by = px - tw // 2 - 5, py - th // 2 - 3
+                bg = pygame.Surface((tw + 10, th + 6), pygame.SRCALPHA)
+                bg.fill((10, 10, 18, bg_a))
+                surf.blit(bg, (bx, by))
+                surf.blit(ts, (px - tw // 2, py - th // 2))
+                return pygame.Rect(bx, by, tw + 10, th + 6)
 
-            # Collect placed label rects to avoid overlap
-            _placed_labels = []
-            def _no_overlap(rect):
-                if rect is None:
-                    return False
-                for placed in _placed_labels:
-                    if rect.colliderect(placed):
-                        return False
-                _placed_labels.append(rect)
+            _placed = []
+            def _nol(r):
+                if r is None: return False
+                for p in _placed:
+                    if r.colliderect(p): return False
+                _placed.append(r)
                 return True
 
-            # TIER 1: Nation labels — always visible, large font
+            # Nation labels (always)
             for nid, nation in geo_map.nations.items():
-                if not nation.region_ids:
-                    continue
-                sum_x, sum_y, count = 0, 0, 0
+                if not nation.region_ids: continue
+                sx_, sy_, cnt = 0.0, 0.0, 0
                 for rid in nation.region_ids:
-                    region = geo_map.regions.get(rid)
-                    if region:
-                        bx1, by1, bx2, by2 = region.bounds
-                        sum_x += (bx1 + bx2) / 2
-                        sum_y += (by1 + by2) / 2
-                        count += 1
-                if count == 0:
-                    continue
-                rect = _draw_map_label(
-                    nation.name.upper(), sum_x / count, sum_y / count,
-                    self.font, (255, 240, 210), bg_alpha=180,
-                )
-                _no_overlap(rect)
+                    rg = geo_map.regions.get(rid)
+                    if rg:
+                        b = rg.bounds
+                        sx_ += (b[0]+b[2])/2; sy_ += (b[1]+b[3])/2; cnt += 1
+                if cnt > 0:
+                    _nol(_lbl(nation.name.upper(), sx_/cnt, sy_/cnt,
+                              self.font, (255, 240, 210), 180))
 
-            # TIER 2: Region labels — visible at medium zoom
-            if chunk_size >= s(3):
-                for rid, region in geo_map.regions.items():
-                    bx1, by1, bx2, by2 = region.bounds
-                    rect = _draw_map_label(
-                        region.name, (bx1 + bx2) / 2, (by1 + by2) / 2,
-                        self.small_font, (195, 205, 225), bg_alpha=140, y_offset=s(16),
-                    )
-                    _no_overlap(rect)
+            # Region labels (medium zoom)
+            if chunk_size_f >= 1.0:
+                for rid, rg in geo_map.regions.items():
+                    b = rg.bounds
+                    _nol(_lbl(rg.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
+                              self.small_font, (190, 200, 220), 140, yoff=s(14)))
 
-            # TIER 3: Province labels — visible at higher zoom
-            if chunk_size >= s(8):
-                for pid, province in geo_map.provinces.items():
-                    bx1, by1, bx2, by2 = province.bounds
-                    rect = _draw_map_label(
-                        province.name, (bx1 + bx2) / 2, (by1 + by2) / 2,
-                        self.small_font, (165, 170, 185), bg_alpha=120,
-                    )
-                    _no_overlap(rect)
+            # Province labels (closer)
+            if chunk_size_f >= 3.0:
+                for pid, pv in geo_map.provinces.items():
+                    b = pv.bounds
+                    _nol(_lbl(pv.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
+                              self.small_font, (160, 165, 180), 120))
 
-            # TIER 4: District labels — visible at close zoom
-            if chunk_size >= s(18):
-                for did, district in geo_map.districts.items():
-                    bx1, by1, bx2, by2 = district.bounds
-                    rect = _draw_map_label(
-                        district.name, (bx1 + bx2) / 2, (by1 + by2) / 2,
-                        self.small_font, (145, 145, 160), bg_alpha=100,
-                    )
-                    _no_overlap(rect)
+            # District labels (very close)
+            if chunk_size_f >= 8.0:
+                for did, dt in geo_map.districts.items():
+                    b = dt.bounds
+                    _nol(_lbl(dt.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
+                              self.tiny_font, (140, 140, 155), 100))
 
-        # Draw grid if enabled
-        if config.map_display.show_grid and chunk_size >= s(8):
-            grid_color = (50, 50, 70)
-            for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 2):
-                x = map_area_x + map_center_x + int((int(center_chunk_x) + dx - center_chunk_x - 0.5) * chunk_size_f)
-                if map_area_x <= x <= map_area_x + map_area_w:
-                    pygame.draw.line(surf, grid_color, (x, map_area_y), (x, map_area_y + map_area_h), 1)
-            for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 2):
-                y = map_area_y + map_center_y + int((int(center_chunk_y) + dy - center_chunk_y - 0.5) * chunk_size_f)
-                if map_area_y <= y <= map_area_y + map_area_h:
-                    pygame.draw.line(surf, grid_color, (map_area_x, y), (map_area_x + map_area_w, y), 1)
+        # ── PLAYER MARKER ──
+        po_x = (character.position.x % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
+        po_y = (character.position.y % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
+        ppx, ppy = _c2p(player_chunk_x + po_x, player_chunk_y + po_y)
+        if map_area_x <= ppx <= map_area_x + map_area_w and map_area_y <= ppy <= map_area_y + map_area_h:
+            ms = max(5, s(config.player_marker.size))
+            mc = config.player_marker.color
+            pts = [(ppx, ppy - ms), (ppx + ms//2, ppy + ms//2), (ppx - ms//2, ppy + ms//2)]
+            pygame.draw.polygon(surf, mc, pts)
+            pygame.draw.polygon(surf, (0, 0, 0), pts, 1)
 
-        # Draw player marker with precise position within chunk
-        if config.map_display.show_player_marker:
-            # Calculate precise player position within chunk (0.0 to 1.0)
-            player_tile_x = character.position.x
-            player_tile_y = character.position.y
-            player_offset_x = (player_tile_x % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
-            player_offset_y = (player_tile_y % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
+        # ── WAYPOINT MARKERS ──
+        for slot_idx, wp in enumerate(map_system.waypoints):
+            if wp:
+                wcx = int(wp['x']) // Config.CHUNK_SIZE
+                wcy = int(wp['y']) // Config.CHUNK_SIZE
+                wpx, wpy = _c2p(wcx + 0.5, wcy + 0.5)
+                if map_area_x <= wpx <= map_area_x + map_area_w and map_area_y <= wpy <= map_area_y + map_area_h:
+                    ws = max(3, s(config.waypoint_marker.size))
+                    wc = config.waypoint_marker.color
+                    dm = [(wpx, wpy-ws), (wpx+ws, wpy), (wpx, wpy+ws), (wpx-ws, wpy)]
+                    pygame.draw.polygon(surf, wc, dm)
+                    pygame.draw.polygon(surf, (0, 0, 0), dm, 1)
 
-            # Player position on map with sub-chunk precision
-            player_px = map_area_x + map_center_x + int((player_chunk_x - center_chunk_x + player_offset_x) * chunk_size_f)
-            player_py = map_area_y + map_center_y + int((player_chunk_y - center_chunk_y + player_offset_y) * chunk_size_f)
+        # ── HOVER INFO ──
+        rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+        if map_area_x <= rx <= map_area_x + map_area_w and map_area_y <= ry <= map_area_y + map_area_h:
+            hcx = int(center_chunk_x + (rx - map_area_x - map_center_x) / max(0.1, chunk_size_f))
+            hcy = int(center_chunk_y + (ry - map_area_y - map_center_y) / max(0.1, chunk_size_f))
+            hovered_chunk = (hcx, hcy, map_system.get_explored_chunk(hcx, hcy))
 
-            # Only draw if in visible area
-            if map_area_x <= player_px <= map_area_x + map_area_w and map_area_y <= player_py <= map_area_y + map_area_h:
-                marker_size = config.player_marker.size
-                marker_color = config.player_marker.color
-                # Draw triangle pointing up
-                points = [
-                    (player_px, player_py - s(marker_size)),
-                    (player_px - s(marker_size // 2), player_py + s(marker_size // 2)),
-                    (player_px + s(marker_size // 2), player_py + s(marker_size // 2))
-                ]
-                pygame.draw.polygon(surf, marker_color, points)
-                pygame.draw.polygon(surf, (0, 0, 0), points, s(1))
-
-        # Draw waypoint markers and collect rects
-        waypoint_rects = []
-        if config.map_display.show_waypoint_markers:
-            for wp in map_system.get_all_waypoints():
-                wp_chunk_x, wp_chunk_y = wp.chunk_coords
-                wp_px = map_area_x + map_center_x + int((wp_chunk_x - center_chunk_x + 0.5) * chunk_size_f)
-                wp_py = map_area_y + map_center_y + int((wp_chunk_y - center_chunk_y + 0.5) * chunk_size_f)
-
-                if map_area_x <= wp_px <= map_area_x + map_area_w and map_area_y <= wp_py <= map_area_y + map_area_h:
-                    marker_size = config.waypoint_marker.size
-                    marker_color = config.waypoint_marker.color
-                    # Draw diamond
-                    points = [
-                        (wp_px, wp_py - s(marker_size)),
-                        (wp_px + s(marker_size), wp_py),
-                        (wp_px, wp_py + s(marker_size)),
-                        (wp_px - s(marker_size), wp_py)
-                    ]
-                    pygame.draw.polygon(surf, marker_color, points)
-                    pygame.draw.polygon(surf, (0, 0, 0), points, s(1))
-
-        # Draw hovered chunk info
         if hovered_chunk and config.map_display.show_coordinates:
-            cx, cy, explored = hovered_chunk
-            info_y = map_area_y + map_area_h + s(5)
-
-            # Geographic info if available
-            geo_info = ""
-            if hasattr(world_system, 'geographic_map') and world_system.geographic_map:
-                addr = world_system.geographic_map.get_full_address(cx, cy)
+            hcx, hcy, hexpl = hovered_chunk
+            info = f"({hcx}, {hcy})"
+            if geo_map:
+                addr = geo_map.get_full_address(hcx, hcy)
                 if addr:
-                    parts = []
-                    if 'nation' in addr:
-                        parts.append(addr['nation'])
-                    if 'region' in addr:
-                        parts.append(addr['region'])
-                    if 'province' in addr:
-                        parts.append(addr['province'])
-                    geo_info = " > ".join(parts)
-                    geo_info += f"  [{addr.get('danger', '?')}]  {addr.get('chunk_type', '').replace('_', ' ').title()}"
+                    parts = [addr.get('nation',''), addr.get('region',''), addr.get('province','')]
+                    info += "  " + " > ".join(p for p in parts if p)
+                    info += f"  [{addr.get('danger','')}]  {addr.get('chunk_type','').replace('_',' ').title()}"
+            surf.blit(self.small_font.render(info, True, (200, 200, 200)),
+                       (map_area_x, map_area_y + map_area_h + s(5)))
 
-            coord_text = f"({cx}, {cy})"
-            if geo_info:
-                coord_text += f"  {geo_info}"
-            elif explored:
-                type_name = explored.chunk_type.replace('_', ' ').title()
-                coord_text += f" - {type_name}"
-            else:
-                coord_text += " - Unexplored"
-
-            if explored:
-                if explored.has_dungeon:
-                    coord_text += " [DUNGEON]"
-                if explored.has_death_chest:
-                    coord_text += " [DEATH CHEST]"
-            surf.blit(self.small_font.render(coord_text, True, (200, 200, 200)), (map_area_x, info_y))
+        # ── MAP BORDER (drawn last, on top of everything) ──
+        pygame.draw.rect(surf, tuple(config.ui.border_color), map_rect, s(2))
 
         # ========== WAYPOINT PANEL ==========
         panel_x = ww - waypoint_panel_w - s(10)
