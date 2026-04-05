@@ -3763,158 +3763,114 @@ class Renderer:
         map_center_x = map_area_w // 2
         map_center_y = map_area_h // 2
 
-        # Render chunks — cached when view unchanged for performance
+        # ══════════════════════════════════════════════════════════════
+        # MAP CHUNK RENDERING
+        # Two paths: pre-rendered image (zoomed out) or per-chunk (zoomed in)
+        # ══════════════════════════════════════════════════════════════
         hovered_chunk = None
-
         _has_geo = hasattr(world_system, 'geographic_map') and world_system.geographic_map is not None
-        _geo_chunks = world_system.geographic_map.chunk_data if _has_geo else {}
-        _biome_color_fn = config.get_biome_color
-        _unexplored_color = config.biome_colors.get('unexplored', (30, 30, 40))
-        _nation_lookup = {}
-        if _has_geo:
-            for nid, nd in world_system.geographic_map.nations.items():
-                if nd.color:
-                    _nation_lookup[nid] = nd.color
-
-        # ── PRE-RENDERED MAP IMAGE (fast path for zoomed-out views) ──
-        _used_lod = False
         _map_images = getattr(world_system, 'map_images', {})
-        if _has_geo and _map_images and chunk_size_f <= 8:
-            from rendering.map_cache import get_best_lod
-            lod_result = get_best_lod(_map_images, chunk_size_f)
-            if lod_result:
-                lod_surf, lod_ppc = lod_result
-                geo_map_obj = world_system.geographic_map
-                half = geo_map_obj.world_size // 2
+        _used_lod = False
+        geo_map = world_system.geographic_map if _has_geo else None
 
-                # Calculate which region of the LOD image is visible
-                # center_chunk → pixel on the LOD image
-                center_img_x = (center_chunk_x + half) * lod_ppc
-                center_img_y = (center_chunk_y + half) * lod_ppc
+        if _has_geo and _map_images and chunk_size <= 6:
+            # ── FAST PATH: blit from pre-rendered map image ──
+            # Pick best LOD tier
+            best_ppc = 1
+            best_surf = _map_images.get(1)
+            for ppc in sorted(_map_images.keys()):
+                if ppc <= chunk_size:
+                    best_ppc = ppc
+                    best_surf = _map_images[ppc]
 
-                # Scale factor: how many screen pixels per LOD pixel
-                scale = chunk_size_f / lod_ppc
+            if best_surf:
+                half = geo_map.world_size // 2
+                img_w, img_h = best_surf.get_size()
 
-                # Source rect on LOD image
-                src_w = map_area_w / scale
-                src_h = map_area_h / scale
+                # Map center_chunk to image pixel coordinate
+                center_img_x = (center_chunk_x + half) * best_ppc
+                center_img_y = (center_chunk_y + half) * best_ppc
+
+                # How many image pixels fit in the viewport
+                scale = chunk_size_f / best_ppc
+                src_w = map_area_w / max(0.01, scale)
+                src_h = map_area_h / max(0.01, scale)
+
                 src_x = center_img_x - src_w / 2
                 src_y = center_img_y - src_h / 2
 
-                # Clamp to image bounds
-                img_w, img_h = lod_surf.get_size()
-                src_x = max(0, min(src_x, img_w - src_w))
-                src_y = max(0, min(src_y, img_h - src_h))
-                src_w = min(src_w, img_w - src_x)
-                src_h = min(src_h, img_h - src_y)
+                # Clamp
+                src_x = max(0, min(img_w - 1, src_x))
+                src_y = max(0, min(img_h - 1, src_y))
+                src_w = max(1, min(img_w - src_x, src_w))
+                src_h = max(1, min(img_h - src_y, src_h))
 
-                if src_w > 0 and src_h > 0:
-                    src_rect = pygame.Rect(int(src_x), int(src_y), int(src_w), int(src_h))
-                    # Extract the visible portion and scale to map area
-                    try:
-                        portion = lod_surf.subsurface(src_rect)
-                        scaled = pygame.transform.smoothscale(portion, (map_area_w, map_area_h))
-                        surf.blit(scaled, (map_area_x, map_area_y))
-                        _used_lod = True
-                    except (ValueError, pygame.error):
-                        pass  # Fall through to per-chunk rendering
+                try:
+                    src_rect = pygame.Rect(int(src_x), int(src_y),
+                                           int(src_w), int(src_h))
+                    portion = best_surf.subsurface(src_rect)
+                    scaled = pygame.transform.scale(portion, (map_area_w, map_area_h))
+                    surf.blit(scaled, (map_area_x, map_area_y))
+                    _used_lod = True
+                except (ValueError, pygame.error):
+                    _used_lod = False
 
-        # ── PER-CHUNK RENDERING (only when zoomed in enough) ──
         if not _used_lod:
-          for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 1):
-            for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 1):
-                chunk_x = int(center_chunk_x) + dx
-                chunk_y = int(center_chunk_y) + dy
+            # ── DETAIL PATH: per-chunk rendering (zoomed in, few chunks visible) ──
+            _geo_chunks = geo_map.chunk_data if geo_map else {}
+            _biome_color_fn = config.get_biome_color
+            _unexplored_color = config.biome_colors.get('unexplored', (30, 30, 40))
+            _nation_lookup = {}
+            if geo_map:
+                for nid, nd in geo_map.nations.items():
+                    if nd.color:
+                        _nation_lookup[nid] = nd.color
 
-                # Calculate pixel position on map (float for sub-pixel accuracy)
-                px = map_area_x + map_center_x + int((chunk_x - center_chunk_x) * chunk_size_f)
-                py = map_area_y + map_center_y + int((chunk_y - center_chunk_y) * chunk_size_f)
+            for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 1):
+                for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 1):
+                    chunk_x = int(center_chunk_x) + dx
+                    chunk_y = int(center_chunk_y) + dy
+                    px = map_area_x + map_center_x + int((chunk_x - center_chunk_x) * chunk_size_f)
+                    py = map_area_y + map_center_y + int((chunk_y - center_chunk_y) * chunk_size_f)
+                    if px + chunk_size < map_area_x or px > map_area_x + map_area_w:
+                        continue
+                    if py + chunk_size < map_area_y or py > map_area_y + map_area_h:
+                        continue
 
-                # Skip if outside map area
-                if px + chunk_size < map_area_x or px > map_area_x + map_area_w:
-                    continue
-                if py + chunk_size < map_area_y or py > map_area_y + map_area_h:
-                    continue
-
-                # Get chunk color — geographic map (fast dict lookup) or exploration
-                geo_data = _geo_chunks.get((chunk_x, chunk_y)) if _has_geo else None
-                explored = None
-
-                if geo_data is not None:
-                    ct_value = geo_data.chunk_type.value if hasattr(geo_data.chunk_type, 'value') else str(geo_data.chunk_type)
-                    color = _biome_color_fn(ct_value)
-                    nation = _nation_lookup.get(geo_data.nation_id)
-                    if nation:
-                        nr, ng, nb = nation
-                        cr, cg, cb = color
-                        color = (
-                            int(cr * 0.85 + nr * 0.15),
-                            int(cg * 0.85 + ng * 0.15),
-                            int(cb * 0.85 + nb * 0.15),
-                        )
-                else:
-                    explored = map_system.get_explored_chunk(chunk_x, chunk_y)
-                    if explored:
-                        color = _biome_color_fn(explored.chunk_type.lower().replace(' ', '_'))
+                    geo_data = _geo_chunks.get((chunk_x, chunk_y))
+                    explored = None
+                    if geo_data is not None:
+                        ct_val = geo_data.chunk_type.value if hasattr(geo_data.chunk_type, 'value') else str(geo_data.chunk_type)
+                        color = _biome_color_fn(ct_val)
+                        nc = _nation_lookup.get(geo_data.nation_id)
+                        if nc:
+                            color = (int(color[0]*0.85+nc[0]*0.15), int(color[1]*0.85+nc[1]*0.15), int(color[2]*0.85+nc[2]*0.15))
                     else:
-                        color = _unexplored_color
+                        explored = map_system.get_explored_chunk(chunk_x, chunk_y)
+                        if explored:
+                            color = _biome_color_fn(explored.chunk_type.lower().replace(' ', '_'))
+                        else:
+                            color = _unexplored_color
 
-                # Draw chunk
-                chunk_rect = pygame.Rect(px, py, max(1, chunk_size - 1), max(1, chunk_size - 1))
-                pygame.draw.rect(surf, color, chunk_rect)
+                    chunk_rect = pygame.Rect(px, py, max(1, chunk_size), max(1, chunk_size))
+                    pygame.draw.rect(surf, color, chunk_rect)
 
-                # At high zoom, add subtle texture to explored chunks
-                if explored and map_system.map_zoom >= 1.5 and chunk_size >= s(20):
-                    # Add subtle grid lines within chunk to show tiles (every 4 tiles)
-                    tile_grid_color = tuple(max(0, c - 20) for c in color)
-                    tile_divisions = 4  # Show 4x4 sub-grid
-                    sub_size = chunk_size // tile_divisions
-                    for i in range(1, tile_divisions):
-                        # Vertical line
-                        lx = px + i * sub_size
-                        pygame.draw.line(surf, tile_grid_color, (lx, py + 2), (lx, py + chunk_size - 3), 1)
-                        # Horizontal line
-                        ly = py + i * sub_size
-                        pygame.draw.line(surf, tile_grid_color, (px + 2, ly), (px + chunk_size - 3, ly), 1)
+                    # Highlight spawn
+                    if chunk_x == 0 and chunk_y == 0:
+                        pygame.draw.rect(surf, config.biome_colors.get('spawn_area', (255, 215, 0)), chunk_rect, s(2))
 
-                # Show chunk coordinates when zoomed in
-                if explored and map_system.map_zoom >= 2.0 and chunk_size >= s(30):
-                    coord_label = f"{chunk_x},{chunk_y}"
-                    coord_surf = self.small_font.render(coord_label, True, (255, 255, 255, 180))
-                    label_x = px + (chunk_size - coord_surf.get_width()) // 2
-                    label_y = py + (chunk_size - coord_surf.get_height()) // 2
-                    surf.blit(coord_surf, (label_x, label_y))
+                    # Dungeon marker
+                    if explored and explored.has_dungeon:
+                        dcx, dcy = px + chunk_size // 2, py + chunk_size // 2
+                        pygame.draw.circle(surf, config.dungeon_marker.color, (dcx, dcy), max(s(3), chunk_size // 4))
 
-                # Highlight spawn area
-                if chunk_x == 0 and chunk_y == 0:
-                    pygame.draw.rect(surf, config.biome_colors.get('spawn_area', (255, 215, 0)), chunk_rect, s(2))
+                    # Hover
+                    rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+                    if chunk_rect.collidepoint(rx, ry):
+                        hovered_chunk = (chunk_x, chunk_y, explored)
+                        pygame.draw.rect(surf, (255, 255, 255), chunk_rect, 1)
 
-                # Draw dungeon marker
-                if explored and explored.has_dungeon:
-                    dungeon_color = config.dungeon_marker.color
-                    cx, cy = px + chunk_size // 2, py + chunk_size // 2
-                    pygame.draw.circle(surf, dungeon_color, (cx, cy), max(s(3), chunk_size // 4))
-
-                # Draw death chest skull marker
-                if explored and explored.has_death_chest:
-                    cx, cy = px + chunk_size // 2, py + chunk_size // 2
-                    skull_size = max(s(4), chunk_size // 3)
-                    # Draw skull icon (simple: circle head + eyes)
-                    skull_color = (255, 100, 100)  # Red skull
-                    pygame.draw.circle(surf, skull_color, (cx, cy), skull_size)
-                    pygame.draw.circle(surf, (0, 0, 0), (cx, cy), skull_size, s(1))  # Outline
-                    # Eyes
-                    eye_size = max(s(1), skull_size // 4)
-                    pygame.draw.circle(surf, (0, 0, 0), (cx - skull_size // 3, cy - skull_size // 4), eye_size)
-                    pygame.draw.circle(surf, (0, 0, 0), (cx + skull_size // 3, cy - skull_size // 4), eye_size)
-
-                # Check for hover
-                rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
-                if chunk_rect.collidepoint(rx, ry):
-                    hovered_chunk = (chunk_x, chunk_y, explored)
-                    pygame.draw.rect(surf, (255, 255, 255), chunk_rect, s(1))
-
-        # Hover detection for LOD mode (compute from mouse position)
+        # Hover detection for LOD mode
         if _used_lod and _has_geo:
             rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
             if map_area_x <= rx <= map_area_x + map_area_w and map_area_y <= ry <= map_area_y + map_area_h:
