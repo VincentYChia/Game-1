@@ -23,7 +23,7 @@ class Config:
     # Infinite world - no fixed size, chunks generated on demand
     CHUNK_SIZE = 16  # Tiles per chunk side (also in world_generation.JSON)
     TILE_SIZE = 32   # Pixels per tile
-    ENTITY_VISUAL_SCALE = 1.5  # Visual scale multiplier for all game entities
+    ENTITY_VISUAL_SCALE = 1.0  # Visual scale multiplier (set >1.0 to enlarge all entities)
 
     # Chunk loading configuration
     # NOTE: These are default values. Actual values are loaded from
@@ -147,10 +147,10 @@ class Config:
         """Scale a value by UI_SCALE (returns float)"""
         return value * cls.UI_SCALE
 
-    # Character/Movement — scaled by ENTITY_VISUAL_SCALE for proportional feel
-    PLAYER_SPEED = 0.15 * ENTITY_VISUAL_SCALE
-    INTERACTION_RANGE = 3.5 * ENTITY_VISUAL_SCALE
-    CLICK_TOLERANCE = 0.7 * ENTITY_VISUAL_SCALE
+    # Character/Movement
+    PLAYER_SPEED = 0.15
+    INTERACTION_RANGE = 3.5
+    CLICK_TOLERANCE = 0.7
 
     # Debug Mode
     DEBUG_INFINITE_RESOURCES = False  # Toggle with F1 - no material consumption

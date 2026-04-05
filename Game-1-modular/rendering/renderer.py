@@ -57,6 +57,9 @@ class Renderer:
         self.pending_tooltip = None  # Tuple of (item_stack, mouse_pos, character, is_equipment)
         self.pending_class_tooltip = None  # Tuple of (class_definition, mouse_pos)
         self.pending_tool_tooltip = None  # Tuple of (tool, tool_type, mouse_pos, character)
+        # Map rendering cache — pre-rendered geographic surface
+        self._map_cache_surf = None
+        self._map_cache_key = None  # (zoom, scroll_x, scroll_y, map_w, map_h)
 
     def _get_grid_size_for_tier(self, tier: int, discipline: str) -> Tuple[int, int]:
         """Get grid dimensions based on station tier for grid-based disciplines (smithing, adornments)"""
@@ -3726,10 +3729,16 @@ class Renderer:
         pygame.draw.rect(surf, tuple(config.ui.border_color), map_rect, s(2))
 
         # Calculate chunk rendering parameters
-        # Use float chunk_size for accurate positioning at extreme zoom out
         chunk_size_f = s(config.map_display.chunk_render_size) * map_system.map_zoom
-        chunk_size = max(1, int(chunk_size_f))  # Pixel size for drawing
-        # For positioning, use the float to avoid cumulative rounding errors
+        chunk_size = max(1, int(chunk_size_f))
+
+        # Map cache key — regenerate only when view changes
+        _cache_key = (round(map_system.map_zoom, 4),
+                      round(map_system.map_scroll_x, 2),
+                      round(map_system.map_scroll_y, 2),
+                      map_area_w, map_area_h)
+        _use_cache = (self._map_cache_surf is not None and
+                      self._map_cache_key == _cache_key)
 
         # Get player chunk position
         player_chunk_x = math.floor(character.position.x) // Config.CHUNK_SIZE
@@ -3754,8 +3763,28 @@ class Renderer:
         map_center_x = map_area_w // 2
         map_center_y = map_area_h // 2
 
-        # Render chunks
+        # Render chunks — cached when view unchanged for performance
         hovered_chunk = None
+
+        # Pre-compute lookups for fast inner loop
+        _has_geo = hasattr(world_system, 'geographic_map') and world_system.geographic_map is not None
+        _geo_chunks = world_system.geographic_map.chunk_data if _has_geo else {}
+        _biome_color_fn = config.get_biome_color
+        _unexplored_color = config.biome_colors.get('unexplored', (30, 30, 40))
+        # Pre-cache nation colors for fast lookup
+        _nation_lookup = {}
+        if _has_geo:
+            for nid, nd in world_system.geographic_map.nations.items():
+                if nd.color:
+                    _nation_lookup[nid] = nd.color
+
+        # Cap visible chunks to prevent lag (at extreme zoom out, limit iteration)
+        max_visible = 600
+        if visible_chunks_x > max_visible:
+            visible_chunks_x = max_visible
+        if visible_chunks_y > max_visible:
+            visible_chunks_y = max_visible
+
         for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 1):
             for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 1):
                 chunk_x = int(center_chunk_x) + dx
@@ -3771,32 +3800,28 @@ class Renderer:
                 if py + chunk_size < map_area_y or py > map_area_y + map_area_h:
                     continue
 
-                # Get chunk color — use geographic map if available, else exploration
-                explored = map_system.get_explored_chunk(chunk_x, chunk_y)
-                geo_data = None
-                if hasattr(world_system, 'geographic_map') and world_system.geographic_map:
-                    geo_data = world_system.geographic_map.get_chunk_data(chunk_x, chunk_y)
+                # Get chunk color — geographic map (fast dict lookup) or exploration
+                geo_data = _geo_chunks.get((chunk_x, chunk_y)) if _has_geo else None
+                explored = None
 
                 if geo_data is not None:
-                    # Geographic system: show all chunks with biome color
                     ct_value = geo_data.chunk_type.value if hasattr(geo_data.chunk_type, 'value') else str(geo_data.chunk_type)
-                    color = config.get_biome_color(ct_value)
-                    # Tint by nation for visual differentiation
-                    nation = world_system.geographic_map.get_nation(geo_data.nation_id) if world_system.geographic_map else None
-                    if nation and nation.color:
-                        # Blend chunk color with nation color (subtle 15% tint)
-                        nr, ng, nb = nation.color
+                    color = _biome_color_fn(ct_value)
+                    nation = _nation_lookup.get(geo_data.nation_id)
+                    if nation:
+                        nr, ng, nb = nation
                         cr, cg, cb = color
                         color = (
                             int(cr * 0.85 + nr * 0.15),
                             int(cg * 0.85 + ng * 0.15),
                             int(cb * 0.85 + nb * 0.15),
                         )
-                elif explored:
-                    chunk_type = explored.chunk_type.lower().replace(' ', '_')
-                    color = config.get_biome_color(chunk_type)
                 else:
-                    color = config.biome_colors.get('unexplored', (30, 30, 40))
+                    explored = map_system.get_explored_chunk(chunk_x, chunk_y)
+                    if explored:
+                        color = _biome_color_fn(explored.chunk_type.lower().replace(' ', '_'))
+                    else:
+                        color = _unexplored_color
 
                 # Draw chunk
                 chunk_rect = pygame.Rect(px, py, max(1, chunk_size - 1), max(1, chunk_size - 1))
@@ -3853,8 +3878,8 @@ class Renderer:
                     hovered_chunk = (chunk_x, chunk_y, explored)
                     pygame.draw.rect(surf, (255, 255, 255), chunk_rect, s(1))
 
-        # Draw geographic borders and labels if geographic map is available
-        if hasattr(world_system, 'geographic_map') and world_system.geographic_map:
+        # Draw geographic borders and labels (skip borders when chunks too small)
+        if _has_geo and chunk_size >= 3:
             geo_map = world_system.geographic_map
             # Draw nation borders — check each chunk pair for different nations
             border_color_nation = (220, 200, 160)  # Gold-ish for nation borders
@@ -3908,7 +3933,8 @@ class Renderer:
                             pygame.draw.line(surf, border_color_province,
                                              (px_, y_line), (px_ + chunk_size, y_line), 1)
 
-            # ── MAP LABELS — progressive LOD with background pills ──
+        # ── MAP LABELS (always drawn when geo available, independent of border rendering) ──
+        if _has_geo:
             # Helper: draw a label with semi-transparent background pill
             def _draw_map_label(text, cx_world, cy_world, font, fg_color, bg_alpha=160, y_offset=0):
                 lpx = map_area_x + map_center_x + int((cx_world - center_chunk_x) * chunk_size_f)

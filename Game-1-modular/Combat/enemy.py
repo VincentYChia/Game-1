@@ -8,13 +8,6 @@ import random
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Optional, Any
 from enum import Enum
-
-# Visual scale factor for range/aggro scaling
-try:
-    from core.config import Config
-    _VISUAL_SCALE = getattr(Config, 'ENTITY_VISUAL_SCALE', 1.0)
-except ImportError:
-    _VISUAL_SCALE = 1.0
 from pathlib import Path
 from entities.status_manager import add_status_manager_to_entity
 from core.effect_executor import get_effect_executor
@@ -284,8 +277,8 @@ class EnemyDatabase:
                     damage_min=damage[0] if isinstance(damage, list) else damage,
                     damage_max=damage[1] if isinstance(damage, list) else damage,
                     defense=stats.get('defense', 0),
-                    speed=stats.get('speed', 1.0) * _VISUAL_SCALE,
-                    aggro_range=stats.get('aggroRange', 5) * _VISUAL_SCALE,
+                    speed=stats.get('speed', 1.0),
+                    aggro_range=stats.get('aggroRange', 5),
                     attack_speed=stats.get('attackSpeed', 1.0),
                     drops=drops,
                     ai_pattern=ai_pattern,
@@ -401,8 +394,8 @@ class EnemyDatabase:
                     damage_min=damage[0] if isinstance(damage, list) else damage,
                     damage_max=damage[1] if isinstance(damage, list) else damage,
                     defense=stats.get('defense', 0),
-                    speed=stats.get('speed', 1.0) * _VISUAL_SCALE,
-                    aggro_range=stats.get('aggroRange', 5) * _VISUAL_SCALE,
+                    speed=stats.get('speed', 1.0),
+                    aggro_range=stats.get('aggroRange', 5),
                     attack_speed=stats.get('attackSpeed', 1.0),
                     drops=drops,
                     ai_pattern=ai_pattern,
@@ -797,7 +790,7 @@ class Enemy:
     def _ai_chase(self, dt: float, dist_to_player: float, player_position: Tuple[float, float]):
         """Chase state - pursue player"""
         # In attack range?
-        attack_range = 1.5 * _VISUAL_SCALE  # Default melee range
+        attack_range = 1.5  # Default melee range
         if dist_to_player <= attack_range:
             self.ai_state = AIState.ATTACK
             return
@@ -814,7 +807,7 @@ class Enemy:
 
     def _ai_attack(self, dt: float, dist_to_player: float, player_position: Tuple[float, float]):
         """Attack state - attack player"""
-        attack_range = 1.5 * _VISUAL_SCALE
+        attack_range = 1.5
 
         # Player moved away?
         if dist_to_player > attack_range * 1.5:
