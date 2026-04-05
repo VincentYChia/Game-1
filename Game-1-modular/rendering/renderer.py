@@ -3766,26 +3766,62 @@ class Renderer:
         # Render chunks — cached when view unchanged for performance
         hovered_chunk = None
 
-        # Pre-compute lookups for fast inner loop
         _has_geo = hasattr(world_system, 'geographic_map') and world_system.geographic_map is not None
         _geo_chunks = world_system.geographic_map.chunk_data if _has_geo else {}
         _biome_color_fn = config.get_biome_color
         _unexplored_color = config.biome_colors.get('unexplored', (30, 30, 40))
-        # Pre-cache nation colors for fast lookup
         _nation_lookup = {}
         if _has_geo:
             for nid, nd in world_system.geographic_map.nations.items():
                 if nd.color:
                     _nation_lookup[nid] = nd.color
 
-        # Cap visible chunks to prevent lag (at extreme zoom out, limit iteration)
-        max_visible = 600
-        if visible_chunks_x > max_visible:
-            visible_chunks_x = max_visible
-        if visible_chunks_y > max_visible:
-            visible_chunks_y = max_visible
+        # ── PRE-RENDERED MAP IMAGE (fast path for zoomed-out views) ──
+        _used_lod = False
+        _map_images = getattr(world_system, 'map_images', {})
+        if _has_geo and _map_images and chunk_size_f <= 8:
+            from rendering.map_cache import get_best_lod
+            lod_result = get_best_lod(_map_images, chunk_size_f)
+            if lod_result:
+                lod_surf, lod_ppc = lod_result
+                geo_map_obj = world_system.geographic_map
+                half = geo_map_obj.world_size // 2
 
-        for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 1):
+                # Calculate which region of the LOD image is visible
+                # center_chunk → pixel on the LOD image
+                center_img_x = (center_chunk_x + half) * lod_ppc
+                center_img_y = (center_chunk_y + half) * lod_ppc
+
+                # Scale factor: how many screen pixels per LOD pixel
+                scale = chunk_size_f / lod_ppc
+
+                # Source rect on LOD image
+                src_w = map_area_w / scale
+                src_h = map_area_h / scale
+                src_x = center_img_x - src_w / 2
+                src_y = center_img_y - src_h / 2
+
+                # Clamp to image bounds
+                img_w, img_h = lod_surf.get_size()
+                src_x = max(0, min(src_x, img_w - src_w))
+                src_y = max(0, min(src_y, img_h - src_h))
+                src_w = min(src_w, img_w - src_x)
+                src_h = min(src_h, img_h - src_y)
+
+                if src_w > 0 and src_h > 0:
+                    src_rect = pygame.Rect(int(src_x), int(src_y), int(src_w), int(src_h))
+                    # Extract the visible portion and scale to map area
+                    try:
+                        portion = lod_surf.subsurface(src_rect)
+                        scaled = pygame.transform.smoothscale(portion, (map_area_w, map_area_h))
+                        surf.blit(scaled, (map_area_x, map_area_y))
+                        _used_lod = True
+                    except (ValueError, pygame.error):
+                        pass  # Fall through to per-chunk rendering
+
+        # ── PER-CHUNK RENDERING (only when zoomed in enough) ──
+        if not _used_lod:
+          for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 1):
             for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 1):
                 chunk_x = int(center_chunk_x) + dx
                 chunk_y = int(center_chunk_y) + dy
@@ -3878,11 +3914,19 @@ class Renderer:
                     hovered_chunk = (chunk_x, chunk_y, explored)
                     pygame.draw.rect(surf, (255, 255, 255), chunk_rect, s(1))
 
+        # Hover detection for LOD mode (compute from mouse position)
+        if _used_lod and _has_geo:
+            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+            if map_area_x <= rx <= map_area_x + map_area_w and map_area_y <= ry <= map_area_y + map_area_h:
+                hover_cx = int(center_chunk_x + (rx - map_area_x - map_center_x) / chunk_size_f)
+                hover_cy = int(center_chunk_y + (ry - map_area_y - map_center_y) / chunk_size_f)
+                hovered_chunk = (hover_cx, hover_cy, map_system.get_explored_chunk(hover_cx, hover_cy))
+
         # Geographic map reference for borders and labels
         geo_map = world_system.geographic_map if _has_geo else None
 
-        # Draw geographic borders (skip when chunks too small to see borders)
-        if _has_geo and chunk_size >= 3:
+        # Draw geographic borders (skip when using LOD image — borders are baked in)
+        if _has_geo and not _used_lod and chunk_size >= 3:
             # Draw nation borders — check each chunk pair for different nations
             border_color_nation = (220, 200, 160)  # Gold-ish for nation borders
             border_color_region = (160, 160, 180)  # Silver for region borders

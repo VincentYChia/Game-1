@@ -53,6 +53,7 @@ class WorldSystem:
 
         # Initialize geographic system (new finite world)
         self.geographic_map = None
+        self.map_images = {}  # Pre-rendered map LOD surfaces
         self._init_geographic_system()
 
         # Chunk management
@@ -128,6 +129,7 @@ class WorldSystem:
             cached = WorldMap.load(cache_path)
             if cached and cached.seed == self.seed:
                 self.geographic_map = cached
+                self._generate_map_images()
                 elapsed = time.time() - t_start
                 print(f"🗺️  Geographic map loaded from cache in {elapsed:.1f}s")
                 return
@@ -148,11 +150,36 @@ class WorldSystem:
                 self.geographic_map.save(cache_path)
             except Exception as e:
                 print(f"[Geographic] Cache save failed (non-fatal): {e}")
+
+            # Generate pre-rendered map images
+            self._generate_map_images()
         except Exception as e:
             print(f"[Geographic] Init failed (falling back to legacy): {e}")
             import traceback
             traceback.print_exc()
             self.geographic_map = None
+
+    def _generate_map_images(self):
+        """Generate pre-rendered map images for fast map rendering."""
+        if not self.geographic_map:
+            return
+        try:
+            import time
+            t = time.time()
+            from rendering.map_cache import generate_map_images
+            from data.databases.map_waypoint_db import MapWaypointConfig
+            config = MapWaypointConfig.get_instance()
+            nation_colors = {}
+            for nid, nd in self.geographic_map.nations.items():
+                if nd.color:
+                    nation_colors[nid] = nd.color
+            self.map_images = generate_map_images(
+                self.geographic_map, config.get_biome_color, nation_colors,
+            )
+            print(f"🗺️  Map images generated in {time.time() - t:.1f}s")
+        except Exception as e:
+            print(f"[MapCache] Generation failed (non-fatal): {e}")
+            self.map_images = {}
 
     def _load_initial_chunks(self):
         """Load chunks around spawn that should always be loaded."""
