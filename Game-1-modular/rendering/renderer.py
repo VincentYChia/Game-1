@@ -3700,9 +3700,11 @@ class Renderer:
         wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)
         wy = s(20)
 
-        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf = pygame.Surface((ww, wh))
         bg_color = config.ui.background_color
-        surf.fill(bg_color)
+        surf.fill(bg_color if isinstance(bg_color, tuple) and len(bg_color) == 3
+                  else (bg_color[0], bg_color[1], bg_color[2]) if isinstance(bg_color, (tuple, list))
+                  else (30, 30, 40))
 
         # Title bar
         title_text = f"WORLD MAP - Explored: {map_system.get_explored_count()} chunks"
@@ -3775,39 +3777,43 @@ class Renderer:
 
         if _has_geo and _map_images and chunk_size <= 6:
             # ── FAST PATH: blit from pre-rendered map image ──
-            # Pick best LOD tier
-            best_ppc = 1
-            best_surf = _map_images.get(1)
-            for ppc in sorted(_map_images.keys()):
-                if ppc <= chunk_size:
-                    best_ppc = ppc
-                    best_surf = _map_images[ppc]
+            # Always use highest resolution available for best quality
+            best_ppc = max(_map_images.keys())
+            best_surf = _map_images[best_ppc]
 
             if best_surf:
                 half = geo_map.world_size // 2
                 img_w, img_h = best_surf.get_size()
 
-                # Map center_chunk to image pixel coordinate
-                center_img_x = (center_chunk_x + half) * best_ppc
-                center_img_y = (center_chunk_y + half) * best_ppc
+                # How many chunks fit in the viewport at current zoom
+                chunks_visible_w = map_area_w / max(0.1, chunk_size_f)
+                chunks_visible_h = map_area_h / max(0.1, chunk_size_f)
 
-                # How many image pixels fit in the viewport
-                scale = chunk_size_f / best_ppc
-                src_w = map_area_w / max(0.01, scale)
-                src_h = map_area_h / max(0.01, scale)
+                # Source rect in image pixels
+                src_w = chunks_visible_w * best_ppc
+                src_h = chunks_visible_h * best_ppc
+                src_cx = (center_chunk_x + half) * best_ppc
+                src_cy = (center_chunk_y + half) * best_ppc
+                src_x = src_cx - src_w / 2
+                src_y = src_cy - src_h / 2
 
-                src_x = center_img_x - src_w / 2
-                src_y = center_img_y - src_h / 2
+                # Clamp to image bounds
+                if src_x < 0:
+                    src_x = 0
+                if src_y < 0:
+                    src_y = 0
+                if src_x + src_w > img_w:
+                    src_w = img_w - src_x
+                if src_y + src_h > img_h:
+                    src_h = img_h - src_y
 
-                # Clamp
-                src_x = max(0, min(img_w - 1, src_x))
-                src_y = max(0, min(img_h - 1, src_y))
-                src_w = max(1, min(img_w - src_x, src_w))
-                src_h = max(1, min(img_h - src_y, src_h))
+                src_w = max(1, int(src_w))
+                src_h = max(1, int(src_h))
+                src_x = max(0, int(src_x))
+                src_y = max(0, int(src_y))
 
                 try:
-                    src_rect = pygame.Rect(int(src_x), int(src_y),
-                                           int(src_w), int(src_h))
+                    src_rect = pygame.Rect(src_x, src_y, src_w, src_h)
                     portion = best_surf.subsurface(src_rect)
                     scaled = pygame.transform.scale(portion, (map_area_w, map_area_h))
                     surf.blit(scaled, (map_area_x, map_area_y))
