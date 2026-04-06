@@ -3821,54 +3821,26 @@ class Renderer:
                     except (ValueError, pygame.error):
                         self._map_scaled_cache = (None, None)
 
-        # ── VIGNETTE: darken edges for natural focus ──
-        vig_size = min(map_area_w, map_area_h) // 6
-        for i in range(vig_size):
-            alpha = int(60 * (1.0 - i / vig_size))
-            if alpha <= 0:
-                break
-            vig_color = (0, 0, 0, alpha)
-            vig_surf = pygame.Surface((map_area_w, 1), pygame.SRCALPHA)
-            vig_surf.fill(vig_color)
-            surf.blit(vig_surf, (map_area_x, map_area_y + i))
-            surf.blit(vig_surf, (map_area_x, map_area_y + map_area_h - 1 - i))
-            vig_surf2 = pygame.Surface((1, map_area_h), pygame.SRCALPHA)
-            vig_surf2.fill(vig_color)
-            surf.blit(vig_surf2, (map_area_x + i, map_area_y))
-            surf.blit(vig_surf2, (map_area_x + map_area_w - 1 - i, map_area_y))
-
-        # ── SMART LABELS ──
+        # ── LABELS — cartographic style with strict size gating ──
         if geo_map:
-            # Only show labels whose territory is large enough on screen to fit them
-            def _smart_label(text, cx, cy, font, color, bg_a, yoff, min_screen_w=0):
+            def _map_label(text, cx, cy, font, color, yoff=0, min_territory_px=0, max_count=None, counter=[0]):
+                """Draw a map label with drop shadow. Only shows if territory is large enough."""
                 px, py = _c2p(cx, cy)
                 py += yoff
-                # Cull: outside visible area
-                if px < map_area_x - 40 or px > map_area_x + map_area_w + 40:
-                    return None
-                if py < map_area_y - 20 or py > map_area_y + map_area_h + 20:
+                # Strict viewport culling
+                if not (map_area_x < px < map_area_x + map_area_w and
+                        map_area_y < py < map_area_y + map_area_h):
                     return None
                 ts = font.render(text, True, color)
                 tw, th = ts.get_width(), ts.get_height()
-                # Don't show if label wider than its territory on screen
-                if min_screen_w > 0 and tw > min_screen_w * 1.5:
+                # Must fit comfortably in territory
+                if min_territory_px > 0 and tw > min_territory_px * 0.8:
                     return None
-                # Fade labels near edges (distance from center as 0-1)
-                dx_from_center = abs(px - (map_area_x + map_center_x)) / max(1, map_center_x)
-                dy_from_center = abs(py - (map_area_y + map_center_y)) / max(1, map_center_y)
-                edge_dist = max(dx_from_center, dy_from_center)
-                fade = max(0.3, min(1.0, 1.5 - edge_dist))
-                actual_alpha = int(bg_a * fade)
-                # Background pill
-                bx, by = px - tw // 2 - 5, py - th // 2 - 3
-                bg = pygame.Surface((tw + 10, th + 6), pygame.SRCALPHA)
-                bg.fill((10, 10, 18, actual_alpha))
-                surf.blit(bg, (bx, by))
-                # Text with fade
-                if fade < 0.95:
-                    ts.set_alpha(int(255 * fade))
+                # Drop shadow instead of background rect (cleaner look)
+                shadow = font.render(text, True, (0, 0, 0))
+                surf.blit(shadow, (px - tw // 2 + 1, py - th // 2 + 1))
                 surf.blit(ts, (px - tw // 2, py - th // 2))
-                return pygame.Rect(bx, by, tw + 10, th + 6)
+                return pygame.Rect(px - tw // 2 - 2, py - th // 2 - 2, tw + 4, th + 4)
 
             _placed = []
             def _nol(r):
@@ -3878,44 +3850,53 @@ class Renderer:
                 _placed.append(r)
                 return True
 
-            # Nation labels — always visible
+            # Nation labels — large, spaced, always try to show
             for nid, nation in geo_map.nations.items():
                 if not nation.region_ids: continue
                 sx_, sy_, cnt = 0.0, 0.0, 0
                 for rid in nation.region_ids:
                     rg = geo_map.regions.get(rid)
                     if rg:
-                        b = rg.bounds
-                        sx_ += (b[0]+b[2])/2; sy_ += (b[1]+b[3])/2; cnt += 1
+                        b = rg.bounds; sx_ += (b[0]+b[2])/2; sy_ += (b[1]+b[3])/2; cnt += 1
                 if cnt > 0:
-                    # Estimate nation width on screen
+                    # Letter-space the nation name for cartographic feel
+                    spaced = "  ".join(nation.name.upper())
                     nw = nation.chunk_count ** 0.5 * chunk_size_f
-                    _nol(_smart_label(nation.name.upper(), sx_/cnt, sy_/cnt,
-                                      self.font, (255, 240, 210), 180, 0, nw))
+                    _nol(_map_label(spaced, sx_/cnt, sy_/cnt,
+                                    self.font, (230, 220, 185), 0, nw))
 
-            # Region labels
-            if chunk_size_f >= 0.8:
-                for rid, rg in geo_map.regions.items():
+            # Region labels — only when regions are reasonably large on screen
+            if chunk_size_f >= 0.6:
+                shown = 0
+                for rid, rg in sorted(geo_map.regions.items(), key=lambda x: x[1].chunk_count, reverse=True):
+                    if shown >= 15: break  # Cap visible region labels
                     b = rg.bounds
                     rw = (b[2] - b[0]) * chunk_size_f
-                    _nol(_smart_label(rg.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
-                                      self.small_font, (190, 200, 220), 140, s(14), rw))
+                    r = _map_label(rg.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
+                                   self.small_font, (180, 190, 210), s(12), rw)
+                    if _nol(r): shown += 1
 
-            # Province labels
-            if chunk_size_f >= 2.5:
-                for pid, pv in geo_map.provinces.items():
+            # Province labels — only when zoomed in enough, limit count
+            if chunk_size_f >= 3.0:
+                shown = 0
+                for pid, pv in sorted(geo_map.provinces.items(), key=lambda x: x[1].chunk_count, reverse=True):
+                    if shown >= 20: break
                     b = pv.bounds
                     pw = (b[2] - b[0]) * chunk_size_f
-                    _nol(_smart_label(pv.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
-                                      self.small_font, (160, 165, 180), 120, 0, pw))
+                    r = _map_label(pv.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
+                                   self.small_font, (155, 160, 175), 0, pw)
+                    if _nol(r): shown += 1
 
-            # District labels
-            if chunk_size_f >= 6.0:
-                for did, dt in geo_map.districts.items():
+            # District labels — very zoomed in, strict limit
+            if chunk_size_f >= 8.0:
+                shown = 0
+                for did, dt in sorted(geo_map.districts.items(), key=lambda x: x[1].chunk_count, reverse=True):
+                    if shown >= 15: break
                     b = dt.bounds
                     dw = (b[2] - b[0]) * chunk_size_f
-                    _nol(_smart_label(dt.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
-                                      self.tiny_font, (140, 140, 155), 100, 0, dw))
+                    r = _map_label(dt.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
+                                   self.tiny_font, (135, 135, 150), 0, dw)
+                    if _nol(r): shown += 1
 
         # ── PLAYER MARKER ──
         po_x = (character.position.x % Config.CHUNK_SIZE) / Config.CHUNK_SIZE

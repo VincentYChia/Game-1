@@ -1,16 +1,14 @@
 """Pre-rendered map image cache for the geographic world map.
 
-Generates static map images at multiple LOD (level of detail) tiers
-after world generation. The map renderer blits from these cached
-surfaces instead of iterating 262K chunks per frame.
+Generates smooth, high-quality map images at startup. The map renderer
+blits viewport regions from these cached surfaces — zero per-chunk
+iteration at render time.
 
-LOD tiers:
-- Tier 0: 512x512 (1px/chunk) — full world overview
-- Tier 1: 1024x1024 (2px/chunk) — medium zoom
-- Tier 2: 2048x2048 (4px/chunk) — closer zoom
-
-At close zoom (>8px/chunk), falls back to per-chunk rendering
-since only a few hundred chunks are visible.
+Key quality features:
+- Smooth color blending (box blur) eliminates per-chunk speckle
+- Thick nation borders that scale well at any zoom
+- Region borders at higher LOD
+- Stronger nation color tinting for clear political distinction
 """
 
 from __future__ import annotations
@@ -20,90 +18,100 @@ from typing import Dict, Optional, Tuple
 import pygame
 
 
+def _box_blur(surf: pygame.Surface, radius: int = 1) -> pygame.Surface:
+    """Fast box blur using pygame scale-down then scale-up.
+
+    This is the standard pygame blur trick: scale to 1/N, then back up.
+    The interpolation during scale-up creates a natural blur effect.
+    """
+    if radius <= 0:
+        return surf
+    w, h = surf.get_size()
+    # Scale down by factor, then back up — the interpolation creates blur
+    factor = max(1, radius + 1)
+    small_w = max(1, w // factor)
+    small_h = max(1, h // factor)
+    small = pygame.transform.smoothscale(surf, (small_w, small_h))
+    return pygame.transform.smoothscale(small, (w, h))
+
+
 def generate_map_images(
     world_map,
     biome_color_fn,
     nation_colors: Dict[int, Tuple[int, int, int]],
 ) -> Dict[int, pygame.Surface]:
-    """Generate pre-rendered map images at multiple LOD levels.
+    """Generate pre-rendered map images.
 
-    Args:
-        world_map: WorldMap from geographic system.
-        biome_color_fn: Function(chunk_type_str) → (r, g, b).
-        nation_colors: Dict mapping nation_id → (r, g, b).
-
-    Returns:
-        Dict mapping pixels_per_chunk → pygame.Surface.
+    Produces a single high-quality image at 4px/chunk (2048x2048 for 512 world),
+    with smooth blurred colors and clear borders.
     """
     world_size = world_map.world_size
     half = world_size // 2
     chunk_data = world_map.chunk_data
 
-    results = {}
+    ppc = 4  # pixels per chunk
+    img_size = world_size * ppc
+    surf = pygame.Surface((img_size, img_size))
+    surf.fill((20, 22, 30))
 
-    for ppc in [1, 2, 4]:
-        img_size = world_size * ppc
-        surf = pygame.Surface((img_size, img_size))
-        surf.fill((15, 15, 25))
+    # Pass 1: Draw chunk colors with stronger nation tinting
+    for (cx, cy), geo in chunk_data.items():
+        ct_value = geo.chunk_type.value if hasattr(geo.chunk_type, 'value') else str(geo.chunk_type)
+        color = biome_color_fn(ct_value)
 
-        for (cx, cy), geo in chunk_data.items():
-            # Chunk type color
-            ct_value = geo.chunk_type.value if hasattr(geo.chunk_type, 'value') else str(geo.chunk_type)
-            color = biome_color_fn(ct_value)
+        # Stronger nation tint (25%) for clear political distinction
+        nc = nation_colors.get(geo.nation_id)
+        if nc:
+            color = (
+                int(color[0] * 0.75 + nc[0] * 0.25),
+                int(color[1] * 0.75 + nc[1] * 0.25),
+                int(color[2] * 0.75 + nc[2] * 0.25),
+            )
 
-            # Nation tint
-            nc = nation_colors.get(geo.nation_id)
-            if nc:
-                color = (
-                    int(color[0] * 0.85 + nc[0] * 0.15),
-                    int(color[1] * 0.85 + nc[1] * 0.15),
-                    int(color[2] * 0.85 + nc[2] * 0.15),
-                )
+        px = (cx + half) * ppc
+        py = (cy + half) * ppc
+        pygame.draw.rect(surf, color, (px, py, ppc, ppc))
 
-            # Convert chunk coords to pixel coords
-            px = (cx + half) * ppc
-            py = (cy + half) * ppc
+    # Pass 2: Blur to smooth out per-chunk speckle → painted map look
+    surf = _box_blur(surf, radius=2)
 
-            if ppc == 1:
-                surf.set_at((px, py), color)
-            else:
-                pygame.draw.rect(surf, color, (px, py, ppc, ppc))
+    # Pass 3: Draw nation borders (thick, on top of blur so they stay crisp)
+    border_color = (200, 185, 140)
+    for (cx, cy), geo in chunk_data.items():
+        right = chunk_data.get((cx + 1, cy))
+        if right and geo.nation_id != right.nation_id:
+            x = (cx + half + 1) * ppc
+            y = (cy + half) * ppc
+            pygame.draw.line(surf, border_color, (x - 1, y), (x - 1, y + ppc), 2)
 
-        # Draw nation borders on higher LOD tiers
-        if ppc >= 2:
-            border_color = (220, 200, 160)
-            for (cx, cy), geo in chunk_data.items():
-                # Check right neighbor
-                right = chunk_data.get((cx + 1, cy))
-                if right and geo.nation_id != right.nation_id:
-                    x = (cx + half + 1) * ppc
-                    y = (cy + half) * ppc
-                    pygame.draw.line(surf, border_color, (x, y), (x, y + ppc), 1)
-                # Check bottom neighbor
-                bottom = chunk_data.get((cx, cy + 1))
-                if bottom and geo.nation_id != bottom.nation_id:
-                    x = (cx + half) * ppc
-                    y = (cy + half + 1) * ppc
-                    pygame.draw.line(surf, border_color, (x, y), (x + ppc, y), 1)
+        bottom = chunk_data.get((cx, cy + 1))
+        if bottom and geo.nation_id != bottom.nation_id:
+            x = (cx + half) * ppc
+            y = (cy + half + 1) * ppc
+            pygame.draw.line(surf, border_color, (x, y - 1), (x + ppc, y - 1), 2)
 
-            # Region borders (thinner, only on highest pre-rendered tier)
-            if ppc >= 4:
-                region_color = (160, 160, 180)
-                for (cx, cy), geo in chunk_data.items():
-                    right = chunk_data.get((cx + 1, cy))
-                    if right and geo.nation_id == right.nation_id and geo.region_id != right.region_id:
-                        x = (cx + half + 1) * ppc
-                        y = (cy + half) * ppc
-                        pygame.draw.line(surf, region_color, (x, y), (x, y + ppc), 1)
-                    bottom = chunk_data.get((cx, cy + 1))
-                    if bottom and geo.nation_id == bottom.nation_id and geo.region_id != bottom.region_id:
-                        x = (cx + half) * ppc
-                        y = (cy + half + 1) * ppc
-                        pygame.draw.line(surf, region_color, (x, y), (x + ppc, y), 1)
+    # Pass 4: Region borders (thinner)
+    region_color = (140, 140, 155, 180)
+    for (cx, cy), geo in chunk_data.items():
+        right = chunk_data.get((cx + 1, cy))
+        if right and geo.nation_id == right.nation_id and geo.region_id != right.region_id:
+            x = (cx + half + 1) * ppc
+            y = (cy + half) * ppc
+            pygame.draw.line(surf, (120, 120, 135), (x, y), (x, y + ppc), 1)
 
-        results[ppc] = surf
-        print(f"[MapCache] Generated LOD tier {ppc}px/chunk: {img_size}x{img_size}")
+        bottom = chunk_data.get((cx, cy + 1))
+        if bottom and geo.nation_id == bottom.nation_id and geo.region_id != bottom.region_id:
+            x = (cx + half) * ppc
+            y = (cy + half + 1) * ppc
+            pygame.draw.line(surf, (120, 120, 135), (x, y), (x + ppc, y), 1)
 
+    results = {ppc: surf}
+
+    # Also generate a small overview (1px/chunk, blurred) for extreme zoom-out
+    small = pygame.transform.smoothscale(surf, (world_size, world_size))
+    results[1] = small
+
+    print(f"[MapCache] Generated map image: {img_size}x{img_size} (blurred, bordered)")
     return results
 
 
@@ -111,27 +119,9 @@ def get_best_lod(
     map_images: Dict[int, pygame.Surface],
     chunk_size_pixels: float,
 ) -> Optional[Tuple[pygame.Surface, int]]:
-    """Select the best LOD surface for the current zoom level.
-
-    Returns (surface, pixels_per_chunk) or None if zoom is too close
-    for pre-rendered images (fall back to per-chunk rendering).
-    """
-    # At 8+ px/chunk, per-chunk rendering is fine (few chunks visible)
-    if chunk_size_pixels > 8:
+    """Select the best LOD surface for the current zoom level."""
+    if not map_images:
         return None
-
-    # Pick the LOD tier closest to (but not exceeding) current chunk size
-    best_ppc = None
-    best_surf = None
-    for ppc in sorted(map_images.keys(), reverse=True):
-        if ppc <= chunk_size_pixels or best_ppc is None:
-            best_ppc = ppc
-            best_surf = map_images[ppc]
-            break
-
-    # Fallback to lowest LOD
-    if best_surf is None and map_images:
-        best_ppc = min(map_images.keys())
-        best_surf = map_images[best_ppc]
-
-    return (best_surf, best_ppc) if best_surf else None
+    # Always use highest quality
+    best_ppc = max(map_images.keys())
+    return (map_images[best_ppc], best_ppc)
