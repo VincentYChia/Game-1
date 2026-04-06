@@ -1,0 +1,130 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Village generation configuration — controls placement, sizing, NPCs, and structures",
+    "notes": [
+      "Villages are placed during geographic world generation",
+      "Each village occupies a square area of chunks (size x size)",
+      "Walls surround the village with evenly-distributed entrances",
+      "NPCs are spawned from templates defined in this file",
+      "Village tiers control size, entrances, NPC count, and building density"
+    ]
+  },
+
+  "placement": {
+    "target_count": 30,
+    "_target_count_effects": "HIGHER = more villages across the world. Lower = fewer, more spread out.",
+    "min_distance": 40,
+    "_min_distance_effects": "Minimum chunks between village centers. HIGHER = more spread out.",
+    "valid_danger_levels": [1, 2, 3],
+    "_valid_danger_effects": "Danger levels where villages can spawn (1=Tranquil, 2=Peaceful, 3=Moderate).",
+    "excluded_chunk_types": ["lake", "river", "cursed_marsh", "wetland", "deep_cave", "crystal_cavern", "flooded_cave"],
+    "_excluded_effects": "Chunk types that cannot contain villages."
+  },
+
+  "tiers": {
+    "_comment": "Village tiers define size, structure, and population. Future: tier selection based on location/danger.",
+    "small": {
+      "display_name": "Hamlet",
+      "size": 2,
+      "_size_effects": "Chunks per side (2 = 2x2 = 32x32 tiles).",
+      "entrances": 4,
+      "_entrances_effects": "Number of wall entrances. Distributed evenly across sides.",
+      "entrance_width": 3,
+      "_entrance_width_effects": "Width of each entrance in tiles.",
+      "wall_inset": 1,
+      "_wall_inset_effects": "Tiles inward from chunk edge for wall placement.",
+      "npc_min": 3,
+      "npc_max": 5,
+      "buildings_min": 2,
+      "buildings_max": 4,
+      "building_width_range": [4, 6],
+      "building_height_range": [3, 4],
+      "spawn_weight": 70,
+      "_spawn_weight_effects": "Relative probability of this tier being chosen."
+    },
+    "medium": {
+      "display_name": "Village",
+      "size": 3,
+      "entrances": 4,
+      "entrance_width": 4,
+      "wall_inset": 1,
+      "npc_min": 5,
+      "npc_max": 8,
+      "buildings_min": 4,
+      "buildings_max": 7,
+      "building_width_range": [4, 7],
+      "building_height_range": [3, 5],
+      "spawn_weight": 25
+    },
+    "large": {
+      "display_name": "Town",
+      "size": 4,
+      "entrances": 5,
+      "entrance_width": 5,
+      "wall_inset": 2,
+      "npc_min": 8,
+      "npc_max": 12,
+      "buildings_min": 6,
+      "buildings_max": 10,
+      "building_width_range": [5, 8],
+      "building_height_range": [4, 6],
+      "spawn_weight": 5
+    }
+  },
+
+  "entrance_distribution": {
+    "_comment": "How entrances are distributed across walls. For N entrances on a 4-sided village:",
+    "rules": [
+      "1 entrance: south wall only",
+      "2 entrances: south + north walls",
+      "3 entrances: south + north + east walls",
+      "4 entrances: one on each wall (N, S, E, W)",
+      "5 entrances: one on each wall + one extra on longest wall, spaced evenly",
+      "6+ entrances: distributed round-robin across walls, spaced evenly"
+    ]
+  },
+
+  "npc_templates": [
+    {
+      "npc_id_prefix": "village_villager",
+      "name": "Villager",
+      "sprite_color": [180, 160, 140],
+      "dialogue_lines": ["Hello there!", "Welcome to our village!", "Nice day, isn't it?"],
+      "spawn_weight": 30
+    },
+    {
+      "npc_id_prefix": "village_farmer",
+      "name": "Farmer",
+      "sprite_color": [140, 170, 120],
+      "dialogue_lines": ["Hi! I tend the fields.", "The soil is good this season.", "Have you seen any slimes nearby?"],
+      "spawn_weight": 25
+    },
+    {
+      "npc_id_prefix": "village_guard",
+      "name": "Guard",
+      "sprite_color": [160, 140, 170],
+      "dialogue_lines": ["Halt! Oh, just a traveler. Carry on.", "Keep your eyes open out there.", "The roads aren't safe at night."],
+      "spawn_weight": 20
+    },
+    {
+      "npc_id_prefix": "village_merchant",
+      "name": "Merchant",
+      "sprite_color": [170, 160, 100],
+      "dialogue_lines": ["Looking to trade? ...Not yet, I'm afraid.", "Business has been slow.", "Come back when I've restocked!"],
+      "spawn_weight": 15
+    },
+    {
+      "npc_id_prefix": "village_scholar",
+      "name": "Scholar",
+      "sprite_color": [120, 140, 180],
+      "dialogue_lines": ["Ah, a fellow seeker of knowledge!", "I've been studying the local wildlife.", "Did you know slimes can split when threatened?"],
+      "spawn_weight": 10
+    }
+  ],
+
+  "naming": {
+    "prefixes": ["Old", "New", "East", "West", "North", "South", "Upper", "Lower", "Little", "Great"],
+    "suffixes": ["haven", "stead", "ton", "burg", "ford", "dale", "brook", "field", "wood", "gate"]
+  }
+}

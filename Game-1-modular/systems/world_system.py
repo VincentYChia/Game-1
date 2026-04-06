@@ -276,17 +276,49 @@ class WorldSystem:
             return
         self._villages = []
         rng = random.Random(self.seed + 777777)
+        try:
+            from systems.geography.village_generator import _load_config, _select_tier, _select_npc_template
+            cfg = _load_config()
+        except Exception:
+            cfg = None
+
         for lid, loc in self.geographic_map.localities.items():
             if loc.feature_type == "village":
-                npc_count = rng.randint(3, 5)
-                base_tx = loc.chunk_x * 16 + 4
-                base_ty = loc.chunk_y * 16 + 4
-                npc_positions = [(base_tx + rng.randint(2, 20), base_ty + rng.randint(2, 20))
-                                 for _ in range(npc_count)]
+                if cfg:
+                    _, tier = _select_tier(rng)
+                else:
+                    tier = {"size": 2, "npc_min": 3, "npc_max": 5, "entrances": 4,
+                            "entrance_width": 3, "wall_inset": 1, "buildings_min": 2, "buildings_max": 4,
+                            "building_width_range": [4, 6], "building_height_range": [3, 4]}
+
+                size = tier.get("size", 2)
+                npc_count = rng.randint(tier.get("npc_min", 3), tier.get("npc_max", 5))
+                inset = tier.get("wall_inset", 1)
+                inner_x = loc.chunk_x * 16 + inset + 3
+                inner_y = loc.chunk_y * 16 + inset + 3
+                inner_w = size * 16 - (inset + 3) * 2
+                inner_h = size * 16 - (inset + 3) * 2
+
+                npc_positions = []
+                npc_templates = []
+                for _ in range(npc_count):
+                    nx = inner_x + rng.randint(2, max(3, inner_w - 2))
+                    ny = inner_y + rng.randint(2, max(3, inner_h - 2))
+                    npc_positions.append((nx, ny))
+                    if cfg:
+                        npc_templates.append(_select_npc_template(rng))
+                    else:
+                        npc_templates.append({"npc_id_prefix": "villager", "name": "Villager",
+                                              "sprite_color": [180, 160, 140], "dialogue_lines": ["Hello!"]})
+
+                chunks = loc.adjacent_chunks if loc.adjacent_chunks else [(loc.chunk_x, loc.chunk_y)]
                 self._villages.append({
                     "center_chunk": (loc.chunk_x, loc.chunk_y),
-                    "chunks": loc.adjacent_chunks if loc.adjacent_chunks else [(loc.chunk_x, loc.chunk_y)],
+                    "chunks": chunks,
+                    "size": size,
+                    "tier_config": tier,
                     "npc_positions": npc_positions,
+                    "npc_templates": npc_templates,
                     "locality_id": lid,
                     "name": loc.name,
                 })
@@ -380,33 +412,27 @@ class WorldSystem:
     def get_village_npc_definitions(self) -> list:
         """Get NPC definitions for all villages (for game_engine to spawn).
 
-        Returns list of dicts with npc_id, name, position, sprite_color, etc.
-        matching the NPCDefinition format.
+        Uses NPC templates from village data (selected from village-config.JSON).
         """
         npc_defs = []
-        npc_templates = [
-            {"npc_id": "village_dummy_1", "name": "Villager", "sprite_color": [180, 160, 140],
-             "dialogue_lines": ["Hello there!", "Welcome to our village!", "Nice day, isn't it?"]},
-            {"npc_id": "village_dummy_2", "name": "Farmer", "sprite_color": [140, 170, 120],
-             "dialogue_lines": ["Hi! I tend the fields.", "The soil is good this season."]},
-            {"npc_id": "village_dummy_3", "name": "Guard", "sprite_color": [160, 140, 170],
-             "dialogue_lines": ["Halt! Oh, just a traveler.", "Keep your eyes open out there."]},
-            {"npc_id": "village_dummy_4", "name": "Merchant", "sprite_color": [170, 160, 100],
-             "dialogue_lines": ["Looking to trade? ...Not yet.", "Come back when I've restocked!"]},
-            {"npc_id": "village_dummy_5", "name": "Scholar", "sprite_color": [120, 140, 180],
-             "dialogue_lines": ["A fellow seeker of knowledge!", "I've been studying the wildlife."]},
-        ]
         for village in self._villages:
             v_name = village.get("name", "Village")
-            for i, (nx, ny) in enumerate(village.get("npc_positions", [])):
-                template = npc_templates[i % len(npc_templates)]
+            positions = village.get("npc_positions", [])
+            templates = village.get("npc_templates", [])
+            for i, (nx, ny) in enumerate(positions):
+                if i < len(templates):
+                    t = templates[i]
+                else:
+                    t = {"npc_id_prefix": "village_villager", "name": "Villager",
+                         "sprite_color": [180, 160, 140],
+                         "dialogue_lines": ["Hello!"]}
                 npc_defs.append({
-                    "npc_id": f"{template['npc_id']}_{village['locality_id']}_{i}",
-                    "name": f"{template['name']} of {v_name}",
+                    "npc_id": f"{t.get('npc_id_prefix', 'villager')}_{village['locality_id']}_{i}",
+                    "name": f"{t['name']} of {v_name}",
                     "position": {"x": float(nx), "y": float(ny), "z": 0.0},
-                    "sprite_color": template["sprite_color"],
+                    "sprite_color": t.get("sprite_color", [180, 160, 140]),
                     "interaction_radius": 2.5,
-                    "dialogue_lines": template["dialogue_lines"],
+                    "dialogue_lines": t.get("dialogue_lines", ["Hello!"]),
                     "quests": [],
                 })
         return npc_defs

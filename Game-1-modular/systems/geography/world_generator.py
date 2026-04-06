@@ -175,12 +175,12 @@ class WorldGenerator:
         try:
             from systems.geography.village_generator import place_villages
             self._villages = place_villages(world_map, self.seed)
-            if verbose:
-                print(f"  Villages: {len(self._villages)} placed in {time.time() - t:.2f}s")
+            print(f"🏘️  {len(self._villages)} villages placed in {time.time() - t:.2f}s")
         except Exception as e:
             self._villages = []
-            if verbose:
-                print(f"  Villages: failed ({e})")
+            print(f"🏘️  Village placement failed: {e}")
+            import traceback
+            traceback.print_exc()
 
         if verbose:
             print(f"Total generation: {time.time() - t_start:.2f}s")
