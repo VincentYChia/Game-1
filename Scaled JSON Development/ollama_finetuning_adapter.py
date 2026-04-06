@@ -20,25 +20,24 @@ from pathlib import Path
 BASE_MODEL_DIR = r"C:\Users\vipVi\gemma-3-4b-it"
 LLAMA_CPP_DIR = r"C:\Users\vipVi\llama.cpp"
 MERGE_WORKSPACE = r"C:\Users\vipVi\lora-merges"
-QUANTIZE = None  # None = F16, or "q4_K_M", "q8_0", etc.
+QUANTIZE = "q8_0"  # None = F16, or "q4_K_M", "q8_0", etc.
 
 # ============================================================================
 # ADAPTERS — add your adapter folders here
-#   "name":  what you'll call it in Ollama (ollama run <name>)
 #   "path":  full path to the adapter folder
+#   The model name is derived from the last folder in the path automatically.
+#   e.g. ...\Game-1_LORA\Smithing_4  →  ollama model name: "Smithing_4"
+#
+#   Optional: include "name" to override the auto-derived name.
 # ============================================================================
 
 ADAPTERS = [
-    {
-        "name": "game1-gemma",
-        "path": r"C:\Users\vipVi\Downloads\Game-1_LORA\New_Engineering_1",
-    },
-    # {
-    #     "name": "game2-gemma",
-    #     "path": r"C:\Users\vipVi\Downloads\Game-2_LORA\Some_Adapter",
-    # },
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\New_Refining_1"},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\New_Alchemy_1"},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_4"},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_2"},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\New_Engineering_1"},
 ]
-
 # ============================================================================
 # Script — no need to edit below
 # ============================================================================
@@ -58,6 +57,30 @@ def run(cmd, cwd=None):
         detail = (result.stderr or result.stdout or "").strip()
         raise RuntimeError(f"Command failed: {' '.join(cmd[:3])}...\n{detail}")
     return result
+
+
+def get_model_name(adapter):
+    """Derive model name from the last folder in the path, or use explicit name."""
+    if "name" in adapter:
+        return adapter["name"]
+    return Path(adapter["path"]).name
+
+
+def get_existing_models():
+    """Return a set of model names currently in Ollama."""
+    try:
+        result = run(["ollama", "list"])
+        models = set()
+        for line in result.stdout.strip().splitlines()[1:]:  # skip header
+            parts = line.split()
+            if parts:
+                # Store both the full "name:tag" and just the name (without :latest)
+                full = parts[0]
+                models.add(full)
+                models.add(full.split(":")[0])
+        return models
+    except RuntimeError:
+        return set()
 
 
 def preflight():
@@ -89,6 +112,7 @@ def preflight():
         errors.append("ollama")
 
     for a in ADAPTERS:
+        name = get_model_name(a)
         p = Path(a["path"])
         missing = []
         if not (p / "adapter_model.safetensors").is_file():
@@ -96,10 +120,10 @@ def preflight():
         if not (p / "adapter_config.json").is_file():
             missing.append("adapter_config.json")
         if missing:
-            log(f"'{a['name']}': missing {', '.join(missing)}", "FAIL")
-            errors.append(a["name"])
+            log(f"'{name}': missing {', '.join(missing)}", "FAIL")
+            errors.append(name)
         else:
-            log(f"'{a['name']}': {p}", "OK")
+            log(f"'{name}': {p}", "OK")
 
     if errors:
         print(f"\n  ✗ Fix these before running: {', '.join(errors)}")
@@ -177,7 +201,7 @@ def import_to_ollama(model_name, gguf_path):
 
 
 def build_one(adapter):
-    name = adapter["name"]
+    name = get_model_name(adapter)
     adapter_path = adapter["path"]
     merged_dir = str(Path(MERGE_WORKSPACE) / f"{name}-merged")
 
@@ -224,9 +248,17 @@ def main():
     preflight()
     os.makedirs(MERGE_WORKSPACE, exist_ok=True)
 
+    # Check which models already exist
+    existing = get_existing_models()
+
     results = {}
     for adapter in ADAPTERS:
-        results[adapter["name"]] = build_one(adapter)
+        name = get_model_name(adapter)
+        if name in existing:
+            log(f"'{name}' already exists in Ollama — skipping", "OK")
+            results[name] = True
+            continue
+        results[name] = build_one(adapter)
 
     # Cleanup workspace
     try:
@@ -239,7 +271,9 @@ def main():
     print("  Results")
     print(f"{'=' * 60}")
     for name, ok in results.items():
-        print(f"  {'✓' if ok else '✗'} {name}")
+        skipped = name in existing
+        tag = "✓ (skipped)" if (ok and skipped) else ("✓" if ok else "✗")
+        print(f"  {tag} {name}")
     print(f"\n  Run a model:  ollama run <name>")
 
     if not all(results.values()):
@@ -248,4 +282,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

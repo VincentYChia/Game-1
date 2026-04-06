@@ -16,11 +16,11 @@ from pathlib import Path
 # REQUEST — edit this for each inference call
 # ============================================================================
 
-MODEL = "game1-gemma"
+MODEL = "New_Engineering_1"
 
 SYSTEM_PROMPT = "You are a helpful assistant."
 
-PROMPT = "Hello! Tell me about yourself."
+PROMPT = "Hello, tell me some things about yourself. What are you knowledegable about."
 
 # Image path — set to None if not using vision, or a path to an image file
 IMAGE = None
