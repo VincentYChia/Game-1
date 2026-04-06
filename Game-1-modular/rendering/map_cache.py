@@ -72,8 +72,8 @@ def generate_map_images(
         py = (cy + half) * ppc
         pygame.draw.rect(surf, color, (px, py, ppc, ppc))
 
-    # Pass 2: Blur to smooth out per-chunk speckle → painted map look
-    surf = _box_blur(surf, radius=2)
+    # Pass 2: Stronger blur to eliminate checkerboard noise → smooth painted look
+    surf = _box_blur(surf, radius=3)
 
     # Pass 3: Draw nation borders (thick, on top of blur so they stay crisp)
     border_color = (200, 185, 140)

@@ -3771,50 +3771,81 @@ class Renderer:
 
         # ── PRE-SCALED MAP: scale once on zoom change, drag = offset only ──
         if not hasattr(self, '_map_prescaled'):
-            self._map_prescaled = (None, None)  # (surface, zoom_level)
+            self._map_prescaled = (None, None, None)  # (surface, zoom_key, effective_csf)
+
+        # Compute effective chunk scale (may be capped at high zoom)
+        _effective_csf = chunk_size_f
+        _half = geo_map.world_size // 2 if geo_map else 256
 
         if geo_map and _map_images:
             ppc = max(_map_images.keys())
             img = _map_images[ppc]
-            half = geo_map.world_size // 2
             world_size = geo_map.world_size
 
-            # Pre-scale the FULL map image at current zoom level (only when zoom changes)
             target_w = max(1, int(world_size * chunk_size_f))
-            target_h = max(1, int(world_size * chunk_size_f))
-            # Cap to prevent insane memory usage at high zoom
+            target_h = target_w
             max_dim = 4096
-            if target_w > max_dim or target_h > max_dim:
-                # At very high zoom, fall back to subsurface approach
-                scale_ratio = min(max_dim / target_w, max_dim / target_h)
-                target_w = int(target_w * scale_ratio)
-                target_h = int(target_h * scale_ratio)
-                effective_csf = chunk_size_f * scale_ratio
-            else:
-                effective_csf = chunk_size_f
+            if target_w > max_dim:
+                ratio = max_dim / target_w
+                target_w = int(target_w * ratio)
+                target_h = target_w
+                _effective_csf = chunk_size_f * ratio
 
-            _cached_zoom = self._map_prescaled[1]
-            if self._map_prescaled[0] is None or _cached_zoom != round(chunk_size_f, 4):
+            zoom_key = round(chunk_size_f, 4)
+            if self._map_prescaled[0] is None or self._map_prescaled[1] != zoom_key:
                 try:
                     full_scaled = pygame.transform.scale(img, (target_w, target_h))
-                    self._map_prescaled = (full_scaled, round(chunk_size_f, 4))
+                    self._map_prescaled = (full_scaled, zoom_key, _effective_csf)
                 except (ValueError, pygame.error):
-                    self._map_prescaled = (None, None)
+                    self._map_prescaled = (None, None, _effective_csf)
+            else:
+                _effective_csf = self._map_prescaled[2]
 
-            # Blit the pre-scaled image at the correct offset (fast — no per-frame scaling)
             if self._map_prescaled[0] is not None:
-                full_img = self._map_prescaled[0]
-                # Compute where the center_chunk maps to on the pre-scaled image
-                blit_x = map_area_x + map_center_x - int((center_chunk_x + half) * effective_csf)
-                blit_y = map_area_y + map_center_y - int((center_chunk_y + half) * effective_csf)
-                surf.blit(full_img, (blit_x, blit_y))
+                blit_x = map_area_x + map_center_x - int((center_chunk_x + _half) * _effective_csf)
+                blit_y = map_area_y + map_center_y - int((center_chunk_y + _half) * _effective_csf)
+                surf.blit(self._map_prescaled[0], (blit_x, blit_y))
 
-        # Helper: chunk world coords -> pixel on surf (uses same math as blit offset)
+        # Helper: chunk coords -> pixel (MUST use _effective_csf to match image)
         def _c2p(cx, cy):
             return (
-                map_area_x + map_center_x + int((cx - center_chunk_x) * chunk_size_f),
-                map_area_y + map_center_y + int((cy - center_chunk_y) * chunk_size_f),
+                map_area_x + map_center_x + int((cx - center_chunk_x) * _effective_csf),
+                map_area_y + map_center_y + int((cy - center_chunk_y) * _effective_csf),
             )
+
+        # ── DYNAMIC BORDERS (drawn on top of image at current zoom) ──
+        if geo_map and _effective_csf >= 1.5:
+            _cd = geo_map.chunk_data
+            # Only draw borders for visible chunks (use viewport bounds)
+            vw_c = int(map_area_w / max(0.5, _effective_csf)) + 2
+            vh_c = int(map_area_h / max(0.5, _effective_csf)) + 2
+            for dy in range(-vh_c // 2, vh_c // 2 + 1):
+                for dx in range(-vw_c // 2, vw_c // 2 + 1):
+                    cx_ = int(center_chunk_x) + dx
+                    cy_ = int(center_chunk_y) + dy
+                    gd = _cd.get((cx_, cy_))
+                    if not gd: continue
+                    px_, py_ = _c2p(cx_, cy_)
+                    cs = max(1, int(_effective_csf))
+                    # Nation border (thick gold)
+                    r = _cd.get((cx_+1, cy_))
+                    if r and gd.nation_id != r.nation_id:
+                        pygame.draw.line(surf, (200,185,140), (px_+cs, py_), (px_+cs, py_+cs), max(2, cs//4))
+                    b = _cd.get((cx_, cy_+1))
+                    if b and gd.nation_id != b.nation_id:
+                        pygame.draw.line(surf, (200,185,140), (px_, py_+cs), (px_+cs, py_+cs), max(2, cs//4))
+                    # Region border (medium silver, only if zoomed enough)
+                    if _effective_csf >= 2.0:
+                        if r and gd.nation_id == r.nation_id and gd.region_id != r.region_id:
+                            pygame.draw.line(surf, (150,150,165), (px_+cs, py_), (px_+cs, py_+cs), max(1, cs//6))
+                        if b and gd.nation_id == b.nation_id and gd.region_id != b.region_id:
+                            pygame.draw.line(surf, (150,150,165), (px_, py_+cs), (px_+cs, py_+cs), max(1, cs//6))
+                    # Province border (thin dotted, at close zoom)
+                    if _effective_csf >= 5.0:
+                        if r and gd.region_id == r.region_id and gd.province_id != r.province_id:
+                            pygame.draw.line(surf, (110,110,125), (px_+cs, py_), (px_+cs, py_+cs), 1)
+                        if b and gd.region_id == b.region_id and gd.province_id != b.province_id:
+                            pygame.draw.line(surf, (110,110,125), (px_, py_+cs), (px_+cs, py_+cs), 1)
 
         # ── LABELS — cartographic style with strict size gating ──
         if geo_map:
@@ -3927,8 +3958,8 @@ class Renderer:
         # ── HOVER INFO (drawn outside clip, below map) ──
         rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
         if map_area_x <= rx <= map_area_x + map_area_w and map_area_y <= ry <= map_area_y + map_area_h:
-            hcx = math.floor(center_chunk_x + (rx - map_area_x - map_center_x) / max(0.1, chunk_size_f))
-            hcy = math.floor(center_chunk_y + (ry - map_area_y - map_center_y) / max(0.1, chunk_size_f))
+            hcx = math.floor(center_chunk_x + (rx - map_area_x - map_center_x) / max(0.1, _effective_csf))
+            hcy = math.floor(center_chunk_y + (ry - map_area_y - map_center_y) / max(0.1, _effective_csf))
             hovered_chunk = (hcx, hcy, map_system.get_explored_chunk(hcx, hcy))
 
         if hovered_chunk and config.map_display.show_coordinates:
