@@ -61,11 +61,30 @@ def _load_config() -> dict:
     return _config_cache
 
 
-def _select_tier(rng: random.Random) -> Tuple[str, dict]:
-    """Select a village tier based on spawn weights."""
+def _select_tier(rng: random.Random, danger_level: int = 3) -> Tuple[str, dict]:
+    """Select a village tier based on danger level.
+
+    Higher danger = larger fortified villages.
+    Uses tier_selection_by_danger from config, falling back to spawn_weight.
+    """
     cfg = _load_config()
     tiers = {k: v for k, v in cfg.get("tiers", {}).items()
              if isinstance(v, dict) and not k.startswith("_")}
+
+    # Try danger-based selection first
+    danger_pools = cfg.get("tier_selection_by_danger", {})
+    pool = danger_pools.get(str(danger_level))
+    if pool:
+        # pool is list of [tier_name, weight] pairs
+        total = sum(w for _, w in pool)
+        roll = rng.uniform(0, total)
+        cumulative = 0
+        for tier_name, weight in pool:
+            cumulative += weight
+            if roll <= cumulative and tier_name in tiers:
+                return tier_name, tiers[tier_name]
+
+    # Fallback: use spawn_weight
     entries = list(tiers.items())
     total = sum(t.get("spawn_weight", 1) for _, t in entries)
     roll = rng.uniform(0, total)
@@ -146,51 +165,55 @@ def place_villages(world_map: WorldMap, seed: int) -> List[Dict]:
              if isinstance(v, dict) and not k.startswith("_")}
     max_size = max((t.get("size", 2) for t in tiers.values()), default=2)
 
+    # Use minimum size (2) for fast candidate scanning
+    min_size = min((t.get("size", 2) for t in tiers.values()), default=2)
     for (cx, cy), geo in chunk_data.items():
         if (cx, cy) in checked:
             continue
 
-        # Check all sizes up to max
-        for _, tier in tiers.items():
-            size = tier.get("size", 2)
-            valid = True
-            area_chunks = []
-            for dx in range(size):
-                for dy in range(size):
-                    pos = (cx + dx, cy + dy)
-                    g = chunk_data.get(pos)
-                    if g is None:
-                        valid = False
-                        break
-                    ct = g.chunk_type.value if hasattr(g.chunk_type, 'value') else str(g.chunk_type)
-                    if ct in excluded_types:
-                        valid = False
-                        break
-                    dl = g.danger_level.value if hasattr(g.danger_level, 'value') else int(g.danger_level)
-                    if dl not in valid_dangers:
-                        valid = False
-                        break
-                    area_chunks.append(pos)
-                if not valid:
-                    break
+        # Quick check: is this chunk valid?
+        ct = geo.chunk_type.value if hasattr(geo.chunk_type, 'value') else str(geo.chunk_type)
+        if ct in excluded_types:
+            checked.add((cx, cy))
+            continue
+        dl = geo.danger_level.value if hasattr(geo.danger_level, 'value') else int(geo.danger_level)
+        if dl not in valid_dangers:
+            checked.add((cx, cy))
+            continue
 
-            if valid and len(area_chunks) == size * size:
-                candidates.append((cx, cy, size))
-                for ac in area_chunks:
-                    checked.add(ac)
-                break  # Found valid size, don't check smaller
+        # Check if min_size x min_size area is all valid
+        valid = True
+        for dx in range(min_size):
+            for dy in range(min_size):
+                pos = (cx + dx, cy + dy)
+                g = chunk_data.get(pos)
+                if g is None:
+                    valid = False
+                    break
+                gct = g.chunk_type.value if hasattr(g.chunk_type, 'value') else str(g.chunk_type)
+                if gct in excluded_types:
+                    valid = False
+                    break
+            if not valid:
+                break
+
+        if valid:
+            candidates.append((cx, cy, dl))  # Store danger level for tier selection
+            for dx in range(min_size):
+                for dy in range(min_size):
+                    checked.add((cx + dx, cy + dy))
 
     # Select villages with distance constraint
     rng.shuffle(candidates)
     selected = []
 
-    for cx, cy, size in candidates:
+    for cx, cy, dl in candidates:
         if len(selected) >= target_count:
             break
         too_close = any(abs(cx - sx) + abs(cy - sy) < min_distance for sx, sy, _ in selected)
         if too_close:
             continue
-        selected.append((cx, cy, size))
+        selected.append((cx, cy, dl))
 
     # Generate village definitions
     villages = []
@@ -199,10 +222,9 @@ def place_villages(world_map: WorldMap, seed: int) -> List[Dict]:
     suffixes = naming.get("suffixes", ["town"])
     next_lid = max((ld.locality_id for ld in world_map.localities.values()), default=-1) + 1
 
-    for i, (cx, cy, size) in enumerate(selected):
-        tier_name, tier = _select_tier(rng)
-        # Override size from the tier that was selected
-        actual_size = tier.get("size", size)
+    for i, (cx, cy, dl) in enumerate(selected):
+        tier_name, tier = _select_tier(rng, danger_level=dl)
+        actual_size = tier.get("size", 2)
         chunks = [(cx + dx, cy + dy) for dx in range(actual_size) for dy in range(actual_size)]
 
         # NPC positions

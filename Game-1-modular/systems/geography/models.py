@@ -149,7 +149,7 @@ REGION_PRIMARY_CHUNKS: Dict[RegionIdentity, List[NewChunkType]] = {
         NewChunkType.BARREN_WASTE, NewChunkType.QUARRY,
     ],
     RegionIdentity.LOWLANDS: [
-        NewChunkType.WETLAND, NewChunkType.FOREST,
+        NewChunkType.FOREST, NewChunkType.RIVER,
     ],
     RegionIdentity.MARSHLANDS: [
         NewChunkType.WETLAND, NewChunkType.CURSED_MARSH,
@@ -161,7 +161,7 @@ REGION_PRIMARY_CHUNKS: Dict[RegionIdentity, List[NewChunkType]] = {
         NewChunkType.ROCKY_HIGHLANDS, NewChunkType.ROCKY_FOREST,
     ],
     RegionIdentity.LAKELAND: [
-        NewChunkType.LAKE, NewChunkType.RIVER, NewChunkType.WETLAND,
+        NewChunkType.LAKE, NewChunkType.RIVER,
     ],
     RegionIdentity.RUINS: [
         NewChunkType.OVERGROWN_RUINS, NewChunkType.CRYSTAL_CAVERN,
@@ -183,7 +183,7 @@ REGION_SECONDARY_CHUNKS: Dict[RegionIdentity, List[NewChunkType]] = {
         NewChunkType.ROCKY_HIGHLANDS, NewChunkType.OVERGROWN_RUINS,
     ],
     RegionIdentity.LOWLANDS: [
-        NewChunkType.LAKE, NewChunkType.RIVER, NewChunkType.ROCKY_FOREST,
+        NewChunkType.WETLAND, NewChunkType.LAKE, NewChunkType.ROCKY_FOREST,
     ],
     RegionIdentity.MARSHLANDS: [
         NewChunkType.FLOODED_CAVE, NewChunkType.LAKE,
@@ -195,7 +195,7 @@ REGION_SECONDARY_CHUNKS: Dict[RegionIdentity, List[NewChunkType]] = {
         NewChunkType.QUARRY, NewChunkType.FOREST,
     ],
     RegionIdentity.LAKELAND: [
-        NewChunkType.FOREST, NewChunkType.FLOODED_CAVE,
+        NewChunkType.WETLAND, NewChunkType.FOREST,
     ],
     RegionIdentity.RUINS: [
         NewChunkType.DEEP_CAVE, NewChunkType.DENSE_THICKET,

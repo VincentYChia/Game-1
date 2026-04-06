@@ -147,9 +147,14 @@ class WorldMemorySystem:
 
         # 5. Event Recorder (subscribes to bus)
         self.event_recorder = EventRecorder.get_instance()
+        # Pass world_map for setting/population/resource tag enrichment
+        _world_map = None
+        if world and hasattr(world, 'geographic_map'):
+            _world_map = world.geographic_map
         self.event_recorder.initialize(
             self.event_store, self.geo_registry,
-            self.entity_registry, self.trigger_manager, self._session_id
+            self.entity_registry, self.trigger_manager, self._session_id,
+            world_map=_world_map,
         )
 
         # 6. Interpreter

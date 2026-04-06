@@ -402,9 +402,10 @@ class WorldSystem:
             # Check if dungeon should spawn in this chunk
             self._maybe_spawn_dungeon(chunk)
 
-            # Check if this chunk is part of a village
-            if key in self._village_chunks:
-                self._apply_village_to_chunk(chunk)
+        # Apply village structures (walls/buildings) on EVERY load, not just generation
+        # This ensures walls persist across save/load cycles
+        if key in self._village_chunks:
+            self._apply_village_to_chunk(chunk)
 
         self.loaded_chunks[key] = chunk
         return chunk
