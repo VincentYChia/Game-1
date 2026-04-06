@@ -127,7 +127,7 @@ class CombatManager:
         # Chunk templates for weighted spawn pool
         self.chunk_templates: Dict[str, dict] = {}
         self.chunk_type_mapping = {
-            # Map ChunkType enum values to template chunkType strings
+            # Legacy ChunkType → template key mappings
             "peaceful_forest": "peaceful_forest",
             "peaceful_quarry": "peaceful_quarry",
             "peaceful_cave": "peaceful_cave",
@@ -136,7 +136,17 @@ class CombatManager:
             "dangerous_cave": "dangerous_cave",
             "rare_hidden_forest": "rare_forest",
             "rare_ancient_quarry": "rare_quarry",
-            "rare_deep_cave": "rare_cave"
+            "rare_deep_cave": "rare_cave",
+            # New geographic chunk types → template keys
+            "dense_forest": "dense_forest",
+            "rocky_forest_quarry": "rocky_forest",
+            "deep_cave": "deep_cave",
+            "flooded_cave": "flooded_cave",
+            "crystal_cave": "crystal_cave",
+            "rocky_quarry": "rocky_quarry",
+            "ruins_quarry": "ruins_quarry",
+            "barren_quarry": "barren_quarry",
+            "wetland": "wetland",
         }
 
         # Active enemies by chunk

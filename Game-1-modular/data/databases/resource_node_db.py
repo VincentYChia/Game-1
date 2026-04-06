@@ -197,10 +197,17 @@ class ResourceNodeDatabase:
         return [s for s in self._stones if s.tier <= max_tier]
 
     def get_resources_for_chunk(self, chunk_type: str, tier_range: tuple) -> List[ResourceNodeDefinition]:
-        """Get appropriate resources for a chunk type and tier range
+        """Get appropriate resources for a chunk type and tier range.
+
+        Determines resource category from chunk type substring:
+        - "forest" → trees
+        - "quarry" → stones
+        - "cave" → ores
+        - "wetland" → trees (sparse wetland vegetation)
+        - Mixed types return combined pools
 
         Args:
-            chunk_type: String containing category hint (e.g., "peaceful_forest", "dangerous_quarry")
+            chunk_type: String containing category hint
             tier_range: Tuple of (min_tier, max_tier)
 
         Returns:
@@ -208,13 +215,24 @@ class ResourceNodeDatabase:
         """
         min_tier, max_tier = tier_range
 
-        # Determine category from chunk type
-        if "forest" in chunk_type:
-            candidates = self._trees
-        elif "quarry" in chunk_type:
-            candidates = self._stones
-        else:  # cave
-            candidates = self._ores
+        has_forest = "forest" in chunk_type
+        has_quarry = "quarry" in chunk_type
+        has_cave = "cave" in chunk_type
+        is_wetland = "wetland" in chunk_type
+
+        candidates = []
+        if has_forest:
+            candidates.extend(self._trees)
+        if has_quarry:
+            candidates.extend(self._stones)
+        if has_cave:
+            candidates.extend(self._ores)
+        if is_wetland:
+            candidates.extend(self._trees)  # Sparse trees in wetlands
+
+        # Default: if no keyword matched, use ores (cave-like)
+        if not candidates:
+            candidates = list(self._ores)
 
         # Filter by tier range
         return [r for r in candidates if min_tier <= r.tier <= max_tier]

@@ -163,7 +163,7 @@ class MapWaypointConfig:
             'water_lake': (65, 105, 225),
             'water_river': (70, 130, 180),
             'water_cursed_swamp': (75, 0, 130),
-            # New geographic system chunk types (15)
+            # New geographic chunk types (by NewChunkType value)
             'forest': (46, 139, 50),
             'dense_thicket': (22, 100, 30),
             'cave': (95, 95, 100),
@@ -179,6 +179,14 @@ class MapWaypointConfig:
             'overgrown_ruins': (100, 110, 75),
             'barren_waste': (140, 130, 110),
             'cursed_marsh': (55, 70, 55),
+            # New ChunkType enum values (used by chunk.py after bridge)
+            'dense_forest': (22, 100, 30),
+            'rocky_forest_quarry': (75, 115, 65),
+            'flooded_cave': (70, 85, 130),
+            'crystal_cave': (120, 80, 180),
+            'rocky_quarry': (130, 130, 120),
+            'ruins_quarry': (100, 110, 75),
+            'barren_quarry': (140, 130, 110),
             # UI colors
             'unexplored': (30, 30, 40),
             'spawn_area': (255, 215, 0)

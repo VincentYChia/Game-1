@@ -228,7 +228,16 @@ class LootDrop:
 
 
 class ChunkType(Enum):
-    """Types of world chunks"""
+    """Types of world chunks.
+
+    Naming convention matters for resource spawning:
+    - Contains "forest" → spawns trees
+    - Contains "quarry" → spawns stones
+    - Contains "cave" → spawns ores
+    - Multiple keywords → spawns mixed resources
+    - Water types → spawns fishing spots
+    """
+    # ── Legacy types (original 12) ──
     PEACEFUL_FOREST = "peaceful_forest"
     PEACEFUL_QUARRY = "peaceful_quarry"
     PEACEFUL_CAVE = "peaceful_cave"
@@ -238,10 +247,24 @@ class ChunkType(Enum):
     RARE_HIDDEN_FOREST = "rare_hidden_forest"
     RARE_ANCIENT_QUARRY = "rare_ancient_quarry"
     RARE_DEEP_CAVE = "rare_deep_cave"
-    # Water chunks
     WATER_LAKE = "water_lake"
     WATER_RIVER = "water_river"
     WATER_CURSED_SWAMP = "water_cursed_swamp"
+
+    # ── New geographic types (from geographic system) ──
+    # Forest variants
+    DENSE_FOREST = "dense_forest"          # Heavy trees, overgrown
+    ROCKY_FOREST = "rocky_forest_quarry"   # Trees + stones (both keywords)
+    # Cave variants
+    DEEP_CAVE = "deep_cave"                # High-tier ores
+    FLOODED_CAVE = "flooded_cave"          # Ores + water features
+    CRYSTAL_CAVE = "crystal_cave"          # Ores + stones
+    # Quarry/open variants
+    ROCKY_HIGHLANDS = "rocky_quarry"       # Stones, elevated terrain
+    OVERGROWN_RUINS = "ruins_quarry"       # Stones + sparse trees
+    BARREN_WASTE = "barren_quarry"         # Sparse stones, desolate
+    # Water variants
+    WETLAND = "wetland"                    # Fish + sparse trees
 
 
 class StationType(Enum):
