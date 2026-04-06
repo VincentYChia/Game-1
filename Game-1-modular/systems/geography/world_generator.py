@@ -127,8 +127,7 @@ class WorldGenerator:
 
         # Phase 7: Names
         t = time.time()
-        # Localities are empty for now — will be populated later when
-        # dungeon/NPC/station placement runs
+        # Localities are empty for now — villages will be added below
         localities = {}
         name_all(
             nation_metadata, region_metadata, province_metadata,
@@ -170,6 +169,20 @@ class WorldGenerator:
 
         if verbose:
             print(f"  Assembly: {len(world_map.chunk_data):,} chunks in {time.time() - t:.2f}s")
+
+        # Phase 9: Villages
+        t = time.time()
+        try:
+            from systems.geography.village_generator import place_villages
+            self._villages = place_villages(world_map, self.seed)
+            if verbose:
+                print(f"  Villages: {len(self._villages)} placed in {time.time() - t:.2f}s")
+        except Exception as e:
+            self._villages = []
+            if verbose:
+                print(f"  Villages: failed ({e})")
+
+        if verbose:
             print(f"Total generation: {time.time() - t_start:.2f}s")
             self._print_summary(world_map)
 

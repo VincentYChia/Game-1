@@ -54,9 +54,10 @@ class WorldSystem:
         # Initialize geographic system (new finite world)
         self.geographic_map = None
         self.map_images = {}  # Pre-rendered map LOD surfaces
+        self._villages = []  # Village definitions from geographic system
+        self._village_chunks = set()  # Set of (cx,cy) that are part of villages
+        self._village_npcs = []  # NPC instances spawned in villages
         self._init_geographic_system()
-
-        # Chunk management
         self.loaded_chunks: Dict[Tuple[int, int], Chunk] = {}
         self._chunk_save_dir: Optional[Path] = None  # Set when save path known
 
@@ -167,6 +168,39 @@ class WorldSystem:
         print(f"   Resources in loaded chunks: {total_resources}")
         for rt, count in sorted(resource_types.items(), key=lambda x: -x[1])[:10]:
             print(f"      {rt}: {count}")
+
+        # Setting tag distribution (sample 1000 chunks)
+        try:
+            from systems.geography.setting_resolver import get_chunk_tags
+            setting_counts = {}
+            pop_counts = {}
+            res_counts = {}
+            sample = list(cd.values())[:5000]
+            for geo in sample:
+                tags = get_chunk_tags(geo, gm)
+                setting_counts[tags["setting"]] = setting_counts.get(tags["setting"], 0) + 1
+                pop_counts[tags["population_status"]] = pop_counts.get(tags["population_status"], 0) + 1
+                res_counts[tags["resource_status"]] = res_counts.get(tags["resource_status"], 0) + 1
+            print(f"   Setting tags (sample {len(sample)}):")
+            for s, c in sorted(setting_counts.items(), key=lambda x: -x[1]):
+                print(f"      {s}: {c}")
+            print(f"   Population status:")
+            for s, c in sorted(pop_counts.items(), key=lambda x: -x[1]):
+                print(f"      {s}: {c}")
+            print(f"   Resource status:")
+            for s, c in sorted(res_counts.items(), key=lambda x: -x[1]):
+                print(f"      {s}: {c}")
+        except Exception as e:
+            print(f"   Setting tags: failed ({e})")
+
+        # Villages
+        if self._villages:
+            print(f"   Villages: {len(self._villages)}")
+            for v in self._villages[:5]:
+                print(f"      {v['name']} at chunk {v['center_chunk']}, {len(v.get('npc_positions', []))} NPCs")
+            if len(self._villages) > 5:
+                print(f"      ... and {len(self._villages) - 5} more")
+
         print(f"   ═══ END DEBUG ═══\n")
 
     def _get_geo_cache_path(self) -> str:
@@ -192,6 +226,7 @@ class WorldSystem:
             cached = WorldMap.load(cache_path)
             if cached and cached.seed == self.seed:
                 self.geographic_map = cached
+                self._rebuild_villages_from_localities()
                 self._generate_map_images()
                 elapsed = time.time() - t_start
                 print(f"🗺️  Geographic map loaded from cache in {elapsed:.1f}s")
@@ -208,6 +243,10 @@ class WorldSystem:
             elapsed = time.time() - t_start
             print(f"🗺️  Geographic map generated in {elapsed:.1f}s")
 
+            # Store village data
+            self._villages = getattr(gen, '_villages', [])
+            self._init_village_data()
+
             # Save to cache for next startup
             try:
                 self.geographic_map.save(cache_path)
@@ -221,6 +260,37 @@ class WorldSystem:
             import traceback
             traceback.print_exc()
             self.geographic_map = None
+
+    def _init_village_data(self):
+        """Build village chunk lookup from village definitions."""
+        self._village_chunks = set()
+        for v in self._villages:
+            for cx, cy in v.get("chunks", []):
+                self._village_chunks.add((cx, cy))
+        if self._villages:
+            print(f"🏘️  {len(self._villages)} villages, {len(self._village_chunks)} village chunks")
+
+    def _rebuild_villages_from_localities(self):
+        """Reconstruct village data from cached WorldMap localities."""
+        if not self.geographic_map:
+            return
+        self._villages = []
+        rng = random.Random(self.seed + 777777)
+        for lid, loc in self.geographic_map.localities.items():
+            if loc.feature_type == "village":
+                npc_count = rng.randint(3, 5)
+                base_tx = loc.chunk_x * 16 + 4
+                base_ty = loc.chunk_y * 16 + 4
+                npc_positions = [(base_tx + rng.randint(2, 20), base_ty + rng.randint(2, 20))
+                                 for _ in range(npc_count)]
+                self._villages.append({
+                    "center_chunk": (loc.chunk_x, loc.chunk_y),
+                    "chunks": loc.adjacent_chunks if loc.adjacent_chunks else [(loc.chunk_x, loc.chunk_y)],
+                    "npc_positions": npc_positions,
+                    "locality_id": lid,
+                    "name": loc.name,
+                })
+        self._init_village_data()
 
     def _generate_map_images(self):
         """Generate pre-rendered map images for fast map rendering."""
@@ -300,8 +370,92 @@ class WorldSystem:
             # Check if dungeon should spawn in this chunk
             self._maybe_spawn_dungeon(chunk)
 
+            # Check if this chunk is part of a village
+            if key in self._village_chunks:
+                self._apply_village_to_chunk(chunk)
+
         self.loaded_chunks[key] = chunk
         return chunk
+
+    def get_village_npc_definitions(self) -> list:
+        """Get NPC definitions for all villages (for game_engine to spawn).
+
+        Returns list of dicts with npc_id, name, position, sprite_color, etc.
+        matching the NPCDefinition format.
+        """
+        npc_defs = []
+        npc_templates = [
+            {"npc_id": "village_dummy_1", "name": "Villager", "sprite_color": [180, 160, 140],
+             "dialogue_lines": ["Hello there!", "Welcome to our village!", "Nice day, isn't it?"]},
+            {"npc_id": "village_dummy_2", "name": "Farmer", "sprite_color": [140, 170, 120],
+             "dialogue_lines": ["Hi! I tend the fields.", "The soil is good this season."]},
+            {"npc_id": "village_dummy_3", "name": "Guard", "sprite_color": [160, 140, 170],
+             "dialogue_lines": ["Halt! Oh, just a traveler.", "Keep your eyes open out there."]},
+            {"npc_id": "village_dummy_4", "name": "Merchant", "sprite_color": [170, 160, 100],
+             "dialogue_lines": ["Looking to trade? ...Not yet.", "Come back when I've restocked!"]},
+            {"npc_id": "village_dummy_5", "name": "Scholar", "sprite_color": [120, 140, 180],
+             "dialogue_lines": ["A fellow seeker of knowledge!", "I've been studying the wildlife."]},
+        ]
+        for village in self._villages:
+            v_name = village.get("name", "Village")
+            for i, (nx, ny) in enumerate(village.get("npc_positions", [])):
+                template = npc_templates[i % len(npc_templates)]
+                npc_defs.append({
+                    "npc_id": f"{template['npc_id']}_{village['locality_id']}_{i}",
+                    "name": f"{template['name']} of {v_name}",
+                    "position": {"x": float(nx), "y": float(ny), "z": 0.0},
+                    "sprite_color": template["sprite_color"],
+                    "interaction_radius": 2.5,
+                    "dialogue_lines": template["dialogue_lines"],
+                    "quests": [],
+                })
+        return npc_defs
+
+    def _apply_village_to_chunk(self, chunk: Chunk):
+        """Apply village structures (walls, buildings) to a chunk that's part of a village."""
+        key = (chunk.chunk_x, chunk.chunk_y)
+        # Find which village this chunk belongs to
+        village = None
+        for v in self._villages:
+            if key in [tuple(c) for c in v.get("chunks", [])]:
+                village = v
+                break
+        if not village:
+            return
+
+        from systems.geography.village_generator import get_village_wall_tiles, get_village_building_tiles
+
+        # Get wall tile positions and check if any fall in this chunk
+        wall_tiles = get_village_wall_tiles(village)
+        building_groups = get_village_building_tiles(village, self.seed)
+
+        cx_min = chunk.chunk_x * Config.CHUNK_SIZE
+        cy_min = chunk.chunk_y * Config.CHUNK_SIZE
+        cx_max = cx_min + Config.CHUNK_SIZE
+        cy_max = cy_min + Config.CHUNK_SIZE
+
+        # Place wall tiles as stone tiles (non-walkable)
+        for wx, wy in wall_tiles:
+            if cx_min <= wx < cx_max and cy_min <= wy < cy_max:
+                tile_key = f"{wx},{wy},0"
+                if tile_key in chunk.tiles:
+                    chunk.tiles[tile_key] = WorldTile(
+                        position=Position(wx, wy, 0),
+                        tile_type=TileType.STONE,
+                        walkable=False,
+                    )
+
+        # Place building walls
+        for building in building_groups:
+            for bx, by in building:
+                if cx_min <= bx < cx_max and cy_min <= by < cy_max:
+                    tile_key = f"{bx},{by},0"
+                    if tile_key in chunk.tiles:
+                        chunk.tiles[tile_key] = WorldTile(
+                            position=Position(bx, by, 0),
+                            tile_type=TileType.STONE,
+                            walkable=False,
+                        )
 
     def _maybe_spawn_dungeon(self, chunk: Chunk):
         """Check if a dungeon entrance should spawn in this chunk.
