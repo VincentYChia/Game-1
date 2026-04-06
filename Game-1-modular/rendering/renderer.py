@@ -3734,14 +3734,6 @@ class Renderer:
         chunk_size_f = s(config.map_display.chunk_render_size) * map_system.map_zoom
         chunk_size = max(1, int(chunk_size_f))
 
-        # Map cache key — regenerate only when view changes
-        _cache_key = (round(map_system.map_zoom, 4),
-                      round(map_system.map_scroll_x, 2),
-                      round(map_system.map_scroll_y, 2),
-                      map_area_w, map_area_h)
-        _use_cache = (self._map_cache_surf is not None and
-                      self._map_cache_key == _cache_key)
-
         # Get player chunk position
         player_chunk_x = math.floor(character.position.x) // Config.CHUNK_SIZE
         player_chunk_y = math.floor(character.position.y) // Config.CHUNK_SIZE
@@ -3784,17 +3776,18 @@ class Renderer:
                 map_area_y + map_center_y + int((cy - center_chunk_y) * chunk_size_f),
             )
 
-        # ── CACHE KEY: only re-scale image when view actually changes ──
-        _view_key = (round(chunk_size_f, 3),
-                     round(center_chunk_x, 1), round(center_chunk_y, 1),
-                     map_area_w, map_area_h)
+        # ── CACHE KEY: skip cache during active drag to prevent desync ──
+        _is_dragging = getattr(map_system, 'map_dragging', False)
+        _view_key = (chunk_size_f, center_chunk_x, center_chunk_y, map_area_w, map_area_h)
         if not hasattr(self, '_map_scaled_cache'):
             self._map_scaled_cache = (None, None)
+        _use_img_cache = (not _is_dragging and
+                          self._map_scaled_cache[1] == _view_key and
+                          self._map_scaled_cache[0] is not None)
 
         # ── DRAW MAP IMAGE ──
         if geo_map and _map_images:
-            if self._map_scaled_cache[1] == _view_key and self._map_scaled_cache[0] is not None:
-                # Cache hit — reuse last scaled surface
+            if _use_img_cache:
                 surf.blit(self._map_scaled_cache[0], (map_area_x, map_area_y))
             else:
                 # Cache miss — compute new scaled view
