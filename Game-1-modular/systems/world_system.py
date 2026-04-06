@@ -102,9 +102,72 @@ class WorldSystem:
             print(f"🌍 World initialized with seed: {self.seed}")
             print(f"   Geographic: {nm} nations, {nr} regions, {np_} provinces, {nd} districts")
             print(f"   Loaded {len(self.loaded_chunks)} initial chunks")
+            self._print_world_debug()
         else:
             print(f"🌍 World initialized with seed: {self.seed} (legacy mode)")
             print(f"   Loaded {len(self.loaded_chunks)} initial chunks")
+
+    def _print_world_debug(self):
+        """Print debug statistics about the generated world."""
+        if not self.geographic_map:
+            return
+        gm = self.geographic_map
+        cd = gm.chunk_data
+
+        # Chunk type distribution
+        type_counts = {}
+        for geo in cd.values():
+            ct = geo.chunk_type.value if hasattr(geo.chunk_type, 'value') else str(geo.chunk_type)
+            type_counts[ct] = type_counts.get(ct, 0) + 1
+
+        print(f"\n   ═══ WORLD DEBUG ═══")
+        print(f"   Chunk type distribution ({len(cd):,} total):")
+        for ct, count in sorted(type_counts.items(), key=lambda x: -x[1]):
+            pct = count / len(cd) * 100
+            print(f"      {ct:25s}: {count:6,} ({pct:5.1f}%)")
+
+        # Danger level distribution
+        danger_counts = {}
+        for geo in cd.values():
+            dl = geo.danger_level
+            name = dl.name if hasattr(dl, 'name') else str(dl)
+            danger_counts[name] = danger_counts.get(name, 0) + 1
+
+        print(f"   Danger distribution:")
+        for name, count in sorted(danger_counts.items()):
+            pct = count / len(cd) * 100
+            print(f"      {name:12s}: {count:6,} ({pct:5.1f}%)")
+
+        # Region identity distribution
+        identity_counts = {}
+        for rid, reg in gm.regions.items():
+            identity_counts[reg.identity.value] = identity_counts.get(reg.identity.value, 0) + reg.chunk_count
+
+        print(f"   Region identities (by chunk coverage):")
+        for ident, count in sorted(identity_counts.items(), key=lambda x: -x[1]):
+            pct = count / len(cd) * 100
+            print(f"      {ident:15s}: {count:6,} ({pct:5.1f}%)")
+
+        # Loaded chunk types (verify bridge table works)
+        loaded_types = {}
+        for chunk in self.loaded_chunks.values():
+            ct = chunk.chunk_type.value
+            loaded_types[ct] = loaded_types.get(ct, 0) + 1
+        print(f"   Loaded chunk types (spawn area, {len(self.loaded_chunks)} chunks):")
+        for ct, count in sorted(loaded_types.items()):
+            print(f"      {ct}: {count}")
+
+        # Verify resources spawned in loaded chunks
+        total_resources = sum(len(c.resources) for c in self.loaded_chunks.values())
+        resource_types = {}
+        for chunk in self.loaded_chunks.values():
+            for res in chunk.resources:
+                rt = res.resource_type.value
+                resource_types[rt] = resource_types.get(rt, 0) + 1
+        print(f"   Resources in loaded chunks: {total_resources}")
+        for rt, count in sorted(resource_types.items(), key=lambda x: -x[1])[:10]:
+            print(f"      {rt}: {count}")
+        print(f"   ═══ END DEBUG ═══\n")
 
     def _get_geo_cache_path(self) -> str:
         """Get the cache file path for the geographic map."""
