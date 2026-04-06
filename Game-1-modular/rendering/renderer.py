@@ -3766,7 +3766,7 @@ class Renderer:
         map_center_y = map_area_h // 2
 
         # ══════════════════════════════════════════════════════════════
-        # MAP RENDERING — single pre-rendered image + label overlays
+        # MAP RENDERING — pre-rendered image + smart label overlays
         # ══════════════════════════════════════════════════════════════
         geo_map = None
         if hasattr(world_system, 'geographic_map') and world_system.geographic_map:
@@ -3774,52 +3774,99 @@ class Renderer:
         _map_images = getattr(world_system, 'map_images', {})
         hovered_chunk = None
 
-        # Helper: chunk world coords → pixel position on surf
+        # Clip all drawing to map area — prevents ANY artifacts outside
+        surf.set_clip(pygame.Rect(map_area_x, map_area_y, map_area_w, map_area_h))
+
+        # Helper: chunk world coords -> pixel on surf
         def _c2p(cx, cy):
             return (
                 map_area_x + map_center_x + int((cx - center_chunk_x) * chunk_size_f),
                 map_area_y + map_center_y + int((cy - center_chunk_y) * chunk_size_f),
             )
 
-        # ── DRAW MAP IMAGE (always from pre-rendered surface) ──
+        # ── CACHE KEY: only re-scale image when view actually changes ──
+        _view_key = (round(chunk_size_f, 3),
+                     round(center_chunk_x, 1), round(center_chunk_y, 1),
+                     map_area_w, map_area_h)
+        if not hasattr(self, '_map_scaled_cache'):
+            self._map_scaled_cache = (None, None)
+
+        # ── DRAW MAP IMAGE ──
         if geo_map and _map_images:
-            ppc = max(_map_images.keys())
-            img = _map_images[ppc]
-            half = geo_map.world_size // 2
-            iw, ih = img.get_size()
+            if self._map_scaled_cache[1] == _view_key and self._map_scaled_cache[0] is not None:
+                # Cache hit — reuse last scaled surface
+                surf.blit(self._map_scaled_cache[0], (map_area_x, map_area_y))
+            else:
+                # Cache miss — compute new scaled view
+                ppc = max(_map_images.keys())
+                img = _map_images[ppc]
+                half = geo_map.world_size // 2
+                iw, ih = img.get_size()
 
-            vw = map_area_w / max(0.1, chunk_size_f)  # chunks visible horizontally
-            vh = map_area_h / max(0.1, chunk_size_f)
+                vw = map_area_w / max(0.1, chunk_size_f)
+                vh = map_area_h / max(0.1, chunk_size_f)
 
-            sx = max(0.0, (center_chunk_x + half - vw / 2) * ppc)
-            sy = max(0.0, (center_chunk_y + half - vh / 2) * ppc)
-            sw = min(float(iw) - sx, vw * ppc)
-            sh = min(float(ih) - sy, vh * ppc)
+                sx = max(0.0, (center_chunk_x + half - vw / 2) * ppc)
+                sy = max(0.0, (center_chunk_y + half - vh / 2) * ppc)
+                sw = min(float(iw) - sx, vw * ppc)
+                sh = min(float(ih) - sy, vh * ppc)
 
-            if sw > 0 and sh > 0:
-                try:
-                    sr = pygame.Rect(int(sx), int(sy), max(1, int(sw)), max(1, int(sh)))
-                    portion = img.subsurface(sr)
-                    scaled = pygame.transform.scale(portion, (map_area_w, map_area_h))
-                    surf.blit(scaled, (map_area_x, map_area_y))
-                except (ValueError, pygame.error):
-                    pass
+                if sw > 0 and sh > 0:
+                    try:
+                        sr = pygame.Rect(int(sx), int(sy), max(1,int(sw)), max(1,int(sh)))
+                        portion = img.subsurface(sr)
+                        scaled = pygame.transform.scale(portion, (map_area_w, map_area_h))
+                        surf.blit(scaled, (map_area_x, map_area_y))
+                        self._map_scaled_cache = (scaled, _view_key)
+                    except (ValueError, pygame.error):
+                        self._map_scaled_cache = (None, None)
 
-        # ── LABELS (fresh each frame, zoom-dependent tiers) ──
+        # ── VIGNETTE: darken edges for natural focus ──
+        vig_size = min(map_area_w, map_area_h) // 6
+        for i in range(vig_size):
+            alpha = int(60 * (1.0 - i / vig_size))
+            if alpha <= 0:
+                break
+            vig_color = (0, 0, 0, alpha)
+            vig_surf = pygame.Surface((map_area_w, 1), pygame.SRCALPHA)
+            vig_surf.fill(vig_color)
+            surf.blit(vig_surf, (map_area_x, map_area_y + i))
+            surf.blit(vig_surf, (map_area_x, map_area_y + map_area_h - 1 - i))
+            vig_surf2 = pygame.Surface((1, map_area_h), pygame.SRCALPHA)
+            vig_surf2.fill(vig_color)
+            surf.blit(vig_surf2, (map_area_x + i, map_area_y))
+            surf.blit(vig_surf2, (map_area_x + map_area_w - 1 - i, map_area_y))
+
+        # ── SMART LABELS ──
         if geo_map:
-            def _lbl(text, cx, cy, font, color, bg_a=160, yoff=0):
+            # Only show labels whose territory is large enough on screen to fit them
+            def _smart_label(text, cx, cy, font, color, bg_a, yoff, min_screen_w=0):
                 px, py = _c2p(cx, cy)
                 py += yoff
-                if px < map_area_x - 80 or px > map_area_x + map_area_w + 80:
+                # Cull: outside visible area
+                if px < map_area_x - 40 or px > map_area_x + map_area_w + 40:
                     return None
-                if py < map_area_y - 30 or py > map_area_y + map_area_h + 30:
+                if py < map_area_y - 20 or py > map_area_y + map_area_h + 20:
                     return None
                 ts = font.render(text, True, color)
                 tw, th = ts.get_width(), ts.get_height()
+                # Don't show if label wider than its territory on screen
+                if min_screen_w > 0 and tw > min_screen_w * 1.5:
+                    return None
+                # Fade labels near edges (distance from center as 0-1)
+                dx_from_center = abs(px - (map_area_x + map_center_x)) / max(1, map_center_x)
+                dy_from_center = abs(py - (map_area_y + map_center_y)) / max(1, map_center_y)
+                edge_dist = max(dx_from_center, dy_from_center)
+                fade = max(0.3, min(1.0, 1.5 - edge_dist))
+                actual_alpha = int(bg_a * fade)
+                # Background pill
                 bx, by = px - tw // 2 - 5, py - th // 2 - 3
                 bg = pygame.Surface((tw + 10, th + 6), pygame.SRCALPHA)
-                bg.fill((10, 10, 18, bg_a))
+                bg.fill((10, 10, 18, actual_alpha))
                 surf.blit(bg, (bx, by))
+                # Text with fade
+                if fade < 0.95:
+                    ts.set_alpha(int(255 * fade))
                 surf.blit(ts, (px - tw // 2, py - th // 2))
                 return pygame.Rect(bx, by, tw + 10, th + 6)
 
@@ -3831,7 +3878,7 @@ class Renderer:
                 _placed.append(r)
                 return True
 
-            # Nation labels (always)
+            # Nation labels — always visible
             for nid, nation in geo_map.nations.items():
                 if not nation.region_ids: continue
                 sx_, sy_, cnt = 0.0, 0.0, 0
@@ -3841,40 +3888,44 @@ class Renderer:
                         b = rg.bounds
                         sx_ += (b[0]+b[2])/2; sy_ += (b[1]+b[3])/2; cnt += 1
                 if cnt > 0:
-                    _nol(_lbl(nation.name.upper(), sx_/cnt, sy_/cnt,
-                              self.font, (255, 240, 210), 180))
+                    # Estimate nation width on screen
+                    nw = nation.chunk_count ** 0.5 * chunk_size_f
+                    _nol(_smart_label(nation.name.upper(), sx_/cnt, sy_/cnt,
+                                      self.font, (255, 240, 210), 180, 0, nw))
 
-            # Region labels (medium zoom)
-            if chunk_size_f >= 1.0:
+            # Region labels
+            if chunk_size_f >= 0.8:
                 for rid, rg in geo_map.regions.items():
                     b = rg.bounds
-                    _nol(_lbl(rg.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
-                              self.small_font, (190, 200, 220), 140, yoff=s(14)))
+                    rw = (b[2] - b[0]) * chunk_size_f
+                    _nol(_smart_label(rg.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
+                                      self.small_font, (190, 200, 220), 140, s(14), rw))
 
-            # Province labels (closer)
-            if chunk_size_f >= 3.0:
+            # Province labels
+            if chunk_size_f >= 2.5:
                 for pid, pv in geo_map.provinces.items():
                     b = pv.bounds
-                    _nol(_lbl(pv.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
-                              self.small_font, (160, 165, 180), 120))
+                    pw = (b[2] - b[0]) * chunk_size_f
+                    _nol(_smart_label(pv.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
+                                      self.small_font, (160, 165, 180), 120, 0, pw))
 
-            # District labels (very close)
-            if chunk_size_f >= 8.0:
+            # District labels
+            if chunk_size_f >= 6.0:
                 for did, dt in geo_map.districts.items():
                     b = dt.bounds
-                    _nol(_lbl(dt.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
-                              self.tiny_font, (140, 140, 155), 100))
+                    dw = (b[2] - b[0]) * chunk_size_f
+                    _nol(_smart_label(dt.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
+                                      self.tiny_font, (140, 140, 155), 100, 0, dw))
 
         # ── PLAYER MARKER ──
         po_x = (character.position.x % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
         po_y = (character.position.y % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
         ppx, ppy = _c2p(player_chunk_x + po_x, player_chunk_y + po_y)
-        if map_area_x <= ppx <= map_area_x + map_area_w and map_area_y <= ppy <= map_area_y + map_area_h:
-            ms = max(5, s(config.player_marker.size))
-            mc = config.player_marker.color
-            pts = [(ppx, ppy - ms), (ppx + ms//2, ppy + ms//2), (ppx - ms//2, ppy + ms//2)]
-            pygame.draw.polygon(surf, mc, pts)
-            pygame.draw.polygon(surf, (0, 0, 0), pts, 1)
+        ms = max(5, s(config.player_marker.size))
+        mc = config.player_marker.color
+        pts = [(ppx, ppy - ms), (ppx + ms//2, ppy + ms//2), (ppx - ms//2, ppy + ms//2)]
+        pygame.draw.polygon(surf, mc, pts)
+        pygame.draw.polygon(surf, (0, 0, 0), pts, 1)
 
         # ── WAYPOINT MARKERS ──
         for slot_idx, wp in enumerate(map_system.waypoints):
@@ -3882,17 +3933,22 @@ class Renderer:
                 wcx = int(wp.position.x) // Config.CHUNK_SIZE
                 wcy = int(wp.position.y) // Config.CHUNK_SIZE
                 wpx, wpy = _c2p(wcx + 0.5, wcy + 0.5)
-                if map_area_x <= wpx <= map_area_x + map_area_w and map_area_y <= wpy <= map_area_y + map_area_h:
-                    ws = max(3, s(config.waypoint_marker.size))
-                    wc = config.waypoint_marker.color
-                    dm = [(wpx, wpy-ws), (wpx+ws, wpy), (wpx, wpy+ws), (wpx-ws, wpy)]
-                    pygame.draw.polygon(surf, wc, dm)
-                    pygame.draw.polygon(surf, (0, 0, 0), dm, 1)
-                    if hasattr(wp, 'name') and wp.name:
-                        wlbl = self.tiny_font.render(wp.name, True, wc)
-                        surf.blit(wlbl, (wpx - wlbl.get_width() // 2, wpy + ws + 2))
+                ws = max(3, s(config.waypoint_marker.size))
+                wc = config.waypoint_marker.color
+                dm = [(wpx, wpy-ws), (wpx+ws, wpy), (wpx, wpy+ws), (wpx-ws, wpy)]
+                pygame.draw.polygon(surf, wc, dm)
+                pygame.draw.polygon(surf, (0, 0, 0), dm, 1)
+                if hasattr(wp, 'name') and wp.name:
+                    wlbl = self.tiny_font.render(wp.name, True, wc)
+                    surf.blit(wlbl, (wpx - wlbl.get_width() // 2, wpy + ws + 2))
 
-        # ── HOVER INFO ──
+        # Remove clip
+        surf.set_clip(None)
+
+        # ── MAP BORDER (drawn OUTSIDE clip so it's always crisp) ──
+        pygame.draw.rect(surf, tuple(config.ui.border_color), map_rect, s(2))
+
+        # ── HOVER INFO (drawn outside clip, below map) ──
         rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
         if map_area_x <= rx <= map_area_x + map_area_w and map_area_y <= ry <= map_area_y + map_area_h:
             hcx = int(center_chunk_x + (rx - map_area_x - map_center_x) / max(0.1, chunk_size_f))
@@ -3910,9 +3966,6 @@ class Renderer:
                     info += f"  [{addr.get('danger','')}]  {addr.get('chunk_type','').replace('_',' ').title()}"
             surf.blit(self.small_font.render(info, True, (200, 200, 200)),
                        (map_area_x, map_area_y + map_area_h + s(5)))
-
-        # ── MAP BORDER (drawn last, on top of everything) ──
-        pygame.draw.rect(surf, tuple(config.ui.border_color), map_rect, s(2))
 
         # ========== WAYPOINT PANEL ==========
         panel_x = ww - waypoint_panel_w - s(10)
