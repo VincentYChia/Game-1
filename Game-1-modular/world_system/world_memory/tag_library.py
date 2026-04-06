@@ -274,6 +274,13 @@ LAYER_2_CATEGORIES = {
         layer_unlocked=2, is_recreated=True,
         description="How noteworthy — RECREATED at every layer with fresh judgment",
     ),
+    "resource_harvesting": TagCategory(
+        "resource_harvesting",
+        frozenset({"active", "heavy", "depleted_50", "depleted_75",
+                   "depleted_90", "exhausted", "recovering"}),
+        layer_unlocked=2,
+        description="Factual observation of resource extraction level in an ecosystem. Feeds Layer 3 resource_status.",
+    ),
 }
 
 # ══════════════════════════════════════════════════════════════════
