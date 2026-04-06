@@ -3769,50 +3769,52 @@ class Renderer:
         # Clip all drawing to map area — prevents ANY artifacts outside
         surf.set_clip(pygame.Rect(map_area_x, map_area_y, map_area_w, map_area_h))
 
-        # Helper: chunk world coords -> pixel on surf
+        # ── PRE-SCALED MAP: scale once on zoom change, drag = offset only ──
+        if not hasattr(self, '_map_prescaled'):
+            self._map_prescaled = (None, None)  # (surface, zoom_level)
+
+        if geo_map and _map_images:
+            ppc = max(_map_images.keys())
+            img = _map_images[ppc]
+            half = geo_map.world_size // 2
+            world_size = geo_map.world_size
+
+            # Pre-scale the FULL map image at current zoom level (only when zoom changes)
+            target_w = max(1, int(world_size * chunk_size_f))
+            target_h = max(1, int(world_size * chunk_size_f))
+            # Cap to prevent insane memory usage at high zoom
+            max_dim = 4096
+            if target_w > max_dim or target_h > max_dim:
+                # At very high zoom, fall back to subsurface approach
+                scale_ratio = min(max_dim / target_w, max_dim / target_h)
+                target_w = int(target_w * scale_ratio)
+                target_h = int(target_h * scale_ratio)
+                effective_csf = chunk_size_f * scale_ratio
+            else:
+                effective_csf = chunk_size_f
+
+            _cached_zoom = self._map_prescaled[1]
+            if self._map_prescaled[0] is None or _cached_zoom != round(chunk_size_f, 4):
+                try:
+                    full_scaled = pygame.transform.scale(img, (target_w, target_h))
+                    self._map_prescaled = (full_scaled, round(chunk_size_f, 4))
+                except (ValueError, pygame.error):
+                    self._map_prescaled = (None, None)
+
+            # Blit the pre-scaled image at the correct offset (fast — no per-frame scaling)
+            if self._map_prescaled[0] is not None:
+                full_img = self._map_prescaled[0]
+                # Compute where the center_chunk maps to on the pre-scaled image
+                blit_x = map_area_x + map_center_x - int((center_chunk_x + half) * effective_csf)
+                blit_y = map_area_y + map_center_y - int((center_chunk_y + half) * effective_csf)
+                surf.blit(full_img, (blit_x, blit_y))
+
+        # Helper: chunk world coords -> pixel on surf (uses same math as blit offset)
         def _c2p(cx, cy):
             return (
                 map_area_x + map_center_x + int((cx - center_chunk_x) * chunk_size_f),
                 map_area_y + map_center_y + int((cy - center_chunk_y) * chunk_size_f),
             )
-
-        # ── CACHE KEY: skip cache during active drag to prevent desync ──
-        _is_dragging = getattr(map_system, 'map_dragging', False)
-        _view_key = (chunk_size_f, center_chunk_x, center_chunk_y, map_area_w, map_area_h)
-        if not hasattr(self, '_map_scaled_cache'):
-            self._map_scaled_cache = (None, None)
-        _use_img_cache = (not _is_dragging and
-                          self._map_scaled_cache[1] == _view_key and
-                          self._map_scaled_cache[0] is not None)
-
-        # ── DRAW MAP IMAGE ──
-        if geo_map and _map_images:
-            if _use_img_cache:
-                surf.blit(self._map_scaled_cache[0], (map_area_x, map_area_y))
-            else:
-                # Cache miss — compute new scaled view
-                ppc = max(_map_images.keys())
-                img = _map_images[ppc]
-                half = geo_map.world_size // 2
-                iw, ih = img.get_size()
-
-                vw = map_area_w / max(0.1, chunk_size_f)
-                vh = map_area_h / max(0.1, chunk_size_f)
-
-                sx = max(0.0, (center_chunk_x + half - vw / 2) * ppc)
-                sy = max(0.0, (center_chunk_y + half - vh / 2) * ppc)
-                sw = min(float(iw) - sx, vw * ppc)
-                sh = min(float(ih) - sy, vh * ppc)
-
-                if sw > 0 and sh > 0:
-                    try:
-                        sr = pygame.Rect(int(sx), int(sy), max(1,int(sw)), max(1,int(sh)))
-                        portion = img.subsurface(sr)
-                        scaled = pygame.transform.scale(portion, (map_area_w, map_area_h))
-                        surf.blit(scaled, (map_area_x, map_area_y))
-                        self._map_scaled_cache = (scaled, _view_key)
-                    except (ValueError, pygame.error):
-                        self._map_scaled_cache = (None, None)
 
         # ── LABELS — cartographic style with strict size gating ──
         if geo_map:
@@ -3925,8 +3927,8 @@ class Renderer:
         # ── HOVER INFO (drawn outside clip, below map) ──
         rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
         if map_area_x <= rx <= map_area_x + map_area_w and map_area_y <= ry <= map_area_y + map_area_h:
-            hcx = int(center_chunk_x + (rx - map_area_x - map_center_x) / max(0.1, chunk_size_f))
-            hcy = int(center_chunk_y + (ry - map_area_y - map_center_y) / max(0.1, chunk_size_f))
+            hcx = math.floor(center_chunk_x + (rx - map_area_x - map_center_x) / max(0.1, chunk_size_f))
+            hcy = math.floor(center_chunk_y + (ry - map_area_y - map_center_y) / max(0.1, chunk_size_f))
             hovered_chunk = (hcx, hcy, map_system.get_explored_chunk(hcx, hcy))
 
         if hovered_chunk and config.map_display.show_coordinates:
