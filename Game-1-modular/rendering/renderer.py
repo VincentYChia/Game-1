@@ -3879,8 +3879,8 @@ class Renderer:
         # ── WAYPOINT MARKERS ──
         for slot_idx, wp in enumerate(map_system.waypoints):
             if wp:
-                wcx = int(wp['x']) // Config.CHUNK_SIZE
-                wcy = int(wp['y']) // Config.CHUNK_SIZE
+                wcx = int(wp.position.x) // Config.CHUNK_SIZE
+                wcy = int(wp.position.y) // Config.CHUNK_SIZE
                 wpx, wpy = _c2p(wcx + 0.5, wcy + 0.5)
                 if map_area_x <= wpx <= map_area_x + map_area_w and map_area_y <= wpy <= map_area_y + map_area_h:
                     ws = max(3, s(config.waypoint_marker.size))
@@ -3888,6 +3888,9 @@ class Renderer:
                     dm = [(wpx, wpy-ws), (wpx+ws, wpy), (wpx, wpy+ws), (wpx-ws, wpy)]
                     pygame.draw.polygon(surf, wc, dm)
                     pygame.draw.polygon(surf, (0, 0, 0), dm, 1)
+                    if hasattr(wp, 'name') and wp.name:
+                        wlbl = self.tiny_font.render(wp.name, True, wc)
+                        surf.blit(wlbl, (wpx - wlbl.get_width() // 2, wpy + ws + 2))
 
         # ── HOVER INFO ──
         rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
