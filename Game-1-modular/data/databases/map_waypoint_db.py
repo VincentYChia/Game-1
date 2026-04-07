@@ -13,8 +13,8 @@ from dataclasses import dataclass, field
 @dataclass
 class MapDisplayConfig:
     """Configuration for map display settings."""
-    default_zoom: float = 1.0
-    min_zoom: float = 0.25
+    default_zoom: float = 0.5
+    min_zoom: float = 0.08
     max_zoom: float = 4.0
     zoom_step: float = 0.25
     chunk_render_size: int = 12
@@ -134,8 +134,8 @@ class MapWaypointConfig:
     def _parse_map_display(self, data: Dict) -> None:
         """Parse map display configuration."""
         self.map_display = MapDisplayConfig(
-            default_zoom=data.get('default_zoom', 1.0),
-            min_zoom=data.get('min_zoom', 0.25),
+            default_zoom=data.get('default_zoom', 0.5),
+            min_zoom=data.get('min_zoom', 0.08),
             max_zoom=data.get('max_zoom', 4.0),
             zoom_step=data.get('zoom_step', 0.25),
             chunk_render_size=data.get('chunk_render_size', 12),
@@ -148,8 +148,9 @@ class MapWaypointConfig:
 
     def _parse_biome_colors(self, data: Dict) -> None:
         """Parse biome color mapping."""
-        # Default colors for all biome types
+        # Default colors for all biome types (legacy + new geographic system)
         default_colors = {
+            # Legacy chunk types (kept for save compatibility)
             'peaceful_forest': (34, 139, 34),
             'dangerous_forest': (0, 100, 0),
             'rare_hidden_forest': (50, 205, 50),
@@ -162,6 +163,31 @@ class MapWaypointConfig:
             'water_lake': (65, 105, 225),
             'water_river': (70, 130, 180),
             'water_cursed_swamp': (75, 0, 130),
+            # New geographic chunk types (by NewChunkType value)
+            'forest': (46, 139, 50),
+            'dense_thicket': (22, 100, 30),
+            'cave': (95, 95, 100),
+            'deep_cave': (60, 55, 80),
+            'quarry': (155, 120, 85),
+            'rocky_highlands': (130, 130, 120),
+            'wetland': (60, 110, 90),
+            'lake': (55, 100, 200),
+            'river': (65, 120, 185),
+            'flooded_cave': (70, 85, 130),
+            'rocky_forest': (75, 115, 65),
+            'crystal_cavern': (120, 80, 180),
+            'overgrown_ruins': (100, 110, 75),
+            'barren_waste': (140, 130, 110),
+            'cursed_marsh': (55, 70, 55),
+            # New ChunkType enum values (used by chunk.py after bridge)
+            'dense_forest': (22, 100, 30),
+            'rocky_forest_quarry': (75, 115, 65),
+            'flooded_cave': (70, 85, 130),
+            'crystal_cave': (120, 80, 180),
+            'rocky_quarry': (130, 130, 120),
+            'ruins_quarry': (100, 110, 75),
+            'barren_quarry': (140, 130, 110),
+            # UI colors
             'unexplored': (30, 30, 40),
             'spawn_area': (255, 215, 0)
         }

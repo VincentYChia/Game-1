@@ -127,7 +127,7 @@ class CombatManager:
         # Chunk templates for weighted spawn pool
         self.chunk_templates: Dict[str, dict] = {}
         self.chunk_type_mapping = {
-            # Map ChunkType enum values to template chunkType strings
+            # Legacy ChunkType → template key mappings
             "peaceful_forest": "peaceful_forest",
             "peaceful_quarry": "peaceful_quarry",
             "peaceful_cave": "peaceful_cave",
@@ -136,7 +136,17 @@ class CombatManager:
             "dangerous_cave": "dangerous_cave",
             "rare_hidden_forest": "rare_forest",
             "rare_ancient_quarry": "rare_quarry",
-            "rare_deep_cave": "rare_cave"
+            "rare_deep_cave": "rare_cave",
+            # New geographic chunk types → template keys
+            "dense_forest": "dense_forest",
+            "rocky_forest_quarry": "rocky_forest",
+            "deep_cave": "deep_cave",
+            "flooded_cave": "flooded_cave",
+            "crystal_cave": "crystal_cave",
+            "rocky_quarry": "rocky_quarry",
+            "ruins_quarry": "ruins_quarry",
+            "barren_quarry": "barren_quarry",
+            "wetland": "wetland",
         }
 
         # Active enemies by chunk
@@ -225,7 +235,24 @@ class CombatManager:
         return distance <= self.config.safe_zone_radius
 
     def get_chunk_danger_level(self, chunk) -> str:
-        """Determine danger level from chunk type"""
+        """Determine danger level from geographic ecosystem or chunk type.
+
+        New geographic system: reads DangerLevel from ecosystem data.
+        Legacy fallback: string-matches chunk_type for backward compatibility.
+        """
+        # New: check geographic data on chunk
+        if hasattr(chunk, '_geographic_data') and chunk._geographic_data is not None:
+            geo = chunk._geographic_data
+            # Map DangerLevel enum to config key strings
+            danger_names = {
+                1: "tranquil", 2: "peaceful", 3: "moderate",
+                4: "dangerous", 5: "perilous", 6: "lethal",
+            }
+            dl = geo.danger_level
+            level_val = dl.value if hasattr(dl, 'value') else int(dl)
+            return danger_names.get(level_val, "moderate")
+
+        # Legacy: string matching on chunk type
         chunk_type_str = chunk.chunk_type.value
         if "peaceful" in chunk_type_str:
             return "peaceful"
@@ -246,15 +273,23 @@ class CombatManager:
         return self.config.density_weights.get(density, 1.0)
 
     def _get_allowed_tiers_for_danger_level(self, danger_level: str) -> set:
-        """Get allowed tiers for a given danger level (tier caps)"""
-        if danger_level == "peaceful":
-            return {1}  # Only T1 enemies
-        elif danger_level == "dangerous":
-            return {1, 2, 3}  # T1-T3 enemies
-        elif danger_level == "rare":
-            return {1, 2, 3, 4}  # T1-T4 enemies (including bosses)
-        else:
-            return {1}  # Default to safest tier
+        """Get allowed tiers for a given danger level (tier caps).
+
+        Supports both new 6-level system and legacy 4-level.
+        """
+        tier_caps = {
+            # New 6-level geographic system
+            "tranquil": {1},
+            "peaceful": {1, 2},
+            "moderate": {1, 2, 3},
+            "dangerous": {1, 2, 3, 4},
+            "perilous": {1, 2, 3, 4},
+            "lethal": {1, 2, 3, 4},
+            # Legacy levels
+            "normal": {1},
+            "rare": {1, 2, 3, 4},
+        }
+        return tier_caps.get(danger_level, {1})
 
     def _filter_tier_weights_for_danger(self, tier_weights: Dict[str, float], danger_level: str) -> Dict[str, float]:
         """Filter tier weights based on danger level restrictions"""

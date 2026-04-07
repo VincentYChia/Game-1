@@ -116,7 +116,10 @@ class WorldMemorySystem:
 
         # 2. Geographic Registry
         self.geo_registry = GeographicRegistry.get_instance()
-        if geo_map_path and os.path.exists(geo_map_path):
+        # Prefer new geographic system's WorldMap if available
+        if world and hasattr(world, 'geographic_map') and world.geographic_map:
+            self.geo_registry.load_from_world_map(world.geographic_map)
+        elif geo_map_path and os.path.exists(geo_map_path):
             self.geo_registry.load_base_map(geo_map_path)
         elif world:
             # Generate from world biome data if available
@@ -144,9 +147,14 @@ class WorldMemorySystem:
 
         # 5. Event Recorder (subscribes to bus)
         self.event_recorder = EventRecorder.get_instance()
+        # Pass world_map for setting/population/resource tag enrichment
+        _world_map = None
+        if world and hasattr(world, 'geographic_map'):
+            _world_map = world.geographic_map
         self.event_recorder.initialize(
             self.event_store, self.geo_registry,
-            self.entity_registry, self.trigger_manager, self._session_id
+            self.entity_registry, self.trigger_manager, self._session_id,
+            world_map=_world_map,
         )
 
         # 6. Interpreter

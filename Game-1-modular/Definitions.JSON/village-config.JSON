@@ -1,0 +1,162 @@
+{
+  "metadata": {
+    "version": "2.0",
+    "description": "Village generation configuration — placement, tiers, NPCs, structures",
+    "notes": [
+      "Villages spawn during geographic world generation",
+      "Tier is selected based on area danger level (higher danger = larger fortified village)",
+      "Wall blocks are breakable but not collectible by the player",
+      "NPC templates define the villager types that can spawn"
+    ]
+  },
+
+  "placement": {
+    "target_count": 2500,
+    "_target_count_effects": "Roughly matches dungeon density across the 262K chunk world.",
+    "min_distance": 8,
+    "_min_distance_effects": "Minimum chunks between village centers. Low because many small hamlets.",
+    "valid_danger_levels": [1, 2, 3, 4, 5, 6],
+    "_valid_danger_effects": "Villages can spawn at any danger level. Tier scales with danger.",
+    "excluded_chunk_types": ["lake", "river", "cursed_marsh", "wetland", "deep_cave", "crystal_cavern", "flooded_cave"],
+    "_excluded_effects": "Chunk types that cannot contain villages."
+  },
+
+  "tier_selection_by_danger": {
+    "_comment": "Maps danger level (1-6) to which tier pool to draw from. Each entry is a list of [tier_name, weight] pairs.",
+    "1": [["tiny", 60], ["small", 35], ["medium", 5]],
+    "2": [["tiny", 40], ["small", 40], ["medium", 15], ["large", 5]],
+    "3": [["small", 30], ["medium", 40], ["large", 25], ["fortress", 5]],
+    "4": [["small", 15], ["medium", 30], ["large", 35], ["fortress", 20]],
+    "5": [["medium", 20], ["large", 40], ["fortress", 40]],
+    "6": [["large", 30], ["fortress", 70]]
+  },
+
+  "tiers": {
+    "tiny": {
+      "display_name": "Campsite",
+      "size": 2,
+      "entrances": 2,
+      "entrance_width": 2,
+      "wall_inset": 1,
+      "npc_min": 1,
+      "npc_max": 2,
+      "buildings_min": 1,
+      "buildings_max": 2,
+      "building_width_range": [3, 4],
+      "building_height_range": [3, 3],
+      "spawn_weight": 40
+    },
+    "small": {
+      "display_name": "Hamlet",
+      "size": 2,
+      "entrances": 4,
+      "entrance_width": 3,
+      "wall_inset": 1,
+      "npc_min": 2,
+      "npc_max": 4,
+      "buildings_min": 2,
+      "buildings_max": 3,
+      "building_width_range": [4, 5],
+      "building_height_range": [3, 4],
+      "spawn_weight": 30
+    },
+    "medium": {
+      "display_name": "Village",
+      "size": 3,
+      "entrances": 4,
+      "entrance_width": 4,
+      "wall_inset": 1,
+      "npc_min": 4,
+      "npc_max": 7,
+      "buildings_min": 3,
+      "buildings_max": 5,
+      "building_width_range": [4, 7],
+      "building_height_range": [3, 5],
+      "spawn_weight": 20
+    },
+    "large": {
+      "display_name": "Town",
+      "size": 4,
+      "entrances": 5,
+      "entrance_width": 5,
+      "wall_inset": 2,
+      "npc_min": 6,
+      "npc_max": 10,
+      "buildings_min": 5,
+      "buildings_max": 8,
+      "building_width_range": [5, 8],
+      "building_height_range": [4, 6],
+      "spawn_weight": 8
+    },
+    "fortress": {
+      "display_name": "Fortress",
+      "size": 5,
+      "entrances": 4,
+      "entrance_width": 5,
+      "wall_inset": 2,
+      "npc_min": 8,
+      "npc_max": 14,
+      "buildings_min": 6,
+      "buildings_max": 12,
+      "building_width_range": [5, 9],
+      "building_height_range": [4, 7],
+      "spawn_weight": 2
+    }
+  },
+
+  "walls": {
+    "breakable": true,
+    "_breakable_effects": "If true, players can break village walls (but not collect them).",
+    "collectible": false,
+    "_collectible_effects": "If true, broken walls drop materials. False = walls just disappear.",
+    "base_health": 200,
+    "_health_effects": "HP of each wall tile. Higher = harder to break."
+  },
+
+  "entrance_distribution": {
+    "_comment": "Entrances distributed evenly across walls. 4=one per side, 5=extra on south, 3=skip one side."
+  },
+
+  "npc_templates": [
+    {
+      "npc_id_prefix": "village_villager",
+      "name": "Villager",
+      "sprite_color": [180, 160, 140],
+      "dialogue_lines": ["Hello there!", "Welcome to our village!", "Nice day, isn't it?"],
+      "spawn_weight": 30
+    },
+    {
+      "npc_id_prefix": "village_farmer",
+      "name": "Farmer",
+      "sprite_color": [140, 170, 120],
+      "dialogue_lines": ["Hi! I tend the fields.", "The soil is good this season.", "Have you seen any slimes nearby?"],
+      "spawn_weight": 25
+    },
+    {
+      "npc_id_prefix": "village_guard",
+      "name": "Guard",
+      "sprite_color": [160, 140, 170],
+      "dialogue_lines": ["Halt! Oh, just a traveler. Carry on.", "Keep your eyes open out there.", "The roads aren't safe at night."],
+      "spawn_weight": 20
+    },
+    {
+      "npc_id_prefix": "village_merchant",
+      "name": "Merchant",
+      "sprite_color": [170, 160, 100],
+      "dialogue_lines": ["Looking to trade? ...Not yet, I'm afraid.", "Business has been slow.", "Come back when I've restocked!"],
+      "spawn_weight": 15
+    },
+    {
+      "npc_id_prefix": "village_scholar",
+      "name": "Scholar",
+      "sprite_color": [120, 140, 180],
+      "dialogue_lines": ["Ah, a fellow seeker of knowledge!", "I've been studying the local wildlife.", "Did you know slimes can split when threatened?"],
+      "spawn_weight": 10
+    }
+  ],
+
+  "naming": {
+    "prefixes": ["Old", "New", "East", "West", "North", "South", "Upper", "Lower", "Little", "Great", "Fort", "Camp", "High", "Deep"],
+    "suffixes": ["haven", "stead", "ton", "burg", "ford", "dale", "brook", "field", "wood", "gate", "wall", "keep", "hold", "watch"]
+  }
+}

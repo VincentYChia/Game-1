@@ -68,10 +68,12 @@ class EventRecorder:
                    geo_registry: GeographicRegistry,
                    entity_registry: EntityRegistry,
                    trigger_manager: Optional[TriggerManager] = None,
-                   session_id: str = "") -> None:
+                   session_id: str = "",
+                   world_map=None) -> None:
         """Wire up dependencies and subscribe to the event bus."""
         self.event_store = event_store
         self.geo_registry = geo_registry
+        self._world_map = world_map  # Geographic WorldMap for setting/status tags
         self.entity_registry = entity_registry
         self.trigger_manager = trigger_manager or TriggerManager.get_instance()
         self.session_id = session_id or str(uuid.uuid4())[:8]
@@ -348,6 +350,7 @@ class EventRecorder:
                 event.tags.append("intensity:moderate")
             else:
                 event.tags.append("intensity:light")
+
 
     def _extract_context(self, event) -> Dict[str, Any]:
         """Extract context snapshot from event data."""

@@ -66,7 +66,8 @@ class Chunk:
 
     def __init__(self, chunk_x: int, chunk_y: int,
                  seed: Optional[int] = None,
-                 biome_generator: Optional['BiomeGenerator'] = None):
+                 biome_generator: Optional['BiomeGenerator'] = None,
+                 geographic_data=None):
         """Initialize a chunk at the given coordinates.
 
         Args:
@@ -74,12 +75,15 @@ class Chunk:
             chunk_y: Chunk Y coordinate
             seed: Deterministic seed for this chunk (optional, for legacy support)
             biome_generator: BiomeGenerator instance for chunk type determination
+            geographic_data: GeographicData from the geographic system (new)
         """
         self.chunk_x = chunk_x
         self.chunk_y = chunk_y
 
         # Store biome generator reference
         self._biome_generator = biome_generator
+        # Store geographic data from new system
+        self._geographic_data = geographic_data
 
         # Get seed - either from biome generator, passed directly, or generate random
         if biome_generator:
@@ -108,13 +112,39 @@ class Chunk:
         self.generate_tiles()
         self.spawn_resources()
 
+    # Bridge: map geographic system's NewChunkType values to ChunkType enum
+    # New types use the new enum values; legacy types as fallbacks
+    _GEO_TO_CHUNK_TYPE = {
+        'forest': ChunkType.PEACEFUL_FOREST,
+        'dense_thicket': ChunkType.DENSE_FOREST,
+        'cave': ChunkType.PEACEFUL_CAVE,
+        'deep_cave': ChunkType.DEEP_CAVE,
+        'quarry': ChunkType.PEACEFUL_QUARRY,
+        'rocky_highlands': ChunkType.ROCKY_HIGHLANDS,
+        'wetland': ChunkType.WETLAND,
+        'lake': ChunkType.WATER_LAKE,
+        'river': ChunkType.WATER_RIVER,
+        'flooded_cave': ChunkType.FLOODED_CAVE,
+        'rocky_forest': ChunkType.ROCKY_FOREST,
+        'crystal_cavern': ChunkType.CRYSTAL_CAVE,
+        'overgrown_ruins': ChunkType.OVERGROWN_RUINS,
+        'barren_waste': ChunkType.BARREN_WASTE,
+        'cursed_marsh': ChunkType.WATER_CURSED_SWAMP,
+    }
+
     def _determine_chunk_type(self) -> ChunkType:
-        """Determine chunk type using BiomeGenerator or legacy random.
+        """Determine chunk type using geographic data, BiomeGenerator, or legacy.
 
         Returns:
             ChunkType for this chunk
         """
-        # Use BiomeGenerator if available (new infinite world system)
+        # New: use geographic system data if available
+        if self._geographic_data is not None:
+            geo_ct = self._geographic_data.chunk_type
+            ct_value = geo_ct.value if hasattr(geo_ct, 'value') else str(geo_ct)
+            return self._GEO_TO_CHUNK_TYPE.get(ct_value, ChunkType.PEACEFUL_FOREST)
+
+        # Use BiomeGenerator if available (legacy infinite world)
         if self._biome_generator:
             return self._biome_generator.get_chunk_type(self.chunk_x, self.chunk_y)
 
@@ -155,11 +185,12 @@ class Chunk:
             ])
 
     def _is_water_chunk(self) -> bool:
-        """Check if this chunk is a water type."""
+        """Check if this chunk is a water type (spawns fishing spots instead of resources)."""
         return self.chunk_type in (
             ChunkType.WATER_LAKE,
             ChunkType.WATER_RIVER,
-            ChunkType.WATER_CURSED_SWAMP
+            ChunkType.WATER_CURSED_SWAMP,
+            ChunkType.WETLAND,
         )
 
     def generate_tiles(self):
@@ -253,12 +284,26 @@ class Chunk:
         # Get resource spawning config from JSON
         world_config = WorldGenerationConfig.get_instance()
 
-        # Determine resource count and tier range based on chunk danger level
-        if "peaceful" in self.chunk_type.value:
+        # Determine resource count and tier range based on danger level
+        # New geographic system: use ecosystem danger level if available
+        geo_danger = None
+        if self._geographic_data is not None:
+            dl = self._geographic_data.danger_level
+            geo_danger = dl.value if hasattr(dl, 'value') else int(dl)
+
+        if geo_danger is not None:
+            # Geographic danger: 1-2 = peaceful, 3-4 = dangerous, 5-6 = rare
+            if geo_danger <= 2:
+                res_config = world_config.resource_spawning.peaceful_chunks
+            elif geo_danger <= 4:
+                res_config = world_config.resource_spawning.dangerous_chunks
+            else:
+                res_config = world_config.resource_spawning.rare_chunks
+        elif "peaceful" in self.chunk_type.value:
             res_config = world_config.resource_spawning.peaceful_chunks
         elif "dangerous" in self.chunk_type.value:
             res_config = world_config.resource_spawning.dangerous_chunks
-        else:  # rare chunks
+        else:
             res_config = world_config.resource_spawning.rare_chunks
 
         resource_count = self._rng.randint(res_config.min_resources, res_config.max_resources)

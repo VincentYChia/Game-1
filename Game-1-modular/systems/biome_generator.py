@@ -1,7 +1,15 @@
-"""Biome generation system for infinite world generation.
+"""Legacy biome generation system (pre-geographic system).
+
+NOTE: This module is now a FALLBACK. The primary world generation is handled
+by systems/geography/ which produces a finite 512x512 world with nations,
+regions, provinces, districts, and biome assignments.
+
+This legacy BiomeGenerator is only used when:
+1. Loading saves created before the geographic system was added
+2. The geographic system fails to initialize (graceful degradation)
 
 Uses deterministic per-chunk random selection to generate consistent biome
-assignments for any chunk coordinate, enabling infinite world expansion.
+assignments for any chunk coordinate.
 
 BIOME DISTRIBUTION:
 - Each chunk gets a deterministic random roll based on seed + coordinates

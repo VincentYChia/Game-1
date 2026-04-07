@@ -206,13 +206,13 @@ LAYER_1_CATEGORIES = {
     ),
     "class": TagCategory(
         "class",
-        frozenset({"warrior", "mage", "ranger", "healer", "rogue", "paladin"}),
+        frozenset({"warrior", "ranger", "scholar", "artisan", "scavenger", "adventurer"}),
         layer_unlocked=1,
         description="Player class",
     ),
     "title_tier": TagCategory(
         "title_tier",
-        frozenset({"novice", "intermediate", "advanced", "master"}),
+        frozenset({"novice", "apprentice", "journeyman", "expert", "master", "special"}),
         layer_unlocked=1,
         description="Title rank tier",
     ),
@@ -227,6 +227,16 @@ LAYER_1_CATEGORIES = {
 # ══════════════════════════════════════════════════════════════════
 
 LAYER_2_CATEGORIES = {
+    "nation": TagCategory(
+        "nation", frozenset(), layer_unlocked=2, is_dynamic=True,
+        is_key_tag=True,
+        description="Nation-level geographic address (largest sovereign division)",
+    ),
+    "region": TagCategory(
+        "region", frozenset(), layer_unlocked=2, is_dynamic=True,
+        is_key_tag=True,
+        description="Region-level geographic address (geographic identity within nation)",
+    ),
     "locality": TagCategory(
         "locality", frozenset(), layer_unlocked=2, is_dynamic=True,
         is_key_tag=True,
@@ -244,12 +254,12 @@ LAYER_2_CATEGORIES = {
     ),
     "biome": TagCategory(
         "biome",
-        frozenset({"peaceful_forest", "dangerous_forest", "rare_forest",
-                   "peaceful_quarry", "dangerous_quarry", "rare_quarry",
-                   "peaceful_cave", "dangerous_cave", "rare_cave",
-                   "water_lake", "water_river", "water_cursed_swamp"}),
+        frozenset({"forest", "dense_thicket", "cave", "deep_cave", "quarry",
+                   "rocky_highlands", "wetland", "lake", "river", "flooded_cave",
+                   "rocky_forest", "crystal_cavern", "overgrown_ruins",
+                   "barren_waste", "cursed_marsh"}),
         layer_unlocked=2,
-        description="Chunk biome type",
+        description="Chunk biome type (15 types derived from region identity)",
     ),
     "scope": TagCategory(
         "scope",
@@ -263,6 +273,12 @@ LAYER_2_CATEGORIES = {
         frozenset({"minor", "moderate", "significant", "major", "critical"}),
         layer_unlocked=2, is_recreated=True,
         description="How noteworthy — RECREATED at every layer with fresh judgment",
+    ),
+    "resource_harvesting": TagCategory(
+        "resource_harvesting",
+        frozenset({"depleted_50", "scarce", "exhausted", "completely_harvested"}),
+        layer_unlocked=2,
+        description="Ecosystem-level resource depletion milestone. Produced as own event by evaluator. Feeds Layer 3 resource_status.",
     ),
 }
 

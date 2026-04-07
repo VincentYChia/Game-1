@@ -569,10 +569,14 @@ class MapWaypointSystem:
     def adjust_zoom(self, delta: float) -> None:
         """Adjust map zoom level.
 
+        Uses proportional stepping so zooming out far is smooth:
+        at high zoom the step is large, at low zoom the step is small.
+
         Args:
-            delta: Amount to change zoom by
+            delta: Direction to zoom (+1 in, -1 out)
         """
-        step = self._config.map_display.zoom_step
+        # Proportional step: 25% of current zoom level (min 0.005)
+        step = max(0.005, self.map_zoom * 0.25)
         self.map_zoom += delta * step
         self.map_zoom = max(self._config.map_display.min_zoom,
                            min(self._config.map_display.max_zoom, self.map_zoom))

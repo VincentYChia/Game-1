@@ -1,0 +1,74 @@
+{
+  "metadata": {
+    "description": "Dummy village NPCs for geographic system villages. Placeholder NPCs that greet the player.",
+    "version": "1.0",
+    "note": "These NPCs are spawned dynamically by the village generator. They use the standard NPC system."
+  },
+  "npcs": [
+    {
+      "npc_id": "village_dummy_1",
+      "name": "Villager",
+      "position": {"x": 0, "y": 0, "z": 0},
+      "sprite_color": [180, 160, 140],
+      "interaction_radius": 2.5,
+      "dialogue_lines": [
+        "Hello there! I'm a villager.",
+        "Welcome to our village!",
+        "Nice day, isn't it?"
+      ],
+      "quests": []
+    },
+    {
+      "npc_id": "village_dummy_2",
+      "name": "Farmer",
+      "position": {"x": 0, "y": 0, "z": 0},
+      "sprite_color": [140, 170, 120],
+      "interaction_radius": 2.5,
+      "dialogue_lines": [
+        "Hi! I tend the fields around here.",
+        "The soil is good this season.",
+        "Have you seen any slimes nearby?"
+      ],
+      "quests": []
+    },
+    {
+      "npc_id": "village_dummy_3",
+      "name": "Guard",
+      "position": {"x": 0, "y": 0, "z": 0},
+      "sprite_color": [160, 140, 170],
+      "interaction_radius": 2.5,
+      "dialogue_lines": [
+        "Halt! Oh, just a traveler. Carry on.",
+        "Keep your eyes open out there.",
+        "The roads aren't safe at night."
+      ],
+      "quests": []
+    },
+    {
+      "npc_id": "village_dummy_4",
+      "name": "Merchant",
+      "position": {"x": 0, "y": 0, "z": 0},
+      "sprite_color": [170, 160, 100],
+      "interaction_radius": 2.5,
+      "dialogue_lines": [
+        "Looking to trade? ...Not yet, I'm afraid.",
+        "Business has been slow lately.",
+        "Come back when I've restocked!"
+      ],
+      "quests": []
+    },
+    {
+      "npc_id": "village_dummy_5",
+      "name": "Scholar",
+      "position": {"x": 0, "y": 0, "z": 0},
+      "sprite_color": [120, 140, 180],
+      "interaction_radius": 2.5,
+      "dialogue_lines": [
+        "Ah, a fellow seeker of knowledge!",
+        "I've been studying the local wildlife.",
+        "Did you know slimes can split when threatened?"
+      ],
+      "quests": []
+    }
+  ]
+}

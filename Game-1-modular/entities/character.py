@@ -1865,9 +1865,13 @@ class Character:
             # Pass dungeon_manager and world_system for proper death handling
             dungeon_manager = kwargs.get('dungeon_manager')
             world_system = kwargs.get('world_system')
-            self._handle_death(dungeon_manager=dungeon_manager, world_system=world_system)
+            self._handle_death(dungeon_manager=dungeon_manager, world_system=world_system,
+                               source_type=kwargs.get('source_type', 'unknown'),
+                               damage_type=kwargs.get('damage_type', 'physical'),
+                               enemy_type=kwargs.get('enemy_type', ''))
 
-    def _handle_death(self, dungeon_manager=None, world_system=None):
+    def _handle_death(self, dungeon_manager=None, world_system=None,
+                      source_type='unknown', damage_type='physical', enemy_type=''):
         """Handle player death - respawn at spawn point (origin)
 
         Death penalty depends on Config.KEEP_INVENTORY:
@@ -1899,9 +1903,9 @@ class Character:
             if dungeon_manager and dungeon_manager.in_dungeon:
                 location = "dungeon"
             self.stat_tracker.record_death_by_source(
-                source_type=kwargs.get('source_type', 'unknown'),
-                damage_type=kwargs.get('damage_type', 'physical'),
-                enemy_type=kwargs.get('enemy_type', ''),
+                source_type=source_type,
+                damage_type=damage_type,
+                enemy_type=enemy_type,
                 location=location,
             )
         try:

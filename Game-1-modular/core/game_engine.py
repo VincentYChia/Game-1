@@ -239,7 +239,28 @@ class GameEngine:
             for npc_def in npc_db.npcs.values():
                 npc = NPC(npc_def)
                 self.npcs.append(npc)
-            print(f"✓ Spawned {len(self.npcs)} NPCs in the world")
+            print(f"✓ Spawned {len(self.npcs)} base NPCs in the world")
+
+        # Add village NPCs from geographic system
+        if hasattr(self.world, 'get_village_npc_definitions'):
+            village_npc_defs = self.world.get_village_npc_definitions()
+            for vnd in village_npc_defs:
+                try:
+                    from data.models.npcs import NPCDefinition
+                    npc_def = NPCDefinition(
+                        npc_id=vnd["npc_id"],
+                        name=vnd["name"],
+                        position=Position(vnd["position"]["x"], vnd["position"]["y"], 0),
+                        sprite_color=tuple(vnd["sprite_color"]),
+                        interaction_radius=vnd.get("interaction_radius", 2.5),
+                        dialogue_lines=vnd.get("dialogue_lines", ["Hello!"]),
+                        quests=vnd.get("quests", []),
+                    )
+                    self.npcs.append(NPC(npc_def))
+                except Exception:
+                    pass
+            if village_npc_defs:
+                print(f"✓ Spawned {len(village_npc_defs)} village NPCs across {len(self.world._villages)} villages")
 
         # NPC interaction state
         self.npc_dialogue_open = False

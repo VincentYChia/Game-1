@@ -57,6 +57,9 @@ class Renderer:
         self.pending_tooltip = None  # Tuple of (item_stack, mouse_pos, character, is_equipment)
         self.pending_class_tooltip = None  # Tuple of (class_definition, mouse_pos)
         self.pending_tool_tooltip = None  # Tuple of (tool, tool_type, mouse_pos, character)
+        # Map rendering cache — pre-rendered geographic surface
+        self._map_cache_surf = None
+        self._map_cache_key = None  # (zoom, scroll_x, scroll_y, map_w, map_h)
 
     def _get_grid_size_for_tier(self, tier: int, discipline: str) -> Tuple[int, int]:
         """Get grid dimensions based on station tier for grid-based disciplines (smithing, adornments)"""
@@ -921,7 +924,7 @@ class Renderer:
             is_near = npc.is_near(character.position)
 
             # NPC body (square sprite)
-            size = Config.TILE_SIZE - 4
+            size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE)
             npc_rect = pygame.Rect(nx - size // 2, ny - size // 2, size, size)
 
             # Try to load NPC icon
@@ -969,17 +972,32 @@ class Renderer:
         # Get image cache once at the start for all icon rendering
         image_cache = ImageCache.get_instance()
 
+        # Import terrain renderer for procedural tile surfaces
+        from rendering.terrain_renderer import get_tile_surface
+
         for tile in world.get_visible_tiles(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(tile.position)
             if -Config.TILE_SIZE <= sx <= Config.VIEWPORT_WIDTH and -Config.TILE_SIZE <= sy <= Config.VIEWPORT_HEIGHT:
-                rect = pygame.Rect(sx, sy, Config.TILE_SIZE, Config.TILE_SIZE)
-                pygame.draw.rect(self.screen, tile.get_color(), rect)
-                pygame.draw.rect(self.screen, Config.COLOR_GRID, rect, 1)
+                # Procedural textured tile — world-space noise makes chunk boundaries invisible
+                tile_type_name = tile.tile_type.name  # "GRASS", "STONE", etc.
+                wx = int(tile.position.x)
+                wy = int(tile.position.y)
+
+                # Get neighbor tile types for edge dithering
+                neighbors = {}
+                for d, (ndx, ndy) in [('n', (0, -1)), ('s', (0, 1)), ('e', (1, 0)), ('w', (-1, 0))]:
+                    n_pos = Position(wx + ndx, wy + ndy)
+                    n_tile = world.get_tile(n_pos)
+                    if n_tile and n_tile.tile_type.name != tile_type_name:
+                        neighbors[d] = n_tile.tile_type.name
+
+                tile_surf = get_tile_surface(tile_type_name, wx, wy, Config.TILE_SIZE, neighbors or None)
+                self.screen.blit(tile_surf, (sx, sy))
 
         for station in world.get_visible_stations(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(station.position)
             in_range = character.is_in_range(station.position)
-            size = Config.TILE_SIZE + 8  # Larger than before (was - 8, now + 8)
+            size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE) + 8
 
             # Map station type to icon name
             station_icon_map = {
@@ -1023,7 +1041,7 @@ class Renderer:
         from data.models import PlacedEntityType
         for entity in world.get_visible_placed_entities(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(entity.position)
-            size = Config.TILE_SIZE
+            size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE)
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
 
             # Construct icon path based on entity type
@@ -1121,7 +1139,7 @@ class Renderer:
         if hasattr(world, 'spawn_storage_chest') and world.spawn_storage_chest:
             chest = world.spawn_storage_chest
             sx, sy = camera.world_to_screen(chest.position)
-            size = Config.TILE_SIZE
+            size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE)
 
             # Check if player is in range
             in_range = character.is_in_range(chest.position) if character else False
@@ -1154,7 +1172,7 @@ class Renderer:
         if hasattr(world, 'death_chests') and world.death_chests:
             for death_chest in world.death_chests:
                 sx, sy = camera.world_to_screen(death_chest.position)
-                size = Config.TILE_SIZE
+                size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE)
 
                 # Check if player is in range
                 in_range = character.is_in_range(death_chest.position) if character else False
@@ -1208,7 +1226,7 @@ class Renderer:
         for entrance in world.get_visible_dungeon_entrances(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(entrance.position)
             in_range = character.is_in_range(entrance.position)
-            size = Config.TILE_SIZE
+            size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE)
 
             # Get rarity color for the entrance
             rarity_color = entrance.get_rarity_color()
@@ -1256,7 +1274,7 @@ class Renderer:
 
             can_harvest, reason = character.can_harvest_resource(resource) if in_range else (False, "")
 
-            size = Config.TILE_SIZE - 4
+            size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE)
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
 
             # Get icon path from ResourceNodeDatabase (handles name mapping)
@@ -1354,8 +1372,8 @@ class Renderer:
 
                 if enemy.is_alive:
                     vis_size = getattr(enemy.definition, 'visual_size', 1.0)
-                    base_size = Config.TILE_SIZE // 2
-                    size = max(4, int(base_size * vis_size))
+                    base_size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE * 0.5)
+                    size = max(6, int(base_size * vis_size))
                     tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
                     enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
                     if enemy.is_boss:
@@ -1491,14 +1509,18 @@ class Renderer:
                         _wu_timer = getattr(enemy, 'attack_phase_timer', 0)
                         _windup_t = 1.0 - (_wu_timer / max(1, _wu_total))
 
-                    icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2)) if enemy.definition.icon_path else None
+                    icon_size = size * 2
+                    icon = image_cache.get_image(enemy.definition.icon_path, (icon_size, icon_size)) if enemy.definition.icon_path else None
                     if icon:
-                        # Scale up slightly during windup (1.0 → 1.12)
+                        # Scale up slightly during windup (1.0 → 1.12) — use transform on cached base
                         if _is_winding and _windup_t > 0.1:
                             _wu_scale = 1.0 + 0.12 * _windup_t
-                            _new_w = int(icon.get_width() * _wu_scale)
-                            _new_h = int(icon.get_height() * _wu_scale)
-                            icon = pygame.transform.smoothscale(icon, (_new_w, _new_h))
+                            _new_w = int(icon_size * _wu_scale)
+                            _new_h = int(icon_size * _wu_scale)
+                            try:
+                                icon = pygame.transform.smoothscale(icon, (_new_w, _new_h))
+                            except (pygame.error, ValueError):
+                                pass  # Keep original icon on transform failure
                         icon_rect = icon.get_rect(center=(ex, ey))
                         self.screen.blit(icon, icon_rect)
                         # Windup tint overlay on sprite
@@ -1582,7 +1604,7 @@ class Renderer:
 
                     # --- Health bar ---
                     health_percent = enemy.current_health / enemy.max_health
-                    bar_w = max(Config.TILE_SIZE, int(Config.TILE_SIZE * vis_size))
+                    bar_w = max(int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE), int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE * vis_size))
                     bar_h = 4
                     bar_y = ey - size - 12
                     pygame.draw.rect(self.screen, Config.COLOR_HP_BAR_BG, (ex - bar_w // 2, bar_y, bar_w, bar_h))
@@ -1603,7 +1625,7 @@ class Renderer:
                 else:
                     # Corpse (greyed out, scaled)
                     vis_size = getattr(enemy.definition, 'visual_size', 1.0)
-                    corpse_size = max(3, int(Config.TILE_SIZE // 3 * vis_size))
+                    corpse_size = max(4, int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE // 3 * vis_size))
                     pygame.draw.circle(self.screen, (100, 100, 100), (ex, ey), corpse_size)
                     loot_text = self.tiny_font.render("LOOT", True, (255, 255, 0))
                     self.screen.blit(loot_text, (ex - loot_text.get_width() // 2, ey - 10))
@@ -1614,11 +1636,13 @@ class Renderer:
         # Render player (enhanced: facing indicator, shadow, idle bob)
         try:
             from rendering.visual_effects import render_player_enhanced
-            render_player_enhanced(self.screen, camera, character, Config.TILE_SIZE,
+            render_player_enhanced(self.screen, camera, character,
+                                   int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE),
                                    getattr(self, '_temp_ac_systems', None))
         except Exception:
             center_x, center_y = camera.world_to_screen(character.position)
-            pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
+            pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y),
+                               int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE // 3))
 
         # Render action combat overlays (hitboxes, projectiles, particles, flashes)
         ac_systems = getattr(self, '_temp_ac_systems', None)
@@ -2358,12 +2382,13 @@ class Renderer:
             if -50 <= ex <= Config.VIEWPORT_WIDTH + 50 and -50 <= ey <= Config.VIEWPORT_HEIGHT + 50:
                 if enemy.is_alive:
                     vis_size = getattr(enemy.definition, 'visual_size', 1.0)
-                    base_size = Config.TILE_SIZE // 2
-                    size = max(4, int(base_size * vis_size))
+                    base_size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE * 0.5)
+                    size = max(6, int(base_size * vis_size))
 
                     icon = None
                     if enemy.definition.icon_path:
-                        icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2))
+                        icon_size = size * 2
+                        icon = image_cache.get_image(enemy.definition.icon_path, (icon_size, icon_size))
 
                     if icon:
                         icon_rect = icon.get_rect(center=(ex, ey))
@@ -2378,7 +2403,7 @@ class Renderer:
 
                     # Health bar (scaled)
                     health_percent = enemy.current_health / enemy.max_health
-                    bar_w = max(Config.TILE_SIZE, int(Config.TILE_SIZE * vis_size))
+                    bar_w = max(int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE), int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE * vis_size))
                     bar_h = 4
                     bar_y = ey - size - 8
                     pygame.draw.rect(self.screen, (60, 60, 60), (ex - bar_w // 2, bar_y, bar_w, bar_h))
@@ -2398,11 +2423,13 @@ class Renderer:
         # Render player (enhanced: facing indicator, shadow, idle bob)
         try:
             from rendering.visual_effects import render_player_enhanced
-            render_player_enhanced(self.screen, camera, character, Config.TILE_SIZE,
+            render_player_enhanced(self.screen, camera, character,
+                                   int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE),
                                    getattr(self, '_temp_ac_systems', None))
         except Exception:
             center_x, center_y = camera.world_to_screen(character.position)
-            pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
+            pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y),
+                               int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE // 3))
             pygame.draw.circle(self.screen, (0, 0, 0), (center_x, center_y), Config.TILE_SIZE // 3, 2)
 
         # Render action combat overlays in dungeon (hitboxes, projectiles, particles, flashes)
@@ -3662,14 +3689,22 @@ class Renderer:
         config = MapWaypointConfig.get_instance()
         s = Config.scale
 
-        # Window dimensions
-        ww, wh = s(config.ui.map_window_size[0]), s(config.ui.map_window_size[1])
+        # Window dimensions — expand to fill viewport for geographic maps
+        has_geo = hasattr(world_system, 'geographic_map') and world_system.geographic_map is not None
+        if has_geo:
+            # Large map window for geographic world view
+            ww = min(Config.VIEWPORT_WIDTH - s(20), s(1200))
+            wh = min(Config.VIEWPORT_HEIGHT - s(60), s(900))
+        else:
+            ww, wh = s(config.ui.map_window_size[0]), s(config.ui.map_window_size[1])
         wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)
-        wy = s(40)
+        wy = s(20)
 
-        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf = pygame.Surface((ww, wh))
         bg_color = config.ui.background_color
-        surf.fill(bg_color)
+        surf.fill(bg_color if isinstance(bg_color, tuple) and len(bg_color) == 3
+                  else (bg_color[0], bg_color[1], bg_color[2]) if isinstance(bg_color, (tuple, list))
+                  else (30, 30, 40))
 
         # Title bar
         title_text = f"WORLD MAP - Explored: {map_system.get_explored_count()} chunks"
@@ -3680,7 +3715,7 @@ class Renderer:
         surf.blit(self.small_font.render(controls, True, (180, 180, 180)), (s(20), s(40)))
 
         # Zoom indicator
-        zoom_text = f"Zoom: {map_system.map_zoom:.1f}x"
+        zoom_text = f"Zoom: {map_system.map_zoom:.2f}x"
         surf.blit(self.small_font.render(zoom_text, True, (150, 200, 255)), (ww - s(100), s(15)))
 
         # Map area dimensions
@@ -3696,8 +3731,8 @@ class Renderer:
         pygame.draw.rect(surf, tuple(config.ui.border_color), map_rect, s(2))
 
         # Calculate chunk rendering parameters
-        chunk_size = s(config.map_display.chunk_render_size) * map_system.map_zoom
-        chunk_size = max(s(4), int(chunk_size))  # Minimum size
+        chunk_size_f = s(config.map_display.chunk_render_size) * map_system.map_zoom
+        chunk_size = max(1, int(chunk_size_f))
 
         # Get player chunk position
         player_chunk_x = math.floor(character.position.x) // Config.CHUNK_SIZE
@@ -3711,9 +3746,9 @@ class Renderer:
             center_chunk_x = map_system.map_scroll_x
             center_chunk_y = map_system.map_scroll_y
 
-        # Calculate visible chunk range
-        visible_chunks_x = int(map_area_w / chunk_size) + 2
-        visible_chunks_y = int(map_area_h / chunk_size) + 2
+        # Calculate visible chunk range using float for accuracy at extreme zoom
+        visible_chunks_x = int(map_area_w / max(0.5, chunk_size_f)) + 2
+        visible_chunks_y = int(map_area_h / max(0.5, chunk_size_f)) + 2
 
         start_chunk_x = int(center_chunk_x - visible_chunks_x // 2)
         start_chunk_y = int(center_chunk_y - visible_chunks_y // 2)
@@ -3722,159 +3757,222 @@ class Renderer:
         map_center_x = map_area_w // 2
         map_center_y = map_area_h // 2
 
-        # Render chunks
+        # ══════════════════════════════════════════════════════════════
+        # MAP RENDERING — pre-rendered image + smart label overlays
+        # ══════════════════════════════════════════════════════════════
+        geo_map = None
+        if hasattr(world_system, 'geographic_map') and world_system.geographic_map:
+            geo_map = world_system.geographic_map
+        _map_images = getattr(world_system, 'map_images', {})
         hovered_chunk = None
-        for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 1):
-            for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 1):
-                chunk_x = int(center_chunk_x) + dx
-                chunk_y = int(center_chunk_y) + dy
 
-                # Calculate pixel position on map
-                px = map_area_x + map_center_x + int((chunk_x - center_chunk_x) * chunk_size)
-                py = map_area_y + map_center_y + int((chunk_y - center_chunk_y) * chunk_size)
+        # Clip all drawing to map area — prevents ANY artifacts outside
+        surf.set_clip(pygame.Rect(map_area_x, map_area_y, map_area_w, map_area_h))
 
-                # Skip if outside map area
-                if px + chunk_size < map_area_x or px > map_area_x + map_area_w:
-                    continue
-                if py + chunk_size < map_area_y or py > map_area_y + map_area_h:
-                    continue
+        # ── PRE-SCALED MAP: scale once on zoom change, drag = offset only ──
+        if not hasattr(self, '_map_prescaled'):
+            self._map_prescaled = (None, None, None)  # (surface, zoom_key, effective_csf)
 
-                # Get chunk color based on exploration status
-                explored = map_system.get_explored_chunk(chunk_x, chunk_y)
-                if explored:
-                    chunk_type = explored.chunk_type.lower().replace(' ', '_')
-                    color = config.get_biome_color(chunk_type)
-                else:
-                    color = config.biome_colors.get('unexplored', (30, 30, 40))
+        # Compute effective chunk scale (may be capped at high zoom)
+        _effective_csf = chunk_size_f
+        _half = geo_map.world_size // 2 if geo_map else 256
 
-                # Draw chunk
-                chunk_rect = pygame.Rect(px, py, chunk_size - 1, chunk_size - 1)
-                pygame.draw.rect(surf, color, chunk_rect)
+        if geo_map and _map_images:
+            ppc = max(_map_images.keys())
+            img = _map_images[ppc]
+            world_size = geo_map.world_size
 
-                # At high zoom, add subtle texture to explored chunks
-                if explored and map_system.map_zoom >= 1.5 and chunk_size >= s(20):
-                    # Add subtle grid lines within chunk to show tiles (every 4 tiles)
-                    tile_grid_color = tuple(max(0, c - 20) for c in color)
-                    tile_divisions = 4  # Show 4x4 sub-grid
-                    sub_size = chunk_size // tile_divisions
-                    for i in range(1, tile_divisions):
-                        # Vertical line
-                        lx = px + i * sub_size
-                        pygame.draw.line(surf, tile_grid_color, (lx, py + 2), (lx, py + chunk_size - 3), 1)
-                        # Horizontal line
-                        ly = py + i * sub_size
-                        pygame.draw.line(surf, tile_grid_color, (px + 2, ly), (px + chunk_size - 3, ly), 1)
+            target_w = max(1, int(world_size * chunk_size_f))
+            target_h = target_w
+            max_dim = 4096
+            if target_w > max_dim:
+                ratio = max_dim / target_w
+                target_w = int(target_w * ratio)
+                target_h = target_w
+                _effective_csf = chunk_size_f * ratio
 
-                # Show chunk coordinates when zoomed in
-                if explored and map_system.map_zoom >= 2.0 and chunk_size >= s(30):
-                    coord_label = f"{chunk_x},{chunk_y}"
-                    coord_surf = self.small_font.render(coord_label, True, (255, 255, 255, 180))
-                    label_x = px + (chunk_size - coord_surf.get_width()) // 2
-                    label_y = py + (chunk_size - coord_surf.get_height()) // 2
-                    surf.blit(coord_surf, (label_x, label_y))
-
-                # Highlight spawn area
-                if chunk_x == 0 and chunk_y == 0:
-                    pygame.draw.rect(surf, config.biome_colors.get('spawn_area', (255, 215, 0)), chunk_rect, s(2))
-
-                # Draw dungeon marker
-                if explored and explored.has_dungeon:
-                    dungeon_color = config.dungeon_marker.color
-                    cx, cy = px + chunk_size // 2, py + chunk_size // 2
-                    pygame.draw.circle(surf, dungeon_color, (cx, cy), max(s(3), chunk_size // 4))
-
-                # Draw death chest skull marker
-                if explored and explored.has_death_chest:
-                    cx, cy = px + chunk_size // 2, py + chunk_size // 2
-                    skull_size = max(s(4), chunk_size // 3)
-                    # Draw skull icon (simple: circle head + eyes)
-                    skull_color = (255, 100, 100)  # Red skull
-                    pygame.draw.circle(surf, skull_color, (cx, cy), skull_size)
-                    pygame.draw.circle(surf, (0, 0, 0), (cx, cy), skull_size, s(1))  # Outline
-                    # Eyes
-                    eye_size = max(s(1), skull_size // 4)
-                    pygame.draw.circle(surf, (0, 0, 0), (cx - skull_size // 3, cy - skull_size // 4), eye_size)
-                    pygame.draw.circle(surf, (0, 0, 0), (cx + skull_size // 3, cy - skull_size // 4), eye_size)
-
-                # Check for hover
-                rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
-                if chunk_rect.collidepoint(rx, ry):
-                    hovered_chunk = (chunk_x, chunk_y, explored)
-                    pygame.draw.rect(surf, (255, 255, 255), chunk_rect, s(1))
-
-        # Draw grid if enabled
-        if config.map_display.show_grid and chunk_size >= s(8):
-            grid_color = (50, 50, 70)
-            for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 2):
-                x = map_area_x + map_center_x + int((int(center_chunk_x) + dx - center_chunk_x - 0.5) * chunk_size)
-                if map_area_x <= x <= map_area_x + map_area_w:
-                    pygame.draw.line(surf, grid_color, (x, map_area_y), (x, map_area_y + map_area_h), 1)
-            for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 2):
-                y = map_area_y + map_center_y + int((int(center_chunk_y) + dy - center_chunk_y - 0.5) * chunk_size)
-                if map_area_y <= y <= map_area_y + map_area_h:
-                    pygame.draw.line(surf, grid_color, (map_area_x, y), (map_area_x + map_area_w, y), 1)
-
-        # Draw player marker with precise position within chunk
-        if config.map_display.show_player_marker:
-            # Calculate precise player position within chunk (0.0 to 1.0)
-            player_tile_x = character.position.x
-            player_tile_y = character.position.y
-            player_offset_x = (player_tile_x % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
-            player_offset_y = (player_tile_y % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
-
-            # Player position on map with sub-chunk precision
-            player_px = map_area_x + map_center_x + int((player_chunk_x - center_chunk_x + player_offset_x) * chunk_size)
-            player_py = map_area_y + map_center_y + int((player_chunk_y - center_chunk_y + player_offset_y) * chunk_size)
-
-            # Only draw if in visible area
-            if map_area_x <= player_px <= map_area_x + map_area_w and map_area_y <= player_py <= map_area_y + map_area_h:
-                marker_size = config.player_marker.size
-                marker_color = config.player_marker.color
-                # Draw triangle pointing up
-                points = [
-                    (player_px, player_py - s(marker_size)),
-                    (player_px - s(marker_size // 2), player_py + s(marker_size // 2)),
-                    (player_px + s(marker_size // 2), player_py + s(marker_size // 2))
-                ]
-                pygame.draw.polygon(surf, marker_color, points)
-                pygame.draw.polygon(surf, (0, 0, 0), points, s(1))
-
-        # Draw waypoint markers and collect rects
-        waypoint_rects = []
-        if config.map_display.show_waypoint_markers:
-            for wp in map_system.get_all_waypoints():
-                wp_chunk_x, wp_chunk_y = wp.chunk_coords
-                wp_px = map_area_x + map_center_x + int((wp_chunk_x - center_chunk_x) * chunk_size) + chunk_size // 2
-                wp_py = map_area_y + map_center_y + int((wp_chunk_y - center_chunk_y) * chunk_size) + chunk_size // 2
-
-                if map_area_x <= wp_px <= map_area_x + map_area_w and map_area_y <= wp_py <= map_area_y + map_area_h:
-                    marker_size = config.waypoint_marker.size
-                    marker_color = config.waypoint_marker.color
-                    # Draw diamond
-                    points = [
-                        (wp_px, wp_py - s(marker_size)),
-                        (wp_px + s(marker_size), wp_py),
-                        (wp_px, wp_py + s(marker_size)),
-                        (wp_px - s(marker_size), wp_py)
-                    ]
-                    pygame.draw.polygon(surf, marker_color, points)
-                    pygame.draw.polygon(surf, (0, 0, 0), points, s(1))
-
-        # Draw hovered chunk info
-        if hovered_chunk and config.map_display.show_coordinates:
-            cx, cy, explored = hovered_chunk
-            info_y = map_area_y + map_area_h + s(5)
-            coord_text = f"Chunk: ({cx}, {cy})"
-            if explored:
-                type_name = explored.chunk_type.replace('_', ' ').title()
-                coord_text += f" - {type_name}"
-                if explored.has_dungeon:
-                    coord_text += " [DUNGEON]"
-                if explored.has_death_chest:
-                    coord_text += " [💀 DEATH CHEST]"
+            zoom_key = round(chunk_size_f, 4)
+            if self._map_prescaled[0] is None or self._map_prescaled[1] != zoom_key:
+                try:
+                    full_scaled = pygame.transform.scale(img, (target_w, target_h))
+                    self._map_prescaled = (full_scaled, zoom_key, _effective_csf)
+                except (ValueError, pygame.error):
+                    self._map_prescaled = (None, None, _effective_csf)
             else:
-                coord_text += " - Unexplored"
-            surf.blit(self.small_font.render(coord_text, True, (200, 200, 200)), (map_area_x, info_y))
+                _effective_csf = self._map_prescaled[2]
+
+            if self._map_prescaled[0] is not None:
+                blit_x = map_area_x + map_center_x - int((center_chunk_x + _half) * _effective_csf)
+                blit_y = map_area_y + map_center_y - int((center_chunk_y + _half) * _effective_csf)
+                surf.blit(self._map_prescaled[0], (blit_x, blit_y))
+
+        # Helper: chunk coords -> pixel (MUST use _effective_csf to match image)
+        def _c2p(cx, cy):
+            return (
+                map_area_x + map_center_x + int((cx - center_chunk_x) * _effective_csf),
+                map_area_y + map_center_y + int((cy - center_chunk_y) * _effective_csf),
+            )
+
+        # ── DYNAMIC BORDERS (drawn on top of image at current zoom) ──
+        if geo_map and _effective_csf >= 1.5:
+            _cd = geo_map.chunk_data
+            # Only draw borders for visible chunks (use viewport bounds)
+            vw_c = int(map_area_w / max(0.5, _effective_csf)) + 2
+            vh_c = int(map_area_h / max(0.5, _effective_csf)) + 2
+            for dy in range(-vh_c // 2, vh_c // 2 + 1):
+                for dx in range(-vw_c // 2, vw_c // 2 + 1):
+                    cx_ = int(center_chunk_x) + dx
+                    cy_ = int(center_chunk_y) + dy
+                    gd = _cd.get((cx_, cy_))
+                    if not gd: continue
+                    px_, py_ = _c2p(cx_, cy_)
+                    cs = max(1, int(_effective_csf))
+                    # Nation border (thick gold)
+                    r = _cd.get((cx_+1, cy_))
+                    if r and gd.nation_id != r.nation_id:
+                        pygame.draw.line(surf, (200,185,140), (px_+cs, py_), (px_+cs, py_+cs), max(2, cs//4))
+                    b = _cd.get((cx_, cy_+1))
+                    if b and gd.nation_id != b.nation_id:
+                        pygame.draw.line(surf, (200,185,140), (px_, py_+cs), (px_+cs, py_+cs), max(2, cs//4))
+                    # Region border (medium silver, only if zoomed enough)
+                    if _effective_csf >= 2.0:
+                        if r and gd.nation_id == r.nation_id and gd.region_id != r.region_id:
+                            pygame.draw.line(surf, (150,150,165), (px_+cs, py_), (px_+cs, py_+cs), max(1, cs//6))
+                        if b and gd.nation_id == b.nation_id and gd.region_id != b.region_id:
+                            pygame.draw.line(surf, (150,150,165), (px_, py_+cs), (px_+cs, py_+cs), max(1, cs//6))
+                    # Province border (thin dotted, at close zoom)
+                    if _effective_csf >= 5.0:
+                        if r and gd.region_id == r.region_id and gd.province_id != r.province_id:
+                            pygame.draw.line(surf, (110,110,125), (px_+cs, py_), (px_+cs, py_+cs), 1)
+                        if b and gd.region_id == b.region_id and gd.province_id != b.province_id:
+                            pygame.draw.line(surf, (110,110,125), (px_, py_+cs), (px_+cs, py_+cs), 1)
+
+        # ── LABELS — cartographic style with strict size gating ──
+        if geo_map:
+            def _map_label(text, cx, cy, font, color, yoff=0, min_territory_px=0, max_count=None, counter=[0]):
+                """Draw a map label with drop shadow. Only shows if territory is large enough."""
+                px, py = _c2p(cx, cy)
+                py += yoff
+                # Strict viewport culling
+                if not (map_area_x < px < map_area_x + map_area_w and
+                        map_area_y < py < map_area_y + map_area_h):
+                    return None
+                ts = font.render(text, True, color)
+                tw, th = ts.get_width(), ts.get_height()
+                # Must fit comfortably in territory
+                if min_territory_px > 0 and tw > min_territory_px * 0.8:
+                    return None
+                # Drop shadow instead of background rect (cleaner look)
+                shadow = font.render(text, True, (0, 0, 0))
+                surf.blit(shadow, (px - tw // 2 + 1, py - th // 2 + 1))
+                surf.blit(ts, (px - tw // 2, py - th // 2))
+                return pygame.Rect(px - tw // 2 - 2, py - th // 2 - 2, tw + 4, th + 4)
+
+            _placed = []
+            def _nol(r):
+                if r is None: return False
+                for p in _placed:
+                    if r.colliderect(p): return False
+                _placed.append(r)
+                return True
+
+            # Nation labels — large, spaced, always try to show
+            for nid, nation in geo_map.nations.items():
+                if not nation.region_ids: continue
+                sx_, sy_, cnt = 0.0, 0.0, 0
+                for rid in nation.region_ids:
+                    rg = geo_map.regions.get(rid)
+                    if rg:
+                        b = rg.bounds; sx_ += (b[0]+b[2])/2; sy_ += (b[1]+b[3])/2; cnt += 1
+                if cnt > 0:
+                    # Letter-space the nation name for cartographic feel
+                    spaced = "  ".join(nation.name.upper())
+                    nw = nation.chunk_count ** 0.5 * chunk_size_f
+                    _nol(_map_label(spaced, sx_/cnt, sy_/cnt,
+                                    self.font, (230, 220, 185), 0, nw))
+
+            # Region labels — only when regions are reasonably large on screen
+            if chunk_size_f >= 0.6:
+                shown = 0
+                for rid, rg in sorted(geo_map.regions.items(), key=lambda x: x[1].chunk_count, reverse=True):
+                    if shown >= 15: break  # Cap visible region labels
+                    b = rg.bounds
+                    rw = (b[2] - b[0]) * chunk_size_f
+                    r = _map_label(rg.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
+                                   self.small_font, (180, 190, 210), s(12), rw)
+                    if _nol(r): shown += 1
+
+            # Province labels — only when zoomed in enough, limit count
+            if chunk_size_f >= 3.0:
+                shown = 0
+                for pid, pv in sorted(geo_map.provinces.items(), key=lambda x: x[1].chunk_count, reverse=True):
+                    if shown >= 20: break
+                    b = pv.bounds
+                    pw = (b[2] - b[0]) * chunk_size_f
+                    r = _map_label(pv.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
+                                   self.small_font, (155, 160, 175), 0, pw)
+                    if _nol(r): shown += 1
+
+            # District labels — very zoomed in, strict limit
+            if chunk_size_f >= 8.0:
+                shown = 0
+                for did, dt in sorted(geo_map.districts.items(), key=lambda x: x[1].chunk_count, reverse=True):
+                    if shown >= 15: break
+                    b = dt.bounds
+                    dw = (b[2] - b[0]) * chunk_size_f
+                    r = _map_label(dt.name, (b[0]+b[2])/2, (b[1]+b[3])/2,
+                                   self.tiny_font, (135, 135, 150), 0, dw)
+                    if _nol(r): shown += 1
+
+        # ── PLAYER MARKER ──
+        po_x = (character.position.x % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
+        po_y = (character.position.y % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
+        ppx, ppy = _c2p(player_chunk_x + po_x, player_chunk_y + po_y)
+        ms = max(5, s(config.player_marker.size))
+        mc = config.player_marker.color
+        pts = [(ppx, ppy - ms), (ppx + ms//2, ppy + ms//2), (ppx - ms//2, ppy + ms//2)]
+        pygame.draw.polygon(surf, mc, pts)
+        pygame.draw.polygon(surf, (0, 0, 0), pts, 1)
+
+        # ── WAYPOINT MARKERS ──
+        for slot_idx, wp in enumerate(map_system.waypoints):
+            if wp:
+                wcx = int(wp.position.x) // Config.CHUNK_SIZE
+                wcy = int(wp.position.y) // Config.CHUNK_SIZE
+                wpx, wpy = _c2p(wcx + 0.5, wcy + 0.5)
+                ws = max(3, s(config.waypoint_marker.size))
+                wc = config.waypoint_marker.color
+                dm = [(wpx, wpy-ws), (wpx+ws, wpy), (wpx, wpy+ws), (wpx-ws, wpy)]
+                pygame.draw.polygon(surf, wc, dm)
+                pygame.draw.polygon(surf, (0, 0, 0), dm, 1)
+                if hasattr(wp, 'name') and wp.name:
+                    wlbl = self.tiny_font.render(wp.name, True, wc)
+                    surf.blit(wlbl, (wpx - wlbl.get_width() // 2, wpy + ws + 2))
+
+        # Remove clip
+        surf.set_clip(None)
+
+        # ── MAP BORDER (drawn OUTSIDE clip so it's always crisp) ──
+        pygame.draw.rect(surf, tuple(config.ui.border_color), map_rect, s(2))
+
+        # ── HOVER INFO (drawn outside clip, below map) ──
+        rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+        if map_area_x <= rx <= map_area_x + map_area_w and map_area_y <= ry <= map_area_y + map_area_h:
+            hcx = math.floor(center_chunk_x + (rx - map_area_x - map_center_x) / max(0.1, _effective_csf))
+            hcy = math.floor(center_chunk_y + (ry - map_area_y - map_center_y) / max(0.1, _effective_csf))
+            hovered_chunk = (hcx, hcy, map_system.get_explored_chunk(hcx, hcy))
+
+        if hovered_chunk and config.map_display.show_coordinates:
+            hcx, hcy, hexpl = hovered_chunk
+            info = f"({hcx}, {hcy})"
+            if geo_map:
+                addr = geo_map.get_full_address(hcx, hcy)
+                if addr:
+                    parts = [addr.get('nation',''), addr.get('region',''), addr.get('province','')]
+                    info += "  " + " > ".join(p for p in parts if p)
+                    info += f"  [{addr.get('danger','')}]  {addr.get('chunk_type','').replace('_',' ').title()}"
+            surf.blit(self.small_font.render(info, True, (200, 200, 200)),
+                       (map_area_x, map_area_y + map_area_h + s(5)))
 
         # ========== WAYPOINT PANEL ==========
         panel_x = ww - waypoint_panel_w - s(10)

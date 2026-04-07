@@ -10,10 +10,10 @@
 
   "map_display": {
     "_comment": "Controls how the map UI renders explored areas",
-    "default_zoom": 1.0,
+    "default_zoom": 0.5,
     "_default_zoom_effects": "HIGHER = zoomed in (larger chunks). LOWER = zoomed out (see more area).",
-    "min_zoom": 0.25,
-    "_min_zoom_effects": "Minimum zoom level (most zoomed out). LOWER = can see more chunks.",
+    "min_zoom": 0.08,
+    "_min_zoom_effects": "Minimum zoom level (most zoomed out). 0.08 shows full 512x512 world.",
     "max_zoom": 4.0,
     "_max_zoom_effects": "Maximum zoom level (most zoomed in). HIGHER = more detail on fewer chunks.",
     "zoom_step": 0.25,
