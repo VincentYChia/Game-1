@@ -276,10 +276,9 @@ LAYER_2_CATEGORIES = {
     ),
     "resource_harvesting": TagCategory(
         "resource_harvesting",
-        frozenset({"active", "heavy", "depleted_50", "depleted_75",
-                   "depleted_90", "exhausted", "recovering"}),
+        frozenset({"depleted_50", "scarce", "exhausted", "completely_harvested"}),
         layer_unlocked=2,
-        description="Factual observation of resource extraction level in an ecosystem. Feeds Layer 3 resource_status.",
+        description="Ecosystem-level resource depletion milestone. Produced as own event by evaluator. Feeds Layer 3 resource_status.",
     ),
 }
 

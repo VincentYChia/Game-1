@@ -351,21 +351,6 @@ class EventRecorder:
             else:
                 event.tags.append("intensity:light")
 
-        # Setting tag from geographic system (factual geographic context)
-        # Note: population_status and resource_status are Layer 3 concerns,
-        # not injected here. resource_harvesting is produced by the
-        # ecosystem_resource_depletion evaluator at Layer 2.
-        if self._world_map and event.position:
-            try:
-                from systems.geography.setting_resolver import resolve_setting
-                chunk_x = int(event.position[0]) // 16
-                chunk_y = int(event.position[1]) // 16
-                geo = self._world_map.get_chunk_data(chunk_x, chunk_y)
-                if geo:
-                    setting = resolve_setting(geo, self._world_map)
-                    event.tags.append(f"setting:{setting}")
-            except Exception:
-                pass
 
     def _extract_context(self, event) -> Dict[str, Any]:
         """Extract context snapshot from event data."""
