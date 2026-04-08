@@ -1,13 +1,15 @@
-"""World Interpreter — transforms Layer 1 stats into Layer 2 text events.
+"""World Interpreter — reads Raw Event Pipeline data and Layer 1 stats
+to generate Layer 2 interpreted events (the first narrative layer).
+
+Layer 1 is pure cumulative counters (StatStore).  The Raw Event Pipeline
+(EventStore) holds timestamped structured facts.  Neither is an "event"
+in the narrative sense.  Layer 2 is where meaning first emerges — evaluators
+read raw data and produce one-sentence narrative interpretations.
 
 Each PatternEvaluator has a specific INPUT FRAME OF REFERENCE — defined by
-what data it queries and how it processes it. The same event can trigger
+what data it queries and how it processes it. The same raw event can trigger
 multiple evaluators because each reads it through a different lens
 (e.g., regional vs global, per-species vs per-tier).
-
-Output is MINIMAL NARRATION — data to text, not editorializing.
-Good: "Player has killed 10 wolves in Whispering Woods."
-Bad:  "The wolf population is declining in Whispering Woods."
 
 33 evaluators covering combat, gathering, crafting, progression,
 exploration, social, economy, and items.
