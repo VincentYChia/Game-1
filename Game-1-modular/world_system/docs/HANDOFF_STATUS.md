@@ -9,26 +9,38 @@
 
 ## What Was Built
 
-### Layer 1: SQL-Backed Stat Tracking (COMPLETE)
+### Layer 1: SQL-Backed Stat Tracking (COMPLETE — REFACTORED)
 
-The entire stat tracking system has been migrated from Python dicts to a single flat SQL table with automatic dimensional breakdowns.
+Single-value schema with tags and descriptions.  Each stat is one row: name, value, tags, description.  Tags enable tag-intersection queries for downstream Layer 2+ consumers and LLM prompts.
 
 **Core files:**
-- `world_system/world_memory/stat_store.py` (258 lines) — SQL engine
-- `entities/components/stat_tracker.py` (1,100+ lines) — 65 `record_*` methods
+- `world_system/world_memory/stat_store.py` (~500 lines) — SQL engine with tag queries
+- `entities/components/stat_tracker.py` (1,100+ lines) — 74 `record_*` methods
 
 **SQL Schema:**
 ```sql
 CREATE TABLE stats (
-    key TEXT PRIMARY KEY,    -- "combat.kills.species.wolf"
-    count INTEGER DEFAULT 0, -- occurrences
-    total REAL DEFAULT 0.0,  -- sum of values
-    max_value REAL DEFAULT 0.0, -- best single instance
+    name TEXT PRIMARY KEY,       -- "combat.kills.species.wolf"
+    value REAL DEFAULT 0.0,      -- single number (count, total, or gauge)
+    tags TEXT DEFAULT '[]',      -- JSON: ["domain:combat", "species:wolf"]
+    description TEXT DEFAULT '', -- LLM-readable: "Wolves killed by player"
     updated_at REAL DEFAULT 0.0
+);
+CREATE TABLE stat_tags (         -- junction table for tag-intersection queries
+    name TEXT NOT NULL,
+    tag_category TEXT NOT NULL,
+    tag_value TEXT NOT NULL
 );
 ```
 
-**How it works:** Each game action writes multiple hierarchical keys via `build_dimensional_keys()`. One wolf kill creates: `combat.kills`, `combat.kills.species.wolf`, `combat.kills.tier.1`, `combat.kills.location.whispering_woods` — all automatically. New enemies, regions, weapons get stat rows without code changes.
+**Three write operations:**
+- `increment(name, amount=1.0)` — counters and running totals
+- `set_value(name, value)` — gauges (current level, gold balance)
+- `set_max(name, value)` — records (longest killstreak, highest hit)
+
+**How it works:** Each game action writes multiple hierarchical names via `build_dimensional_keys()`. One wolf kill creates: `combat.kills`, `combat.kills.species.wolf`, `combat.kills.tier.1`, `combat.kills.location.whispering_woods` — all automatically. Tags auto-derived from name structure or loaded from manifest (`stat-key-manifest.json`, 374 patterns). New enemies, regions, weapons get stat rows without code changes.
+
+**Tag queries:** `stat_store.query_by_tags(["domain:combat", "species:wolf"])` returns all matching stats with values and descriptions. StatStore is the single source of truth for Layer 1 — LayerStore no longer duplicates it.
 
 **What's tracked (65 methods, ~400+ key patterns):**
 
@@ -50,7 +62,7 @@ CREATE TABLE stats (
 | Misc | 4 | Menu opens, saves, loads, debug actions |
 | Barriers | 2 | Placed/picked up by material |
 
-**Save system:** Stats live in `world_memory.db` (SQLite). `to_dict()` still works for backward compat with old JSON saves. `from_dict()` imports v1.0 legacy saves into SQL automatically.
+**Save system:** Stats live in `world_memory.db` (SQLite). `to_dict()` serializes as `{name: value}` flat dicts. `from_dict()` handles v2.0 (flat values), v1.0 (count/total/max dicts), and legacy dict formats automatically.
 
 ### Raw Event Pipeline: Event Recording Infrastructure (COMPLETE)
 

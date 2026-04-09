@@ -210,25 +210,18 @@ class StatStore:
 
         entry = self._lookup_manifest(name)
         if entry:
-            tags = entry.get("tags", [])
+            tags = list(entry.get("tags", []))
             desc = entry.get("description", "")
-            # Resolve {dim} placeholders from the name
+            # Resolve {dim} placeholders from the name.
+            # Pattern "combat.kills.species.*" matched "combat.kills.species.wolf"
+            # Tags like "species:{dim}" should become "species:wolf"
+            # {dim} = the last segment of the name (the wildcard value)
             parts = name.split(".")
+            wildcard_value = parts[-1] if len(parts) >= 2 else ""
             resolved_tags = []
             for tag in tags:
-                if "{" in tag:
-                    try:
-                        resolved = tag
-                        for j, p in enumerate(parts):
-                            resolved = resolved.replace(f"{{p{j}}}", p)
-                        # Also handle {dim} patterns from stat key structure
-                        # e.g., combat.kills.species.wolf → species=wolf
-                        if len(parts) >= 4:
-                            resolved = resolved.replace("{dim}", parts[-2])
-                            resolved = resolved.replace("{val}", parts[-1])
-                        resolved_tags.append(resolved)
-                    except Exception:
-                        resolved_tags.append(tag)
+                if "{dim}" in tag:
+                    resolved_tags.append(tag.replace("{dim}", wildcard_value))
                 else:
                     resolved_tags.append(tag)
             tags = resolved_tags

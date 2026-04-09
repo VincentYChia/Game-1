@@ -140,16 +140,25 @@ def create_database(db_path: str) -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
 
-    # ── stat_store.py: Layer 1 flat counters (write-path) ────────
+    # ── stat_store.py: Layer 1 stats (name, value, tags, description) ──
     conn.executescript("""
     CREATE TABLE IF NOT EXISTS stats (
-        key TEXT PRIMARY KEY,
-        count INTEGER DEFAULT 0,
-        total REAL DEFAULT 0.0,
-        max_value REAL DEFAULT 0.0,
+        name TEXT PRIMARY KEY,
+        value REAL DEFAULT 0.0,
+        tags TEXT DEFAULT '[]',
+        description TEXT DEFAULT '',
         updated_at REAL DEFAULT 0.0
     );
-    CREATE INDEX IF NOT EXISTS idx_stats_prefix ON stats(key COLLATE NOCASE);
+    CREATE INDEX IF NOT EXISTS idx_stats_prefix ON stats(name COLLATE NOCASE);
+
+    CREATE TABLE IF NOT EXISTS stat_tags (
+        name TEXT NOT NULL,
+        tag_category TEXT NOT NULL,
+        tag_value TEXT NOT NULL,
+        FOREIGN KEY (name) REFERENCES stats(name) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_stat_tags ON stat_tags(tag_category, tag_value);
+    CREATE INDEX IF NOT EXISTS idx_stat_tags_name ON stat_tags(name);
     """)
 
     # ── event_store.py: Raw Event Pipeline + tracking ────────────
@@ -210,27 +219,8 @@ def create_database(db_path: str) -> sqlite3.Connection:
     );
     """)
 
-    # ── layer_store.py: Per-layer tag-indexed tables (canonical) ─
-    # Layer 1: Stats with structured tag junction
+    # ── layer_store.py: Per-layer tag-indexed tables (Layers 2-7) ─
     conn.executescript("""
-    CREATE TABLE IF NOT EXISTS layer1_stats (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        key TEXT NOT NULL UNIQUE,
-        count INTEGER DEFAULT 0,
-        total REAL DEFAULT 0.0,
-        max_value REAL DEFAULT 0.0,
-        tags_json TEXT DEFAULT '[]',
-        updated_at REAL DEFAULT 0.0
-    );
-    CREATE TABLE IF NOT EXISTS layer1_tags (
-        stat_id INTEGER NOT NULL,
-        tag_category TEXT NOT NULL,
-        tag_value TEXT NOT NULL,
-        FOREIGN KEY (stat_id) REFERENCES layer1_stats(id)
-    );
-    CREATE INDEX IF NOT EXISTS idx_l1_tags ON layer1_tags(tag_category, tag_value);
-    CREATE INDEX IF NOT EXISTS idx_l1_tags_id ON layer1_tags(stat_id);
-
     -- Layer 2: Evaluator outputs with structured tags
     CREATE TABLE IF NOT EXISTS layer2_events (
         id TEXT PRIMARY KEY,
@@ -312,7 +302,11 @@ def populate_layer1(conn: sqlite3.Connection) -> int:
     t = time.time()
 
     def add(key, count=0, total=0.0, mx=0.0):
-        rows.append((key, count, total, max(mx, total), t))
+        # New schema: single value.  Pick the most meaningful number.
+        value = total if total != 0.0 else float(count)
+        if mx > value:
+            value = mx
+        rows.append((key, value, t))
 
     # Combat kills (player killed ~120 enemies total)
     add("combat.kills", 120, 120.0, 120.0)
@@ -479,38 +473,32 @@ def populate_layer1(conn: sqlite3.Connection) -> int:
     rows = rows[:500]
     while len(rows) < 500:
         idx = len(rows)
-        rows.append((f"_padding.key_{idx}", 0, 0.0, 0.0, t))
+        rows.append((f"_padding.key_{idx}", 0.0, t))
 
+    # Insert into stats table (new single-value schema)
     conn.executemany(
-        "INSERT OR REPLACE INTO stats (key, count, total, max_value, updated_at) VALUES (?, ?, ?, ?, ?)",
+        "INSERT OR REPLACE INTO stats (name, value, updated_at) VALUES (?, ?, ?)",
         rows
     )
 
-    # Also populate layer1_stats + layer1_tags (layer_store.py canonical schema)
+    # Populate tags and descriptions in stats + stat_tags junction
     conn.execute("PRAGMA defer_foreign_keys=ON")
-    for key, count, total, mx, updated in rows:
-        if key.startswith("_padding"):
+    for name, value, updated in rows:
+        if name.startswith("_padding"):
             continue
-        tags = _derive_tags_for_stat(key)
+        tags = _derive_tags_for_stat(name)
+        tags_json = json.dumps(tags)
         conn.execute(
-            "INSERT OR REPLACE INTO layer1_stats (key, count, total, max_value, tags_json, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (key, count, total, max(mx, total), json.dumps(tags), updated)
+            "UPDATE stats SET tags = ? WHERE name = ?",
+            (tags_json, name)
         )
-    conn.commit()
-    # Now insert tags (foreign keys satisfied)
-    for key, count, total, mx, updated in rows:
-        if key.startswith("_padding"):
-            continue
-        row_id = conn.execute("SELECT id FROM layer1_stats WHERE key = ?", (key,)).fetchone()
-        if row_id is None:
-            continue
-        row_id = row_id[0]
-        for tag in _derive_tags_for_stat(key):
+        for tag in tags:
             if ":" in tag:
                 cat, val = tag.split(":", 1)
-                conn.execute("INSERT INTO layer1_tags (stat_id, tag_category, tag_value) VALUES (?, ?, ?)",
-                            (row_id, cat, val))
+                conn.execute(
+                    "INSERT INTO stat_tags (name, tag_category, tag_value) VALUES (?, ?, ?)",
+                    (name, cat, val)
+                )
     conn.commit()
     return len(rows)
 
@@ -1086,24 +1074,23 @@ def dump_summary(conn: sqlite3.Connection):
     print("WORLD MEMORY SYSTEM — SIMULATION DATABASE SUMMARY")
     print("=" * 70)
 
-    # Layer 1: stats table (write-path) + layer1_stats (read-path)
-    row = conn.execute("SELECT COUNT(*), SUM(count), SUM(total) FROM stats").fetchone()
-    l1_tagged = conn.execute("SELECT COUNT(*) FROM layer1_stats").fetchone()[0]
-    l1_tags = conn.execute("SELECT COUNT(*) FROM layer1_tags").fetchone()[0]
-    print(f"\nLayer 1 (Stats): {row[0]} keys, {int(row[1] or 0)} total counts, {row[2] or 0:.0f} total values")
-    print(f"  layer1_stats: {l1_tagged} rows with {l1_tags} structured tags")
-    print("  Top 10 by count:")
-    for r in conn.execute("SELECT key, count, total FROM stats ORDER BY count DESC LIMIT 10"):
-        print(f"    {r[0]:45s} count={r[1]:>6d}  total={r[2]:>10.1f}")
+    # Layer 1: stats table (name, value, tags, description)
+    row = conn.execute("SELECT COUNT(*), SUM(value) FROM stats WHERE value != 0.0").fetchone()
+    tag_count = conn.execute("SELECT COUNT(*) FROM stat_tags").fetchone()[0]
+    print(f"\nLayer 1 (Stats): {row[0]} active stats, total value sum: {row[1] or 0:.0f}")
+    print(f"  stat_tags: {tag_count} junction rows")
+    print("  Top 10 by value:")
+    for r in conn.execute("SELECT name, value FROM stats WHERE value != 0.0 ORDER BY value DESC LIMIT 10"):
+        print(f"    {r[0]:45s} value={r[1]:>10.1f}")
     # Sample tag query
     print("  Tag query example (domain:combat):")
     for r in conn.execute("""
-        SELECT s.key, s.count FROM layer1_stats s
-        JOIN layer1_tags t ON t.stat_id = s.id
+        SELECT s.name, s.value FROM stats s
+        JOIN stat_tags t ON t.name = s.name
         WHERE t.tag_category = 'domain' AND t.tag_value = 'combat'
-        ORDER BY s.count DESC LIMIT 5
+        ORDER BY s.value DESC LIMIT 5
     """):
-        print(f"    {r[0]:45s} count={r[1]}")
+        print(f"    {r[0]:45s} value={r[1]:.0f}")
 
     # Raw events
     row = conn.execute("SELECT COUNT(*) FROM events").fetchone()
