@@ -245,6 +245,281 @@ The following tables are confirmed redundant and will be removed:
 | `realm_state` | `layer5_events` |
 | `world_narrative`, `narrative_threads` | `layer7_events` |
 
-### What Remains — Temporal Fact Store (designing)
+### What Remains — Temporal Fact Store (FINALIZED)
 
-See "Temporal Calculations" section below (in progress).
+---
+
+## Temporal Storage System
+
+### Overview
+
+Three SQL tiers capture the time dimension that StatStore (all-time aggregates) cannot:
+
+```
+Tier 1: CURRENT DAY EVENTS — individual events as they happen (cleared at day end)
+Tier 2: DAILY SUMMARIES    — one detailed row per completed game-day (kept forever)
+Tier 3: MONTHLY SUMMARIES  — one row per 30-day period (kept forever, computed from Tier 2)
+```
+
+All tiers are proper SQL tables. No JSON blobs for primary data. No row limits.
+
+**Game time reference** (single source of truth):
+- `game_engine.py:443` — `CYCLE_LENGTH = 1440.0` seconds (24 real minutes = 1 game day/night cycle)
+- `game_engine.py:7635` — `self.game_time += dt` (continuous clock)
+- `game_day = int(game_time / CYCLE_LENGTH)`
+- Day boundary detected by `DailyLedgerManager.check_day_boundary(game_time)`
+- A "month" = every 30 game-days (no in-game month concept; we define this boundary)
+
+### Tier 1: Current Day Events
+
+Individual events recorded as they happen during the current game-day.
+Cleared at each day boundary after being summarized into a Tier 2 row.
+
+```sql
+CREATE TABLE current_day_events (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type  TEXT NOT NULL,       -- "enemy_killed", "resource_gathered", etc.
+    event_subtype TEXT NOT NULL,     -- "killed_wolf", "gathered_iron_ore", etc.
+    game_time   REAL NOT NULL,       -- exact game_time of the event
+    locality_id TEXT,                -- where it happened
+    actor_id    TEXT NOT NULL DEFAULT 'player',
+    target_id   TEXT,                -- what was acted on
+    magnitude   REAL DEFAULT 0.0,    -- damage, quantity, etc.
+    tier        INTEGER,
+    tags        TEXT DEFAULT '[]'    -- JSON array of tags from event
+);
+CREATE INDEX idx_cde_type ON current_day_events(event_type);
+CREATE INDEX idx_cde_time ON current_day_events(game_time);
+```
+
+This is the "running journal" for today. Max ~50-150 rows per day during heavy play.
+It is the ONLY place with individual event detail for the current day.
+At day boundary: summarized → Tier 2 row, then `DELETE FROM current_day_events`.
+
+### Tier 2: Daily Summaries
+
+One row per completed game-day. Complete aggregate picture of what happened.
+Reading one row tells you everything the player did that day.
+
+Two tables: `daily_summary` for fixed domain totals, `daily_detail` for per-entity breakdowns.
+
+```sql
+CREATE TABLE daily_summary (
+    game_day                INTEGER PRIMARY KEY,
+    game_month              INTEGER NOT NULL,       -- int(game_day / 30)
+    game_time_start         REAL NOT NULL,
+    game_time_end           REAL NOT NULL,
+
+    -- Combat
+    combat_kills            INTEGER DEFAULT 0,
+    combat_kills_t1         INTEGER DEFAULT 0,
+    combat_kills_t2         INTEGER DEFAULT 0,
+    combat_kills_t3         INTEGER DEFAULT 0,
+    combat_kills_t4         INTEGER DEFAULT 0,
+    combat_damage_dealt     REAL DEFAULT 0.0,
+    combat_damage_taken     REAL DEFAULT 0.0,
+    combat_highest_hit      REAL DEFAULT 0.0,
+    combat_deaths           INTEGER DEFAULT 0,
+    combat_dodges           INTEGER DEFAULT 0,
+    combat_blocks           INTEGER DEFAULT 0,
+    combat_healing          REAL DEFAULT 0.0,
+    combat_crits            INTEGER DEFAULT 0,
+    combat_status_applied   INTEGER DEFAULT 0,
+
+    -- Gathering
+    gathering_collected     INTEGER DEFAULT 0,
+    gathering_actions       INTEGER DEFAULT 0,
+    gathering_nodes_depleted INTEGER DEFAULT 0,
+    gathering_unique_resources INTEGER DEFAULT 0,
+
+    -- Crafting
+    crafting_attempts       INTEGER DEFAULT 0,
+    crafting_successes      INTEGER DEFAULT 0,
+    crafting_unique_disciplines INTEGER DEFAULT 0,
+    crafting_materials_used INTEGER DEFAULT 0,
+
+    -- Exploration
+    exploration_chunks      INTEGER DEFAULT 0,
+    exploration_distance    REAL DEFAULT 0.0,
+    exploration_discoveries INTEGER DEFAULT 0,
+
+    -- Social
+    social_npc_interactions INTEGER DEFAULT 0,
+    social_quests_accepted  INTEGER DEFAULT 0,
+    social_quests_completed INTEGER DEFAULT 0,
+    social_quests_failed    INTEGER DEFAULT 0,
+
+    -- Economy
+    economy_gold_earned     REAL DEFAULT 0.0,
+    economy_gold_spent      REAL DEFAULT 0.0,
+    economy_items_acquired  INTEGER DEFAULT 0,
+
+    -- Progression
+    progression_levels      INTEGER DEFAULT 0,
+    progression_exp         REAL DEFAULT 0.0,
+    progression_skills_used INTEGER DEFAULT 0,
+    progression_mana_spent  REAL DEFAULT 0.0,
+
+    -- Computed
+    primary_activity        TEXT DEFAULT 'idle',    -- domain with most events
+    top_species             TEXT DEFAULT '',         -- most-killed enemy type
+    top_resource            TEXT DEFAULT '',         -- most-gathered resource
+    top_discipline          TEXT DEFAULT ''          -- most-used craft discipline
+);
+CREATE INDEX idx_ds_month ON daily_summary(game_month);
+```
+
+Per-entity breakdowns:
+```sql
+CREATE TABLE daily_detail (
+    game_day    INTEGER NOT NULL,
+    domain      TEXT NOT NULL,       -- "combat", "gathering", "crafting"
+    entity      TEXT NOT NULL,       -- "wolf_grey", "iron_ore", "smithing"
+    count       INTEGER DEFAULT 0,
+    total       REAL DEFAULT 0.0,    -- magnitude sum (damage, quantity)
+    PRIMARY KEY (game_day, domain, entity),
+    FOREIGN KEY (game_day) REFERENCES daily_summary(game_day)
+);
+CREATE INDEX idx_dd_domain ON daily_detail(domain);
+```
+
+Example daily_detail rows for Day 14:
+```
+(14, "combat",    "wolf_grey",    8,  120.0)
+(14, "combat",    "spider_acid",  3,   45.0)
+(14, "combat",    "golem_stone",  2,  250.0)
+(14, "gathering", "iron_ore",    12,   12.0)
+(14, "gathering", "oak_log",      8,    8.0)
+(14, "crafting",  "smithing",     2,    2.0)
+```
+
+### Tier 3: Monthly Summaries
+
+Same structure as Tier 2 but summed over 30-day periods. Provides artificial data breaks
+for long playthroughs. Updated incrementally at each day boundary (running accumulator for
+current month). Old daily rows are NOT deleted — they stay for queryability.
+
+```sql
+CREATE TABLE monthly_summary (
+    game_month              INTEGER PRIMARY KEY,
+    day_start               INTEGER NOT NULL,
+    day_end                 INTEGER NOT NULL,
+    days_elapsed            INTEGER DEFAULT 0,
+
+    -- Same domain columns as daily_summary (summed)
+    combat_kills            INTEGER DEFAULT 0,
+    combat_kills_t1         INTEGER DEFAULT 0,
+    combat_kills_t2         INTEGER DEFAULT 0,
+    combat_kills_t3         INTEGER DEFAULT 0,
+    combat_kills_t4         INTEGER DEFAULT 0,
+    combat_damage_dealt     REAL DEFAULT 0.0,
+    combat_damage_taken     REAL DEFAULT 0.0,
+    combat_highest_hit      REAL DEFAULT 0.0,    -- max across all days in month
+    combat_deaths           INTEGER DEFAULT 0,
+    combat_dodges           INTEGER DEFAULT 0,
+    combat_blocks           INTEGER DEFAULT 0,
+    combat_healing          REAL DEFAULT 0.0,
+    combat_crits            INTEGER DEFAULT 0,
+    combat_status_applied   INTEGER DEFAULT 0,
+
+    gathering_collected     INTEGER DEFAULT 0,
+    gathering_actions       INTEGER DEFAULT 0,
+    gathering_nodes_depleted INTEGER DEFAULT 0,
+
+    crafting_attempts       INTEGER DEFAULT 0,
+    crafting_successes      INTEGER DEFAULT 0,
+
+    exploration_chunks      INTEGER DEFAULT 0,
+    exploration_distance    REAL DEFAULT 0.0,
+    exploration_discoveries INTEGER DEFAULT 0,
+
+    social_npc_interactions INTEGER DEFAULT 0,
+    social_quests_completed INTEGER DEFAULT 0,
+
+    economy_gold_earned     REAL DEFAULT 0.0,
+    economy_gold_spent      REAL DEFAULT 0.0,
+
+    progression_levels      INTEGER DEFAULT 0,
+    progression_exp         REAL DEFAULT 0.0,
+
+    -- Pre-computed monthly aggregates
+    primary_activity        TEXT DEFAULT 'idle',
+    peak_combat_day         INTEGER DEFAULT 0,   -- game_day with most kills
+    peak_gathering_day      INTEGER DEFAULT 0,   -- game_day with most gathered
+    combat_active_days      INTEGER DEFAULT 0,   -- days where combat_kills > 0
+    gathering_active_days   INTEGER DEFAULT 0,
+    crafting_active_days    INTEGER DEFAULT 0
+);
+```
+
+Monthly detail (per-entity totals across the month):
+```sql
+CREATE TABLE monthly_detail (
+    game_month  INTEGER NOT NULL,
+    domain      TEXT NOT NULL,
+    entity      TEXT NOT NULL,
+    count       INTEGER DEFAULT 0,
+    total       REAL DEFAULT 0.0,
+    PRIMARY KEY (game_month, domain, entity),
+    FOREIGN KEY (game_month) REFERENCES monthly_summary(game_month)
+);
+```
+
+### Day Boundary Processing (pseudocode)
+
+```python
+def on_day_boundary(ended_day, game_time):
+    # 1. Summarize Tier 1 → Tier 2
+    events = query_all(current_day_events)
+    summary = compute_daily_summary(events, ended_day)
+    insert(daily_summary, summary)
+    insert_many(daily_detail, compute_detail_breakdown(events, ended_day))
+    delete_all(current_day_events)
+
+    # 2. Update Tier 3 running accumulator for current month
+    current_month = ended_day // 30
+    update_monthly_accumulator(current_month, summary)
+
+    # 3. At month boundary (ended_day % 30 == 29):
+    if ended_day % 30 == 29:
+        finalize_monthly_summary(current_month)
+```
+
+### Temporal Calculations (derived, never stored)
+
+All calculations read from the three tiers + StatStore. None are pre-stored.
+
+| Calculation | Formula | Source |
+|------------|---------|--------|
+| `today_count(type)` | COUNT from current_day_events WHERE event_type=X | Tier 1 |
+| `all_time(stat)` | stat_store.get(name) | StatStore |
+| `month_daily_avg(metric)` | monthly_summary.metric / days_elapsed | Tier 3 |
+| `recency_ratio` | today_count / all_time | Tier 1 + StatStore |
+| `vs_average` | today_count / month_daily_avg | Tier 1 + Tier 3 |
+| `day_streak(domain)` | Count consecutive daily_summary rows where domain > 0 | Tier 2 |
+| `primary_activity` | max(today domain counts) | Tier 1 |
+
+### What Layer 2 Receives (data block for LLM)
+
+For a wolf kill trigger on Day 14:
+```
+Stats (all-time, from StatStore):
+  combat.kills.species.wolf = 47
+  combat.kills = 150
+  combat.kills.location.whispering_woods = 23
+
+Today (from Tier 1):
+  wolves_killed_today = 8
+  total_combat_today = 12
+  primary_activity = combat
+
+This month (from Tier 3):
+  avg_kills_per_day = 4.2  (58 kills / 14 days)
+  combat_active_days = 12 of 14
+
+Derived:
+  today vs average = 1.9x
+  recency = 17% of all-time wolf kills happened today
+```
+
+Pure numbers. No interpretation. The LLM interprets them via prompt fragments.
