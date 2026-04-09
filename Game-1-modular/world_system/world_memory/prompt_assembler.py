@@ -1,0 +1,319 @@
+"""Prompt assembly engine — core logic for selecting and assembling
+Layer 2 LLM prompts from tag-indexed fragments.
+
+This module has no UI dependencies. It is used by:
+- tools/prompt_editor.py (tkinter visual editor)
+- Layer 2 evaluators (runtime prompt assembly)
+- Tests
+
+The prompt_editor.py UI imports this for its preview/simulation logic.
+"""
+
+import json
+import os
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+
+# ── Paths ───────────────────────────────────────────────────────────
+
+_CONFIG_DIR = Path(__file__).parent.parent / "config"
+_FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments.json"
+
+# Fragment categories that get matched from trigger tags
+FRAGMENT_CATEGORIES = frozenset({
+    "species", "material_category", "discipline",
+    "tier", "element", "rank", "status_effect",
+})
+
+# Domain mapping from event types
+EVENT_TO_DOMAIN = {
+    "enemy_killed": "combat", "attack_performed": "combat",
+    "damage_taken": "combat", "player_death": "combat",
+    "dodge_performed": "combat", "status_applied": "combat",
+    "resource_gathered": "gathering", "node_depleted": "gathering",
+    "craft_attempted": "crafting", "item_invented": "crafting",
+    "recipe_discovered": "crafting",
+    "level_up": "progression", "skill_learned": "progression",
+    "title_earned": "progression", "class_changed": "progression",
+    "skill_used": "skills",
+    "chunk_entered": "exploration", "area_discovered": "exploration",
+    "npc_interaction": "social", "quest_accepted": "social",
+    "quest_completed": "social", "quest_failed": "social",
+    "item_acquired": "items", "item_equipped": "items",
+    "repair_performed": "economy",
+    "world_event": "combat",
+    "position_sample": "exploration",
+}
+
+
+def estimate_tokens(text: str) -> int:
+    """Rough token estimate: ~4 chars per token for English."""
+    return max(1, len(text) // 4)
+
+
+class PromptAssembler:
+    """Loads prompt fragments and assembles prompts from tags.
+
+    Usage:
+        assembler = PromptAssembler()
+        assembler.load()
+        prompt = assembler.assemble(
+            tags=["domain:combat", "species:wolf_grey", "tier:1"],
+            data_block="Count today: 8\\nAll-time: 47\\n..."
+        )
+        # prompt.system = "You narrate events... Combat events... Grey Wolf..."
+        # prompt.user = "Count today: 8\\nAll-time: 47\\n...\\nWrite ONE factual..."
+    """
+
+    def __init__(self, fragments_path: Optional[str] = None):
+        self._path = Path(fragments_path) if fragments_path else _FRAGMENTS_PATH
+        self.fragments: Dict[str, Any] = {}
+        self._loaded = False
+
+    def load(self) -> int:
+        """Load fragments from JSON file. Returns fragment count."""
+        if self._path.exists():
+            with open(self._path) as f:
+                self.fragments = json.load(f)
+            self._loaded = True
+            return self.fragments.get("_meta", {}).get("total_fragments", 0)
+        return 0
+
+    def save(self):
+        """Save current fragments back to JSON."""
+        # Update meta
+        cats: Dict[str, int] = {}
+        for key in self.fragments:
+            if key.startswith("_meta"):
+                continue
+            if key.startswith("_"):
+                cats[key] = 1
+            else:
+                cat = key.split(":")[0] if ":" in key else key
+                cats[cat] = cats.get(cat, 0) + 1
+        self.fragments.setdefault("_meta", {})
+        self.fragments["_meta"]["total_fragments"] = sum(cats.values())
+        self.fragments["_meta"]["categories"] = cats
+
+        with open(self._path, "w") as f:
+            json.dump(self.fragments, f, indent=2)
+            f.write("\n")
+
+    @property
+    def fragment_count(self) -> int:
+        return self.fragments.get("_meta", {}).get("total_fragments", 0)
+
+    def get_fragment(self, key: str) -> str:
+        """Get a single fragment by key. Returns empty string if missing."""
+        val = self.fragments.get(key, "")
+        return val if isinstance(val, str) else ""
+
+    def set_fragment(self, key: str, text: str):
+        """Set a fragment's text."""
+        self.fragments[key] = text
+
+    def list_keys(self) -> List[str]:
+        """List all fragment keys (excluding _meta)."""
+        return sorted(k for k in self.fragments if k != "_meta")
+
+    def list_by_category(self) -> Dict[str, List[str]]:
+        """Group fragment keys by category."""
+        groups: Dict[str, List[str]] = {}
+        for key in self.list_keys():
+            if key.startswith("_"):
+                cat = key
+            else:
+                cat = key.split(":")[0] if ":" in key else "other"
+            groups.setdefault(cat, []).append(key)
+        return groups
+
+    # ── Core Assembly ───────────────────────────────────────────────
+
+    def select_fragments(self, tags: List[str]) -> List[Tuple[str, str]]:
+        """Select prompt fragments matching the given tags.
+
+        Returns list of (key, text) tuples in assembly order:
+        [_core, domain:X, species:Y, tier:N, ..., _output]
+        """
+        selected = []
+
+        # Core (always)
+        core = self.get_fragment("_core")
+        if core:
+            selected.append(("_core", core))
+
+        # Domain (first matching)
+        for tag in tags:
+            if tag.startswith("domain:") and tag in self.fragments:
+                selected.append((tag, self.get_fragment(tag)))
+                break
+
+        # Entity/context fragments (all matching, deduplicated)
+        seen_texts = {text for _, text in selected}
+        for tag in tags:
+            if ":" not in tag:
+                continue
+            cat = tag.split(":")[0]
+            if cat in FRAGMENT_CATEGORIES:
+                text = self.get_fragment(tag)
+                if text and text not in seen_texts:
+                    selected.append((tag, text))
+                    seen_texts.add(text)
+                elif not text:
+                    # Fallback: try tier if species missing, etc.
+                    fallback = self._find_fallback(tag, tags)
+                    if fallback and fallback[1] not in seen_texts:
+                        selected.append(fallback)
+                        seen_texts.add(fallback[1])
+
+        # Output instruction (always)
+        output = self.get_fragment("_output")
+        if output:
+            selected.append(("_output", output))
+
+        return selected
+
+    def _find_fallback(self, missing_tag: str, all_tags: List[str]
+                       ) -> Optional[Tuple[str, str]]:
+        """Find a fallback fragment when the specific one is missing."""
+        cat = missing_tag.split(":")[0]
+
+        fallback_map = {
+            "species": "tier",
+            "resource": "material_category",
+            "discipline": "domain",
+            "skill": "domain",
+            "npc": "domain",
+        }
+        fallback_cat = fallback_map.get(cat)
+        if not fallback_cat:
+            return None
+
+        for tag in all_tags:
+            if tag.startswith(f"{fallback_cat}:"):
+                text = self.get_fragment(tag)
+                if text:
+                    return (f"{tag} (fallback for {missing_tag})", text)
+        return None
+
+    def assemble(self, tags: List[str],
+                 data_block: str = "") -> "AssembledPrompt":
+        """Assemble a complete prompt from tags and data.
+
+        Returns an AssembledPrompt with system and user components.
+        """
+        selected = self.select_fragments(tags)
+
+        # System prompt = all fragments except _output
+        system_parts = []
+        output_text = ""
+        for key, text in selected:
+            if key == "_output":
+                output_text = text
+            else:
+                system_parts.append(text)
+
+        system = "\n\n".join(system_parts)
+        user = data_block
+        if output_text:
+            user = f"{data_block}\n\n{output_text}" if data_block else output_text
+
+        return AssembledPrompt(
+            system=system,
+            user=user,
+            fragments_used=selected,
+            tags=tags,
+            token_estimate=estimate_tokens(system) + estimate_tokens(user),
+        )
+
+    def tags_from_event(self, event_type: str, event_subtype: str = "",
+                        tier: Optional[int] = None,
+                        extra_tags: Optional[List[str]] = None) -> List[str]:
+        """Derive prompt-relevant tags from an event type and subtype.
+
+        Utility for evaluators to get the tag list they should pass to assemble().
+        """
+        tags = []
+
+        # Domain
+        domain = EVENT_TO_DOMAIN.get(event_type, "combat")
+        tags.append(f"domain:{domain}")
+
+        # Entity from subtype
+        if event_type == "enemy_killed" and event_subtype.startswith("killed_"):
+            species = event_subtype[len("killed_"):]
+            tags.append(f"species:{species}")
+        elif event_type == "resource_gathered" and event_subtype.startswith("gathered_"):
+            resource = event_subtype[len("gathered_"):]
+            tags.append(f"resource:{resource}")
+        elif event_type == "craft_attempted" and event_subtype.startswith("crafted_"):
+            # Could map to discipline if we had recipe→discipline mapping
+            pass
+
+        # Tier
+        if tier is not None:
+            tags.append(f"tier:{tier}")
+
+        # Extra tags from the event's tag list
+        if extra_tags:
+            for tag in extra_tags:
+                cat = tag.split(":")[0] if ":" in tag else ""
+                if cat in FRAGMENT_CATEGORIES:
+                    tags.append(tag)
+
+        return tags
+
+    # ── Coverage Validation ─────────────────────────────────────────
+
+    def validate_coverage(self, game_entities: Optional[dict] = None
+                          ) -> Dict[str, List[str]]:
+        """Check which game entities lack fragments.
+
+        Returns {"missing": [...], "covered": [...]}.
+        """
+        missing = []
+        covered = []
+
+        if game_entities:
+            for e in game_entities.get("enemies", []):
+                key = f"species:{e.get('id', e.get('enemyId', ''))}"
+                if key in self.fragments:
+                    covered.append(key)
+                else:
+                    missing.append(key)
+
+            for d in game_entities.get("disciplines", []):
+                key = f"discipline:{d}"
+                if key in self.fragments:
+                    covered.append(key)
+                else:
+                    missing.append(key)
+
+        # Always check tiers
+        for t in range(1, 5):
+            key = f"tier:{t}"
+            if key in self.fragments:
+                covered.append(key)
+            else:
+                missing.append(key)
+
+        return {"missing": missing, "covered": covered}
+
+
+class AssembledPrompt:
+    """The result of assembling a prompt from fragments + data."""
+
+    def __init__(self, system: str, user: str,
+                 fragments_used: List[Tuple[str, str]],
+                 tags: List[str], token_estimate: int):
+        self.system = system
+        self.user = user
+        self.fragments_used = fragments_used
+        self.tags = tags
+        self.token_estimate = token_estimate
+
+    def __repr__(self):
+        return (f"AssembledPrompt(tags={self.tags}, "
+                f"fragments={len(self.fragments_used)}, "
+                f"~{self.token_estimate} tokens)")
