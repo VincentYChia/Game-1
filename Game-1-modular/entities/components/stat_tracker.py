@@ -822,17 +822,13 @@ class StatTracker:
         # Flatten all SQL stats into categorized dicts
         # Group by top-level key prefix
         categories: Dict[str, Dict] = {}
-        for key, (count, total, max_val) in all_stats.items():
-            parts = key.split(".", 1)
+        for name, value in all_stats.items():
+            parts = name.split(".", 1)
             cat = parts[0]
-            subkey = parts[1] if len(parts) > 1 else key
+            subkey = parts[1] if len(parts) > 1 else name
             if cat not in categories:
                 categories[cat] = {}
-            categories[cat][subkey] = {
-                "count": count,
-                "total": total,
-                "max_value": max_val,
-            }
+            categories[cat][subkey] = value
 
         result["stats"] = categories
 

@@ -1,101 +1,120 @@
-"""SQL-backed stat storage for Layer 1 of the World Memory System.
+"""Layer 1 of the World Memory System — SQL-backed stat storage.
 
-Single flat table with hierarchical keys.  Every stat is a row.
-Automatic dimensional breakdowns create rows on demand — new enemies,
-regions, weapons get tracked without code changes.
+Layer 1 is pure cumulative counters.  No events, no narratives, just numbers.
+Every stat is a single row: (name, value, tags, description).
+
+Dimensional breakdowns create rows on demand — new enemies, regions, weapons
+get tracked without code changes.  Tags and descriptions are populated from
+a manifest on first write, enabling tag-intersection queries and LLM-readable
+descriptions for downstream layers.
 
 Schema:
     CREATE TABLE stats (
-        key TEXT PRIMARY KEY,
-        count INTEGER DEFAULT 0,
-        total REAL DEFAULT 0.0,
-        max_value REAL DEFAULT 0.0,
+        name TEXT PRIMARY KEY,
+        value REAL DEFAULT 0.0,
+        tags TEXT DEFAULT '[]',
+        description TEXT DEFAULT '',
         updated_at REAL DEFAULT 0.0
     );
 
-Example keys:
-    combat.kills                           → total kills
-    combat.kills.species.wolf              → wolf kills
-    combat.kills.tier.1                    → tier 1 kills
-    combat.kills.location.whispering_woods → kills in that locality
-    combat.damage_dealt                    → total damage
-    combat.damage_dealt.type.fire          → fire damage
-    gathering.resource.iron_ore            → iron gathered
-    crafting.discipline.smithing.success   → successful smithing crafts
+    CREATE TABLE stat_tags (
+        name TEXT NOT NULL,
+        tag_category TEXT NOT NULL,
+        tag_value TEXT NOT NULL
+    );
+
+Example:
+    name:        "combat.kills.species.wolf"
+    value:       47.0
+    tags:        '["domain:combat", "action:kill", "species:wolf"]'
+    description: "Wolves killed by player"
 """
 
 from __future__ import annotations
 
+import json
 import sqlite3
 import time
-from typing import Any, ClassVar, Dict, List, Optional, Tuple
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 # ── Schema DDL ──────────────────────────────────────────────────────
 
 _STATS_SCHEMA = """
 CREATE TABLE IF NOT EXISTS stats (
-    key TEXT PRIMARY KEY,
-    count INTEGER DEFAULT 0,
-    total REAL DEFAULT 0.0,
-    max_value REAL DEFAULT 0.0,
+    name TEXT PRIMARY KEY,
+    value REAL DEFAULT 0.0,
+    tags TEXT DEFAULT '[]',
+    description TEXT DEFAULT '',
     updated_at REAL DEFAULT 0.0
 );
 
 CREATE INDEX IF NOT EXISTS idx_stats_prefix
-    ON stats(key COLLATE NOCASE);
+    ON stats(name COLLATE NOCASE);
+
+CREATE TABLE IF NOT EXISTS stat_tags (
+    name TEXT NOT NULL,
+    tag_category TEXT NOT NULL,
+    tag_value TEXT NOT NULL,
+    FOREIGN KEY (name) REFERENCES stats(name) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_stat_tags
+    ON stat_tags(tag_category, tag_value);
+
+CREATE INDEX IF NOT EXISTS idx_stat_tags_name
+    ON stat_tags(name);
 """
 
-# Precompiled UPSERT statement
-_UPSERT_SQL = """
-INSERT INTO stats (key, count, total, max_value, updated_at)
-VALUES (?, 1, ?, ?, ?)
-ON CONFLICT(key) DO UPDATE SET
-    count = count + 1,
-    total = total + excluded.total,
-    max_value = MAX(max_value, excluded.max_value),
+# ── Precompiled SQL ─────────────────────────────────────────────────
+
+# Increment: value += amount
+_INCREMENT_SQL = """
+INSERT INTO stats (name, value, updated_at)
+VALUES (?, ?, ?)
+ON CONFLICT(name) DO UPDATE SET
+    value = value + excluded.value,
     updated_at = excluded.updated_at
 """
 
-# For incrementing count only (value=1, no magnitude)
-_UPSERT_COUNT_SQL = """
-INSERT INTO stats (key, count, total, max_value, updated_at)
-VALUES (?, 1, 1.0, 1.0, ?)
-ON CONFLICT(key) DO UPDATE SET
-    count = count + 1,
-    total = total + 1.0,
-    updated_at = excluded.updated_at
-"""
-
-# For setting a value directly (not incrementing)
+# Set: value = new_value
 _SET_SQL = """
-INSERT INTO stats (key, count, total, max_value, updated_at)
-VALUES (?, 0, ?, ?, ?)
-ON CONFLICT(key) DO UPDATE SET
-    total = excluded.total,
-    max_value = MAX(max_value, excluded.max_value),
+INSERT INTO stats (name, value, updated_at)
+VALUES (?, ?, ?)
+ON CONFLICT(name) DO UPDATE SET
+    value = excluded.value,
+    updated_at = excluded.updated_at
+"""
+
+# Set max: value = max(current, new)
+_SET_MAX_SQL = """
+INSERT INTO stats (name, value, updated_at)
+VALUES (?, ?, ?)
+ON CONFLICT(name) DO UPDATE SET
+    value = MAX(value, excluded.value),
     updated_at = excluded.updated_at
 """
 
 
 class StatStore:
-    """SQL-backed stat storage.  One table, hierarchical keys.
+    """Layer 1 stat storage.  One table, hierarchical names, single value per stat.
 
-    All writes use UPSERT — keys are created on first write.
-    Reads are O(1) by key or O(n) by prefix scan.
+    Three write operations:
+        increment(name, amount)  — value += amount (counters, running totals)
+        set_value(name, value)   — value = new_value (gauges, current state)
+        set_max(name, value)     — value = max(current, new) (records, peaks)
+
+    Tags and descriptions are populated from a manifest on first write.
+    Tag-intersection queries via stat_tags junction table.
     """
 
     _instance: ClassVar[Optional[StatStore]] = None
 
     def __init__(self, conn: Optional[sqlite3.Connection] = None,
                  db_path: Optional[str] = None):
-        """Initialize with an existing connection or a new database.
-
-        Args:
-            conn: Existing SQLite connection (shared with EventStore).
-            db_path: Path to create/open a standalone database.
-        """
         self._owns_conn = False
+        self._manifest: Dict[str, dict] = {}  # name_pattern → {tags, description}
+
         if conn:
             self._conn = conn
         elif db_path:
@@ -103,52 +122,23 @@ class StatStore:
             self._conn.execute("PRAGMA journal_mode=WAL")
             self._owns_conn = True
         else:
-            # In-memory for testing
             self._conn = sqlite3.connect(":memory:", check_same_thread=False)
             self._owns_conn = True
 
+        self._conn.execute("PRAGMA foreign_keys=ON")
         self._conn.executescript(_STATS_SCHEMA)
         self._conn.commit()
 
-    def prepopulate_from_manifest(self, manifest_path: str) -> int:
-        """Pre-populate stats table with all known keys from the manifest.
+        # Cache of names that already have tags populated
+        self._tagged: set = set()
+        self._load_existing_tagged()
 
-        Uses INSERT OR IGNORE so existing data is preserved.  Only runs
-        on databases that haven't been populated yet (checks row count).
-
-        Args:
-            manifest_path: Path to stat-key-manifest.json
-
-        Returns:
-            Number of keys inserted (0 if already populated).
-        """
-        import json as _json
-        import os
-
-        if not os.path.exists(manifest_path):
-            return 0
-
-        # Skip if table already has substantial data
-        cursor = self._conn.execute("SELECT COUNT(*) FROM stats")
-        existing = cursor.fetchone()[0]
-        if existing > 100:
-            return 0
-
-        with open(manifest_path) as f:
-            manifest = _json.load(f)
-
-        keys = manifest.get("keys", [])
-        if not keys:
-            return 0
-
-        now = 0.0  # Use 0.0 as sentinel for "pre-populated, never written"
-        self._conn.executemany(
-            "INSERT OR IGNORE INTO stats (key, count, total, max_value, updated_at) "
-            "VALUES (?, 0, 0.0, 0.0, ?)",
-            [(k, now) for k in keys]
-        )
-        self._conn.commit()
-        return len(keys)
+    def _load_existing_tagged(self) -> None:
+        """Load names that already have tags in the junction table."""
+        rows = self._conn.execute(
+            "SELECT DISTINCT name FROM stat_tags"
+        ).fetchall()
+        self._tagged = {r[0] for r in rows}
 
     @classmethod
     def get_instance(cls) -> StatStore:
@@ -162,156 +152,454 @@ class StatStore:
             cls._instance.close()
         cls._instance = None
 
-    # ── Core write operations ───────────────────────────────────────
+    # ── Manifest loading ───────────────────────────────────────────
 
-    def record(self, key: str, value: float = 1.0,
-               timestamp: Optional[float] = None) -> None:
-        """Increment a stat.  Creates the row if it doesn't exist.
+    def load_manifest(self, manifest_path: str) -> int:
+        """Load stat definitions manifest (name patterns → tags + descriptions).
 
-        Args:
-            key: Hierarchical stat key (e.g. "combat.kills.species.wolf").
-            value: The magnitude to add to total and compare for max.
-            timestamp: Override for updated_at (defaults to time.time()).
+        The manifest is a JSON file mapping stat name patterns to their
+        tags and human-readable descriptions.  Patterns can use '*' as
+        a wildcard segment.  When a stat is first written, its tags and
+        description are looked up from the manifest.
+
+        Returns number of patterns loaded.
         """
-        ts = timestamp or time.time()
-        self._conn.execute(_UPSERT_SQL, (key, value, value, ts))
+        import os
+        if not os.path.exists(manifest_path):
+            return 0
 
-    def record_multi(self, keys: List[str], value: float = 1.0,
-                     timestamp: Optional[float] = None) -> None:
-        """Increment multiple stats atomically in a single transaction.
+        with open(manifest_path) as f:
+            data = json.load(f)
 
-        All keys get the same value.  This is the primary method for
-        dimensional breakdowns — one game action writes many stat keys.
+        patterns = data.get("patterns", {})
+        self._manifest = patterns
+        return len(patterns)
+
+    def _lookup_manifest(self, name: str) -> Optional[dict]:
+        """Find the best matching manifest entry for a stat name.
+
+        Tries exact match first, then progressively wildcarded patterns.
         """
-        ts = timestamp or time.time()
-        with self._conn:
-            self._conn.executemany(
-                _UPSERT_SQL,
-                [(k, value, value, ts) for k in keys],
-            )
+        # Exact match
+        if name in self._manifest:
+            return self._manifest[name]
 
-    def record_count(self, key: str,
-                     timestamp: Optional[float] = None) -> None:
-        """Increment a simple counter (count +1, total +1, no magnitude)."""
-        ts = timestamp or time.time()
-        self._conn.execute(_UPSERT_COUNT_SQL, (key, ts))
+        # Wildcard matching: replace segments from right with *
+        parts = name.split(".")
+        for i in range(len(parts) - 1, 0, -1):
+            pattern = ".".join(parts[:i]) + ".*"
+            if pattern in self._manifest:
+                return self._manifest[pattern]
+            # Try double wildcard: base.*.* etc
+            if i >= 2:
+                pattern2 = ".".join(parts[:i-1]) + ".*.*"
+                if pattern2 in self._manifest:
+                    return self._manifest[pattern2]
 
-    def record_count_multi(self, keys: List[str],
-                           timestamp: Optional[float] = None) -> None:
-        """Increment multiple simple counters atomically."""
-        ts = timestamp or time.time()
-        with self._conn:
-            self._conn.executemany(
-                _UPSERT_COUNT_SQL,
-                [(k, ts) for k in keys],
-            )
+        return None
 
-    def set_value(self, key: str, value: float,
+    def _ensure_tags(self, name: str) -> None:
+        """Populate tags and description for a stat from the manifest.
+
+        Called on first write.  If no manifest entry exists, derives
+        basic tags from the name structure (e.g., "combat.kills.species.wolf"
+        → ["domain:combat", "species:wolf"]).
+        """
+        if name in self._tagged:
+            return
+
+        entry = self._lookup_manifest(name)
+        if entry:
+            tags = entry.get("tags", [])
+            desc = entry.get("description", "")
+            # Resolve {dim} placeholders from the name
+            parts = name.split(".")
+            resolved_tags = []
+            for tag in tags:
+                if "{" in tag:
+                    try:
+                        resolved = tag
+                        for j, p in enumerate(parts):
+                            resolved = resolved.replace(f"{{p{j}}}", p)
+                        # Also handle {dim} patterns from stat key structure
+                        # e.g., combat.kills.species.wolf → species=wolf
+                        if len(parts) >= 4:
+                            resolved = resolved.replace("{dim}", parts[-2])
+                            resolved = resolved.replace("{val}", parts[-1])
+                        resolved_tags.append(resolved)
+                    except Exception:
+                        resolved_tags.append(tag)
+                else:
+                    resolved_tags.append(tag)
+            tags = resolved_tags
+        else:
+            # Derive from name structure
+            tags = self._derive_tags(name)
+            desc = ""
+
+        if tags or desc:
+            self._write_metadata(name, tags, desc)
+
+        self._tagged.add(name)
+
+    def _derive_tags(self, name: str) -> List[str]:
+        """Derive basic tags from the stat name structure.
+
+        "combat.kills.species.wolf" → ["domain:combat", "species:wolf"]
+        "gathering.collected.resource.iron_ore" → ["domain:gathering", "resource:iron_ore"]
+        """
+        parts = name.split(".")
+        tags = []
+        if parts:
+            tags.append(f"domain:{parts[0]}")
+        # Parse dimension.value pairs from the name
+        i = 2  # Skip base (e.g., "combat.kills")
+        while i + 1 < len(parts):
+            dim = parts[i]
+            val = parts[i + 1]
+            tags.append(f"{dim}:{val}")
+            i += 2
+        return tags
+
+    def _write_metadata(self, name: str, tags: List[str],
+                        description: str) -> None:
+        """Write tags and description to the stats row and junction table."""
+        tags_json = json.dumps(tags)
+        self._conn.execute(
+            "UPDATE stats SET tags = ?, description = ? WHERE name = ?",
+            (tags_json, description, name)
+        )
+        # If the row doesn't exist yet (UPDATE affected 0 rows), it will
+        # be created by the UPSERT in increment/set_value/set_max.
+        # We'll write junction tags after the UPSERT ensures the row exists.
+        self._conn.execute("DELETE FROM stat_tags WHERE name = ?", (name,))
+        for tag in tags:
+            if ":" in tag:
+                cat, val = tag.split(":", 1)
+                self._conn.execute(
+                    "INSERT INTO stat_tags (name, tag_category, tag_value) "
+                    "VALUES (?, ?, ?)", (name, cat, val)
+                )
+
+    # ── Core write operations ──────────────────────────────────────
+
+    def increment(self, name: str, amount: float = 1.0,
                   timestamp: Optional[float] = None) -> None:
-        """Set a stat's total to a specific value (not increment).
+        """Increment a stat's value.  Creates the row if it doesn't exist.
 
-        Useful for gauges like current_gold, current_health, etc.
-        Still tracks max_value across all sets.
+        This is the primary write for counters and running totals.
+        For a kill count: increment("combat.kills.species.wolf")
+        For damage dealt: increment("combat.damage_dealt", amount=50.0)
         """
         ts = timestamp or time.time()
-        self._conn.execute(_SET_SQL, (key, value, value, ts))
+        self._conn.execute(_INCREMENT_SQL, (name, amount, ts))
+        self._ensure_tags(name)
+
+    def increment_multi(self, names: List[str], amount: float = 1.0,
+                        timestamp: Optional[float] = None) -> None:
+        """Increment multiple stats atomically.
+
+        All names get the same amount.  This is the primary method for
+        dimensional breakdowns — one game action writes many stat names.
+        """
+        ts = timestamp or time.time()
+        with self._conn:
+            self._conn.executemany(
+                _INCREMENT_SQL,
+                [(n, amount, ts) for n in names],
+            )
+        for n in names:
+            self._ensure_tags(n)
+
+    def set_value(self, name: str, value: float,
+                  timestamp: Optional[float] = None) -> None:
+        """Set a stat to a specific value (not increment).
+
+        For gauges: set_value("progression.current_level", 15.0)
+        """
+        ts = timestamp or time.time()
+        self._conn.execute(_SET_SQL, (name, value, ts))
+        self._ensure_tags(name)
+
+    def set_max(self, name: str, value: float,
+                timestamp: Optional[float] = None) -> None:
+        """Set a stat only if the new value exceeds the current.
+
+        For records: set_max("combat.longest_killstreak", 12.0)
+        """
+        ts = timestamp or time.time()
+        self._conn.execute(_SET_MAX_SQL, (name, value, ts))
+        self._ensure_tags(name)
 
     def flush(self) -> None:
         """Ensure all writes are committed to disk."""
         self._conn.commit()
 
-    # ── Core read operations ────────────────────────────────────────
+    # ── Core read operations ───────────────────────────────────────
 
-    def get(self, key: str) -> Optional[Tuple[int, float, float]]:
-        """Get (count, total, max_value) for a single key.
+    def get(self, name: str) -> float:
+        """Get the value of a stat.  Returns 0.0 if missing."""
+        row = self._conn.execute(
+            "SELECT value FROM stats WHERE name = ?", (name,),
+        ).fetchone()
+        return row[0] if row else 0.0
 
-        Returns None if the key doesn't exist.
+    def get_with_meta(self, name: str) -> Optional[dict]:
+        """Get a stat with all its metadata.
+
+        Returns {name, value, tags, description, updated_at} or None.
         """
         row = self._conn.execute(
-            "SELECT count, total, max_value FROM stats WHERE key = ?",
-            (key,),
+            "SELECT name, value, tags, description, updated_at "
+            "FROM stats WHERE name = ?", (name,),
         ).fetchone()
-        return (row[0], row[1], row[2]) if row else None
-
-    def get_count(self, key: str) -> int:
-        """Get just the count for a key.  Returns 0 if missing."""
-        row = self._conn.execute(
-            "SELECT count FROM stats WHERE key = ?", (key,),
-        ).fetchone()
-        return row[0] if row else 0
-
-    def get_total(self, key: str) -> float:
-        """Get just the total for a key.  Returns 0.0 if missing."""
-        row = self._conn.execute(
-            "SELECT total FROM stats WHERE key = ?", (key,),
-        ).fetchone()
-        return row[0] if row else 0.0
-
-    def get_max(self, key: str) -> float:
-        """Get just the max_value for a key.  Returns 0.0 if missing."""
-        row = self._conn.execute(
-            "SELECT max_value FROM stats WHERE key = ?", (key,),
-        ).fetchone()
-        return row[0] if row else 0.0
+        if not row:
+            return None
+        return {
+            "name": row[0],
+            "value": row[1],
+            "tags": json.loads(row[2]) if row[2] else [],
+            "description": row[3] or "",
+            "updated_at": row[4],
+        }
 
     def get_prefix(self, prefix: str,
-                   limit: int = 1000) -> Dict[str, Tuple[int, float, float]]:
-        """Get all stats whose key starts with prefix.
+                   limit: int = 1000) -> Dict[str, float]:
+        """Get all stats whose name starts with prefix.
 
-        Returns {key: (count, total, max_value)}.
-        Example: get_prefix("combat.kills.species.") returns all species kill stats.
+        Returns {name: value}.
         """
         rows = self._conn.execute(
-            "SELECT key, count, total, max_value FROM stats "
-            "WHERE key LIKE ? || '%' ORDER BY key LIMIT ?",
+            "SELECT name, value FROM stats "
+            "WHERE name LIKE ? || '%' AND value != 0.0 "
+            "ORDER BY name LIMIT ?",
             (prefix, limit),
         ).fetchall()
-        return {r[0]: (r[1], r[2], r[3]) for r in rows}
+        return {r[0]: r[1] for r in rows}
 
-    def get_all(self) -> Dict[str, Tuple[int, float, float]]:
-        """Get all stats.  Use sparingly — for serialization/debugging."""
+    def get_prefix_with_meta(self, prefix: str,
+                             limit: int = 1000) -> List[dict]:
+        """Get all stats with metadata whose name starts with prefix.
+
+        Returns list of {name, value, tags, description}.
+        Only returns stats with non-zero values.
+        """
         rows = self._conn.execute(
-            "SELECT key, count, total, max_value FROM stats ORDER BY key"
+            "SELECT name, value, tags, description FROM stats "
+            "WHERE name LIKE ? || '%' AND value != 0.0 "
+            "ORDER BY name LIMIT ?",
+            (prefix, limit),
         ).fetchall()
-        return {r[0]: (r[1], r[2], r[3]) for r in rows}
+        return [
+            {
+                "name": r[0], "value": r[1],
+                "tags": json.loads(r[2]) if r[2] else [],
+                "description": r[3] or "",
+            }
+            for r in rows
+        ]
+
+    def get_all(self) -> Dict[str, float]:
+        """Get all stats with non-zero values.  For serialization."""
+        rows = self._conn.execute(
+            "SELECT name, value FROM stats WHERE value != 0.0 ORDER BY name"
+        ).fetchall()
+        return {r[0]: r[1] for r in rows}
+
+    def get_all_with_meta(self) -> List[dict]:
+        """Get all stats with metadata.  For full export."""
+        rows = self._conn.execute(
+            "SELECT name, value, tags, description, updated_at "
+            "FROM stats WHERE value != 0.0 ORDER BY name"
+        ).fetchall()
+        return [
+            {
+                "name": r[0], "value": r[1],
+                "tags": json.loads(r[2]) if r[2] else [],
+                "description": r[3] or "",
+                "updated_at": r[4],
+            }
+            for r in rows
+        ]
 
     def get_stat_count(self) -> int:
-        """Total number of distinct stat keys."""
-        row = self._conn.execute("SELECT COUNT(*) FROM stats").fetchone()
+        """Total number of stats with non-zero values."""
+        row = self._conn.execute(
+            "SELECT COUNT(*) FROM stats WHERE value != 0.0"
+        ).fetchone()
         return row[0] if row else 0
 
-    # ── Bulk import (for old save migration) ────────────────────────
+    # ── Tag-based queries ──────────────────────────────────────────
+
+    def query_by_tags(self, tags: List[str],
+                      match_all: bool = True,
+                      limit: int = 100) -> List[dict]:
+        """Query stats by tag intersection.
+
+        Args:
+            tags: List of "category:value" tags to match.
+            match_all: If True, ALL tags must match (AND). If False, ANY (OR).
+            limit: Max results.
+
+        Returns list of {name, value, tags, description}.
+        """
+        if not tags:
+            return []
+
+        tag_conditions = []
+        params: list = []
+        for tag in tags:
+            if ":" in tag:
+                cat, val = tag.split(":", 1)
+                tag_conditions.append(
+                    "(t.tag_category = ? AND t.tag_value = ?)")
+                params.extend([cat, val])
+
+        if not tag_conditions:
+            return []
+
+        tag_where = " OR ".join(tag_conditions)
+
+        if match_all:
+            query = f"""
+                SELECT s.name, s.value, s.tags, s.description
+                FROM stats s
+                WHERE s.value != 0.0 AND s.name IN (
+                    SELECT name FROM stat_tags t
+                    WHERE {tag_where}
+                    GROUP BY name
+                    HAVING COUNT(DISTINCT t.tag_category || ':' || t.tag_value) >= ?
+                )
+                ORDER BY s.value DESC LIMIT ?
+            """
+            params.extend([len(tags), limit])
+        else:
+            query = f"""
+                SELECT DISTINCT s.name, s.value, s.tags, s.description
+                FROM stats s
+                JOIN stat_tags t ON s.name = t.name
+                WHERE s.value != 0.0 AND ({tag_where})
+                ORDER BY s.value DESC LIMIT ?
+            """
+            params.append(limit)
+
+        rows = self._conn.execute(query, params).fetchall()
+        return [
+            {
+                "name": r[0], "value": r[1],
+                "tags": json.loads(r[2]) if r[2] else [],
+                "description": r[3] or "",
+            }
+            for r in rows
+        ]
+
+    # ── Backward-compatible read methods ───────────────────────────
+    # These maintain the old API so existing code doesn't break during
+    # migration.  They all read from the single 'value' column.
+
+    def get_count(self, name: str) -> int:
+        """Backward compat: get value as int.  Same as int(get(name))."""
+        return int(self.get(name))
+
+    def get_total(self, name: str) -> float:
+        """Backward compat: get value as float.  Same as get(name)."""
+        return self.get(name)
+
+    def get_max(self, name: str) -> float:
+        """Backward compat: get value as float.  Same as get(name)."""
+        return self.get(name)
+
+    # ── Backward-compatible write methods ──────────────────────────
+    # Bridge from old API (record/record_count/record_multi) to new.
+
+    def record(self, key: str, value: float = 1.0,
+               timestamp: Optional[float] = None) -> None:
+        """Backward compat: increment by value.  Same as increment()."""
+        self.increment(key, value, timestamp)
+
+    def record_multi(self, keys: List[str], value: float = 1.0,
+                     timestamp: Optional[float] = None) -> None:
+        """Backward compat: batch increment.  Same as increment_multi()."""
+        self.increment_multi(keys, value, timestamp)
+
+    def record_count(self, key: str,
+                     timestamp: Optional[float] = None) -> None:
+        """Backward compat: increment by 1.  Same as increment(name)."""
+        self.increment(key, 1.0, timestamp)
+
+    def record_count_multi(self, keys: List[str],
+                           timestamp: Optional[float] = None) -> None:
+        """Backward compat: batch increment by 1."""
+        self.increment_multi(keys, 1.0, timestamp)
+
+    # ── Bulk import (for old save migration) ───────────────────────
 
     def import_flat(self, data: Dict[str, Any],
                     timestamp: Optional[float] = None) -> int:
-        """Import a flat dict of {key: value} pairs.
+        """Import a flat dict of {name: value} pairs.
 
-        Values can be int/float (treated as total) or
-        dict with count/total/max_value fields.
-        Returns the number of keys imported.
+        Values can be int/float (treated as value) or
+        dict with count/total/max_value fields (old format — takes
+        the most meaningful number: total if nonzero, else count).
+        Returns the number of stats imported.
         """
         ts = timestamp or time.time()
         imported = 0
         with self._conn:
-            for key, val in data.items():
+            for name, val in data.items():
                 if isinstance(val, dict):
-                    count = val.get("count", 0)
+                    # Old format: pick the most meaningful number
                     total = val.get("total_value", val.get("total", 0.0))
-                    max_v = val.get("max_value", val.get("max", 0.0))
+                    count = val.get("count", 0)
+                    value = total if total != 0.0 else float(count)
                 else:
-                    count = int(val) if isinstance(val, (int, float)) else 0
-                    total = float(val) if isinstance(val, (int, float)) else 0.0
-                    max_v = total
+                    value = float(val) if isinstance(val, (int, float)) else 0.0
                 self._conn.execute(
-                    """INSERT OR REPLACE INTO stats
-                       (key, count, total, max_value, updated_at)
-                       VALUES (?, ?, ?, ?, ?)""",
-                    (key, count, total, max_v, ts),
+                    "INSERT OR REPLACE INTO stats (name, value, updated_at) "
+                    "VALUES (?, ?, ?)",
+                    (name, value, ts),
                 )
                 imported += 1
         return imported
 
-    # ── Cleanup ─────────────────────────────────────────────────────
+    def prepopulate_from_manifest(self, manifest_path: str) -> int:
+        """Pre-populate stats table from manifest with tags and descriptions.
+
+        Uses INSERT OR IGNORE so existing data is preserved.
+        Returns number of stats inserted.
+        """
+        import os
+        if not os.path.exists(manifest_path):
+            return 0
+
+        existing = self._conn.execute(
+            "SELECT COUNT(*) FROM stats"
+        ).fetchone()[0]
+        if existing > 100:
+            return 0
+
+        loaded = self.load_manifest(manifest_path)
+        if not loaded:
+            return 0
+
+        count = 0
+        with self._conn:
+            for pattern, entry in self._manifest.items():
+                if "*" in pattern:
+                    continue  # Skip wildcard patterns, only prepopulate exact
+                tags_json = json.dumps(entry.get("tags", []))
+                desc = entry.get("description", "")
+                self._conn.execute(
+                    "INSERT OR IGNORE INTO stats "
+                    "(name, value, tags, description, updated_at) "
+                    "VALUES (?, 0.0, ?, ?, 0.0)",
+                    (pattern, tags_json, desc),
+                )
+                count += 1
+        self._conn.commit()
+        return count
+
+    # ── Cleanup ────────────────────────────────────────────────────
 
     def close(self) -> None:
         if self._conn and self._owns_conn:
@@ -320,44 +608,43 @@ class StatStore:
 
     def clear(self) -> None:
         """Delete all stats.  For testing only."""
+        self._conn.execute("DELETE FROM stat_tags")
         self._conn.execute("DELETE FROM stats")
         self._conn.commit()
+        self._tagged.clear()
 
 
-# ── Dimensional breakdown helpers ───────────────────────────────────
+# ── Dimensional breakdown helpers ─────────────────────────────────
 
 def _safe_key(value: Any) -> str:
-    """Sanitize a value for use as a stat key component."""
+    """Sanitize a value for use as a stat name component."""
     s = str(value).lower().strip()
-    # Replace spaces and special chars with underscores
     return s.replace(" ", "_").replace("-", "_").replace(".", "_")
 
 
 def build_dimensional_keys(base: str,
                            dimensions: Dict[str, Any]) -> List[str]:
-    """Build a list of hierarchical stat keys from a base and dimensions.
+    """Build a list of hierarchical stat names from a base and dimensions.
 
     Args:
-        base: The root key (e.g. "combat.kills", "gathering.resource")
+        base: The root name (e.g. "combat.kills", "gathering.collected")
         dimensions: {dimension_name: value} pairs to create breakdowns.
             Values of None or empty string are skipped.
 
     Returns:
-        List of keys: [base, base.dim1.val1, base.dim2.val2, ...]
+        List of names: [base, base.dim1.val1, base.dim2.val2, ...]
 
     Example:
         build_dimensional_keys("combat.kills", {
             "species": "wolf",
             "tier": 1,
             "location": "whispering_woods",
-            "element": "fire",
         })
         → [
             "combat.kills",
             "combat.kills.species.wolf",
             "combat.kills.tier.1",
             "combat.kills.location.whispering_woods",
-            "combat.kills.element.fire",
         ]
     """
     keys = [base]
