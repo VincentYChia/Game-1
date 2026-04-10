@@ -1,13 +1,15 @@
-"""World Interpreter — transforms Layer 1 stats into Layer 2 text events.
+"""World Interpreter — reads Raw Event Pipeline data and Layer 1 stats
+to generate Layer 2 interpreted events (the first narrative layer).
+
+Layer 1 is pure cumulative counters (StatStore).  The Raw Event Pipeline
+(EventStore) holds timestamped structured facts.  Neither is an "event"
+in the narrative sense.  Layer 2 is where meaning first emerges — evaluators
+read raw data and produce one-sentence narrative interpretations.
 
 Each PatternEvaluator has a specific INPUT FRAME OF REFERENCE — defined by
-what data it queries and how it processes it. The same event can trigger
+what data it queries and how it processes it. The same raw event can trigger
 multiple evaluators because each reads it through a different lens
 (e.g., regional vs global, per-species vs per-tier).
-
-Output is MINIMAL NARRATION — data to text, not editorializing.
-Good: "Player has killed 10 wolves in Whispering Woods."
-Bad:  "The wolf population is declining in Whispering Woods."
 
 33 evaluators covering combat, gathering, crafting, progression,
 exploration, social, economy, and items.
@@ -55,6 +57,7 @@ class WorldInterpreter:
         self.geo_registry: Optional[GeographicRegistry] = None
         self.entity_registry: Optional[EntityRegistry] = None
         self.layer_store = None  # LayerStore for per-layer tag-indexed storage
+        self.wms_ai = None       # WmsAI for LLM narration (optional)
         self._evaluators: List[PatternEvaluator] = []
         self._interpretations_created: int = 0
 
@@ -71,12 +74,14 @@ class WorldInterpreter:
     def initialize(self, event_store: EventStore,
                    geo_registry: GeographicRegistry,
                    entity_registry: EntityRegistry,
-                   layer_store=None) -> None:
+                   layer_store=None,
+                   wms_ai=None) -> None:
         """Wire dependencies and register built-in evaluators."""
         self.event_store = event_store
         self.geo_registry = geo_registry
         self.entity_registry = entity_registry
         self.layer_store = layer_store
+        self.wms_ai = wms_ai
 
         # Register all evaluators
         self._evaluators = []
@@ -181,6 +186,10 @@ class WorldInterpreter:
                 # Enrich tags via tag assignment system (Layer 2)
                 self._enrich_tags(interpretation, trigger_event)
 
+                # Upgrade narrative via LLM if WmsAI available
+                if self.wms_ai:
+                    self._upgrade_narrative(interpretation, trigger_event)
+
                 # Check if this supersedes an existing interpretation
                 existing = self.event_store.find_supersedable(
                     category=interpretation.category,
@@ -267,6 +276,69 @@ class WorldInterpreter:
         except Exception as e:
             # If tag enrichment fails, keep original evaluator tags
             print(f"[Interpreter] Tag enrichment failed: {e}")
+
+    def _upgrade_narrative(self, interpretation: InterpretedEvent,
+                           trigger_event: WorldMemoryEvent) -> None:
+        """Replace the template narrative with an LLM-generated one.
+
+        Uses WmsAI to generate a richer narration from the evaluator's
+        data (category, severity, tags, spatial scope) plus StatStore
+        context. The evaluator's template narrative becomes the fallback
+        if the LLM call fails.
+
+        Called synchronously for now. Can be switched to async by queuing
+        triggers and processing results in WorldMemorySystem.update().
+        """
+        if not self.wms_ai:
+            return
+
+        # Build data block from the evaluator's output + trigger context
+        region_name = ""
+        if trigger_event.locality_id and self.geo_registry:
+            region = self.geo_registry.regions.get(trigger_event.locality_id)
+            if region:
+                region_name = region.name
+
+        # Include the evaluator's template as context
+        data_lines = [
+            f"Event: {trigger_event.event_type} ({trigger_event.event_subtype})",
+            f"Category: {interpretation.category}",
+            f"Severity: {interpretation.severity}",
+            f"Trigger count: {trigger_event.interpretation_count}",
+        ]
+        if region_name:
+            data_lines.append(f"Location: {region_name}")
+        if trigger_event.biome and trigger_event.biome != "unknown":
+            data_lines.append(f"Biome: {trigger_event.biome}")
+        if trigger_event.magnitude > 0:
+            data_lines.append(f"Magnitude: {trigger_event.magnitude}")
+        if trigger_event.tier:
+            data_lines.append(f"Tier: {trigger_event.tier}")
+
+        # Add the template narration as reference
+        data_lines.append(f"Context: {interpretation.narrative}")
+
+        data_block = "\n".join(data_lines)
+
+        try:
+            result = self.wms_ai.generate_narration(
+                event_type=trigger_event.event_type,
+                event_subtype=trigger_event.event_subtype or "",
+                tier=trigger_event.tier,
+                tags=interpretation.affects_tags,
+                data_block=data_block,
+                layer=2,
+            )
+
+            if result.success and result.text:
+                interpretation.narrative = result.text
+                # Update severity if the LLM detected a different level
+                if result.severity != "minor":
+                    interpretation.severity = result.severity
+
+        except Exception as e:
+            # Keep the evaluator's template narrative on error
+            print(f"[Interpreter] LLM upgrade failed: {e}")
 
     def _propagate(self, interpretation: InterpretedEvent) -> None:
         """Route interpretation to affected region states."""

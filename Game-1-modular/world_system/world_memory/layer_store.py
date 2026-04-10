@@ -1,13 +1,14 @@
-"""Per-layer SQL storage for the World Memory System.
+"""Per-layer SQL storage for the World Memory System (Layers 2-7).
 
-Each layer (1-7) has its own table + junction table for tag-based retrieval.
+Each layer (2-7) has its own table + junction table for tag-based retrieval.
 This module manages creation, insertion, and querying across all layer tables.
 
 Schema per layer:
 - layer{N}_events: (id, narrative, origin_ids, game_time, category, severity, tags_json, ...)
 - layer{N}_tags: (event_id, tag_category, tag_value) with index on (tag_category, tag_value)
 
-Layer 1 is special: stats with (id, key, count, total, max_value, tags_json, updated_at).
+Layer 1 (stats) is handled by StatStore directly — it has its own tags and
+tag-intersection queries.  LayerStore does NOT duplicate Layer 1 data.
 """
 
 from __future__ import annotations
@@ -44,31 +45,11 @@ class LayerStore:
         return self._conn
 
     def _create_all_tables(self) -> None:
-        """Create tables for all 7 layers."""
-        c = self.connection
+        """Create tables for layers 2-7.
 
-        # Layer 1: Stats (special schema)
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS layer1_stats (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                key TEXT NOT NULL UNIQUE,
-                count INTEGER DEFAULT 0,
-                total REAL DEFAULT 0.0,
-                max_value REAL DEFAULT 0.0,
-                tags_json TEXT DEFAULT '[]',
-                updated_at REAL DEFAULT 0.0
-            )
-        """)
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS layer1_tags (
-                stat_id INTEGER NOT NULL,
-                tag_category TEXT NOT NULL,
-                tag_value TEXT NOT NULL,
-                FOREIGN KEY (stat_id) REFERENCES layer1_stats(id)
-            )
-        """)
-        c.execute("CREATE INDEX IF NOT EXISTS idx_l1_tags ON layer1_tags(tag_category, tag_value)")
-        c.execute("CREATE INDEX IF NOT EXISTS idx_l1_tags_id ON layer1_tags(stat_id)")
+        Layer 1 (stats) is managed by StatStore — not duplicated here.
+        """
+        c = self.connection
 
         # Layer 2: Text events from evaluators
         c.execute("""
@@ -136,43 +117,6 @@ class LayerStore:
         c.commit()
 
     # ══════════════════════════════════════════════════════════════
-    # LAYER 1: Stats
-    # ══════════════════════════════════════════════════════════════
-
-    def upsert_stat(self, key: str, count: int = 0, total: float = 0.0,
-                    max_value: float = 0.0, tags: Optional[List[str]] = None,
-                    updated_at: float = 0.0) -> int:
-        """Insert or update a Layer 1 stat with tags. Returns row id."""
-        c = self.connection
-        tags = tags or []
-        tags_json = json.dumps(tags)
-
-        c.execute("""
-            INSERT INTO layer1_stats (key, count, total, max_value, tags_json, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON CONFLICT(key) DO UPDATE SET
-                count = excluded.count,
-                total = excluded.total,
-                max_value = MAX(layer1_stats.max_value, excluded.max_value),
-                tags_json = excluded.tags_json,
-                updated_at = excluded.updated_at
-        """, (key, count, total, max_value, tags_json, updated_at))
-
-        row = c.execute("SELECT id FROM layer1_stats WHERE key = ?", (key,)).fetchone()
-        stat_id = row["id"]
-
-        # Replace tags in junction table
-        c.execute("DELETE FROM layer1_tags WHERE stat_id = ?", (stat_id,))
-        for tag in tags:
-            if ":" in tag:
-                cat, val = tag.split(":", 1)
-                c.execute("INSERT INTO layer1_tags (stat_id, tag_category, tag_value) "
-                          "VALUES (?, ?, ?)", (stat_id, cat, val))
-
-        c.commit()
-        return stat_id
-
-    # ══════════════════════════════════════════════════════════════
     # LAYER 2-7: Events
     # ══════════════════════════════════════════════════════════════
 
@@ -230,7 +174,7 @@ class LayerStore:
         """Query events at a layer by tag intersection.
 
         Args:
-            layer: Which layer to search (1-7).
+            layer: Which layer to search (2-7).
             tags: List of "category:value" tags to match.
             match_all: If True, ALL tags must match (AND). If False, ANY (OR).
             limit: Max results.
@@ -238,14 +182,16 @@ class LayerStore:
 
         Returns:
             List of event dicts with all columns + tags.
+
+        Note: Layer 1 (stats) queries should use StatStore.query_by_tags() directly.
         """
         if not tags:
             return []
 
-        c = self.connection
-
         if layer == 1:
-            return self._query_stats_by_tags(tags, match_all, limit)
+            raise ValueError("Layer 1 queries should use StatStore.query_by_tags()")
+
+        c = self.connection
 
         table = f"layer{layer}_events"
         tag_table = f"layer{layer}_tags"
@@ -294,51 +240,12 @@ class LayerStore:
         rows = c.execute(query, params).fetchall()
         return [self._row_to_dict(row) for row in rows]
 
-    def _query_stats_by_tags(self, tags: List[str], match_all: bool,
-                             limit: int) -> List[Dict[str, Any]]:
-        """Query Layer 1 stats by tags."""
-        c = self.connection
-        tag_conditions = []
-        params = []
-        for tag in tags:
-            if ":" in tag:
-                cat, val = tag.split(":", 1)
-                tag_conditions.append("(t.tag_category = ? AND t.tag_value = ?)")
-                params.extend([cat, val])
-
-        if not tag_conditions:
-            return []
-
-        tag_where = " OR ".join(tag_conditions)
-
-        if match_all:
-            query = f"""
-                SELECT s.* FROM layer1_stats s
-                WHERE s.id IN (
-                    SELECT stat_id FROM layer1_tags t
-                    WHERE {tag_where}
-                    GROUP BY stat_id
-                    HAVING COUNT(DISTINCT t.tag_category || ':' || t.tag_value) >= ?
-                )
-                LIMIT ?
-            """
-            params.extend([len(tags), limit])
-        else:
-            query = f"""
-                SELECT DISTINCT s.* FROM layer1_stats s
-                JOIN layer1_tags t ON s.id = t.stat_id
-                WHERE {tag_where}
-                LIMIT ?
-            """
-            params.append(limit)
-
-        rows = c.execute(query, params).fetchall()
-        return [self._row_to_dict(row) for row in rows]
-
     def get_tags_for_event(self, layer: int, event_id: str) -> List[str]:
-        """Get all tags for a specific event."""
+        """Get all tags for a specific event (layers 2-7)."""
+        if layer < 2:
+            raise ValueError("Layer 1 tags: use StatStore.get_with_meta()")
         tag_table = f"layer{layer}_tags"
-        id_col = "stat_id" if layer == 1 else "event_id"
+        id_col = "event_id"
         c = self.connection
         rows = c.execute(
             f"SELECT tag_category, tag_value FROM {tag_table} WHERE {id_col} = ?",
@@ -348,13 +255,16 @@ class LayerStore:
 
     def count_by_tags(self, layer: int, tags: List[str],
                       match_all: bool = True) -> int:
-        """Count events matching tags at a layer."""
-        if not tags or layer < 1 or layer > 7:
+        """Count events matching tags at a layer (2-7 only).
+
+        Layer 1 stats: use StatStore.query_by_tags() instead.
+        """
+        if not tags or layer < 2 or layer > 7:
             return 0
 
         c = self.connection
         table = f"layer{layer}_tags"
-        id_col = "stat_id" if layer == 1 else "event_id"
+        id_col = "event_id"
 
         tag_conditions = []
         params = []
@@ -398,11 +308,9 @@ class LayerStore:
         return d
 
     def get_table_stats(self) -> Dict[str, int]:
-        """Row counts for all layer tables."""
+        """Row counts for all layer tables (layers 2-7)."""
         c = self.connection
         stats = {}
-        stats["layer1_stats"] = c.execute("SELECT COUNT(*) FROM layer1_stats").fetchone()[0]
-        stats["layer1_tags"] = c.execute("SELECT COUNT(*) FROM layer1_tags").fetchone()[0]
         for layer in range(2, 8):
             table = f"layer{layer}_events"
             tag_table = f"layer{layer}_tags"

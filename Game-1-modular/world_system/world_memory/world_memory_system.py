@@ -95,16 +95,16 @@ class WorldMemorySystem:
         # 1b. Stat Store (shares the same SQLite connection)
         self.stat_store = StatStore(conn=self.event_store.connection)
 
-        # Pre-populate stat keys from manifest (only on fresh databases)
+        # Load stat manifest (tags + descriptions for stat name patterns)
         manifest_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "config", "stat-key-manifest.json"
         )
-        prepop_count = self.stat_store.prepopulate_from_manifest(manifest_path)
-        if prepop_count > 0:
-            print(f"[WorldMemory] Pre-populated {prepop_count} stat keys from manifest")
+        loaded = self.stat_store.load_manifest(manifest_path)
+        if loaded > 0:
+            print(f"[WorldMemory] Loaded {loaded} stat tag patterns from manifest")
 
-        # 1c. Layer Store (per-layer tag-indexed storage for Layers 1-7)
+        # 1c. Layer Store (per-layer tag-indexed storage for Layers 2-7)
         try:
             from world_system.world_memory.layer_store import LayerStore
             layer_db_path = os.path.join(save_dir, "layer_store.db")
@@ -157,11 +157,22 @@ class WorldMemorySystem:
             world_map=_world_map,
         )
 
-        # 6. Interpreter
+        # 6. WMS AI (LLM narration for Layer 2+)
+        self.wms_ai = None
+        try:
+            from world_system.world_memory.wms_ai import WmsAI
+            self.wms_ai = WmsAI.get_instance()
+            self.wms_ai.initialize()
+            print(f"[WorldMemory] WmsAI initialized — {self.wms_ai.stats}")
+        except Exception as e:
+            print(f"[WorldMemory] WmsAI init failed (non-fatal, templates used): {e}")
+
+        # 7. Interpreter
         self.interpreter = WorldInterpreter.get_instance()
         self.interpreter.initialize(
             self.event_store, self.geo_registry, self.entity_registry,
-            layer_store=self.layer_store
+            layer_store=self.layer_store,
+            wms_ai=self.wms_ai,
         )
         # Wire interpreter to recorder
         self.event_recorder.set_interpreter_callback(self.interpreter.on_trigger)
