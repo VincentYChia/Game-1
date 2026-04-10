@@ -353,15 +353,25 @@ class PromptAssembler:
         if core:
             selected.append(("_l3_core", core))
 
+        # Tag categories reference (always — LLM needs valid values)
+        tag_cats = self.get_l3_fragment("_l3_tag_categories")
+        if tag_cats:
+            selected.append(("_l3_tag_categories", tag_cats))
+
         # Consolidator-specific fragment
         cons_key = f"l3_consolidator:{consolidator_id}"
         cons_frag = self.get_l3_fragment(cons_key)
         if cons_frag:
             selected.append((cons_key, cons_frag))
 
-        # Example if available
-        example_key = f"l3_example:{consolidator_id.split('_')[0]}"
+        # Example if available — try exact match, then prefix
+        example_key = f"l3_example:{consolidator_id}"
         example_frag = self.get_l3_fragment(example_key)
+        if not example_frag:
+            # Try prefix match (e.g., regional_synthesis → regional)
+            prefix = consolidator_id.split("_")[0]
+            example_key = f"l3_example:{prefix}"
+            example_frag = self.get_l3_fragment(example_key)
         if example_frag:
             selected.append((example_key, example_frag))
 

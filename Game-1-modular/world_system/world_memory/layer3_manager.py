@@ -208,7 +208,15 @@ class Layer3Manager:
                 if result is None:
                     continue
 
-                # Enrich tags via HigherLayerTagAssigner
+                # Upgrade narrative via LLM if available.
+                # LLM also assigns interpretive tags (sentiment, trend, etc.)
+                # which replace the consolidator's template tags.
+                if self._wms_ai:
+                    self._upgrade_narrative(result, consolidator, l2_events,
+                                            geo_context)
+
+                # Enrich tags via HigherLayerTagAssigner:
+                # Inherits from L2 origin events + merges LLM/consolidator tags
                 origin_tags = [e.get("tags", []) for e in l2_events]
                 enriched = assign_higher_layer_tags(
                     layer=3,
@@ -217,11 +225,6 @@ class Layer3Manager:
                     layer_specific_tags=result.affects_tags,
                 )
                 result.affects_tags = enriched
-
-                # Upgrade narrative via LLM if available
-                if self._wms_ai:
-                    self._upgrade_narrative(result, consolidator, l2_events,
-                                            geo_context)
 
                 # Store in LayerStore
                 self._store_consolidation(result, game_time)
@@ -299,10 +302,12 @@ class Layer3Manager:
                            consolidator: ConsolidatorBase,
                            l2_events: List[Dict[str, Any]],
                            geo_context: Dict[str, Any]) -> None:
-        """Replace template narrative with LLM-generated one.
+        """Replace template narrative and tags with LLM-generated ones.
 
-        Builds a data block from the L2 events and geographic context,
-        then calls WmsAI with layer=3 configuration.
+        The LLM returns JSON with both 'narrative' and 'tags' fields.
+        LLM-assigned tags (sentiment, trend, intensity, etc.) replace
+        the consolidator's template tags. Geographic/structural tags
+        (district, consolidator) are preserved from the consolidator.
         """
         if not self._wms_ai:
             return
@@ -315,12 +320,6 @@ class Layer3Manager:
         district_name = geo_context.get("district_name", "Unknown District")
         data_block = consolidator.build_xml_data_block(
             l2_events, district_name, localities_map)
-
-        # Add consolidation context
-        data_block += f"\n\nConsolidator: {consolidator.consolidator_id}"
-        data_block += f"\nCategory: {result.category}"
-        data_block += f"\nSource events: {len(l2_events)}"
-        data_block += f"\nTemplate: {result.narrative}"
 
         try:
             llm_result = self._wms_ai.generate_narration(
@@ -335,6 +334,17 @@ class Layer3Manager:
                 result.narrative = llm_result.text
                 if llm_result.severity != "minor":
                     result.severity = llm_result.severity
+
+                # Replace consolidator's template tags with LLM-assigned tags.
+                # Keep structural tags (district:, consolidator:, scope:)
+                # from the consolidator and add LLM interpretive tags.
+                if llm_result.tags:
+                    structural_prefixes = ("district:", "consolidator:",
+                                           "scope:", "province:", "domain:")
+                    structural = [t for t in result.affects_tags
+                                  if any(t.startswith(p)
+                                         for p in structural_prefixes)]
+                    result.affects_tags = structural + llm_result.tags
 
         except Exception as e:
             print(f"[Layer3] LLM upgrade failed for "

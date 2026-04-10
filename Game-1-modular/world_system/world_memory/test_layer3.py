@@ -804,5 +804,143 @@ class TestLayerStoreL3(unittest.TestCase):
         self.assertEqual(len(results), 1)
 
 
+# ══════════════════════════════════════════════════════════════════
+# 12. Game Date Utility Tests
+# ══════════════════════════════════════════════════════════════════
+
+
+class TestGameDate(unittest.TestCase):
+
+    def test_game_day(self):
+        from world_system.world_memory.game_date import game_day, CYCLE_LENGTH
+        self.assertEqual(game_day(0.0), 0)
+        self.assertEqual(game_day(1439.9), 0)   # Just before day 1
+        self.assertEqual(game_day(1440.0), 1)   # Exactly day 1
+        self.assertEqual(game_day(2880.0), 2)   # Day 2
+        self.assertEqual(game_day(43200.0), 30) # Day 30 = month boundary
+
+    def test_game_month(self):
+        from world_system.world_memory.game_date import game_month, CYCLE_LENGTH
+        self.assertEqual(game_month(0.0), 0)
+        self.assertEqual(game_month(43200.0), 1)       # Day 30 = month 1
+        self.assertEqual(game_month(43199.0), 0)       # Day 29 = month 0
+
+    def test_date_stamp(self):
+        from world_system.world_memory.game_date import date_stamp
+        stamp = date_stamp(46080.0)  # Day 32
+        self.assertEqual(stamp["game_day"], 32)
+        self.assertEqual(stamp["game_month"], 1)
+        self.assertEqual(stamp["day_in_month"], 2)
+
+    def test_format_relative_today(self):
+        from world_system.world_memory.game_date import format_relative
+        self.assertEqual(format_relative(100.0, 100.0), "today")
+        self.assertEqual(format_relative(100.0, 1000.0), "today")  # Same day
+
+    def test_format_relative_days(self):
+        from world_system.world_memory.game_date import format_relative, CYCLE_LENGTH
+        # 3 days ago
+        event_time = 0.0
+        current_time = 3 * CYCLE_LENGTH
+        self.assertEqual(format_relative(event_time, current_time), "3 days ago")
+
+    def test_format_relative_months(self):
+        from world_system.world_memory.game_date import format_relative, CYCLE_LENGTH
+        # 2 months and 5 days ago
+        event_time = 0.0
+        current_time = 65 * CYCLE_LENGTH  # 65 days = 2 months + 5 days
+        self.assertEqual(format_relative(event_time, current_time),
+                         "2 months and 5 days ago")
+
+    def test_format_relative_exact_month(self):
+        from world_system.world_memory.game_date import format_relative, CYCLE_LENGTH
+        event_time = 0.0
+        current_time = 30 * CYCLE_LENGTH  # Exactly 1 month
+        self.assertEqual(format_relative(event_time, current_time),
+                         "1 month ago")
+
+    def test_format_date_label(self):
+        from world_system.world_memory.game_date import format_date_label, CYCLE_LENGTH
+        self.assertEqual(format_date_label(0.0), "Day 1")
+        self.assertEqual(format_date_label(CYCLE_LENGTH), "Day 2")
+        self.assertEqual(format_date_label(31 * CYCLE_LENGTH), "Month 2, Day 2")
+
+
+# ══════════════════════════════════════════════════════════════════
+# 13. LLM Tag Extraction Tests
+# ══════════════════════════════════════════════════════════════════
+
+
+class TestLLMTagExtraction(unittest.TestCase):
+
+    def test_narration_result_has_tags(self):
+        from world_system.world_memory.wms_ai import NarrationResult
+        result = NarrationResult(
+            text="Test narrative.",
+            tags=["sentiment:dangerous", "trend:increasing"],
+        )
+        self.assertEqual(len(result.tags), 2)
+        self.assertIn("sentiment:dangerous", result.tags)
+
+    def test_prompt_includes_tag_categories(self):
+        """L3 prompt must include tag category reference."""
+        assembler = PromptAssembler()
+        assembler.load()
+        prompt = assembler.assemble_l3("regional_synthesis", "test data")
+        # System prompt should include tag categories
+        self.assertIn("sentiment", prompt.system)
+        self.assertIn("trend", prompt.system)
+        self.assertIn("intensity", prompt.system)
+        # Output instruction should ask for JSON
+        self.assertIn("JSON", prompt.user)
+        self.assertIn("tags", prompt.user)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 14. LayerStore game_day Column Tests
+# ══════════════════════════════════════════════════════════════════
+
+
+class TestLayerStoreGameDay(unittest.TestCase):
+
+    def setUp(self):
+        self.store = _setup_layer_store()
+
+    def test_l2_event_has_game_day(self):
+        from world_system.world_memory.game_date import CYCLE_LENGTH
+        # Insert event at day 5
+        game_time = 5 * CYCLE_LENGTH
+        self.store.insert_event(
+            layer=2, narrative="Day 5 event.", game_time=game_time,
+            category="combat", severity="minor", significance="minor",
+            tags=["domain:combat"], origin_ref="test", real_time=0.0)
+
+        c = self.store.connection
+        row = c.execute("SELECT game_day FROM layer2_events LIMIT 1").fetchone()
+        self.assertEqual(row["game_day"], 5)
+
+    def test_l3_event_has_game_day(self):
+        from world_system.world_memory.game_date import CYCLE_LENGTH
+        game_time = 10 * CYCLE_LENGTH
+        self.store.insert_event(
+            layer=3, narrative="Day 10 consolidation.", game_time=game_time,
+            category="regional_synthesis", severity="minor",
+            significance="minor", tags=["district:test"])
+
+        c = self.store.connection
+        row = c.execute("SELECT game_day FROM layer3_events LIMIT 1").fetchone()
+        self.assertEqual(row["game_day"], 10)
+
+    def test_game_day_zero_for_early_events(self):
+        self.store.insert_event(
+            layer=2, narrative="Early.", game_time=0.0,
+            category="combat", severity="minor", significance="minor",
+            tags=[], origin_ref="", real_time=0.0)
+
+        c = self.store.connection
+        row = c.execute("SELECT game_day FROM layer2_events LIMIT 1").fetchone()
+        self.assertEqual(row["game_day"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
