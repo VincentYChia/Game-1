@@ -359,6 +359,16 @@ class WorldInterpreter:
                 # Update severity if the LLM detected a different level
                 if result.severity != "minor":
                     interpretation.severity = result.severity
+                # Apply LLM-assigned tags as extra tags
+                if result.tags:
+                    for tag in result.tags:
+                        if tag not in interpretation.affects_tags:
+                            interpretation.affects_tags.append(tag)
+                else:
+                    print(f"[Interpreter] WARNING: LLM returned no tags for "
+                          f"L2 event {trigger_event.event_type}"
+                          f"/{trigger_event.event_subtype} — "
+                          f"check prompt or LLM output format")
 
         except Exception as e:
             # Keep the evaluator's template narrative on error

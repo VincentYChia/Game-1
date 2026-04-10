@@ -655,14 +655,14 @@ class TestPromptAssemblerL3(unittest.TestCase):
 
     def test_get_l3_fragment(self):
         core = self.assembler.get_l3_fragment("_l3_core")
-        self.assertIn("chronicler", core.lower())
+        self.assertIn("consolidate", core.lower())
 
     def test_assemble_l3_regional(self):
         prompt = self.assembler.assemble_l3(
             "regional_synthesis",
             data_block='<district name="Test">events here</district>')
 
-        self.assertIn("chronicler", prompt.system.lower())
+        self.assertIn("consolidate", prompt.system.lower())
         self.assertIn("Test", prompt.user)
         self.assertGreater(prompt.token_estimate, 0)
 
@@ -882,18 +882,26 @@ class TestLLMTagExtraction(unittest.TestCase):
         self.assertEqual(len(result.tags), 2)
         self.assertIn("sentiment:dangerous", result.tags)
 
-    def test_prompt_includes_tag_categories(self):
-        """L3 prompt must include tag category reference."""
+    def test_prompt_includes_tag_categories_in_output(self):
+        """L3 output instruction must include tag categories inline."""
         assembler = PromptAssembler()
         assembler.load()
         prompt = assembler.assemble_l3("regional_synthesis", "test data")
-        # System prompt should include tag categories
-        self.assertIn("sentiment", prompt.system)
-        self.assertIn("trend", prompt.system)
-        self.assertIn("intensity", prompt.system)
-        # Output instruction should ask for JSON
+        # Tag categories should be in the user prompt (part of _l3_output)
+        self.assertIn("sentiment", prompt.user)
+        self.assertIn("trend", prompt.user)
+        self.assertIn("intensity", prompt.user)
         self.assertIn("JSON", prompt.user)
         self.assertIn("tags", prompt.user)
+
+    def test_l2_output_requests_json(self):
+        """L2 _output fragment must request JSON with tags."""
+        assembler = PromptAssembler()
+        assembler.load()
+        prompt = assembler.assemble(
+            ["domain:combat"], data_block="Count: 10")
+        self.assertIn("JSON", prompt.user)
+        self.assertIn("significance", prompt.user)
 
 
 # ══════════════════════════════════════════════════════════════════

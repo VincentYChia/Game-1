@@ -345,6 +345,10 @@ class Layer3Manager:
                                   if any(t.startswith(p)
                                          for p in structural_prefixes)]
                     result.affects_tags = structural + llm_result.tags
+                else:
+                    print(f"[Layer3] WARNING: LLM returned no tags for "
+                          f"L3 {consolidator.consolidator_id} — "
+                          f"check prompt or LLM output format")
 
         except Exception as e:
             print(f"[Layer3] LLM upgrade failed for "

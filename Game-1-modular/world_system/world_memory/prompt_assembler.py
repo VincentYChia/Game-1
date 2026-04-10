@@ -353,11 +353,6 @@ class PromptAssembler:
         if core:
             selected.append(("_l3_core", core))
 
-        # Tag categories reference (always — LLM needs valid values)
-        tag_cats = self.get_l3_fragment("_l3_tag_categories")
-        if tag_cats:
-            selected.append(("_l3_tag_categories", tag_cats))
-
         # Consolidator-specific fragment
         cons_key = f"l3_consolidator:{consolidator_id}"
         cons_frag = self.get_l3_fragment(cons_key)
