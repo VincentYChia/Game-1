@@ -24,7 +24,8 @@ _FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments.json"
 FRAGMENT_CATEGORIES = frozenset({
     "species", "material_category", "discipline",
     "tier", "element", "rank", "status_effect",
-    "action", "result",
+    "action", "result", "attack_type", "item_category",
+    "tool", "npc", "source", "resource", "quality", "rarity",
 })
 
 # Domain mapping from event types

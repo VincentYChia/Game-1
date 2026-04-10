@@ -157,11 +157,22 @@ class WorldMemorySystem:
             world_map=_world_map,
         )
 
-        # 6. Interpreter
+        # 6. WMS AI (LLM narration for Layer 2+)
+        self.wms_ai = None
+        try:
+            from world_system.world_memory.wms_ai import WmsAI
+            self.wms_ai = WmsAI.get_instance()
+            self.wms_ai.initialize()
+            print(f"[WorldMemory] WmsAI initialized — {self.wms_ai.stats}")
+        except Exception as e:
+            print(f"[WorldMemory] WmsAI init failed (non-fatal, templates used): {e}")
+
+        # 7. Interpreter
         self.interpreter = WorldInterpreter.get_instance()
         self.interpreter.initialize(
             self.event_store, self.geo_registry, self.entity_registry,
-            layer_store=self.layer_store
+            layer_store=self.layer_store,
+            wms_ai=self.wms_ai,
         )
         # Wire interpreter to recorder
         self.event_recorder.set_interpreter_callback(self.interpreter.on_trigger)

@@ -268,7 +268,15 @@ class WmsAI:
             if error:
                 return NarrationResult(success=False, error=error)
 
-            # Parse response — strip quotes, clean up
+            # Parse response — handle JSON wrapping from mock/some models
+            text = text.strip()
+            if text.startswith("{"):
+                try:
+                    parsed = json.loads(text)
+                    text = parsed.get("text", parsed.get("narrative",
+                           parsed.get("dialogue", text)))
+                except (json.JSONDecodeError, TypeError):
+                    pass
             text = text.strip().strip('"').strip("'")
 
             # Try to extract severity if the model included it
