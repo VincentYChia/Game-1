@@ -44,6 +44,30 @@
     "faction_narrative": {
       "primary": "ollama",
       "description": "Faction reputation milestone narratives"
+    },
+    "wms_layer2": {
+      "primary": "claude",
+      "description": "WMS Layer 2: one-sentence factual narrations from evaluator triggers"
+    },
+    "wms_layer3": {
+      "primary": "claude",
+      "description": "WMS Layer 3: cross-domain consolidation across districts"
+    },
+    "wms_layer4": {
+      "primary": "claude",
+      "description": "WMS Layer 4: provincial summaries"
+    },
+    "wms_layer5": {
+      "primary": "claude",
+      "description": "WMS Layer 5: realm-level state"
+    },
+    "wms_layer6": {
+      "primary": "claude",
+      "description": "WMS Layer 6: cross-realm patterns"
+    },
+    "wms_layer7": {
+      "primary": "claude",
+      "description": "WMS Layer 7: world narrative threads"
     }
   },
 

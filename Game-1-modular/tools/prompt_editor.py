@@ -6,132 +6,51 @@ Tkinter UI with three panels:
   Center: Fragment text editor with live token count
   Right:  Prompt assembly preview (simulates what the LLM would receive)
 
-Run: python tools/prompt_editor.py
+Run from Game-1-modular/:  python tools/prompt_editor.py
 """
 
 import json
 import os
 import sys
 import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext
+from tkinter import ttk, messagebox, scrolledtext, simpledialog
 from pathlib import Path
 
-# Add project root to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add project root to path
+_PROJECT_DIR = Path(__file__).parent.parent
+sys.path.insert(0, str(_PROJECT_DIR))
+
 from world_system.world_memory.prompt_assembler import (
-    PromptAssembler, FRAGMENT_CATEGORIES, estimate_tokens,
+    PromptAssembler, FRAGMENT_CATEGORIES, EVENT_TO_DOMAIN, estimate_tokens,
 )
 
 # ── Paths ───────────────────────────────────────────────────────────
 
-SCRIPT_DIR = Path(__file__).parent
-PROJECT_DIR = SCRIPT_DIR.parent
-CONFIG_DIR = PROJECT_DIR / "world_system" / "config"
-FRAGMENTS_PATH = CONFIG_DIR / "prompt_fragments.json"
-MANIFEST_PATH = CONFIG_DIR / "stat-key-manifest.json"
-HOSTILES_PATH = PROJECT_DIR / "Definitions.JSON" / "hostiles-1.JSON"
-MATERIALS_PATH = PROJECT_DIR / "items.JSON" / "items-materials-1.JSON"
+HOSTILES_PATH = _PROJECT_DIR / "Definitions.JSON" / "hostiles-1.JSON"
+MATERIALS_PATH = _PROJECT_DIR / "items.JSON" / "items-materials-1.JSON"
 
-# Fragment categories that get matched from trigger tags
-FRAGMENT_CATEGORIES = {
-    "species", "material_category", "discipline",
-    "tier", "element", "rank", "status_effect",
-}
-
-# Colors for each category in the browser
+# Colors per category
 CATEGORY_COLORS = {
-    "_core": "#4A90D9",
-    "_output": "#4A90D9",
-    "domain": "#2ECC71",
-    "species": "#E67E22",
-    "material_category": "#8B4513",
-    "discipline": "#9B59B6",
-    "tier": "#F39C12",
-    "element": "#E74C3C",
-    "rank": "#C0392B",
-    "status_effect": "#1ABC9C",
+    "_core": "#4A90D9", "_output": "#4A90D9",
+    "domain": "#2ECC71", "species": "#E67E22",
+    "material_category": "#8B4513", "discipline": "#9B59B6",
+    "tier": "#F39C12", "element": "#E74C3C",
+    "rank": "#C0392B", "status_effect": "#1ABC9C",
+    "action": "#3498DB", "result": "#16A085",
 }
 
-
-def estimate_tokens(text: str) -> int:
-    """Rough token estimate: ~4 chars per token for English."""
-    return max(1, len(text) // 4)
-
-
-def load_fragments() -> dict:
-    """Load prompt fragments from JSON."""
-    if FRAGMENTS_PATH.exists():
-        with open(FRAGMENTS_PATH) as f:
-            return json.load(f)
-    return {"_meta": {"version": "1.0", "total_fragments": 0}}
+CATEGORY_ORDER = [
+    "_core", "_output", "domain", "species", "material_category",
+    "discipline", "tier", "element", "rank", "status_effect",
+    "action", "result",
+]
 
 
-def save_fragments(data: dict):
-    """Save prompt fragments to JSON."""
-    # Update meta counts
-    cats = {}
-    for key in data:
-        if key.startswith("_meta"):
-            continue
-        if key.startswith("_"):
-            cats[key] = 1
-        else:
-            cat = key.split(":")[0] if ":" in key else key
-            cats[cat] = cats.get(cat, 0) + 1
-    data["_meta"]["total_fragments"] = sum(cats.values())
-    data["_meta"]["categories"] = cats
-
-    with open(FRAGMENTS_PATH, "w") as f:
-        json.dump(data, f, indent=2)
-        f.write("\n")
-
-
-def get_category(key: str) -> str:
-    """Get the display category for a fragment key."""
-    if key.startswith("_"):
-        return key
-    return key.split(":")[0] if ":" in key else "other"
-
-
-def select_fragments_for_tags(tags: list, library: dict) -> list:
-    """Simulate the fragment selection logic for a given tag set."""
-    selected = []
-
-    # Core (always)
-    if "_core" in library:
-        selected.append(("_core", library["_core"]))
-
-    # Domain (first matching)
-    for tag in tags:
-        if tag.startswith("domain:") and tag in library:
-            selected.append((tag, library[tag]))
-            break
-
-    # Entity/context fragments
-    for tag in tags:
-        cat = tag.split(":")[0] if ":" in tag else ""
-        if cat in FRAGMENT_CATEGORIES and tag in library:
-            selected.append((tag, library[tag]))
-
-    # Output (always)
-    if "_output" in library:
-        selected.append(("_output", library["_output"]))
-
-    return selected
-
-
-def load_stat_patterns() -> dict:
-    """Load stat manifest patterns for the simulator."""
-    if MANIFEST_PATH.exists():
-        with open(MANIFEST_PATH) as f:
-            data = json.load(f)
-        return data.get("patterns", {})
-    return {}
-
-
-def load_game_entities() -> dict:
-    """Load enemies and materials for dropdown population."""
-    entities = {"enemies": [], "materials": [], "disciplines": []}
+def _load_game_entities() -> dict:
+    """Load enemies and materials for the simulator dropdowns."""
+    entities = {"enemies": [], "materials": [], "disciplines": [
+        "smithing", "alchemy", "refining", "engineering", "enchanting", "fishing",
+    ]}
 
     if HOSTILES_PATH.exists():
         with open(HOSTILES_PATH) as f:
@@ -155,11 +74,6 @@ def load_game_entities() -> dict:
                 "category": m.get("category", ""),
             })
 
-    entities["disciplines"] = [
-        "smithing", "alchemy", "refining",
-        "engineering", "enchanting", "fishing",
-    ]
-
     return entities
 
 
@@ -168,34 +82,39 @@ def load_game_entities() -> dict:
 # ═══════════════════════════════════════════════════════════════════
 
 class PromptEditorApp:
+
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("WMS Prompt Fragment Editor")
         self.root.geometry("1500x900")
         self.root.minsize(1200, 700)
 
-        self.fragments = load_fragments()
-        self.game_entities = load_game_entities()
-        self.stat_patterns = load_stat_patterns()
-        self.selected_key = None
+        # Core data
+        self.assembler = PromptAssembler()
+        self.assembler.load()
+        self.game_entities = _load_game_entities()
+        self.selected_key: str | None = None
         self.unsaved_changes = False
+
+        # Map treeview item IDs → fragment keys
+        self._tree_key_map: dict[str, str] = {}
 
         self._build_menu()
         self._build_ui()
         self._populate_browser()
-        self._populate_simulator_dropdowns()
 
-    # ── Menu Bar ────────────────────────────────────────────────────
+    # ── Menu ────────────────────────────────────────────────────────
 
     def _build_menu(self):
         menubar = tk.Menu(self.root)
 
         file_menu = tk.Menu(menubar, tearoff=0)
-        file_menu.add_command(label="Save All", command=self._save_all,
-                              accelerator="Ctrl+S")
+        file_menu.add_command(label="Save All (Ctrl+S)", command=self._save_all)
         file_menu.add_separator()
-        file_menu.add_command(label="Validate Coverage",
-                              command=self._validate_coverage)
+        file_menu.add_command(label="New Fragment...", command=self._new_fragment)
+        file_menu.add_command(label="Delete Fragment", command=self._delete_fragment)
+        file_menu.add_separator()
+        file_menu.add_command(label="Validate Coverage", command=self._validate)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self._on_close)
         menubar.add_cascade(label="File", menu=file_menu)
@@ -204,541 +123,438 @@ class PromptEditorApp:
         self.root.bind("<Control-s>", lambda e: self._save_all())
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
-    # ── Main Layout ─────────────────────────────────────────────────
+    # ── Layout ──────────────────────────────────────────────────────
 
     def _build_ui(self):
-        # Main paned window (horizontal split)
-        main_pane = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
-        main_pane.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        pane = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
+        pane.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Left panel: Fragment Browser
-        left_frame = ttk.LabelFrame(main_pane, text="Fragment Browser",
-                                     padding=5)
-        main_pane.add(left_frame, weight=1)
-        self._build_browser(left_frame)
+        left = ttk.LabelFrame(pane, text="Fragments", padding=5)
+        pane.add(left, weight=1)
+        self._build_browser(left)
 
-        # Center panel: Fragment Editor
-        center_frame = ttk.LabelFrame(main_pane, text="Fragment Editor",
-                                       padding=5)
-        main_pane.add(center_frame, weight=2)
-        self._build_editor(center_frame)
+        center = ttk.LabelFrame(pane, text="Editor", padding=5)
+        pane.add(center, weight=2)
+        self._build_editor(center)
 
-        # Right panel: Prompt Preview / Simulator
-        right_frame = ttk.LabelFrame(main_pane, text="Prompt Assembly Preview",
-                                      padding=5)
-        main_pane.add(right_frame, weight=2)
-        self._build_simulator(right_frame)
+        right = ttk.LabelFrame(pane, text="Prompt Preview", padding=5)
+        pane.add(right, weight=2)
+        self._build_simulator(right)
 
-        # Status bar
         self.status_var = tk.StringVar(value="Ready")
-        status_bar = ttk.Label(self.root, textvariable=self.status_var,
-                                relief=tk.SUNKEN, anchor=tk.W)
-        status_bar.pack(fill=tk.X, padx=5, pady=(0, 5))
+        ttk.Label(self.root, textvariable=self.status_var,
+                  relief=tk.SUNKEN, anchor=tk.W).pack(fill=tk.X, padx=5, pady=(0, 5))
 
-    # ── Left Panel: Browser ─────────────────────────────────────────
+    # ── Left: Browser ───────────────────────────────────────────────
 
     def _build_browser(self, parent):
-        # Search bar
-        search_frame = ttk.Frame(parent)
-        search_frame.pack(fill=tk.X, pady=(0, 5))
-        ttk.Label(search_frame, text="Search:").pack(side=tk.LEFT)
+        # Search
+        sf = ttk.Frame(parent)
+        sf.pack(fill=tk.X, pady=(0, 5))
+        ttk.Label(sf, text="Search:").pack(side=tk.LEFT)
         self.search_var = tk.StringVar()
-        self.search_var.trace_add("write", lambda *a: self._filter_browser())
-        search_entry = ttk.Entry(search_frame, textvariable=self.search_var)
-        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
+        self.search_var.trace_add("write", lambda *_: self._filter_browser())
+        ttk.Entry(sf, textvariable=self.search_var).pack(
+            side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
 
-        # Treeview
-        tree_frame = ttk.Frame(parent)
-        tree_frame.pack(fill=tk.BOTH, expand=True)
+        # Tree
+        tf = ttk.Frame(parent)
+        tf.pack(fill=tk.BOTH, expand=True)
 
-        self.tree = ttk.Treeview(tree_frame, selectmode="browse",
+        self.tree = ttk.Treeview(tf, selectmode="browse",
                                   columns=("tokens",), show="tree headings")
         self.tree.heading("#0", text="Fragment", anchor=tk.W)
-        self.tree.heading("tokens", text="Tokens", anchor=tk.E)
-        self.tree.column("#0", width=220, minwidth=150)
-        self.tree.column("tokens", width=50, minwidth=40, anchor=tk.E)
+        self.tree.heading("tokens", text="Tok", anchor=tk.E)
+        self.tree.column("#0", width=230, minwidth=150)
+        self.tree.column("tokens", width=40, minwidth=35, anchor=tk.E)
 
-        scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL,
-                                   command=self.tree.yview)
-        self.tree.configure(yscrollcommand=scrollbar.set)
-
+        sb = ttk.Scrollbar(tf, orient=tk.VERTICAL, command=self.tree.yview)
+        self.tree.configure(yscrollcommand=sb.set)
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        sb.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.tree.bind("<<TreeviewSelect>>", self._on_tree_select)
+        self.tree.bind("<<TreeviewSelect>>", self._on_select)
 
-        # Fragment count label
         self.count_label = ttk.Label(parent, text="")
         self.count_label.pack(fill=tk.X, pady=(5, 0))
 
     def _populate_browser(self):
-        """Fill the treeview with fragments grouped by category."""
         self.tree.delete(*self.tree.get_children())
+        self._tree_key_map.clear()
 
-        # Group fragments by category
-        groups = {}
-        for key in sorted(self.fragments.keys()):
-            if key == "_meta":
-                continue
-            cat = get_category(key)
+        groups: dict[str, list[str]] = {}
+        for key in self.assembler.list_keys():
+            cat = key if key.startswith("_") else (
+                key.split(":")[0] if ":" in key else "other")
             groups.setdefault(cat, []).append(key)
 
-        # Category display order
-        order = ["_core", "_output", "domain", "species",
-                 "material_category", "discipline", "tier",
-                 "element", "rank", "status_effect"]
-        for cat in order:
+        for cat in CATEGORY_ORDER:
             if cat not in groups:
                 continue
-            color = CATEGORY_COLORS.get(cat, "#666666")
-            parent_id = self.tree.insert(
-                "", "end", text=f"  {cat} ({len(groups[cat])})",
-                open=(cat in ("_core", "_output", "domain")),
-                tags=(cat,),
-            )
+            keys = groups.pop(cat)
+            color = CATEGORY_COLORS.get(cat, "#666")
+            pid = self.tree.insert("", "end",
+                                    text=f"  {cat} ({len(keys)})",
+                                    open=(cat in ("_core", "_output", "domain")))
             self.tree.tag_configure(cat, foreground=color)
+            self.tree.item(pid, tags=(cat,))
 
-            for key in groups[cat]:
-                text = self.fragments[key]
-                tokens = estimate_tokens(text) if isinstance(text, str) else 0
-                display = key.split(":")[-1] if ":" in key else key
-                self.tree.insert(parent_id, "end", text=f"  {display}",
-                                 values=(tokens,), tags=("leaf",))
+            for key in sorted(keys):
+                text = self.assembler.get_fragment(key)
+                tok = estimate_tokens(text)
+                iid = self.tree.insert(pid, "end", text=f"  {key}",
+                                        values=(tok,), tags=(cat,))
+                self._tree_key_map[iid] = key
 
-        # Any uncategorized
+        # Remaining
         for cat, keys in groups.items():
-            if cat not in order:
-                parent_id = self.tree.insert(
-                    "", "end", text=f"  {cat} ({len(keys)})", tags=("other",))
-                for key in keys:
-                    text = self.fragments[key]
-                    tokens = estimate_tokens(text) if isinstance(text, str) else 0
-                    display = key.split(":")[-1] if ":" in key else key
-                    self.tree.insert(parent_id, "end", text=f"  {display}",
-                                     values=(tokens,), tags=("leaf",))
+            pid = self.tree.insert("", "end", text=f"  {cat} ({len(keys)})")
+            for key in sorted(keys):
+                text = self.assembler.get_fragment(key)
+                tok = estimate_tokens(text)
+                iid = self.tree.insert(pid, "end", text=f"  {key}",
+                                        values=(tok,))
+                self._tree_key_map[iid] = key
 
-        total = self.fragments.get("_meta", {}).get("total_fragments", 0)
-        self.count_label.config(text=f"{total} fragments total")
+        self.count_label.config(
+            text=f"{self.assembler.fragment_count} fragments")
 
     def _filter_browser(self):
-        """Filter browser by search text."""
-        query = self.search_var.get().lower().strip()
-        if not query:
+        q = self.search_var.get().lower().strip()
+        if not q:
             self._populate_browser()
             return
-
         self.tree.delete(*self.tree.get_children())
-        for key in sorted(self.fragments.keys()):
-            if key == "_meta":
-                continue
-            text = self.fragments[key] if isinstance(self.fragments[key], str) else ""
-            if query in key.lower() or query in text.lower():
-                cat = get_category(key)
-                color = CATEGORY_COLORS.get(cat, "#666666")
-                tokens = estimate_tokens(text)
-                self.tree.insert("", "end", text=f"  {key}",
-                                 values=(tokens,), tags=(cat,))
+        self._tree_key_map.clear()
+        for key in self.assembler.list_keys():
+            text = self.assembler.get_fragment(key)
+            if q in key.lower() or q in text.lower():
+                cat = key.split(":")[0] if ":" in key else key
+                color = CATEGORY_COLORS.get(cat, "#666")
                 self.tree.tag_configure(cat, foreground=color)
+                iid = self.tree.insert("", "end", text=f"  {key}",
+                                        values=(estimate_tokens(text),),
+                                        tags=(cat,))
+                self._tree_key_map[iid] = key
 
-    def _on_tree_select(self, event):
-        """Handle treeview selection — load fragment into editor."""
-        selection = self.tree.selection()
-        if not selection:
+    def _on_select(self, event):
+        sel = self.tree.selection()
+        if not sel:
             return
-
-        item = self.tree.item(selection[0])
-        display_text = item["text"].strip()
-
-        # Find the actual key
-        key = None
-        for k in self.fragments:
-            if k == "_meta":
-                continue
-            short = k.split(":")[-1] if ":" in k else k
-            if short == display_text or k == display_text:
-                key = k
-                break
-
-        if key and key in self.fragments:
+        key = self._tree_key_map.get(sel[0])
+        if key:
             self._load_fragment(key)
 
-    # ── Center Panel: Editor ────────────────────────────────────────
+    # ── Center: Editor ──────────────────────────────────────────────
 
     def _build_editor(self, parent):
-        # Key display
-        key_frame = ttk.Frame(parent)
-        key_frame.pack(fill=tk.X, pady=(0, 5))
-        ttk.Label(key_frame, text="Key:").pack(side=tk.LEFT)
+        # Key label
+        kf = ttk.Frame(parent)
+        kf.pack(fill=tk.X, pady=(0, 5))
+        ttk.Label(kf, text="Key:").pack(side=tk.LEFT)
         self.key_var = tk.StringVar(value="(select a fragment)")
-        ttk.Label(key_frame, textvariable=self.key_var,
-                   font=("TkDefaultFont", 10, "bold")).pack(side=tk.LEFT, padx=5)
+        ttk.Label(kf, textvariable=self.key_var,
+                  font=("TkDefaultFont", 10, "bold")).pack(side=tk.LEFT, padx=5)
 
-        # Category / tag info
-        self.tag_var = tk.StringVar(value="")
-        ttk.Label(parent, textvariable=self.tag_var,
-                   foreground="gray").pack(fill=tk.X)
+        self.cat_var = tk.StringVar(value="")
+        ttk.Label(parent, textvariable=self.cat_var,
+                  foreground="gray").pack(fill=tk.X)
 
         # Text editor
         self.editor = scrolledtext.ScrolledText(
             parent, wrap=tk.WORD, font=("Consolas", 11),
-            height=10, padx=8, pady=8,
-        )
+            height=10, padx=8, pady=8)
         self.editor.pack(fill=tk.BOTH, expand=True, pady=5)
-        self.editor.bind("<KeyRelease>", self._on_editor_change)
+        self.editor.bind("<KeyRelease>", self._on_edit)
 
-        # Token count + save button
-        bottom_frame = ttk.Frame(parent)
-        bottom_frame.pack(fill=tk.X)
-
-        self.token_var = tk.StringVar(value="0 tokens")
-        ttk.Label(bottom_frame, textvariable=self.token_var).pack(side=tk.LEFT)
-
-        self.save_btn = ttk.Button(bottom_frame, text="Save Fragment",
-                                    command=self._save_fragment)
-        self.save_btn.pack(side=tk.RIGHT)
-
-        self.change_indicator = ttk.Label(bottom_frame, text="",
-                                           foreground="orange")
-        self.change_indicator.pack(side=tk.RIGHT, padx=10)
+        bf = ttk.Frame(parent)
+        bf.pack(fill=tk.X)
+        self.tok_var = tk.StringVar(value="0 tokens")
+        ttk.Label(bf, textvariable=self.tok_var).pack(side=tk.LEFT)
+        ttk.Button(bf, text="Save Fragment",
+                   command=self._save_fragment).pack(side=tk.RIGHT)
+        self.change_lbl = ttk.Label(bf, text="", foreground="orange")
+        self.change_lbl.pack(side=tk.RIGHT, padx=10)
 
     def _load_fragment(self, key: str):
-        """Load a fragment into the editor."""
         self.selected_key = key
         self.key_var.set(key)
+        cat = key if key.startswith("_") else key.split(":")[0]
+        self.cat_var.set(f"Category: {cat}")
 
-        cat = get_category(key)
-        color = CATEGORY_COLORS.get(cat, "#666666")
-        self.tag_var.set(f"Category: {cat}")
-
-        text = self.fragments.get(key, "")
-        if not isinstance(text, str):
-            text = str(text)
-
+        text = self.assembler.get_fragment(key)
         self.editor.delete("1.0", tk.END)
         self.editor.insert("1.0", text)
-        self._update_token_count()
-        self.change_indicator.config(text="")
-
+        self._update_tok()
+        self.change_lbl.config(text="")
         self.status_var.set(f"Editing: {key}")
 
-    def _on_editor_change(self, event=None):
-        """Track changes in the editor."""
-        self._update_token_count()
+    def _on_edit(self, event=None):
+        self._update_tok()
         if self.selected_key:
-            current = self.editor.get("1.0", tk.END).strip()
-            original = self.fragments.get(self.selected_key, "")
-            if current != original:
-                self.change_indicator.config(text="● unsaved")
+            cur = self.editor.get("1.0", tk.END).strip()
+            orig = self.assembler.get_fragment(self.selected_key)
+            if cur != orig:
+                self.change_lbl.config(text="● unsaved", foreground="orange")
                 self.unsaved_changes = True
             else:
-                self.change_indicator.config(text="")
+                self.change_lbl.config(text="")
 
-    def _update_token_count(self):
+    def _update_tok(self):
         text = self.editor.get("1.0", tk.END).strip()
-        tokens = estimate_tokens(text)
-        self.token_var.set(f"~{tokens} tokens")
+        self.tok_var.set(f"~{estimate_tokens(text)} tokens")
 
     def _save_fragment(self):
-        """Save the current fragment back to the library."""
         if not self.selected_key:
             return
         text = self.editor.get("1.0", tk.END).strip()
-        self.fragments[self.selected_key] = text
-        self.change_indicator.config(text="✓ saved", foreground="green")
+        self.assembler.set_fragment(self.selected_key, text)
+        self.change_lbl.config(text="✓ saved", foreground="green")
         self.status_var.set(f"Saved: {self.selected_key}")
-        self.root.after(2000,
-                         lambda: self.change_indicator.config(text=""))
 
-    # ── Right Panel: Simulator ──────────────────────────────────────
+    # ── Right: Simulator ────────────────────────────────────────────
 
     def _build_simulator(self, parent):
-        # Trigger configuration
-        config_frame = ttk.LabelFrame(parent, text="Trigger Configuration",
-                                       padding=5)
-        config_frame.pack(fill=tk.X, pady=(0, 5))
+        cfg = ttk.LabelFrame(parent, text="Trigger Configuration", padding=5)
+        cfg.pack(fill=tk.X, pady=(0, 5))
 
-        # Row 1: Event type
-        r1 = ttk.Frame(config_frame)
+        # Event type
+        r1 = ttk.Frame(cfg)
         r1.pack(fill=tk.X, pady=2)
-        ttk.Label(r1, text="Event:", width=10).pack(side=tk.LEFT)
-        self.event_type_var = tk.StringVar(value="enemy_killed")
-        event_combo = ttk.Combobox(r1, textvariable=self.event_type_var,
-                                    width=25, state="readonly")
-        event_combo["values"] = [
-            "enemy_killed", "resource_gathered", "craft_attempted",
-            "attack_performed", "damage_taken", "level_up",
-            "skill_used", "chunk_entered", "npc_interaction",
-            "quest_completed", "item_acquired", "node_depleted",
-        ]
-        event_combo.pack(side=tk.LEFT, padx=5)
-        event_combo.bind("<<ComboboxSelected>>",
-                          lambda e: self._update_subtype_options())
+        ttk.Label(r1, text="Event:", width=12).pack(side=tk.LEFT)
+        self.evt_var = tk.StringVar(value="enemy_killed")
+        cb = ttk.Combobox(r1, textvariable=self.evt_var, width=25,
+                          state="readonly")
+        cb["values"] = sorted(EVENT_TO_DOMAIN.keys())
+        cb.pack(side=tk.LEFT, padx=5)
+        cb.bind("<<ComboboxSelected>>", lambda e: self._update_entity_opts())
 
-        # Row 2: Subtype (entity)
-        r2 = ttk.Frame(config_frame)
+        # Entity
+        r2 = ttk.Frame(cfg)
         r2.pack(fill=tk.X, pady=2)
-        ttk.Label(r2, text="Entity:", width=10).pack(side=tk.LEFT)
-        self.subtype_var = tk.StringVar(value="wolf_grey")
-        self.subtype_combo = ttk.Combobox(r2, textvariable=self.subtype_var,
-                                           width=25)
-        self.subtype_combo.pack(side=tk.LEFT, padx=5)
+        ttk.Label(r2, text="Entity:", width=12).pack(side=tk.LEFT)
+        self.ent_var = tk.StringVar(value="wolf_grey")
+        self.ent_cb = ttk.Combobox(r2, textvariable=self.ent_var, width=25)
+        self.ent_cb.pack(side=tk.LEFT, padx=5)
+        self._update_entity_opts()
 
-        # Row 3: Location
-        r3 = ttk.Frame(config_frame)
+        # Location
+        r3 = ttk.Frame(cfg)
         r3.pack(fill=tk.X, pady=2)
-        ttk.Label(r3, text="Location:", width=10).pack(side=tk.LEFT)
-        self.location_var = tk.StringVar(value="whispering_woods")
-        loc_combo = ttk.Combobox(r3, textvariable=self.location_var, width=25)
-        loc_combo["values"] = [
-            "whispering_woods", "iron_hills", "dark_cave",
-            "spawn_crossroads", "elder_grove", "traders_corner",
-        ]
-        loc_combo.pack(side=tk.LEFT, padx=5)
+        ttk.Label(r3, text="Location:", width=12).pack(side=tk.LEFT)
+        self.loc_var = tk.StringVar(value="whispering_woods")
+        ttk.Combobox(r3, textvariable=self.loc_var, width=25,
+                      values=["whispering_woods", "iron_hills", "dark_cave",
+                              "spawn_crossroads", "elder_grove", "traders_corner"]
+                      ).pack(side=tk.LEFT, padx=5)
 
-        # Row 4: Counts
-        r4 = ttk.Frame(config_frame)
+        # Numeric inputs
+        r4 = ttk.Frame(cfg)
         r4.pack(fill=tk.X, pady=2)
-        ttk.Label(r4, text="Count:", width=10).pack(side=tk.LEFT)
-        self.count_var = tk.StringVar(value="10")
-        ttk.Entry(r4, textvariable=self.count_var, width=8).pack(
-            side=tk.LEFT, padx=5)
-        ttk.Label(r4, text="All-time:").pack(side=tk.LEFT, padx=(15, 0))
-        self.alltime_var = tk.StringVar(value="47")
-        ttk.Entry(r4, textvariable=self.alltime_var, width=8).pack(
-            side=tk.LEFT, padx=5)
-        ttk.Label(r4, text="Month avg/day:").pack(side=tk.LEFT, padx=(15, 0))
-        self.avg_var = tk.StringVar(value="4.2")
-        ttk.Entry(r4, textvariable=self.avg_var, width=8).pack(
-            side=tk.LEFT, padx=5)
+        for label, var_name, default in [
+            ("Today:", "cnt_var", "8"),
+            ("All-time:", "all_var", "47"),
+            ("Month avg:", "avg_var", "4.2"),
+        ]:
+            ttk.Label(r4, text=label).pack(side=tk.LEFT, padx=(10, 0))
+            v = tk.StringVar(value=default)
+            setattr(self, var_name, v)
+            ttk.Entry(r4, textvariable=v, width=7).pack(side=tk.LEFT, padx=2)
 
-        # Assemble button
-        ttk.Button(config_frame, text="Assemble Prompt",
-                    command=self._assemble_prompt).pack(pady=(5, 0))
+        # Extra tags
+        r5 = ttk.Frame(cfg)
+        r5.pack(fill=tk.X, pady=2)
+        ttk.Label(r5, text="Extra tags:", width=12).pack(side=tk.LEFT)
+        self.extra_tags_var = tk.StringVar(value="")
+        ttk.Entry(r5, textvariable=self.extra_tags_var, width=40).pack(
+            side=tk.LEFT, padx=5)
+        ttk.Label(r5, text="(comma-separated, e.g. action:deplete,result:first)",
+                  foreground="gray").pack(side=tk.LEFT)
 
-        # Preview area
-        preview_frame = ttk.LabelFrame(parent, text="Assembled Prompt",
-                                        padding=5)
-        preview_frame.pack(fill=tk.BOTH, expand=True)
+        ttk.Button(cfg, text="⟳ Assemble Prompt",
+                   command=self._assemble).pack(pady=(5, 0))
+
+        # Preview
+        pf = ttk.LabelFrame(parent, text="Assembled Prompt", padding=5)
+        pf.pack(fill=tk.BOTH, expand=True)
 
         self.preview = scrolledtext.ScrolledText(
-            preview_frame, wrap=tk.WORD, font=("Consolas", 10),
-            state=tk.DISABLED, padx=8, pady=8,
-        )
+            pf, wrap=tk.WORD, font=("Consolas", 10),
+            state=tk.DISABLED, padx=8, pady=8)
         self.preview.pack(fill=tk.BOTH, expand=True)
 
-        # Configure text tags for coloring
-        self.preview.tag_configure("header", foreground="#4A90D9",
+        self.preview.tag_configure("h", foreground="#4A90D9",
                                     font=("Consolas", 10, "bold"))
-        self.preview.tag_configure("fragment_key", foreground="#E67E22",
+        self.preview.tag_configure("fk", foreground="#E67E22",
                                     font=("Consolas", 10, "bold"))
-        self.preview.tag_configure("data", foreground="#2ECC71")
-        self.preview.tag_configure("token_count", foreground="#888888")
+        self.preview.tag_configure("d", foreground="#2ECC71")
 
-        # Total tokens label
-        self.preview_tokens_var = tk.StringVar(value="")
-        ttk.Label(parent, textvariable=self.preview_tokens_var).pack(
-            fill=tk.X, pady=(5, 0))
+        self.ptok_var = tk.StringVar(value="")
+        ttk.Label(parent, textvariable=self.ptok_var).pack(fill=tk.X, pady=(5, 0))
 
-    def _populate_simulator_dropdowns(self):
-        """Fill entity dropdown based on available game data."""
-        self._update_subtype_options()
-
-    def _update_subtype_options(self):
-        """Update the entity dropdown based on selected event type."""
-        event_type = self.event_type_var.get()
-
-        if event_type == "enemy_killed":
-            values = [e["id"] for e in self.game_entities["enemies"]]
-        elif event_type == "resource_gathered":
-            values = list({m["id"] for m in self.game_entities["materials"]})[:30]
-        elif event_type == "craft_attempted":
-            values = self.game_entities["disciplines"]
+    def _update_entity_opts(self):
+        evt = self.evt_var.get()
+        if evt == "enemy_killed":
+            vals = [e["id"] for e in self.game_entities["enemies"]]
+        elif evt in ("resource_gathered", "node_depleted"):
+            vals = sorted({m["id"] for m in self.game_entities["materials"]})
+        elif evt == "craft_attempted":
+            vals = self.game_entities["disciplines"]
+        elif evt in ("skill_used",):
+            vals = ["combat_strike", "fireball", "heal", "chain_harvest"]
         else:
-            values = ["general"]
+            vals = ["general"]
+        self.ent_cb["values"] = vals
+        if vals and self.ent_var.get() not in vals:
+            self.ent_var.set(vals[0])
 
-        self.subtype_combo["values"] = sorted(values)
-        if values and self.subtype_var.get() not in values:
-            self.subtype_var.set(values[0])
+    def _build_tags(self) -> list[str]:
+        evt = self.evt_var.get()
+        entity = self.ent_var.get()
 
-    def _get_trigger_tags(self) -> list:
-        """Build a tag list from the simulator configuration."""
-        event_type = self.event_type_var.get()
-        entity = self.subtype_var.get()
-        tags = []
-
-        # Domain tag
-        domain_map = {
-            "enemy_killed": "combat", "attack_performed": "combat",
-            "damage_taken": "combat", "resource_gathered": "gathering",
-            "node_depleted": "gathering", "craft_attempted": "crafting",
-            "level_up": "progression", "skill_used": "skills",
-            "chunk_entered": "exploration", "npc_interaction": "social",
-            "quest_completed": "social", "item_acquired": "items",
-        }
-        domain = domain_map.get(event_type, "combat")
-        tags.append(f"domain:{domain}")
-
-        # Entity-specific tags
-        if event_type == "enemy_killed":
-            tags.append(f"species:{entity}")
-            # Find tier
+        # Start with assembler's tag derivation
+        tier = None
+        if evt == "enemy_killed":
+            subtype = f"killed_{entity}"
             for e in self.game_entities["enemies"]:
                 if e["id"] == entity:
-                    tags.append(f"tier:{e['tier']}")
+                    tier = e["tier"]
                     break
-            tags.append("rank:normal")
-
-        elif event_type == "resource_gathered":
+        elif evt in ("resource_gathered", "node_depleted"):
+            subtype = f"gathered_{entity}"
             for m in self.game_entities["materials"]:
                 if m["id"] == entity:
-                    if m.get("category"):
-                        tags.append(f"material_category:{m['category']}")
-                    tags.append(f"tier:{m['tier']}")
+                    tier = m["tier"]
                     break
+        elif evt == "craft_attempted":
+            subtype = f"crafted_{entity}"
+        else:
+            subtype = entity
 
-        elif event_type == "craft_attempted":
-            tags.append(f"discipline:{entity}")
+        extra = []
+        # Material category
+        if evt in ("resource_gathered", "node_depleted"):
+            for m in self.game_entities["materials"]:
+                if m["id"] == entity and m.get("category"):
+                    extra.append(f"material_category:{m['category']}")
+                    break
+        # Manual extra tags
+        manual = self.extra_tags_var.get().strip()
+        if manual:
+            extra.extend(t.strip() for t in manual.split(",") if t.strip())
 
+        tags = self.assembler.tags_from_event(evt, subtype, tier, extra)
         return tags
 
-    def _assemble_prompt(self):
-        """Assemble and display the full prompt from fragments + data."""
-        tags = self._get_trigger_tags()
-        selected = select_fragments_for_tags(tags, self.fragments)
+    def _assemble(self):
+        tags = self._build_tags()
 
         # Build data block
-        event_type = self.event_type_var.get()
-        entity = self.subtype_var.get()
-        location = self.location_var.get()
-        count = self.count_var.get()
-        alltime = self.alltime_var.get()
-        avg = self.avg_var.get()
-
         try:
-            count_f = float(count)
-            alltime_f = float(alltime)
-            avg_f = float(avg)
+            cnt = float(self.cnt_var.get())
+            all_ = float(self.all_var.get())
+            avg = float(self.avg_var.get())
         except ValueError:
-            count_f = alltime_f = avg_f = 0.0
+            cnt = all_ = avg = 0.0
 
-        recency = f"{count_f / alltime_f:.0%}" if alltime_f > 0 else "N/A"
-        vs_avg = f"{count_f / avg_f:.1f}x" if avg_f > 0 else "N/A"
+        recency = f"{cnt / all_:.0%}" if all_ > 0 else "N/A"
+        vs_avg = f"{cnt / avg:.1f}x" if avg > 0 else "N/A"
 
-        # Display in preview
+        entity = self.ent_var.get()
+        loc = self.loc_var.get()
+        evt = self.evt_var.get()
+
+        data_block = (
+            f"Trigger: {evt} ({entity}) in {loc}\n"
+            f"Count today: {self.cnt_var.get()}\n"
+            f"All-time: {self.all_var.get()}\n"
+            f"Month average per day: {self.avg_var.get()}\n"
+            f"Recency: {recency} of all-time happened today\n"
+            f"vs average: {vs_avg}"
+        )
+
+        prompt = self.assembler.assemble(tags, data_block)
+
+        # Render
         self.preview.config(state=tk.NORMAL)
         self.preview.delete("1.0", tk.END)
 
-        # Tags line
-        self.preview.insert(tk.END, "TRIGGER TAGS: ", "header")
+        self.preview.insert(tk.END, "TAGS: ", "h")
         self.preview.insert(tk.END, ", ".join(tags) + "\n\n")
 
-        # Fragments selected
-        self.preview.insert(tk.END, "FRAGMENTS SELECTED:\n", "header")
-        total_tokens = 0
-        for key, text in selected:
-            tokens = estimate_tokens(text)
-            total_tokens += tokens
-            self.preview.insert(tk.END, f"  [{key}] ", "fragment_key")
-            self.preview.insert(tk.END, f"(~{tokens} tokens)\n")
+        self.preview.insert(tk.END, "FRAGMENTS SELECTED:\n", "h")
+        for key, text in prompt.fragments_used:
+            self.preview.insert(tk.END, f"  [{key}] ", "fk")
+            self.preview.insert(tk.END, f"~{estimate_tokens(text)} tok\n")
 
-        self.preview.insert(tk.END, "\n")
-        self.preview.insert(tk.END, "═" * 60 + "\n", "header")
-        self.preview.insert(tk.END, "SYSTEM PROMPT:\n", "header")
-        self.preview.insert(tk.END, "═" * 60 + "\n\n")
+        self.preview.insert(tk.END, f"\n{'═' * 55}\n", "h")
+        self.preview.insert(tk.END, "SYSTEM:\n", "h")
+        self.preview.insert(tk.END, f"{'═' * 55}\n\n")
+        self.preview.insert(tk.END, prompt.system + "\n")
 
-        for key, text in selected:
-            if key == "_output":
-                continue
-            self.preview.insert(tk.END, text + "\n\n")
-
-        self.preview.insert(tk.END, "═" * 60 + "\n", "header")
-        self.preview.insert(tk.END, "USER PROMPT:\n", "header")
-        self.preview.insert(tk.END, "═" * 60 + "\n\n")
-
-        # Data block
-        self.preview.insert(tk.END,
-            f"Trigger: {event_type} ({entity}) in {location}\n", "data")
-        self.preview.insert(tk.END, f"Count today: {count}\n", "data")
-        self.preview.insert(tk.END, f"All-time: {alltime}\n", "data")
-        self.preview.insert(tk.END,
-            f"Month average per day: {avg}\n", "data")
-        self.preview.insert(tk.END,
-            f"Recency: {recency} of all-time happened today\n", "data")
-        self.preview.insert(tk.END,
-            f"vs average: {vs_avg}\n\n", "data")
-
-        # Output instruction
-        for key, text in selected:
-            if key == "_output":
-                self.preview.insert(tk.END, text + "\n")
-
-        # Token summary
-        data_tokens = estimate_tokens(
-            f"Trigger: {event_type} ({entity}) in {location}\n"
-            f"Count: {count}\nAll-time: {alltime}\nAvg: {avg}\n"
-            f"Recency: {recency}\nvs average: {vs_avg}\n"
-        )
-        total_tokens += data_tokens
-        self.preview_tokens_var.set(
-            f"Total: ~{total_tokens} tokens "
-            f"(system: ~{total_tokens - data_tokens}, "
-            f"data: ~{data_tokens})"
-        )
+        self.preview.insert(tk.END, f"\n{'═' * 55}\n", "h")
+        self.preview.insert(tk.END, "USER:\n", "h")
+        self.preview.insert(tk.END, f"{'═' * 55}\n\n")
+        self.preview.insert(tk.END, prompt.user + "\n")
 
         self.preview.config(state=tk.DISABLED)
+        self.ptok_var.set(f"~{prompt.token_estimate} total tokens")
         self.status_var.set(
-            f"Assembled prompt with {len(selected)} fragments, "
-            f"~{total_tokens} tokens"
-        )
+            f"Assembled: {len(prompt.fragments_used)} fragments, "
+            f"~{prompt.token_estimate} tokens")
 
-    # ── File Operations ─────────────────────────────────────────────
+    # ── File operations ─────────────────────────────────────────────
 
     def _save_all(self):
-        """Save all fragments to disk."""
-        # Save current editor content first
         if self.selected_key:
             text = self.editor.get("1.0", tk.END).strip()
-            self.fragments[self.selected_key] = text
-
-        save_fragments(self.fragments)
+            self.assembler.set_fragment(self.selected_key, text)
+        self.assembler.save()
         self.unsaved_changes = False
-        self.change_indicator.config(text="✓ all saved", foreground="green")
-        self.status_var.set("All fragments saved to prompt_fragments.json")
+        self.change_lbl.config(text="✓ all saved", foreground="green")
+        self.status_var.set("Saved to prompt_fragments.json")
         self._populate_browser()
 
-    def _validate_coverage(self):
-        """Check for game entities without matching fragments."""
-        missing = []
+    def _new_fragment(self):
+        key = simpledialog.askstring(
+            "New Fragment",
+            "Enter fragment key (e.g. species:new_enemy, action:trade):",
+            parent=self.root)
+        if not key:
+            return
+        if key in self.assembler.fragments:
+            messagebox.showwarning("Exists", f"Fragment '{key}' already exists.")
+            return
+        self.assembler.set_fragment(key, "")
+        self._populate_browser()
+        self._load_fragment(key)
+        self.status_var.set(f"Created: {key}")
 
-        # Check species coverage
-        for e in self.game_entities["enemies"]:
-            key = f"species:{e['id']}"
-            if key not in self.fragments:
-                missing.append(f"  {key} ({e['name']}, T{e['tier']})")
+    def _delete_fragment(self):
+        if not self.selected_key:
+            return
+        if self.selected_key.startswith("_"):
+            messagebox.showwarning("Protected", "Cannot delete core fragments.")
+            return
+        if messagebox.askyesno("Delete", f"Delete '{self.selected_key}'?"):
+            del self.assembler.fragments[self.selected_key]
+            self.selected_key = None
+            self.editor.delete("1.0", tk.END)
+            self.key_var.set("(deleted)")
+            self._populate_browser()
 
-        # Check discipline coverage
-        for d in self.game_entities["disciplines"]:
-            key = f"discipline:{d}"
-            if key not in self.fragments:
-                missing.append(f"  {key}")
-
-        # Check tier coverage
-        for t in range(1, 5):
-            key = f"tier:{t}"
-            if key not in self.fragments:
-                missing.append(f"  {key}")
-
+    def _validate(self):
+        result = self.assembler.validate_coverage(self.game_entities)
+        missing = result["missing"]
         if missing:
-            msg = f"Missing fragments ({len(missing)}):\n\n" + "\n".join(missing)
+            msg = f"Missing {len(missing)} fragments:\n\n" + "\n".join(missing)
         else:
-            msg = "Full coverage! All game entities have matching fragments."
-
-        messagebox.showinfo("Coverage Validation", msg)
+            msg = f"Full coverage! {len(result['covered'])} entities covered."
+        messagebox.showinfo("Coverage", msg)
 
     def _on_close(self):
         if self.unsaved_changes:
-            if messagebox.askyesno("Unsaved Changes",
-                                    "Save changes before closing?"):
+            if messagebox.askyesno("Unsaved", "Save before closing?"):
                 self._save_all()
         self.root.destroy()
 
@@ -747,7 +563,7 @@ class PromptEditorApp:
 
 def main():
     root = tk.Tk()
-    app = PromptEditorApp(root)
+    PromptEditorApp(root)
     root.mainloop()
 
 
