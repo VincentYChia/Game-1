@@ -230,6 +230,62 @@ class InterpretedEvent:
         )
 
 
+@dataclass
+class ConsolidatedEvent:
+    """A cross-domain narrative synthesized from multiple Layer 2 interpretations.
+
+    Layer 3 output. These are "connected interpretations" — they link
+    multiple single-lens Layer 2 events into a coherent district-level
+    or global picture. Stored in LayerStore layer3_events + layer3_tags.
+
+    Categories:
+    - regional_synthesis: overall district activity summary
+    - cross_domain: patterns connecting different activity types
+    - player_identity: behavioral profile from all player events
+    - faction_narrative: faction relationship narrative
+    """
+
+    # Identity
+    consolidation_id: str
+    created_at: float  # Game time
+
+    # THE NARRATIVE — core output
+    narrative: str
+
+    # Classification
+    category: str  # regional_synthesis, cross_domain, player_identity, faction_narrative
+    severity: str  # minor, moderate, significant, major, critical
+
+    # Source Layer 2 interpretations that fed this
+    source_interpretation_ids: List[str] = field(default_factory=list)
+
+    # Spatial scope
+    affected_district_ids: List[str] = field(default_factory=list)
+    affected_province_ids: List[str] = field(default_factory=list)
+
+    # Tag-based routing
+    affects_tags: List[str] = field(default_factory=list)
+
+    # History tracking
+    supersedes_id: Optional[str] = None
+    update_count: int = 1
+
+    @staticmethod
+    def create(narrative: str, category: str, severity: str,
+               source_interpretation_ids: List[str],
+               game_time: float, **kwargs) -> ConsolidatedEvent:
+        """Factory for creating consolidated events with auto-generated ID."""
+        return ConsolidatedEvent(
+            consolidation_id=str(uuid.uuid4()),
+            created_at=game_time,
+            narrative=narrative,
+            category=category,
+            severity=severity,
+            source_interpretation_ids=source_interpretation_ids,
+            **kwargs,
+        )
+
+
 # Severity ordering for comparisons
 SEVERITY_ORDER = {
     "minor": 0,

@@ -1,0 +1,22 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "total_fragments": 8,
+    "layer": 3,
+    "description": "Layer 3 prompt fragments for cross-domain consolidation. Separate from Layer 2 fragments. Loaded by PromptAssembler alongside prompt_fragments.json.",
+    "design_principles": [
+      "P1: Layer 3 CONSOLIDATES, not narrates. The LLM sees multiple L2 narratives and synthesizes.",
+      "P2: Geographic context is critical — always name districts and localities.",
+      "P3: 2-3 sentences maximum. Synthesis, not lists.",
+      "P4: State facts about patterns. Do not speculate about player intent.",
+      "P5: Use the example input/output format to anchor the LLM."
+    ]
+  },
+  "_l3_core": "You are a game world chronicler. You consolidate individual event reports into coherent summaries. Rules: Synthesize, do not list. Connect events across domains. Write 2-3 sentences maximum. State facts about what happened. Do not speculate about causes. Use the geographic names provided. Do not repeat individual event narratives — summarize patterns.",
+  "_l3_output": "Write 2-3 factual sentences synthesizing these events into a coherent summary. Mention geographic names. Note cross-domain connections if present. Do not list events — describe the overall pattern.",
+  "l3_consolidator:regional_synthesis": "Summarize all activity in this district across domains. Identify which localities are most active and what types of activity dominate. Note if activity is concentrated or spread out.",
+  "l3_consolidator:cross_domain": "Identify connections between different types of activity in the same area. Combat and resource depletion together may indicate intensive exploitation. Crafting surges after gathering suggest supply chains. Note co-location of different activity types.",
+  "l3_consolidator:player_identity": "Describe the player's behavioral pattern based on their recent activities across all regions. What is their primary focus? Are they a combatant, crafter, explorer, or a mix? Note geographic preferences and tier engagement.",
+  "l3_consolidator:faction_narrative": "Describe how the player's activities relate to faction dynamics. Quest completion and NPC interactions indicate positive relationships. Combat near faction territory may indicate conflict. Note which factions are most affected.",
+  "l3_example:regional": "EXAMPLE INPUT:\n<district name=\"Western Frontier\">\n<locality name=\"Whispering Woods\">\n  <event category=\"combat\" severity=\"moderate\">Player has killed 15 wolves in Whispering Woods.</event>\n  <event category=\"gathering\" severity=\"minor\">Player has gathered 8 oak in Whispering Woods.</event>\n</locality>\n<locality name=\"Iron Hills\">\n  <event category=\"gathering\" severity=\"significant\">Player has gathered 45 iron ore in Iron Hills.</event>\n  <event category=\"gathering\" severity=\"moderate\">Player has depleted 6 resource nodes in Iron Hills.</event>\n</locality>\n</district>\n\nEXAMPLE OUTPUT:\nThe Western Frontier is seeing concentrated activity. Iron Hills is under heavy resource extraction with node depletion, while Whispering Woods has moderate combat with some gathering. Activity spans two localities in the district."
+}

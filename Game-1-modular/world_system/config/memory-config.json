@@ -65,6 +65,13 @@
     "description": "Minimum relevance scores and display limits for query results."
   },
 
+  "layer3": {
+    "trigger_interval": 15,
+    "min_l2_per_district": 3,
+    "min_categories_per_district": 2,
+    "description": "Layer 3 consolidation config. trigger_interval = run every N Layer 2 events. min_l2_per_district = minimum L2 events in a district to consolidate. min_categories_per_district = alternative trigger if 2+ categories present."
+  },
+
   "evaluators": {
     "population_change": {
       "enabled": true,

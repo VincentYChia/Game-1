@@ -60,6 +60,7 @@ class WorldInterpreter:
         self.wms_ai = None       # WmsAI for LLM narration (optional)
         self._evaluators: List[PatternEvaluator] = []
         self._interpretations_created: int = 0
+        self._layer3_callback = None  # Callback to notify Layer3Manager of L2 events
 
     @classmethod
     def get_instance(cls) -> WorldInterpreter:
@@ -147,6 +148,14 @@ class WorldInterpreter:
         """Register an additional pattern evaluator."""
         self._evaluators.append(evaluator)
 
+    def set_layer3_callback(self, callback) -> None:
+        """Set callback to notify Layer3Manager when L2 events are created.
+
+        The callback receives a dict representing the L2 event as stored
+        in LayerStore (with 'tags' as a list of strings).
+        """
+        self._layer3_callback = callback
+
     def on_trigger(self, trigger_input) -> None:
         """Called when a threshold trigger fires.
 
@@ -225,6 +234,21 @@ class WorldInterpreter:
                         )
                     except Exception as e:
                         print(f"[Interpreter] LayerStore write failed: {e}")
+
+                # Notify Layer3Manager of new L2 event
+                if self._layer3_callback:
+                    try:
+                        l2_dict = {
+                            "id": interpretation.interpretation_id,
+                            "narrative": interpretation.narrative,
+                            "category": interpretation.category,
+                            "severity": interpretation.severity,
+                            "tags": interpretation.affects_tags or [],
+                            "game_time": interpretation.created_at,
+                        }
+                        self._layer3_callback(l2_dict)
+                    except Exception as e:
+                        print(f"[Interpreter] Layer3 callback failed: {e}")
 
                 # Propagate to region states
                 self._propagate(interpretation)
