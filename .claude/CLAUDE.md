@@ -135,7 +135,7 @@ Game-1/
 - **Durability, weight, and repair systems**
 - **Tag-driven effect system** (combat, skills, items)
 - **Difficulty/Reward calculators** (material-based scaling)
-- **World Memory System** — Layers 1-2 complete, 33 evaluators, 56 passing tests (14,269 LOC)
+- **World Memory System** — Layers 1-4 complete, 33 evaluators + 4 consolidators + province summarizer, 88+ passing tests (~17,500 LOC)
 - **GameEventBus** pub/sub system (events/event_bus.py)
 - **StatTracker** — 65 SQL-backed recording methods for comprehensive player analytics
 - **Living World consumers** — BackendManager, NPC agents, factions, ecosystem (pre-existing, external to WMS)
@@ -143,7 +143,7 @@ Game-1/
 ### Partially Implemented
 - World generation (basic chunks, detailed templates pending)
 - NPC/Quest system (basic functionality, needs expansion)
-- World Memory Layers 3-7 (SQL schemas exist, no code writes to them yet)
+- World Memory Layers 5-7 (SQL schemas exist, no code writes to them yet)
 
 ### Designed But NOT Implemented
 - Advanced skill evolution chains
