@@ -292,6 +292,38 @@ class TriggerRegistry:
         bucket = self._weighted_buckets.get(bucket_name)
         return bucket.has_fired() if bucket else False
 
+    # ── Prefix-based operations (per-province buckets) ─────────────
+
+    def any_weighted_fired_with_prefix(self, prefix: str) -> bool:
+        """Check if any weighted bucket whose name starts with prefix has fired."""
+        return any(
+            b.has_fired() for n, b in self._weighted_buckets.items()
+            if n.startswith(prefix)
+        )
+
+    def pop_all_fired_weighted_with_prefix(
+        self, prefix: str,
+    ) -> Dict[str, Dict[str, List[str]]]:
+        """Pop fired tags from all weighted buckets matching prefix.
+
+        Returns:
+            Dict mapping bucket_name → {fired_tag → [contributing_event_ids]}.
+            Only includes buckets that actually had fired tags.
+        """
+        result: Dict[str, Dict[str, List[str]]] = {}
+        for name, bucket in list(self._weighted_buckets.items()):
+            if name.startswith(prefix) and bucket.has_fired():
+                fired = bucket.pop_fired()
+                if fired:
+                    result[name] = fired
+        return result
+
+    def get_weighted_bucket_names(self, prefix: str = "") -> List[str]:
+        """Get names of all weighted buckets, optionally filtered by prefix."""
+        if prefix:
+            return [n for n in self._weighted_buckets if n.startswith(prefix)]
+        return list(self._weighted_buckets.keys())
+
     # ── Save/Load ──────────────────────────────────────────────────
 
     def get_state(self) -> Dict[str, Any]:

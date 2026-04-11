@@ -34,7 +34,7 @@ from world_system.world_memory.geographic_registry import (
     GeographicRegistry, Region, RegionLevel,
 )
 from world_system.world_memory.layer4_summarizer import Layer4Summarizer
-from world_system.world_memory.layer4_manager import Layer4Manager
+from world_system.world_memory.layer4_manager import Layer4Manager, BUCKET_PREFIX
 from world_system.world_memory.tag_assignment import assign_higher_layer_tags
 from world_system.world_memory.prompt_assembler import PromptAssembler
 
@@ -244,6 +244,25 @@ class TestTriggerRegistry(unittest.TestCase):
             ["province:region_1", "domain:combat"])
         self.assertTrue(self.registry.has_fired_weighted("wt"))
 
+    def test_prefix_based_operations(self):
+        self.registry.register_weighted_bucket("layer4_province_r1", threshold=10)
+        self.registry.register_weighted_bucket("layer4_province_r2", threshold=10)
+        self.registry.ingest_event_weighted("layer4_province_r1", "e1",
+            ["domain:combat"])  # 10 → fires
+        self.assertFalse(
+            self.registry.any_weighted_fired_with_prefix("layer4_province_r2"))
+        self.assertTrue(
+            self.registry.any_weighted_fired_with_prefix("layer4_province_"))
+        # Pop only fired buckets
+        result = self.registry.pop_all_fired_weighted_with_prefix(
+            "layer4_province_")
+        self.assertIn("layer4_province_r1", result)
+        self.assertNotIn("layer4_province_r2", result)
+        # Verify bucket name listing
+        names = self.registry.get_weighted_bucket_names("layer4_province_")
+        self.assertEqual(sorted(names),
+                         ["layer4_province_r1", "layer4_province_r2"])
+
     def test_save_load_state(self):
         self.registry.register_bucket("simple", threshold=5)
         self.registry.increment("simple", "k1", 3)
@@ -379,19 +398,44 @@ class TestLayer4Manager(unittest.TestCase):
         evt = _make_l3_event(province_id="region_1",
                             district_id="province_0")
         self.manager.on_layer3_created(evt)
+        # Per-province bucket: geo tags stripped, content tags scored
         bucket = TriggerRegistry.get_instance().get_weighted_bucket(
-            "layer4_provinces")
-        self.assertGreater(bucket.get_score("province:region_1"), 0)
+            f"{BUCKET_PREFIX}region_1")
+        self.assertIsNotNone(bucket)
+        # domain:regional is now at position 0 = 10 pts (geo tags stripped)
+        self.assertGreater(bucket.get_score("domain:regional"), 0)
+        # Province tag should NOT be in the bucket (stripped)
+        self.assertEqual(bucket.get_score("province:region_1"), 0)
 
     def test_should_run_after_threshold(self):
         self.assertFalse(self.manager.should_run())
-        # province:region_1 at position 0 = 10 pts each, need 5 events for 50
+        # domain:regional at position 0 = 10 pts each (geo tags stripped)
+        # Need 5 events for 50
         for i in range(5):
             evt = _make_l3_event(province_id="region_1",
                                 district_id="province_0",
                                 game_time=100 + i)
             self.manager.on_layer3_created(evt)
         self.assertTrue(self.manager.should_run())
+
+    def test_province_isolation(self):
+        """Tags from different provinces do NOT cross-contaminate."""
+        # 3 events in region_1: domain:regional = 10*3 = 30 (below 50)
+        for i in range(3):
+            evt = _make_l3_event(province_id="region_1",
+                                district_id="province_0",
+                                game_time=100 + i)
+            self.manager.on_layer3_created(evt)
+
+        # 3 events in region_2: domain:regional = 10*3 = 30 (below 50)
+        for i in range(3):
+            evt = _make_l3_event(province_id="region_2",
+                                district_id="province_1",
+                                game_time=200 + i)
+            self.manager.on_layer3_created(evt)
+
+        # Neither should fire (30 < 50 each), even though 30+30=60 globally
+        self.assertFalse(self.manager.should_run())
 
     def test_run_summarization_stores_event(self):
         # Seed L3 events in LayerStore
@@ -572,7 +616,7 @@ class TestLayer4Integration(unittest.TestCase):
                                             "game_time": 100 + i * 10})
             event_ids.append(eid)
 
-        # province:region_1 = 10*6 = 60 > 50
+        # domain:combat at position 0 (geo stripped) = 10*6 = 60 > 50
         self.assertTrue(self.manager.should_run())
         created = self.manager.run_summarization(game_time=300.0)
         self.assertEqual(created, 1)

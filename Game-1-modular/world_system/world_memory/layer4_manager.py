@@ -1,8 +1,13 @@
 """Layer 4 Manager — orchestrates province-level summarization from Layer 3.
 
-Trigger: Tag-weighted. Each Layer 3 event's tags are scored by positional
-importance (1st tag = 10pts, 2nd = 8, ... 13th+ = 1). When any tag crosses
-50 points, that tag fires and all contributing L3 events become context.
+Trigger: Tag-weighted, **per-province**. Each Layer 3 event is routed to a
+province-specific WeightedTriggerBucket based on its geographic address.
+Geographic tags (province:, district:, locality:, nation:) are stripped before
+scoring so only content tags consume positional weight:
+    Position 1 = 10, 2 = 8, 3 = 6, 4 = 5, 5 = 4, 6 = 3, 7-12 = 2, 13+ = 1.
+
+When any content tag crosses 50 points *within a province*, it fires and all
+contributing L3 events become context for that province's summary.
 
 Province scope: WMS PROVINCE = game Region (region_X). Each province
 contains multiple districts (game provinces = province_X).
@@ -10,8 +15,11 @@ contains multiple districts (game provinces = province_X).
 Data flow:
     Layer 3 event stored in LayerStore (layer3_events)
            ↓
-    Layer4Manager.on_layer3_created() — ingest tags into WeightedTriggerBucket
-           ↓ (tag crosses threshold → fires)
+    Layer4Manager.on_layer3_created()
+      — extract province_id from event tags
+      — strip geographic tags (province:, district:, locality:, nation:)
+      — ingest content tags into per-province WeightedTriggerBucket
+           ↓ (content tag crosses threshold within province → fires)
     Contributing L3 events become primary context
     Relevant L2 events (strict tag-position filter) become supporting context
            ↓
@@ -40,11 +48,16 @@ from world_system.world_memory.tag_assignment import assign_higher_layer_tags
 from world_system.world_memory.trigger_registry import TriggerRegistry
 
 
-# TriggerRegistry bucket name for Layer 4
-BUCKET_NAME = "layer4_provinces"
+# Per-province bucket name prefix: "layer4_province_{province_id}"
+BUCKET_PREFIX = "layer4_province_"
 
 # For L2 visibility: trigger tag must be in these top N positions
 _L2_TAG_POSITION_CUTOFF = 3
+
+# Geographic tag prefixes stripped before scoring — these are address tags,
+# not content tags.  Stripping them ensures content tags get full positional
+# weight (e.g. domain:combat moves from position 2 → 0 = 10 pts, not 6).
+_GEO_TAG_PREFIXES = ("province:", "district:", "locality:", "nation:")
 
 
 class Layer4Manager:
@@ -64,6 +77,9 @@ class Layer4Manager:
         self._wms_ai = None
         self._trigger_registry: Optional[TriggerRegistry] = None
         self._initialized = False
+
+        # Per-province bucket tracking (set of bucket names)
+        self._province_buckets: Set[str] = set()
 
         # Config
         self._trigger_threshold: int = 50
@@ -105,23 +121,27 @@ class Layer4Manager:
         self._max_l3_per_province = cfg.get("max_l3_per_province", 50)
         self._max_l2_relevance = cfg.get("max_l2_relevance", 15)
 
-        # Register weighted trigger bucket
+        # Per-province buckets created lazily in on_layer3_created().
+        # Recover any existing province buckets from a prior session.
         self._trigger_registry = trigger_registry or TriggerRegistry.get_instance()
-        self._trigger_registry.register_weighted_bucket(
-            BUCKET_NAME, threshold=self._trigger_threshold,
+        self._province_buckets = set(
+            self._trigger_registry.get_weighted_bucket_names(BUCKET_PREFIX)
         )
 
         self._initialized = True
-        print(f"[Layer4] Initialized — weighted trigger, "
-              f"threshold {self._trigger_threshold} points")
+        print(f"[Layer4] Initialized — per-province weighted triggers, "
+              f"threshold {self._trigger_threshold} points, "
+              f"{len(self._province_buckets)} existing province buckets")
 
     # ── Trigger API ─────────────────────────────────────────────────
 
     def on_layer3_created(self, l3_event_dict: Dict[str, Any]) -> None:
         """Called each time a Layer 3 consolidation is stored.
 
-        Ingests the event's ordered tags into the WeightedTriggerBucket.
-        Tags at earlier positions contribute more points.
+        Extracts province_id from the event's tags, strips geographic
+        address tags, and ingests content tags into the province-specific
+        WeightedTriggerBucket.  Geographic tags are stripped so content
+        tags receive full positional weight (position 0 = 10 pts).
         """
         if not self._initialized or not self._trigger_registry:
             return
@@ -134,37 +154,69 @@ class Layer4Manager:
             except (json.JSONDecodeError, TypeError):
                 tags = []
 
-        if event_id and tags:
+        if not event_id or not tags:
+            return
+
+        # Extract province_id(s) from tags — route to each province bucket
+        province_ids = [
+            t.split(":", 1)[1] for t in tags if t.startswith("province:")
+        ]
+        if not province_ids:
+            return
+
+        # Strip geographic address tags so content tags get full positional
+        # weight (e.g. domain:combat at position 0 = 10 pts, not position 2 = 6)
+        content_tags = [
+            t for t in tags
+            if not any(t.startswith(p) for p in _GEO_TAG_PREFIXES)
+        ]
+        if not content_tags:
+            return
+
+        # Ingest into each province's bucket (usually one, could span)
+        for province_id in province_ids:
+            bucket_name = f"{BUCKET_PREFIX}{province_id}"
+            if bucket_name not in self._province_buckets:
+                self._trigger_registry.register_weighted_bucket(
+                    bucket_name, threshold=self._trigger_threshold)
+                self._province_buckets.add(bucket_name)
+
             self._trigger_registry.ingest_event_weighted(
-                BUCKET_NAME, event_id, tags)
+                bucket_name, event_id, content_tags)
 
     def should_run(self) -> bool:
-        """Check if any tag has crossed the threshold."""
+        """Check if any content tag in any province bucket has crossed the threshold."""
         if not self._initialized or not self._trigger_registry:
             return False
-        return self._trigger_registry.has_fired_weighted(BUCKET_NAME)
+        return self._trigger_registry.any_weighted_fired_with_prefix(BUCKET_PREFIX)
 
     def run_summarization(self, game_time: float) -> int:
-        """Execute summarization for all fired tags.
+        """Execute summarization for all province buckets that have fired.
 
-        Groups fired tags by province, then summarizes each province
-        using the contributing events as primary context.
+        Each province bucket fires independently when its content tags
+        cross the threshold.  Contributing event IDs are already scoped
+        to the correct province — no post-hoc grouping needed.
 
         Returns the number of Layer 4 summaries created.
         """
         if not self._initialized or not self._layer_store:
             return 0
 
-        # Get all fired tags with their contributing event IDs
-        fired = self._trigger_registry.get_and_clear_fired_weighted(BUCKET_NAME)
-        if not fired:
+        # Pop fired tags from every province bucket at once
+        all_fired = self._trigger_registry.pop_all_fired_weighted_with_prefix(
+            BUCKET_PREFIX)
+        if not all_fired:
             return 0
 
-        # Group by province: find which province each fired tag belongs to
-        province_contexts = self._group_by_province(fired)
-
         created = 0
-        for province_id, context_event_ids in province_contexts.items():
+        for bucket_name, fired_tags in all_fired.items():
+            province_id = bucket_name[len(BUCKET_PREFIX):]
+
+            # Collect all contributing event IDs across all fired tags
+            context_event_ids: Set[str] = set()
+            for event_ids in fired_tags.values():
+                context_event_ids.update(event_ids)
+
             summary = self._summarize_province(
                 province_id, context_event_ids, game_time)
             if summary is not None:
@@ -178,50 +230,11 @@ class Layer4Manager:
         if created > 0:
             print(f"[Layer4] Summarization run #{self._runs_completed}: "
                   f"{created} province summaries from "
-                  f"{len(fired)} fired tags")
+                  f"{len(all_fired)} province buckets")
 
         return created
 
     # ── Internal Methods ────────────────────────────────────────────
-
-    def _group_by_province(
-        self, fired: Dict[str, List[str]],
-    ) -> Dict[str, Set[str]]:
-        """Group fired tags by province, collecting all contributing event IDs.
-
-        Examines each fired tag. If it's a province: tag, use it directly.
-        Otherwise, look up the contributing events' province tags in LayerStore.
-
-        Returns:
-            Dict mapping province_id → set of contributing L3 event IDs.
-        """
-        province_events: Dict[str, Set[str]] = {}
-
-        for tag, event_ids in fired.items():
-            # Direct province tag — e.g. "province:region_1"
-            if tag.startswith("province:"):
-                pid = tag.split(":", 1)[1]
-                province_events.setdefault(pid, set()).update(event_ids)
-                continue
-
-            # Non-province tag fired — find which province(s) the
-            # contributing events belong to
-            for eid in event_ids:
-                pid = self._province_for_event(eid)
-                if pid:
-                    province_events.setdefault(pid, set()).add(eid)
-
-        return province_events
-
-    def _province_for_event(self, event_id: str) -> Optional[str]:
-        """Look up which province an L3 event belongs to from its tags."""
-        if not self._layer_store:
-            return None
-        tags = self._layer_store.get_tags_for_event(layer=3, event_id=event_id)
-        for tag in tags:
-            if tag.startswith("province:"):
-                return tag.split(":", 1)[1]
-        return None
 
     def _summarize_province(
         self, province_id: str, context_event_ids: Set[str],
@@ -462,15 +475,22 @@ class Layer4Manager:
 
     @property
     def stats(self) -> Dict[str, Any]:
-        trigger_info = {}
+        trigger_info: Dict[str, Any] = {}
         if self._trigger_registry:
-            bucket = self._trigger_registry.get_weighted_bucket(BUCKET_NAME)
-            if bucket:
-                trigger_info = {
-                    "tags_tracked": len(bucket.tag_scores),
-                    "tags_fired": len(bucket.fired_tags),
-                    "threshold": bucket.threshold,
-                }
+            per_province: Dict[str, Any] = {}
+            for bucket_name in sorted(self._province_buckets):
+                bucket = self._trigger_registry.get_weighted_bucket(bucket_name)
+                if bucket:
+                    province_id = bucket_name[len(BUCKET_PREFIX):]
+                    per_province[province_id] = {
+                        "tags_tracked": len(bucket.tag_scores),
+                        "tags_fired": len(bucket.fired_tags),
+                    }
+            trigger_info = {
+                "provinces_tracked": len(self._province_buckets),
+                "threshold": self._trigger_threshold,
+                "per_province": per_province,
+            }
         return {
             "initialized": self._initialized,
             "summaries_created": self._summaries_created,
