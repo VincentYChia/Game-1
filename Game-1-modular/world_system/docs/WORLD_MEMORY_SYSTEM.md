@@ -787,21 +787,35 @@ Layer 2 event stored → interpreter notifies Layer3Manager
         → store in layer3_events + layer3_tags
 ```
 
-## 7.2 Layer 4: Smaller Region Events
+## 7.2 Layer 4: Smaller Region Events (IMPLEMENTED)
 
-Per-province gross summaries. Updated when Layer 3 changes significantly.
+Per-province gross summaries. WMS PROVINCE = game Region (`region_X`). Updated via tag-weighted triggers when Layer 3 events accumulate enough positional weight across a province's tags.
 
 ```python
 @dataclass
-class ProvinceSummary:
-    province_id: str
-    summary_text: str                 # "Eastern Highlands: heavy mining, moderate combat, iron scarcity spreading"
+class ProvinceSummaryEvent:
+    summary_id: str
+    province_id: str                  # e.g. "region_1" (WMS PROVINCE = game Region)
+    created_at: float
+    narrative: str                    # "Iron Reaches: heavy mining, moderate combat, iron scarcity spreading"
+    severity: str                     # minor...critical
     dominant_activities: List[str]    # ["mining", "combat"]
-    notable_events: List[str]        # Top 3-5 interpretation narratives
-    resource_state: Dict[str, str]   # {"iron": "strained", "wood": "abundant"}
-    threat_level: str                # "low"..."critical"
-    last_updated: float
+    threat_level: str                 # "low"..."critical"
+    source_consolidation_ids: List[str]  # L3 event IDs that fed this
+    relevant_l2_ids: List[str]       # High-relevance L2 event IDs
+    tags: List[str]                  # Full tag list (LLM-rewritten at this layer)
+    supersedes_id: Optional[str]     # Previous summary for same province
 ```
+
+**Trigger mechanism**: Tag-weighted via `WeightedTriggerBucket`. Each L3 event's tags scored by position (1st=10, 2nd=8, 3rd=6, 4th=5, 5th=4, 6th=3, 7-12th=2, 13th+=1). When any tag crosses 50 points, the contributing L3 events are used as context for province summarization.
+
+**LLM tag rewrite**: At Layer 4+, the LLM receives all inherited tags as input context and outputs a complete reordered tag list (keeping 66-80% of aggregate tags, reordered by relevance). This enables tag position to carry semantic weight in downstream triggers.
+
+**L2 visibility**: Layer 4 sees L3 (full) and L2 (filtered — trigger tag must appear in L2 event's top 3 tag positions).
+
+**Prompt fragments**: `prompt_fragments_l4.json` — aggregates ALL lower-layer fragments (L2+L3+L4) for maximum entity context.
+
+**Storage**: `layer4_events` + `layer4_tags` in LayerStore (append-only, same pattern as L2-L3). The `province_summaries` table in EventStore is dormant.
 
 ## 7.3 Layer 5: Larger Region/Country Events
 
