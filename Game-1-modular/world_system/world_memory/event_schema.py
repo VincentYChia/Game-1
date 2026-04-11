@@ -133,6 +133,7 @@ class WorldMemoryEvent:
     locality_id: Optional[str] = None
     district_id: Optional[str] = None
     province_id: Optional[str] = None
+    nation_id: Optional[str] = None
     biome: str = "unknown"
 
     # WHEN

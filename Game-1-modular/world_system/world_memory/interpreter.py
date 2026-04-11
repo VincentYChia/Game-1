@@ -289,6 +289,7 @@ class WorldInterpreter:
                 locality_id=trigger_event.locality_id or "",
                 district_id=trigger_event.district_id or "",
                 province_id=trigger_event.province_id or "",
+                nation_id=getattr(trigger_event, 'nation_id', "") or "",
                 biome=trigger_event.biome or "",
                 scope=scope,
                 significance=interpretation.severity,

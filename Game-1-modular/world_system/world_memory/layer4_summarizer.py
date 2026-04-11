@@ -173,7 +173,7 @@ class Layer4Summarizer:
             if not placed:
                 global_events.append(event)
 
-        # Emit per-district blocks
+        # Emit per-district blocks (with full tag list for LLM rewrite)
         for d_id, events in sorted(by_district.items()):
             d_name = district_map.get(d_id, d_id)
             lines.append(f'  <district name="{d_name}">')
@@ -182,8 +182,10 @@ class Layer4Summarizer:
                 cat = event.get("category", "unknown")
                 sev = event.get("severity", "minor")
                 narrative = event.get("narrative", "").strip()
+                tag_str = ", ".join(event.get("tags", []))
                 lines.append(
-                    f'    <event category="{cat}" severity="{sev}" when="{when}">'
+                    f'    <event category="{cat}" severity="{sev}" '
+                    f'when="{when}" tags="[{tag_str}]">'
                     f'{narrative}</event>'
                 )
             lines.append('  </district>')
@@ -196,21 +198,25 @@ class Layer4Summarizer:
                 cat = event.get("category", "unknown")
                 sev = event.get("severity", "minor")
                 narrative = event.get("narrative", "").strip()
+                tag_str = ", ".join(event.get("tags", []))
                 lines.append(
-                    f'    <event category="{cat}" severity="{sev}" when="{when}">'
+                    f'    <event category="{cat}" severity="{sev}" '
+                    f'when="{when}" tags="[{tag_str}]">'
                     f'{narrative}</event>'
                 )
             lines.append('  </cross-district>')
 
-        # Supporting Layer 2 detail (high-relevance only)
+        # Supporting Layer 2 detail (with tags for context)
         if l2_events:
             lines.append('  <supporting-detail>')
             for event in l2_events[:10]:  # Cap to avoid prompt bloat
                 when = format_relative(event.get("game_time", 0), game_time)
                 cat = event.get("category", "unknown")
                 narrative = event.get("narrative", "").strip()
+                tag_str = ", ".join(event.get("tags", []))
                 lines.append(
-                    f'    <event category="{cat}" when="{when}">'
+                    f'    <event category="{cat}" when="{when}" '
+                    f'tags="[{tag_str}]">'
                     f'{narrative}</event>'
                 )
             lines.append('  </supporting-detail>')

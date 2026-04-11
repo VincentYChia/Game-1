@@ -17,7 +17,7 @@ The prompt_editor.py UI imports this for its preview/simulation logic.
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 
 # ── Paths ───────────────────────────────────────────────────────────
@@ -407,17 +407,48 @@ class PromptAssembler:
         val = self._l4_fragments.get(key, "")
         if isinstance(val, str) and val:
             return val
-        # Fallback chain: L3 → L2
         return self.get_l3_fragment(key)
 
-    def assemble_l4(self, data_block: str = "") -> "AssembledPrompt":
+    def _collect_all_tag_fragments(self, event_tags: List[str]) -> List[Tuple[str, str]]:
+        """Collect matching tag fragments from ALL layers (L2 + L3 + L4).
+
+        Higher layers can see all lower-layer fragments. This gives them
+        richer context about the entities and concepts in their events.
+        Returns (key, text) pairs with deduplication by text content.
+        """
+        selected = []
+        seen_texts: Set[str] = set()
+
+        # Check all fragment sources in priority order: L4 → L3 → L2
+        all_sources = [self._l4_fragments, self._l3_fragments, self.fragments]
+
+        for tag in event_tags:
+            if ":" not in tag:
+                continue
+            cat = tag.split(":")[0]
+            # Look for matching fragments in any layer
+            for source in all_sources:
+                text = source.get(tag, "")
+                if isinstance(text, str) and text and text not in seen_texts:
+                    selected.append((tag, text))
+                    seen_texts.add(text)
+                    break  # Found in highest-priority source
+
+        return selected
+
+    def assemble_l4(self, data_block: str = "",
+                    event_tags: Optional[List[str]] = None,
+                    ) -> "AssembledPrompt":
         """Assemble a Layer 4 prompt for province summarization.
 
-        Uses Layer 4 fragments (_l4_core, _l4_output, context, example).
-        Falls back to L3/L2 fragments if L4 versions are missing.
+        Aggregates fragments from ALL layers (L2, L3, L4). Higher layers
+        see everything below them, giving the LLM full context about
+        species, materials, disciplines, etc. referenced in the events.
 
         Args:
             data_block: XML-formatted Layer 3 + L2 events data.
+            event_tags: Optional aggregate tags from input events — used
+                        to pull matching entity/context fragments from L2/L3.
 
         Returns:
             AssembledPrompt with system and user components.
@@ -434,6 +465,12 @@ class PromptAssembler:
         ctx_frag = self.get_l4_fragment(ctx_key)
         if ctx_frag:
             selected.append((ctx_key, ctx_frag))
+
+        # Aggregate entity/context fragments from ALL lower layers
+        # based on tags present in the input events
+        if event_tags:
+            tag_frags = self._collect_all_tag_fragments(event_tags)
+            selected.extend(tag_frags)
 
         # Example if available
         example_key = "l4_example:province"

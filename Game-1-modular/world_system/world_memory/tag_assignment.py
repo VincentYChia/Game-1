@@ -185,6 +185,7 @@ class Layer2TagAssigner:
                     locality_id: str = "",
                     district_id: str = "",
                     province_id: str = "",
+                    nation_id: str = "",
                     biome: str = "",
                     scope: str = "local",
                     significance: str = "minor",
@@ -197,6 +198,7 @@ class Layer2TagAssigner:
             locality_id: Geographic locality.
             district_id: Geographic district.
             province_id: Geographic province.
+            nation_id: Geographic nation.
             biome: Chunk biome type.
             scope: Geographic scope of this event.
             significance: Evaluator-assessed significance (RECREATED here).
@@ -218,6 +220,8 @@ class Layer2TagAssigner:
             tags.append(format_tag("district", district_id))
         if province_id:
             tags.append(format_tag("province", province_id))
+        if nation_id:
+            tags.append(format_tag("nation", nation_id))
         if biome:
             tags.append(format_tag("biome", biome))
 

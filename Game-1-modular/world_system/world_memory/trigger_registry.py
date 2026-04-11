@@ -1,39 +1,57 @@
-"""Centralized per-key trigger tracking for WMS layer escalation.
+"""Centralized trigger tracking for WMS layer escalation.
 
-Manages counters that accumulate per logical key (province_id, district_id,
-faction_id, etc.) and fire when a threshold is reached. After firing, the
-counter resets to zero.
+Two trigger modes:
+1. **TriggerBucket** — simple per-key counter (Layer 3 uses this).
+2. **WeightedTriggerBucket** — tag-positional weighting (Layer 4+ uses this).
 
-Designed to be reusable across layers:
-- Layer 3→4: key=province_id, counting Layer 3 events per province
-- Layer 4→5: key=realm_id, counting Layer 4 events per realm
-- Any future trigger: register a TriggerBucket and go
+Tag-positional weighting assigns points based on where a tag appears in the
+event's tag list (earlier = more relevant):
+    Position 1 = 10, 2 = 8, 3 = 6, 4 = 5, 5 = 4, 6 = 3, 7-12 = 2, 13+ = 1
+
+When any tag accumulates enough points (default 50), it fires. All events
+that contributed to that tag's score are returned as context for the
+summarizer, pre-filtered to the most relevant inputs.
 
 Usage:
     registry = TriggerRegistry()
-    registry.register_bucket("layer4_provinces", threshold=3)
-    registry.increment("layer4_provinces", "nation_1")
-    registry.increment("layer4_provinces", "nation_1")
-    registry.increment("layer4_provinces", "nation_1")
-    fired = registry.get_and_clear_fired("layer4_provinces")
-    # fired == ["nation_1"]
+
+    # Simple counter trigger (Layer 3)
+    registry.register_bucket("layer3_districts", threshold=15)
+
+    # Weighted tag trigger (Layer 4)
+    bucket = registry.register_weighted_bucket("layer4_provinces",
+                                                threshold=50)
+    bucket.ingest_event("evt_1", ["province:region_1", "domain:combat", ...])
+    fired = registry.get_and_clear_fired_weighted("layer4_provinces")
+    # fired == {"province:region_1": ["evt_1", ...]}
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, ClassVar, Dict, List, Optional, Set
+from typing import Any, ClassVar, Dict, List, Optional, Set, Tuple
 
+
+# ── Positional weight table ────────────────────────────────────────
+
+# Tag position → points. Position is 0-indexed.
+_POSITION_WEIGHTS = (10, 8, 6, 5, 4, 3, 2, 2, 2, 2, 2, 2)
+# Position 12+ all get 1 point
+
+def tag_weight_for_position(position: int) -> int:
+    """Return the point value for a tag at the given 0-indexed position."""
+    if position < len(_POSITION_WEIGHTS):
+        return _POSITION_WEIGHTS[position]
+    return 1
+
+
+# ── Simple counter bucket (unchanged from v1) ─────────────────────
 
 @dataclass
 class TriggerBucket:
     """A named collection of per-key counters with a shared threshold.
 
-    Attributes:
-        name: Unique bucket identifier (e.g., "layer4_provinces").
-        threshold: Number of increments before a key fires.
-        counters: Current count per key.
-        fired: Keys that have reached the threshold since last check.
+    Used by Layer 3 (simple event counting per district).
     """
     name: str
     threshold: int
@@ -41,12 +59,7 @@ class TriggerBucket:
     fired: Set[str] = field(default_factory=set)
 
     def increment(self, key: str, amount: int = 1) -> bool:
-        """Increment counter for key. Returns True if threshold reached.
-
-        Once a key fires, it is added to the `fired` set. The counter
-        keeps accumulating (not auto-reset) until explicitly cleared
-        via `pop_fired()` or `clear_key()`.
-        """
+        """Increment counter for key. Returns True if threshold reached."""
         self.counters[key] = self.counters.get(key, 0) + amount
         if self.counters[key] >= self.threshold:
             self.fired.add(key)
@@ -54,10 +67,7 @@ class TriggerBucket:
         return False
 
     def pop_fired(self) -> List[str]:
-        """Return all fired keys and reset their counters.
-
-        Returns keys in sorted order for deterministic processing.
-        """
+        """Return all fired keys and reset their counters."""
         keys = sorted(self.fired)
         for key in keys:
             self.counters.pop(key, None)
@@ -65,20 +75,16 @@ class TriggerBucket:
         return keys
 
     def has_fired(self) -> bool:
-        """Check if any key has reached the threshold."""
         return len(self.fired) > 0
 
     def clear_key(self, key: str) -> None:
-        """Reset a specific key's counter and remove from fired set."""
         self.counters.pop(key, None)
         self.fired.discard(key)
 
     def get_count(self, key: str) -> int:
-        """Get current count for a key."""
         return self.counters.get(key, 0)
 
     def get_state(self) -> Dict[str, Any]:
-        """Serialize for save/load."""
         return {
             "name": self.name,
             "threshold": self.threshold,
@@ -88,28 +94,127 @@ class TriggerBucket:
 
     @classmethod
     def from_state(cls, state: Dict[str, Any]) -> TriggerBucket:
-        """Restore from serialized state."""
-        bucket = cls(
-            name=state["name"],
-            threshold=state["threshold"],
-        )
+        bucket = cls(name=state["name"], threshold=state["threshold"])
         bucket.counters = dict(state.get("counters", {}))
         bucket.fired = set(state.get("fired", []))
         return bucket
 
 
-class TriggerRegistry:
-    """Central registry of trigger buckets for all WMS layers.
+# ── Weighted tag bucket (Layer 4+) ────────────────────────────────
 
-    Singleton. Each layer registers its buckets during initialization.
-    The registry provides a uniform API for incrementing, checking, and
-    clearing triggers regardless of which layer owns them.
+@dataclass
+class WeightedTriggerBucket:
+    """Tag-weighted trigger bucket. Scores tags by positional importance.
+
+    Each ingested event distributes points across its tags based on their
+    position in the tag list. When any tag's score crosses the threshold,
+    it fires. The bucket tracks which event IDs contributed to each tag so
+    that the fired result includes all relevant context events.
+
+    Attributes:
+        name: Unique bucket name.
+        threshold: Point threshold to fire (default 50).
+        tag_scores: Current score per tag.
+        tag_contributors: Map of tag → set of event IDs that contributed.
+        fired_tags: Tags that crossed the threshold since last check.
     """
+    name: str
+    threshold: int = 50
+    tag_scores: Dict[str, float] = field(default_factory=dict)
+    tag_contributors: Dict[str, List[str]] = field(default_factory=dict)
+    fired_tags: Set[str] = field(default_factory=set)
+
+    # Tags that are purely structural and should not trigger on their own
+    _SKIP_PREFIXES: ClassVar[Tuple[str, ...]] = (
+        "significance:", "scope:", "consolidator:",
+    )
+
+    def ingest_event(self, event_id: str, tags: List[str]) -> List[str]:
+        """Score all tags in an event by their position. Returns newly fired tags.
+
+        Args:
+            event_id: Unique event identifier.
+            tags: Ordered tag list from the event (position matters!).
+
+        Returns:
+            List of tags that newly crossed the threshold from this event.
+        """
+        newly_fired = []
+        for pos, tag in enumerate(tags):
+            # Skip structural tags that shouldn't trigger
+            if any(tag.startswith(p) for p in self._SKIP_PREFIXES):
+                continue
+
+            weight = tag_weight_for_position(pos)
+            self.tag_scores[tag] = self.tag_scores.get(tag, 0) + weight
+
+            # Track contributing event
+            if tag not in self.tag_contributors:
+                self.tag_contributors[tag] = []
+            if event_id not in self.tag_contributors[tag]:
+                self.tag_contributors[tag].append(event_id)
+
+            # Check threshold
+            if (self.tag_scores[tag] >= self.threshold
+                    and tag not in self.fired_tags):
+                self.fired_tags.add(tag)
+                newly_fired.append(tag)
+
+        return newly_fired
+
+    def has_fired(self) -> bool:
+        return len(self.fired_tags) > 0
+
+    def pop_fired(self) -> Dict[str, List[str]]:
+        """Return fired tags with their contributing event IDs, then reset.
+
+        Returns:
+            Dict mapping each fired tag to the list of event IDs that
+            contributed points to it.
+        """
+        result = {}
+        for tag in sorted(self.fired_tags):
+            result[tag] = list(self.tag_contributors.get(tag, []))
+            # Reset this tag's score and contributors
+            self.tag_scores.pop(tag, None)
+            self.tag_contributors.pop(tag, None)
+        self.fired_tags.clear()
+        return result
+
+    def get_score(self, tag: str) -> float:
+        return self.tag_scores.get(tag, 0)
+
+    def get_state(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "threshold": self.threshold,
+            "tag_scores": dict(self.tag_scores),
+            "tag_contributors": {k: list(v)
+                                 for k, v in self.tag_contributors.items()},
+            "fired_tags": sorted(self.fired_tags),
+        }
+
+    @classmethod
+    def from_state(cls, state: Dict[str, Any]) -> WeightedTriggerBucket:
+        bucket = cls(name=state["name"], threshold=state["threshold"])
+        bucket.tag_scores = dict(state.get("tag_scores", {}))
+        bucket.tag_contributors = {
+            k: list(v) for k, v in state.get("tag_contributors", {}).items()
+        }
+        bucket.fired_tags = set(state.get("fired_tags", []))
+        return bucket
+
+
+# ── Central Registry ───────────────────────────────────────────────
+
+class TriggerRegistry:
+    """Central registry of trigger buckets for all WMS layers. Singleton."""
 
     _instance: ClassVar[Optional[TriggerRegistry]] = None
 
     def __init__(self):
         self._buckets: Dict[str, TriggerBucket] = {}
+        self._weighted_buckets: Dict[str, WeightedTriggerBucket] = {}
 
     @classmethod
     def get_instance(cls) -> TriggerRegistry:
@@ -121,19 +226,10 @@ class TriggerRegistry:
     def reset(cls) -> None:
         cls._instance = None
 
+    # ── Simple bucket API ──────────────────────────────────────────
+
     def register_bucket(self, name: str, threshold: int) -> TriggerBucket:
-        """Register a new trigger bucket.
-
-        If a bucket with this name already exists, its threshold is updated
-        but counters are preserved (supports config reload).
-
-        Args:
-            name: Unique bucket name (e.g., "layer4_provinces").
-            threshold: Fire when a key reaches this count.
-
-        Returns:
-            The registered TriggerBucket.
-        """
+        """Register a simple counter bucket."""
         if name in self._buckets:
             self._buckets[name].threshold = threshold
         else:
@@ -141,71 +237,104 @@ class TriggerRegistry:
         return self._buckets[name]
 
     def get_bucket(self, name: str) -> Optional[TriggerBucket]:
-        """Get a bucket by name. Returns None if not registered."""
         return self._buckets.get(name)
 
     def increment(self, bucket_name: str, key: str, amount: int = 1) -> bool:
-        """Increment a key in a named bucket.
-
-        Returns True if the key has now fired. Returns False if the
-        bucket doesn't exist or the threshold hasn't been reached.
-        """
         bucket = self._buckets.get(bucket_name)
         if bucket is None:
             return False
         return bucket.increment(key, amount)
 
     def get_and_clear_fired(self, bucket_name: str) -> List[str]:
-        """Get all fired keys from a bucket and reset their counters.
-
-        Returns empty list if bucket doesn't exist.
-        """
         bucket = self._buckets.get(bucket_name)
         if bucket is None:
             return []
         return bucket.pop_fired()
 
     def has_fired(self, bucket_name: str) -> bool:
-        """Check if any key has fired in a bucket."""
         bucket = self._buckets.get(bucket_name)
         return bucket.has_fired() if bucket else False
 
+    # ── Weighted bucket API ────────────────────────────────────────
+
+    def register_weighted_bucket(self, name: str,
+                                  threshold: int = 50) -> WeightedTriggerBucket:
+        """Register a tag-weighted trigger bucket."""
+        if name in self._weighted_buckets:
+            self._weighted_buckets[name].threshold = threshold
+        else:
+            self._weighted_buckets[name] = WeightedTriggerBucket(
+                name=name, threshold=threshold)
+        return self._weighted_buckets[name]
+
+    def get_weighted_bucket(self, name: str) -> Optional[WeightedTriggerBucket]:
+        return self._weighted_buckets.get(name)
+
+    def ingest_event_weighted(self, bucket_name: str,
+                               event_id: str,
+                               tags: List[str]) -> List[str]:
+        """Ingest an event into a weighted bucket. Returns newly fired tags."""
+        bucket = self._weighted_buckets.get(bucket_name)
+        if bucket is None:
+            return []
+        return bucket.ingest_event(event_id, tags)
+
+    def get_and_clear_fired_weighted(
+        self, bucket_name: str,
+    ) -> Dict[str, List[str]]:
+        """Get fired tags from a weighted bucket with contributor event IDs."""
+        bucket = self._weighted_buckets.get(bucket_name)
+        if bucket is None:
+            return {}
+        return bucket.pop_fired()
+
+    def has_fired_weighted(self, bucket_name: str) -> bool:
+        bucket = self._weighted_buckets.get(bucket_name)
+        return bucket.has_fired() if bucket else False
+
+    # ── Save/Load ──────────────────────────────────────────────────
+
     def get_state(self) -> Dict[str, Any]:
-        """Serialize all buckets for save/load."""
         return {
-            name: bucket.get_state()
-            for name, bucket in self._buckets.items()
+            "simple": {n: b.get_state() for n, b in self._buckets.items()},
+            "weighted": {n: b.get_state()
+                         for n, b in self._weighted_buckets.items()},
         }
 
     def load_state(self, state: Dict[str, Any]) -> None:
-        """Restore buckets from serialized state.
-
-        Only restores counters for buckets that are already registered
-        (threshold comes from config, not save data).
-        """
-        for name, bucket_state in state.items():
+        for name, bs in state.get("simple", {}).items():
             if name in self._buckets:
-                # Preserve the config-set threshold, restore counters
-                self._buckets[name].counters = dict(
-                    bucket_state.get("counters", {}))
-                self._buckets[name].fired = set(
-                    bucket_state.get("fired", []))
+                self._buckets[name].counters = dict(bs.get("counters", {}))
+                self._buckets[name].fired = set(bs.get("fired", []))
             else:
-                # Bucket was registered in a previous session but not
-                # in the current config — restore it anyway
-                self._buckets[name] = TriggerBucket.from_state(bucket_state)
+                self._buckets[name] = TriggerBucket.from_state(bs)
+        for name, bs in state.get("weighted", {}).items():
+            if name in self._weighted_buckets:
+                self._weighted_buckets[name].tag_scores = dict(
+                    bs.get("tag_scores", {}))
+                self._weighted_buckets[name].tag_contributors = {
+                    k: list(v)
+                    for k, v in bs.get("tag_contributors", {}).items()
+                }
+                self._weighted_buckets[name].fired_tags = set(
+                    bs.get("fired_tags", []))
+            else:
+                self._weighted_buckets[name] = (
+                    WeightedTriggerBucket.from_state(bs))
 
     @property
     def stats(self) -> Dict[str, Any]:
-        """Summary stats for debugging."""
         return {
-            "buckets": len(self._buckets),
+            "simple_buckets": len(self._buckets),
+            "weighted_buckets": len(self._weighted_buckets),
             "details": {
-                name: {
-                    "threshold": b.threshold,
-                    "keys_tracked": len(b.counters),
-                    "keys_fired": len(b.fired),
-                }
-                for name, b in self._buckets.items()
+                **{n: {"type": "simple", "threshold": b.threshold,
+                       "keys_tracked": len(b.counters),
+                       "keys_fired": len(b.fired)}
+                   for n, b in self._buckets.items()},
+                **{n: {"type": "weighted", "threshold": b.threshold,
+                       "tags_tracked": len(b.tag_scores),
+                       "tags_fired": len(b.fired_tags)}
+                   for n, b in self._weighted_buckets.items()},
             },
         }
