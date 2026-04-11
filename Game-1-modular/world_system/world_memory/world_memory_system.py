@@ -33,6 +33,8 @@ from world_system.world_memory.position_sampler import PositionSampler
 from world_system.world_memory.stat_store import StatStore
 from world_system.world_memory.daily_ledger import DailyLedgerManager
 from world_system.world_memory.layer3_manager import Layer3Manager
+from world_system.world_memory.layer4_manager import Layer4Manager
+from world_system.world_memory.trigger_registry import TriggerRegistry
 
 
 class WorldMemorySystem:
@@ -54,6 +56,8 @@ class WorldMemorySystem:
         self.position_sampler: Optional[PositionSampler] = None
         self.daily_ledger_manager: Optional[DailyLedgerManager] = None
         self.layer3_manager: Optional[Layer3Manager] = None
+        self.layer4_manager: Optional[Layer4Manager] = None
+        self.trigger_registry: Optional[TriggerRegistry] = None
 
         self._initialized: bool = False
         self._game_time: float = 0.0
@@ -193,6 +197,25 @@ class WorldMemorySystem:
         except Exception as e:
             print(f"[WorldMemory] Layer3Manager init failed (non-fatal): {e}")
             self.layer3_manager = None
+
+        # 7c. Layer 4 Manager (province summarization)
+        try:
+            self.trigger_registry = TriggerRegistry.get_instance()
+            self.layer4_manager = Layer4Manager.get_instance()
+            self.layer4_manager.initialize(
+                layer_store=self.layer_store,
+                geo_registry=self.geo_registry,
+                wms_ai=self.wms_ai,
+                trigger_registry=self.trigger_registry,
+            )
+            # Wire L4 callback to L3 manager so it gets notified of L3 events
+            if self.layer3_manager:
+                self.layer3_manager.set_layer4_callback(
+                    self.layer4_manager.on_layer3_created)
+            print(f"[WorldMemory] Layer4Manager initialized — {self.layer4_manager.stats}")
+        except Exception as e:
+            print(f"[WorldMemory] Layer4Manager init failed (non-fatal): {e}")
+            self.layer4_manager = None
 
         # 8. Query Interface
         self.world_query = WorldQuery.get_instance()
@@ -388,6 +411,13 @@ class WorldMemorySystem:
             except Exception as e:
                 print(f"[WorldMemory] Layer 3 consolidation error: {e}")
 
+        # Layer 4 province summarization check
+        if self.layer4_manager and self.layer4_manager.should_run():
+            try:
+                self.layer4_manager.run_summarization(game_time)
+            except Exception as e:
+                print(f"[WorldMemory] Layer 4 summarization error: {e}")
+
         # Periodic retention pruning
         if self.retention_manager.should_prune(game_time):
             self.retention_manager.prune(self.event_store, game_time)
@@ -484,6 +514,8 @@ class WorldMemorySystem:
         WorldQuery.reset()
         StatStore.reset()
         Layer3Manager.reset()
+        Layer4Manager.reset()
+        TriggerRegistry.reset()
 
     # ── Debug / Stats ────────────────────────────────────────────────
 

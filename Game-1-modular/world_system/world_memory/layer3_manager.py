@@ -54,6 +54,9 @@ class Layer3Manager:
         self._trigger_interval: int = 15  # Run every N L2 events
         self._districts_with_new_l2: Set[str] = set()
 
+        # Layer 4 callback — notified when L3 events are stored
+        self._layer4_callback = None
+
         # Stats
         self._consolidations_created: int = 0
         self._runs_completed: int = 0
@@ -124,6 +127,14 @@ class Layer3Manager:
     def add_consolidator(self, consolidator: ConsolidatorBase) -> None:
         """Register an additional consolidator."""
         self._consolidators.append(consolidator)
+
+    def set_layer4_callback(self, callback) -> None:
+        """Register a callback invoked when L3 events are stored.
+
+        The callback receives the stored L3 event dict (as it would appear
+        from LayerStore). Used by Layer4Manager to track per-province triggers.
+        """
+        self._layer4_callback = callback
 
     # ── Trigger API ─────────────────────────────────────────────────
 
@@ -378,6 +389,21 @@ class Layer3Manager:
             origin_ref=origin_ref,
             event_id=result.consolidation_id,
         )
+
+        # Notify Layer 4 of the new L3 event
+        if self._layer4_callback:
+            try:
+                l3_event_dict = {
+                    "id": result.consolidation_id,
+                    "narrative": result.narrative,
+                    "category": result.category,
+                    "severity": result.severity,
+                    "tags": result.affects_tags,
+                    "game_time": game_time,
+                }
+                self._layer4_callback(l3_event_dict)
+            except Exception as e:
+                print(f"[Layer3] Layer 4 callback error: {e}")
 
     def _find_supersedable(self, result: ConsolidatedEvent) -> Optional[str]:
         """Find an existing L3 event that this result supersedes.

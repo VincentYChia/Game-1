@@ -190,8 +190,15 @@ class WmsAI:
         if tags is None:
             tags = self._assembler.tags_from_event(event_type, event_subtype, tier)
 
-        # 2. Assemble prompt
-        prompt = self._assembler.assemble(tags, data_block)
+        # 2. Assemble prompt (layer-specific assembly for Layer 3+)
+        if layer == 4:
+            prompt = self._assembler.assemble_l4(data_block)
+        elif layer == 3:
+            # Extract consolidator ID from event_type (e.g. "layer3_regional_synthesis")
+            cons_id = event_type.replace("layer3_", "") if event_type.startswith("layer3_") else event_type
+            prompt = self._assembler.assemble_l3(cons_id, data_block)
+        else:
+            prompt = self._assembler.assemble(tags, data_block)
 
         # 3. Call LLM
         config = LAYER_CONFIG.get(layer, LAYER_CONFIG[2])

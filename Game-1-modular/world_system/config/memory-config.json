@@ -72,6 +72,13 @@
     "description": "Layer 3 consolidation config. trigger_interval = run every N Layer 2 events. min_l2_per_district = minimum L2 events in a district to consolidate. min_categories_per_district = alternative trigger if 2+ categories present."
   },
 
+  "layer4": {
+    "trigger_threshold": 3,
+    "max_l3_per_province": 50,
+    "max_l2_relevance": 15,
+    "description": "Layer 4 province summarization config. trigger_threshold = number of Layer 3 events per province before regenerating summary. max_l3_per_province = max L3 events to include in prompt. max_l2_relevance = max L2 supporting-detail events."
+  },
+
   "evaluators": {
     "population_change": {
       "enabled": true,

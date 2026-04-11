@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional, Tuple
 _CONFIG_DIR = Path(__file__).parent.parent / "config"
 _FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments.json"
 _L3_FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments_l3.json"
+_L4_FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments_l4.json"
 
 # Fragment categories that get matched from trigger tags
 FRAGMENT_CATEGORIES = frozenset({
@@ -78,6 +79,7 @@ class PromptAssembler:
         self._path = Path(fragments_path) if fragments_path else _FRAGMENTS_PATH
         self.fragments: Dict[str, Any] = {}
         self._l3_fragments: Dict[str, Any] = {}
+        self._l4_fragments: Dict[str, Any] = {}
         self._loaded = False
 
     def load(self) -> int:
@@ -98,6 +100,13 @@ class PromptAssembler:
             with open(l3_path) as f:
                 self._l3_fragments = json.load(f)
             total += self._l3_fragments.get("_meta", {}).get("total_fragments", 0)
+
+        # Load Layer 4 fragments from separate file
+        l4_path = self._path.parent / "prompt_fragments_l4.json"
+        if l4_path.exists():
+            with open(l4_path) as f:
+                self._l4_fragments = json.load(f)
+            total += self._l4_fragments.get("_meta", {}).get("total_fragments", 0)
 
         self._loaded = True
         return total
@@ -387,6 +396,68 @@ class PromptAssembler:
             user=user,
             fragments_used=selected,
             tags=[f"consolidator:{consolidator_id}"],
+            token_estimate=estimate_tokens(system) + estimate_tokens(user),
+        )
+
+
+    # ── Layer 4 Assembly ───────────────────────────────────────────
+
+    def get_l4_fragment(self, key: str) -> str:
+        """Get a Layer 4 fragment by key. Falls back to L3, then L2."""
+        val = self._l4_fragments.get(key, "")
+        if isinstance(val, str) and val:
+            return val
+        # Fallback chain: L3 → L2
+        return self.get_l3_fragment(key)
+
+    def assemble_l4(self, data_block: str = "") -> "AssembledPrompt":
+        """Assemble a Layer 4 prompt for province summarization.
+
+        Uses Layer 4 fragments (_l4_core, _l4_output, context, example).
+        Falls back to L3/L2 fragments if L4 versions are missing.
+
+        Args:
+            data_block: XML-formatted Layer 3 + L2 events data.
+
+        Returns:
+            AssembledPrompt with system and user components.
+        """
+        selected = []
+
+        # L4 core (always)
+        core = self.get_l4_fragment("_l4_core")
+        if core:
+            selected.append(("_l4_core", core))
+
+        # Province summary context fragment
+        ctx_key = "l4_context:province_summary"
+        ctx_frag = self.get_l4_fragment(ctx_key)
+        if ctx_frag:
+            selected.append((ctx_key, ctx_frag))
+
+        # Example if available
+        example_key = "l4_example:province"
+        example_frag = self.get_l4_fragment(example_key)
+        if example_frag:
+            selected.append((example_key, example_frag))
+
+        # L4 output instruction
+        output_text = self.get_l4_fragment("_l4_output")
+
+        # Build system prompt
+        system_parts = [text for _, text in selected]
+        system = "\n\n".join(system_parts)
+
+        # Build user prompt
+        user = data_block
+        if output_text:
+            user = f"{data_block}\n\n{output_text}" if data_block else output_text
+
+        return AssembledPrompt(
+            system=system,
+            user=user,
+            fragments_used=selected,
+            tags=["layer:4", "scope:province"],
             token_estimate=estimate_tokens(system) + estimate_tokens(user),
         )
 
