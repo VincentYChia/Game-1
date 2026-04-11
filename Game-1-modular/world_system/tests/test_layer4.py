@@ -437,6 +437,90 @@ class TestLayer4Manager(unittest.TestCase):
         # Neither should fire (30 < 50 each), even though 30+30=60 globally
         self.assertFalse(self.manager.should_run())
 
+    def test_l2_filtering_top5_min3(self):
+        """L2 visibility: top 5 L3 content tags, min 3/5 match, scored sort."""
+        # L3 events with consistent content tags
+        l3_events = [
+            {"tags": ["province:region_1", "domain:combat",
+                      "species:wolf", "terrain:forest",
+                      "intensity:heavy", "tier:2"]},
+            {"tags": ["province:region_1", "domain:combat",
+                      "species:wolf", "terrain:forest",
+                      "setting:wilderness"]},
+        ]
+        # Top 5 content tags by frequency (geo stripped):
+        #   domain:combat(2), species:wolf(2), terrain:forest(2),
+        #   intensity:heavy(1), tier:2(1) — or setting:wilderness(1)
+        # (alphabetical tiebreak for the 1-count group)
+
+        # L2 candidates — insert into LayerStore
+        # good: 4/5 matches, weight-heavy (early positions)
+        self.layer_store.insert_event(
+            layer=2, narrative="Wolf pack attacks in forest",
+            game_time=150.0, category="combat_event",
+            severity="moderate", significance="moderate",
+            tags=["province:region_1", "domain:combat", "species:wolf",
+                  "terrain:forest", "tier:2"],
+            origin_ref="[]", event_id="l2_good")
+
+        # decent: 3/5 matches, later positions
+        self.layer_store.insert_event(
+            layer=2, narrative="Forest exploration",
+            game_time=140.0, category="exploration_event",
+            severity="minor", significance="minor",
+            tags=["province:region_1", "setting:cave",
+                  "domain:combat", "species:wolf", "terrain:forest"],
+            origin_ref="[]", event_id="l2_decent")
+
+        # poor: only 2/5 matches (below minimum 3)
+        self.layer_store.insert_event(
+            layer=2, narrative="Crafting session",
+            game_time=160.0, category="crafting_event",
+            severity="minor", significance="minor",
+            tags=["province:region_1", "domain:combat", "species:wolf"],
+            origin_ref="[]", event_id="l2_poor")
+
+        # irrelevant: 0/5 matches
+        self.layer_store.insert_event(
+            layer=2, narrative="Mining iron",
+            game_time=170.0, category="gathering_event",
+            severity="minor", significance="minor",
+            tags=["province:region_1", "domain:gathering",
+                  "resource:iron", "discipline:mining"],
+            origin_ref="[]", event_id="l2_irrelevant")
+
+        result = self.manager._query_relevant_l2("region_1", l3_events)
+        result_ids = [e["id"] for e in result]
+
+        # good (4 matches) and decent (3 matches) pass; poor (2) and irrelevant (0) don't
+        self.assertIn("l2_good", result_ids)
+        self.assertIn("l2_decent", result_ids)
+        self.assertNotIn("l2_poor", result_ids)
+        self.assertNotIn("l2_irrelevant", result_ids)
+
+        # good should rank above decent (more matches)
+        self.assertEqual(result_ids[0], "l2_good")
+
+    def test_l2_filtering_cap_5(self):
+        """L2 returns at most 5 events."""
+        l3_events = [
+            {"tags": ["province:region_1", "domain:combat",
+                      "species:wolf", "terrain:forest",
+                      "intensity:heavy", "tier:2"]},
+        ]
+        # Insert 8 L2 events all with 3+ matches
+        for i in range(8):
+            self.layer_store.insert_event(
+                layer=2, narrative=f"Event {i}",
+                game_time=100 + i, category="combat_event",
+                severity="moderate", significance="moderate",
+                tags=["province:region_1", "domain:combat",
+                      "species:wolf", "terrain:forest"],
+                origin_ref="[]", event_id=f"l2_{i}")
+
+        result = self.manager._query_relevant_l2("region_1", l3_events)
+        self.assertLessEqual(len(result), 5)
+
     def test_run_summarization_stores_event(self):
         # Seed L3 events in LayerStore
         for i in range(6):

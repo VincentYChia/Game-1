@@ -45,14 +45,20 @@ from world_system.world_memory.event_schema import (
 )
 from world_system.world_memory.layer4_summarizer import Layer4Summarizer
 from world_system.world_memory.tag_assignment import assign_higher_layer_tags
-from world_system.world_memory.trigger_registry import TriggerRegistry
+from world_system.world_memory.trigger_registry import (
+    TriggerRegistry, tag_weight_for_position,
+)
 
 
 # Per-province bucket name prefix: "layer4_province_{province_id}"
 BUCKET_PREFIX = "layer4_province_"
 
-# For L2 visibility: trigger tag must be in these top N positions
-_L2_TAG_POSITION_CUTOFF = 3
+# L2 visibility: top-N L3 content tags used as the matching set.
+# L2 events must share at least _L2_MIN_TAG_MATCHES of these to be included.
+# Up to _L2_MAX_RESULTS events returned, ranked by match quality.
+_L2_TOP_TAG_COUNT = 5
+_L2_MIN_TAG_MATCHES = 3
+_L2_MAX_RESULTS = 5
 
 # Geographic tag prefixes stripped before scoring — these are address tags,
 # not content tags.  Stripping them ensures content tags get full positional
@@ -84,7 +90,6 @@ class Layer4Manager:
         # Config
         self._trigger_threshold: int = 50
         self._max_l3_per_province: int = 50
-        self._max_l2_relevance: int = 15
 
         # Stats
         self._summaries_created: int = 0
@@ -119,7 +124,6 @@ class Layer4Manager:
         cfg = get_section("layer4")
         self._trigger_threshold = cfg.get("trigger_threshold", 50)
         self._max_l3_per_province = cfg.get("max_l3_per_province", 50)
-        self._max_l2_relevance = cfg.get("max_l2_relevance", 15)
 
         # Per-province buckets created lazily in on_layer3_created().
         # Recover any existing province buckets from a prior session.
@@ -316,27 +320,43 @@ class Layer4Manager:
         province_id: str,
         l3_events: List[Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
-        """Query L2 events relevant to this province, using strict filtering.
+        """Query L2 events relevant to this province using top-tag matching.
 
-        An L2 event is included only if the fired trigger tag appears in
-        the L2 event's top 3 tag positions. This ensures only the most
-        directly relevant L2 detail surfaces.
+        Algorithm:
+          1. Collect all content tags from L3 events, ranked by frequency
+             (most frequent = most representative of the province context).
+          2. Take the top 5 as the matching set.
+          3. For each L2 candidate, count how many of the 5 it contains.
+          4. Filter: must match at least 3 of the 5.
+          5. Sort by:  match count (desc)
+                     → positional weight sum of matched tags (desc)
+                     → game_time (desc, most recent first)
+          6. Return at most 5 events.
         """
         if not self._layer_store:
             return []
 
-        # Collect content tags from L3 events (for matching)
-        l3_content_tags: Set[str] = set()
+        # ── Step 1: Collect content tags from L3 events, ranked by frequency.
+        # L3 tags are already frequency-sorted (_merge_origin_tags), but
+        # across multiple L3 events we re-count to find the most common.
+        _STRUCTURAL = ("significance:", "scope:", "consolidator:")
+        tag_freq: Dict[str, int] = {}
         for event in l3_events:
             for tag in event.get("tags", []):
-                if not tag.startswith(("significance:", "scope:",
-                                       "consolidator:")):
-                    l3_content_tags.add(tag)
+                if not any(tag.startswith(p) for p in _STRUCTURAL):
+                    # Also strip geo tags — province/district are structural
+                    if not any(tag.startswith(p) for p in _GEO_TAG_PREFIXES):
+                        tag_freq[tag] = tag_freq.get(tag, 0) + 1
 
-        if not l3_content_tags:
+        if not tag_freq:
             return []
 
-        # Get L2 events in this province
+        # ── Step 2: Top 5 by frequency (tiebreak: alphabetical for stability)
+        top_tags = sorted(tag_freq, key=lambda t: (-tag_freq[t], t))
+        top_tags = top_tags[:_L2_TOP_TAG_COUNT]
+        top_tag_set = set(top_tags)
+
+        # ── Step 3-4: Score each L2 candidate
         l2_candidates = self._layer_store.query_by_tags(
             layer=2,
             tags=[f"province:{province_id}"],
@@ -344,20 +364,31 @@ class Layer4Manager:
             limit=100,
         )
 
-        # Strict filter: L3 content tag must appear in L2's top N positions
-        relevant = []
+        scored: List[tuple] = []  # (match_count, weight_sum, game_time, event)
         for event in l2_candidates:
             event_tags = event.get("tags", [])
-            top_tags = set(event_tags[:_L2_TAG_POSITION_CUTOFF])
-            if top_tags & l3_content_tags:
-                relevant.append(event)
+            all_tags_set = set(event_tags)
+            matched = top_tag_set & all_tags_set
+            match_count = len(matched)
 
-        # Sort by severity descending
-        relevant.sort(
-            key=lambda e: SEVERITY_ORDER.get(e.get("severity", "minor"), 0),
-            reverse=True,
-        )
-        return relevant[:self._max_l2_relevance]
+            if match_count < _L2_MIN_TAG_MATCHES:
+                continue
+
+            # Positional weight sum: sum of tag_weight_for_position for each
+            # matched tag at its position in the L2 event's tag list.
+            weight_sum = 0
+            for pos, tag in enumerate(event_tags):
+                if tag in matched:
+                    weight_sum += tag_weight_for_position(pos)
+
+            game_time = event.get("game_time", 0.0)
+            scored.append((match_count, weight_sum, game_time, event))
+
+        # ── Step 5: Sort: match count desc → weight desc → recency desc
+        scored.sort(key=lambda x: (x[0], x[1], x[2]), reverse=True)
+
+        # ── Step 6: Return top results
+        return [item[3] for item in scored[:_L2_MAX_RESULTS]]
 
     def _build_geo_context(self, province_id: str) -> Dict[str, Any]:
         """Build geographic context for a province (WMS PROVINCE = game region)."""
