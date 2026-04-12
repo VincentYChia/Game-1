@@ -37,6 +37,7 @@ class NarrationResult:
     """Result from an LLM narration call."""
     text: str = ""
     severity: str = "minor"
+    tags: List[str] = field(default_factory=list)
     success: bool = True
     from_fallback: bool = False
     error: str = ""
@@ -189,8 +190,15 @@ class WmsAI:
         if tags is None:
             tags = self._assembler.tags_from_event(event_type, event_subtype, tier)
 
-        # 2. Assemble prompt
-        prompt = self._assembler.assemble(tags, data_block)
+        # 2. Assemble prompt (layer-specific assembly for Layer 3+)
+        if layer == 4:
+            prompt = self._assembler.assemble_l4(data_block, event_tags=tags)
+        elif layer == 3:
+            # Extract consolidator ID from event_type (e.g. "layer3_regional_synthesis")
+            cons_id = event_type.replace("layer3_", "") if event_type.startswith("layer3_") else event_type
+            prompt = self._assembler.assemble_l3(cons_id, data_block)
+        else:
+            prompt = self._assembler.assemble(tags, data_block)
 
         # 3. Call LLM
         config = LAYER_CONFIG.get(layer, LAYER_CONFIG[2])
@@ -268,28 +276,47 @@ class WmsAI:
             if error:
                 return NarrationResult(success=False, error=error)
 
-            # Parse response — handle JSON wrapping from mock/some models
+            # Parse response — handle JSON with narrative + tags
             text = text.strip()
+            llm_tags = []
+
             if text.startswith("{"):
                 try:
                     parsed = json.loads(text)
-                    text = parsed.get("text", parsed.get("narrative",
+                    text = parsed.get("narrative", parsed.get("text",
                            parsed.get("dialogue", text)))
+                    # Extract LLM-assigned tags
+                    raw_tags = parsed.get("tags", [])
+                    if isinstance(raw_tags, list):
+                        llm_tags = [t for t in raw_tags
+                                    if isinstance(t, str) and ":" in t]
                 except (json.JSONDecodeError, TypeError):
                     pass
+
+            if isinstance(text, dict):
+                text = str(text)
             text = text.strip().strip('"').strip("'")
 
-            # Try to extract severity if the model included it
+            # Extract severity from tags first, then fallback to text search
             severity = "minor"
-            text_lower = text.lower()
-            for sev in ("critical", "major", "significant", "moderate", "minor"):
-                if sev in text_lower:
-                    severity = sev
+            for tag in llm_tags:
+                if tag.startswith("severity:"):
+                    severity = tag.split(":", 1)[1]
+                    llm_tags = [t for t in llm_tags
+                                if not t.startswith("severity:")]
                     break
+            else:
+                text_lower = text.lower()
+                for sev in ("critical", "major", "significant",
+                            "moderate", "minor"):
+                    if sev in text_lower:
+                        severity = sev
+                        break
 
             return NarrationResult(
                 text=text,
                 severity=severity,
+                tags=llm_tags,
                 success=True,
                 model_used=task,
             )

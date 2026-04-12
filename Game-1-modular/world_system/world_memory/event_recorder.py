@@ -386,6 +386,7 @@ class EventRecorder:
             event.locality_id = address.get("locality")
             event.district_id = address.get("district")
             event.province_id = address.get("province")
+            event.nation_id = address.get("nation")
 
             # Add biome from region if available
             if event.locality_id:

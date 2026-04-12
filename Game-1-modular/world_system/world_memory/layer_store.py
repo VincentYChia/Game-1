@@ -18,6 +18,8 @@ import sqlite3
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
+from world_system.world_memory.game_date import game_day as compute_game_day
+
 
 class LayerStore:
     """Manages per-layer SQL tables for the World Memory System.
@@ -59,6 +61,7 @@ class LayerStore:
                 origin_stat_key TEXT NOT NULL,
                 game_time REAL NOT NULL,
                 real_time REAL NOT NULL,
+                game_day INTEGER NOT NULL DEFAULT 0,
                 category TEXT NOT NULL,
                 severity TEXT NOT NULL,
                 significance TEXT NOT NULL DEFAULT 'minor',
@@ -91,6 +94,7 @@ class LayerStore:
                     narrative TEXT NOT NULL,
                     {origin_col} TEXT NOT NULL DEFAULT '[]',
                     game_time REAL NOT NULL,
+                    game_day INTEGER NOT NULL DEFAULT 0,
                     category TEXT NOT NULL,
                     severity TEXT NOT NULL,
                     significance TEXT NOT NULL DEFAULT 'minor',
@@ -131,6 +135,7 @@ class LayerStore:
 
         event_id = event_id or str(uuid.uuid4())
         tags_json = json.dumps(tags)
+        day = compute_game_day(game_time)
         c = self.connection
         table = f"layer{layer}_events"
         tag_table = f"layer{layer}_tags"
@@ -138,19 +143,19 @@ class LayerStore:
         if layer == 2:
             c.execute(f"""
                 INSERT INTO {table}
-                (id, narrative, origin_stat_key, game_time, real_time,
+                (id, narrative, origin_stat_key, game_time, game_day, real_time,
                  category, severity, significance, tags_json, evaluator_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (event_id, narrative, origin_ref, game_time, real_time,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (event_id, narrative, origin_ref, game_time, day, real_time,
                   category, severity, significance, tags_json, evaluator_id))
         else:
             origin_col = f"origin_layer{layer - 1}_ids"
             c.execute(f"""
                 INSERT INTO {table}
-                (id, narrative, {origin_col}, game_time,
+                (id, narrative, {origin_col}, game_time, game_day,
                  category, severity, significance, tags_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (event_id, narrative, origin_ref, game_time,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (event_id, narrative, origin_ref, game_time, day,
                   category, severity, significance, tags_json))
 
         # Insert tags into junction table

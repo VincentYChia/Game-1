@@ -622,7 +622,9 @@ Player position sampled every ~10 real seconds as `POSITION_SAMPLE` events. Incl
 4. **Templates first, LLM when needed** — Layer 2-3 evaluators use templates or tiny LLMs. Only higher layers justify larger models.
 5. **Every evaluator can return None** — "Not interesting enough" is a valid result.
 
-## 6.2 Layer 2 Evaluators (9 Total)
+## 6.2 Layer 2 Evaluators (9 Designed → 33 Implemented)
+
+> **Implementation status (2026-04-10):** The 9 conceptual evaluators expanded into 33 concrete evaluators covering finer-grained domains. See `world_system/world_memory/evaluators/` for all files. LLM narration via WmsAI is operational — the LLM assigns `significance` tags via structured JSON output. Debug warnings log when the LLM returns no tags.
 
 ### 1. Population Dynamics
 - **Question**: Are creature populations changing?
@@ -674,25 +676,57 @@ Player position sampled every ~10 real seconds as `POSITION_SAMPLE` events. Incl
 - **Triggers on**: `dungeon_entered`, `dungeon_completed`, enemy kills in dungeon localities
 - **Examples**: "Cleared Iron Mine dungeon (no deaths)" / "Struggling with cave encounters (2 deaths)"
 
-## 6.3 Layer 3 Evaluators (4 Total)
+## 6.3 Layer 3 Consolidators (4 Total) — IMPLEMENTED
 
-Layer 3 reads Layer 2 interpretations (full) and Raw Event Pipeline events (limited/summary). Triggers when a locality accumulates 3+ Layer 2 interpretations or 2+ from different categories.
+> **Implementation status (2026-04-10):** All 4 consolidators built and operational. Layer 3 uses a new `ConsolidatorBase` ABC (not `PatternEvaluator`) because consolidators take multiple L2 events as input rather than a single trigger event. Orchestrated by `Layer3Manager` singleton which triggers every 15 L2 events (configurable in `memory-config.json`). Prompt fragments stored separately in `prompt_fragments_l3.json`.
 
-### 1. Regional Activity Synthesizer
-- **Reads**: All Layer 2 interpretations for a district
-- **Produces**: "The Iron Hills are experiencing heavy resource extraction, moderate combat, and growing trade activity."
+Layer 3 reads Layer 2 interpretations (full) and Raw Event Pipeline events (limited/summary). Triggers when a district accumulates 3+ Layer 2 interpretations or 2+ from different categories.
 
-### 2. Cross-Domain Pattern Detector
-- **Reads**: Layer 2 interpretations across categories
-- **Produces**: "Heavy combat AND resource depletion in the same area — possible connection" / "Crafting surge following exploration of new region"
+**Key files:**
+- `world_system/world_memory/consolidator_base.py` (166 lines) — ConsolidatorBase ABC, XML data block builder
+- `world_system/world_memory/layer3_manager.py` (422 lines) — Layer3Manager singleton, trigger/orchestration
+- `world_system/world_memory/consolidators/` — 4 consolidator implementations
+- `world_system/config/prompt_fragments_l3.json` — Layer 3 prompt fragments (separate from L2)
+- `world_system/world_memory/game_date.py` (106 lines) — game_time → game_day conversion, relative date formatting
 
-### 3. Player Identity Consolidator
-- **Reads**: All player-related Layer 2 interpretations
-- **Produces**: "The player is a combat-focused explorer with growing smithing expertise."
+**ConsolidatorBase interface** (differs from PatternEvaluator):
+```python
+class ConsolidatorBase(ABC):
+    def is_applicable(self, l2_events, district_id) -> bool: ...
+    def consolidate(self, l2_events, district_id, geo_context, game_time) -> Optional[ConsolidatedEvent]: ...
+```
 
-### 4. Faction Narrative Synthesizer
-- **Reads**: Social + economy + combat interpretations involving faction-tagged entities
-- **Produces**: "Player reputation with Miners Guild rising; trade volume up 40%"
+**Trigger mechanism:** Layer3Manager counts L2 events via a callback from `interpreter.on_trigger()`. Every 15 L2 events, `WorldMemorySystem.update()` calls `run_consolidation()` which queries LayerStore for each district with new L2 data and runs all applicable consolidators.
+
+**LLM tag assignment:** The LLM assigns Layer 3 interpretive tags (sentiment, trend, intensity, population_status, resource_status, setting, terrain) via structured JSON output. Consolidators provide template tags as fallback when no LLM is available. Geographic/structural tags (district, consolidator, scope) remain procedural. Debug warnings log when the LLM returns no tags.
+
+**Tag enrichment:** Uses existing `HigherLayerTagAssigner` from `tag_assignment.py` — inherits L2 tags, removes old significance, merges LLM/consolidator tags.
+
+**Date stamps:** All LayerStore events (L2-L7) carry a `game_day` column computed from `game_time / 1440.0`. Relative dates formatted as "X months and Y days ago" for higher-layer LLM consumption. Replaces the designed-but-unbuilt 3-tier temporal storage system.
+
+### 1. Regional Activity Synthesizer (`regional_synthesis`)
+- **Scope**: Per WMS district (= game region)
+- **Reads**: All Layer 2 interpretations for the district, grouped by locality
+- **Produces**: "The Western Frontier shows heavy resource extraction in Iron Hills and moderate combat in Whispering Woods."
+- **Applicability**: District has 3+ L2 events OR 2+ from different categories
+
+### 2. Cross-Domain Pattern Detector (`cross_domain`)
+- **Scope**: Per WMS district
+- **Reads**: Layer 2 interpretations from different domains in the same district
+- **Produces**: "Deep Mine shows combat and resource extraction in tandem, suggesting intensive exploitation."
+- **Applicability**: District has 2+ domains represented. Detects co-location across domains.
+
+### 3. Player Identity Consolidator (`player_identity`)
+- **Scope**: Global (all L2 events regardless of location)
+- **Reads**: All recent Layer 2 interpretations about the player
+- **Produces**: "The player is primarily a melee combatant with growing smithing expertise, focused on western regions."
+- **Applicability**: 5+ total L2 events exist. Skips district-scoped calls.
+
+### 4. Faction Narrative Synthesizer (`faction_narrative`)
+- **Scope**: Global (per-faction across all districts)
+- **Reads**: Social, economy, and combat L2 events with faction-relevant tags
+- **Produces**: "The player has positive engagement with the Warriors Guild through quest completion."
+- **Applicability**: 3+ faction-relevant L2 events. Detects faction affiliation from NPC tags and narrative keywords.
 
 ## 6.4 Evaluator Visibility Rules
 
@@ -720,38 +754,70 @@ The same event type can trigger multiple evaluators:
 
 # 7. Aggregation & World State (Layers 3-7)
 
-## 7.1 Layer 3: Municipality/Local Consolidation
+## 7.1 Layer 3: Municipality/Local Consolidation — IMPLEMENTED
 
-Each district maintains consolidated interpretations — cross-domain patterns detected by Layer 3 evaluators.
+Each district maintains consolidated interpretations — cross-domain patterns detected by Layer 3 consolidators. Stored in LayerStore `layer3_events` + `layer3_tags`.
 
 ```python
 @dataclass
-class ConnectedInterpretation:
-    interpretation_id: str
-    created_at: float
+class ConsolidatedEvent:
+    """Implemented in event_schema.py. Maps to layer3_events table."""
+    consolidation_id: str
+    created_at: float                 # game_time
     narrative: str                    # "Heavy combat AND resource depletion suggest..."
-    source_interpretation_ids: List[str]  # Layer 2 interpretations that fed this
-    category: str                     # "cross_domain", "regional_synthesis", "player_identity", "faction"
+    category: str                     # "regional_synthesis", "cross_domain", "player_identity", "faction_narrative"
     severity: str                     # "minor"..."critical"
+    source_interpretation_ids: List[str]  # Layer 2 event IDs that fed this
     affected_district_ids: List[str]
-    affects_tags: List[str]
+    affected_province_ids: List[str]
+    affects_tags: List[str]           # Inherited from L2 + LLM-assigned L3 tags
+    supersedes_id: Optional[str]      # Previous consolidation for same district+category
+    update_count: int
 ```
 
-## 7.2 Layer 4: Smaller Region Events
+**Data flow:**
+```
+Layer 2 event stored → interpreter notifies Layer3Manager
+    → counter increments (every 15 L2 events triggers run)
+    → WorldMemorySystem.update() calls run_consolidation()
+        → query LayerStore for L2 events per district
+        → run all 4 consolidators (is_applicable → consolidate)
+        → LLM upgrade (narrative + tag assignment via JSON)
+        → tag enrichment (HigherLayerTagAssigner)
+        → store in layer3_events + layer3_tags
+```
 
-Per-province gross summaries. Updated when Layer 3 changes significantly.
+## 7.2 Layer 4: Smaller Region Events (IMPLEMENTED)
+
+Per-province gross summaries. WMS PROVINCE = game Region (`region_X`). Each province has its own `WeightedTriggerBucket` (`layer4_province_{province_id}`), created lazily. Tags accumulate independently per province — no cross-province contamination.
 
 ```python
 @dataclass
-class ProvinceSummary:
-    province_id: str
-    summary_text: str                 # "Eastern Highlands: heavy mining, moderate combat, iron scarcity spreading"
+class ProvinceSummaryEvent:
+    summary_id: str
+    province_id: str                  # e.g. "region_1" (WMS PROVINCE = game Region)
+    created_at: float
+    narrative: str                    # "Iron Reaches: heavy mining, moderate combat, iron scarcity spreading"
+    severity: str                     # minor...critical
     dominant_activities: List[str]    # ["mining", "combat"]
-    notable_events: List[str]        # Top 3-5 interpretation narratives
-    resource_state: Dict[str, str]   # {"iron": "strained", "wood": "abundant"}
-    threat_level: str                # "low"..."critical"
-    last_updated: float
+    threat_level: str                 # "low"..."critical"
+    source_consolidation_ids: List[str]  # L3 event IDs that fed this
+    relevant_l2_ids: List[str]       # High-relevance L2 event IDs
+    tags: List[str]                  # Full tag list (LLM-rewritten at this layer)
+    supersedes_id: Optional[str]     # Previous summary for same province
 ```
+
+**Trigger mechanism**: Per-province tag-weighted via `WeightedTriggerBucket`. Geographic tags (`province:`, `district:`, `locality:`, `nation:`) are stripped before scoring so content tags get full positional weight (e.g. `domain:combat` at position 0 = 10 pts). Scoring: 1st=10, 2nd=8, 3rd=6, 4th=5, 5th=4, 6th=3, 7-12th=2, 13th+=1. When any content tag crosses 50 points within a province, the contributing L3 events are used as context. After firing, all scores/contributors for that tag reset to 0 (recurring trigger, no carryover).
+
+**LLM tag rewrite**: At Layer 4+, the LLM receives all inherited tags as input context and outputs a complete reordered tag list (keeping 66-80% of aggregate tags, reordered by relevance). This enables tag position to carry semantic weight in downstream triggers.
+
+**L2 visibility**: Layer 4 sees L3 (full) and L2 (top-5 tag matching). The top 5 content tags from L3 events (by frequency, geo/structural stripped) form a matching set. L2 events must share at least 3 of the 5. Ranked by: match count (desc) → best matched tag rank (asc, winner-take-all) → recency (desc). At most 5 L2 events returned.
+
+**L3 tag ordering**: Frequency-based (most common across origin L2 events first). Documented in `tag_assignment.py:_merge_origin_tags()` with LLM prompting noted as an alternative.
+
+**Prompt fragments**: `prompt_fragments_l4.json` — aggregates ALL lower-layer fragments (L2+L3+L4) for maximum entity context.
+
+**Storage**: `layer4_events` + `layer4_tags` in LayerStore (append-only, same pattern as L2-L3). The `province_summaries` table in EventStore is dormant.
 
 ## 7.3 Layer 5: Larger Region/Country Events
 

@@ -185,6 +185,7 @@ class Layer2TagAssigner:
                     locality_id: str = "",
                     district_id: str = "",
                     province_id: str = "",
+                    nation_id: str = "",
                     biome: str = "",
                     scope: str = "local",
                     significance: str = "minor",
@@ -197,6 +198,7 @@ class Layer2TagAssigner:
             locality_id: Geographic locality.
             district_id: Geographic district.
             province_id: Geographic province.
+            nation_id: Geographic nation.
             biome: Chunk biome type.
             scope: Geographic scope of this event.
             significance: Evaluator-assessed significance (RECREATED here).
@@ -218,6 +220,8 @@ class Layer2TagAssigner:
             tags.append(format_tag("district", district_id))
         if province_id:
             tags.append(format_tag("province", province_id))
+        if nation_id:
+            tags.append(format_tag("nation", nation_id))
         if biome:
             tags.append(format_tag("biome", biome))
 
@@ -339,6 +343,21 @@ class HigherLayerTagAssigner:
 
         Tags that appear in more origin events come first (more representative).
         Within same frequency, order of first appearance is preserved.
+
+        NOTE — Tag ordering at Layer 3 matters because Layer 4's
+        WeightedTriggerBucket scores tags by position (pos 0 = 10 pts,
+        pos 1 = 8, etc.).  Frequency-based ordering is a good default:
+        tags appearing in more L2 events are genuinely more representative
+        of the consolidated event's theme.
+
+        ALTERNATIVE: Add an LLM reordering instruction to the Layer 3
+        prompt (prompt_fragments_l3.json), similar to the Layer 4 prompt's
+        "reorder by relevance to your narrative" instruction.  This would
+        let the LLM rank tags by semantic importance rather than raw
+        frequency.  Trade-off: adds LLM dependency and non-determinism
+        to L3 tag ordering.  Frequency-based ordering is preferred for
+        now because it is deterministic, zero-cost, and produces
+        reasonable results for the weighted trigger system.
         """
         tag_count: Dict[str, int] = {}
         tag_first_seen: Dict[str, int] = {}

@@ -47,7 +47,7 @@ All development targets the **2D Python/Pygame version**. Unity migration is pau
 ### Key Architecture Additions
 - `animation/` — Frame-based animation system with procedural generation from static sprites
 - `Combat/` — Attack state machine, hitbox system, projectile system (expanded from original 3 files to 11)
-- `world_system/` — World Memory System (SQLite-backed 7-layer event architecture, 14,269 LOC)
+- `world_system/` — World Memory System (SQLite-backed 7-layer event architecture, ~20,600 LOC)
   - `world_memory/` — StatStore, EventStore, evaluators, tag library, triggers, daily ledger
   - `living_world/` — BackendManager (Ollama/Claude/Mock), NPC agents, factions, ecosystem
   - `config/` — 7 JSON config files (memory, geographic, backend, faction, ecosystem, NPC, tags)
@@ -135,7 +135,7 @@ Game-1/
 - **Durability, weight, and repair systems**
 - **Tag-driven effect system** (combat, skills, items)
 - **Difficulty/Reward calculators** (material-based scaling)
-- **World Memory System** — Layers 1-2 complete, 33 evaluators, 56 passing tests (14,269 LOC)
+- **World Memory System** — Layers 1-4 complete, 33 evaluators + 4 consolidators + province summarizer, 93 passing tests (~20,600 LOC)
 - **GameEventBus** pub/sub system (events/event_bus.py)
 - **StatTracker** — 65 SQL-backed recording methods for comprehensive player analytics
 - **Living World consumers** — BackendManager, NPC agents, factions, ecosystem (pre-existing, external to WMS)
@@ -143,7 +143,7 @@ Game-1/
 ### Partially Implemented
 - World generation (basic chunks, detailed templates pending)
 - NPC/Quest system (basic functionality, needs expansion)
-- World Memory Layers 3-7 (SQL schemas exist, no code writes to them yet)
+- World Memory Layers 5-7 (SQL schemas exist, no code writes to them yet)
 
 ### Designed But NOT Implemented
 - Advanced skill evolution chains
@@ -269,7 +269,7 @@ Game-1-modular/
 │   ├── crafting_classifier.py   # ML classifiers (1,419 lines)
 │   └── (+ biome_generator, chunk, collision_system, dungeon, encyclopedia,
 │        map_waypoint_system, npc_system, quest_system, turret_system, etc.)
-├── world_system/                # World Memory System (71 files, 14,269 LOC)
+├── world_system/                # World Memory System (87 files, ~20,600 LOC)
 │   ├── world_memory/            # Core WMS engine
 │   │   ├── world_memory_system.py # Facade (449 lines)
 │   │   ├── stat_store.py        # SQL-backed hierarchical stats (327 lines)

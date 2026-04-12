@@ -1,7 +1,7 @@
 """Geographic Registry — named region hierarchy overlaid on the chunk grid.
 
 Maps every position to a human-readable address:
-  Realm > Province > District > Locality
+  Realm > Nation > Province > District > Locality
 
 Regions carry identity tags for interest-matching with entities and events.
 Loaded from JSON configuration; supports runtime additions.
@@ -21,6 +21,7 @@ class RegionLevel(Enum):
     LOCALITY = "locality"
     DISTRICT = "district"
     PROVINCE = "province"
+    NATION = "nation"
     REALM = "realm"
 
 
@@ -170,8 +171,11 @@ class GeographicRegistry:
     def load_from_world_map(self, world_map) -> None:
         """Load region hierarchy from the geographic system's WorldMap.
 
-        Converts WorldMap nations/regions/provinces/districts into
-        GeographicRegistry Region objects with proper hierarchy.
+        Maps the game's 5-tier hierarchy 1:1 to WMS levels:
+            Game Nation   → WMS NATION
+            Game Region   → WMS PROVINCE  (Layer 4 scope)
+            Game Province → WMS DISTRICT  (Layer 3 scope)
+            Game District → WMS LOCALITY  (Layer 2 scope / position lookup)
 
         Args:
             world_map: WorldMap from systems.geography.models
@@ -194,10 +198,9 @@ class GeographicRegistry:
         self.regions["realm_0"] = realm
         self.realm = realm
 
-        # Register nations as provinces (highest named division in WMS)
+        # Register nations as NATION (highest named division)
         for nid, nation in world_map.nations.items():
             nation_id = f"nation_{nid}"
-            # Find bounds from regions
             child_ids = []
             min_x, min_y = float('inf'), float('inf')
             max_x, max_y = float('-inf'), float('-inf')
@@ -214,7 +217,7 @@ class GeographicRegistry:
             self.regions[nation_id] = Region(
                 region_id=nation_id,
                 name=nation.name,
-                level=RegionLevel.PROVINCE,
+                level=RegionLevel.NATION,
                 bounds_x1=int(min_x) if min_x != float('inf') else 0,
                 bounds_y1=int(min_y) if min_y != float('inf') else 0,
                 bounds_x2=int(max_x) if max_x != float('-inf') else 0,
@@ -225,20 +228,20 @@ class GeographicRegistry:
             )
             realm.child_ids.append(nation_id)
 
-        # Register regions as districts
+        # Register game regions as PROVINCE (Layer 4 scope)
         for rid, region in world_map.regions.items():
             region_id = f"region_{rid}"
             bx1, by1, bx2, by2 = region.bounds
             nation = world_map.nations.get(region.nation_id)
             parent_id = f"nation_{region.nation_id}"
 
-            # Collect province child IDs
+            # Children are game provinces (WMS districts)
             child_ids = [f"province_{pid}" for pid in region.province_ids]
 
             self.regions[region_id] = Region(
                 region_id=region_id,
                 name=region.name,
-                level=RegionLevel.DISTRICT,
+                level=RegionLevel.PROVINCE,
                 bounds_x1=bx1 * chunk_size, bounds_y1=by1 * chunk_size,
                 bounds_x2=bx2 * chunk_size, bounds_y2=by2 * chunk_size,
                 parent_id=parent_id,
@@ -248,26 +251,51 @@ class GeographicRegistry:
                       f"nation:{nation.name.lower()}" if nation else ""],
             )
 
-        # Register provinces as localities (for position lookup)
+        # Register game provinces as DISTRICT (Layer 3 scope)
         for pid, province in world_map.provinces.items():
             province_id = f"province_{pid}"
             bx1, by1, bx2, by2 = province.bounds
             parent_id = f"region_{province.region_id}"
 
+            # Children are game districts (WMS localities)
+            child_ids = []
+            if hasattr(province, 'district_ids'):
+                child_ids = [f"district_{did}" for did in province.district_ids]
+
             self.regions[province_id] = Region(
                 region_id=province_id,
                 name=province.name,
-                level=RegionLevel.LOCALITY,
+                level=RegionLevel.DISTRICT,
                 bounds_x1=bx1 * chunk_size, bounds_y1=by1 * chunk_size,
                 bounds_x2=bx2 * chunk_size, bounds_y2=by2 * chunk_size,
                 parent_id=parent_id,
+                child_ids=child_ids,
             )
 
+        # Register game districts as LOCALITY (position lookup)
+        if hasattr(world_map, 'districts') and world_map.districts:
+            for did, district in world_map.districts.items():
+                district_id = f"district_{did}"
+                bx1, by1, bx2, by2 = district.bounds
+                parent_id = f"province_{district.province_id}"
+
+                self.regions[district_id] = Region(
+                    region_id=district_id,
+                    name=district.name,
+                    level=RegionLevel.LOCALITY,
+                    bounds_x1=bx1 * chunk_size, bounds_y1=by1 * chunk_size,
+                    bounds_x2=bx2 * chunk_size, bounds_y2=by2 * chunk_size,
+                    parent_id=parent_id,
+                )
+
         self._invalidate_cache()
+        nn = len(world_map.nations)
         nr = len(world_map.regions)
         np_ = len(world_map.provinces)
-        nn = len(world_map.nations)
-        print(f"[GeoRegistry] Loaded from WorldMap: {nn} nations, {nr} regions, {np_} provinces")
+        nd = len(world_map.districts) if hasattr(world_map, 'districts') else 0
+        print(f"[GeoRegistry] Loaded from WorldMap: "
+              f"{nn} nations, {nr} regions/provinces, "
+              f"{np_} provinces/districts, {nd} districts/localities")
 
     def generate_from_biomes(self, chunk_biomes: Dict[Tuple[int, int], str],
                              chunk_size: int = 16) -> None:

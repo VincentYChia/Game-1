@@ -65,6 +65,20 @@
     "description": "Minimum relevance scores and display limits for query results."
   },
 
+  "layer3": {
+    "trigger_interval": 15,
+    "min_l2_per_district": 3,
+    "min_categories_per_district": 2,
+    "description": "Layer 3 consolidation config. trigger_interval = run every N Layer 2 events. min_l2_per_district = minimum L2 events in a district to consolidate. min_categories_per_district = alternative trigger if 2+ categories present."
+  },
+
+  "layer4": {
+    "trigger_threshold": 50,
+    "max_l3_per_province": 50,
+    "max_l2_relevance": 15,
+    "description": "Layer 4 province summarization config. trigger_threshold = tag-weighted point threshold (positional: 1st=10, 2nd=8, 3rd=6, 4th=5, 5th=4, 6th=3, 7-12th=2, 13th+=1). max_l3_per_province = max L3 events to include in prompt. max_l2_relevance = max L2 supporting-detail events (filtered to trigger tag in top 3 positions)."
+  },
+
   "evaluators": {
     "population_change": {
       "enabled": true,

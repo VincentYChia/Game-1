@@ -2,6 +2,8 @@
 
 Raw Event Pipeline: WorldMemoryEvent — atomic structured facts stored in SQLite.
 Layer 2: InterpretedEvent — narrative descriptions derived from patterns (evaluator output).
+Layer 3: ConsolidatedEvent — cross-domain synthesis from Layer 2 (district/global scope).
+Layer 4: ProvinceSummaryEvent — province-level summaries from Layer 3 (per-province scope).
 
 All dataclasses here are pure data with no dependencies on game systems.
 """
@@ -131,6 +133,7 @@ class WorldMemoryEvent:
     locality_id: Optional[str] = None
     district_id: Optional[str] = None
     province_id: Optional[str] = None
+    nation_id: Optional[str] = None
     biome: str = "unknown"
 
     # WHEN
@@ -226,6 +229,118 @@ class InterpretedEvent:
             severity=severity,
             trigger_event_id=trigger_event_id,
             trigger_count=trigger_count,
+            **kwargs,
+        )
+
+
+@dataclass
+class ConsolidatedEvent:
+    """A cross-domain narrative synthesized from multiple Layer 2 interpretations.
+
+    Layer 3 output. These are "connected interpretations" — they link
+    multiple single-lens Layer 2 events into a coherent district-level
+    or global picture. Stored in LayerStore layer3_events + layer3_tags.
+
+    Categories:
+    - regional_synthesis: overall district activity summary
+    - cross_domain: patterns connecting different activity types
+    - player_identity: behavioral profile from all player events
+    - faction_narrative: faction relationship narrative
+    """
+
+    # Identity
+    consolidation_id: str
+    created_at: float  # Game time
+
+    # THE NARRATIVE — core output
+    narrative: str
+
+    # Classification
+    category: str  # regional_synthesis, cross_domain, player_identity, faction_narrative
+    severity: str  # minor, moderate, significant, major, critical
+
+    # Source Layer 2 interpretations that fed this
+    source_interpretation_ids: List[str] = field(default_factory=list)
+
+    # Spatial scope
+    affected_district_ids: List[str] = field(default_factory=list)
+    affected_province_ids: List[str] = field(default_factory=list)
+
+    # Tag-based routing
+    affects_tags: List[str] = field(default_factory=list)
+
+    # History tracking
+    supersedes_id: Optional[str] = None
+    update_count: int = 1
+
+    @staticmethod
+    def create(narrative: str, category: str, severity: str,
+               source_interpretation_ids: List[str],
+               game_time: float, **kwargs) -> ConsolidatedEvent:
+        """Factory for creating consolidated events with auto-generated ID."""
+        return ConsolidatedEvent(
+            consolidation_id=str(uuid.uuid4()),
+            created_at=game_time,
+            narrative=narrative,
+            category=category,
+            severity=severity,
+            source_interpretation_ids=source_interpretation_ids,
+            **kwargs,
+        )
+
+
+@dataclass
+class ProvinceSummaryEvent:
+    """A province-level summary synthesized from multiple Layer 3 consolidations.
+
+    Layer 4 output. Each province gets one current summary that is superseded
+    when new Layer 3 events accumulate. Stored in LayerStore layer4_events +
+    layer4_tags.
+
+    Unlike ConsolidatedEvent which has multiple categories (regional, cross-domain,
+    etc.), each province produces a single holistic summary. The LLM distills
+    all Layer 3 district-level events into a gross summary of provincial state.
+    """
+
+    # Identity
+    summary_id: str
+    province_id: str
+    created_at: float  # Game time
+
+    # THE NARRATIVE — core output
+    narrative: str  # e.g. "Eastern Highlands: heavy mining, moderate combat, iron scarcity spreading"
+
+    # Classification
+    severity: str  # minor, moderate, significant, major, critical
+
+    # Structured fields extracted from LLM output
+    dominant_activities: List[str] = field(default_factory=list)  # ["mining", "combat"]
+    threat_level: str = "low"  # low, moderate, high, critical
+
+    # Source Layer 3 events that fed this
+    source_consolidation_ids: List[str] = field(default_factory=list)
+
+    # Source Layer 2 events included for high-relevance context
+    relevant_l2_ids: List[str] = field(default_factory=list)
+
+    # Tag-based routing
+    tags: List[str] = field(default_factory=list)
+
+    # History tracking
+    supersedes_id: Optional[str] = None
+
+    @staticmethod
+    def create(province_id: str, narrative: str, severity: str,
+               source_consolidation_ids: List[str],
+               game_time: float, **kwargs) -> ProvinceSummaryEvent:
+        """Factory with auto-generated summary_id."""
+        return ProvinceSummaryEvent(
+            summary_id=str(uuid.uuid4()),
+            province_id=province_id,
+            created_at=game_time,
+            narrative=narrative,
+            severity=severity,
+            source_consolidation_ids=source_consolidation_ids,
             **kwargs,
         )
 
