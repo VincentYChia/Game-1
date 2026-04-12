@@ -789,7 +789,7 @@ Layer 2 event stored → interpreter notifies Layer3Manager
 
 ## 7.2 Layer 4: Smaller Region Events (IMPLEMENTED)
 
-Per-province gross summaries. WMS PROVINCE = game Region (`region_X`). Updated via tag-weighted triggers when Layer 3 events accumulate enough positional weight across a province's tags.
+Per-province gross summaries. WMS PROVINCE = game Region (`region_X`). Each province has its own `WeightedTriggerBucket` (`layer4_province_{province_id}`), created lazily. Tags accumulate independently per province — no cross-province contamination.
 
 ```python
 @dataclass
@@ -807,11 +807,13 @@ class ProvinceSummaryEvent:
     supersedes_id: Optional[str]     # Previous summary for same province
 ```
 
-**Trigger mechanism**: Tag-weighted via `WeightedTriggerBucket`. Each L3 event's tags scored by position (1st=10, 2nd=8, 3rd=6, 4th=5, 5th=4, 6th=3, 7-12th=2, 13th+=1). When any tag crosses 50 points, the contributing L3 events are used as context for province summarization.
+**Trigger mechanism**: Per-province tag-weighted via `WeightedTriggerBucket`. Geographic tags (`province:`, `district:`, `locality:`, `nation:`) are stripped before scoring so content tags get full positional weight (e.g. `domain:combat` at position 0 = 10 pts). Scoring: 1st=10, 2nd=8, 3rd=6, 4th=5, 5th=4, 6th=3, 7-12th=2, 13th+=1. When any content tag crosses 50 points within a province, the contributing L3 events are used as context. After firing, all scores/contributors for that tag reset to 0 (recurring trigger, no carryover).
 
 **LLM tag rewrite**: At Layer 4+, the LLM receives all inherited tags as input context and outputs a complete reordered tag list (keeping 66-80% of aggregate tags, reordered by relevance). This enables tag position to carry semantic weight in downstream triggers.
 
-**L2 visibility**: Layer 4 sees L3 (full) and L2 (filtered — trigger tag must appear in L2 event's top 3 tag positions).
+**L2 visibility**: Layer 4 sees L3 (full) and L2 (top-5 tag matching). The top 5 content tags from L3 events (by frequency, geo/structural stripped) form a matching set. L2 events must share at least 3 of the 5. Ranked by: match count (desc) → best matched tag rank (asc, winner-take-all) → recency (desc). At most 5 L2 events returned.
+
+**L3 tag ordering**: Frequency-based (most common across origin L2 events first). Documented in `tag_assignment.py:_merge_origin_tags()` with LLM prompting noted as an alternative.
 
 **Prompt fragments**: `prompt_fragments_l4.json` — aggregates ALL lower-layer fragments (L2+L3+L4) for maximum entity context.
 

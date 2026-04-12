@@ -1,9 +1,9 @@
 # World Memory System — Handoff Status
 
-**Date**: 2026-04-11
+**Date**: 2026-04-12
 **Branch**: `claude/review-handoff-status-BZ64g`
 **Phase**: Layers 1-4 operational. Layer 5+ designed but not implemented.
-**Tests**: 88 passing (54 Layer 3 + 34 Layer 4, 0 failures)
+**Tests**: 93 passing (54 Layer 3 + 39 Layer 4, 0 failures)
 
 ---
 
@@ -34,7 +34,7 @@ Game Action → GameEventBus → EventRecorder (priority -10)
                                                     ConsolidatedEvent (Layer 3)
                                                     stored in LayerStore layer3_events
                                                               ↓
-                                                    Layer4Manager (tag-weighted trigger)
+                                                    Layer4Manager (per-province weighted triggers)
                                                     Province summarizer per province
                                                               ↓
                                                     ProvinceSummaryEvent (Layer 4)
@@ -100,18 +100,22 @@ Tag addressing: `locality:district_X`, `district:province_X`, `province:region_X
 
 ## Layer 4: Province Summarization (COMPLETE)
 
-**Pipeline**: L3 event tags scored by position → tag crosses 50 points → contributing L3 events + relevant L2 events gathered → single province summary generated → LLM performs full tag rewrite → ProvinceSummaryEvent stored in LayerStore.
+**Pipeline**: L3 event routed to per-province bucket → geo tags stripped, content tags scored by position → content tag crosses 50 points within a province → contributing L3 events + top-5-tag-matched L2 events gathered → single province summary → LLM full tag rewrite → ProvinceSummaryEvent stored in LayerStore.
 
 **Key files**:
-- `layer4_manager.py` (~310 lines) — orchestrator with WeightedTriggerBucket
-- `layer4_summarizer.py` (~310 lines) — province-level summary builder
-- `trigger_registry.py` (~270 lines) — centralized trigger system (simple + weighted)
+- `layer4_manager.py` (530 lines) — per-province trigger routing, L2 filtering, LLM upgrade
+- `layer4_summarizer.py` (437 lines) — province-level summary builder, XML data block
+- `trigger_registry.py` (372 lines) — centralized trigger system (simple + weighted + prefix ops)
 - `prompt_fragments_l4.json` — 5 Layer 4 prompt fragments
 - `event_schema.py` — ProvinceSummaryEvent dataclass
 
-### Tag-Weighted Trigger System
+### Per-Province Tag-Weighted Triggers
 
-Tags are scored by position in each L3 event's tag list:
+Each province gets its own `WeightedTriggerBucket` (named `layer4_province_{province_id}`), created lazily when the first L3 event for that province arrives. This ensures tags accumulate independently per province — `domain:combat` in region_1 does not combine with `domain:combat` in region_2.
+
+**Geographic tag stripping**: Before ingestion, geographic address tags (`province:`, `district:`, `locality:`, `nation:`) are stripped from the tag list. This promotes content tags to earlier positions (e.g. `domain:combat` moves from position 2 → position 0 = 10 pts instead of 6 pts). Only content tags drive triggers.
+
+Tags are scored by position in the **stripped** tag list:
 | Position | Points |
 |----------|--------|
 | 1st | 10 |
@@ -123,7 +127,9 @@ Tags are scored by position in each L3 event's tag list:
 | 7th-12th | 2 |
 | 13th+ | 1 |
 
-When any tag crosses 50 points, it fires. All L3 events that contributed to that tag's score are used as primary context. Structural tags (`significance:`, `scope:`, `consolidator:`) are excluded from scoring.
+When any content tag crosses 50 points within a province, it fires. All L3 events that contributed to that tag's score are used as primary context. Structural tags (`significance:`, `scope:`, `consolidator:`) are also excluded from scoring.
+
+**Reset behavior**: After firing, the tag's score resets to 0 and all contributing events are voided — the trigger is recurring (fires every 50 points, not once). If the score reaches 55, ALL contributing events are voided with no carryover.
 
 ### LLM Full Tag Rewrite
 
@@ -133,9 +139,20 @@ At Layer 4+, the LLM receives ALL inherited tags from input events as context (s
 - Add Layer 4 categories: `faction`, `urgency_level`, `event_status`, `player_impact`
 - Tag order matters — position determines weight in future trigger calculations
 
-### L2 Visibility (Strict Filtering)
+### L2 Visibility (Top-5 Tag Matching)
 
-Layer 4 sees L3 (full) and L2 (filtered). An L2 event is included only if a content tag shared with L3 appears in the L2 event's **top 3 tag positions**. This prevents low-relevance L2 detail from diluting the province narrative.
+Layer 4 sees L3 (full) and L2 (filtered by top-tag matching):
+
+1. Collect all content tags from L3 events, ranked by frequency (geo/structural stripped)
+2. Take the **top 5** as the matching set (rank 0 = most important)
+3. For each L2 candidate in the province, count how many of the 5 it contains
+4. **Minimum 3/5 match** required — below this, the L2 event is excluded
+5. Sort by: match count (desc) → best matched tag rank (asc, **winner-take-all**: having the #1 tag beats having only #2-5) → game_time (desc, most recent)
+6. Return at most **5** L2 events
+
+### L3 Tag Ordering
+
+Layer 3 tags are ordered by **frequency** across origin L2 events (most frequent first, tiebreak by first appearance). This is documented as an intentional design choice in `tag_assignment.py:_merge_origin_tags()`, with LLM prompting noted as an alternative.
 
 ### Prompt Fragment Aggregation
 
@@ -147,9 +164,9 @@ Layer 4 prompts aggregate fragments from ALL lower layers (L2 + L3 + L4). The `_
 - **TriggerBucket** — simple per-key counter (used by Layer 3)
 - **WeightedTriggerBucket** — tag-positional scoring (used by Layer 4+)
 
-Both support save/load serialization. The registry is a singleton shared across all layers.
+Prefix-based operations (`any_weighted_fired_with_prefix`, `pop_all_fired_weighted_with_prefix`, `get_weighted_bucket_names`) support per-province bucket management without iterating private state. Both bucket types support save/load serialization. The registry is a singleton shared across all layers.
 
-**Tests**: 34 passing.
+**Tests**: 39 passing.
 
 ---
 
