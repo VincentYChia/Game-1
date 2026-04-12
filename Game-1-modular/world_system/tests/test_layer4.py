@@ -449,21 +449,22 @@ class TestLayer4Manager(unittest.TestCase):
                       "setting:wilderness"]},
         ]
         # Top 5 content tags by frequency (geo stripped):
-        #   domain:combat(2), species:wolf(2), terrain:forest(2),
-        #   intensity:heavy(1), tier:2(1) — or setting:wilderness(1)
+        #   rank 0: domain:combat(2), rank 1: species:wolf(2),
+        #   rank 2: terrain:forest(2),
+        #   rank 3: intensity:heavy(1), rank 4: setting:wilderness(1)
         # (alphabetical tiebreak for the 1-count group)
 
         # L2 candidates — insert into LayerStore
-        # good: 4/5 matches, weight-heavy (early positions)
+        # good: 4/5 matches
         self.layer_store.insert_event(
             layer=2, narrative="Wolf pack attacks in forest",
             game_time=150.0, category="combat_event",
             severity="moderate", significance="moderate",
             tags=["province:region_1", "domain:combat", "species:wolf",
-                  "terrain:forest", "tier:2"],
+                  "terrain:forest", "intensity:heavy"],
             origin_ref="[]", event_id="l2_good")
 
-        # decent: 3/5 matches, later positions
+        # decent: 3/5 matches
         self.layer_store.insert_event(
             layer=2, narrative="Forest exploration",
             game_time=140.0, category="exploration_event",
@@ -500,6 +501,62 @@ class TestLayer4Manager(unittest.TestCase):
 
         # good should rank above decent (more matches)
         self.assertEqual(result_ids[0], "l2_good")
+
+    def test_l2_tiebreak_winner_take_all(self):
+        """Tiebreaker: L2 with highest-ranked tag from top-5 wins."""
+        # Top 5 will be: rank0=domain:combat(3), rank1=species:wolf(3),
+        # rank2=terrain:forest(3), rank3=intensity:heavy(3),
+        # rank4=tier:2(3)
+        l3_events = [
+            {"tags": ["province:region_1", "domain:combat",
+                      "species:wolf", "terrain:forest",
+                      "intensity:heavy", "tier:2"]},
+            {"tags": ["province:region_1", "domain:combat",
+                      "species:wolf", "terrain:forest",
+                      "intensity:heavy", "tier:2"]},
+            {"tags": ["province:region_1", "domain:combat",
+                      "species:wolf", "terrain:forest",
+                      "intensity:heavy", "tier:2"]},
+        ]
+
+        # event_a: has rank0 (domain:combat) + rank3 + rank4 = 3 matches
+        self.layer_store.insert_event(
+            layer=2, narrative="Event A",
+            game_time=100.0, category="test",
+            severity="minor", significance="minor",
+            tags=["province:region_1", "domain:combat",
+                  "intensity:heavy", "tier:2"],
+            origin_ref="[]", event_id="l2_a")
+
+        # event_b: has rank1 + rank2 + rank3 + rank4 = 4 matches, BUT
+        # missing rank0 (domain:combat). Best rank = 1.
+        self.layer_store.insert_event(
+            layer=2, narrative="Event B",
+            game_time=100.0, category="test",
+            severity="minor", significance="minor",
+            tags=["province:region_1", "species:wolf",
+                  "terrain:forest", "intensity:heavy", "tier:2"],
+            origin_ref="[]", event_id="l2_b")
+
+        # event_c: has rank1 + rank2 + rank3 = 3 matches, best rank = 1
+        self.layer_store.insert_event(
+            layer=2, narrative="Event C",
+            game_time=200.0, category="test",
+            severity="minor", significance="minor",
+            tags=["province:region_1", "species:wolf",
+                  "terrain:forest", "intensity:heavy"],
+            origin_ref="[]", event_id="l2_c")
+
+        result = self.manager._query_relevant_l2("region_1", l3_events)
+        result_ids = [e["id"] for e in result]
+
+        # event_b has most matches (4), so it ranks first
+        self.assertEqual(result_ids[0], "l2_b")
+        # event_a and event_c both have 3 matches.
+        # event_a best rank = 0 (has domain:combat), event_c best rank = 1
+        # Winner-take-all: event_a beats event_c
+        self.assertEqual(result_ids[1], "l2_a")
+        self.assertEqual(result_ids[2], "l2_c")
 
     def test_l2_filtering_cap_5(self):
         """L2 returns at most 5 events."""

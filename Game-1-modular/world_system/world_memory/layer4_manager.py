@@ -45,9 +45,7 @@ from world_system.world_memory.event_schema import (
 )
 from world_system.world_memory.layer4_summarizer import Layer4Summarizer
 from world_system.world_memory.tag_assignment import assign_higher_layer_tags
-from world_system.world_memory.trigger_registry import (
-    TriggerRegistry, tag_weight_for_position,
-)
+from world_system.world_memory.trigger_registry import TriggerRegistry
 
 
 # Per-province bucket name prefix: "layer4_province_{province_id}"
@@ -325,11 +323,12 @@ class Layer4Manager:
         Algorithm:
           1. Collect all content tags from L3 events, ranked by frequency
              (most frequent = most representative of the province context).
-          2. Take the top 5 as the matching set.
+          2. Take the top 5 as the matching set (ranked 0-4, 0 = most important).
           3. For each L2 candidate, count how many of the 5 it contains.
           4. Filter: must match at least 3 of the 5.
           5. Sort by:  match count (desc)
-                     → positional weight sum of matched tags (desc)
+                     → best matched tag rank (asc, winner-take-all:
+                       having the #1 tag beats having only #2-5)
                      → game_time (desc, most recent first)
           6. Return at most 5 events.
         """
@@ -351,10 +350,13 @@ class Layer4Manager:
         if not tag_freq:
             return []
 
-        # ── Step 2: Top 5 by frequency (tiebreak: alphabetical for stability)
+        # ── Step 2: Top 5 by frequency (tiebreak: alphabetical for stability).
+        # Rank 0 = most important, rank 4 = least important in the top 5.
         top_tags = sorted(tag_freq, key=lambda t: (-tag_freq[t], t))
         top_tags = top_tags[:_L2_TOP_TAG_COUNT]
         top_tag_set = set(top_tags)
+        # Map tag → rank (0 = best)
+        tag_rank = {tag: rank for rank, tag in enumerate(top_tags)}
 
         # ── Step 3-4: Score each L2 candidate
         l2_candidates = self._layer_store.query_by_tags(
@@ -364,7 +366,7 @@ class Layer4Manager:
             limit=100,
         )
 
-        scored: List[tuple] = []  # (match_count, weight_sum, game_time, event)
+        scored: List[tuple] = []  # (match_count, best_rank, game_time, event)
         for event in l2_candidates:
             event_tags = event.get("tags", [])
             all_tags_set = set(event_tags)
@@ -374,18 +376,15 @@ class Layer4Manager:
             if match_count < _L2_MIN_TAG_MATCHES:
                 continue
 
-            # Positional weight sum: sum of tag_weight_for_position for each
-            # matched tag at its position in the L2 event's tag list.
-            weight_sum = 0
-            for pos, tag in enumerate(event_tags):
-                if tag in matched:
-                    weight_sum += tag_weight_for_position(pos)
+            # Winner-take-all: best (lowest) rank among matched tags.
+            # E.g. having tag ranked #0 beats having only #1-4.
+            best_rank = min(tag_rank[t] for t in matched)
 
             game_time = event.get("game_time", 0.0)
-            scored.append((match_count, weight_sum, game_time, event))
+            scored.append((match_count, best_rank, game_time, event))
 
-        # ── Step 5: Sort: match count desc → weight desc → recency desc
-        scored.sort(key=lambda x: (x[0], x[1], x[2]), reverse=True)
+        # ── Step 5: Sort: match count desc → best rank asc → recency desc
+        scored.sort(key=lambda x: (-x[0], x[1], -x[2]))
 
         # ── Step 6: Return top results
         return [item[3] for item in scored[:_L2_MAX_RESULTS]]
