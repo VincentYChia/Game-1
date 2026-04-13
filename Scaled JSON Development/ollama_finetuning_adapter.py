@@ -41,6 +41,10 @@ ADAPTERS = [
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_4",       "vision": True},
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_2",      "vision": True},
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\New_Engineering_1"},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_5", "vision": True}
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_6",       "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_2a",      "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_7", "vision": True}
 ]
 
 # ============================================================================
