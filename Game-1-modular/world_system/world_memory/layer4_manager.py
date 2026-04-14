@@ -89,6 +89,9 @@ class Layer4Manager:
         self._trigger_threshold: int = 50
         self._max_l3_per_province: int = 50
 
+        # Layer 5 callback — notified when L4 events are stored
+        self._layer5_callback = None
+
         # Stats
         self._summaries_created: int = 0
         self._runs_completed: int = 0
@@ -459,6 +462,14 @@ class Layer4Manager:
         except Exception as e:
             print(f"[Layer4] LLM upgrade failed for {summary.province_id}: {e}")
 
+    def set_layer5_callback(self, callback) -> None:
+        """Register a callback invoked when L4 events are stored.
+
+        The callback receives the stored L4 event dict (as it would appear
+        from LayerStore). Used by Layer5Manager to track per-realm triggers.
+        """
+        self._layer5_callback = callback
+
     def _store_summary(self, summary: ProvinceSummaryEvent,
                        game_time: float) -> None:
         """Store a ProvinceSummaryEvent in LayerStore layer4_events."""
@@ -481,6 +492,21 @@ class Layer4Manager:
             origin_ref=origin_ref,
             event_id=summary.summary_id,
         )
+
+        # Notify Layer 5 of the new L4 event
+        if self._layer5_callback:
+            try:
+                l4_event_dict = {
+                    "id": summary.summary_id,
+                    "narrative": summary.narrative,
+                    "category": "province_summary",
+                    "severity": summary.severity,
+                    "tags": list(summary.tags),
+                    "game_time": game_time,
+                }
+                self._layer5_callback(l4_event_dict)
+            except Exception as e:
+                print(f"[Layer4] Layer 5 callback error: {e}")
 
     def _find_supersedable(self, province_id: str) -> Optional[str]:
         """Find an existing L4 summary for this province to supersede."""

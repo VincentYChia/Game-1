@@ -34,6 +34,7 @@ from world_system.world_memory.stat_store import StatStore
 from world_system.world_memory.daily_ledger import DailyLedgerManager
 from world_system.world_memory.layer3_manager import Layer3Manager
 from world_system.world_memory.layer4_manager import Layer4Manager
+from world_system.world_memory.layer5_manager import Layer5Manager
 from world_system.world_memory.trigger_registry import TriggerRegistry
 
 
@@ -57,6 +58,7 @@ class WorldMemorySystem:
         self.daily_ledger_manager: Optional[DailyLedgerManager] = None
         self.layer3_manager: Optional[Layer3Manager] = None
         self.layer4_manager: Optional[Layer4Manager] = None
+        self.layer5_manager: Optional[Layer5Manager] = None
         self.trigger_registry: Optional[TriggerRegistry] = None
 
         self._initialized: bool = False
@@ -216,6 +218,26 @@ class WorldMemorySystem:
         except Exception as e:
             print(f"[WorldMemory] Layer4Manager init failed (non-fatal): {e}")
             self.layer4_manager = None
+
+        # 7d. Layer 5 Manager (realm summarization)
+        try:
+            if self.trigger_registry is None:
+                self.trigger_registry = TriggerRegistry.get_instance()
+            self.layer5_manager = Layer5Manager.get_instance()
+            self.layer5_manager.initialize(
+                layer_store=self.layer_store,
+                geo_registry=self.geo_registry,
+                wms_ai=self.wms_ai,
+                trigger_registry=self.trigger_registry,
+            )
+            # Wire L5 callback to L4 manager so it gets notified of L4 events
+            if self.layer4_manager:
+                self.layer4_manager.set_layer5_callback(
+                    self.layer5_manager.on_layer4_created)
+            print(f"[WorldMemory] Layer5Manager initialized — {self.layer5_manager.stats}")
+        except Exception as e:
+            print(f"[WorldMemory] Layer5Manager init failed (non-fatal): {e}")
+            self.layer5_manager = None
 
         # 8. Query Interface
         self.world_query = WorldQuery.get_instance()
@@ -418,6 +440,13 @@ class WorldMemorySystem:
             except Exception as e:
                 print(f"[WorldMemory] Layer 4 summarization error: {e}")
 
+        # Layer 5 realm summarization check
+        if self.layer5_manager and self.layer5_manager.should_run():
+            try:
+                self.layer5_manager.run_summarization(game_time)
+            except Exception as e:
+                print(f"[WorldMemory] Layer 5 summarization error: {e}")
+
         # Periodic retention pruning
         if self.retention_manager.should_prune(game_time):
             self.retention_manager.prune(self.event_store, game_time)
@@ -515,6 +544,7 @@ class WorldMemorySystem:
         StatStore.reset()
         Layer3Manager.reset()
         Layer4Manager.reset()
+        Layer5Manager.reset()
         TriggerRegistry.reset()
 
     # ── Debug / Stats ────────────────────────────────────────────────

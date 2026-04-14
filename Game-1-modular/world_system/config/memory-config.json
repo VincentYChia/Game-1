@@ -79,6 +79,14 @@
     "description": "Layer 4 province summarization config. trigger_threshold = tag-weighted point threshold (positional: 1st=10, 2nd=8, 3rd=6, 4th=5, 5th=4, 6th=3, 7-12th=2, 13th+=1). max_l3_per_province = max L3 events to include in prompt. max_l2_relevance = max L2 supporting-detail events (filtered to trigger tag in top 3 positions)."
   },
 
+  "layer5": {
+    "trigger_threshold": 100,
+    "max_l4_per_realm": 50,
+    "max_l3_relevance": 8,
+    "min_provinces_contributing": 1,
+    "description": "Layer 5 realm summarization config. Same per-realm WeightedTriggerBucket pattern as Layer 4 but at realm scale. trigger_threshold defaults to 100 (twice Layer 4) because realm summaries should be rarer than province summaries. max_l4_per_realm = max L4 events in prompt. max_l3_relevance = max Layer 3 supporting-detail events (two-layers-down visibility, filtered by fired-tag overlap). min_provinces_contributing = optional minimum province diversity gate (set to 2+ in multi-realm worlds to avoid single-province realm summaries)."
+  },
+
   "evaluators": {
     "population_change": {
       "enabled": true,

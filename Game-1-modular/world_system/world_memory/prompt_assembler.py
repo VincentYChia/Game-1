@@ -26,6 +26,7 @@ _CONFIG_DIR = Path(__file__).parent.parent / "config"
 _FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments.json"
 _L3_FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments_l3.json"
 _L4_FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments_l4.json"
+_L5_FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments_l5.json"
 
 # Fragment categories that get matched from trigger tags
 FRAGMENT_CATEGORIES = frozenset({
@@ -80,13 +81,16 @@ class PromptAssembler:
         self.fragments: Dict[str, Any] = {}
         self._l3_fragments: Dict[str, Any] = {}
         self._l4_fragments: Dict[str, Any] = {}
+        self._l5_fragments: Dict[str, Any] = {}
         self._loaded = False
 
     def load(self) -> int:
         """Load fragments from JSON files. Returns total fragment count.
 
-        Loads Layer 2 fragments from prompt_fragments.json and
-        Layer 3 fragments from prompt_fragments_l3.json (if it exists).
+        Loads Layer 2 fragments from prompt_fragments.json, Layer 3
+        fragments from prompt_fragments_l3.json, Layer 4 from
+        prompt_fragments_l4.json, and Layer 5 from prompt_fragments_l5.json
+        (each loaded only if present).
         """
         total = 0
         if self._path.exists():
@@ -107,6 +111,13 @@ class PromptAssembler:
             with open(l4_path) as f:
                 self._l4_fragments = json.load(f)
             total += self._l4_fragments.get("_meta", {}).get("total_fragments", 0)
+
+        # Load Layer 5 fragments from separate file
+        l5_path = self._path.parent / "prompt_fragments_l5.json"
+        if l5_path.exists():
+            with open(l5_path) as f:
+                self._l5_fragments = json.load(f)
+            total += self._l5_fragments.get("_meta", {}).get("total_fragments", 0)
 
         self._loaded = True
         return total
@@ -409,8 +420,15 @@ class PromptAssembler:
             return val
         return self.get_l3_fragment(key)
 
+    def get_l5_fragment(self, key: str) -> str:
+        """Get a Layer 5 fragment by key. Falls back to L4, then L3, then L2."""
+        val = self._l5_fragments.get(key, "")
+        if isinstance(val, str) and val:
+            return val
+        return self.get_l4_fragment(key)
+
     def _collect_all_tag_fragments(self, event_tags: List[str]) -> List[Tuple[str, str]]:
-        """Collect matching tag fragments from ALL layers (L2 + L3 + L4).
+        """Collect matching tag fragments from ALL layers (L2 + L3 + L4 + L5).
 
         Higher layers can see all lower-layer fragments. This gives them
         richer context about the entities and concepts in their events.
@@ -419,8 +437,11 @@ class PromptAssembler:
         selected = []
         seen_texts: Set[str] = set()
 
-        # Check all fragment sources in priority order: L4 → L3 → L2
-        all_sources = [self._l4_fragments, self._l3_fragments, self.fragments]
+        # Check all fragment sources in priority order: L5 → L4 → L3 → L2
+        all_sources = [
+            self._l5_fragments, self._l4_fragments,
+            self._l3_fragments, self.fragments,
+        ]
 
         for tag in event_tags:
             if ":" not in tag:
@@ -495,6 +516,72 @@ class PromptAssembler:
             user=user,
             fragments_used=selected,
             tags=["layer:4", "scope:province"],
+            token_estimate=estimate_tokens(system) + estimate_tokens(user),
+        )
+
+    # ── Layer 5 Assembly ───────────────────────────────────────────
+
+    def assemble_l5(self, data_block: str = "",
+                    event_tags: Optional[List[str]] = None,
+                    ) -> "AssembledPrompt":
+        """Assemble a Layer 5 prompt for realm summarization.
+
+        Aggregates fragments from ALL lower layers (L2 + L3 + L4 + L5).
+        Like Layer 4, the LLM performs a full tag rewrite, so the prompt
+        emphasizes producing a complete reordered tag list alongside the
+        narrative.
+
+        Args:
+            data_block: XML-formatted Layer 4 + L3 events data.
+            event_tags: Optional aggregate tags from input events — used
+                        to pull matching entity/context fragments from
+                        any lower layer.
+
+        Returns:
+            AssembledPrompt with system and user components.
+        """
+        selected = []
+
+        # L5 core (always)
+        core = self.get_l5_fragment("_l5_core")
+        if core:
+            selected.append(("_l5_core", core))
+
+        # Realm summary context fragment
+        ctx_key = "l5_context:realm_summary"
+        ctx_frag = self.get_l5_fragment(ctx_key)
+        if ctx_frag:
+            selected.append((ctx_key, ctx_frag))
+
+        # Aggregate entity/context fragments from ALL lower layers
+        # based on tags present in the input events
+        if event_tags:
+            tag_frags = self._collect_all_tag_fragments(event_tags)
+            selected.extend(tag_frags)
+
+        # Example if available
+        example_key = "l5_example:realm"
+        example_frag = self.get_l5_fragment(example_key)
+        if example_frag:
+            selected.append((example_key, example_frag))
+
+        # L5 output instruction
+        output_text = self.get_l5_fragment("_l5_output")
+
+        # Build system prompt
+        system_parts = [text for _, text in selected]
+        system = "\n\n".join(system_parts)
+
+        # Build user prompt
+        user = data_block
+        if output_text:
+            user = f"{data_block}\n\n{output_text}" if data_block else output_text
+
+        return AssembledPrompt(
+            system=system,
+            user=user,
+            fragments_used=selected,
+            tags=["layer:5", "scope:realm"],
             token_estimate=estimate_tokens(system) + estimate_tokens(user),
         )
 

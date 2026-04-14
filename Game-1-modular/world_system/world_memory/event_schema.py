@@ -4,6 +4,7 @@ Raw Event Pipeline: WorldMemoryEvent — atomic structured facts stored in SQLit
 Layer 2: InterpretedEvent — narrative descriptions derived from patterns (evaluator output).
 Layer 3: ConsolidatedEvent — cross-domain synthesis from Layer 2 (district/global scope).
 Layer 4: ProvinceSummaryEvent — province-level summaries from Layer 3 (per-province scope).
+Layer 5: RealmSummaryEvent — realm-level summaries from Layer 4 (per-realm scope).
 
 All dataclasses here are pure data with no dependencies on game systems.
 """
@@ -341,6 +342,72 @@ class ProvinceSummaryEvent:
             narrative=narrative,
             severity=severity,
             source_consolidation_ids=source_consolidation_ids,
+            **kwargs,
+        )
+
+
+@dataclass
+class RealmSummaryEvent:
+    """A realm-level summary synthesized from multiple Layer 4 province summaries.
+
+    Layer 5 output. Each realm produces a single current summary that is
+    superseded when new Layer 4 events accumulate enough tag-weighted score.
+    Stored in LayerStore layer5_events + layer5_tags.
+
+    Like ProvinceSummaryEvent, each realm produces a single holistic summary
+    (not multiple categories). The LLM distills province-level states into
+    a realm-scoped narrative covering dominant activities, cross-province
+    trends, and overall realm condition.
+
+    Layer 5 does NOT read from FactionSystem, EcosystemAgent, or any other
+    state tracker. It is pure WMS layer pipeline: L4 events + L3 events
+    (two-layers-down, tag-filtered) are the only inputs. Faction and
+    economic content in the narrative comes from whatever tags flow up the
+    layer pipeline, not from external systems. See
+    docs/ARCHITECTURAL_DECISIONS.md for rationale.
+    """
+
+    # Identity
+    summary_id: str
+    realm_id: str
+    created_at: float  # Game time
+
+    # THE NARRATIVE — core output
+    narrative: str  # e.g. "The Known Lands: intensive mining across the
+                    # Northern Reaches, contested forests in the south"
+
+    # Classification
+    severity: str  # minor, moderate, significant, major, critical
+
+    # Structured fields extracted from LLM output
+    dominant_activities: List[str] = field(default_factory=list)  # ["mining", "combat"]
+    dominant_provinces: List[str] = field(default_factory=list)   # province IDs
+    realm_condition: str = "stable"  # stable, shifting, volatile, crisis
+
+    # Source Layer 4 events that fed this
+    source_province_summary_ids: List[str] = field(default_factory=list)
+
+    # Source Layer 3 events included for two-layers-down context
+    relevant_l3_ids: List[str] = field(default_factory=list)
+
+    # Tag-based routing
+    tags: List[str] = field(default_factory=list)
+
+    # History tracking
+    supersedes_id: Optional[str] = None
+
+    @staticmethod
+    def create(realm_id: str, narrative: str, severity: str,
+               source_province_summary_ids: List[str],
+               game_time: float, **kwargs) -> RealmSummaryEvent:
+        """Factory with auto-generated summary_id."""
+        return RealmSummaryEvent(
+            summary_id=str(uuid.uuid4()),
+            realm_id=realm_id,
+            created_at=game_time,
+            narrative=narrative,
+            severity=severity,
+            source_province_summary_ids=source_province_summary_ids,
             **kwargs,
         )
 

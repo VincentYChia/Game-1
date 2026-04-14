@@ -191,7 +191,9 @@ class WmsAI:
             tags = self._assembler.tags_from_event(event_type, event_subtype, tier)
 
         # 2. Assemble prompt (layer-specific assembly for Layer 3+)
-        if layer == 4:
+        if layer == 5:
+            prompt = self._assembler.assemble_l5(data_block, event_tags=tags)
+        elif layer == 4:
             prompt = self._assembler.assemble_l4(data_block, event_tags=tags)
         elif layer == 3:
             # Extract consolidator ID from event_type (e.g. "layer3_regional_synthesis")
