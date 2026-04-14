@@ -1,9 +1,20 @@
 # World Memory System — Handoff Status
 
-**Date**: 2026-04-12
-**Branch**: `claude/review-handoff-status-BZ64g`
-**Phase**: Layers 1-4 operational. Layer 5+ designed but not implemented.
-**Tests**: 93 passing (54 Layer 3 + 39 Layer 4, 0 failures)
+**Date**: 2026-04-14
+**Branch**: `claude/review-handoff-status-XG5iC`
+**Phase**: Layers 1-5 operational. Layers 6-7 designed but not implemented.
+**Tests**: 132 passing (54 Layer 3 + 39 Layer 4 + 39 Layer 5, 0 failures)
+
+> **Pipeline scope**: The WMS layer pipeline consumes **raw gameplay
+> events only**. `FactionSystem` and `EcosystemAgent` are separate
+> sibling trackers that listen to the same GameEventBus but **do not
+> feed into any WMS layer**. `FACTION_REP_CHANGED`,
+> `FACTION_MILESTONE_REACHED`, `RESOURCE_SCARCITY`, and
+> `RESOURCE_RECOVERED` are explicitly **not** wired into
+> `BUS_TO_MEMORY_TYPE`, and no layer code reads from
+> `FactionSystem` or `EcosystemAgent`. See
+> [`ARCHITECTURAL_DECISIONS.md`](ARCHITECTURAL_DECISIONS.md) §§1-5 for
+> full rationale.
 
 ---
 
@@ -39,6 +50,12 @@ Game Action → GameEventBus → EventRecorder (priority -10)
                                                               ↓
                                                     ProvinceSummaryEvent (Layer 4)
                                                     stored in LayerStore layer4_events
+                                                              ↓
+                                                    Layer5Manager (per-realm weighted triggers)
+                                                    Realm summarizer per realm
+                                                              ↓
+                                                    RealmSummaryEvent (Layer 5)
+                                                    stored in LayerStore layer5_events
 ```
 
 ---
@@ -170,6 +187,91 @@ Prefix-based operations (`any_weighted_fired_with_prefix`, `pop_all_fired_weight
 
 ---
 
+## Layer 5: Realm Summarization (COMPLETE)
+
+**Pipeline**: Layer 4 event created → Layer5Manager resolves realm_id from
+the geographic parent chain (province → nation → realm) → geographic
+address tags stripped → content tags scored in a per-realm
+`WeightedTriggerBucket` (named `layer5_realm_{realm_id}`) → when any
+content tag crosses 100 points within a realm → contributing L4 events +
+fired-tag-filtered L3 events gathered → single realm summary built →
+LLM full tag rewrite → RealmSummaryEvent stored in LayerStore
+`layer5_events` (superseding previous summary for that realm).
+
+**Key files**:
+- `layer5_manager.py` (~640 lines) — per-realm trigger routing, realm
+  resolution via geo parent chain, L3 relevance filtering, LLM upgrade,
+  supersession on second run
+- `layer5_summarizer.py` (~500 lines) — realm-level summary builder, XML
+  data block with province grouping, `filter_relevant_l3` static method
+- `prompt_fragments_l5.json` — 4 Layer 5 prompt fragments
+- `event_schema.py` — `RealmSummaryEvent` dataclass
+
+### Per-Realm Tag-Weighted Triggers
+
+Each realm gets its own bucket (`layer5_realm_{realm_id}`), created
+lazily when the first L4 event for that realm arrives. Events from
+different realms never cross-contaminate. Realm resolution tries the
+fast path first (explicit `realm:` tag) and otherwise walks the
+geographic parent chain from the most-specific available address tag
+(`nation:` → `province:` → `district:` → `locality:`) up to the
+REALM-level region. Events with no resolvable geographic address are
+dropped silently.
+
+Scoring reuses the same positional weights as Layer 4 (1st=10, 2nd=8,
+…) and the same structural skip list (`significance:`, `scope:`,
+`consolidator:`). Note that Layer4Summarizer always emits a
+`scope:province` tag at position 0 of its output, so on typical L4
+events the first *scoring* content tag lands at position 1 = 8 pts.
+Threshold is 100 points.
+
+### L3 Visibility (Fired-Tag Overlap Filter)
+
+Layer 5 sees L4 (full, per-realm) and L3 (filtered by fired-tag
+overlap), following the "two-layers-down" visibility rule. The fired
+tag set from the weighted bucket *is* the relevance signal — it
+represents what the realm currently "cares about." Candidate L3 events
+are ranked by:
+
+1. Number of fired content tags they contain (desc; min 1 match)
+2. Best-matched-tag position within the L3 event's own tag list (asc;
+   L3 tags are frequency-sorted so earlier = more representative)
+3. Game time (desc, most recent first)
+
+Structural/geographic tags are stripped from the fired set before
+matching. If the fired set is empty after stripping, there is a fallback
+that derives a content-tag set from the L4 events themselves. Results
+are capped at 8 L3 events.
+
+### LLM Full Tag Rewrite
+
+Like Layer 4, the Layer 5 LLM call receives all inherited tags as
+context and outputs a complete reordered tag list. The
+`HigherLayerTagAssigner` is invoked with `rewrite_all=summary.tags` when
+an LLM is present, otherwise falls back to the inheritance path.
+
+### Pure Pipeline — No Sibling Tracker Reads
+
+**Layer 5 does not read `FactionSystem`, `EcosystemAgent`, `NPCMemory`,
+or any other state tracker.** The `faction_standings`,
+`economic_summary`, and `player_reputation` fields from older drafts
+are not populated from external systems; if present in a future schema
+they must be fed by events that flowed up the layer pipeline. See
+`ARCHITECTURAL_DECISIONS.md` §§4-5 for rationale. Future cross-system
+narrative weaving will live in a separate parallel narrative layer, not
+inside the WMS layers themselves.
+
+**Tests**: 39 passing (`world_system/tests/test_layer5.py`) — covers
+`RealmSummaryEvent` dataclass, `Layer5Summarizer` (is_applicable,
+summarize, XML data block, `filter_relevant_l3`), `Layer5Manager`
+(on_layer4_created, realm resolution, should_run, run_summarization,
+multi-realm isolation, supersession, stats), `PromptAssemblerL5`
+(assemble_l5, fragment loading, cross-layer fragment cascade), and a
+full integration test exercising L4 events → per-realm trigger →
+stored L5 summary.
+
+---
+
 ## Province Summaries Table
 
 The `province_summaries` table in EventStore (from the original design doc) is **not used** by Layer 4. Instead, Layer 4 stores events in `layer4_events` + `layer4_tags` via LayerStore, consistent with the append-only pattern used by Layers 2-3. The `province_summaries` table remains in the schema but is dormant — it may be repurposed as a materialized view or removed in a future cleanup.
@@ -178,11 +280,19 @@ The `province_summaries` table in EventStore (from the original design doc) is *
 
 ## Known Issues / Remaining Work
 
-### Layer 5-7 (Designed, Not Implemented)
-- Layer 5: Realm-level summaries from multiple provinces
+### Layer 6-7 (Designed, Not Implemented)
 - Layer 6: Cross-realm patterns
 - Layer 7: World-level narrative threads
 - All use LayerStore tables (already created), WmsAI routing (already configured)
+
+### Faction / Ecosystem are OUT of the Pipeline (Deliberate)
+`FactionSystem` and `EcosystemAgent` are separate sibling trackers and
+explicitly **not** part of the WMS layer pipeline. No layer reads from
+them and `FACTION_REP_CHANGED` / `FACTION_MILESTONE_REACHED` /
+`RESOURCE_SCARCITY` / `RESOURCE_RECOVERED` are intentionally absent
+from `BUS_TO_MEMORY_TYPE`. Any future cross-system weaving belongs in
+a parallel narrative layer, not inside the WMS layers. See
+[`ARCHITECTURAL_DECISIONS.md`](ARCHITECTURAL_DECISIONS.md) §§2-5.
 
 ### Prompt Editor Geographic Dropdown
 The location dropdown in `tools/prompt_editor.py` has hardcoded locality names. Should load from GeographicRegistry.
@@ -194,7 +304,9 @@ EventStore has 24 tables mixing raw facts, counters, interpretations, and higher
 
 ## How to Continue
 
-1. **Read** this file + `WORLD_MEMORY_SYSTEM.md` for design reference
-2. **Run tests**: `python -m unittest world_system.world_memory.test_layer3 world_system.tests.test_layer4 -v`
-3. **Next task**: Layer 5 realm summaries (uses same WeightedTriggerBucket pattern, reading layer4_events)
+1. **Read** this file + `WORLD_MEMORY_SYSTEM.md` +
+   `ARCHITECTURAL_DECISIONS.md` for design reference
+2. **Run tests**: `python -m unittest world_system.world_memory.test_layer3 world_system.tests.test_layer4 world_system.tests.test_layer5 -v`
+3. **Next task**: Layer 6 cross-realm patterns (reuse per-scope
+   WeightedTriggerBucket pattern on top of `layer5_events`)
 4. **Test with Claude**: Set `ANTHROPIC_API_KEY` env var — WmsAI auto-detects and routes to Claude
