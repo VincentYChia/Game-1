@@ -1,13 +1,11 @@
 # World Memory System — Handoff Status
 
-**Date**: 2026-04-16
-**Branch**: `claude/review-handoff-status-XG5iC`
-**Phase**: Layers 1-5 operational on a corrected 6-tier hierarchy
-(`World → Nation → Region → Province → District → Locality`). Layer 6
-is the next task — a mechanical copy of Layer 5's pattern one tier
-coarser. See the **Layer 6 Implementation Playbook** near the end of
-this document.
-**Tests**: 130 passing (54 Layer 3 + 39 Layer 4 + 37 Layer 5, 0 failures)
+**Date**: 2026-04-16 (updated 2026-04-16 after Layer 6 completion)
+**Branch**: `claude/implement-layer-6-nation-N6Xdy`
+**Phase**: Layers 1-6 operational on a corrected 6-tier hierarchy
+(`World → Nation → Region → Province → District → Locality`). Layer 7
+is the next task — final aggregation tier at the game World level.
+**Tests**: 166 passing (54 Layer 3 + 39 Layer 4 + 37 Layer 5 + 36 Layer 6, 0 failures)
 **Schema**: `EventStore.SCHEMA_VERSION = 2` (v1 databases hard-fail on
 load; `WorldMemorySystem.load` recovers by deleting the stale file).
 
@@ -96,6 +94,12 @@ Game Action → GameEventBus → EventRecorder (priority -10)
                                                               ↓
                                                     RegionSummaryEvent (Layer 5)
                                                     stored in LayerStore layer5_events
+                                                              ↓
+                                                    Layer6Manager (per-nation weighted triggers)
+                                                    Nation summarizer per game Nation
+                                                              ↓
+                                                    NationSummaryEvent (Layer 6)
+                                                    stored in LayerStore layer6_events
 ```
 
 ---
@@ -365,250 +369,290 @@ EventStore has 24 tables mixing raw facts, counters, interpretations, and higher
 
 ---
 
-## Layer 6 Implementation Playbook (Next Task)
+## Layer 6: Nation Summarization (COMPLETE)
 
-**Aggregation tier**: game Nation (parent of game Region). Layer 6
-consolidates Layer 5 region summaries across every region within one
-game Nation. Drops `region:` on output, retains `world:` and
-`nation:`.
+**Pipeline**: L5 event routed to per-nation bucket → geo tags stripped, content tags scored by position → content tag crosses 150 points within a nation → contributing L5 events + top-8-tag-matched L4 events gathered → single nation summary → LLM full tag rewrite → NationSummaryEvent stored in LayerStore.
 
-**Key insight**: Layer 6 is a **mechanical copy of Layer 5's pattern**,
-one tier coarser. The architecture is settled; this is a 1–2 day
-implementation task, not a design task. Every part has a proven
-template.
+**Key files**:
+- `layer6_manager.py` (550 lines) — per-nation trigger routing, L4 filtering, LLM upgrade, L7 callback hook
+- `layer6_summarizer.py` (500 lines) — nation-level summary builder, XML data block
+- `prompt_fragments_l6.json` — 5 Layer 6 prompt fragments (address tags explicitly excluded)
+- `event_schema.py` — `NationSummaryEvent` dataclass
 
-### File-by-file plan
+### Per-Nation Tag-Weighted Triggers
 
-All tier-specific constants live in `geographic_registry.py` already
-(`ADDRESS_TAG_PREFIXES`, `RegionLevel.NATION`, `RegionLevel.REGION`,
-`propagate_address_facts`, `is_address_tag`,
-`partition_address_and_content`). Do NOT re-declare them.
+Each game Nation gets its own bucket (`layer6_nation_{nation_id}`), created lazily when the first L5 event for that nation arrives. Events from different nations never cross-contaminate. Nation resolution is a single-tag lookup: the `nation:X` tag is present on every event (fact-propagated from L2 capture), so there is **no parent-chain walking**. Events without a `nation:` tag are dropped silently.
+
+Scoring reuses the same positional weights as Layer 5 (1st=10, 2nd=8, …) and the same structural skip list (`significance:`, `scope:`, etc.). Note that Layer5Summarizer always emits a `scope:region` tag at position 0 of its output, so on typical L5 events the first *scoring* content tag lands at position 1 = 8 pts. Threshold is 150 points (higher than Layer 5's 100 because nation summaries should be rarer than region summaries).
+
+### L4 Visibility (Fired-Tag Overlap Filter)
+
+Layer 6 sees L5 (full, per-nation) and L4 (filtered by fired-tag overlap), following the "two-layers-down" visibility rule. Both L5 and L4 candidates are queried directly by their `nation:X` tag. The fired tag set from the weighted bucket drives relevance ranking (same algorithm as Layer 5). Results are capped at 8 L4 events.
+
+### LLM Upgrade — Content Tags Only
+
+The Layer 6 LLM call partitions `summary.tags` into **address tags** (`world:/nation:`) and **content tags**, sends only the content tags to the LLM, and re-attaches the address half after the rewrite returns. Any address tag the LLM emitted in its output is discarded.
+
+### L7 Callback Hook
+
+Layer 6 Manager includes a `set_layer7_callback` hook to notify Layer 7 when a nation summary is stored. This enables the callback chain for future world-level aggregation (Layer 7).
+
+**Tests**: 36 passing (`world_system/tests/test_layer6.py`) — covers
+`NationSummaryEvent` dataclass, `Layer6Summarizer` (is_applicable,
+summarize, XML data block, `filter_relevant_l4`), `Layer6Manager`
+(on_layer5_created, nation resolution via tag lookup, should_run,
+run_summarization, multi-nation isolation with 25-event threshold
+trigger, supersession, stats), `PromptAssemblerL6` (assemble_l6,
+fragment loading, cross-layer fragment cascade), and a full integration
+test exercising L5 events → per-nation trigger → stored L6 summary.
+
+---
+
+## Layer 7 Implementation Playbook (Next Task)
+
+**Status**: Ready to implement. All architectural rules proven by Layers 3-6.
+
+**Aggregation tier**: game World (singleton, `world_0`). Layer 7 consolidates
+Layer 6 nation summaries across every nation within the single game World.
+Drops `nation:` on output, retains `world:` only. This is the top tier — no
+Layer 8 planned.
+
+**Key insight**: Layer 7 is a **mechanical copy of Layer 6's pattern**, one
+tier coarser. Only difference: single world bucket instead of per-nation
+buckets (game has exactly one World). Architecture is proven; this is a
+**1–2 day implementation task**. Copy-paste from Layer 6, rename classes/variables, adjust one tier.
+
+### File-by-file Implementation Plan
+
+All constants imported from `geographic_registry.py` (NO re-declarations).
 
 **New files**:
-- `world_system/world_memory/layer6_manager.py` (~550 lines) — copy
-  of `layer5_manager.py`, then:
-  - `BUCKET_PREFIX = "layer6_nation_"`
-  - Class renamed `Layer6Manager`
-  - `_max_l5_per_nation` config key (fallback default 40)
-  - `_min_regions_contributing` optional quorum gate
-  - `on_layer5_created(l5_event_dict)` instead of `on_layer4_created`
-  - `_resolve_nation_id_from_tags` — trivially scans for `nation:X`
-  - `_fetch_l5_events(nation_id, ...)` queries `layer=5` with
-    `tags=[f"nation:{nation_id}"]`
-  - `_query_relevant_l4(nation_id, fired_tags, l5_events)` — two
-    layers down, queries layer=4 by the same nation: tag, passes to
-    `Layer6Summarizer.filter_relevant_l4`
-  - `_summarize_nation` analog of `_summarize_region`
-  - `_build_geo_context` returns `{"nation_name": ..., "regions": [...]}`
-  - `_upgrade_narrative` uses `partition_address_and_content` +
-    `is_address_tag` (identical shape to L5)
-  - `_store_summary` writes category `"nation_summary"` to
-    `layer6_events`
-  - `_find_supersedable` reads `layer6_events` where category =
-    `"nation_summary"`
-  - Expose a `set_layer7_callback` hook for future L7 wiring
+- `world_system/world_memory/layer7_manager.py` (~610 lines) — copy of
+  `layer6_manager.py`, then:
+  - `BUCKET_PREFIX = "layer7_world_"` — single world bucket
+  - Class renamed `Layer7Manager`
+  - `_max_l6_per_world` config key (fallback default 20)
+  - `on_layer6_created(l6_event_dict)` instead of `on_layer5_created`
+  - `_resolve_world_id_from_tags` — scans for `world:X` tag (always `world_0`)
+  - `_fetch_l6_events(world_id, ...)` queries `layer=6` with `world: tag`
+  - `_query_relevant_l5(world_id, fired_tags, l6_events)` — two layers down,
+    queries `layer=5` by `world:` tag, passes to `Layer7Summarizer.filter_relevant_l5`
+  - `_summarize_world` analog of `_summarize_nation`
+  - `_build_geo_context` returns `{"world_name": "...", "nations": [...]}`
+  - `_upgrade_narrative` — identical pattern to L6 (partition/filter/re-attach)
+  - `_store_summary` writes category `"world_summary"` to `layer7_events`
+  - `_find_supersedable` reads `layer7_events` where category = `"world_summary"`
+  - No Layer 8 callback (this is the final tier)
 
-- `world_system/world_memory/layer6_summarizer.py` (~500 lines) —
-  copy of `layer5_summarizer.py`, then:
-  - Class renamed `Layer6Summarizer`
-  - `summarize(..., nation_id=...)` returns `NationSummaryEvent`
-  - `is_applicable(..., nation_id=...)` — min 2 L5 events
-  - `build_xml_data_block` root element `<nation name="...">`,
-    children `<region name="...">`, cross-region bucket
-    `<cross-region>`
-  - `filter_relevant_l4` analog of `filter_relevant_l3` (same
-    fired-tag overlap algorithm, different input layer)
-  - `_extract_dominant_activities` unchanged
-  - `_extract_dominant_regions` replaces `_extract_dominant_provinces`
-    (scans for `region:` tags)
-  - `_determine_nation_condition` — same severity/threat classifier
-    as L5, renamed
-  - `_build_tags(nation_id, ...)` uses
-    `propagate_address_facts(l5_events, (RegionLevel.WORLD,
-    RegionLevel.NATION))` — note NATION is the layer's own target, so
-    it's redundant to propagate it; we emit `nation:{nation_id}`
-    explicitly from the known id instead. Only propagate `WORLD`.
-    `tags.append(f"nation:{nation_id}")`, `tags.append("scope:nation")`
-  - `_L4_MAX_RESULTS = 8` (same as L5's L3 cap)
+- `world_system/world_memory/layer7_summarizer.py` (~510 lines) — copy of
+  `layer6_summarizer.py`, then:
+  - Class renamed `Layer7Summarizer`
+  - `summarize(..., world_id=...)` returns `WorldSummaryEvent`
+  - `is_applicable(..., world_id=...)` — min 2 L6 events (or set to 1?)
+  - `build_xml_data_block` root element `<world name="...">`, children
+    `<nation name="...">`, cross-nation bucket `<cross-nation>`
+  - `filter_relevant_l5` analog of `filter_relevant_l4` (same fired-tag
+    overlap algorithm, different input layer)
+  - `_extract_dominant_activities` unchanged (global scope)
+  - `_extract_dominant_nations` replaces `_extract_dominant_regions`
+    (scans for `nation:` tags)
+  - `_determine_world_condition` — same severity/threat classifier, renamed
+  - `_build_tags(world_id, ...)` propagates only `world:world_0` (always),
+    appends `scope:world`
+  - `_L5_MAX_RESULTS = 8` (same as L6's L4 cap)
 
-- `world_system/config/prompt_fragments_l6.json` — copy of
-  `prompt_fragments_l5.json`, s/region/nation/ in prose, s/province/region/
-  in examples, version bump. `_l6_core`, `_l6_output`,
-  `l6_context:nation_summary`, `l6_example:nation`. Address-tag
-  exclusion instructions unchanged ("do NOT include any address tags
-  … those are facts").
+- `world_system/config/prompt_fragments_l7.json` — copy of
+  `prompt_fragments_l6.json`, s/nation/world/ in prose, s/region/nation/ in
+  examples. `_l7_core`, `_l7_output`, `l7_context:world_summary`,
+  `l7_example:world`. Address-tag exclusion unchanged.
 
-- `world_system/tests/test_layer6.py` — copy of `test_layer5.py`,
-  then:
-  - `_setup_geo_registry_multi_nation` — two-nation fixture. Both
-    under world_0. Each nation has a region, each region has one or
-    two provinces. Pattern: world_0 → {nation_1, nation_2} → region
-    → province.
-  - `_make_l5_event(region_id=, nation_id=, world_id=, ...)` helper
-    emits `world:/nation:/region:/scope:region` + content tags
-    (mirrors `_make_l4_event` in test_layer5, shifted one tier).
-  - **Crucial arithmetic**: after the L5 summarizer, typical L5
-    events carry `scope:region` at position 0 of what survives
-    address-stripping (since addresses are stripped). `scope:` is
-    skipped by the weighted bucket → first content tag lands at
-    position 1 = 8 pts. Threshold 100 = **13 events**, same as L5.
-  - Test classes: `TestNationSummaryEvent`, `TestLayer6Summarizer`,
-    `TestLayer6XmlBlock`, `TestFilterRelevantL4`, `TestLayer6Manager`
-    (includes `test_multi_nation_isolation`), `TestPromptAssemblerL6`,
-    `TestLayer6Integration`.
+- `world_system/tests/test_layer7.py` — copy of `test_layer6.py`, then:
+  - `_setup_geo_registry_single_world` — single world, 2 nations, 2 regions per nation
+  - `_make_l6_event(nation_id=, world_id=, ...)` helper emits
+    `world:/nation:/scope:nation` + content tags
+  - **Crucial arithmetic**: L6 events carry `scope:nation` at pos 0
+    (skipped), so first content tag at pos 1 = 8 pts. Threshold 200 = **25
+    events** (same as L6 for consistency — can be tuned later).
+  - Test classes: `TestWorldSummaryEvent`, `TestLayer7Summarizer`,
+    `TestLayer7XmlBlock`, `TestFilterRelevantL5`, `TestLayer7Manager`
+    (simpler: no multi-world isolation, only one world), `TestPromptAssemblerL7`,
+    `TestLayer7Integration`.
+  - Expected: ~25-30 tests (fewer than L6 because only one world bucket).
 
 **Modified files**:
 - `world_system/world_memory/event_schema.py`:
-  - Add `NationSummaryEvent` dataclass at the end of the summary-event
-    block. Fields: `summary_id, nation_id, created_at, narrative,
-    severity, dominant_activities, dominant_regions (List[str]),
-    nation_condition, source_region_summary_ids, relevant_l4_ids,
-    tags, supersedes_id`. Factory `create(nation_id=, ...)`.
-  - Update the module header comment to list NationSummaryEvent at
-    Layer 6.
+  - Add `WorldSummaryEvent` dataclass. Fields: `summary_id, world_id,
+    created_at, narrative, severity, dominant_activities, dominant_nations
+    (List[str]), world_condition, source_nation_summary_ids, relevant_l5_ids,
+    tags, supersedes_id`. Factory `create(world_id=, ...)`.
+  - Update module header to list `WorldSummaryEvent` at Layer 7.
 
 - `world_system/world_memory/world_memory_system.py`:
-  - Import `Layer6Manager`.
-  - Add attribute `self.layer6_manager: Optional[Layer6Manager] = None`.
-  - Section `# 7e. Layer 6 Manager (nation summarization)` after
-    the existing L5 init block. Initialize with
-    `(layer_store, geo_registry, wms_ai, trigger_registry)`.
-  - Wire `self.layer5_manager.set_layer6_callback(
-    self.layer6_manager.on_layer5_created)` — requires adding
-    `set_layer6_callback` on `Layer5Manager` and having
-    `Layer5Manager._store_summary` invoke the callback after
-    writing to LayerStore, mirroring how
-    `Layer4Manager._store_summary` already calls the L5 callback.
-  - Add `# Layer 6 nation summarization check` block to the
-    periodic `update()` path after the L5 drain.
-  - Add `Layer6Manager.reset()` to `shutdown()`.
+  - Import `Layer7Manager`.
+  - Add attribute `self.layer7_manager: Optional[Layer7Manager] = None`.
+  - Section `# 7f. Layer 7 Manager (world summarization)` after L6 init.
+    Initialize with `(layer_store, geo_registry, wms_ai, trigger_registry)`.
+  - Wire `self.layer6_manager.set_layer7_callback(
+    self.layer7_manager.on_layer6_created)` (already has the hook!).
+  - Add `# Layer 7 world summarization check` block to periodic `update()`
+    after the L6 drain.
+  - Add `Layer7Manager.reset()` to `shutdown()`.
 
-- `world_system/world_memory/layer5_manager.py`:
-  - Add `self._layer6_callback = None` in `__init__`.
-  - Add `set_layer6_callback(callback)` method.
-  - In `_store_summary`, after the LayerStore write, invoke
-    `self._layer6_callback(l5_event_dict)` where the dict mirrors
-    what Layer4 passes to L5 (id, tags, game_time, category,
-    severity, narrative). Wrap in try/except that prints an error
-    and keeps the L5 write intact on callback failure (same pattern
-    as `Layer4Manager._store_summary`).
+- `world_system/world_memory/layer6_manager.py`:
+  - Already has `self._layer7_callback = None` and `set_layer7_callback()`
+  - In `_store_summary`, after LayerStore write, invoke
+    `self._layer7_callback(l6_event_dict)` wrapped in try/except
+    (mirror existing L4→L5 pattern).
 
 - `world_system/world_memory/wms_ai.py`:
-  - Update the `wms_layer6` entry in the `_LAYER_CONFIG` dict if it
-    exists; otherwise add one. Temperature 0.5, max_tokens 500,
-    description `"Layer 6: nation-level summaries"` (already done
-    in the 2026-04-16 migration, verify).
+  - Verify `wms_layer7` entry exists in `LAYER_CONFIG` (it should from migration).
+    If not, add: temperature 0.6, max_tokens 600, description "Layer 7:
+    world-level summaries".
 
 - `world_system/config/backend-config.json`:
-  - Already has a `wms_layer6` entry pointing at claude with
-    description `"WMS Layer 6: nation-level summaries"`. Verify no
-    changes needed.
+  - Verify `wms_layer7` entry exists (should already be there).
 
 - `world_system/config/memory-config.json`:
-  - Add a `"layer6"` section mirroring `"layer5"`. Defaults:
+  - Add `"layer7"` section:
     ```json
     {
-      "trigger_threshold": 150,
-      "max_l5_per_nation": 40,
-      "max_l4_relevance": 8,
-      "min_regions_contributing": 1,
-      "description": "Layer 6 nation summarization config (game Nation tier). Same per-nation WeightedTriggerBucket pattern as Layer 5 but one tier coarser. trigger_threshold defaults to 150 (higher than Layer 5) because nation summaries should be rarer than region summaries."
+      "trigger_threshold": 200,
+      "max_l6_per_world": 20,
+      "max_l5_relevance": 8,
+      "description": "Layer 7 world summarization config (game World tier, singleton). Same WeightedTriggerBucket pattern as Layer 6 but single world bucket. trigger_threshold defaults to 200 (same as Layer 6 for tuning flexibility). max_l6_per_world = max L6 nation events included in prompt. max_l5_relevance = max Layer 5 supporting-detail events."
     }
     ```
-  - **Do not tune thresholds** — defaults are placeholders, real
-    tuning comes later after the full WMS is up and can be
-    exercised.
 
 - `world_system/world_memory/prompt_assembler.py`:
-  - Add `assemble_l6(data_block, event_tags)` method mirroring
-    `assemble_l5`. Uses `_l6_core` / `l6_context:nation_summary` /
-    `l6_example:nation` / `_l6_output` fragments. Tags
-    `["layer:6", "scope:nation"]`. Tag cascade includes all lower
-    layer fragments (same `_collect_all_tag_fragments` call).
-  - Add `get_l6_fragment(key)` method and
-    `self._l6_fragments: Dict[str, Any] = {}`.
-  - Extend `load()` to read
-    `world_system/config/prompt_fragments_l6.json`.
+  - Add `assemble_l7(data_block, event_tags)` method mirroring `assemble_l6`.
+    Uses `_l7_core` / `l7_context:world_summary` / `l7_example:world` /
+    `_l7_output` fragments. Tags `["layer:7", "scope:world"]`.
+  - Add `get_l7_fragment(key)` method and `self._l7_fragments: Dict[str, Any] = {}`.
+  - Extend `load()` to read `world_system/config/prompt_fragments_l7.json`.
 
-- `world_system/world_memory/tag_library.py`:
-  - Optional — add a `"nation_condition"` tag category under Layer 6
-    if the summarizer emits `nation_condition:X` tags (mirroring the
-    `region_condition:X` pattern at L5).
+- `world_system/docs/HANDOFF_STATUS.md` — update test count (166 → ~190-200
+  once L7 tests added), update pipeline diagram, add Layer 7 completion
+  section (after implementation), remove this playbook, sketch Layer 8
+  (probably not needed, but document why).
 
-- `world_system/docs/HANDOFF_STATUS.md` — update the test count
-  (130 → ~160 once L6 tests are added), add L6 to the pipeline
-  diagram, add the Layer 6 section after Layer 5.
+- `world_system/docs/ARCHITECTURAL_DECISIONS.md` — add Document History
+  entry for Layer 7 completion.
 
-- `world_system/docs/ARCHITECTURAL_DECISIONS.md` — add a note in the
-  §7 Document History confirming L6 completion.
+### Address-tag contract (Layer 7 specific)
 
-### Address-tag contract (reminder — do not deviate)
+1. **Input**: L6 events carry `world:world_0` + `nation:nation_X` tags.
+2. **Output**: L7 drops `nation:` on summary. Retains only `world:world_0`.
+3. **Scope tag**: Output includes `scope:world` (single tier).
+4. **LLM rewrite**: Partition before call, re-attach after, filter output
+   with `is_address_tag()`.
 
-1. **Address tags are facts**. The `nation:X` tag on every L5 event
-   is propagated from L2 capture. Layer 6's trigger bucket reads it
-   directly — no parent-chain walk.
-2. **Layer 6 output address tags**: `world:world_0` (propagated from
-   any input), `nation:{layer's own target}`. **Drops**: `region:`,
-   `province:`, `district:`, `locality:`.
-3. **LLM rewrites CONTENT tags only**. Use
-   `partition_address_and_content(summary.tags)` before the LLM
-   call; re-attach `address_tags` after; filter LLM output with
-   `is_address_tag` to drop any hallucinated address tags.
-4. **No new tag-prefix constants**. Import
-   `ADDRESS_TAG_PREFIXES` from `geographic_registry`.
-
-### Testing ladder (run these in order as you build)
+### Testing strategy
 
 ```bash
-# After Phase 1 (dataclass + summarizer skeleton):
-python -m unittest world_system.tests.test_layer6.TestNationSummaryEvent \
-    world_system.tests.test_layer6.TestLayer6Summarizer
+# After Phase 1 (dataclass + summarizer):
+python -m unittest world_system.tests.test_layer7.TestWorldSummaryEvent \
+    world_system.tests.test_layer7.TestLayer7Summarizer
 
 # After Phase 2 (manager + integration):
-python -m unittest world_system.tests.test_layer6
+python -m unittest world_system.tests.test_layer7
 
-# Full regression (must stay green throughout):
-python -m unittest world_system.world_memory.test_layer3 \
+# Full regression (must stay green):
+python -m unittest \
+    world_system.world_memory.test_layer3 \
     world_system.tests.test_layer4 \
     world_system.tests.test_layer5 \
-    world_system.tests.test_layer6
+    world_system.tests.test_layer6 \
+    world_system.tests.test_layer7
 ```
 
-Expected final count: **~160 tests** (54 L3 + 39 L4 + 37 L5 + ~30 L6),
+Expected final count: **~190-200 tests** (54 L3 + 39 L4 + 37 L5 + 36 L6 + 25-30 L7),
 all passing.
 
-### Known gotchas
+### Key differences from Layer 6 → Layer 7
 
-- The `scope:province` → pos-0-skip arithmetic from L5's test file
-  applies identically at L6: L5 summarizer emits `scope:region`,
-  which is structural and skipped, so the first scoring content tag
-  in an L5 event lands at position 1 = 8 pts. Size the trigger tests
-  for 13 events × 8 pts = 104 > 100 threshold (or 19 × 8 = 152 > 150
-  if you use the higher 150 threshold for L6).
-- `Layer5Manager._store_summary` must invoke the L6 callback
-  **after** the LayerStore write succeeds, wrapped in try/except.
-  Otherwise an L6 error crashes L5 storage. Mirror the existing
-  pattern in `Layer4Manager._store_summary`.
-- The dormant `province_summaries` table in `event_store.py` is
-  still dormant and unused. Do NOT try to repurpose it for L6.
-- `WorldMemorySystem.save()` returns `memory_db_path`. Do NOT add
-  an L6-specific save field — all L6 state lives in
-  `layer6_events`/`layer6_tags` which persist via the existing
-  SQLite DB. No schema bump needed.
+| Aspect | Layer 6 | Layer 7 |
+|---|---|---|
+| Aggregation Tier | Game Nation | Game World |
+| Trigger Buckets | Per-nation (many) | Per-world (1) |
+| Config Max Events | 40 L5 | 20 L6 |
+| is_applicable() | Min 2 L5 events | Min 2 L6 events (or 1?) |
+| Tests | 36 | ~25-30 |
+| Multi-isolation | YES (test critical) | N/A (only 1 world) |
+| LLM Call Path | Identical | Identical |
+| Callback | set_layer7_callback() | NONE (final tier) |
 
-### Out of scope for the L6 work
+### Known gotchas (Layer 7 specific)
 
-- Trigger threshold tuning (deferred until full WMS is built).
-- Layer 7 (world-level aggregation — even easier, another mechanical copy).
-- BalanceValidator (still designed, not implemented — separate work).
-- Faction/economy narrative weaving (per-system narrative layer, not L6).
+- **Single world bucket**: The game always has exactly one World (`world_0`).
+  Layer 7 still uses `WeightedTriggerBucket` (named `layer7_world_0`) because
+  the architecture is consistent. Multi-world games could extend this.
+- **is_applicable threshold**: Layer 7 requires min 2 L6 events OR set to 1?
+  Currently matched to L6 (2), but world-scope aggregation might justify
+  threshold-of-1 (any event triggers). Decision deferred to implementation.
+- **Relevance filtering**: Two-layers-down visibility means L7 sees L6 (full)
+  + L5 (fired-tag filtered). Relevance threshold same as L6 (8 L5 events).
+- **No Layer 8**: This is the final tier. `set_layer7_callback` exists in
+  Layer6Manager but is never invoked by anything.
 
 ---
 
 ## How to Continue
 
-1. **Read** this file + `WORLD_MEMORY_SYSTEM.md` +
-   `ARCHITECTURAL_DECISIONS.md` for design reference
-2. **Run tests**: `python -m unittest world_system.world_memory.test_layer3 world_system.tests.test_layer4 world_system.tests.test_layer5 -v`
-3. **Next task**: Layer 6 nation-level aggregation — trivial copy of Layer 5's pattern, bucketed by `nation:X` tag, drops `region:` on output, reads `layer5_events`.
-4. **Test with Claude**: Set `ANTHROPIC_API_KEY` env var — WmsAI auto-detects and routes to Claude.
+### For Layer 7 Implementation
+
+1. **Read this entire file** — especially this playbook and the Layer 6/5
+   sections for reference patterns.
+2. **Read** `WORLD_MEMORY_SYSTEM.md` (§7.4 Layer 6, §7.5 Layer 7 stub) and
+   `ARCHITECTURAL_DECISIONS.md` §6 for rules.
+3. **Copy Layer 6 code** — start with `layer6_manager.py`, mechanically rename,
+   adjust one tier up.
+4. **Test early and often** — run test ladder after each phase.
+5. **Follow the checklist** in the "File-by-file Implementation Plan" above.
+
+### Current Test Status
+
+```bash
+$ python -m unittest \
+    world_system.world_memory.test_layer3 \
+    world_system.tests.test_layer4 \
+    world_system.tests.test_layer5 \
+    world_system.tests.test_layer6 -v
+
+Ran 166 tests in 0.2s
+OK (54 L3 + 39 L4 + 37 L5 + 36 L6)
+```
+
+### Commands to Know
+
+```bash
+# Full test ladder (run frequently)
+python -m unittest world_system.world_memory.test_layer3 \
+    world_system.tests.test_layer4 world_system.tests.test_layer5 \
+    world_system.tests.test_layer6 -v
+
+# Individual layer tests (for debugging)
+python -m unittest world_system.tests.test_layer6 -v
+
+# After creating Layer 7 code, add to ladder:
+python -m unittest world_system.world_memory.test_layer3 \
+    world_system.tests.test_layer4 world_system.tests.test_layer5 \
+    world_system.tests.test_layer6 world_system.tests.test_layer7 -v
+
+# LLM testing (requires ANTHROPIC_API_KEY set)
+export ANTHROPIC_API_KEY="sk-ant-..."
+python -m unittest world_system.tests.test_layer7.TestLayer7Integration -v
+```
+
+### Critical Review Points (Before Committing Layer 7)
+
+- [ ] `WorldSummaryEvent` dataclass has 12 fields (matching L6 pattern)
+- [ ] `Layer7Manager._resolve_world_id_from_tags()` scans for `world:X` tag
+- [ ] `Layer7Manager._upgrade_narrative()` uses partition/filter pattern
+- [ ] `_build_tags()` propagates only `world:world_0` (never hallucinated nations)
+- [ ] Tests verify single-bucket behavior (only layer7_world_0 triggers)
+- [ ] Prompt fragments (`_l7_core`, etc.) loaded in PromptAssembler.load()
+- [ ] `memory-config.json` layer7 section has trigger_threshold, max_l6_per_world, max_l5_relevance
+- [ ] L6→L7 callback wired in `WorldMemorySystem.__init__()`
+- [ ] All 166 existing tests still pass (regression check)
+- [ ] New tests cover: dataclass, summarizer, manager, prompts, integration
+- [ ] Documentation updated (HANDOFF_STATUS.md, ARCHITECTURAL_DECISIONS.md)
