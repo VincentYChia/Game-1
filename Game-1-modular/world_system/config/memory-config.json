@@ -88,11 +88,11 @@
   },
 
   "layer6": {
-    "trigger_threshold": 150,
+    "trigger_threshold": 200,
     "max_l5_per_nation": 40,
     "max_l4_relevance": 8,
     "min_regions_contributing": 1,
-    "description": "Layer 6 nation summarization config (game Nation tier). Same per-nation WeightedTriggerBucket pattern as Layer 5 but one tier coarser. trigger_threshold defaults to 150 (higher than Layer 5) because nation summaries should be rarer than region summaries. max_l5_per_nation = max L5 events included in prompt. max_l4_relevance = max Layer 4 supporting-detail events (two-layers-down visibility, filtered by fired-tag overlap). min_regions_contributing = optional minimum region diversity gate. NOTE: defaults are placeholders — real tuning happens after the full WMS is built."
+    "description": "Layer 6 nation summarization config (game Nation tier). Same per-nation WeightedTriggerBucket pattern as Layer 5 but one tier coarser. trigger_threshold defaults to 200 (higher than Layer 5's 100) because nation summaries should be rarer than region summaries. max_l5_per_nation = max L5 events included in prompt. max_l4_relevance = max Layer 4 supporting-detail events (two-layers-down visibility, filtered by fired-tag overlap). min_regions_contributing = optional minimum region diversity gate. NOTE: defaults are placeholders — real tuning happens after the full WMS is built."
   },
 
   "evaluators": {

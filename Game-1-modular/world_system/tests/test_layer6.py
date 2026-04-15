@@ -592,8 +592,8 @@ class TestLayer6Manager(unittest.TestCase):
 
         # scope:region occupies position 0 (skipped), so
         # domain:combat lands at pos 1 = 8 pts per event.
-        # Threshold is 150 → need 19 events (19 * 8 = 152).
-        for i in range(19):
+        # Threshold is 200 → need 25 events (25 * 8 = 200).
+        for i in range(25):
             evt = _make_l5_event(
                 region_id=f"region_{(i % 2) + 1}",
                 nation_id="nation_1",
@@ -604,15 +604,15 @@ class TestLayer6Manager(unittest.TestCase):
 
     def test_multi_nation_isolation(self):
         """Events in nation_1 should not trigger nation_2 and vice versa."""
-        # Fire nation_1: 19 events * 8 pts = 152 > 150
-        for i in range(19):
+        # Fire nation_1: 25 events * 8 pts = 200 >= 200
+        for i in range(25):
             self.manager.on_layer5_created(_make_l5_event(
                 region_id=f"region_{(i % 2) + 1}",
                 nation_id="nation_1",
                 game_time=100 + i, extra_tags=["domain:combat"],
             ))
         # A few events into nation_2 (not enough to fire)
-        for i in range(3):
+        for i in range(5):
             self.manager.on_layer5_created(_make_l5_event(
                 region_id=f"region_{3 + (i % 2)}",
                 nation_id="nation_2",
@@ -626,7 +626,7 @@ class TestLayer6Manager(unittest.TestCase):
         self.assertFalse(b2.has_fired())
 
     def test_run_summarization_stores_l6_event(self):
-        for i in range(19):
+        for i in range(25):
             eid = str(uuid.uuid4())
             rid = f"region_{(i % 2) + 1}"
             tags = ["world:world_0", "nation:nation_1",
@@ -654,7 +654,7 @@ class TestLayer6Manager(unittest.TestCase):
     def test_supersession_on_second_run(self):
         """Second summarization should set supersedes_id on new event."""
         for round_num in range(2):
-            for i in range(19):
+            for i in range(25):
                 eid = str(uuid.uuid4())
                 rid = f"region_{(i % 2) + 1}"
                 tags = ["world:world_0", "nation:nation_1",
@@ -691,7 +691,7 @@ class TestLayer6Manager(unittest.TestCase):
         stats = self.manager.stats
         trigger = stats["trigger"]
         self.assertEqual(trigger["nations_tracked"], 1)
-        self.assertEqual(trigger["threshold"], 150)
+        self.assertEqual(trigger["threshold"], 200)
         self.assertIn("nation_1", trigger["per_nation"])
 
 
@@ -766,7 +766,7 @@ class TestLayer6Integration(unittest.TestCase):
     def test_l5_events_flow_to_l6_storage(self):
         """Full pipeline: L5 events → weighted buckets → L6 summary."""
         # Populate L5 events in storage
-        for i in range(19):
+        for i in range(25):
             eid = str(uuid.uuid4())
             rid = f"region_{(i % 2) + 1}"
             tags = ["world:world_0", "nation:nation_1",
@@ -806,7 +806,7 @@ class TestLayer6Integration(unittest.TestCase):
         self.manager.set_layer7_callback(mock_l7_callback)
 
         # Insert L5 events
-        for i in range(19):
+        for i in range(25):
             eid = str(uuid.uuid4())
             rid = f"region_{(i % 2) + 1}"
             tags = ["world:world_0", "nation:nation_1",
