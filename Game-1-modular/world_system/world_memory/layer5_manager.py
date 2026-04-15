@@ -61,6 +61,9 @@ from world_system.world_memory.config_loader import get_section
 from world_system.world_memory.event_schema import (
     RegionSummaryEvent, SEVERITY_ORDER,
 )
+from world_system.world_memory.geographic_registry import (
+    ADDRESS_TAG_PREFIXES, is_address_tag, partition_address_and_content,
+)
 from world_system.world_memory.layer5_summarizer import Layer5Summarizer
 from world_system.world_memory.tag_assignment import assign_higher_layer_tags
 from world_system.world_memory.trigger_registry import TriggerRegistry
@@ -68,13 +71,6 @@ from world_system.world_memory.trigger_registry import TriggerRegistry
 
 # Per-region bucket name prefix: "layer5_region_{region_id}"
 BUCKET_PREFIX = "layer5_region_"
-
-# Address tag prefixes stripped before scoring — these are facts, not
-# content. Stripping them ensures content tags get full positional
-# weight.
-_GEO_TAG_PREFIXES = (
-    "world:", "nation:", "region:", "province:", "district:", "locality:",
-)
 
 
 class Layer5Manager:
@@ -200,7 +196,7 @@ class Layer5Manager:
         # weight (e.g. domain:combat at position 0 = 10 pts).
         content_tags = [
             t for t in tags
-            if not any(t.startswith(p) for p in _GEO_TAG_PREFIXES)
+            if not any(t.startswith(p) for p in ADDRESS_TAG_PREFIXES)
         ]
         if not content_tags:
             return
@@ -480,11 +476,7 @@ class Layer5Manager:
         region_name = geo_context.get("region_name", summary.region_id)
 
         # Partition existing tags into address (preserved) vs content (LLM-rewritable)
-        address_tags = [
-            t for t in summary.tags
-            if any(t.startswith(p) for p in _GEO_TAG_PREFIXES)
-        ]
-        content_tags = [t for t in summary.tags if t not in address_tags]
+        address_tags, content_tags = partition_address_and_content(summary.tags)
 
         data_block = self._summarizer.build_xml_data_block(
             l4_events, l3_events, region_name, provinces, game_time,
@@ -508,10 +500,7 @@ class Layer5Manager:
                 # attached from the pre-call snapshot. Any address tag
                 # the LLM invented is dropped.
                 llm_tags = llm_result.tags or []
-                llm_content = [
-                    t for t in llm_tags
-                    if not any(t.startswith(p) for p in _GEO_TAG_PREFIXES)
-                ]
+                llm_content = [t for t in llm_tags if not is_address_tag(t)]
                 if llm_content:
                     summary.tags = address_tags + llm_content
                 else:

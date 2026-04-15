@@ -45,6 +45,109 @@ class RegionLevel(Enum):
     WORLD = "world"           # Game World — always present (singleton)
 
 
+# ══════════════════════════════════════════════════════════════════
+# Canonical address tiers — single source of truth
+# ══════════════════════════════════════════════════════════════════
+#
+# Every module that touches address tags — layer managers, layer
+# summarizers, event recorder, tag assigner, tag library, tests —
+# imports from here. DO NOT redeclare these tuples elsewhere.
+#
+# See docs/ARCHITECTURAL_DECISIONS.md §6:
+#   - Address tags are FACTS, assigned at L2 capture.
+#   - One tier per layer; each layer drops the finest address tag
+#     on its output.
+#   - The LLM is never allowed to synthesize or rewrite address tags.
+
+# Coarse → fine ordering (used by event emission / L2 tag assignment)
+ADDRESS_TIERS_COARSE_TO_FINE: Tuple[RegionLevel, ...] = (
+    RegionLevel.WORLD,
+    RegionLevel.NATION,
+    RegionLevel.REGION,
+    RegionLevel.PROVINCE,
+    RegionLevel.DISTRICT,
+    RegionLevel.LOCALITY,
+)
+
+# Fine → coarse ordering (used by finest-region-at-point lookup)
+ADDRESS_TIERS_FINE_TO_COARSE: Tuple[RegionLevel, ...] = tuple(
+    reversed(ADDRESS_TIERS_COARSE_TO_FINE)
+)
+
+# Address tag prefixes, e.g. ("world:", "nation:", "region:", ...).
+# Used by every layer manager to strip address tags before scoring
+# content tags, and by every layer summarizer/upgrade path to
+# partition address vs content when calling the LLM.
+ADDRESS_TAG_PREFIXES: Tuple[str, ...] = tuple(
+    f"{lvl.value}:" for lvl in ADDRESS_TIERS_COARSE_TO_FINE
+)
+
+
+def is_address_tag(tag: str) -> bool:
+    """True if the tag is an address fact (never LLM-rewritable)."""
+    return any(tag.startswith(p) for p in ADDRESS_TAG_PREFIXES)
+
+
+def strip_address_tags(tags: List[str]) -> List[str]:
+    """Return a new list containing only non-address (content) tags."""
+    return [t for t in tags if not is_address_tag(t)]
+
+
+def partition_address_and_content(tags: List[str]) -> Tuple[List[str], List[str]]:
+    """Split a tag list into (address_tags, content_tags).
+
+    Preserves the original order within each partition. Used by
+    Layer 4+ `_upgrade_narrative` before calling the LLM.
+    """
+    address: List[str] = []
+    content: List[str] = []
+    for t in tags:
+        (address if is_address_tag(t) else content).append(t)
+    return address, content
+
+
+def propagate_address_facts(
+    origin_events: List[Dict[str, Any]],
+    retain_tiers: Tuple[RegionLevel, ...],
+) -> List[str]:
+    """Extract the first address tag at each retained tier from origin events.
+
+    Layer N+1 produces a summary that spans multiple Layer N inputs.
+    Those inputs all belong to the same ancestor at every tier above
+    the aggregation boundary, so the address is deterministic — we
+    just need to read it from any input. This helper does that once
+    for a whole set of tiers and returns them in canonical coarse →
+    fine order.
+
+    Args:
+        origin_events: List of event dicts (each with a "tags" field).
+        retain_tiers: Which tiers to copy through. Typical usage for a
+            layer that aggregates to game Region:
+                (RegionLevel.WORLD, RegionLevel.NATION, RegionLevel.REGION)
+            The layer's own aggregation-target tier should be INCLUDED
+            here; the caller decides not to read it and to emit its
+            own `{tier}:{id}` instead if the target id is known
+            independently.
+
+    Returns:
+        A list of tags like `["world:world_0", "nation:nation_1",
+        "region:region_17"]` in coarsest → finest order. Missing
+        tiers are silently omitted.
+    """
+    wanted_prefixes = tuple(f"{lvl.value}:" for lvl in retain_tiers)
+    found: Dict[str, str] = {}
+    for event in origin_events:
+        for tag in event.get("tags", []):
+            for pref in wanted_prefixes:
+                if pref not in found and tag.startswith(pref):
+                    found[pref] = tag
+                    break
+        if len(found) == len(wanted_prefixes):
+            break
+    # Emit in the requested canonical order, skipping any missing
+    return [found[pref] for pref in wanted_prefixes if pref in found]
+
+
 @dataclass
 class RegionState:
     """Mutable state of a region — updated by the aggregation pipeline."""

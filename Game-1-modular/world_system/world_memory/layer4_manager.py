@@ -58,6 +58,9 @@ from world_system.world_memory.config_loader import get_section
 from world_system.world_memory.event_schema import (
     ProvinceSummaryEvent, SEVERITY_ORDER,
 )
+from world_system.world_memory.geographic_registry import (
+    ADDRESS_TAG_PREFIXES, is_address_tag, partition_address_and_content,
+)
 from world_system.world_memory.layer4_summarizer import Layer4Summarizer
 from world_system.world_memory.tag_assignment import assign_higher_layer_tags
 from world_system.world_memory.trigger_registry import TriggerRegistry
@@ -72,14 +75,6 @@ BUCKET_PREFIX = "layer4_province_"
 _L2_TOP_TAG_COUNT = 5
 _L2_MIN_TAG_MATCHES = 3
 _L2_MAX_RESULTS = 5
-
-# Geographic tag prefixes stripped before scoring — these are address
-# tags, not content tags. Stripping them ensures content tags get full
-# positional weight (e.g. domain:combat moves from position ~5 → 0 =
-# 10 pts, not 3).
-_GEO_TAG_PREFIXES = (
-    "world:", "nation:", "region:", "province:", "district:", "locality:",
-)
 
 
 class Layer4Manager:
@@ -191,7 +186,7 @@ class Layer4Manager:
         # weight (e.g. domain:combat at position 0 = 10 pts, not position 2 = 6)
         content_tags = [
             t for t in tags
-            if not any(t.startswith(p) for p in _GEO_TAG_PREFIXES)
+            if not any(t.startswith(p) for p in ADDRESS_TAG_PREFIXES)
         ]
         if not content_tags:
             return
@@ -365,7 +360,7 @@ class Layer4Manager:
             for tag in event.get("tags", []):
                 if not any(tag.startswith(p) for p in _STRUCTURAL):
                     # Also strip geo tags — province/district are structural
-                    if not any(tag.startswith(p) for p in _GEO_TAG_PREFIXES):
+                    if not any(tag.startswith(p) for p in ADDRESS_TAG_PREFIXES):
                         tag_freq[tag] = tag_freq.get(tag, 0) + 1
 
         if not tag_freq:
@@ -461,11 +456,7 @@ class Layer4Manager:
         province_name = geo_context.get("province_name", summary.province_id)
 
         # Partition tags into address (preserved) vs content (rewritable)
-        address_tags = [
-            t for t in summary.tags
-            if any(t.startswith(p) for p in _GEO_TAG_PREFIXES)
-        ]
-        content_tags = [t for t in summary.tags if t not in address_tags]
+        address_tags, content_tags = partition_address_and_content(summary.tags)
 
         data_block = self._summarizer.build_xml_data_block(
             l3_events, l2_events, province_name, districts, game_time,
@@ -489,10 +480,7 @@ class Layer4Manager:
                 # re-attached from the pre-call snapshot. Any address
                 # tag the LLM invented is dropped.
                 llm_tags = llm_result.tags or []
-                llm_content = [
-                    t for t in llm_tags
-                    if not any(t.startswith(p) for p in _GEO_TAG_PREFIXES)
-                ]
+                llm_content = [t for t in llm_tags if not is_address_tag(t)]
                 if llm_content:
                     summary.tags = address_tags + llm_content
                 else:

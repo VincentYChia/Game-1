@@ -44,6 +44,9 @@ from world_system.world_memory.event_schema import (
     RegionSummaryEvent, SEVERITY_ORDER,
 )
 from world_system.world_memory.game_date import format_relative
+from world_system.world_memory.geographic_registry import (
+    ADDRESS_TAG_PREFIXES, RegionLevel, propagate_address_facts,
+)
 
 
 # Tag categories that carry region-relevant meaning. Used for L3
@@ -55,12 +58,14 @@ _CONTENT_TAG_PREFIXES = frozenset({
     "urgency_level:", "event_status:", "player_impact:",
 })
 
-# Address tag prefixes that must NOT score in L3 filtering (facts, not
-# content) plus other structural categories.
-_GEO_STRUCTURAL_PREFIXES = frozenset({
-    "world:", "nation:", "region:", "province:", "district:", "locality:",
+# Non-address structural prefixes that must also be excluded from L3
+# filtering (scope/significance/consolidator are classification
+# scaffolding, not semantic content). Address prefixes are pulled from
+# the single source of truth in geographic_registry.
+_STRUCTURAL_NON_ADDRESS_PREFIXES = frozenset({
     "scope:", "significance:", "consolidator:",
 })
+_GEO_STRUCTURAL_PREFIXES = frozenset(ADDRESS_TAG_PREFIXES) | _STRUCTURAL_NON_ADDRESS_PREFIXES
 
 # L3 filter tuning — more permissive than L4's L2 filter because L3
 # events are already consolidated summaries (higher signal-to-noise).
@@ -474,28 +479,15 @@ class Layer5Summarizer:
         The LLM later rewrites only the content tags; address tags
         are preserved untouched by layer code.
         """
-        tags: List[str] = []
-
         # ── Address tags (FACTS, propagated from L4 inputs) ──
-        # Walk the inputs once and pick up the first world:/nation:/region:
-        # value seen. All L4 events in the same region share the same
-        # world/nation/region ancestry so this is deterministic.
-        world_tag = ""
-        nation_tag = ""
-        for event in l4_events:
-            for tag in event.get("tags", []):
-                if not world_tag and tag.startswith("world:"):
-                    world_tag = tag
-                elif not nation_tag and tag.startswith("nation:"):
-                    nation_tag = tag
-            if world_tag and nation_tag:
-                break
-
-        if world_tag:
-            tags.append(world_tag)
-        if nation_tag:
-            tags.append(nation_tag)
-        # Region tag is the layer's own aggregation target
+        # Copy world/nation from any input event (all share the same
+        # ancestry above the region level). `region:` is this layer's
+        # own aggregation target, so we emit it from `region_id` rather
+        # than reading it from inputs.
+        tags: List[str] = propagate_address_facts(
+            l4_events,
+            (RegionLevel.WORLD, RegionLevel.NATION),
+        )
         tags.append(f"region:{region_id}")
 
         # Structural scope tag
