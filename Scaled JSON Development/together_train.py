@@ -8,16 +8,16 @@ from together import Together
 # CHANGE THESE EVERY RUN
 # ============================================================================
 
-FILE_ID = "file-1ef99ffd-9d59-49c1-80d2-00e2f4f24499"  # Your uploaded file ID
-JOB_NAME = "Smithing_7"                          # Name/suffix for your job
+FILE_ID = "file-fd51d4bb-2f50-43ca-bbf4-8698fda360f3"  # Your uploaded file ID
+JOB_NAME = "Combined_Crafting_1"                          # Name/suffix for your job
 MODEL = "google/gemma-3-4b-it-VLM"                    # Model to fine-tune
 
 # Parameters
 N_EPOCHS = 5
 BATCH_SIZE = 8
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 2e-3
 USE_LORA = True
-TRAIN_VISION = False
+TRAIN_VISION = True
 TRAIN_ON_INPUTS = "auto"  # "auto", "true", or "false"
 
 # ============================================================================

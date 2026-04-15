@@ -32,6 +32,17 @@ MODEL_MAP = {
 
 JSONL_DIR = r"C:\Users\vipVi\PycharmProjects\Game-1\Scaled JSON Development\LLM Training Data\jsonl_outputs"
 SYSTEM_PROMPT_DIR = r"C:\Users\vipVi\PycharmProjects\Game-1\Scaled JSON Development\LLM Training Data\Synthetic_Training\system_prompts"
+
+# Live (few-shot) system prompts — numbered files mapped to disciplines
+LIVE_PROMPT_DIR = r"C:\Users\vipVi\PycharmProjects\Game-1\Scaled JSON Development\LLM Training Data\Fewshot_llm\prompts\system_prompts"
+LIVE_PROMPT_MAP = {
+    "smithing":    "system_1.txt",
+    "refining":    "system_2.txt",
+    "alchemy":     "system_3.txt",
+    "engineering": "system_4.txt",
+    "adornment":   "system_5.txt",
+}
+
 OLLAMA_API = "http://localhost:11434"
 
 # ============================================================================
@@ -65,13 +76,38 @@ def load_jsonl(filepath, limit=None):
     return entries
 
 
-def load_system_prompt(discipline):
-    base = discipline.split("_")[0]
+def load_system_prompt(discipline, mode="training"):
+    """Load a system prompt.
+
+    mode="training"  → original prompts from SYSTEM_PROMPT_DIR
+    mode="live"      → few-shot prompts from LIVE_PROMPT_DIR
+    """
+    base = discipline.split("_")[0].lower()
+    print(f"  [prompt] discipline='{discipline}' base='{base}' mode='{mode}'", flush=True)
+
+    if mode == "live":
+        filename = LIVE_PROMPT_MAP.get(base)
+        print(f"  [prompt] LIVE_PROMPT_MAP.get('{base}') → '{filename}'", flush=True)
+        if filename:
+            fp = os.path.join(LIVE_PROMPT_DIR, filename)
+            exists = os.path.isfile(fp)
+            print(f"  [prompt] live path: {fp}  exists={exists}", flush=True)
+            if exists:
+                with open(fp, "r", encoding="utf-8") as f:
+                    content = f.read().strip()
+                print(f"  [prompt] ✓ LOADED LIVE prompt ({len(content)} chars)", flush=True)
+                return content
+        print(f"  [prompt] ⚠ Live prompt not found for '{base}', falling back to training", flush=True)
+
+    # Training mode (or fallback)
     for name in [discipline, base]:
         fp = os.path.join(SYSTEM_PROMPT_DIR, f"{name}.txt")
         if os.path.isfile(fp):
             with open(fp, "r", encoding="utf-8") as f:
-                return f.read().strip()
+                content = f.read().strip()
+            print(f"  [prompt] ✓ LOADED TRAINING prompt from {fp} ({len(content)} chars)", flush=True)
+            return content
+    print(f"  [prompt] ⚠ No prompt found at all, using default", flush=True)
     return "You are a helpful assistant."
 
 
@@ -171,7 +207,7 @@ def api_infer():
         payload["images"] = [body["image"]]
 
     def generate():
-        print(f"  → Infer: model={payload['model']}", flush=True)
+        print(f"  → Infer: model={payload['model']}  system_len={len(payload.get('system',''))}  system_first80={payload.get('system','')[:80]!r}", flush=True)
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
             f"{OLLAMA_API}/api/generate", data=data,
@@ -210,7 +246,11 @@ def api_infer():
 @app.route("/api/system_prompt")
 def api_system_prompt():
     discipline = request.args.get("discipline", "")
-    return jsonify({"prompt": load_system_prompt(discipline)})
+    mode = request.args.get("mode", "training")
+    print(f"  [api] /api/system_prompt?discipline='{discipline}' mode='{mode}'", flush=True)
+    prompt = load_system_prompt(discipline, mode)
+    print(f"  [api] returning prompt: {len(prompt)} chars, first 80: {prompt[:80]!r}", flush=True)
+    return jsonify({"prompt": prompt, "mode": mode})
 
 
 @app.route("/api/models")
@@ -312,6 +352,25 @@ select, input[type="number"] {
 select:focus, input:focus { border-color: var(--accent); }
 select option { background: var(--bg2); }
 
+/* Prompt mode toggle */
+.prompt-toggle {
+  display: flex; border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--border);
+}
+.prompt-toggle-btn {
+  flex: 1; padding: 6px 0; text-align: center;
+  font-family: var(--mono); font-size: 0.72rem; font-weight: 600;
+  cursor: pointer; border: none; background: var(--bg2);
+  color: var(--text3); transition: all 0.15s;
+}
+.prompt-toggle-btn:first-child { border-right: 1px solid var(--border); }
+.prompt-toggle-btn.active {
+  background: var(--accent); color: #fff;
+}
+.prompt-toggle-btn:not(.active):hover {
+  background: var(--bg3); color: var(--text2);
+}
+
 .entry-list { flex: 1; overflow-y: auto; border-top: 1px solid var(--border); }
 .entry-item {
   padding: 7px 16px; font-size: 0.73rem; font-family: var(--mono);
@@ -342,6 +401,16 @@ select option { background: var(--bg2); }
   font-family: var(--mono); font-size: 0.78rem; font-weight: 700;
   color: var(--green); background: var(--green-bg);
   padding: 3px 12px; border-radius: 20px;
+}
+.mode-badge {
+  font-family: var(--mono); font-size: 0.72rem; font-weight: 600;
+  padding: 3px 10px; border-radius: 20px;
+}
+.mode-badge.training {
+  color: var(--accent); background: var(--accent-light);
+}
+.mode-badge.live {
+  color: var(--orange); background: var(--orange-bg);
 }
 .topbar-info { font-size: 0.73rem; color: var(--text3); }
 .spacer { flex: 1; }
@@ -428,6 +497,47 @@ select option { background: var(--bg2); }
   .compare-grid { grid-template-columns: 1fr; }
   .sidebar { width: 240px; min-width: 240px; }
 }
+
+/* System prompt modal */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--bg2); border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+  width: min(800px, 90vw); max-height: 85vh;
+  display: flex; flex-direction: column;
+  animation: modalSlide 0.15s ease;
+}
+@keyframes modalSlide { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  background: var(--bg3); border-radius: 8px 8px 0 0;
+}
+.modal-header .panel-title { font-size: 0.75rem; }
+.modal-close {
+  font-size: 1.1rem; color: var(--text3); cursor: pointer;
+  background: none; border: none; padding: 4px 8px;
+  border-radius: 4px; line-height: 1;
+}
+.modal-close:hover { background: var(--bg4); color: var(--text); }
+.modal-body {
+  padding: 20px; overflow-y: auto; flex: 1;
+  font-family: var(--mono); font-size: 0.8rem;
+  line-height: 1.7; white-space: pre-wrap; word-break: break-word;
+  color: var(--text);
+}
+.modal-footer {
+  padding: 10px 20px; border-top: 1px solid var(--border);
+  background: var(--bg3); border-radius: 0 0 8px 8px;
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--mono); font-size: 0.7rem; color: var(--text3);
+}
 </style>
 </head>
 <body>
@@ -447,6 +557,13 @@ select option { background: var(--bg2); }
       <label>Ollama Model</label>
       <select id="sel-model"></select>
     </div>
+    <div class="sidebar-section">
+      <label>System Prompt</label>
+      <div class="prompt-toggle">
+        <button class="prompt-toggle-btn active" id="btn-mode-training" onclick="setPromptMode('training')">Training</button>
+        <button class="prompt-toggle-btn" id="btn-mode-live" onclick="setPromptMode('live')">Live</button>
+      </div>
+    </div>
     <div class="sidebar-section" style="display:flex;gap:8px;align-items:end;">
       <div style="flex:1">
         <label>Go to Index</label>
@@ -462,8 +579,10 @@ select option { background: var(--bg2); }
   <div class="main">
     <div class="topbar">
       <div class="model-badge" id="model-badge">&mdash;</div>
+      <div class="mode-badge training" id="mode-badge">TRAINING</div>
       <div class="topbar-info" id="topbar-info">No entry selected</div>
       <div class="spacer"></div>
+      <button class="btn btn-ghost" id="btn-preview-sp" onclick="previewSystemPrompt()" style="font-size:0.72rem;">&#128196; View Prompt</button>
       <button class="btn btn-primary" id="btn-run" onclick="runInference()" disabled>&#9654; Run Inference</button>
       <button class="btn btn-ghost" id="btn-stop" onclick="stopInference()" style="display:none;color:var(--red);border-color:var(--red);">&#9632; Stop</button>
     </div>
@@ -485,6 +604,17 @@ select option { background: var(--bg2); }
 <script>
 let disciplines=[], entries=[], currentFile="", currentIndex=-1, currentEntry=null, running=false;
 let abortController=null;
+let promptMode="training"; // "training" or "live"
+
+function setPromptMode(mode){
+  promptMode=mode;
+  console.log("[UI] promptMode set to:", promptMode);
+  document.getElementById("btn-mode-training").classList.toggle("active",mode==="training");
+  document.getElementById("btn-mode-live").classList.toggle("active",mode==="live");
+  const badge=document.getElementById("mode-badge");
+  badge.textContent=mode.toUpperCase();
+  badge.className="mode-badge "+mode;
+}
 
 function stopInference(){
   if(abortController){abortController.abort();abortController=null;}
@@ -576,6 +706,47 @@ function renderEntry(){
     </div>`;
 }
 
+async function previewSystemPrompt(){
+  const sel=document.getElementById("sel-discipline");
+  const base=sel.options[sel.selectedIndex]?.dataset.base||"";
+  if(!base){alert("Select a discipline first.");return;}
+  console.log("[previewPrompt] base=", base, "promptMode=", promptMode);
+  // Always fetch fresh
+  const res=await fetch(`/api/system_prompt?discipline=${encodeURIComponent(base)}&mode=${promptMode}`);
+  const data=await res.json();
+  const txt=data.prompt||"(empty)";
+  const actualMode=data.mode||promptMode;
+  const dotColor=actualMode==='live'?'var(--orange)':'var(--accent)';
+  const charCount=txt.length;
+  const wordCount=txt.split(/\s+/).filter(Boolean).length;
+  // Remove existing modal if open
+  const existing=document.getElementById("sp-modal");
+  if(existing)existing.remove();
+  // Build modal
+  const overlay=document.createElement("div");
+  overlay.id="sp-modal";
+  overlay.className="modal-overlay";
+  overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
+  overlay.innerHTML=`<div class="modal">
+    <div class="modal-header">
+      <div class="panel-dot" style="background:${dotColor}"></div>
+      <div class="panel-title">System Prompt — ${esc(base.toUpperCase())} — ${actualMode.toUpperCase()}</div>
+      <div class="spacer"></div>
+      <button class="modal-close" onclick="document.getElementById('sp-modal').remove()">&#10005;</button>
+    </div>
+    <div class="modal-body">${esc(txt)}</div>
+    <div class="modal-footer">
+      <span>${charCount.toLocaleString()} chars &middot; ${wordCount.toLocaleString()} words</span>
+      <div class="spacer"></div>
+      <span>Press Esc or click outside to close</span>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  // Esc key to close
+  const escHandler=function(e){if(e.key==="Escape"){overlay.remove();document.removeEventListener("keydown",escHandler);}};
+  document.addEventListener("keydown",escHandler);
+}
+
 async function runInference(){
   if(running||!currentEntry)return;
   running=true;
@@ -585,8 +756,13 @@ async function runInference(){
   const model=document.getElementById("sel-model").value;
   const sel=document.getElementById("sel-discipline");
   const base=sel.options[sel.selectedIndex]?.dataset.base||"";
-  const spRes=await fetch(`/api/system_prompt?discipline=${encodeURIComponent(base)}`);
+  console.log("[runInference] base=", base, "promptMode=", promptMode);
+  const spUrl=`/api/system_prompt?discipline=${encodeURIComponent(base)}&mode=${promptMode}`;
+  console.log("[runInference] fetching:", spUrl);
+  const spRes=await fetch(spUrl);
   const spData=await spRes.json();
+  console.log("[runInference] got prompt mode:", spData.mode, "length:", (spData.prompt||"").length);
+  const systemLen=(spData.prompt||"").length;
   const body={
     model, system:spData.prompt||"", prompt:currentEntry.prompt_text||"",
     image:document.getElementById("cfg-img").checked?(currentEntry.image_base64||null):null,
@@ -597,6 +773,7 @@ async function runInference(){
     repeat_penalty:parseFloat(document.getElementById("cfg-rep").value)||1.1,
     seed:document.getElementById("cfg-seed").value?parseInt(document.getElementById("cfg-seed").value):null,
   };
+  console.log("[runInference] system prompt being sent:", body.system.substring(0,100), "...("+systemLen+" chars)");
   const mb=document.getElementById("model-body");
   const ind=document.getElementById("run-indicator");
   const sb=document.getElementById("stats-bar");
@@ -618,7 +795,7 @@ async function runInference(){
           const evt=JSON.parse(l.slice(6));
           if(evt.error){mb.textContent+="\n\nERROR: "+evt.error;break;}
           if(evt.token){full+=evt.token;mb.textContent=full;mb.scrollTop=mb.scrollHeight;}
-          if(evt.done&&evt.stats)showStats(evt.stats);
+          if(evt.done&&evt.stats)showStats(evt.stats,promptMode,systemLen);
         }catch{}
       }
     }
@@ -638,14 +815,16 @@ async function runInference(){
   document.getElementById("btn-stop").style.display="none";
 }
 
-function showStats(s){
+function showStats(s,mode,sysLen){
   const bar=document.getElementById("stats-bar");
   if(!s)return;
   const ts=s.total_duration?(s.total_duration/1e9).toFixed(2):"—";
   const es=s.eval_duration?(s.eval_duration/1e9):0;
   const tps=es&&s.output_tokens?(s.output_tokens/es).toFixed(1):"—";
+  const modeColor=mode==='live'?'var(--orange)':'var(--accent)';
+  const cached=s.prompt_tokens===0?' <span style="color:var(--red)">(cached!)</span>':'';
   bar.style.display="flex";
-  bar.innerHTML=`<span>prompt: <span class="stat-val">${s.prompt_tokens||0}</span> tok</span><span>output: <span class="stat-val">${s.output_tokens||0}</span> tok</span><span>time: <span class="stat-val">${ts}</span>s</span><span>speed: <span class="stat-val">${tps}</span> tok/s</span>`;
+  bar.innerHTML=`<span style="color:${modeColor};font-weight:700;">${(mode||'?').toUpperCase()}</span><span>sys: <span class="stat-val">${(sysLen||0).toLocaleString()}</span> chars</span><span>prompt: <span class="stat-val">${s.prompt_tokens||0}</span> tok${cached}</span><span>output: <span class="stat-val">${s.output_tokens||0}</span> tok</span><span>time: <span class="stat-val">${ts}</span>s</span><span>speed: <span class="stat-val">${tps}</span> tok/s</span>`;
 }
 
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
@@ -660,7 +839,13 @@ if __name__ == "__main__":
     print(f"\n  ⚒  Ollama Inference Runner")
     print(f"  ─────────────────────────")
     print(f"  JSONL dir:     {JSONL_DIR}")
-    print(f"  Prompts dir:   {SYSTEM_PROMPT_DIR}")
+    print(f"  Training prompts: {SYSTEM_PROMPT_DIR}")
+    print(f"  Live prompts:     {LIVE_PROMPT_DIR}")
+    print(f"  Live prompt files:")
+    for disc, fname in LIVE_PROMPT_MAP.items():
+        fp = os.path.join(LIVE_PROMPT_DIR, fname)
+        status = "✓ found" if os.path.isfile(fp) else "✗ MISSING"
+        print(f"    {disc:15s} → {fname:15s} {status}")
     print(f"  Ollama API:    {OLLAMA_API}")
     print(f"  UI:            http://localhost:{port}")
     print()

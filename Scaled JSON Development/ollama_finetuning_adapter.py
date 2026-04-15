@@ -36,15 +36,21 @@ OLLAMA_VISION_BASE = "gemma3:4b"
 # ============================================================================
 
 ADAPTERS = [
-    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\New_Refining_1"},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_4", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_5", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_6", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Alchemy_2"},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Alchemy_3"},
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\New_Alchemy_1"},
-    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_4",       "vision": True},
-    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_2",      "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Engineering_2"},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Engineering_3"},
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\New_Engineering_1"},
-    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_5", "vision": True}
-    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_6",       "vision": True},
-    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_2a",      "vision": True},
-    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_7", "vision": True}
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Refining_2"},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Refining_3"},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\New_Refining_1"},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_12", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_13", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_14", "vision": True},
 ]
 
 # ============================================================================
