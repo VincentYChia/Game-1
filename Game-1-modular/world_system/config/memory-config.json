@@ -87,6 +87,14 @@
     "description": "Layer 5 region summarization config (game Region tier). Same per-region WeightedTriggerBucket pattern as Layer 4 but one tier coarser. trigger_threshold defaults to 100 (twice Layer 4) because region summaries should be rarer than province summaries. max_l4_per_region = max L4 events included in prompt. max_l3_relevance = max Layer 3 supporting-detail events (two-layers-down visibility, filtered by fired-tag overlap). min_provinces_contributing = optional minimum province diversity gate (set to 2+ to avoid single-province region summaries)."
   },
 
+  "layer6": {
+    "trigger_threshold": 150,
+    "max_l5_per_nation": 40,
+    "max_l4_relevance": 8,
+    "min_regions_contributing": 1,
+    "description": "Layer 6 nation summarization config (game Nation tier). Same per-nation WeightedTriggerBucket pattern as Layer 5 but one tier coarser. trigger_threshold defaults to 150 (higher than Layer 5) because nation summaries should be rarer than region summaries. max_l5_per_nation = max L5 events included in prompt. max_l4_relevance = max Layer 4 supporting-detail events (two-layers-down visibility, filtered by fired-tag overlap). min_regions_contributing = optional minimum region diversity gate. NOTE: defaults are placeholders — real tuning happens after the full WMS is built."
+  },
+
   "evaluators": {
     "population_change": {
       "enabled": true,

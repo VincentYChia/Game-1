@@ -35,6 +35,7 @@ from world_system.world_memory.daily_ledger import DailyLedgerManager
 from world_system.world_memory.layer3_manager import Layer3Manager
 from world_system.world_memory.layer4_manager import Layer4Manager
 from world_system.world_memory.layer5_manager import Layer5Manager
+from world_system.world_memory.layer6_manager import Layer6Manager
 from world_system.world_memory.trigger_registry import TriggerRegistry
 
 
@@ -59,6 +60,7 @@ class WorldMemorySystem:
         self.layer3_manager: Optional[Layer3Manager] = None
         self.layer4_manager: Optional[Layer4Manager] = None
         self.layer5_manager: Optional[Layer5Manager] = None
+        self.layer6_manager: Optional[Layer6Manager] = None
         self.trigger_registry: Optional[TriggerRegistry] = None
 
         self._initialized: bool = False
@@ -238,6 +240,26 @@ class WorldMemorySystem:
         except Exception as e:
             print(f"[WorldMemory] Layer5Manager init failed (non-fatal): {e}")
             self.layer5_manager = None
+
+        # 7e. Layer 6 Manager (nation summarization — game Nation tier)
+        try:
+            if self.trigger_registry is None:
+                self.trigger_registry = TriggerRegistry.get_instance()
+            self.layer6_manager = Layer6Manager.get_instance()
+            self.layer6_manager.initialize(
+                layer_store=self.layer_store,
+                geo_registry=self.geo_registry,
+                wms_ai=self.wms_ai,
+                trigger_registry=self.trigger_registry,
+            )
+            # Wire L6 callback to L5 manager so it gets notified of L5 events
+            if self.layer5_manager:
+                self.layer5_manager.set_layer6_callback(
+                    self.layer6_manager.on_layer5_created)
+            print(f"[WorldMemory] Layer6Manager initialized — {self.layer6_manager.stats}")
+        except Exception as e:
+            print(f"[WorldMemory] Layer6Manager init failed (non-fatal): {e}")
+            self.layer6_manager = None
 
         # 8. Query Interface
         self.world_query = WorldQuery.get_instance()
@@ -453,6 +475,13 @@ class WorldMemorySystem:
             except Exception as e:
                 print(f"[WorldMemory] Layer 5 summarization error: {e}")
 
+        # Layer 6 nation summarization check
+        if self.layer6_manager and self.layer6_manager.should_run():
+            try:
+                self.layer6_manager.run_summarization(game_time)
+            except Exception as e:
+                print(f"[WorldMemory] Layer 6 summarization error: {e}")
+
         # Periodic retention pruning
         if self.retention_manager.should_prune(game_time):
             self.retention_manager.prune(self.event_store, game_time)
@@ -575,6 +604,7 @@ class WorldMemorySystem:
         Layer3Manager.reset()
         Layer4Manager.reset()
         Layer5Manager.reset()
+        Layer6Manager.reset()
         TriggerRegistry.reset()
 
     # ── Debug / Stats ────────────────────────────────────────────────
