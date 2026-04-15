@@ -1,9 +1,25 @@
 # World Memory System — Handoff Status
 
-**Date**: 2026-04-14
+**Date**: 2026-04-16
 **Branch**: `claude/review-handoff-status-XG5iC`
-**Phase**: Layers 1-5 operational. Layers 6-7 designed but not implemented.
-**Tests**: 132 passing (54 Layer 3 + 39 Layer 4 + 39 Layer 5, 0 failures)
+**Phase**: Layers 1-5 operational on a corrected 6-tier hierarchy
+(`World → Nation → Region → Province → District → Locality`). Layers
+6-7 are ready for trivial copies of Layer 5's pattern.
+**Tests**: 130 passing (54 Layer 3 + 39 Layer 4 + 37 Layer 5, 0 failures)
+**Schema**: `EventStore.SCHEMA_VERSION = 2` (v1 databases hard-fail on
+load with a rebuild message — no migration shim).
+
+> **Major migration this session**: The WMS geography labels were
+> previously shifted one tier relative to the game's own hierarchy,
+> which caused `province:region_17` to mean "WMS province, game region
+> 17" — contradictory. The loader, event fields, tag namespaces, layer
+> targets, and test fixtures have all been realigned to the game's
+> terms (`systems/geography/models.py`). Layer 5 was structurally
+> wrong (it aggregated game Region straight to game World); it now
+> correctly aggregates one tier up from Layer 4, targeting game
+> Region. Address tags are now **facts**: assigned at L2 capture from
+> chunk position, propagated unchanged, never synthesized or rewritten
+> by the LLM. See `ARCHITECTURAL_DECISIONS.md` §6.
 
 > **Pipeline scope**: The WMS layer pipeline consumes **raw gameplay
 > events only**. `FactionSystem` and `EcosystemAgent` are separate
@@ -46,33 +62,57 @@ Game Action → GameEventBus → EventRecorder (priority -10)
                                                     stored in LayerStore layer3_events
                                                               ↓
                                                     Layer4Manager (per-province weighted triggers)
-                                                    Province summarizer per province
+                                                    Province summarizer per game Province
                                                               ↓
                                                     ProvinceSummaryEvent (Layer 4)
                                                     stored in LayerStore layer4_events
                                                               ↓
-                                                    Layer5Manager (per-realm weighted triggers)
-                                                    Realm summarizer per realm
+                                                    Layer5Manager (per-region weighted triggers)
+                                                    Region summarizer per game Region
                                                               ↓
-                                                    RealmSummaryEvent (Layer 5)
+                                                    RegionSummaryEvent (Layer 5)
                                                     stored in LayerStore layer5_events
 ```
 
 ---
 
-## Geographic Hierarchy (5-level)
+## Geographic Hierarchy (6-tier, aligned to the game)
 
-The WMS now maps the game's full 5-tier hierarchy 1:1:
+As of the 2026-04-16 migration, the WMS hierarchy mirrors the game's
+`systems/geography/models.py` 1:1 — no tier shifting. See
+`ARCHITECTURAL_DECISIONS.md` §6.
 
-| WMS Level | Game Concept | ID Format | Example |
-|-----------|-------------|-----------|---------|
-| REALM | World | `realm_0` | The Known Lands |
-| NATION | Nation | `nation_X` | Northern Kingdom |
-| PROVINCE | Region | `region_X` | Iron Reaches (Layer 4 scope) |
-| DISTRICT | Province | `province_X` | Western Mines (Layer 3 scope) |
-| LOCALITY | District | `district_X` | Deep Mine (Layer 2 / position lookup) |
+| WMS `RegionLevel` | Game term | ID format | Always present? | Layer |
+|---|---|---|---|---|
+| `WORLD` | World | `world_0` | yes (singleton) | L7 target (future) |
+| `NATION` | Nation | `nation_X` | yes | L6 target (future) |
+| `REGION` | Region | `region_X` | yes | **L5 target** |
+| `PROVINCE` | Province | `province_X` | yes | **L4 target** |
+| `DISTRICT` | District | `district_X` | yes | **L3 target** |
+| `LOCALITY` | Locality | `locality_X` | sparse — only if chunk has a POI | L2 capture only |
 
-Tag addressing: `locality:district_X`, `district:province_X`, `province:region_X`, `nation:nation_X`.
+Tag addressing (coarsest → finest as emitted at L2 capture):
+`world:world_0`, `nation:nation_X`, `region:region_X`,
+`province:province_X`, `district:district_X`, `locality:locality_X`.
+
+**Address tags are facts.** They are assigned at L2 capture from the
+chunk's `GeographicData` and propagated unchanged to every higher
+layer. The LLM at L4/L5 is given only *content* tags to rewrite;
+address tags are partitioned out before the LLM call and re-attached
+afterwards. See `ARCHITECTURAL_DECISIONS.md` §6 for the rule set.
+
+**One tier per layer.** Each layer drops exactly one address tag on
+its output because the aggregation is summed across that tier's
+children:
+
+| Layer | Aggregation tier | Drops | Retains |
+|---|---|---|---|
+| L2 | capture | — | world, nation, region, province, district, locality |
+| L3 | district | locality | world, nation, region, province, district |
+| L4 | province | district | world, nation, region, province |
+| L5 | region | province | world, nation, region |
+| L6 (future) | nation | region | world, nation |
+| L7 (future) | world | nation | world |
 
 ---
 
@@ -187,36 +227,44 @@ Prefix-based operations (`any_weighted_fired_with_prefix`, `pop_all_fired_weight
 
 ---
 
-## Layer 5: Realm Summarization (COMPLETE)
+## Layer 5: Region Summarization (COMPLETE)
 
-**Pipeline**: Layer 4 event created → Layer5Manager resolves realm_id from
-the geographic parent chain (province → nation → realm) → geographic
-address tags stripped → content tags scored in a per-realm
-`WeightedTriggerBucket` (named `layer5_realm_{realm_id}`) → when any
-content tag crosses 100 points within a realm → contributing L4 events +
-fired-tag-filtered L3 events gathered → single realm summary built →
-LLM full tag rewrite → RealmSummaryEvent stored in LayerStore
-`layer5_events` (superseding previous summary for that realm).
+**Aggregation tier**: game Region (parent of game Province). Layer 5
+consolidates L4 province summaries across every province within one
+game Region.
+
+**Pipeline**: Layer 4 event created → Layer5Manager reads the
+`region:X` tag directly from the event (no parent-chain walking —
+address tags are facts assigned at L2 capture) → address tags stripped
+before scoring → content tags scored in a per-region
+`WeightedTriggerBucket` (named `layer5_region_{region_id}`) → when any
+content tag crosses 100 points within a region → contributing L4
+events + fired-tag-filtered L3 events gathered → region summary built
+→ LLM CONTENT-tag rewrite (address tags preserved by layer code) →
+RegionSummaryEvent stored in LayerStore `layer5_events` (superseding
+previous summary for that region).
 
 **Key files**:
-- `layer5_manager.py` (~640 lines) — per-realm trigger routing, realm
-  resolution via geo parent chain, L3 relevance filtering, LLM upgrade,
-  supersession on second run
-- `layer5_summarizer.py` (~500 lines) — realm-level summary builder, XML
-  data block with province grouping, `filter_relevant_l3` static method
-- `prompt_fragments_l5.json` — 4 Layer 5 prompt fragments
-- `event_schema.py` — `RealmSummaryEvent` dataclass
+- `layer5_manager.py` (~550 lines) — per-region trigger routing,
+  trivial region resolution (one-tag lookup), L3 relevance filtering,
+  LLM upgrade, supersession on second run
+- `layer5_summarizer.py` (~500 lines) — region-level summary builder,
+  XML data block with province grouping, `filter_relevant_l3` static
+  method, propagates `world:`/`nation:`/`region:` facts from L4 inputs
+- `prompt_fragments_l5.json` — 5 Layer 5 prompt fragments (address
+  tags explicitly excluded from rewrite instructions)
+- `event_schema.py` — `RegionSummaryEvent` dataclass
 
-### Per-Realm Tag-Weighted Triggers
+### Per-Region Tag-Weighted Triggers
 
-Each realm gets its own bucket (`layer5_realm_{realm_id}`), created
-lazily when the first L4 event for that realm arrives. Events from
-different realms never cross-contaminate. Realm resolution tries the
-fast path first (explicit `realm:` tag) and otherwise walks the
-geographic parent chain from the most-specific available address tag
-(`nation:` → `province:` → `district:` → `locality:`) up to the
-REALM-level region. Events with no resolvable geographic address are
-dropped silently.
+Each game Region gets its own bucket (`layer5_region_{region_id}`),
+created lazily when the first L4 event for that region arrives.
+Events from different regions never cross-contaminate. Region
+resolution is a single-tag lookup: the `region:X` tag is present on
+every event (fact-propagated from L2 capture), so there is **no
+parent-chain walking** — the fallback logic that existed in an earlier
+pre-migration draft has been deleted. Events without a `region:` tag
+are dropped silently.
 
 Scoring reuses the same positional weights as Layer 4 (1st=10, 2nd=8,
 …) and the same structural skip list (`significance:`, `scope:`,
@@ -227,48 +275,47 @@ Threshold is 100 points.
 
 ### L3 Visibility (Fired-Tag Overlap Filter)
 
-Layer 5 sees L4 (full, per-realm) and L3 (filtered by fired-tag
-overlap), following the "two-layers-down" visibility rule. The fired
-tag set from the weighted bucket *is* the relevance signal — it
-represents what the realm currently "cares about." Candidate L3 events
-are ranked by:
+Layer 5 sees L4 (full, per-region) and L3 (filtered by fired-tag
+overlap), following the "two-layers-down" visibility rule. Both L4
+and L3 candidates are queried directly by their `region:X` tag — no
+per-province enumeration needed. The fired tag set from the weighted
+bucket drives relevance ranking:
 
 1. Number of fired content tags they contain (desc; min 1 match)
-2. Best-matched-tag position within the L3 event's own tag list (asc;
-   L3 tags are frequency-sorted so earlier = more representative)
+2. Best-matched-tag position within the L3 event's own tag list (asc)
 3. Game time (desc, most recent first)
 
-Structural/geographic tags are stripped from the fired set before
-matching. If the fired set is empty after stripping, there is a fallback
-that derives a content-tag set from the L4 events themselves. Results
-are capped at 8 L3 events.
+Address tags are stripped from the fired set before matching. If the
+fired set is empty after stripping, there is a fallback that derives
+a content-tag set from the L4 events themselves. Results are capped
+at 8 L3 events.
 
-### LLM Full Tag Rewrite
+### LLM Upgrade — Content Tags Only
 
-Like Layer 4, the Layer 5 LLM call receives all inherited tags as
-context and outputs a complete reordered tag list. The
-`HigherLayerTagAssigner` is invoked with `rewrite_all=summary.tags` when
-an LLM is present, otherwise falls back to the inheritance path.
+The Layer 5 LLM call partitions `summary.tags` into **address tags**
+(`world:/nation:/region:/province:/district:/locality:`) and **content
+tags**, sends only the content tags to the LLM, and re-attaches the
+address half after the rewrite returns. Any address tag the LLM
+emitted in its output is discarded. The prompt fragments are updated
+to explicitly instruct the LLM not to emit address tags. See
+`ARCHITECTURAL_DECISIONS.md` §6.
 
 ### Pure Pipeline — No Sibling Tracker Reads
 
-**Layer 5 does not read `FactionSystem`, `EcosystemAgent`, `NPCMemory`,
-or any other state tracker.** The `faction_standings`,
+**Layer 5 does not read `FactionSystem`, `EcosystemAgent`,
+`NPCMemory`, or any other state tracker.** The `faction_standings`,
 `economic_summary`, and `player_reputation` fields from older drafts
-are not populated from external systems; if present in a future schema
-they must be fed by events that flowed up the layer pipeline. See
-`ARCHITECTURAL_DECISIONS.md` §§4-5 for rationale. Future cross-system
-narrative weaving will live in a separate parallel narrative layer, not
-inside the WMS layers themselves.
+are not populated from external systems. See
+`ARCHITECTURAL_DECISIONS.md` §§4-5 for rationale.
 
-**Tests**: 39 passing (`world_system/tests/test_layer5.py`) — covers
-`RealmSummaryEvent` dataclass, `Layer5Summarizer` (is_applicable,
+**Tests**: 37 passing (`world_system/tests/test_layer5.py`) — covers
+`RegionSummaryEvent` dataclass, `Layer5Summarizer` (is_applicable,
 summarize, XML data block, `filter_relevant_l3`), `Layer5Manager`
-(on_layer4_created, realm resolution, should_run, run_summarization,
-multi-realm isolation, supersession, stats), `PromptAssemblerL5`
-(assemble_l5, fragment loading, cross-layer fragment cascade), and a
-full integration test exercising L4 events → per-realm trigger →
-stored L5 summary.
+(on_layer4_created, region resolution via tag lookup, should_run,
+run_summarization, multi-region isolation, supersession, stats),
+`PromptAssemblerL5` (assemble_l5, fragment loading, cross-layer
+fragment cascade), and a full integration test exercising L4 events
+→ per-region trigger → stored L5 summary.
 
 ---
 
@@ -281,7 +328,7 @@ The `province_summaries` table in EventStore (from the original design doc) is *
 ## Known Issues / Remaining Work
 
 ### Layer 6-7 (Designed, Not Implemented)
-- Layer 6: Cross-realm patterns
+- Layer 6: Nation-level aggregation (drops `region:` tag)
 - Layer 7: World-level narrative threads
 - All use LayerStore tables (already created), WmsAI routing (already configured)
 
@@ -307,6 +354,5 @@ EventStore has 24 tables mixing raw facts, counters, interpretations, and higher
 1. **Read** this file + `WORLD_MEMORY_SYSTEM.md` +
    `ARCHITECTURAL_DECISIONS.md` for design reference
 2. **Run tests**: `python -m unittest world_system.world_memory.test_layer3 world_system.tests.test_layer4 world_system.tests.test_layer5 -v`
-3. **Next task**: Layer 6 cross-realm patterns (reuse per-scope
-   WeightedTriggerBucket pattern on top of `layer5_events`)
-4. **Test with Claude**: Set `ANTHROPIC_API_KEY` env var — WmsAI auto-detects and routes to Claude
+3. **Next task**: Layer 6 nation-level aggregation — trivial copy of Layer 5's pattern, bucketed by `nation:X` tag, drops `region:` on output, reads `layer5_events`.
+4. **Test with Claude**: Set `ANTHROPIC_API_KEY` env var — WmsAI auto-detects and routes to Claude.

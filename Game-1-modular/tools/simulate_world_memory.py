@@ -1000,7 +1000,7 @@ def populate_layer5(conn: sqlite3.Connection) -> int:
             game_time, category, severity, significance, tags_json)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (l5id, narrative, json.dumps(source_ids), latest_time,
-          "realm_summary", "moderate", "moderate", json.dumps(tags)))
+          "region_summary", "moderate", "moderate", json.dumps(tags)))
     _insert_tags(conn, "layer5_tags", "event_id", l5id, tags)
 
     conn.commit()
@@ -1015,14 +1015,14 @@ def populate_layers_6_7(conn: sqlite3.Connection) -> int:
     """Generate Layers 6-7 from Layer 5. Writes to layer6/7_events + tags."""
     count = 0
 
-    # Layer 6: Cross-realm (only 1 realm, so this is a pass-through)
+    # Layer 6: Nation-level aggregation (pass-through when only one nation).
     cursor = conn.execute("SELECT id, narrative, game_time FROM layer5_events")
     l5_events = cursor.fetchall()
     if l5_events:
         l6id = _uid()
         latest = max(r[2] for r in l5_events)
-        l6_narrative = ("Cross-realm: Single realm active (Known Lands). "
-                       "No inter-realm patterns yet.")
+        l6_narrative = ("Nation summary: Single nation active (Known Lands). "
+                       "No inter-nation patterns yet.")
         l6_tags = [
             "scope:world",
             "significance:minor",
@@ -1169,8 +1169,8 @@ def main():
     print(f"  Layer 4: {n_provinces} province summaries")
 
     # Layer 5
-    n_realms = populate_layer5(conn)
-    print(f"  Layer 5: {n_realms} realm state(s)")
+    n_regions = populate_layer5(conn)
+    print(f"  Layer 5: {n_regions} region summary(s)")
 
     # Layers 6-7
     n_world = populate_layers_6_7(conn)

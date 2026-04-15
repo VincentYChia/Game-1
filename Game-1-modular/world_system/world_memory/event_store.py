@@ -22,6 +22,11 @@ from world_system.world_memory.event_schema import InterpretedEvent, WorldMemory
 
 _SCHEMA_SQL = """
 -- Raw Event Pipeline: Structured Event Records
+-- Address columns mirror the 6-tier game hierarchy. Only `locality_id`
+-- is sparse (POIs only); the rest are always present for events whose
+-- chunk is inside a loaded WorldMap. See
+-- docs/ARCHITECTURAL_DECISIONS.md — address tags are FACTS assigned at
+-- capture, never synthesized by any layer.
 CREATE TABLE IF NOT EXISTS events (
     event_id TEXT PRIMARY KEY,
     event_type TEXT NOT NULL,
@@ -37,6 +42,9 @@ CREATE TABLE IF NOT EXISTS events (
     locality_id TEXT,
     district_id TEXT,
     province_id TEXT,
+    region_id TEXT,
+    nation_id TEXT,
+    world_id TEXT,
     biome TEXT,
     game_time REAL NOT NULL,
     real_time REAL NOT NULL,
@@ -57,6 +65,8 @@ CREATE INDEX IF NOT EXISTS idx_events_target ON events(target_id);
 CREATE INDEX IF NOT EXISTS idx_events_time ON events(game_time);
 CREATE INDEX IF NOT EXISTS idx_events_locality ON events(locality_id);
 CREATE INDEX IF NOT EXISTS idx_events_district ON events(district_id);
+CREATE INDEX IF NOT EXISTS idx_events_province ON events(province_id);
+CREATE INDEX IF NOT EXISTS idx_events_region ON events(region_id);
 CREATE INDEX IF NOT EXISTS idx_events_chunk ON events(chunk_x, chunk_y);
 CREATE INDEX IF NOT EXISTS idx_events_triggered ON events(triggered_interpretation)
     WHERE triggered_interpretation = 1;
@@ -307,18 +317,13 @@ CREATE TABLE IF NOT EXISTS province_summaries (
 );
 
 
--- ══════════════════════════════════════════════════════════════════
--- Layer 5: Realm State
--- ══════════════════════════════════════════════════════════════════
-
-CREATE TABLE IF NOT EXISTS realm_state (
-    realm_id TEXT PRIMARY KEY,
-    faction_standings_json TEXT DEFAULT '{}',
-    economic_summary TEXT DEFAULT '',
-    player_reputation TEXT DEFAULT '',
-    major_events_json TEXT DEFAULT '[]',
-    last_updated REAL DEFAULT 0.0
-);
+-- NOTE: Layer 5 does NOT write a separate "region state" table.
+-- Region summaries are stored as events in layer5_events via
+-- LayerStore (append-only + tag junction tables). The earlier
+-- `realm_state` table has been removed from v2 schema — its
+-- intended contents (faction standings, economic summaries, player
+-- reputation) are either not written by the pure WMS pipeline (per
+-- ARCHITECTURAL_DECISIONS.md §§4-5) or live on sibling trackers.
 
 
 -- ══════════════════════════════════════════════════════════════════
@@ -366,6 +371,14 @@ class EventStore:
 
     DB_FILENAME = "world_memory.db"
 
+    # Schema version — bump whenever the DDL changes incompatibly.
+    # v2 (2026-04-16): added region_id/nation_id/world_id columns to
+    #   the events table and dropped the dormant realm_state table
+    #   as part of the 6-tier geography hierarchy alignment.
+    #   Databases created by v1 are NOT loadable; WorldMemorySystem.load
+    #   recovers gracefully by deleting the stale file and regenerating.
+    SCHEMA_VERSION = 2
+
     def __init__(self, db_path: Optional[str] = None, save_dir: Optional[str] = None):
         """Initialize with an explicit db_path or derive from save_dir.
 
@@ -387,12 +400,85 @@ class EventStore:
     # ── Connection management ────────────────────────────────────────
 
     def _init_db(self) -> None:
-        """Create tables and indexes if they don't exist."""
+        """Create tables and indexes if they don't exist.
+
+        Also enforces SCHEMA_VERSION. If an existing database is found
+        and its stored version does not match `SCHEMA_VERSION`, boot
+        fails fast with a clear RuntimeError telling the developer to
+        delete the old file. During active WMS development we do NOT
+        write compat shims — the database is disposable.
+        """
         self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute("PRAGMA foreign_keys=ON")
+
+        # Check stored version BEFORE running the DDL so we don't
+        # accidentally mutate an old DB with new CREATE IF NOT EXISTS
+        # statements.
+        self._check_schema_version()
+
         self._conn.executescript(_SCHEMA_SQL)
+
+        # Persist current version. `schema_meta` is created lazily here
+        # to avoid a chicken-and-egg ordering vs _SCHEMA_SQL.
+        self._conn.execute(
+            "CREATE TABLE IF NOT EXISTS schema_meta ("
+            "key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+        )
+        self._conn.execute(
+            "INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)",
+            ("schema_version", str(self.SCHEMA_VERSION)),
+        )
         self._conn.commit()
+
+    def _check_schema_version(self) -> None:
+        """Fail fast on incompatible databases.
+
+        Returns silently if:
+          - the DB is empty (brand new), or
+          - schema_meta records a version that equals SCHEMA_VERSION.
+        Raises RuntimeError on mismatch.
+        """
+        conn = self._conn
+        # If the schema_meta table does not exist yet, see if any
+        # pre-v2 tables exist. If they do, the DB is v1 and we refuse
+        # to touch it. If nothing exists, it's a fresh DB and we
+        # proceed.
+        row = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' "
+            "AND name='schema_meta'"
+        ).fetchone()
+        if row is None:
+            # No schema_meta table. Is the DB empty?
+            any_table = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' LIMIT 1"
+            ).fetchone()
+            if any_table is None:
+                return  # Brand new DB — fine, DDL will populate.
+            # Tables exist but no schema_meta — this is a v1 DB.
+            raise RuntimeError(
+                f"WMS database at {self.db_path} appears to be from "
+                f"schema version 1 (no schema_meta table). Schema v2 "
+                f"introduces the 6-tier geography hierarchy (adds "
+                f"region_id/nation_id/world_id columns, drops the "
+                f"dormant realm_state table). Old databases are not "
+                f"loadable. Delete the file and let the game regenerate "
+                f"it. See docs/ARCHITECTURAL_DECISIONS.md §6."
+            )
+
+        # schema_meta exists — read the stored version.
+        ver_row = conn.execute(
+            "SELECT value FROM schema_meta WHERE key='schema_version'"
+        ).fetchone()
+        stored = int(ver_row[0]) if ver_row else None
+        if stored is not None and stored != self.SCHEMA_VERSION:
+            raise RuntimeError(
+                f"WMS database at {self.db_path} was created with "
+                f"schema version {stored}, but this build requires "
+                f"version {self.SCHEMA_VERSION}. Delete the file and "
+                f"let the game regenerate it. (No migration shim is "
+                f"written during active WMS development.)"
+            )
 
     @property
     def connection(self) -> sqlite3.Connection:
@@ -412,32 +498,35 @@ class EventStore:
 
     # ── Raw Event Pipeline: Event CRUD ──────────────────────────────
 
+    _EVENT_INSERT_SQL = """INSERT OR REPLACE INTO events (
+        event_id, event_type, event_subtype,
+        actor_id, actor_type, target_id, target_type,
+        position_x, position_y, chunk_x, chunk_y,
+        locality_id, district_id, province_id, region_id, nation_id, world_id, biome,
+        game_time, real_time, session_id,
+        magnitude, result, quality, tier,
+        context_json,
+        interpretation_count, triggered_interpretation
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+
+    @staticmethod
+    def _event_insert_params(event: WorldMemoryEvent) -> tuple:
+        return (
+            event.event_id, event.event_type, event.event_subtype,
+            event.actor_id, event.actor_type, event.target_id, event.target_type,
+            event.position_x, event.position_y, event.chunk_x, event.chunk_y,
+            event.locality_id, event.district_id, event.province_id,
+            event.region_id, event.nation_id, event.world_id, event.biome,
+            event.game_time, event.real_time, event.session_id,
+            event.magnitude, event.result, event.quality, event.tier,
+            json.dumps(event.context),
+            event.interpretation_count, int(event.triggered_interpretation),
+        )
+
     def record(self, event: WorldMemoryEvent) -> None:
         """Store a single raw event pipeline event."""
         conn = self.connection
-        conn.execute(
-            """INSERT OR REPLACE INTO events (
-                event_id, event_type, event_subtype,
-                actor_id, actor_type, target_id, target_type,
-                position_x, position_y, chunk_x, chunk_y,
-                locality_id, district_id, province_id, biome,
-                game_time, real_time, session_id,
-                magnitude, result, quality, tier,
-                context_json,
-                interpretation_count, triggered_interpretation
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (
-                event.event_id, event.event_type, event.event_subtype,
-                event.actor_id, event.actor_type, event.target_id, event.target_type,
-                event.position_x, event.position_y, event.chunk_x, event.chunk_y,
-                event.locality_id, event.district_id, event.province_id, event.biome,
-                event.game_time, event.real_time, event.session_id,
-                event.magnitude, event.result, event.quality, event.tier,
-                json.dumps(event.context),
-                event.interpretation_count, int(event.triggered_interpretation),
-            ),
-        )
-        # Insert tags
+        conn.execute(self._EVENT_INSERT_SQL, self._event_insert_params(event))
         if event.tags:
             conn.executemany(
                 "INSERT INTO event_tags (event_id, tag) VALUES (?, ?)",
@@ -449,28 +538,8 @@ class EventStore:
         """Store multiple events in a single transaction."""
         conn = self.connection
         for event in events:
-            conn.execute(
-                """INSERT OR REPLACE INTO events (
-                    event_id, event_type, event_subtype,
-                    actor_id, actor_type, target_id, target_type,
-                    position_x, position_y, chunk_x, chunk_y,
-                    locality_id, district_id, province_id, biome,
-                    game_time, real_time, session_id,
-                    magnitude, result, quality, tier,
-                    context_json,
-                    interpretation_count, triggered_interpretation
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (
-                    event.event_id, event.event_type, event.event_subtype,
-                    event.actor_id, event.actor_type, event.target_id, event.target_type,
-                    event.position_x, event.position_y, event.chunk_x, event.chunk_y,
-                    event.locality_id, event.district_id, event.province_id, event.biome,
-                    event.game_time, event.real_time, event.session_id,
-                    event.magnitude, event.result, event.quality, event.tier,
-                    json.dumps(event.context),
-                    event.interpretation_count, int(event.triggered_interpretation),
-                ),
-            )
+            conn.execute(self._EVENT_INSERT_SQL,
+                         self._event_insert_params(event))
             if event.tags:
                 conn.executemany(
                     "INSERT INTO event_tags (event_id, tag) VALUES (?, ?)",
@@ -501,6 +570,9 @@ class EventStore:
             locality_id=d["locality_id"],
             district_id=d["district_id"],
             province_id=d["province_id"],
+            region_id=d["region_id"] if "region_id" in d.keys() else None,
+            nation_id=d["nation_id"] if "nation_id" in d.keys() else None,
+            world_id=d["world_id"] if "world_id" in d.keys() else None,
             biome=d["biome"],
             game_time=d["game_time"],
             real_time=d["real_time"],

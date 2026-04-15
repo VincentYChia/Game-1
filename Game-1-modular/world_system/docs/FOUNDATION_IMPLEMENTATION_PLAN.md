@@ -52,7 +52,7 @@
 | SQL: `meta_daily_stats` | §11 | P2 — streak tracking |
 | SQL: `connected_interpretations` + tags | §11.3 (Layer 4) | P2 — schema only for now |
 | SQL: `province_summaries` | §11.4 (Layer 5) | P2 — schema only |
-| SQL: `realm_state` | §11.5 (Layer 6) | P3 — schema only |
+| SQL: `region_state` (previously `realm_state` — renamed in the 2026-04-16 hierarchy alignment; dormant table retained for schema compat) | §11.5 (Layer 6) | P3 — schema only |
 | SQL: `world_narrative` + `narrative_threads` | §11.6 (Layer 7) | P3 — schema only |
 | `EVENT_CATEGORY_MAP` constant | §2.2 | P0 — needed by TriggerManager |
 | `TriggerAction` dataclass | §2.6 | P0 — trigger output type |
@@ -161,9 +161,15 @@ CREATE TABLE IF NOT EXISTS province_summaries (
 ```
 
 **P3 — Layers 6-7 schema (empty, ready):**
+
+> **Note (2026-04-16)**: The table below was renamed from `realm_state`
+> to `region_state` when WMS `RegionLevel` was expanded to match the
+> game's 6-tier geography. It remains dormant (no code writes to it)
+> and is retained for schema compat.
+
 ```sql
-CREATE TABLE IF NOT EXISTS realm_state (
-    realm_id TEXT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS region_state (
+    region_id TEXT PRIMARY KEY,
     faction_standings_json TEXT DEFAULT '{}',
     economic_summary TEXT DEFAULT '',
     player_reputation TEXT DEFAULT '',
@@ -790,7 +796,7 @@ class TestSQLSchema:
             "regional_counters", "interpretation_counters",
             "daily_ledgers", "meta_daily_stats",
             "connected_interpretations", "connected_interpretation_tags",
-            "province_summaries", "realm_state",
+            "province_summaries", "region_state",
             "world_narrative", "narrative_threads",
         ]
         for table in expected:
@@ -1036,7 +1042,7 @@ class TestFullPipeline:
         # Setup
         store = EventStore(save_dir=tmp_dir)
         geo = GeographicRegistry.get_instance()
-        # Load test geographic map (small: 1 realm, 1 province, 2 districts, 4 localities)
+        # Load test geographic map (small: 1 world, 1 nation, 1 region, 1 province, 2 districts, 4 localities)
         geo.load_base_map(TEST_GEO_MAP)
         entity_reg = EntityRegistry.get_instance()
         trigger_mgr = TriggerManager()
@@ -1111,10 +1117,18 @@ def reset_singletons():
     WorldQuery.reset()
     yield
 
-# Test geographic map (minimal)
+# Test geographic map (minimal) — 6-tier hierarchy matching
+# systems/geography/models.py (World → Nation → Region → Province →
+# District → Locality). Locality is sparse; only the two POI-bearing
+# chunks below carry a locality_id.
 TEST_GEO_MAP = {
-    "realm": {"id": "test_realm", "name": "Test Realm"},
-    "provinces": [{"id": "test_province", "bounds": [0,0,99,99]}],
+    "world": {"id": "test_world", "name": "Test World"},
+    "nations": [{"id": "test_nation", "name": "Test Nation",
+                 "parent": "test_world"}],
+    "regions": [{"id": "test_region", "name": "Test Region",
+                 "parent": "test_nation"}],
+    "provinces": [{"id": "test_province", "bounds": [0,0,99,99],
+                   "parent": "test_region"}],
     "districts": [
         {"id": "eastern_highlands", "bounds": [0,0,49,99], "parent": "test_province"},
         {"id": "western_lowlands", "bounds": [50,0,99,99], "parent": "test_province"},
@@ -1265,3 +1279,17 @@ def make_event_at_time(game_time, event_type="enemy_killed"):
 - [ ] Full pipeline test: 100 wolf kills → 7 stream triggers + regional triggers + correct tags
 - [ ] ALL existing tests still pass
 - [ ] No references to prime-number triggers remain in codebase
+
+---
+
+## Document History
+
+- **2026-04-16**: Hierarchy-alignment migration notes. The dormant
+  `realm_state` table was renamed to `region_state` when WMS
+  `RegionLevel` was expanded from 5 shifted labels to 6 game-aligned
+  values (`WORLD/NATION/REGION/PROVINCE/DISTRICT/LOCALITY`). Test
+  fixtures updated to reflect the 6-tier hierarchy. Note that this
+  document is a historical build plan — much of it has been executed
+  (TriggerManager, DailyLedger, tag enrichment). See
+  `ARCHITECTURAL_DECISIONS.md` §6 and `HANDOFF_STATUS.md` for current
+  state.

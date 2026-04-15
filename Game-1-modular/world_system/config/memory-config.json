@@ -81,10 +81,10 @@
 
   "layer5": {
     "trigger_threshold": 100,
-    "max_l4_per_realm": 50,
+    "max_l4_per_region": 50,
     "max_l3_relevance": 8,
     "min_provinces_contributing": 1,
-    "description": "Layer 5 realm summarization config. Same per-realm WeightedTriggerBucket pattern as Layer 4 but at realm scale. trigger_threshold defaults to 100 (twice Layer 4) because realm summaries should be rarer than province summaries. max_l4_per_realm = max L4 events in prompt. max_l3_relevance = max Layer 3 supporting-detail events (two-layers-down visibility, filtered by fired-tag overlap). min_provinces_contributing = optional minimum province diversity gate (set to 2+ in multi-realm worlds to avoid single-province realm summaries)."
+    "description": "Layer 5 region summarization config (game Region tier). Same per-region WeightedTriggerBucket pattern as Layer 4 but one tier coarser. trigger_threshold defaults to 100 (twice Layer 4) because region summaries should be rarer than province summaries. max_l4_per_region = max L4 events included in prompt. max_l3_relevance = max Layer 3 supporting-detail events (two-layers-down visibility, filtered by fired-tag overlap). min_provinces_contributing = optional minimum province diversity gate (set to 2+ to avoid single-province region summaries)."
   },
 
   "evaluators": {

@@ -524,7 +524,7 @@ class PromptAssembler:
     def assemble_l5(self, data_block: str = "",
                     event_tags: Optional[List[str]] = None,
                     ) -> "AssembledPrompt":
-        """Assemble a Layer 5 prompt for realm summarization.
+        """Assemble a Layer 5 prompt for region summarization.
 
         Aggregates fragments from ALL lower layers (L2 + L3 + L4 + L5).
         Like Layer 4, the LLM performs a full tag rewrite, so the prompt
@@ -547,8 +547,8 @@ class PromptAssembler:
         if core:
             selected.append(("_l5_core", core))
 
-        # Realm summary context fragment
-        ctx_key = "l5_context:realm_summary"
+        # Region summary context fragment
+        ctx_key = "l5_context:region_summary"
         ctx_frag = self.get_l5_fragment(ctx_key)
         if ctx_frag:
             selected.append((ctx_key, ctx_frag))
@@ -560,7 +560,7 @@ class PromptAssembler:
             selected.extend(tag_frags)
 
         # Example if available
-        example_key = "l5_example:realm"
+        example_key = "l5_example:region"
         example_frag = self.get_l5_fragment(example_key)
         if example_frag:
             selected.append((example_key, example_frag))
@@ -581,7 +581,7 @@ class PromptAssembler:
             system=system,
             user=user,
             fragments_used=selected,
-            tags=["layer:5", "scope:realm"],
+            tags=["layer:5", "scope:region"],
             token_estimate=estimate_tokens(system) + estimate_tokens(user),
         )
 

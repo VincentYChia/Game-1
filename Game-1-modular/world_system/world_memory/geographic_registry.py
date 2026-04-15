@@ -1,10 +1,24 @@
 """Geographic Registry — named region hierarchy overlaid on the chunk grid.
 
-Maps every position to a human-readable address:
-  Realm > Nation > Province > District > Locality
+Maps every position to a human-readable address, following the **game's**
+geographic hierarchy 1:1:
 
-Regions carry identity tags for interest-matching with entities and events.
-Loaded from JSON configuration; supports runtime additions.
+    World > Nation > Region > Province > District > Locality (sparse POI)
+
+Hierarchy rules:
+- Every chunk deterministically has World, Nation, Region, Province, and
+  District. These tiers are always present.
+- Locality is sparse — a chunk only has a Locality when a POI (e.g.
+  village) has been placed there. See
+  systems/geography/village_generator.py.
+
+Address tags emitted at Layer 2 capture mirror this hierarchy exactly:
+  world:world_0, nation:nation_{id}, region:region_{id},
+  province:province_{id}, district:district_{id},
+  locality:locality_{id}  (optional).
+
+This registry is the source of truth for parent→child walking and for
+`get_full_address(x, y)` lookups used by the event recorder.
 """
 
 from __future__ import annotations
@@ -18,11 +32,17 @@ from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
 
 class RegionLevel(Enum):
-    LOCALITY = "locality"
-    DISTRICT = "district"
-    PROVINCE = "province"
-    NATION = "nation"
-    REALM = "realm"
+    """6-tier hierarchy matching the game's geography system 1:1.
+
+    Order (finest → coarsest): LOCALITY, DISTRICT, PROVINCE, REGION,
+    NATION, WORLD.
+    """
+    LOCALITY = "locality"     # Sparse POI — only present if chunk has locality_id >= 0
+    DISTRICT = "district"     # Game District — always present per chunk
+    PROVINCE = "province"     # Game Province — always present per chunk
+    REGION = "region"         # Game Region — always present per chunk
+    NATION = "nation"         # Game Nation — always present per chunk
+    WORLD = "world"           # Game World — always present (singleton)
 
 
 @dataclass
@@ -103,11 +123,22 @@ class GeographicRegistry:
 
     def __init__(self):
         self.regions: Dict[str, Region] = {}
-        self.realm: Optional[Region] = None
+        self.world: Optional[Region] = None
 
         # Caches
         self._chunk_to_locality: Dict[Tuple[int, int], Optional[str]] = {}
         self._locality_chain: Dict[str, Dict[str, str]] = {}
+
+    # Backwards-compat alias — some older code still reads `self.realm`.
+    # `realm` is no longer a hierarchy tier; the attribute points at the
+    # top-level WORLD region. Prefer `self.world` in new code.
+    @property
+    def realm(self) -> Optional[Region]:
+        return self.world
+
+    @realm.setter
+    def realm(self, value: Optional[Region]) -> None:
+        self.world = value
 
     @classmethod
     def get_instance(cls) -> GeographicRegistry:
@@ -122,7 +153,16 @@ class GeographicRegistry:
     # ── Loading ──────────────────────────────────────────────────────
 
     def load_base_map(self, filepath: str) -> None:
-        """Load region definitions from a JSON map file."""
+        """Load region definitions from a JSON map file.
+
+        Supports both the new 6-tier layout (`world`, `nations`,
+        `regions`, `provinces`, `districts`, `localities`) and the
+        legacy 4-tier layout (`realm`, `provinces`, `districts`,
+        `localities`) for backwards compatibility with old fixture
+        files. Legacy files load as-declared and do not get
+        auto-promoted — they're assumed to already reference the
+        correct RegionLevel values.
+        """
         if not os.path.exists(filepath):
             print(f"[GeoRegistry] Map file not found: {filepath} — starting empty")
             return
@@ -130,15 +170,19 @@ class GeographicRegistry:
         with open(filepath, "r") as f:
             data = json.load(f)
 
-        # Load realm
-        if "realm" in data:
-            r = data["realm"]
-            realm = self._parse_region(r)
-            self.regions[realm.region_id] = realm
-            self.realm = realm
+        # Load top-level region — accept both "world" (new) and "realm"
+        # (legacy). Either one is parsed and stored under its declared
+        # region_id. The RegionLevel is whatever the file says.
+        top_key = "world" if "world" in data else ("realm" if "realm" in data else None)
+        if top_key:
+            r = data[top_key]
+            top = self._parse_region(r)
+            self.regions[top.region_id] = top
+            self.world = top
 
-        # Load provinces, districts, localities
-        for level_key in ("provinces", "districts", "localities"):
+        # Load all tiers. Order matters for parent wiring, so walk from
+        # coarser to finer.
+        for level_key in ("nations", "regions", "provinces", "districts", "localities"):
             for r in data.get(level_key, []):
                 region = self._parse_region(r)
                 self.regions[region.region_id] = region
@@ -169,13 +213,21 @@ class GeographicRegistry:
         )
 
     def load_from_world_map(self, world_map) -> None:
-        """Load region hierarchy from the geographic system's WorldMap.
+        """Load region hierarchy from the game's WorldMap.
 
-        Maps the game's 5-tier hierarchy 1:1 to WMS levels:
-            Game Nation   → WMS NATION
-            Game Region   → WMS PROVINCE  (Layer 4 scope)
-            Game Province → WMS DISTRICT  (Layer 3 scope)
-            Game District → WMS LOCALITY  (Layer 2 scope / position lookup)
+        Maps the game's 6-tier hierarchy 1:1 to WMS RegionLevels. The
+        game's own terminology is preserved — no tier shifting.
+
+            Game World    → WMS WORLD     (Layer 7 scope, future)
+            Game Nation   → WMS NATION    (Layer 6 scope, future)
+            Game Region   → WMS REGION    (Layer 5 scope)
+            Game Province → WMS PROVINCE  (Layer 4 scope)
+            Game District → WMS DISTRICT  (Layer 3 scope)
+            Game Locality → WMS LOCALITY  (Layer 2 capture, sparse POI)
+
+        Locality is optional — only present if the game generated a
+        POI (e.g. a village) on that chunk. Non-locality chunks still
+        get the full District/Province/Region/Nation/World address.
 
         Args:
             world_map: WorldMap from systems.geography.models
@@ -184,21 +236,21 @@ class GeographicRegistry:
         self._invalidate_cache()
         chunk_size = 16
 
-        # Create realm
+        # Create the top-level World region
         half = world_map.world_size // 2
-        realm_bounds = [-half * chunk_size, -half * chunk_size,
+        world_bounds = [-half * chunk_size, -half * chunk_size,
                         half * chunk_size, half * chunk_size]
-        realm = Region(
-            region_id="realm_0",
+        world = Region(
+            region_id="world_0",
             name="The Known Lands",
-            level=RegionLevel.REALM,
-            bounds_x1=realm_bounds[0], bounds_y1=realm_bounds[1],
-            bounds_x2=realm_bounds[2], bounds_y2=realm_bounds[3],
+            level=RegionLevel.WORLD,
+            bounds_x1=world_bounds[0], bounds_y1=world_bounds[1],
+            bounds_x2=world_bounds[2], bounds_y2=world_bounds[3],
         )
-        self.regions["realm_0"] = realm
-        self.realm = realm
+        self.regions["world_0"] = world
+        self.world = world
 
-        # Register nations as NATION (highest named division)
+        # Register game Nations as WMS NATION
         for nid, nation in world_map.nations.items():
             nation_id = f"nation_{nid}"
             child_ids = []
@@ -222,26 +274,26 @@ class GeographicRegistry:
                 bounds_y1=int(min_y) if min_y != float('inf') else 0,
                 bounds_x2=int(max_x) if max_x != float('-inf') else 0,
                 bounds_y2=int(max_y) if max_y != float('-inf') else 0,
-                parent_id="realm_0",
+                parent_id="world_0",
                 child_ids=child_ids,
                 tags=[f"nation:{nation.name.lower()}", f"flavor:{nation.naming_flavor.value}"],
             )
-            realm.child_ids.append(nation_id)
+            world.child_ids.append(nation_id)
 
-        # Register game regions as PROVINCE (Layer 4 scope)
+        # Register game Regions as WMS REGION (Layer 5 scope)
         for rid, region in world_map.regions.items():
             region_id = f"region_{rid}"
             bx1, by1, bx2, by2 = region.bounds
             nation = world_map.nations.get(region.nation_id)
             parent_id = f"nation_{region.nation_id}"
 
-            # Children are game provinces (WMS districts)
+            # Children are game Provinces
             child_ids = [f"province_{pid}" for pid in region.province_ids]
 
             self.regions[region_id] = Region(
                 region_id=region_id,
                 name=region.name,
-                level=RegionLevel.PROVINCE,
+                level=RegionLevel.REGION,
                 bounds_x1=bx1 * chunk_size, bounds_y1=by1 * chunk_size,
                 bounds_x2=bx2 * chunk_size, bounds_y2=by2 * chunk_size,
                 parent_id=parent_id,
@@ -251,13 +303,13 @@ class GeographicRegistry:
                       f"nation:{nation.name.lower()}" if nation else ""],
             )
 
-        # Register game provinces as DISTRICT (Layer 3 scope)
+        # Register game Provinces as WMS PROVINCE (Layer 4 scope)
         for pid, province in world_map.provinces.items():
             province_id = f"province_{pid}"
             bx1, by1, bx2, by2 = province.bounds
             parent_id = f"region_{province.region_id}"
 
-            # Children are game districts (WMS localities)
+            # Children are game Districts
             child_ids = []
             if hasattr(province, 'district_ids'):
                 child_ids = [f"district_{did}" for did in province.district_ids]
@@ -265,14 +317,14 @@ class GeographicRegistry:
             self.regions[province_id] = Region(
                 region_id=province_id,
                 name=province.name,
-                level=RegionLevel.DISTRICT,
+                level=RegionLevel.PROVINCE,
                 bounds_x1=bx1 * chunk_size, bounds_y1=by1 * chunk_size,
                 bounds_x2=bx2 * chunk_size, bounds_y2=by2 * chunk_size,
                 parent_id=parent_id,
                 child_ids=child_ids,
             )
 
-        # Register game districts as LOCALITY (position lookup)
+        # Register game Districts as WMS DISTRICT (Layer 3 scope)
         if hasattr(world_map, 'districts') and world_map.districts:
             for did, district in world_map.districts.items():
                 district_id = f"district_{did}"
@@ -282,11 +334,71 @@ class GeographicRegistry:
                 self.regions[district_id] = Region(
                     region_id=district_id,
                     name=district.name,
-                    level=RegionLevel.LOCALITY,
+                    level=RegionLevel.DISTRICT,
                     bounds_x1=bx1 * chunk_size, bounds_y1=by1 * chunk_size,
                     bounds_x2=bx2 * chunk_size, bounds_y2=by2 * chunk_size,
                     parent_id=parent_id,
                 )
+
+        # Register game Localities as WMS LOCALITY (sparse POIs)
+        # Locality parent is determined by looking at a chunk the
+        # locality occupies and reading its stamped district_id. This
+        # gives a deterministic district parent; no heuristics.
+        nl_registered = 0
+        if hasattr(world_map, 'localities') and world_map.localities:
+            for lid, locality in world_map.localities.items():
+                parent_district_id: Optional[str] = None
+                parent_region: Optional[Region] = None
+
+                # Find the containing district from any occupied chunk.
+                # locality.adjacent_chunks may be empty for legacy data,
+                # so fall back to (chunk_x, chunk_y).
+                candidate_chunks = list(locality.adjacent_chunks or [])
+                if not candidate_chunks:
+                    candidate_chunks = [(locality.chunk_x, locality.chunk_y)]
+
+                for (cx, cy) in candidate_chunks:
+                    gd = world_map.chunk_data.get((cx, cy))
+                    if gd and gd.district_id >= 0:
+                        parent_district_id = f"district_{gd.district_id}"
+                        parent_region = self.regions.get(parent_district_id)
+                        if parent_region is not None:
+                            break
+
+                if parent_region is None:
+                    # Can't parent this locality — skip rather than
+                    # registering an orphaned tier. Log once.
+                    continue
+
+                # Bounds: enclosing rectangle over all adjacent chunks
+                if candidate_chunks:
+                    xs = [c[0] for c in candidate_chunks]
+                    ys = [c[1] for c in candidate_chunks]
+                    min_cx, max_cx = min(xs), max(xs)
+                    min_cy, max_cy = min(ys), max(ys)
+                    bx1 = min_cx * chunk_size
+                    by1 = min_cy * chunk_size
+                    bx2 = (max_cx + 1) * chunk_size - 1
+                    by2 = (max_cy + 1) * chunk_size - 1
+                else:
+                    bx1 = locality.chunk_x * chunk_size
+                    by1 = locality.chunk_y * chunk_size
+                    bx2 = bx1 + chunk_size - 1
+                    by2 = by1 + chunk_size - 1
+
+                wms_loc_id = f"locality_{lid}"
+                self.regions[wms_loc_id] = Region(
+                    region_id=wms_loc_id,
+                    name=locality.name,
+                    level=RegionLevel.LOCALITY,
+                    bounds_x1=bx1, bounds_y1=by1,
+                    bounds_x2=bx2, bounds_y2=by2,
+                    parent_id=parent_district_id,
+                    tags=[f"feature:{locality.feature_type}"] if locality.feature_type else [],
+                )
+                if wms_loc_id not in parent_region.child_ids:
+                    parent_region.child_ids.append(wms_loc_id)
+                nl_registered += 1
 
         self._invalidate_cache()
         nn = len(world_map.nations)
@@ -294,15 +406,18 @@ class GeographicRegistry:
         np_ = len(world_map.provinces)
         nd = len(world_map.districts) if hasattr(world_map, 'districts') else 0
         print(f"[GeoRegistry] Loaded from WorldMap: "
-              f"{nn} nations, {nr} regions/provinces, "
-              f"{np_} provinces/districts, {nd} districts/localities")
+              f"1 world, {nn} nations, {nr} regions, "
+              f"{np_} provinces, {nd} districts, "
+              f"{nl_registered} localities")
 
     def generate_from_biomes(self, chunk_biomes: Dict[Tuple[int, int], str],
                              chunk_size: int = 16) -> None:
         """Generate a basic region hierarchy from chunk biome data.
 
-        Groups chunks by biome type into localities, then clusters
-        localities into districts and provinces.
+        Fallback used when no WorldMap is available. Produces a
+        minimal 3-tier hierarchy (WORLD → PROVINCE quadrants →
+        LOCALITY chunks) that skips Nation/Region/District. Real
+        gameplay always goes through `load_from_world_map`.
         """
         if not chunk_biomes:
             return
@@ -313,19 +428,19 @@ class GeographicRegistry:
         min_cx, max_cx = min(all_cx), max(all_cx)
         min_cy, max_cy = min(all_cy), max(all_cy)
 
-        # Create realm covering entire known world
-        realm = Region(
+        # Create top-level World covering the whole known area
+        world = Region(
             region_id="known_lands",
             name="The Known Lands",
-            level=RegionLevel.REALM,
+            level=RegionLevel.WORLD,
             bounds_x1=min_cx * chunk_size,
             bounds_y1=min_cy * chunk_size,
             bounds_x2=(max_cx + 1) * chunk_size - 1,
             bounds_y2=(max_cy + 1) * chunk_size - 1,
             description="The explored world.",
         )
-        self.regions[realm.region_id] = realm
-        self.realm = realm
+        self.regions[world.region_id] = world
+        self.world = world
 
         # Group chunks into quadrant-based provinces
         mid_x = (min_cx + max_cx) // 2
@@ -347,10 +462,10 @@ class GeographicRegistry:
                 bounds_y1=cy1 * chunk_size,
                 bounds_x2=(cx2 + 1) * chunk_size - 1,
                 bounds_y2=(cy2 + 1) * chunk_size - 1,
-                parent_id=realm.region_id,
+                parent_id=world.region_id,
             )
             self.regions[prov_id] = province
-            realm.child_ids.append(prov_id)
+            world.child_ids.append(prov_id)
 
             # Create localities from individual chunks in this quadrant
             for (cx, cy), biome in chunk_biomes.items():
@@ -377,8 +492,25 @@ class GeographicRegistry:
 
     # ── Lookup ───────────────────────────────────────────────────────
 
+    # Tier precedence from finest → coarsest. `get_region_at` returns the
+    # first (finest) containing region. Locality is finest; it's optional
+    # per chunk so the lookup may fall through to district.
+    _TIER_SEARCH_ORDER: ClassVar[Tuple[RegionLevel, ...]] = (
+        RegionLevel.LOCALITY,
+        RegionLevel.DISTRICT,
+        RegionLevel.PROVINCE,
+        RegionLevel.REGION,
+        RegionLevel.NATION,
+        RegionLevel.WORLD,
+    )
+
     def get_region_at(self, x: float, y: float) -> Optional[Region]:
-        """Get the most specific (locality-level) region for a position."""
+        """Get the finest-tier containing region for a position.
+
+        Returns a LOCALITY region if one covers (x, y); otherwise
+        falls back to DISTRICT, then PROVINCE, and so on. Result is
+        cached per chunk.
+        """
         chunk_x = int(x) // 16
         chunk_y = int(y) // 16
         cache_key = (chunk_x, chunk_y)
@@ -387,27 +519,42 @@ class GeographicRegistry:
             loc_id = self._chunk_to_locality[cache_key]
             return self.regions.get(loc_id) if loc_id else None
 
-        # Scan localities
-        for region in self.regions.values():
-            if region.level == RegionLevel.LOCALITY and region.contains(x, y):
-                self._chunk_to_locality[cache_key] = region.region_id
-                return region
+        # Walk finest → coarsest, return the first match
+        for level in self._TIER_SEARCH_ORDER:
+            for region in self.regions.values():
+                if region.level == level and region.contains(x, y):
+                    self._chunk_to_locality[cache_key] = region.region_id
+                    return region
 
         self._chunk_to_locality[cache_key] = None
         return None
 
     def get_full_address(self, x: float, y: float) -> Dict[str, str]:
-        """Get full address hierarchy: {locality, district, province, realm}."""
-        locality = self.get_region_at(x, y)
-        if not locality:
+        """Get the full address hierarchy for a position.
+
+        Returns a dict keyed by RegionLevel.value (lower-case tier
+        name) containing every tier from the finest containing region
+        up to the World root.
+
+        Possible keys: ``locality`` (optional — only if the point is
+        inside a registered Locality POI), ``district``, ``province``,
+        ``region``, ``nation``, ``world``. Chunks that exist outside
+        any Locality POI still get the other five tiers (assuming the
+        registry is fully loaded).
+
+        Returns an empty dict if the point is outside every registered
+        region (e.g. before `load_from_world_map` has been called).
+        """
+        start = self.get_region_at(x, y)
+        if not start:
             return {}
 
-        # Check chain cache
-        if locality.region_id in self._locality_chain:
-            return dict(self._locality_chain[locality.region_id])
+        # Check chain cache keyed by the finest tier's region_id
+        if start.region_id in self._locality_chain:
+            return dict(self._locality_chain[start.region_id])
 
-        result: Dict[str, str] = {"locality": locality.region_id}
-        current = locality
+        result: Dict[str, str] = {start.level.value: start.region_id}
+        current = start
         while current.parent_id:
             parent = self.regions.get(current.parent_id)
             if not parent:
@@ -415,7 +562,7 @@ class GeographicRegistry:
             result[parent.level.value] = parent.region_id
             current = parent
 
-        self._locality_chain[locality.region_id] = result
+        self._locality_chain[start.region_id] = result
         return dict(result)
 
     def get_regions_by_level(self, level: RegionLevel) -> List[Region]:

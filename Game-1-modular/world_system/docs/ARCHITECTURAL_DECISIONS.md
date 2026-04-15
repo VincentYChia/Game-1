@@ -85,8 +85,8 @@ GameEventBus the WMS listens to, but runs an independent projection
 - No Layer 2 evaluator reads FactionSystem state.
 - The `faction_narrative` Layer 3 consolidator does not query FactionSystem
   — it infers faction relevance from L2 event tags independently.
-- Layer 5 (realm summaries) does **not** read `faction_standings` from
-  FactionSystem. Realm narratives are built purely from the layer pipeline.
+- Layer 5 (region summaries) does **not** read `faction_standings` from
+  FactionSystem. Region narratives are built purely from the layer pipeline.
 
 Think of FactionSystem as a **synchronous query API for NPCs and quest
 generation** (current game state: "what's my rep with the Miners?"). The
@@ -185,8 +185,9 @@ would replace it entirely without loss.
 
 ## 4. Rule: WMS Layers Are Events Only
 
-The WMS layers (L1 stats → L2 interpretations → L3 consolidations → L4
-province summaries → L5 realm summaries → L6/L7) form a strictly
+The WMS layers (L1 stats → L2 interpretations → L3 district
+consolidations → L4 province summaries → L5 region summaries →
+L6 nation summaries → L7 world summaries) form a strictly
 event-driven pipeline. Each layer:
 
 1. Receives events from the layer below (or from the raw event pipeline
@@ -225,9 +226,12 @@ When implementing Layer 5 (and later 6, 7):
   / `player_reputation` fields from anywhere outside the WMS pipeline.
   Either rename/drop those fields or leave them empty for now.
 - **Do** keep the pipeline pure: L5 reads L4 (full) + L3 (filtered, two
-  layers down), produces realm-scoped events, writes to LayerStore.
-- **Do** follow the L4 pattern (WeightedTriggerBucket, LLM full-tag
-  rewrite, per-realm buckets).
+  layers down), produces region-scoped events, writes to LayerStore.
+- **Do** follow the L4 pattern (WeightedTriggerBucket, LLM content-tag
+  rewrite with address-tag preservation, per-region buckets).
+- **Do** treat address tags (`world:`, `nation:`, `region:`,
+  `province:`, `district:`, `locality:`) as FACTS. Never let the LLM
+  touch them. See §6.
 
 Future evaluators for faction-adjacent or ecosystem-adjacent concerns
 can be added later. The WMS does not fully require them to function — the
@@ -236,8 +240,88 @@ progression, exploration) which are already wired in.
 
 ---
 
-## 6. Document History
+## 6. Address Tags Are Facts, Not LLM Output
 
+The WMS layer pipeline maps 1:1 to the game's geographic hierarchy:
+
+```
+World → Nation → Region → Province → District → Locality (sparse POI)
+```
+
+This is 6 tiers (5 guaranteed per chunk plus optional Locality).
+See `systems/geography/models.py` and
+`world_system/world_memory/geographic_registry.py::RegionLevel`.
+
+### Rule: one tier per layer
+
+Each WMS layer aggregates at exactly one tier of the hierarchy. As
+events flow up the pipeline, each layer **drops the finest address
+tag on its output** because the summary is now summed across that
+tier's children.
+
+| Layer | Aggregation tier | Drops on output | Retains |
+|---|---|---|---|
+| L2 | capture | — | world, nation, region, province, district, locality |
+| L3 | game District | locality | world, nation, region, province, district |
+| L4 | game Province | district | world, nation, region, province |
+| L5 | game Region | province | world, nation, region |
+| L6 (future) | game Nation | region | world, nation |
+| L7 (future) | game World | nation | world |
+
+### Rule: addresses are facts, never LLM-synthesized
+
+Every event's address is determined deterministically at **Layer 2
+capture time** by looking up the chunk at `(position_x, position_y)`
+in `GeographicRegistry.get_full_address()`. From that point on:
+
+1. Higher layers **propagate** address tags by copying them from input
+   events — they never synthesize new ones and never re-parent.
+2. The LLM at Layer 4 and Layer 5 is given only **content tags** for
+   its rewrite step. The layer code partitions `summary.tags` into
+   address/content halves before calling the LLM, then re-attaches the
+   address half after the rewrite returns. Any address tag the LLM
+   emits in its output is discarded.
+3. The `region:` / `province:` / etc. tag on a layer's output is
+   **always** the aggregation target for that layer — never whatever
+   the LLM wrote.
+
+This guarantees that address resolution is:
+- **Deterministic**: same inputs always produce the same address.
+- **Simple**: no parent-chain walking at higher layers, just tag
+  lookup (e.g. `Layer5Manager._resolve_region_id_from_tags` reads the
+  `region:X` tag directly).
+- **Safe**: the LLM cannot invent geographic tags, drop them, or
+  cross-wire events to the wrong place.
+
+### Address tag prefixes (reserved)
+
+The following tag namespaces are reserved for address facts. No layer
+and no LLM prompt is permitted to create, rewrite, reorder, or drop
+them outside their layer's own aggregation step:
+
+- `world:`, `nation:`, `region:`, `province:`, `district:`, `locality:`
+
+Content prefixes (LLM-rewritable) include `domain:`, `sentiment:`,
+`trend:`, `intensity:`, `resource_status:`, `threat_level:`,
+`urgency_level:`, `event_status:`, `player_impact:`, `species:`,
+`terrain:`, `discipline:`, `tier:`, etc. See `tag_library.py` for the
+full list.
+
+---
+
+## 7. Document History
+
+- **2026-04-16**: Added §6 formalizing the 1-tier-per-layer
+  aggregation rule and address-tag immutability rule. Aligned WMS
+  hierarchy 1:1 with the game's geography system
+  (`systems/geography/models.py`). Added `WORLD` and `REGION`
+  `RegionLevel` values, shifted `load_from_world_map` to correct
+  tier mapping, renamed `RealmSummaryEvent → RegionSummaryEvent`,
+  retargeted Layer 5 from world-aggregation to region-aggregation.
+  `EventStore` schema bumped to v2 (adds `region_id`/`nation_id`/
+  `world_id` columns; old databases fail fast with a rebuild
+  message). L4/L5 `_upgrade_narrative` partitions tags into
+  address vs content and only hands content to the LLM.
 - **2026-04-13**: Initial creation. Captures separation of FactionSystem /
   EcosystemAgent from the WMS layer pipeline, marks
   `faction-definitions.json` as placeholder, reframes "WMS" as central

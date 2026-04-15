@@ -185,7 +185,9 @@ class Layer2TagAssigner:
                     locality_id: str = "",
                     district_id: str = "",
                     province_id: str = "",
+                    region_id: str = "",
                     nation_id: str = "",
+                    world_id: str = "",
                     biome: str = "",
                     scope: str = "local",
                     significance: str = "minor",
@@ -195,10 +197,12 @@ class Layer2TagAssigner:
 
         Args:
             origin_stat_tags: Inherited tags from Layer 1.
-            locality_id: Geographic locality.
-            district_id: Geographic district.
-            province_id: Geographic province.
-            nation_id: Geographic nation.
+            locality_id: Sparse locality POI (optional).
+            district_id: Game District — always present per chunk.
+            province_id: Game Province — always present per chunk.
+            region_id: Game Region — always present per chunk.
+            nation_id: Game Nation — always present per chunk.
+            world_id: Game World — always present (singleton).
             biome: Chunk biome type.
             scope: Geographic scope of this event.
             significance: Evaluator-assessed significance (RECREATED here).
@@ -213,15 +217,20 @@ class Layer2TagAssigner:
         # 1. Inherit Layer 1 tags (these come first — most factual/specific)
         tags.extend(origin_stat_tags)
 
-        # 2. Add Layer 2 geographic address tags
+        # 2. Add Layer 2 geographic address tags, finest → coarsest.
+        #    These are FACTS, not LLM-synthesized. Locality is optional.
         if locality_id:
             tags.append(format_tag("locality", locality_id))
         if district_id:
             tags.append(format_tag("district", district_id))
         if province_id:
             tags.append(format_tag("province", province_id))
+        if region_id:
+            tags.append(format_tag("region", region_id))
         if nation_id:
             tags.append(format_tag("nation", nation_id))
+        if world_id:
+            tags.append(format_tag("world", world_id))
         if biome:
             tags.append(format_tag("biome", biome))
 

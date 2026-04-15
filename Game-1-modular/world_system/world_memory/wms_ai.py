@@ -70,13 +70,13 @@ LAYER_CONFIG = {
         "task": "wms_layer5",
         "temperature": 0.5,
         "max_tokens": 500,
-        "description": "Layer 5: realm-level state",
+        "description": "Layer 5: region-level summaries",
     },
     6: {
         "task": "wms_layer6",
         "temperature": 0.5,
         "max_tokens": 500,
-        "description": "Layer 6: cross-realm patterns",
+        "description": "Layer 6: nation-level summaries",
     },
     7: {
         "task": "wms_layer7",

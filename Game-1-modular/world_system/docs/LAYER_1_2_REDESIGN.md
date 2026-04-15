@@ -242,7 +242,7 @@ The following tables are confirmed redundant and will be removed:
 | `interpretations`, `interpretation_tags` | `layer2_events`, `layer2_tags` |
 | `connected_interpretations`, `connected_interpretation_tags` | `layer3_events`, `layer3_tags` |
 | `province_summaries` | `layer4_events` |
-| `realm_state` | `layer5_events` |
+| `region_state` (previously `realm_state`, renamed in the 2026-04-16 hierarchy alignment; dormant table retained for schema compat) | `layer5_events` |
 | `world_narrative`, `narrative_threads` | `layer7_events` |
 
 ### What Remains — Temporal Fact Store (FINALIZED)
@@ -523,3 +523,15 @@ Derived:
 ```
 
 Pure numbers. No interpretation. The LLM interprets them via prompt fragments.
+
+---
+
+## Document History
+
+- **2026-04-16**: Hierarchy-alignment migration. Notes that the
+  dormant `realm_state` table was renamed to `region_state` when WMS
+  `RegionLevel` was expanded from 5 shifted labels to 6 game-aligned
+  values. Layer 5 events (now `RegionSummaryEvent`) target game
+  Region rather than world-scope "realm". See
+  `ARCHITECTURAL_DECISIONS.md` §6.
+- **2026-04-09**: Initial creation.

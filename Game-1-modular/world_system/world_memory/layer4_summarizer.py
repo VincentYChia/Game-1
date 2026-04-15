@@ -407,15 +407,45 @@ class Layer4Summarizer:
     ) -> List[str]:
         """Build initial tag set for the summary event.
 
-        These are structural/analytical tags from the summarizer.
-        The LLM may add or replace interpretive tags (faction, urgency_level,
-        event_status, player_impact).
-        """
-        tags = [
-            f"province:{province_id}",
-            "scope:province",
-        ]
+        Address tags (world, nation, region) are copied as FACTS from
+        the input L3 events — we do NOT invent them. `district:` and
+        `locality:` are NOT included because this layer aggregates
+        across districts.
 
+        The LLM later rewrites only the content tags; address tags
+        are preserved untouched by layer code.
+        """
+        tags: List[str] = []
+
+        # ── Address tags (FACTS, propagated from L3 inputs) ──
+        # Walk the inputs once and pick up the first world:/nation:/region:
+        # value seen. All L3 events in the same province share the same
+        # region/nation/world ancestry so this is deterministic.
+        world_tag = ""
+        nation_tag = ""
+        region_tag = ""
+        for event in l3_events:
+            for tag in event.get("tags", []):
+                if not world_tag and tag.startswith("world:"):
+                    world_tag = tag
+                elif not nation_tag and tag.startswith("nation:"):
+                    nation_tag = tag
+                elif not region_tag and tag.startswith("region:"):
+                    region_tag = tag
+            if world_tag and nation_tag and region_tag:
+                break
+
+        if world_tag:
+            tags.append(world_tag)
+        if nation_tag:
+            tags.append(nation_tag)
+        if region_tag:
+            tags.append(region_tag)
+        # Province tag is this layer's own aggregation target
+        tags.append(f"province:{province_id}")
+        tags.append("scope:province")
+
+        # ── Content tags (LLM-rewritable later) ──
         # Dominant activities as domain tags
         for activity in dominant_activities[:3]:
             tags.append(f"domain:{activity}")

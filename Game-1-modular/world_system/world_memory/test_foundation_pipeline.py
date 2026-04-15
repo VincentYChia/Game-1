@@ -68,7 +68,7 @@ def test_all_tables_created():
             "regional_counters", "interpretation_counters",
             "daily_ledgers", "meta_daily_stats",
             "connected_interpretations", "connected_interpretation_tags",
-            "province_summaries", "realm_state",
+            "province_summaries",
             "world_narrative", "narrative_threads",
         ]
         for table in expected:

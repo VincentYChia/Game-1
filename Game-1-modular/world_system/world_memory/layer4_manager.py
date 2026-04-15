@@ -1,37 +1,52 @@
 """Layer 4 Manager — orchestrates province-level summarization from Layer 3.
 
-Trigger: Tag-weighted, **per-province**. Each Layer 3 event is routed to a
-province-specific WeightedTriggerBucket based on its geographic address.
-Geographic tags (province:, district:, locality:, nation:) are stripped before
-scoring so only content tags consume positional weight:
+Aggregation tier: **game Province** (parent of game District). Each
+Layer 4 event consolidates Layer 3 events across the districts of a
+single game Province.
+
+Trigger: Tag-weighted, per-province. Each Layer 3 event is routed to a
+province-specific WeightedTriggerBucket based on its ``province:X`` tag.
+Geographic (address) tags are stripped before scoring so only content
+tags consume positional weight:
     Position 1 = 10, 2 = 8, 3 = 6, 4 = 5, 5 = 4, 6 = 3, 7-12 = 2, 13+ = 1.
 
-When any content tag crosses 50 points *within a province*, it fires and all
-contributing L3 events become context for that province's summary.
+When any content tag crosses the threshold *within a province*, it
+fires and all contributing L3 events become context for that
+province's summary.
 
-Province scope: WMS PROVINCE = game Region (region_X). Each province
-contains multiple districts (game provinces = province_X).
+Address tag drop rule:
+    Layer 4 output tags include: world, nation, region, province.
+    The `district:` tag is dropped at this layer because the
+    consolidation is summed across every district in the province,
+    not a single district. Any `locality:` tags that leaked up from
+    L3 are also dropped here.
 
 Data flow:
     Layer 3 event stored in LayerStore (layer3_events)
            ↓
     Layer4Manager.on_layer3_created()
       — extract province_id from event tags
-      — strip geographic tags (province:, district:, locality:, nation:)
+      — strip all geographic/address tags before scoring
       — ingest content tags into per-province WeightedTriggerBucket
            ↓ (content tag crosses threshold within province → fires)
     Contributing L3 events become primary context
-    Relevant L2 events (strict tag-position filter) become supporting context
+    Relevant L2 events (top-tag filter) become supporting context
            ↓
     Layer4Summarizer.summarize() — build template narrative
            ↓
-    LLM upgrade — rewrite narrative + ALL tags (66-80% retention, reordered)
+    LLM upgrade — rewrites ONLY content tags, address tags are
+    re-attached by layer code after the LLM call
            ↓
     Store in layer4_events + layer4_tags (superseding previous summary)
 
 Visibility rule (two-layers-down):
     Layer 4 sees Layer 3 (full) and Layer 2 (filtered — trigger tag in top 3).
     Layer 4 does NOT see Layer 1 stats or Layers 5-7.
+
+Pure pipeline, address immutability:
+    Address tags are FACTS, assigned at capture. Layer 4 never
+    synthesizes address tags; the LLM is not permitted to rewrite
+    them. See docs/ARCHITECTURAL_DECISIONS.md.
 """
 
 from __future__ import annotations
@@ -58,10 +73,13 @@ _L2_TOP_TAG_COUNT = 5
 _L2_MIN_TAG_MATCHES = 3
 _L2_MAX_RESULTS = 5
 
-# Geographic tag prefixes stripped before scoring — these are address tags,
-# not content tags.  Stripping them ensures content tags get full positional
-# weight (e.g. domain:combat moves from position 2 → 0 = 10 pts, not 6).
-_GEO_TAG_PREFIXES = ("province:", "district:", "locality:", "nation:")
+# Geographic tag prefixes stripped before scoring — these are address
+# tags, not content tags. Stripping them ensures content tags get full
+# positional weight (e.g. domain:combat moves from position ~5 → 0 =
+# 10 pts, not 3).
+_GEO_TAG_PREFIXES = (
+    "world:", "nation:", "region:", "province:", "district:", "locality:",
+)
 
 
 class Layer4Manager:
@@ -393,7 +411,12 @@ class Layer4Manager:
         return [item[3] for item in scored[:_L2_MAX_RESULTS]]
 
     def _build_geo_context(self, province_id: str) -> Dict[str, Any]:
-        """Build geographic context for a province (WMS PROVINCE = game region)."""
+        """Build geographic context for a game Province.
+
+        Collects:
+          - province_name: the province's display name
+          - districts: list of child game Districts (name + id)
+        """
         if not self._geo_registry:
             return {"province_name": province_id, "districts": []}
 
@@ -401,7 +424,7 @@ class Layer4Manager:
         if not province:
             return {"province_name": province_id, "districts": []}
 
-        # Get child districts
+        # Get child districts (game Districts)
         districts = []
         for child_id in province.child_ids:
             child = self._geo_registry.regions.get(child_id)
@@ -423,16 +446,26 @@ class Layer4Manager:
     ) -> None:
         """Replace template narrative with LLM-generated one.
 
-        At Layer 4, the LLM performs a FULL TAG REWRITE: it receives the
-        aggregate inherited tags as input context and outputs a complete
-        reordered tag list (keeping ~66-80% of aggregate tags, reordered
-        by relevance to the narrative it generated).
+        The LLM rewrites CONTENT tags only. Address tags
+        (world/nation/region/province) are preserved by layer code —
+        this method partitions ``summary.tags`` into address vs
+        content halves, sends only the content half to the LLM, and
+        re-attaches the address half after the call returns. Any
+        address tag the LLM returned is discarded. See
+        docs/ARCHITECTURAL_DECISIONS.md.
         """
         if not self._wms_ai:
             return
 
         districts = geo_context.get("districts", [])
         province_name = geo_context.get("province_name", summary.province_id)
+
+        # Partition tags into address (preserved) vs content (rewritable)
+        address_tags = [
+            t for t in summary.tags
+            if any(t.startswith(p) for p in _GEO_TAG_PREFIXES)
+        ]
+        content_tags = [t for t in summary.tags if t not in address_tags]
 
         data_block = self._summarizer.build_xml_data_block(
             l3_events, l2_events, province_name, districts, game_time,
@@ -442,7 +475,7 @@ class Layer4Manager:
             llm_result = self._wms_ai.generate_narration(
                 event_type="layer4_province_summary",
                 event_subtype="province_summary",
-                tags=summary.tags,
+                tags=content_tags,
                 data_block=data_block,
                 layer=4,
             )
@@ -452,12 +485,20 @@ class Layer4Manager:
                 if llm_result.severity != "minor":
                     summary.severity = llm_result.severity
 
-                # Full tag rewrite: LLM output replaces ALL tags
-                if llm_result.tags:
-                    summary.tags = llm_result.tags
+                # LLM rewrites content tags only; address tags are
+                # re-attached from the pre-call snapshot. Any address
+                # tag the LLM invented is dropped.
+                llm_tags = llm_result.tags or []
+                llm_content = [
+                    t for t in llm_tags
+                    if not any(t.startswith(p) for p in _GEO_TAG_PREFIXES)
+                ]
+                if llm_content:
+                    summary.tags = address_tags + llm_content
                 else:
-                    print("[Layer4] WARNING: LLM returned no tags for "
-                          f"province {summary.province_id}")
+                    print("[Layer4] WARNING: LLM returned no content "
+                          f"tags for province {summary.province_id}; "
+                          "keeping template tags")
 
         except Exception as e:
             print(f"[Layer4] LLM upgrade failed for {summary.province_id}: {e}")
@@ -465,8 +506,9 @@ class Layer4Manager:
     def set_layer5_callback(self, callback) -> None:
         """Register a callback invoked when L4 events are stored.
 
-        The callback receives the stored L4 event dict (as it would appear
-        from LayerStore). Used by Layer5Manager to track per-realm triggers.
+        The callback receives the stored L4 event dict (as it would
+        appear from LayerStore). Used by Layer5Manager to track
+        per-region triggers.
         """
         self._layer5_callback = callback
 

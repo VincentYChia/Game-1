@@ -152,3 +152,28 @@ Player gathers resources → RESOURCE_GATHERED event (Layer 0/1)
 
 ### Chunk Type System
 ChunkType enum values must contain "forest"/"quarry"/"cave" substrings for resource spawning. Resource system supports compound types. Danger level from geographic ecosystem determines resource tier range.
+
+---
+
+## Update 2026-04-16: Hierarchy Alignment
+
+The WMS `RegionLevel` enum now maps 1:1 to the game's 6-tier geography
+(`World → Nation → Region → Province → District → Locality`).
+Previously the WMS used 5 shifted labels (`REALM/NATION/PROVINCE/DISTRICT/
+LOCALITY`) where WMS "REALM" held the game World and every other level was
+off by one. That shift is gone:
+
+- `RegionLevel` gained `WORLD` and `REGION` values.
+- `geographic_registry.load_from_world_map()` now assigns each game tier
+  to its matching WMS level.
+- Game `Locality` (POI) is represented as a sparse 6th tier — only
+  present when a chunk has a POI, otherwise Layer 2 capture falls back
+  to the `district:` tag as the finest address.
+- Address tag prefixes `world: / nation: / region: / province: /
+  district: / locality:` are now reserved facts assigned at L2 capture
+  and propagated unchanged up the layer stack. See
+  `ARCHITECTURAL_DECISIONS.md` §6.
+- Layer 5 was renamed from `RealmSummaryEvent` to `RegionSummaryEvent`
+  and retargeted from world-aggregation to region-aggregation (one tier
+  up from Layer 4's province summaries). Layers 6 and 7 are future
+  copies of L5's pattern at nation and world scope respectively.

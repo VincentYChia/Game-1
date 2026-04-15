@@ -219,7 +219,7 @@ class WorldMemorySystem:
             print(f"[WorldMemory] Layer4Manager init failed (non-fatal): {e}")
             self.layer4_manager = None
 
-        # 7d. Layer 5 Manager (realm summarization)
+        # 7d. Layer 5 Manager (region summarization — game Region tier)
         try:
             if self.trigger_registry is None:
                 self.trigger_registry = TriggerRegistry.get_instance()
@@ -284,19 +284,25 @@ class WorldMemorySystem:
             self.geo_registry.generate_from_biomes(chunk_biomes, chunk_size)
 
     def _create_default_geography(self) -> None:
-        """Create a minimal default geography when no other source is available."""
+        """Create a minimal default geography when no other source is available.
+
+        This fallback is used when no WorldMap exists (e.g. early
+        boot, tests). It produces a 3-tier hierarchy (WORLD → PROVINCE
+        quadrants → LOCALITY chunks) that skips Nation/Region/District.
+        Real gameplay always goes through `load_from_world_map`.
+        """
         from world_system.world_memory.geographic_registry import Region, RegionLevel
 
-        realm = Region(
+        world = Region(
             region_id="known_lands",
             name="The Known Lands",
-            level=RegionLevel.REALM,
+            level=RegionLevel.WORLD,
             bounds_x1=-800, bounds_y1=-800,
             bounds_x2=800, bounds_y2=800,
             description="The explored world.",
         )
-        self.geo_registry.regions[realm.region_id] = realm
-        self.geo_registry.realm = realm
+        self.geo_registry.regions[world.region_id] = world
+        self.geo_registry.world = world
 
         # Create four provinces covering the quadrants
         provinces = [
@@ -312,7 +318,7 @@ class WorldMemorySystem:
                 parent_id="known_lands",
             )
             self.geo_registry.regions[pid] = prov
-            realm.child_ids.append(pid)
+            world.child_ids.append(pid)
 
         # Create basic localities around spawn
         for dx in range(-2, 3):
@@ -440,7 +446,7 @@ class WorldMemorySystem:
             except Exception as e:
                 print(f"[WorldMemory] Layer 4 summarization error: {e}")
 
-        # Layer 5 realm summarization check
+        # Layer 5 region summarization check
         if self.layer5_manager and self.layer5_manager.should_run():
             try:
                 self.layer5_manager.run_summarization(game_time)
@@ -505,24 +511,48 @@ class WorldMemorySystem:
              geo_map_path: Optional[str] = None) -> None:
         """Load memory system from save data.
 
-        If the SQLite database exists, it's reopened. Otherwise,
-        a fresh system is initialized.
+        If the SQLite database exists, it's reopened. On schema version
+        mismatch (e.g. an old v1 database), the stale DB is deleted
+        and a fresh v2 database is regenerated — the game continues,
+        losing only WMS history (stats, raw events, higher layers)
+        but preserving the save file itself. This matches the
+        cautious migration policy: fail loud, recover gracefully, do
+        not write compat shims.
         """
         db_path = save_data.get("memory_db_path", "")
+        target_dir = os.path.dirname(db_path) if db_path else save_dir
+
+        def _try_init(directory: str) -> None:
+            self.initialize(
+                save_dir=directory,
+                character=character,
+                world=world,
+                geo_map_path=geo_map_path,
+            )
+
         if db_path and os.path.exists(db_path):
-            self.initialize(
-                save_dir=os.path.dirname(db_path),
-                character=character,
-                world=world,
-                geo_map_path=geo_map_path,
-            )
-        else:
-            self.initialize(
-                save_dir=save_dir,
-                character=character,
-                world=world,
-                geo_map_path=geo_map_path,
-            )
+            try:
+                _try_init(target_dir)
+                return
+            except RuntimeError as e:
+                # Schema mismatch: delete the stale DB and start fresh.
+                # Log clearly so a developer can see what happened.
+                print(f"[WorldMemory] Stale WMS database at {db_path}: {e}")
+                print("[WorldMemory] Deleting old DB and regenerating.")
+                try:
+                    os.remove(db_path)
+                    # Also clean up WAL/SHM sidecars if present
+                    for suffix in ("-wal", "-shm"):
+                        p = db_path + suffix
+                        if os.path.exists(p):
+                            os.remove(p)
+                except OSError as rm_err:
+                    print(f"[WorldMemory] Could not remove old DB: {rm_err}")
+                _try_init(target_dir)
+                return
+
+        # No existing DB — fresh init
+        _try_init(save_dir)
 
     # ── Shutdown ─────────────────────────────────────────────────────
 

@@ -283,13 +283,15 @@ class WorldInterpreter:
             else:
                 scope = "global"
 
-            # Build full Layer 2 tag set
+            # Build full Layer 2 tag set (6-tier address)
             enriched_tags = assign_layer2_tags(
                 origin_stat_key=origin_stat_key,
                 locality_id=trigger_event.locality_id or "",
                 district_id=trigger_event.district_id or "",
                 province_id=trigger_event.province_id or "",
+                region_id=getattr(trigger_event, 'region_id', "") or "",
                 nation_id=getattr(trigger_event, 'nation_id', "") or "",
+                world_id=getattr(trigger_event, 'world_id', "") or "",
                 biome=trigger_event.biome or "",
                 scope=scope,
                 significance=interpretation.severity,

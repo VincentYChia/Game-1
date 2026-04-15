@@ -63,38 +63,52 @@ def _make_l3_event(category="regional_synthesis", severity="moderate",
 
 
 def _setup_geo_registry():
+    """Test fixture — full 6-tier hierarchy matching the game's layout.
+
+    Layer 4 aggregates at the PROVINCE tier, so `province_1` is the
+    unit under test. Region, Nation, World exist above it so the full
+    parent-chain walk succeeds.
+    """
     GeographicRegistry.reset()
     geo = GeographicRegistry.get_instance()
 
-    realm = Region(region_id="realm_0", name="Test Realm",
-                   level=RegionLevel.REALM,
+    world = Region(region_id="world_0", name="The Known Lands",
+                   level=RegionLevel.WORLD,
                    bounds_x1=-100, bounds_y1=-100,
                    bounds_x2=100, bounds_y2=100)
-    geo.regions["realm_0"] = realm
-    geo.realm = realm
+    geo.regions["world_0"] = world
+    geo.world = world
 
     nation = Region(region_id="nation_1", name="Northern Kingdom",
                     level=RegionLevel.NATION,
                     bounds_x1=-100, bounds_y1=-100,
                     bounds_x2=100, bounds_y2=0,
-                    parent_id="realm_0")
+                    parent_id="world_0")
     geo.regions["nation_1"] = nation
-    realm.child_ids.append("nation_1")
+    world.child_ids.append("nation_1")
 
-    province = Region(region_id="region_1", name="Iron Reaches",
+    region = Region(region_id="region_1", name="Iron Reaches",
+                    level=RegionLevel.REGION,
+                    bounds_x1=-100, bounds_y1=-100,
+                    bounds_x2=100, bounds_y2=0,
+                    parent_id="nation_1")
+    geo.regions["region_1"] = region
+    nation.child_ids.append("region_1")
+
+    province = Region(region_id="province_1", name="Western Province",
                       level=RegionLevel.PROVINCE,
                       bounds_x1=-100, bounds_y1=-100,
                       bounds_x2=0, bounds_y2=0,
-                      parent_id="nation_1")
-    geo.regions["region_1"] = province
-    nation.child_ids.append("region_1")
+                      parent_id="region_1")
+    geo.regions["province_1"] = province
+    region.child_ids.append("province_1")
 
     for i, name in enumerate(["Western Mines", "Eastern Fields"]):
-        district = Region(region_id=f"province_{i}",
+        district = Region(region_id=f"district_{i}",
                          name=name, level=RegionLevel.DISTRICT,
                          bounds_x1=-100 + i*50, bounds_y1=-100,
                          bounds_x2=-50 + i*50, bounds_y2=-50,
-                         parent_id="region_1")
+                         parent_id="province_1")
         geo.regions[district.region_id] = district
         province.child_ids.append(district.region_id)
 
@@ -159,29 +173,29 @@ class TestWeightedTriggerBucket(unittest.TestCase):
 
     def test_single_event_scoring(self):
         b = WeightedTriggerBucket(name="test", threshold=50)
-        tags = ["province:region_1", "domain:combat", "intensity:heavy"]
+        tags = ["province:province_1", "domain:combat", "intensity:heavy"]
         b.ingest_event("e1", tags)
         # Position 0=10, 1=8, 2=6
-        self.assertEqual(b.get_score("province:region_1"), 10)
+        self.assertEqual(b.get_score("province:province_1"), 10)
         self.assertEqual(b.get_score("domain:combat"), 8)
         self.assertEqual(b.get_score("intensity:heavy"), 6)
 
     def test_threshold_fires(self):
         b = WeightedTriggerBucket(name="test", threshold=20)
         # Position 0 = 10 points each time
-        b.ingest_event("e1", ["province:region_1", "x:y"])
+        b.ingest_event("e1", ["province:province_1", "x:y"])
         self.assertFalse(b.has_fired())
-        newly = b.ingest_event("e2", ["province:region_1", "x:y"])
+        newly = b.ingest_event("e2", ["province:province_1", "x:y"])
         self.assertTrue(b.has_fired())
-        self.assertIn("province:region_1", newly)
+        self.assertIn("province:province_1", newly)
 
     def test_contributor_tracking(self):
         b = WeightedTriggerBucket(name="test", threshold=20)
-        b.ingest_event("e1", ["province:region_1"])
-        b.ingest_event("e2", ["province:region_1"])
+        b.ingest_event("e1", ["province:province_1"])
+        b.ingest_event("e2", ["province:province_1"])
         fired = b.pop_fired()
-        self.assertIn("province:region_1", fired)
-        self.assertEqual(sorted(fired["province:region_1"]), ["e1", "e2"])
+        self.assertIn("province:province_1", fired)
+        self.assertEqual(sorted(fired["province:province_1"]), ["e1", "e2"])
 
     def test_skip_structural_tags(self):
         b = WeightedTriggerBucket(name="test", threshold=5)
@@ -191,28 +205,28 @@ class TestWeightedTriggerBucket(unittest.TestCase):
 
     def test_pop_resets_fired_tag(self):
         b = WeightedTriggerBucket(name="test", threshold=10)
-        b.ingest_event("e1", ["province:region_1"])  # 10 pts
+        b.ingest_event("e1", ["province:province_1"])  # 10 pts
         self.assertTrue(b.has_fired())
         fired = b.pop_fired()
         self.assertFalse(b.has_fired())
-        self.assertEqual(b.get_score("province:region_1"), 0)
+        self.assertEqual(b.get_score("province:province_1"), 0)
 
     def test_serialization(self):
         b = WeightedTriggerBucket(name="test", threshold=50)
-        b.ingest_event("e1", ["province:region_1", "domain:combat"])
+        b.ingest_event("e1", ["province:province_1", "domain:combat"])
         state = b.get_state()
         b2 = WeightedTriggerBucket.from_state(state)
-        self.assertEqual(b2.get_score("province:region_1"), 10)
+        self.assertEqual(b2.get_score("province:province_1"), 10)
         self.assertEqual(b2.threshold, 50)
 
     def test_multiple_tags_fire_independently(self):
         b = WeightedTriggerBucket(name="test", threshold=15)
-        b.ingest_event("e1", ["domain:combat", "province:region_1"])
-        b.ingest_event("e2", ["domain:combat", "province:region_1"])
-        # domain:combat = 10+10 = 20 (fires), province:region_1 = 8+8 = 16 (fires)
+        b.ingest_event("e1", ["domain:combat", "province:province_1"])
+        b.ingest_event("e2", ["domain:combat", "province:province_1"])
+        # domain:combat = 10+10 = 20 (fires), province:province_1 = 8+8 = 16 (fires)
         fired = b.pop_fired()
         self.assertIn("domain:combat", fired)
-        self.assertIn("province:region_1", fired)
+        self.assertIn("province:province_1", fired)
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -238,10 +252,10 @@ class TestTriggerRegistry(unittest.TestCase):
     def test_weighted_bucket(self):
         self.registry.register_weighted_bucket("wt", threshold=20)
         self.registry.ingest_event_weighted("wt", "e1",
-            ["province:region_1", "domain:combat"])
+            ["province:province_1", "domain:combat"])
         self.assertFalse(self.registry.has_fired_weighted("wt"))
         self.registry.ingest_event_weighted("wt", "e2",
-            ["province:region_1", "domain:combat"])
+            ["province:province_1", "domain:combat"])
         self.assertTrue(self.registry.has_fired_weighted("wt"))
 
     def test_prefix_based_operations(self):
@@ -268,7 +282,7 @@ class TestTriggerRegistry(unittest.TestCase):
         self.registry.increment("simple", "k1", 3)
         self.registry.register_weighted_bucket("wt", threshold=50)
         self.registry.ingest_event_weighted("wt", "e1",
-            ["province:region_1"])
+            ["province:province_1"])
         state = self.registry.get_state()
 
         TriggerRegistry.reset()
@@ -280,7 +294,7 @@ class TestTriggerRegistry(unittest.TestCase):
         bucket = reg2.get_bucket("simple")
         self.assertEqual(bucket.get_count("k1"), 3)
         wbucket = reg2.get_weighted_bucket("wt")
-        self.assertEqual(wbucket.get_score("province:region_1"), 10)
+        self.assertEqual(wbucket.get_score("province:province_1"), 10)
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -291,14 +305,14 @@ class TestProvinceSummaryEvent(unittest.TestCase):
 
     def test_create_factory(self):
         evt = ProvinceSummaryEvent.create(
-            province_id="region_1",
+            province_id="province_1",
             narrative="Test summary.",
             severity="moderate",
             source_consolidation_ids=["id1", "id2"],
             game_time=500.0,
         )
         self.assertTrue(evt.summary_id)
-        self.assertEqual(evt.province_id, "region_1")
+        self.assertEqual(evt.province_id, "province_1")
         self.assertEqual(evt.narrative, "Test summary.")
         self.assertEqual(len(evt.source_consolidation_ids), 2)
         self.assertEqual(evt.created_at, 500.0)
@@ -318,45 +332,45 @@ class TestLayer4Summarizer(unittest.TestCase):
         GeographicRegistry.reset()
 
     def test_is_applicable_needs_2_events(self):
-        events = [_make_l3_event(province_id="region_1")]
-        self.assertFalse(self.summarizer.is_applicable(events, "region_1"))
-        events.append(_make_l3_event(province_id="region_1"))
-        self.assertTrue(self.summarizer.is_applicable(events, "region_1"))
+        events = [_make_l3_event(province_id="province_1")]
+        self.assertFalse(self.summarizer.is_applicable(events, "province_1"))
+        events.append(_make_l3_event(province_id="province_1"))
+        self.assertTrue(self.summarizer.is_applicable(events, "province_1"))
 
     def test_summarize_produces_event(self):
         events = [
             _make_l3_event("regional_synthesis", "moderate",
-                          "Iron Reaches busy.", province_id="region_1",
-                          district_id="province_0"),
+                          "Iron Reaches busy.", province_id="province_1",
+                          district_id="district_0"),
             _make_l3_event("cross_domain", "minor",
-                          "Combat and gathering.", province_id="region_1",
-                          district_id="province_1"),
+                          "Combat and gathering.", province_id="province_1",
+                          district_id="district_1"),
         ]
         geo_ctx = {
-            "province_name": "Iron Reaches",
+            "province_name": "Western Province",
             "districts": [
-                {"id": "province_0", "name": "Western Mines"},
-                {"id": "province_1", "name": "Eastern Fields"},
+                {"id": "district_0", "name": "Western Mines"},
+                {"id": "district_1", "name": "Eastern Fields"},
             ],
         }
         result = self.summarizer.summarize(
-            events, [], "region_1", geo_ctx, game_time=200.0)
+            events, [], "province_1", geo_ctx, game_time=200.0)
         self.assertIsNotNone(result)
-        self.assertEqual(result.province_id, "region_1")
-        self.assertIn("Iron Reaches", result.narrative)
+        self.assertEqual(result.province_id, "province_1")
+        self.assertIn("Western Province", result.narrative)
 
     def test_xml_data_block_includes_tags(self):
         events = [
             _make_l3_event("regional_synthesis", "moderate",
-                          "Test event.", district_id="province_0",
-                          province_id="region_1",
+                          "Test event.", district_id="district_0",
+                          province_id="province_1",
                           extra_tags=["domain:combat"]),
         ]
         xml = self.summarizer.build_xml_data_block(
-            events, [], "Iron Reaches",
-            [{"id": "province_0", "name": "Western Mines"}], 200.0)
+            events, [], "Western Province",
+            [{"id": "district_0", "name": "Western Mines"}], 200.0)
         self.assertIn('tags="[', xml)
-        self.assertIn("province:region_1", xml)
+        self.assertIn("province:province_1", xml)
 
     def test_filter_relevant_l2_strict(self):
         l3 = [_make_l3_event(extra_tags=["domain:combat", "species:wolf"])]
@@ -395,42 +409,42 @@ class TestLayer4Manager(unittest.TestCase):
         GeographicRegistry.reset()
 
     def test_on_layer3_created_scores_tags(self):
-        evt = _make_l3_event(province_id="region_1",
-                            district_id="province_0")
+        evt = _make_l3_event(province_id="province_1",
+                            district_id="district_0")
         self.manager.on_layer3_created(evt)
         # Per-province bucket: geo tags stripped, content tags scored
         bucket = TriggerRegistry.get_instance().get_weighted_bucket(
-            f"{BUCKET_PREFIX}region_1")
+            f"{BUCKET_PREFIX}province_1")
         self.assertIsNotNone(bucket)
         # domain:regional is now at position 0 = 10 pts (geo tags stripped)
         self.assertGreater(bucket.get_score("domain:regional"), 0)
         # Province tag should NOT be in the bucket (stripped)
-        self.assertEqual(bucket.get_score("province:region_1"), 0)
+        self.assertEqual(bucket.get_score("province:province_1"), 0)
 
     def test_should_run_after_threshold(self):
         self.assertFalse(self.manager.should_run())
         # domain:regional at position 0 = 10 pts each (geo tags stripped)
         # Need 5 events for 50
         for i in range(5):
-            evt = _make_l3_event(province_id="region_1",
-                                district_id="province_0",
+            evt = _make_l3_event(province_id="province_1",
+                                district_id="district_0",
                                 game_time=100 + i)
             self.manager.on_layer3_created(evt)
         self.assertTrue(self.manager.should_run())
 
     def test_province_isolation(self):
         """Tags from different provinces do NOT cross-contaminate."""
-        # 3 events in region_1: domain:regional = 10*3 = 30 (below 50)
+        # 3 events in province_1: domain:regional = 10*3 = 30 (below 50)
         for i in range(3):
-            evt = _make_l3_event(province_id="region_1",
-                                district_id="province_0",
+            evt = _make_l3_event(province_id="province_1",
+                                district_id="district_0",
                                 game_time=100 + i)
             self.manager.on_layer3_created(evt)
 
-        # 3 events in region_2: domain:regional = 10*3 = 30 (below 50)
+        # 3 events in province_2: domain:regional = 10*3 = 30 (below 50)
         for i in range(3):
-            evt = _make_l3_event(province_id="region_2",
-                                district_id="province_1",
+            evt = _make_l3_event(province_id="province_2",
+                                district_id="district_1",
                                 game_time=200 + i)
             self.manager.on_layer3_created(evt)
 
@@ -441,10 +455,10 @@ class TestLayer4Manager(unittest.TestCase):
         """L2 visibility: top 5 L3 content tags, min 3/5 match, scored sort."""
         # L3 events with consistent content tags
         l3_events = [
-            {"tags": ["province:region_1", "domain:combat",
+            {"tags": ["province:province_1", "domain:combat",
                       "species:wolf", "terrain:forest",
                       "intensity:heavy", "tier:2"]},
-            {"tags": ["province:region_1", "domain:combat",
+            {"tags": ["province:province_1", "domain:combat",
                       "species:wolf", "terrain:forest",
                       "setting:wilderness"]},
         ]
@@ -460,7 +474,7 @@ class TestLayer4Manager(unittest.TestCase):
             layer=2, narrative="Wolf pack attacks in forest",
             game_time=150.0, category="combat_event",
             severity="moderate", significance="moderate",
-            tags=["province:region_1", "domain:combat", "species:wolf",
+            tags=["province:province_1", "domain:combat", "species:wolf",
                   "terrain:forest", "intensity:heavy"],
             origin_ref="[]", event_id="l2_good")
 
@@ -469,7 +483,7 @@ class TestLayer4Manager(unittest.TestCase):
             layer=2, narrative="Forest exploration",
             game_time=140.0, category="exploration_event",
             severity="minor", significance="minor",
-            tags=["province:region_1", "setting:cave",
+            tags=["province:province_1", "setting:cave",
                   "domain:combat", "species:wolf", "terrain:forest"],
             origin_ref="[]", event_id="l2_decent")
 
@@ -478,7 +492,7 @@ class TestLayer4Manager(unittest.TestCase):
             layer=2, narrative="Crafting session",
             game_time=160.0, category="crafting_event",
             severity="minor", significance="minor",
-            tags=["province:region_1", "domain:combat", "species:wolf"],
+            tags=["province:province_1", "domain:combat", "species:wolf"],
             origin_ref="[]", event_id="l2_poor")
 
         # irrelevant: 0/5 matches
@@ -486,11 +500,11 @@ class TestLayer4Manager(unittest.TestCase):
             layer=2, narrative="Mining iron",
             game_time=170.0, category="gathering_event",
             severity="minor", significance="minor",
-            tags=["province:region_1", "domain:gathering",
+            tags=["province:province_1", "domain:gathering",
                   "resource:iron", "discipline:mining"],
             origin_ref="[]", event_id="l2_irrelevant")
 
-        result = self.manager._query_relevant_l2("region_1", l3_events)
+        result = self.manager._query_relevant_l2("province_1", l3_events)
         result_ids = [e["id"] for e in result]
 
         # good (4 matches) and decent (3 matches) pass; poor (2) and irrelevant (0) don't
@@ -508,13 +522,13 @@ class TestLayer4Manager(unittest.TestCase):
         # rank2=terrain:forest(3), rank3=intensity:heavy(3),
         # rank4=tier:2(3)
         l3_events = [
-            {"tags": ["province:region_1", "domain:combat",
+            {"tags": ["province:province_1", "domain:combat",
                       "species:wolf", "terrain:forest",
                       "intensity:heavy", "tier:2"]},
-            {"tags": ["province:region_1", "domain:combat",
+            {"tags": ["province:province_1", "domain:combat",
                       "species:wolf", "terrain:forest",
                       "intensity:heavy", "tier:2"]},
-            {"tags": ["province:region_1", "domain:combat",
+            {"tags": ["province:province_1", "domain:combat",
                       "species:wolf", "terrain:forest",
                       "intensity:heavy", "tier:2"]},
         ]
@@ -524,7 +538,7 @@ class TestLayer4Manager(unittest.TestCase):
             layer=2, narrative="Event A",
             game_time=100.0, category="test",
             severity="minor", significance="minor",
-            tags=["province:region_1", "domain:combat",
+            tags=["province:province_1", "domain:combat",
                   "intensity:heavy", "tier:2"],
             origin_ref="[]", event_id="l2_a")
 
@@ -534,7 +548,7 @@ class TestLayer4Manager(unittest.TestCase):
             layer=2, narrative="Event B",
             game_time=100.0, category="test",
             severity="minor", significance="minor",
-            tags=["province:region_1", "species:wolf",
+            tags=["province:province_1", "species:wolf",
                   "terrain:forest", "intensity:heavy", "tier:2"],
             origin_ref="[]", event_id="l2_b")
 
@@ -543,11 +557,11 @@ class TestLayer4Manager(unittest.TestCase):
             layer=2, narrative="Event C",
             game_time=200.0, category="test",
             severity="minor", significance="minor",
-            tags=["province:region_1", "species:wolf",
+            tags=["province:province_1", "species:wolf",
                   "terrain:forest", "intensity:heavy"],
             origin_ref="[]", event_id="l2_c")
 
-        result = self.manager._query_relevant_l2("region_1", l3_events)
+        result = self.manager._query_relevant_l2("province_1", l3_events)
         result_ids = [e["id"] for e in result]
 
         # event_b has most matches (4), so it ranks first
@@ -561,7 +575,7 @@ class TestLayer4Manager(unittest.TestCase):
     def test_l2_filtering_cap_5(self):
         """L2 returns at most 5 events."""
         l3_events = [
-            {"tags": ["province:region_1", "domain:combat",
+            {"tags": ["province:province_1", "domain:combat",
                       "species:wolf", "terrain:forest",
                       "intensity:heavy", "tier:2"]},
         ]
@@ -571,11 +585,11 @@ class TestLayer4Manager(unittest.TestCase):
                 layer=2, narrative=f"Event {i}",
                 game_time=100 + i, category="combat_event",
                 severity="moderate", significance="moderate",
-                tags=["province:region_1", "domain:combat",
+                tags=["province:province_1", "domain:combat",
                       "species:wolf", "terrain:forest"],
                 origin_ref="[]", event_id=f"l2_{i}")
 
-        result = self.manager._query_relevant_l2("region_1", l3_events)
+        result = self.manager._query_relevant_l2("province_1", l3_events)
         self.assertLessEqual(len(result), 5)
 
     def test_run_summarization_stores_event(self):
@@ -586,13 +600,13 @@ class TestLayer4Manager(unittest.TestCase):
                 layer=3, narrative=f"L3 event {i}",
                 game_time=100 + i, category="regional_synthesis",
                 severity="moderate", significance="moderate",
-                tags=["province:region_1", f"district:province_{i%2}",
+                tags=["province:province_1", f"district:district_{i%2}",
                       "domain:combat"],
                 origin_ref="[]", event_id=eid,
             )
             self.manager.on_layer3_created({
                 "id": eid,
-                "tags": ["province:region_1", f"district:province_{i%2}",
+                "tags": ["province:province_1", f"district:district_{i%2}",
                          "domain:combat"],
                 "game_time": 100 + i,
             })
@@ -603,7 +617,7 @@ class TestLayer4Manager(unittest.TestCase):
 
         # Verify stored in layer4_events
         rows = self.layer_store.query_by_tags(
-            layer=4, tags=["province:region_1"], match_all=True)
+            layer=4, tags=["province:province_1"], match_all=True)
         self.assertGreaterEqual(len(rows), 1)
         self.assertEqual(rows[0]["category"], "province_summary")
 
@@ -630,16 +644,16 @@ class TestGeographicHierarchy(unittest.TestCase):
 
     def test_hierarchy_levels(self):
         self.assertEqual(
-            self.geo.regions["realm_0"].level, RegionLevel.REALM)
+            self.geo.regions["world_0"].level, RegionLevel.WORLD)
         self.assertEqual(
             self.geo.regions["nation_1"].level, RegionLevel.NATION)
         self.assertEqual(
-            self.geo.regions["region_1"].level, RegionLevel.PROVINCE)
+            self.geo.regions["province_1"].level, RegionLevel.PROVINCE)
         self.assertEqual(
-            self.geo.regions["province_0"].level, RegionLevel.DISTRICT)
+            self.geo.regions["district_0"].level, RegionLevel.DISTRICT)
 
     def test_province_children_are_districts(self):
-        province = self.geo.regions["region_1"]
+        province = self.geo.regions["province_1"]
         self.assertEqual(province.level, RegionLevel.PROVINCE)
         for child_id in province.child_ids:
             child = self.geo.regions[child_id]
@@ -653,9 +667,9 @@ class TestGeographicHierarchy(unittest.TestCase):
 class TestLayer4TagAssignment(unittest.TestCase):
 
     def test_rewrite_all_at_layer4(self):
-        origin_tags = [["province:region_1", "domain:combat"]]
+        origin_tags = [["province:province_1", "domain:combat"]]
         rewrite = [
-            "province:region_1", "domain:combat",
+            "province:province_1", "domain:combat",
             "urgency_level:high", "event_status:escalating",
         ]
         tags = assign_higher_layer_tags(
@@ -666,7 +680,7 @@ class TestLayer4TagAssignment(unittest.TestCase):
         self.assertIn("urgency_level:high", tags)
 
     def test_rewrite_not_available_at_layer3(self):
-        origin_tags = [["district:province_0", "domain:combat"]]
+        origin_tags = [["district:district_0", "domain:combat"]]
         rewrite = ["custom:tag"]
         tags = assign_higher_layer_tags(
             layer=3, origin_event_tags=origin_tags,
@@ -674,19 +688,19 @@ class TestLayer4TagAssignment(unittest.TestCase):
         )
         # Layer 3 ignores rewrite_all — falls through to inheritance
         self.assertNotIn("custom:tag", tags)
-        self.assertIn("district:province_0", tags)
+        self.assertIn("district:district_0", tags)
 
     def test_inheritance_path_without_rewrite(self):
         origin_tags = [
-            ["province:region_1", "domain:combat", "species:wolf"],
-            ["province:region_1", "domain:gathering", "resource:iron"],
+            ["province:province_1", "domain:combat", "species:wolf"],
+            ["province:province_1", "domain:gathering", "resource:iron"],
         ]
         tags = assign_higher_layer_tags(
             layer=4, origin_event_tags=origin_tags,
             significance="moderate",
             layer_specific_tags=["threat_level:moderate"],
         )
-        self.assertIn("province:region_1", tags)
+        self.assertIn("province:province_1", tags)
         self.assertIn("significance:moderate", tags)
         self.assertIn("threat_level:moderate", tags)
 
@@ -744,7 +758,7 @@ class TestLayer4Integration(unittest.TestCase):
         event_ids = []
         for i in range(6):
             eid = str(uuid.uuid4())
-            tags = ["province:region_1", f"district:province_{i%2}",
+            tags = ["province:province_1", f"district:district_{i%2}",
                     "domain:combat", "intensity:heavy",
                     f"species:wolf_{i}"]
             self.layer_store.insert_event(
@@ -763,18 +777,18 @@ class TestLayer4Integration(unittest.TestCase):
         self.assertEqual(created, 1)
 
         l4_events = self.layer_store.query_by_tags(
-            layer=4, tags=["province:region_1"], match_all=True)
+            layer=4, tags=["province:province_1"], match_all=True)
         self.assertEqual(len(l4_events), 1)
         l4 = l4_events[0]
         self.assertEqual(l4["category"], "province_summary")
-        self.assertIn("Iron Reaches", l4["narrative"])
+        self.assertIn("Western Province", l4["narrative"])
 
     def test_supersession(self):
         """Second summarization supersedes first."""
         for round_num in range(2):
             for i in range(6):
                 eid = str(uuid.uuid4())
-                tags = ["province:region_1", "district:province_0",
+                tags = ["province:province_1", "district:district_0",
                         "domain:combat"]
                 self.layer_store.insert_event(
                     layer=3, narrative=f"Round {round_num} event {i}",
@@ -789,7 +803,7 @@ class TestLayer4Integration(unittest.TestCase):
 
         # Should have 2 L4 events total
         all_l4 = self.layer_store.query_by_tags(
-            layer=4, tags=["province:region_1"], match_all=True)
+            layer=4, tags=["province:province_1"], match_all=True)
         self.assertEqual(len(all_l4), 2)
 
 
