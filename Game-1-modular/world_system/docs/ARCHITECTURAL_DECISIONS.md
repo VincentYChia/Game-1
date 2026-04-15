@@ -1,7 +1,7 @@
 # Architectural Decisions — World Memory System & Sibling Systems
 
 **Status**: Living document
-**Last updated**: 2026-04-13
+**Last updated**: 2026-04-16 (Layer 6 complete)
 
 This document captures the top-level architectural decisions about what is and
 isn't part of the layered memory pipeline. Read this before extending or
@@ -311,7 +311,17 @@ full list.
 
 ## 7. Document History
 
-- **2026-04-16**: Added §6 formalizing the 1-tier-per-layer
+- **2026-04-16 (Layer 6 completion)**: Layer 6 nation-level aggregation
+  completed. 166 tests passing (54 L3 + 39 L4 + 37 L5 + 36 L6). Added
+  `NationSummaryEvent` dataclass, `Layer6Manager` and `Layer6Summarizer`
+  following the identical mechanical pattern as Layer 5. Per-nation
+  trigger buckets with 150-pt threshold, two-layers-down L4 visibility.
+  L5→L6 callback wired. `wms_ai.py` updated with L6 dispatch,
+  `prompt_assembler.py` with `assemble_l6`, `memory-config.json` with
+  L6 config. Test suite in `test_layer6.py` (36 tests) covers dataclass,
+  summarizer, manager, integration, and prompt assembly. Layer 7 playbook
+  sketched in HANDOFF_STATUS.md.
+- **2026-04-16 (earlier)**: Added §6 formalizing the 1-tier-per-layer
   aggregation rule and address-tag immutability rule. Aligned WMS
   hierarchy 1:1 with the game's geography system
   (`systems/geography/models.py`). Added `WORLD` and `REGION`
