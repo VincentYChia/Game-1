@@ -1,8 +1,8 @@
 {
-  "realm": {
+  "world": {
     "region_id": "known_lands",
     "name": "The Known Lands",
-    "level": "realm",
+    "level": "world",
     "bounds": [-800, -800, 800, 800],
     "description": "A frontier land of forests, hills, caves, and ancient ruins."
   },

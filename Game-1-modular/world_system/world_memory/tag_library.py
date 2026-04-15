@@ -227,30 +227,39 @@ LAYER_1_CATEGORIES = {
 # ══════════════════════════════════════════════════════════════════
 
 LAYER_2_CATEGORIES = {
-    "nation": TagCategory(
-        "nation", frozenset(), layer_unlocked=2, is_dynamic=True,
-        is_key_tag=True,
-        description="Nation-level geographic address (largest sovereign division)",
-    ),
-    "region": TagCategory(
-        "region", frozenset(), layer_unlocked=2, is_dynamic=True,
-        is_key_tag=True,
-        description="Region-level geographic address (geographic identity within nation)",
-    ),
+    # ── Address tags — 6-tier hierarchy, facts assigned at L2 capture ──
+    # Order in source mirrors finest → coarsest. Each address tag is a
+    # KEY TAG (propagated through layers) but NOT an LLM-rewritable tag.
+    # See docs/ARCHITECTURAL_DECISIONS.md for the 1-tier-per-layer rule.
     "locality": TagCategory(
         "locality", frozenset(), layer_unlocked=2, is_dynamic=True,
         is_key_tag=True,
-        description="Precise geographic address (locality level)",
+        description="Locality address (sparse POI — villages, dungeons, stations). Optional per event. Dropped at Layer 3.",
     ),
     "district": TagCategory(
         "district", frozenset(), layer_unlocked=2, is_dynamic=True,
         is_key_tag=True,
-        description="District-level geographic address",
+        description="District address (game District — smallest guaranteed tier). Layer 3 aggregation key. Dropped at Layer 4.",
     ),
     "province": TagCategory(
         "province", frozenset(), layer_unlocked=2, is_dynamic=True,
         is_key_tag=True,
-        description="Province-level geographic address",
+        description="Province address (game Province). Layer 4 aggregation key. Dropped at Layer 5.",
+    ),
+    "region": TagCategory(
+        "region", frozenset(), layer_unlocked=2, is_dynamic=True,
+        is_key_tag=True,
+        description="Region address (game Region — geographic identity: forest, mountains, etc.). Layer 5 aggregation key. Dropped at Layer 6.",
+    ),
+    "nation": TagCategory(
+        "nation", frozenset(), layer_unlocked=2, is_dynamic=True,
+        is_key_tag=True,
+        description="Nation address (largest sovereign division). Layer 6 aggregation key (future). Dropped at Layer 7.",
+    ),
+    "world": TagCategory(
+        "world", frozenset(), layer_unlocked=2, is_dynamic=True,
+        is_key_tag=True,
+        description="World address (singleton root of the hierarchy). Layer 7 aggregation key (future). Never dropped.",
     ),
     "biome": TagCategory(
         "biome",

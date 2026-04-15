@@ -85,24 +85,43 @@ Factual dimensions of raw stats. Derived from stat keys and record_* parameters.
 
 ---
 
-## Layer 2: Simple Text Events — 6 new (36 total)
+## Layer 2: Simple Text Events — 9 new (39 total)
 
 Geographic address system and initial event assessment. Evaluators produce these.
+The six address tags map 1:1 to the game's geographic hierarchy
+(`World → Nation → Region → Province → District → Locality`) and are assigned
+**at L2 capture time** from the chunk position via
+`GeographicRegistry.get_full_address()`. They are FACTS — no higher layer and
+no LLM prompt is permitted to create, rewrite, or drop them. See
+`ARCHITECTURAL_DECISIONS.md` §6.
 
 | # | Category | Values | Notes |
 |---|----------|--------|-------|
-| 31 | `locality` | elder_grove, traders_corner... | Precise geographic address |
-| 32 | `district` | spawn_crossroads, whispering_woods... | District-level address |
+| 31 | `locality` | elder_grove, traders_corner... | Sparse 6th tier — only present when the chunk has a POI |
+| 32 | `district` | spawn_crossroads, whispering_woods... | District-level address (always present) |
 | 33 | `province` | northwestern_reaches, northeastern_highlands... | Province-level address |
-| 34 | `biome` | peaceful_forest, dangerous_quarry, water_lake... | Chunk biome type |
-| 35 | `scope` | chunk, local, district, regional, global | **KEY TAG — updated at higher layers** |
-| 36 | `significance` | minor, moderate, significant, major, critical | **RECREATED at every layer** |
+| 34 | `region` | shattered_coast, emberveil... | Region-level address |
+| 35 | `nation` | varethkar, sylvandor... | Nation-level address |
+| 36 | `world` | terra | World-level address (constant for a save) |
+| 37 | `biome` | peaceful_forest, dangerous_quarry, water_lake... | Chunk biome type |
+| 38 | `scope` | chunk, local, district, province, region, nation, global | **KEY TAG — updated at higher layers** |
+| 39 | `significance` | minor, moderate, significant, major, critical | **RECREATED at every layer** |
+
+**Sparse locality rule:** If the chunk has no POI, `locality:` is omitted
+and the finest address tag on the event is `district:`. This is the only
+optional tier — the other five address tiers are always present on any L2
+event carrying a position.
 
 ---
 
-## Layer 3: Municipality/Local — 9 new (45 total)
+## Layer 3: District-level — 9 new (48 total)
 
-Consolidation of Layer 2 events. Interpretation begins. Can OVERRIDE Layer 2 tags.
+Consolidation of Layer 2 events into game-District-scoped narratives. One
+tier per layer: L3 aggregates across all localities inside one district, so
+**it drops the `locality:` address tag** on its output and retains
+`district:/province:/region:/nation:/world:`. Interpretation begins here.
+Content tags can be overridden/refined. Address tags are propagated unchanged
+and never LLM-rewritten.
 
 | # | Category | Values | Notes |
 |---|----------|--------|-------|
@@ -116,89 +135,122 @@ Consolidation of Layer 2 events. Interpretation begins. Can OVERRIDE Layer 2 tag
 | 44 | `population_status` | thriving, declining, extinct, migrating, stable, recovering | Creature population state from event patterns |
 | 45 | `resource_status` | abundant, steady, scarce, critical, depleted, recovering | Resource availability from event patterns |
 
-**Override behavior:** Layer 3 UPDATES these from Layer 2:
-- `significance` → recreated with local consolidation context
-- `scope` → updated (may expand if event spans multiple localities)
-- `locality`, `district`, `province` → updated if event scope changed
+**Override behavior:** Layer 3 UPDATES these content tags from Layer 2:
+- `significance` → recreated with district consolidation context
+- `scope` → updated (likely `district`)
+
+**Address tag behavior (facts, never rewritten):**
+- `locality:` → **dropped** (L3 aggregates across all localities in a district)
+- `district:/province:/region:/nation:/world:` → propagated unchanged
 
 ---
 
-## Layer 4: Smaller Region — 5 new (50 total)
+## Layer 4: Province-level — 5 new (53 total)
 
-District-level cross-domain patterns. Tags describe event characteristics.
-
-| # | Category | Values | Notes |
-|---|----------|--------|-------|
-| 46 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** District-level judgment — a locally major event may be minor at district scale. |
-| 47 | `faction` | village_guard, crafters_guild, forest_wardens, miners_collective | Which faction this event touches |
-| 48 | `urgency_level` | none, low, moderate, high, critical, emergency | **KEY TAG — updated at higher layers.** Broader than danger — any event type |
-| 49 | `event_status` | emerging, developing, ongoing, resolving, resolved, recurring, escalating | Lifecycle status of the event pattern |
-| 50 | `player_impact` | player_driven, partially_player, world_driven, mixed | Proportion of player vs world causation |
-
-**Override behavior:** Layer 4 UPDATES:
-- `significance` → recreated at district level
-- `scope` → updated (likely `district` or broader)
-- `urgency_level` → set here, updated at higher layers
-- Address tags → updated if event spans multiple localities
-
----
-
-## Layer 5: Larger Region / Country — 5 new (55 total)
-
-Province-level event interpretation. How events interact with political/living conditions.
+Province-scoped consolidation of L3 district events. L4 aggregates across
+all districts inside one province, so it **drops the `district:` address
+tag** and retains `province:/region:/nation:/world:`. LLM-driven narrative
+upgrade may rewrite content tags but never touches address tags.
 
 | # | Category | Values | Notes |
 |---|----------|--------|-------|
-| 51 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** Province-level judgment with full regional context. |
-| 52 | `political` | stabilizing, destabilizing, neutral, provocative, unifying, divisive | Political dimension of the event |
-| 53 | `military` | peaceful, escalating, defensive, offensive, deterrent, provocative | Military dimension of the event |
-| 54 | `living_impact` | minimal, noticeable, significant, dire, nightmarish, beneficial, transformative | Impact on quality of life |
-| 55 | `migration` | causing_inflow, causing_outflow, displacement, attraction, neutral | Whether event drives population movement |
+| 49 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** Province-level judgment — a district-level major event may be minor at province scale. |
+| 50 | `faction` | village_guard, crafters_guild, forest_wardens, miners_collective | Which faction this event touches |
+| 51 | `urgency_level` | none, low, moderate, high, critical, emergency | **KEY TAG — updated at higher layers.** Broader than danger — any event type |
+| 52 | `event_status` | emerging, developing, ongoing, resolving, resolved, recurring, escalating | Lifecycle status of the event pattern |
+| 53 | `player_impact` | player_driven, partially_player, world_driven, mixed | Proportion of player vs world causation |
 
-**Override behavior:** Layer 5 UPDATES:
+**Override behavior (content tags only — LLM may rewrite):**
 - `significance` → recreated at province level
-- `scope` → updated (likely `regional`)
-- `urgency_level` → refined with province-wide context
-- Address tags → updated to province level
+- `scope` → updated (likely `province`)
+- `urgency_level` → set here, updated at higher layers
+
+**Address tag behavior (facts, never rewritten):**
+- `district:` → **dropped** (L4 aggregates across all districts in a province)
+- `province:/region:/nation:/world:` → propagated unchanged. The layer code
+  partitions `summary.tags` into address/content halves before calling the
+  LLM and re-attaches the address half after the rewrite returns.
 
 ---
 
-## Layer 6: Intercountry — 5 new (60 total)
+## Layer 5: Region-level — 5 new (58 total)
 
-Cross-province event effects. How events ripple between regions.
+Region-scoped consolidation of L4 province events. L5 aggregates across all
+provinces inside one game Region (one tier up from Layer 4), so it **drops
+the `province:` address tag** and retains `region:/nation:/world:`. L5
+events are produced as `RegionSummaryEvent` (previously named
+`RealmSummaryEvent` and retargeted from world-aggregation to
+region-aggregation in the 2026-04-16 hierarchy alignment). The LLM is given
+only content tags for rewrite; address tags are re-attached by layer code.
 
 | # | Category | Values | Notes |
 |---|----------|--------|-------|
-| 56 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** Intercountry-level judgment. |
-| 57 | `relation_effect` | hostility, alliance, friendship, hatred, war, trade_disruption, cooperation, indifference | What the event triggers between provinces/factions |
-| 58 | `diplomacy` | treaty, embargo, negotiation, escalation, de_escalation, neutral | Diplomatic consequence of the event |
-| 59 | `regional_effect` | unifying, fragmenting, isolating, connecting, destabilizing, strengthening | How event affects regional cohesion |
-| 60 | `regional_significance` | negligible, minor, notable, major, defining | **NEW significance at cross-regional scope** (separate from per-layer `significance`) |
+| 54 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** Region-level judgment with full region context. |
+| 55 | `political` | stabilizing, destabilizing, neutral, provocative, unifying, divisive | Political dimension of the event |
+| 56 | `military` | peaceful, escalating, defensive, offensive, deterrent, provocative | Military dimension of the event |
+| 57 | `living_impact` | minimal, noticeable, significant, dire, nightmarish, beneficial, transformative | Impact on quality of life |
+| 58 | `migration` | causing_inflow, causing_outflow, displacement, attraction, neutral | Whether event drives population movement |
 
-**Override behavior:** Layer 6 UPDATES:
-- `significance` → recreated at intercountry level
-- `scope` → updated (`widespread`, `cross_regional`)
-- `urgency_level` → updated with multi-province context
+**Override behavior (content tags only — LLM may rewrite):**
+- `significance` → recreated at region level
+- `scope` → updated (likely `region`)
+- `urgency_level` → refined with region-wide context
+
+**Address tag behavior (facts, never rewritten):**
+- `province:` → **dropped** (L5 aggregates across all provinces in a region)
+- `region:/nation:/world:` → propagated unchanged
 
 ---
 
-## Layer 7: World Level — 5 new (65 total)
+## Layer 6: Nation-level — 5 new (63 total)  *(future)*
 
-World-level event interpretation. How events shape the world narrative.
+Nation-scoped consolidation of L5 region events. L6 aggregates across all
+regions inside one nation, so it **drops the `region:` address tag** and
+retains `nation:/world:`. Layer 6 is a future trivial copy of Layer 5's
+pattern at nation scope — it does not exist in code yet.
 
 | # | Category | Values | Notes |
 |---|----------|--------|-------|
-| 61 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** World-level judgment — most events are minor at world scale. |
-| 62 | `world_significance` | negligible, passing, notable, historic, epochal | **Scope-specific significance.** A Layer 4 `critical` event may be `world_significance:passing`. |
-| 63 | `narrative_role` | catalyst, turning_point, escalation, resolution, echo, origin, consequence, climax | What role this event plays in the world story. |
-| 64 | `era_effect` | no_effect, era_continuing, era_shifting, era_defining, era_ending, era_beginning | Does this event mark or affect a world epoch? |
-| 65 | `world_theme` | conflict, discovery, decline, growth, balance, chaos, order, renewal, stagnation | What thematic thread this event reinforces. |
+| 59 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** Nation-level judgment. |
+| 60 | `relation_effect` | hostility, alliance, friendship, hatred, war, trade_disruption, cooperation, indifference | What the event triggers between regions/factions |
+| 61 | `diplomacy` | treaty, embargo, negotiation, escalation, de_escalation, neutral | Diplomatic consequence of the event |
+| 62 | `nation_effect` | unifying, fragmenting, isolating, connecting, destabilizing, strengthening | How event affects national cohesion |
+| 63 | `nation_significance` | negligible, minor, notable, major, defining | **NEW significance at nation scope** (separate from per-layer `significance`) |
 
-**Override behavior:** Layer 7 UPDATES:
+**Override behavior (content tags only):**
+- `significance` → recreated at nation level
+- `scope` → updated (`nation`, `cross_regional`)
+- `urgency_level` → updated with multi-region context
+
+**Address tag behavior (facts, never rewritten):**
+- `region:` → **dropped** (L6 aggregates across all regions in a nation)
+- `nation:/world:` → propagated unchanged
+
+---
+
+## Layer 7: World-level — 5 new (68 total)  *(future)*
+
+World-scoped consolidation of L6 nation events. L7 aggregates across all
+nations inside the world, so it **drops the `nation:` address tag** and
+retains only `world:`. Layer 7 is a future trivial copy of Layer 5's
+pattern at world scope — it does not exist in code yet.
+
+| # | Category | Values | Notes |
+|---|----------|--------|-------|
+| 64 | `significance` | minor, moderate, significant, major, critical | **RECREATED at this layer.** World-level judgment — most events are minor at world scale. |
+| 65 | `world_significance` | negligible, passing, notable, historic, epochal | **Scope-specific significance.** A Layer 4 `critical` event may be `world_significance:passing`. |
+| 66 | `narrative_role` | catalyst, turning_point, escalation, resolution, echo, origin, consequence, climax | What role this event plays in the world story. |
+| 67 | `era_effect` | no_effect, era_continuing, era_shifting, era_defining, era_ending, era_beginning | Does this event mark or affect a world epoch? |
+| 68 | `world_theme` | conflict, discovery, decline, growth, balance, chaos, order, renewal, stagnation | What thematic thread this event reinforces. |
+
+**Override behavior (content tags only):**
 - `significance` → recreated at world level
 - `scope` → `global` or `world`
 - `urgency_level` → final assessment
-- Address tags → may be stripped or generalized (world level doesn't need locality precision)
+
+**Address tag behavior (facts, never rewritten):**
+- `nation:` → **dropped** (L7 aggregates across all nations in the world)
+- `world:` → propagated unchanged (the only address tag remaining)
 
 ---
 
@@ -209,26 +261,29 @@ World-level event interpretation. How events shape the world narrative.
 | Tag | Behavior | Why |
 |-----|----------|-----|
 | `significance` | **Recreated fresh** at every layer | Each layer judges significance with its own scope. Layer 2's `major` might be Layer 5's `minor`. |
-| `scope` | **Updated** (generally broadens) | `local` → `district` → `regional` → `global` as event consolidates upward |
+| `scope` | **Updated** (generally broadens) | `local` → `district` → `province` → `region` → `nation` → `global` as event consolidates upward |
 | `urgency_level` | **Updated** (from Layer 4+) | Refined with each layer's broader context. Can escalate OR de-escalate. |
-| Address (`locality`, `district`, `province`) | **Updated** (can expand or generalize) | Event may span larger area at higher layers. World-level may drop locality entirely. |
+| Address (`world`, `nation`, `region`, `province`, `district`, `locality`) | **Propagated unchanged, with one dropped per layer** | See §6 of `ARCHITECTURAL_DECISIONS.md`. Addresses are facts assigned at L2 capture from chunk position. Each layer drops exactly the finest address tag (the tier it aggregates across). No LLM may ever create, rewrite, or remove an address tag. |
 
-### All Other Tags
+### All Other Tags (content tags)
 
 - **Inherited by default** from the layer below
 - **Can be overridden** by the processing layer (add, remove, or change)
 - **NOT a simple union** of all involved lower-layer events' tags
-- At higher layers, LLM will likely handle tag selection/override
+- At higher layers, LLM handles content-tag selection/override. The layer
+  code partitions `summary.tags` into address/content halves before
+  calling the LLM and re-attaches the address half after. Any address
+  tag the LLM emits in its output is discarded.
 - Each item carries 5-10 tags from its available categories
 
 ### Significance Per Layer
 
 Each layer creates its own significance column:
-- Layer 2: `significance` (evaluator-assessed)
-- Layer 3: `significance` (recreated with local context)
-- Layer 4: `significance` (recreated with district context)
-- Layer 5: `significance` (recreated with province context)
-- Layer 6: `significance` + `regional_significance` (new scope-specific)
+- Layer 2: `significance` (evaluator-assessed, capture-scope)
+- Layer 3: `significance` (recreated with district context)
+- Layer 4: `significance` (recreated with province context)
+- Layer 5: `significance` (recreated with region context)
+- Layer 6: `significance` + `nation_significance` (new scope-specific)
 - Layer 7: `significance` + `world_significance` (new scope-specific)
 
 ---
@@ -293,22 +348,38 @@ CREATE INDEX idx_layer{N}_tags_cat_val ON layer{N}_tags(tag_category, tag_value)
 
 ## Summary
 
-| Layer | New Categories | Total | Focus |
-|-------|---------------|-------|-------|
-| 1 | 30 | 30 | Factual dimensions of numerical data |
-| 2 | 6 | 36 | Geographic address + initial assessment |
-| 3 | 9 (incl. significance) | 45 | Local interpretation, sentiment, alignment |
-| 4 | 5 (incl. significance) | 50 | District cross-domain, urgency, factions |
-| 5 | 5 (incl. significance) | 55 | Province political/military/living impact |
-| 6 | 5 (incl. significance) | 60 | Cross-province effects and relations |
-| 7 | 5 (incl. significance) | 65 | World narrative, era, theme |
+| Layer | Aggregation tier | New Categories | Total | Focus |
+|-------|-----|---------------|-------|-------|
+| 1 | — | 30 | 30 | Factual dimensions of numerical data |
+| 2 | capture | 9 | 39 | Full 6-tier address (world/nation/region/province/district/locality) + biome + scope + significance |
+| 3 | game District | 9 (incl. significance) | 48 | District consolidation — sentiment, alignment, trend, setting, terrain. Drops `locality:` address tag. |
+| 4 | game Province | 5 (incl. significance) | 53 | Province cross-domain — urgency, factions, event status. Drops `district:` address tag. |
+| 5 | game Region | 5 (incl. significance) | 58 | Region political/military/living impact. Drops `province:` address tag. |
+| 6 | game Nation *(future)* | 5 (incl. significance) | 63 | Cross-region effects and relations. Drops `region:` address tag. |
+| 7 | game World *(future)* | 5 (incl. significance) | 68 | World narrative, era, theme. Drops `nation:` address tag. |
 
 ---
 
 ## Implementation Notes
 
 - Procedural tag assignment (how tags are automatically derived) is designed separately after this library is finalized.
-- LLM will likely handle tag updates at Layers 4+ where judgment and context are needed.
+- LLM handles **content**-tag rewriting at Layers 4 and 5. It never sees address tags. The layer code partitions `summary.tags` into address/content halves before calling the LLM and re-attaches the address half after. See `ARCHITECTURAL_DECISIONS.md` §6.
 - Tag library is defined as a JSON config for easy modification.
 - The existing `affects_tags` field on evaluator output maps to Layer 2 tags.
 - Existing `tag_relevance.py` category:value parsing already supports this format.
+
+---
+
+## Document History
+
+- **2026-04-16**: Hierarchy-alignment migration. The WMS `RegionLevel`
+  enum was expanded from 5 shifted labels to 6 game-aligned values
+  (`WORLD/NATION/REGION/PROVINCE/DISTRICT/LOCALITY`). Layer 2 now
+  carries all six address tags (was locality/district/province only).
+  Layers 3-7 re-pinned to their correct aggregation tiers — each layer
+  now drops exactly the finest address tag (one tier per layer). Layer
+  5 retargeted from "realm" (world-scope) to game-Region scope; L6/L7
+  remapped to nation/world. Address tags formalized as facts (assigned
+  at L2 capture from chunk position, never LLM-synthesized). See
+  `ARCHITECTURAL_DECISIONS.md` §6.
+- **2026-03-26**: Initial creation.

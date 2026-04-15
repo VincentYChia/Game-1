@@ -1,4 +1,5 @@
 {
+  "_status": "INCOMPLETE — PLACEHOLDER. This file was created without a design directive and will be overhauled drastically. The current 4 factions are throwaway fixtures used only to keep the system compiling and tests passing. Do NOT build new features against this schema. See world_system/docs/ARCHITECTURAL_DECISIONS.md §2 for the overhaul plan. The faction system is a SEPARATE tracker (not part of the WMS layer pipeline) — it will eventually reach geography-system level detail with many factions, nuanced reputation axes, territory/membership, inner-faction dynamics, and quest generation hooks.",
   "description": "Faction definitions for the Living World. Defines factions, their territories, inter-faction relationships, and reputation event modifiers.",
 
   "factions": {

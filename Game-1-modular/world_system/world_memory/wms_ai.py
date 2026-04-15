@@ -70,13 +70,13 @@ LAYER_CONFIG = {
         "task": "wms_layer5",
         "temperature": 0.5,
         "max_tokens": 500,
-        "description": "Layer 5: realm-level state",
+        "description": "Layer 5: region-level summaries",
     },
     6: {
         "task": "wms_layer6",
         "temperature": 0.5,
         "max_tokens": 500,
-        "description": "Layer 6: cross-realm patterns",
+        "description": "Layer 6: nation-level summaries",
     },
     7: {
         "task": "wms_layer7",
@@ -191,7 +191,9 @@ class WmsAI:
             tags = self._assembler.tags_from_event(event_type, event_subtype, tier)
 
         # 2. Assemble prompt (layer-specific assembly for Layer 3+)
-        if layer == 4:
+        if layer == 5:
+            prompt = self._assembler.assemble_l5(data_block, event_tags=tags)
+        elif layer == 4:
             prompt = self._assembler.assemble_l4(data_block, event_tags=tags)
         elif layer == 3:
             # Extract consolidator ID from event_type (e.g. "layer3_regional_synthesis")

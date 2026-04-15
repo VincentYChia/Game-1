@@ -32,6 +32,9 @@ from world_system.world_memory.event_schema import (
     ProvinceSummaryEvent, SEVERITY_ORDER,
 )
 from world_system.world_memory.game_date import format_relative
+from world_system.world_memory.geographic_registry import (
+    RegionLevel, propagate_address_facts,
+)
 
 
 # Tag categories that indicate meaningful overlap between L2 and L3
@@ -407,15 +410,27 @@ class Layer4Summarizer:
     ) -> List[str]:
         """Build initial tag set for the summary event.
 
-        These are structural/analytical tags from the summarizer.
-        The LLM may add or replace interpretive tags (faction, urgency_level,
-        event_status, player_impact).
-        """
-        tags = [
-            f"province:{province_id}",
-            "scope:province",
-        ]
+        Address tags (world, nation, region) are copied as FACTS from
+        the input L3 events — we do NOT invent them. `district:` and
+        `locality:` are NOT included because this layer aggregates
+        across districts.
 
+        The LLM later rewrites only the content tags; address tags
+        are preserved untouched by layer code.
+        """
+        # ── Address tags (FACTS, propagated from L3 inputs) ──
+        # Copy world/nation/region from any input event (all share the
+        # same ancestry above the province level). `province:` is
+        # this layer's own aggregation target, so we emit it from the
+        # known `province_id` rather than reading it from inputs.
+        tags: List[str] = propagate_address_facts(
+            l3_events,
+            (RegionLevel.WORLD, RegionLevel.NATION, RegionLevel.REGION),
+        )
+        tags.append(f"province:{province_id}")
+        tags.append("scope:province")
+
+        # ── Content tags (LLM-rewritable later) ──
         # Dominant activities as domain tags
         for activity in dominant_activities[:3]:
             tags.append(f"domain:{activity}")

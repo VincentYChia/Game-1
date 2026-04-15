@@ -59,11 +59,11 @@
     },
     "wms_layer5": {
       "primary": "claude",
-      "description": "WMS Layer 5: realm-level state"
+      "description": "WMS Layer 5: region-level summaries"
     },
     "wms_layer6": {
       "primary": "claude",
-      "description": "WMS Layer 6: cross-realm patterns"
+      "description": "WMS Layer 6: nation-level summaries"
     },
     "wms_layer7": {
       "primary": "claude",

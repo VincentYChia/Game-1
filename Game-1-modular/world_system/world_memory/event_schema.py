@@ -4,6 +4,7 @@ Raw Event Pipeline: WorldMemoryEvent — atomic structured facts stored in SQLit
 Layer 2: InterpretedEvent — narrative descriptions derived from patterns (evaluator output).
 Layer 3: ConsolidatedEvent — cross-domain synthesis from Layer 2 (district/global scope).
 Layer 4: ProvinceSummaryEvent — province-level summaries from Layer 3 (per-province scope).
+Layer 5: RegionSummaryEvent — region-level summaries from Layer 4 (per-region scope, game Region tier).
 
 All dataclasses here are pure data with no dependencies on game systems.
 """
@@ -130,10 +131,16 @@ class WorldMemoryEvent:
     position_y: float = 0.0
     chunk_x: int = 0
     chunk_y: int = 0
-    locality_id: Optional[str] = None
-    district_id: Optional[str] = None
-    province_id: Optional[str] = None
-    nation_id: Optional[str] = None
+    # Full 6-tier address, populated by EventRecorder._enrich_geographic
+    # from the event's chunk position. See
+    # docs/ARCHITECTURAL_DECISIONS.md — address tags are FACTS, assigned
+    # at capture from chunk position, never synthesized by an LLM.
+    locality_id: Optional[str] = None   # Sparse — only if chunk has a POI
+    district_id: Optional[str] = None   # Always present per chunk
+    province_id: Optional[str] = None   # Always present per chunk
+    region_id: Optional[str] = None     # Always present per chunk
+    nation_id: Optional[str] = None     # Always present per chunk
+    world_id: Optional[str] = None      # Always present (singleton)
     biome: str = "unknown"
 
     # WHEN
@@ -341,6 +348,73 @@ class ProvinceSummaryEvent:
             narrative=narrative,
             severity=severity,
             source_consolidation_ids=source_consolidation_ids,
+            **kwargs,
+        )
+
+
+@dataclass
+class RegionSummaryEvent:
+    """A region-level summary synthesized from multiple Layer 4 province summaries.
+
+    Layer 5 output. Each game Region produces a single current summary
+    that is superseded when new Layer 4 events accumulate enough
+    tag-weighted score. Stored in LayerStore layer5_events +
+    layer5_tags.
+
+    Aggregation tier: **game Region** (parent of game Province). The
+    LLM distills province-level states into a region-scoped narrative
+    covering dominant activities, cross-province trends, and overall
+    region condition.
+
+    Layer 5 does NOT read from FactionSystem, EcosystemAgent, or any
+    other state tracker. It is pure WMS layer pipeline: L4 events +
+    L3 events (two-layers-down, tag-filtered) are the only inputs.
+    Address tags are FACTS propagated by layer code, never
+    synthesized by the LLM. See docs/ARCHITECTURAL_DECISIONS.md for
+    rationale.
+    """
+
+    # Identity
+    summary_id: str
+    region_id: str                        # game Region id (e.g. "region_17")
+    created_at: float                     # Game time
+
+    # THE NARRATIVE — core output
+    narrative: str  # e.g. "Iron Reaches: intensive mining in the
+                    # Northern Mines, contested forests to the south"
+
+    # Classification
+    severity: str                         # minor, moderate, significant, major, critical
+
+    # Structured fields extracted from LLM output
+    dominant_activities: List[str] = field(default_factory=list)  # ["mining", "combat"]
+    dominant_provinces: List[str] = field(default_factory=list)   # game province IDs
+    region_condition: str = "stable"      # stable, shifting, volatile, crisis
+
+    # Source Layer 4 events that fed this
+    source_province_summary_ids: List[str] = field(default_factory=list)
+
+    # Source Layer 3 events included for two-layers-down context
+    relevant_l3_ids: List[str] = field(default_factory=list)
+
+    # Tag-based routing
+    tags: List[str] = field(default_factory=list)
+
+    # History tracking
+    supersedes_id: Optional[str] = None
+
+    @staticmethod
+    def create(region_id: str, narrative: str, severity: str,
+               source_province_summary_ids: List[str],
+               game_time: float, **kwargs) -> RegionSummaryEvent:
+        """Factory with auto-generated summary_id."""
+        return RegionSummaryEvent(
+            summary_id=str(uuid.uuid4()),
+            region_id=region_id,
+            created_at=game_time,
+            narrative=narrative,
+            severity=severity,
+            source_province_summary_ids=source_province_summary_ids,
             **kwargs,
         )
 

@@ -49,16 +49,18 @@
 
 Data compresses upward. Each layer condenses the one below into better information transfer.
 
-| Layer | Name | Scale | What It Stores | Trigger Cadence |
+| Layer | Name | Aggregates Game Tier | What It Stores | Trigger Cadence |
 |:---:|-------|-------|---------------|-----------------|
 | 1 | Numerical Stats | Global | 850+ cumulative counters (stat_tracker.py) | Every event |
-| — | Raw Event Pipeline | Chunk/Locality | Timestamped facts in SQLite — WHO/WHAT/WHERE/WHEN | Every event |
-| 2 | Simple Text Events | Locality/District | One-sentence narratives from evaluators (evaluator output) | Milestone series |
-| 3 | Municipality/Local Consolidation | District/Province | Cross-domain and cross-region pattern detection | Accumulation-based |
-| 4 | Smaller Region Events | Province | Gross summaries of provincial state | Provincial triggers |
-| 5 | Larger Region/Country Events | Realm | Faction landscapes, economic state, player reputation | Multi-province |
-| 6 | Intercountry Events | Multi-Realm | Cross-realm patterns, trade routes, diplomatic state | Multi-realm |
-| 7 | World Events | World | Narrative threads, world identity, themes, history | World-shaping only |
+| — | Raw Event Pipeline | Chunk + optional Locality | Timestamped facts in SQLite — WHO/WHAT/WHERE/WHEN | Every event |
+| 2 | Simple Text Events | Locality (or District when no POI) | One-sentence narratives from evaluators (evaluator output) | Milestone series |
+| 3 | Municipality/Local Consolidation | District | Cross-domain pattern detection within a district | Accumulation-based |
+| 4 | Province Events | Province | Gross summaries of provincial state | Provincial triggers |
+| 5 | Region Events | Region | Region-scoped summaries (faction landscapes, economic state, player reputation) aggregating across child provinces | Multi-province |
+| 6 | Nation Events (future) | Nation | Cross-region patterns, trade routes, diplomatic state — trivial copy of L5 pattern, one tier up | Multi-region |
+| 7 | World Events (future) | World | Narrative threads, world identity, themes, history — trivial copy of L5 pattern at world scale | World-shaping only |
+
+**Hierarchy alignment (2026-04-16 migration)**: Each layer aggregates exactly one game geography tier upward from its child layer. The game's 6-tier hierarchy — World → Nation → Region → Province → District → Locality — maps 1:1 onto `RegionLevel` (WORLD, NATION, REGION, PROVINCE, DISTRICT, LOCALITY). Layer 5 was renamed from `RealmSummaryEvent` to `RegionSummaryEvent` and retargeted from world-aggregation to region-aggregation; L6/L7 are the equivalent nation/world-scope layers and are currently future work.
 
 ### The Compression Principle
 
@@ -98,7 +100,7 @@ GAME ACTION (player mines iron)
                 │
                 ▼
             Layers 4-7 (if significance warrants)              [NEW]
-                │     Smaller Region → Larger Region → Intercountry → World summaries
+                │     Province → Region → Nation → World summaries
                 │
                 ▼
             [Ready for downstream queries by NPC agents, quest gen, etc.]
@@ -132,19 +134,23 @@ Writes flow downward through the pipeline. Reads flow upward. The cycle goes thr
 - Cross-region patterns: "iron scarce across multiple districts"
 - 4 evaluators synthesize Layer 2 interpretations
 
-### Layer 4: Smaller Region Events (NEW — SQLite)
+### Layer 4: Province Events (NEW — SQLite)
 - Per-province gross summaries: dominant activities, notable events, resource state
-- Updated when Layer 3 changes significantly in child regions
+- Aggregates across all districts inside one game Province
+- Drops the `district:` address tag on output; retains `province:/region:/nation:/world:`
+- Updated when Layer 3 changes significantly in child districts
 
-### Layer 5: Larger Region/Country Events (NEW — SQLite)
-- Faction power balances, economic state, player reputation realm-wide
-- Single row per realm, updated on multi-province events
+### Layer 5: Region Events (NEW — SQLite)
+- Faction power balances, economic state, player reputation aggregated across a single game Region (one tier up from Layer 4's Province scope)
+- One row per game Region, updated on multi-province events
+- Emits `RegionSummaryEvent` (formerly `RealmSummaryEvent` before the 2026-04-16 hierarchy-alignment migration)
 
-### Layer 6: Intercountry Events (NEW — SQLite)
-- Cross-realm patterns, trade routes, diplomatic state
-- Updated on multi-realm events
+### Layer 6: Nation Events (NEW — SQLite, future)
+- Cross-region patterns, trade routes, diplomatic state at the game Nation tier
+- Trivial copy of L5's pattern, one tier up — aggregates child regions into a single nation-level row
+- Updated on multi-region events
 
-### Layer 7: World Events (NEW — SQLite)
+### Layer 7: World Events (NEW — SQLite, future)
 - Narrative threads (persistent story elements with canonical facts)
 - World identity, themes, historical events
 - Updated only by world-shaping events
@@ -272,23 +278,40 @@ class TriggerManager:
 
 ## 3.1 Hierarchy
 
-The game's 100x100 tile world (16x16 chunks) gets a **named address hierarchy** superimposed on the existing biome grid:
+The game's world gets a **named address hierarchy** from `systems/geography/models.py`. WMS mirrors that hierarchy 1:1 — no tier shifting:
 
 ```
-Realm (entire world, 1)
-  └── Province (~25x50 tiles, ~4 per realm)
-        └── District (~12x25 tiles, ~12-20 total, "Iron Hills", "Whispering Woods")
-              └── Locality (~8x16 tiles, ~40-80 total, "Old Mine Shaft", "Blacksmith's Crossing")
+World (1, entire map)
+  └── Nation (3-12 per world)
+        └── Region (~4-8 per nation, cultural/geographic identity)
+              └── Province (~4-10 per region, political subdivision)
+                    └── District (~3-5 per province)
+                          └── Locality (sparse POI — only present when a chunk has a village/dungeon/landmark)
 ```
+
+| Game Tier | WMS `RegionLevel` | Layer that aggregates upward from this tier |
+|-----------|------------------|----------------------------------------------|
+| World     | `WORLD`          | L7 (future)                                  |
+| Nation    | `NATION`         | L6 (future)                                  |
+| Region    | `REGION`         | L5 (`RegionSummaryEvent`)                    |
+| Province  | `PROVINCE`       | L4 (province summary)                        |
+| District  | `DISTRICT`       | L3 (municipality/local consolidation)        |
+| Locality  | `LOCALITY`       | L2 (capture) — when a chunk has a POI        |
+
+**Locality is sparse**: it is a 6th-tier POI (village, dungeon, named landmark) that only exists when a chunk has been assigned one. Layer 2 capture reads chunk position → full address; if no Locality is present, L2 falls back to the District tier as the finest address. Locality is always the finest tier when present.
+
+**Address tags are facts** (see `ARCHITECTURAL_DECISIONS.md` §6): the six address prefixes `world:`, `nation:`, `region:`, `province:`, `district:`, `locality:` are assigned at L2 capture from chunk position, propagated unchanged through all layers, and are never synthesized or rewritten by any LLM. Each aggregating layer drops the finest address tag on its output because it aggregates across that tier's children (L3 drops `locality:`, L4 drops `district:`, L5 drops `province:`, etc.).
 
 ## 3.2 Region Definition
 
 ```python
 class RegionLevel(Enum):
-    LOCALITY = "locality"
+    LOCALITY = "locality"   # Sparse POI (only when present)
     DISTRICT = "district"
     PROVINCE = "province"
-    REALM = "realm"
+    REGION   = "region"
+    NATION   = "nation"
+    WORLD    = "world"
 
 @dataclass
 class Region:
@@ -297,7 +320,7 @@ class Region:
     level: RegionLevel
     bounds_x1: int; bounds_y1: int    # Top-left (inclusive)
     bounds_x2: int; bounds_y2: int    # Bottom-right (inclusive)
-    parent_id: Optional[str]          # None for realm
+    parent_id: Optional[str]          # None for WORLD
     child_ids: List[str]
     biome_primary: str
     description: str                  # Narrative description for LLM context
@@ -336,7 +359,12 @@ class GeographicRegistry:
         return None
 
     def get_full_address(self, x: float, y: float) -> Dict[str, str]:
-        """Returns {"locality": "...", "district": "...", "province": "..."}"""
+        """Returns the full 6-tier address for a position:
+        {"world": "...", "nation": "...", "region": "...",
+         "province": "...", "district": "...", "locality": "..."}
+        Locality is omitted if the chunk has no POI. All other tiers are
+        always present. These values become the L2 address tags and are
+        FACTS — see ARCHITECTURAL_DECISIONS.md §6."""
         ...
 
     def get_regions_by_tag(self, tag: str) -> List[Region]: ...
@@ -705,7 +733,7 @@ class ConsolidatorBase(ABC):
 **Date stamps:** All LayerStore events (L2-L7) carry a `game_day` column computed from `game_time / 1440.0`. Relative dates formatted as "X months and Y days ago" for higher-layer LLM consumption. Replaces the designed-but-unbuilt 3-tier temporal storage system.
 
 ### 1. Regional Activity Synthesizer (`regional_synthesis`)
-- **Scope**: Per WMS district (= game region)
+- **Scope**: Per game District
 - **Reads**: All Layer 2 interpretations for the district, grouped by locality
 - **Produces**: "The Western Frontier shows heavy resource extraction in Iron Hills and moderate combat in Whispering Woods."
 - **Applicability**: District has 3+ L2 events OR 2+ from different categories
@@ -787,15 +815,20 @@ Layer 2 event stored → interpreter notifies Layer3Manager
         → store in layer3_events + layer3_tags
 ```
 
-## 7.2 Layer 4: Smaller Region Events (IMPLEMENTED)
+## 7.2 Layer 4: Province Events (IMPLEMENTED)
 
-Per-province gross summaries. WMS PROVINCE = game Region (`region_X`). Each province has its own `WeightedTriggerBucket` (`layer4_province_{province_id}`), created lazily. Tags accumulate independently per province — no cross-province contamination.
+Per-province gross summaries. WMS `PROVINCE` now maps 1:1 to game
+Province (since the 2026-04-16 hierarchy alignment — previously the
+WMS label was shifted and held the game Region). Each province has
+its own `WeightedTriggerBucket` (`layer4_province_{province_id}`),
+created lazily. Tags accumulate independently per province — no
+cross-province contamination.
 
 ```python
 @dataclass
 class ProvinceSummaryEvent:
     summary_id: str
-    province_id: str                  # e.g. "region_1" (WMS PROVINCE = game Region)
+    province_id: str                  # game Province id
     created_at: float
     narrative: str                    # "Iron Reaches: heavy mining, moderate combat, iron scarcity spreading"
     severity: str                     # minor...critical
@@ -807,9 +840,9 @@ class ProvinceSummaryEvent:
     supersedes_id: Optional[str]     # Previous summary for same province
 ```
 
-**Trigger mechanism**: Per-province tag-weighted via `WeightedTriggerBucket`. Geographic tags (`province:`, `district:`, `locality:`, `nation:`) are stripped before scoring so content tags get full positional weight (e.g. `domain:combat` at position 0 = 10 pts). Scoring: 1st=10, 2nd=8, 3rd=6, 4th=5, 5th=4, 6th=3, 7-12th=2, 13th+=1. When any content tag crosses 50 points within a province, the contributing L3 events are used as context. After firing, all scores/contributors for that tag reset to 0 (recurring trigger, no carryover).
+**Trigger mechanism**: Per-province tag-weighted via `WeightedTriggerBucket`. All 6 address tag prefixes (`world:`, `nation:`, `region:`, `province:`, `district:`, `locality:`) are stripped before scoring so content tags get full positional weight (e.g. `domain:combat` at position 0 = 10 pts). Scoring: 1st=10, 2nd=8, 3rd=6, 4th=5, 5th=4, 6th=3, 7-12th=2, 13th+=1. When any content tag crosses 50 points within a province, the contributing L3 events are used as context. After firing, all scores/contributors for that tag reset to 0 (recurring trigger, no carryover).
 
-**LLM tag rewrite**: At Layer 4+, the LLM receives all inherited tags as input context and outputs a complete reordered tag list (keeping 66-80% of aggregate tags, reordered by relevance). This enables tag position to carry semantic weight in downstream triggers.
+**LLM content-tag rewrite (address tags preserved)**: At Layer 4+, the layer code partitions `summary.tags` into address-tag and content-tag halves. The LLM receives **only content tags** as input context and outputs a complete reordered content-tag list (keeping 66-80% of aggregate content tags, reordered by relevance). Address tags are re-attached by the layer code after the LLM returns — any address tag the LLM emits is discarded. The layer's own aggregation tier (e.g. `province:X` at L4) is always present because it is a fact copied from the input events, not produced by the LLM. See `ARCHITECTURAL_DECISIONS.md` §6.
 
 **L2 visibility**: Layer 4 sees L3 (full) and L2 (top-5 tag matching). The top 5 content tags from L3 events (by frequency, geo/structural stripped) form a matching set. L2 events must share at least 3 of the 5. Ranked by: match count (desc) → best matched tag rank (asc, winner-take-all) → recency (desc). At most 5 L2 events returned.
 
@@ -819,33 +852,49 @@ class ProvinceSummaryEvent:
 
 **Storage**: `layer4_events` + `layer4_tags` in LayerStore (append-only, same pattern as L2-L3). The `province_summaries` table in EventStore is dormant.
 
-## 7.3 Layer 5: Larger Region/Country Events
+## 7.3 Layer 5: Region Events
 
-Single row per realm capturing faction power, economic state, player reputation.
+One row per game Region capturing faction power, economic state, player
+reputation at the region tier. Emits `RegionSummaryEvent` (renamed from
+`RealmSummaryEvent` in the 2026-04-16 hierarchy-alignment migration, at
+which point it was retargeted from world-aggregation to
+region-aggregation).
+
+**Aggregation tier**: game Region. L5 reads L4 (full) and L3 (filtered,
+two layers down), aggregates across all provinces inside one region, and
+produces region-scoped events. It drops the `province:` address tag on
+output and retains `region:/nation:/world:`. LLM rewrite operates on
+content tags only; address tags are partitioned out by layer code and
+re-attached after the rewrite returns. See `ARCHITECTURAL_DECISIONS.md`
+§6.
 
 ```python
 @dataclass
-class RealmState:
-    realm_id: str
+class RegionState:
+    region_id: str
     faction_standings: Dict[str, float]   # faction_id → reputation (-1.0 to 1.0)
     economic_summary: str                  # "Trade is active, iron scarce, herbs abundant"
     player_reputation: str                 # "Known as a skilled hunter and capable smith"
-    major_events: List[str]               # Recent world-significant narratives
+    major_events: List[str]               # Recent region-significant narratives
     last_updated: float
 ```
 
-## 7.4 Layer 6: Intercountry Events
+## 7.4 Layer 6: Nation Events  *(future)*
 
-Cross-realm patterns, trade routes, and diplomatic state. Updated on multi-realm events.
+Nation-scoped consolidation: cross-region patterns, trade routes, and
+diplomatic state. Trivial copy of L5's pattern, one tier up — aggregates
+child regions into a single nation-level row per game Nation. Drops the
+`region:` address tag on output and retains `nation:/world:`. Not
+implemented yet.
 
 ```python
 @dataclass
-class IntercountryState:
+class NationState:
     id: str
-    narrative: str                       # "Trade tensions between eastern and western realms"
-    cross_realm_patterns: List[str]      # Detected patterns spanning realms
+    narrative: str                       # "Trade tensions between eastern and western regions"
+    cross_region_patterns: List[str]     # Detected patterns spanning regions
     trade_route_state: Dict[str, str]    # route_id → "active"/"disrupted"/"closed"
-    diplomatic_state: Dict[str, str]     # realm_pair → "allied"/"neutral"/"hostile"
+    diplomatic_state: Dict[str, str]     # region_pair → "allied"/"neutral"/"hostile"
     last_updated: float
 ```
 
@@ -1321,7 +1370,7 @@ CREATE TABLE connected_interpretation_tags (
 );
 ```
 
-## 11.4 Layer 4: Smaller Region Events
+## 11.4 Layer 4: Province Events
 
 ```sql
 CREATE TABLE province_summaries (
@@ -1335,11 +1384,16 @@ CREATE TABLE province_summaries (
 );
 ```
 
-## 11.5 Layer 5: Larger Region/Country Events
+## 11.5 Layer 5: Region Events
+
+Primary storage is `layer5_events` + `layer5_tags` in `LayerStore`. The
+dormant `region_state` row-per-region cache below was renamed from
+`realm_state` in the 2026-04-16 hierarchy alignment; it is retained for
+schema compat and not currently written to by any code.
 
 ```sql
-CREATE TABLE realm_state (
-    realm_id TEXT PRIMARY KEY,
+CREATE TABLE region_state (
+    region_id TEXT PRIMARY KEY,
     faction_standings_json TEXT DEFAULT '{}',
     economic_summary TEXT DEFAULT '',
     player_reputation TEXT DEFAULT '',
@@ -1348,13 +1402,13 @@ CREATE TABLE realm_state (
 );
 ```
 
-## 11.6 Layer 6: Intercountry Events
+## 11.6 Layer 6: Nation Events  *(future)*
 
 ```sql
-CREATE TABLE intercountry_state (
+CREATE TABLE nation_state (
     id TEXT PRIMARY KEY,
     narrative TEXT DEFAULT '',
-    cross_realm_patterns_json TEXT DEFAULT '[]',
+    cross_region_patterns_json TEXT DEFAULT '[]',
     trade_route_state_json TEXT DEFAULT '{}',
     diplomatic_state_json TEXT DEFAULT '{}',
     last_updated REAL DEFAULT 0.0
@@ -1452,12 +1506,12 @@ Player Action → EventBus
     ├→ stat_tracker (Layer 1) — cumulative counters
     └→ EventRecorder (Raw Event Pipeline) — SQLite: events + event_tags + occurrence_counts
         └→ TriggerManager checks thresholds
-            └→ Layer 2 evaluators → interpretations + interpretation_tags
-                └→ Layer 3 consolidators → connected_interpretations
-                    └→ Layer 4 → province_summaries
-                        └→ Layer 5 → realm_state
-                            └→ Layer 6 → intercountry_state
-                                └→ Layer 7 → world_narrative + narrative_threads
+            └→ Layer 2 evaluators → layer2_events + layer2_tags  [district cap; drops locality: at L3]
+                └→ Layer 3 consolidators → layer3_events + layer3_tags  [aggregates game District, drops locality:]
+                    └→ Layer 4 → layer4_events + layer4_tags  [aggregates game Province, drops district:]
+                        └→ Layer 5 → layer5_events + layer5_tags  [aggregates game Region, drops province:]
+                            └→ Layer 6 (future) → layer6_events  [aggregates game Nation, drops region:]
+                                └→ Layer 7 (future) → layer7_events  [aggregates game World, drops nation:]
 ```
 
 ---
@@ -1755,7 +1809,7 @@ Game-1-modular/world_system/
 ### Phase F: Layer 3 Consolidators & Higher Layers
 - Layer 3 consolidators (cross-domain, regional, player identity, faction)
 - Layer 4 smaller region summaries
-- Layers 5-7 realm/intercountry/world state (may be deferred)
+- Layer 5 region summaries (in progress), Layers 6-7 nation/world state (deferred — trivial copies of L5's pattern at higher tiers)
 
 ## 14.5 Estimated Sizes
 
@@ -1928,3 +1982,21 @@ This unified document consolidates the following prior documents:
 - `world_system/docs/AI_TOUCHPOINT_MAP.md` (356 lines) — inference map
 
 The 7-layer architecture (from world_system/docs/, 2026-03-24) supersedes the 6-layer architecture (from Development-Plan/, 2026-03-16). All other content merged by taking the more recent/complete version of each topic.
+
+## Revision Log
+
+- **2026-04-16 — Hierarchy alignment migration.** WMS `RegionLevel`
+  expanded from 5 shifted labels to 6 game-aligned values
+  (`WORLD/NATION/REGION/PROVINCE/DISTRICT/LOCALITY`). Each layer now
+  aggregates exactly one game tier (L3=District, L4=Province,
+  L5=Region, L6=Nation (future), L7=World (future)). Layer 5 was
+  renamed from `RealmSummaryEvent` to `RegionSummaryEvent` and
+  retargeted from world-aggregation to region-aggregation. Address
+  tags (`world:/nation:/region:/province:/district:/locality:`) are
+  formalized as facts assigned at L2 capture and propagated unchanged
+  — the LLM is only given content tags for rewrite at L4/L5 (see
+  `ARCHITECTURAL_DECISIONS.md` §6). The dormant EventStore table
+  `realm_state` was renamed to `region_state` (retained for schema
+  compat). Older section headings that referenced "Smaller Region",
+  "Larger Region", "Intercountry" etc. were renamed to use the
+  concrete game tiers (Province/Region/Nation).

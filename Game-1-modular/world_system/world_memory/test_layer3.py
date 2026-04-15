@@ -79,49 +79,73 @@ def _make_l2_event(category: str, severity: str = "minor",
 
 
 def _setup_geo_registry():
-    """Create a test geographic hierarchy with districts and localities."""
+    """Create a test geographic hierarchy for Layer 3 (game District scope).
+
+    Builds the full 6-tier hierarchy so the registry parent-chain walk
+    produces a complete address. Layer 3 aggregates at the DISTRICT
+    level, so `district_1` is the unit under test; Province/Region/
+    Nation/World exist above it to validate walker output.
+    """
     GeographicRegistry.reset()
     geo = GeographicRegistry.get_instance()
 
-    realm = Region(
-        region_id="realm_0", name="Test Realm",
-        level=RegionLevel.REALM,
+    world = Region(
+        region_id="world_0", name="The Known Lands",
+        level=RegionLevel.WORLD,
         bounds_x1=-100, bounds_y1=-100, bounds_x2=100, bounds_y2=100,
     )
-    geo.regions["realm_0"] = realm
-    geo.realm = realm
+    geo.regions["world_0"] = world
+    geo.world = world
 
-    province = Region(
+    nation = Region(
         region_id="nation_1", name="Northern Kingdom",
-        level=RegionLevel.PROVINCE,
+        level=RegionLevel.NATION,
         bounds_x1=-100, bounds_y1=-100, bounds_x2=100, bounds_y2=0,
-        parent_id="realm_0",
+        parent_id="world_0",
     )
-    geo.regions["nation_1"] = province
-    realm.child_ids.append("nation_1")
+    geo.regions["nation_1"] = nation
+    world.child_ids.append("nation_1")
 
-    district = Region(
-        region_id="region_1", name="Western Frontier",
-        level=RegionLevel.DISTRICT,
-        bounds_x1=-100, bounds_y1=-100, bounds_x2=0, bounds_y2=0,
+    region = Region(
+        region_id="region_1", name="Iron Reaches",
+        level=RegionLevel.REGION,
+        bounds_x1=-100, bounds_y1=-100, bounds_x2=100, bounds_y2=0,
         parent_id="nation_1",
     )
-    geo.regions["region_1"] = district
-    province.child_ids.append("region_1")
+    geo.regions["region_1"] = region
+    nation.child_ids.append("region_1")
 
-    # Add localities
+    province = Region(
+        region_id="province_1", name="Western Province",
+        level=RegionLevel.PROVINCE,
+        bounds_x1=-100, bounds_y1=-100, bounds_x2=0, bounds_y2=0,
+        parent_id="region_1",
+    )
+    geo.regions["province_1"] = province
+    region.child_ids.append("province_1")
+
+    district = Region(
+        region_id="district_1", name="Western Frontier",
+        level=RegionLevel.DISTRICT,
+        bounds_x1=-100, bounds_y1=-100, bounds_x2=0, bounds_y2=0,
+        parent_id="province_1",
+    )
+    geo.regions["district_1"] = district
+    province.child_ids.append("district_1")
+
+    # Add locality POIs (sparse — children of district)
     for i, (name, x1, y1) in enumerate([
         ("Whispering Woods", -100, -100),
         ("Iron Hills", -50, -100),
         ("Crystal Lake", -100, -50),
     ]):
         loc = Region(
-            region_id=f"province_{i}",
+            region_id=f"locality_{i}",
             name=name,
             level=RegionLevel.LOCALITY,
             bounds_x1=x1, bounds_y1=y1,
             bounds_x2=x1 + 49, bounds_y2=y1 + 49,
-            parent_id="region_1",
+            parent_id="district_1",
         )
         geo.regions[loc.region_id] = loc
         district.child_ids.append(loc.region_id)
@@ -148,7 +172,7 @@ class TestConsolidatedEvent(unittest.TestCase):
             severity="moderate",
             source_interpretation_ids=["id1", "id2", "id3"],
             game_time=100.0,
-            affected_district_ids=["region_1"],
+            affected_district_ids=["district_1"],
         )
         self.assertTrue(event.consolidation_id)
         self.assertEqual(event.narrative, "Test synthesis.")
@@ -175,14 +199,14 @@ class TestConsolidatorBase(unittest.TestCase):
         consolidator = RegionalSynthesisConsolidator()
         events = [
             _make_l2_event("combat_kills", "moderate",
-                          "Player killed 15 wolves.", "province_0"),
+                          "Player killed 15 wolves.", "locality_0"),
             _make_l2_event("gathering_regional", "minor",
-                          "Player gathered 8 oak.", "province_0"),
+                          "Player gathered 8 oak.", "locality_0"),
             _make_l2_event("gathering_regional", "significant",
-                          "Player gathered 45 iron.", "province_1"),
+                          "Player gathered 45 iron.", "locality_1"),
         ]
-        localities = {"province_0": "Whispering Woods",
-                     "province_1": "Iron Hills"}
+        localities = {"locality_0": "Whispering Woods",
+                     "locality_1": "Iron Hills"}
 
         xml = consolidator.build_xml_data_block(
             events, "Western Frontier", localities)
@@ -233,59 +257,59 @@ class TestRegionalSynthesis(unittest.TestCase):
         GeographicRegistry.reset()
 
     def test_is_applicable_needs_district(self):
-        events = [_make_l2_event("combat", district_id="region_1")] * 3
+        events = [_make_l2_event("combat", district_id="district_1")] * 3
         self.assertFalse(self.consolidator.is_applicable(events, ""))
-        self.assertTrue(self.consolidator.is_applicable(events, "region_1"))
+        self.assertTrue(self.consolidator.is_applicable(events, "district_1"))
 
     def test_is_applicable_3_events(self):
         events = [_make_l2_event("combat")] * 3
-        self.assertTrue(self.consolidator.is_applicable(events, "region_1"))
+        self.assertTrue(self.consolidator.is_applicable(events, "district_1"))
 
     def test_is_applicable_2_categories(self):
         events = [
             _make_l2_event("combat_kills"),
             _make_l2_event("gathering_regional"),
         ]
-        self.assertTrue(self.consolidator.is_applicable(events, "region_1"))
+        self.assertTrue(self.consolidator.is_applicable(events, "district_1"))
 
     def test_is_applicable_1_event_1_category(self):
         events = [_make_l2_event("combat")]
-        self.assertFalse(self.consolidator.is_applicable(events, "region_1"))
+        self.assertFalse(self.consolidator.is_applicable(events, "district_1"))
 
     def test_consolidate_produces_event(self):
         events = [
             _make_l2_event("combat_kills", "moderate",
-                          "Player killed 10 wolves.", "province_0",
-                          district_id="region_1"),
+                          "Player killed 10 wolves.", "locality_0",
+                          district_id="district_1"),
             _make_l2_event("gathering_regional", "minor",
-                          "Player gathered 20 iron.", "province_1",
-                          district_id="region_1"),
+                          "Player gathered 20 iron.", "locality_1",
+                          district_id="district_1"),
             _make_l2_event("combat_kills", "minor",
-                          "Player killed 5 goblins.", "province_0",
-                          district_id="region_1"),
+                          "Player killed 5 goblins.", "locality_0",
+                          district_id="district_1"),
         ]
 
         geo_context = {
             "district_name": "Western Frontier",
             "province_name": "Northern Kingdom",
             "localities": [
-                {"id": "province_0", "name": "Whispering Woods"},
-                {"id": "province_1", "name": "Iron Hills"},
+                {"id": "locality_0", "name": "Whispering Woods"},
+                {"id": "locality_1", "name": "Iron Hills"},
             ],
         }
 
         result = self.consolidator.consolidate(
-            events, "region_1", geo_context, game_time=200.0)
+            events, "district_1", geo_context, game_time=200.0)
 
         self.assertIsNotNone(result)
         self.assertEqual(result.category, "regional_synthesis")
         self.assertIn("Western Frontier", result.narrative)
         self.assertEqual(len(result.source_interpretation_ids), 3)
-        self.assertIn("region_1", result.affected_district_ids)
+        self.assertIn("district_1", result.affected_district_ids)
 
     def test_consolidate_empty(self):
         result = self.consolidator.consolidate(
-            [], "region_1", {}, game_time=100.0)
+            [], "district_1", {}, game_time=100.0)
         self.assertIsNone(result)
 
 
@@ -302,11 +326,11 @@ class TestCrossDomain(unittest.TestCase):
     def test_is_applicable_needs_2_domains(self):
         events = [_make_l2_event("combat_kills"),
                   _make_l2_event("combat_style")]
-        self.assertFalse(self.consolidator.is_applicable(events, "region_1"))
+        self.assertFalse(self.consolidator.is_applicable(events, "district_1"))
 
         events = [_make_l2_event("combat_kills"),
                   _make_l2_event("gathering_regional")]
-        self.assertTrue(self.consolidator.is_applicable(events, "region_1"))
+        self.assertTrue(self.consolidator.is_applicable(events, "district_1"))
 
     def test_is_applicable_needs_district(self):
         events = [_make_l2_event("combat"),
@@ -316,23 +340,23 @@ class TestCrossDomain(unittest.TestCase):
     def test_consolidate_finds_pattern(self):
         events = [
             _make_l2_event("combat_kills", "moderate",
-                          "Player killed 15 wolves.", "province_0",
-                          district_id="region_1"),
+                          "Player killed 15 wolves.", "locality_0",
+                          district_id="district_1"),
             _make_l2_event("gathering_regional", "significant",
-                          "Player gathered 45 iron.", "province_0",
-                          district_id="region_1"),
+                          "Player gathered 45 iron.", "locality_0",
+                          district_id="district_1"),
         ]
 
         result = self.consolidator.consolidate(
-            events, "region_1",
+            events, "district_1",
             {"district_name": "Western Frontier",
              "province_name": "Northern Kingdom",
-             "localities": [{"id": "province_0", "name": "Whispering Woods"}]},
+             "localities": [{"id": "locality_0", "name": "Whispering Woods"}]},
             game_time=200.0)
 
         self.assertIsNotNone(result)
         self.assertEqual(result.category, "cross_domain")
-        self.assertIn("region_1", result.affected_district_ids)
+        self.assertIn("district_1", result.affected_district_ids)
         # Should detect co-location
         self.assertIn("Whispering Woods", result.narrative)
 
@@ -340,7 +364,7 @@ class TestCrossDomain(unittest.TestCase):
         events = [_make_l2_event("combat_kills"),
                   _make_l2_event("combat_style")]
         result = self.consolidator.consolidate(
-            events, "region_1", {"district_name": "Test"}, 100.0)
+            events, "district_1", {"district_name": "Test"}, 100.0)
         self.assertIsNone(result)
 
 
@@ -357,7 +381,7 @@ class TestPlayerIdentity(unittest.TestCase):
     def test_is_applicable_global_only(self):
         events = [_make_l2_event("combat")] * 5
         # Must NOT run for district-scoped calls
-        self.assertFalse(self.consolidator.is_applicable(events, "region_1"))
+        self.assertFalse(self.consolidator.is_applicable(events, "district_1"))
         # Runs for global (empty district_id)
         self.assertTrue(self.consolidator.is_applicable(events, ""))
 
@@ -367,11 +391,11 @@ class TestPlayerIdentity(unittest.TestCase):
 
     def test_consolidate_combat_focused(self):
         events = [
-            _make_l2_event("combat_kills", district_id="region_1"),
-            _make_l2_event("combat_kills", district_id="region_1"),
-            _make_l2_event("combat_kills", district_id="region_1"),
-            _make_l2_event("combat_kills", district_id="region_1"),
-            _make_l2_event("gathering_regional", district_id="region_1"),
+            _make_l2_event("combat_kills", district_id="district_1"),
+            _make_l2_event("combat_kills", district_id="district_1"),
+            _make_l2_event("combat_kills", district_id="district_1"),
+            _make_l2_event("combat_kills", district_id="district_1"),
+            _make_l2_event("gathering_regional", district_id="district_1"),
         ]
 
         result = self.consolidator.consolidate(
@@ -414,7 +438,7 @@ class TestFactionNarrative(unittest.TestCase):
             _make_l2_event("social_quests", extra_tags=["npc:combat_trainer"]),
             _make_l2_event("social_npc", extra_tags=["npc:combat_trainer"]),
         ]
-        self.assertFalse(self.consolidator.is_applicable(events, "region_1"))
+        self.assertFalse(self.consolidator.is_applicable(events, "district_1"))
         self.assertTrue(self.consolidator.is_applicable(events, ""))
 
     def test_is_applicable_needs_faction_events(self):
@@ -476,27 +500,27 @@ class TestLayer3Manager(unittest.TestCase):
         # Should not trigger before interval
         for i in range(14):
             self.manager.on_layer2_created(
-                _make_l2_event("combat", district_id="region_1"))
+                _make_l2_event("combat", district_id="district_1"))
             self.assertFalse(self.manager.should_run())
 
         # 15th event triggers
         self.manager.on_layer2_created(
-            _make_l2_event("combat", district_id="region_1"))
+            _make_l2_event("combat", district_id="district_1"))
         self.assertTrue(self.manager.should_run())
 
     def test_district_tracking(self):
         self.manager.on_layer2_created(
-            _make_l2_event("combat", district_id="region_1"))
+            _make_l2_event("combat", district_id="district_1"))
         self.manager.on_layer2_created(
             _make_l2_event("combat", district_id="region_2"))
 
-        self.assertIn("region_1", self.manager._districts_with_new_l2)
+        self.assertIn("district_1", self.manager._districts_with_new_l2)
         self.assertIn("region_2", self.manager._districts_with_new_l2)
 
     def test_run_consolidation_resets_counter(self):
         for i in range(15):
             self.manager.on_layer2_created(
-                _make_l2_event("combat", district_id="region_1"))
+                _make_l2_event("combat", district_id="district_1"))
 
         self.manager.run_consolidation(game_time=200.0)
         self.assertEqual(self.manager._l2_events_since_last_run, 0)
@@ -551,14 +575,14 @@ class TestLayer3Integration(unittest.TestCase):
         """Test L2 events → trigger → regional synthesis → L3 stored."""
         events = [
             _make_l2_event("combat_kills", "moderate",
-                          "Player killed 15 wolves.", "province_0",
-                          "region_1", "nation_1", game_time=100.0),
+                          "Player killed 15 wolves.", "locality_0",
+                          "district_1", "nation_1", game_time=100.0),
             _make_l2_event("gathering_regional", "minor",
-                          "Player gathered 20 iron.", "province_1",
-                          "region_1", "nation_1", game_time=101.0),
+                          "Player gathered 20 iron.", "locality_1",
+                          "district_1", "nation_1", game_time=101.0),
             _make_l2_event("combat_kills", "minor",
-                          "Player killed 5 goblins.", "province_0",
-                          "region_1", "nation_1", game_time=102.0),
+                          "Player killed 5 goblins.", "locality_0",
+                          "district_1", "nation_1", game_time=102.0),
         ]
 
         # Insert L2 events
@@ -568,8 +592,8 @@ class TestLayer3Integration(unittest.TestCase):
         for i in range(12):
             extra = _make_l2_event(
                 "combat_kills", "minor",
-                f"Extra event {i}.", "province_0",
-                "region_1", "nation_1", game_time=103.0 + i)
+                f"Extra event {i}.", "locality_0",
+                "district_1", "nation_1", game_time=103.0 + i)
             self._insert_l2_events([extra])
 
         # Should have triggered
@@ -592,14 +616,14 @@ class TestLayer3Integration(unittest.TestCase):
                    "crafting_smithing", "exploration_territory"][i % 4]
             events.append(_make_l2_event(
                 cat, "minor", f"Event {i}.",
-                "province_0", "region_1", "nation_1",
+                "locality_0", "district_1", "nation_1",
                 game_time=100.0 + i))
 
         # Add enough to trigger (15 total)
         for i in range(7):
             events.append(_make_l2_event(
                 "combat_kills", "minor", f"Extra {i}.",
-                "province_0", "region_1", "nation_1",
+                "locality_0", "district_1", "nation_1",
                 game_time=110.0 + i))
 
         self._insert_l2_events(events)
@@ -616,7 +640,7 @@ class TestLayer3Integration(unittest.TestCase):
             cat = "combat_kills" if i % 2 == 0 else "gathering_regional"
             events.append(_make_l2_event(
                 cat, "minor", f"Event {i}.",
-                "province_0", "region_1", "nation_1",
+                "locality_0", "district_1", "nation_1",
                 game_time=100.0 + i))
 
         self._insert_l2_events(events)

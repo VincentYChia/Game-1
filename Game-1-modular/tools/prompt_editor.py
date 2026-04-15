@@ -28,6 +28,9 @@ from world_system.world_memory.prompt_assembler import (
 
 HOSTILES_PATH = _PROJECT_DIR / "Definitions.JSON" / "hostiles-1.JSON"
 MATERIALS_PATH = _PROJECT_DIR / "items.JSON" / "items-materials-1.JSON"
+GEOGRAPHIC_MAP_PATH = (
+    _PROJECT_DIR / "world_system" / "config" / "geographic-map.json"
+)
 
 # Colors per category
 CATEGORY_COLORS = {
@@ -44,6 +47,48 @@ CATEGORY_ORDER = [
     "discipline", "tier", "element", "rank", "status_effect",
     "action", "result",
 ]
+
+
+def _load_location_options() -> list:
+    """Load available location region_ids from the geographic map.
+
+    Reads `world_system/config/geographic-map.json` (the static
+    fallback map) and returns a flat list of `region_id` values across
+    every tier (world, nations, regions, provinces, districts,
+    localities). Falls back to a minimal default list if the file is
+    missing or malformed.
+
+    This replaces an earlier hardcoded dropdown that listed locality
+    names from an older shifted-hierarchy map. The new behaviour means
+    the dropdown stays aligned with whatever geographic-map.json
+    currently declares — no code changes needed when the map changes.
+    """
+    defaults = ["known_lands"]
+    if not GEOGRAPHIC_MAP_PATH.exists():
+        return defaults
+    try:
+        with open(GEOGRAPHIC_MAP_PATH) as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return defaults
+
+    options: list = []
+
+    # Top-level: accept either "world" (new) or "realm" (legacy fixture)
+    for top_key in ("world", "realm"):
+        top = data.get(top_key)
+        if isinstance(top, dict) and top.get("region_id"):
+            options.append(top["region_id"])
+            break
+
+    # All finer tiers — walk whatever is present
+    for tier_key in ("nations", "regions", "provinces", "districts", "localities"):
+        for region in data.get(tier_key, []) or []:
+            rid = region.get("region_id") if isinstance(region, dict) else None
+            if rid and rid not in options:
+                options.append(rid)
+
+    return options or defaults
 
 
 def _load_game_entities() -> dict:
@@ -338,15 +383,18 @@ class PromptEditorApp:
         self.ent_cb.pack(side=tk.LEFT, padx=5)
         self._update_entity_opts()
 
-        # Location
+        # Location — pulled from world_system/config/geographic-map.json
+        # so the dropdown reflects the current static map. Address tag
+        # prefixes are canonical; see geographic_registry.ADDRESS_TAG_PREFIXES.
         r3 = ttk.Frame(cfg)
         r3.pack(fill=tk.X, pady=2)
         ttk.Label(r3, text="Location:", width=12).pack(side=tk.LEFT)
-        self.loc_var = tk.StringVar(value="whispering_woods")
+        location_options = _load_location_options()
+        default_loc = location_options[-1] if location_options else "known_lands"
+        self.loc_var = tk.StringVar(value=default_loc)
         ttk.Combobox(r3, textvariable=self.loc_var, width=25,
-                      values=["whispering_woods", "iron_hills", "dark_cave",
-                              "spawn_crossroads", "elder_grove", "traders_corner"]
-                      ).pack(side=tk.LEFT, padx=5)
+                     values=location_options
+                     ).pack(side=tk.LEFT, padx=5)
 
         # Numeric inputs
         r4 = ttk.Frame(cfg)

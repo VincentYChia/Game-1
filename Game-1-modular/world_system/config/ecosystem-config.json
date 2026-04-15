@@ -1,4 +1,5 @@
 {
+  "_status": "REFRAMING CANDIDATE. EcosystemAgent is NOT part of the WMS layer pipeline. Its current shape (aggregate per-biome counts with fake regeneration) duplicates state that already exists in NaturalResource and the raw event pipeline. The likely future is to delete the state-tracking code and replace it with a thin query API over the actual World System (scanning loaded chunks / NaturalResource instances). See world_system/docs/ARCHITECTURAL_DECISIONS.md §3. Do NOT build new features against this schema. For now, the config stays as-is so the existing agent keeps compiling.",
   "description": "Ecosystem configuration for resource tracking, scarcity thresholds, and regeneration rates.",
 
   "scarcity_thresholds": {

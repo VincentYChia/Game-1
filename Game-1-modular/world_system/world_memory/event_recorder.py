@@ -329,14 +329,26 @@ class EventRecorder:
     def _add_derived_tags(self, event: WorldMemoryEvent) -> None:
         """Phase 2 tags: depend on geographic enrichment and computed values.
 
-        Called AFTER _enrich_geographic() so locality/district are available.
-        Design Doc §9.2: location tags, intensity tags.
+        Called AFTER _enrich_geographic() so the full 6-tier address
+        is available.
+
+        Address tags follow the hierarchy from finest → coarsest so
+        position-weighted triggers see the most specific tier first.
+        Locality is optional.
         """
-        # Location tags
+        # Address tags — emitted finest first
         if event.locality_id:
-            event.tags.append(f"location:{event.locality_id}")
+            event.tags.append(f"locality:{event.locality_id}")
         if event.district_id:
-            event.tags.append(f"location:{event.district_id}")
+            event.tags.append(f"district:{event.district_id}")
+        if event.province_id:
+            event.tags.append(f"province:{event.province_id}")
+        if event.region_id:
+            event.tags.append(f"region:{event.region_id}")
+        if event.nation_id:
+            event.tags.append(f"nation:{event.nation_id}")
+        if event.world_id:
+            event.tags.append(f"world:{event.world_id}")
 
         # Intensity tags (magnitude relative to tier baseline)
         if event.magnitude > 0:
@@ -375,7 +387,17 @@ class EventRecorder:
         return context
 
     def _enrich_geographic(self, event: WorldMemoryEvent) -> None:
-        """Stamp chunk coordinates and geographic region IDs onto the event."""
+        """Stamp chunk coordinates and the full 6-tier address.
+
+        All six address tiers are read from ``GeographicRegistry
+        .get_full_address``. Locality is optional (present only when
+        the chunk has a POI); the other five tiers are guaranteed per
+        chunk as long as the registry was loaded from a WorldMap.
+
+        Address tags are **facts** — assigned at capture from chunk
+        position, never synthesized by an LLM. See
+        world_system/docs/ARCHITECTURAL_DECISIONS.md.
+        """
         event.chunk_x = int(event.position_x) // 16
         event.chunk_y = int(event.position_y) // 16
 
@@ -386,13 +408,21 @@ class EventRecorder:
             event.locality_id = address.get("locality")
             event.district_id = address.get("district")
             event.province_id = address.get("province")
+            event.region_id = address.get("region")
             event.nation_id = address.get("nation")
+            event.world_id = address.get("world")
 
-            # Add biome from region if available
-            if event.locality_id:
-                region = self.geo_registry.regions.get(event.locality_id)
+            # Add biome from the finest enclosing region that has one.
+            # Prefer locality → district → province → region (whichever
+            # has a biome_primary set).
+            for tier_id in (event.locality_id, event.district_id,
+                            event.province_id, event.region_id):
+                if not tier_id:
+                    continue
+                region = self.geo_registry.regions.get(tier_id)
                 if region and region.biome_primary:
                     event.biome = region.biome_primary
+                    break
 
     def _update_activity_logs(self, event: WorldMemoryEvent) -> None:
         """Append event to relevant entity activity logs."""
@@ -410,9 +440,11 @@ class EventRecorder:
             if target:
                 target.add_activity(event.event_id)
 
-        # Region's log
-        if event.locality_id:
-            region_entity = self.entity_registry.get(f"region_{event.locality_id}")
+        # Region entity activity log — use the finest available address
+        # tier (locality if present, else district).
+        finest_addr = event.locality_id or event.district_id
+        if finest_addr:
+            region_entity = self.entity_registry.get(f"region_{finest_addr}")
             if region_entity:
                 region_entity.add_activity(event.event_id)
 

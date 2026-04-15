@@ -1,18 +1,30 @@
 """Layer 3 Manager — orchestrates consolidation of Layer 2 interpretations.
 
+Aggregation tier: **game District** (the smallest guaranteed address
+tier). Each Layer 3 event is a consolidation of all Layer 2 events that
+occurred within one game District since the last consolidation.
+
 Trigger: Every N Layer 2 events created (default 15, configurable).
 When triggered, runs all 4 consolidators for each district that has
 accumulated new Layer 2 events since last consolidation.
 
+Address tag drop rule:
+    Layer 3 output tags include: world, nation, region, province,
+    district. The `locality:` tag (when present on the source events)
+    is dropped at this layer because the consolidation is summed
+    across an entire district, not a single POI.
+
 Data flow:
     Layer 2 interpretation stored in LayerStore
            ↓
-    Layer3Manager.on_layer2_created() increments counter
+    Layer3Manager.on_layer2_created() increments counter and notes
+    which district the event came from (via its district:X tag)
            ↓ (every N events)
     For each district with 3+ L2 events:
       1. Query LayerStore: layer2_events by district tag
       2. Run all consolidators
-      3. Enrich tags via HigherLayerTagAssigner
+      3. Enrich tags via HigherLayerTagAssigner (address tags are
+         propagated as facts — the LLM never rewrites them)
       4. Call WmsAI.generate_narration(layer=3)
       5. Store result in layer3_events + layer3_tags
 
@@ -279,7 +291,14 @@ class Layer3Manager:
         return [self._layer_store._row_to_dict(row) for row in rows]
 
     def _build_geo_context(self, district_id: str) -> Dict[str, Any]:
-        """Build geographic context for a district."""
+        """Build geographic context for a game District.
+
+        Collects:
+          - district_name: this district's display name
+          - province_name: parent game Province's name
+          - localities: list of child Locality POIs (may be empty —
+            locality is sparse)
+        """
         if not self._geo_registry or not district_id:
             return {"district_name": "", "province_name": "",
                     "localities": []}
@@ -289,14 +308,14 @@ class Layer3Manager:
             return {"district_name": district_id, "province_name": "",
                     "localities": []}
 
-        # Get province (parent)
+        # Get parent game Province
         province_name = ""
         if district.parent_id:
             province = self._geo_registry.regions.get(district.parent_id)
             if province:
                 province_name = province.name
 
-        # Get localities (children)
+        # Get child localities (sparse POIs — may be empty)
         localities = []
         for child_id in district.child_ids:
             child = self._geo_registry.regions.get(child_id)

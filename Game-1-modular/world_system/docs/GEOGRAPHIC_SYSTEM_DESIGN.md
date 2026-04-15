@@ -1,7 +1,7 @@
 # Geographic System Design Document
 
 **Created**: 2026-04-04
-**Last Updated**: 2026-04-04
+**Last Updated**: 2026-04-16
 **Status**: Approved for implementation
 **Source**: Full design conversation with project owner
 
@@ -318,22 +318,24 @@ Danger is organized into **ecosystems** — groups of 3×3 chunks that share the
 
 ## 13. Tag Library Updates Required
 
-### New address tags needed (not yet in tag_library.py)
+### Address tag set (Layer 2, all 6 tiers) — assigned at capture, never LLM-rewritten
 
-| Tag | Layer | Type |
-|-----|-------|------|
-| `nation` | Layer 2 (or new) | Dynamic, key_tag |
-| `region` | Layer 2 (or new) | Dynamic, key_tag |
+Address tags are FACTS. They are determined deterministically at Layer 2
+capture time from the chunk position via
+`GeographicRegistry.get_full_address()` and propagated unchanged up the
+layer stack. Each higher layer drops exactly the finest tag (the tier
+it aggregates across). See `ARCHITECTURAL_DECISIONS.md` §6.
 
-### Existing tags that align
-
-| Tag | Layer | Status |
-|-----|-------|--------|
-| `province` | Layer 2 | Exists, keep |
-| `district` | Layer 2 | Exists, keep |
-| `locality` | Layer 2 | Exists, keep |
-| `biome` | Layer 2 | Exists, values TBD (current 12 are placeholders) |
-| `scope` | Layer 2 | Exists, values may need update |
+| Tag | Layer | Status | Notes |
+|-----|-------|--------|-------|
+| `world` | Layer 2 | Required | Constant for a save (single top-level world) |
+| `nation` | Layer 2 | Required | From `GeographicRegistry.load_from_world_map()` |
+| `region` | Layer 2 | Required | From `GeographicRegistry.load_from_world_map()` |
+| `province` | Layer 2 | Required | Existing |
+| `district` | Layer 2 | Required | Existing |
+| `locality` | Layer 2 | Optional (sparse) | Only present when the chunk has a POI; otherwise omitted and `district:` is the finest address |
+| `biome` | Layer 2 | Exists | Chunk biome type (15 chunk types) |
+| `scope` | Layer 2 | Exists | Values updated to include province/region/nation |
 
 ### Tags confirmed correct (already committed)
 
@@ -382,9 +384,9 @@ faction, political, military, migration, diplomacy, relation_effect, narrative_r
 | `systems/world_system.py` | Add finite boundary, integrate geographic hierarchy |
 | `systems/chunk.py` | Chunks gain nation/region/province/district/biome/ecosystem fields |
 | `Combat/combat_manager.py` | Spawn system uses new danger levels + ecosystem grouping |
-| `world_system/world_memory/geographic_registry.py` | Rewrite — generated from world, not static JSON |
+| `world_system/world_memory/geographic_registry.py` | Rewrite — `RegionLevel` expanded to 6 values (`WORLD/NATION/REGION/PROVINCE/DISTRICT/LOCALITY`) mapping 1:1 to game tiers. `load_from_world_map()` assigns each game tier to its matching WMS level. |
 | `world_system/config/geographic-map.json` | Becomes nation templates + naming config |
-| `world_system/world_memory/tag_library.py` | Add nation, region tags; update biome values later |
+| `world_system/world_memory/tag_library.py` | Add `world`, `nation`, `region` address tags; address tags partitioned out of LLM-rewrite path at L4/L5 |
 | `rendering/renderer.py` (render_map_ui) | Add borders/labels at all tiers with zoom levels + visual blending |
 | `data/models/world.py` | Add new ChunkTypes, geographic fields, danger levels |
 | `core/config.py` | Add world size, geographic config constants |
@@ -430,3 +432,17 @@ faction, political, military, migration, diplomacy, relation_effect, narrative_r
 Naming: Procedural, per-nation cultural banks, all tiers
 Map: Everything visible, zoom for detail, blended chunk visuals
 ```
+
+---
+
+## Document History
+
+- **2026-04-16**: Hierarchy-alignment migration. Clarified that address
+  tags (`world/nation/region/province/district/locality`) are facts
+  assigned at Layer 2 capture from chunk position and propagated
+  unchanged up the layer stack. WMS `RegionLevel` now maps 1:1 to the
+  6 game tiers defined in this document (previously WMS used 5
+  shifted labels where "REALM" held the World and every other tier
+  was off by one). Layer 5 retargeted from "realm" (world) to game
+  Region (one tier up from Layer 4's province summaries).
+- **2026-04-04**: Initial creation.
