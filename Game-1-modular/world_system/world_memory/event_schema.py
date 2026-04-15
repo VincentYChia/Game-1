@@ -5,6 +5,7 @@ Layer 2: InterpretedEvent — narrative descriptions derived from patterns (eval
 Layer 3: ConsolidatedEvent — cross-domain synthesis from Layer 2 (district/global scope).
 Layer 4: ProvinceSummaryEvent — province-level summaries from Layer 3 (per-province scope).
 Layer 5: RegionSummaryEvent — region-level summaries from Layer 4 (per-region scope, game Region tier).
+Layer 6: NationSummaryEvent — nation-level summaries from Layer 5 (per-nation scope, game Nation tier).
 
 All dataclasses here are pure data with no dependencies on game systems.
 """
@@ -415,6 +416,72 @@ class RegionSummaryEvent:
             narrative=narrative,
             severity=severity,
             source_province_summary_ids=source_province_summary_ids,
+            **kwargs,
+        )
+
+
+@dataclass
+class NationSummaryEvent:
+    """A nation-level summary synthesized from multiple Layer 5 region summaries.
+
+    Layer 6 output. Each game Nation produces a single current summary
+    that is superseded when new Layer 5 events accumulate enough
+    tag-weighted score. Stored in LayerStore layer6_events +
+    layer6_tags.
+
+    Aggregation tier: **game Nation** (parent of game Region). The
+    LLM distills region-level states into a nation-scoped narrative
+    covering dominant activities, cross-region trends, and overall
+    nation condition.
+
+    Layer 6 does NOT read from FactionSystem, EcosystemAgent, or any
+    other state tracker. It is pure WMS layer pipeline: L5 events +
+    L4 events (two-layers-down, tag-filtered) are the only inputs.
+    Address tags are FACTS propagated by layer code, never
+    synthesized by the LLM. See docs/ARCHITECTURAL_DECISIONS.md §6.
+    """
+
+    # Identity
+    summary_id: str
+    nation_id: str                        # game Nation id (e.g. "nation_3")
+    created_at: float                     # Game time
+
+    # THE NARRATIVE — core output
+    narrative: str  # e.g. "Northern Kingdom: Iron Reaches drives heavy
+                    # mining, while Emerald Valley sees steady farming"
+
+    # Classification
+    severity: str                         # minor, moderate, significant, major, critical
+
+    # Structured fields extracted from LLM output
+    dominant_activities: List[str] = field(default_factory=list)  # ["mining", "combat"]
+    dominant_regions: List[str] = field(default_factory=list)     # game region IDs
+    nation_condition: str = "stable"      # stable, shifting, volatile, crisis
+
+    # Source Layer 5 events that fed this
+    source_region_summary_ids: List[str] = field(default_factory=list)
+
+    # Source Layer 4 events included for two-layers-down context
+    relevant_l4_ids: List[str] = field(default_factory=list)
+
+    # Tag-based routing
+    tags: List[str] = field(default_factory=list)
+
+    # History tracking
+    supersedes_id: Optional[str] = None
+
+    @staticmethod
+    def create(nation_id: str, narrative: str, severity: str,
+               source_region_summary_ids: List[str],
+               game_time: float, **kwargs) -> NationSummaryEvent:
+        """Factory with auto-generated summary_id."""
+        return NationSummaryEvent(
+            summary_id=str(uuid.uuid4()),
+            nation_id=nation_id,
+            created_at=game_time,
+            narrative=narrative,
+            severity=severity,
+            source_region_summary_ids=source_region_summary_ids,
             **kwargs,
         )
 
