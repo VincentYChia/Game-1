@@ -335,14 +335,6 @@ class RecipeDataProcessorV2:
 
         return cls(materials_dict, placements, num_augment_passes)
 
-    def get_shape_mask(self, material_id: str) -> np.ndarray:
-        """Get the 4x4 shape mask for a material's category."""
-        if material_id is None or material_id not in self.materials_dict:
-            return self.DEFAULT_SHAPE
-
-        category = self.materials_dict[material_id].get('category', 'unknown')
-        return self.CATEGORY_SHAPES.get(category, self.DEFAULT_SHAPE)
-
     def get_tier_fill_mask(self, material_id: str, cell_size: int = 4) -> np.ndarray:
         """
         Get a mask that limits fill based on tier.
