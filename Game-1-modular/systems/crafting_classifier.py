@@ -69,6 +69,10 @@ class MaterialColorEncoder:
     DO NOT MODIFY without retraining crafting_classifier_models.
     """
 
+    # *** DUPLICATE — source of truth is valid_smithing_data_v2.py (ColorAugmentor) ***
+    # If you change colors/shapes here, mirror them in:
+    #   Scaled JSON Development/Convolution Neural Network (CNN)/Smithing/valid_smithing_data_v2.py
+    #   Scaled JSON Development/LLM Training Data/crafting_training_data.py (ImageGenerator)
     # Category to Hue mapping (degrees, 0-360)
     CATEGORY_HUES = {
         'metal': 210,
@@ -233,7 +237,8 @@ class SmithingImageRenderer:
     CELL_SIZE = 4
     GRID_SIZE = 9
 
-    # Shape masks by category — high-tier fallback patterns
+    # Shape masks by category — high-tier fallback patterns.
+    # *** DUPLICATE — source of truth is valid_smithing_data_v2.py (RecipeDataProcessorV2) ***
     # MUST MATCH training (valid_smithing_data_v2.py CATEGORY_SHAPES)
     CATEGORY_SHAPES = {
         'metal':        np.ones((4, 4), dtype=np.float32),
