@@ -1,11 +1,12 @@
 # World Memory System — Handoff Status
 
-**Date**: 2026-04-16 (updated 2026-04-16 after Layer 7 completion)
+**Date**: 2026-04-16 (updated 2026-04-16 after evaluator expansion)
 **Branch**: `claude/implement-layer-7-aggregation-mn87h`
 **Phase**: Layers 1-7 operational on a corrected 6-tier hierarchy
 (`World → Nation → Region → Province → District → Locality`). Layer 7
 is complete — final aggregation tier at the game World level. No Layer 8 planned.
-**Tests**: 195 passing (54 Layer 3 + 39 Layer 4 + 37 Layer 5 + 36 Layer 6 + 29 Layer 7, 0 failures)
+**Evaluators**: 36 (33 original + 3 new: FishingActivity, TurretActivity, ChestLoot)
+**Tests**: 246 passing (141 layer tests + 105 new evaluator tests, 0 failures)
 **Schema**: `EventStore.SCHEMA_VERSION = 2` (v1 databases hard-fail on
 load; `WorldMemorySystem.load` recovers by deleting the stale file).
 
@@ -162,7 +163,7 @@ children:
 
 **Pipeline**: Threshold trigger → evaluator produces data context → WmsAI assembles prompt from tag-indexed fragments → LLM generates one-sentence narration → stored as InterpretedEvent.
 
-**Key files**: `interpreter.py` (394 lines), `wms_ai.py` (~375 lines), `prompt_assembler.py` (~460 lines), `prompt_fragments.json` (123 fragments), 33 evaluator files.
+**Key files**: `interpreter.py` (394 lines), `wms_ai.py` (~375 lines), `prompt_assembler.py` (~460 lines), `prompt_fragments.json` (127 fragments), 36 evaluator files.
 
 ---
 
@@ -494,7 +495,19 @@ The WMS pipeline is complete, but the *data flowing into it* has gaps. The 33
 evaluators cover combat/crafting/gathering/progression/social well, but are
 entirely blind to several domains:
 
-**High-impact gaps:**
+**Resolved gaps (2026-04-16):**
+- **Fishing**: `FishingActivityEvaluator` now listens to `FISH_CAUGHT`
+  (published by `game_engine._complete_fishing_minigame`). Severity
+  escalates with catch count; rare/legendary catches boost severity by one
+  tier. Tags: `domain:fishing`, `resource:{species}`, `rarity:{rarity}`.
+- **Turrets/Barriers**: `TurretActivityEvaluator` listens to
+  `TURRET_PLACED` + `BARRIER_PLACED`. T3/T4 placements boost severity.
+  Turret *kills* route through the existing `ENEMY_KILLED` pipeline with
+  `source:turret` — all combat evaluators already count them.
+- **Chests**: `ChestLootEvaluator` listens to `CHEST_OPENED` (published by
+  `game_engine` chest-taking code). Dungeon/boss chests guarantee ≥moderate.
+
+**Remaining high-impact gaps:**
 - **Faction standing changes**: `FACTION_REP_CHANGED` is deliberately excluded
   from the pipeline, but a lightweight faction evaluator (emitting
   `domain:faction` + `faction:X`) is the prerequisite for the political
@@ -504,10 +517,6 @@ entirely blind to several domains:
   paths*, elemental mastery, or skill *tree* specialization patterns.
 - **Attack mechanics depth**: No combo tracking, no attack-phase analysis.
   `combat_style.py` counts dodges/attacks/statuses but not *patterns*.
-- **Fishing**: `StatTracker.record_fish_caught()` exists but no evaluator
-  exposes fishing data to the WMS pipeline.
-- **Turrets/Barriers**: `StatTracker.record_barrier_placed()` exists but
-  placed-entity events are not evaluated.
 
 **Roadmap**: See `Development-Plan/PART_2_LIVING_WORLD.md` for the full
 political pipeline dependency chain. Faction evaluators are the bridge between
@@ -550,21 +559,14 @@ Do not start before the priority items above are complete.
 ### Current Test Status
 
 ```bash
-$ python -m unittest \
-    world_system.world_memory.test_layer3 \
-    world_system.tests.test_layer4 \
-    world_system.tests.test_layer5 \
-    world_system.tests.test_layer6 \
-    world_system.tests.test_layer7 -v
+# Full test suite (all 246 tests)
+cd Game-1-modular
+python -m unittest discover -s world_system/tests -p "test_*.py" -v
 
-Ran 195 tests in 0.2s
-OK (54 L3 + 39 L4 + 37 L5 + 36 L6 + 29 L7)
-```
+Ran 246 tests in 0.6s
+OK  (141 layer tests + 105 new evaluator tests)
 
-### Commands to Know
-
-```bash
-# Full test ladder (run frequently — all 195 tests)
+# Layer tests only
 python -m unittest \
     world_system.world_memory.test_layer3 \
     world_system.tests.test_layer4 \
@@ -572,15 +574,14 @@ python -m unittest \
     world_system.tests.test_layer6 \
     world_system.tests.test_layer7 -v
 
-# Individual layer tests
-python -m unittest world_system.tests.test_layer7 -v
+# New evaluator tests only
+python -m unittest world_system/tests/test_new_evaluators.py -v
 
-# LLM testing (requires ANTHROPIC_API_KEY set)
-export ANTHROPIC_API_KEY="sk-ant-..."
-python -m unittest world_system.tests.test_layer7.TestLayer7Integration -v
+# Individual layer
+python -m unittest world_system.tests.test_layer7 -v
 ```
 
-### Verification (Layer 7 Complete)
+### Verification (Layer 7 + Evaluator Expansion Complete)
 
 - [x] `WorldSummaryEvent` dataclass has 12 fields (matching L6 pattern)
 - [x] `Layer7Manager._resolve_world_id_from_tags()` scans for `world:X` tag
@@ -588,8 +589,98 @@ python -m unittest world_system.tests.test_layer7.TestLayer7Integration -v
 - [x] `_build_tags()` propagates only `world:world_0` (never hallucinated nations)
 - [x] Tests verify single-bucket behavior (only layer7_world_0 triggers)
 - [x] Prompt fragments (`_l7_core`, etc.) loaded in PromptAssembler.load()
-- [x] `memory-config.json` layer7 section has trigger_threshold, max_l6_per_world, max_l5_relevance
+- [x] `memory-config.json` layer7 section present; 3 new evaluator sections added
 - [x] L6→L7 callback wired in `WorldMemorySystem.__init__()`
-- [x] All 195 tests pass (regression: 166 existing + 29 new L7, 0 failures)
-- [x] Tests cover: dataclass, summarizer, manager, prompts, integration
-- [x] Documentation updated (HANDOFF_STATUS.md)
+- [x] 3 new EventTypes (`FISH_CAUGHT`, `CHEST_OPENED`, `TURRET_PLACED`, `BARRIER_PLACED`) in schema
+- [x] 4 new `BUS_TO_MEMORY_TYPE` mappings wired
+- [x] New evaluators registered in `interpreter.py` (36 total)
+- [x] New prompt fragments added to `prompt_fragments.json` (127 total)
+- [x] All 246 tests pass, 0 failures
+- [x] Documentation updated (HANDOFF_STATUS.md, ARCHITECTURAL_DECISIONS.md)
+
+---
+
+## New-Evaluator Checklist
+
+Follow this checklist every time a new evaluator is added to the WMS pipeline.
+This covers the full trace from bus event to LLM-ready narrative.
+
+### 1. Event Schema (`event_schema.py`)
+- [ ] Add a new `EventType` enum value (e.g. `MY_EVENT = "my_event"`)
+- [ ] Add an entry to `BUS_TO_MEMORY_TYPE` mapping the bus string to the new EventType
+
+### 2. EventRecorder (`event_recorder.py`)
+- [ ] Add a branch in `_derive_subtype()` returning a descriptive `"verb_noun"` subtype
+  (e.g. `"caught_salmon"`, `"opened_dungeon"`, `"placed_net_launcher"`)
+- [ ] Add a branch (or extend existing logic) in `_build_event_tags()` to attach
+  relevant Phase 1 tags:
+  - `domain:X` — which gameplay domain this belongs to
+  - `source:X` — optional, who/what triggered it (e.g. `source:turret`)
+  - `rarity:X` — optional, if the event carries a rarity field
+  - other contextual tags (tier, species, etc.)
+
+### 3. Event Publishing (in the game code)
+- [ ] Find the game_engine / system method where the action occurs
+- [ ] Add `get_event_bus().publish("MY_EVENT", {...payload...})` wrapped in try/except
+- [ ] Payload must include position_x, position_y and any classification fields
+  (fish_id, chest_type, item_id, etc.) that `_derive_subtype` expects
+- [ ] For indirect routing (e.g. turret kills → `ENEMY_KILLED` with `source:turret`),
+  the new EventType may not need a separate evaluator — check if an existing one
+  already handles the routed event type
+
+### 4. Evaluator (`evaluators/my_evaluator.py`)
+- [ ] Create `world_system/world_memory/evaluators/my_evaluator.py`
+- [ ] Class extends `PatternEvaluator`, implements `is_relevant()` and `evaluate()`
+- [ ] `RELEVANT_TYPES = {"my_event"}` (or multiple types if the evaluator covers both)
+- [ ] Load config via `get_evaluator_config("my_evaluator")` — all thresholds and
+  templates must come from config, not hardcoded values
+- [ ] Count via `event_store.count_filtered(event_type=..., locality_id=..., since_game_time=...)`
+- [ ] Return `None` if count < 1 (or below your minimum threshold)
+- [ ] Severity ladder: minor → moderate → significant → major, driven by count thresholds
+- [ ] Optional severity boost (e.g. for rare items, high tiers): one-step bump via `_order` list
+- [ ] `affects_tags` must include `domain:X` and at least one content tag
+- [ ] Return `InterpretedEvent.create(...)` with correct geographic IDs, expiry, and is_ongoing
+
+### 5. Config (`world_system/config/memory-config.json`)
+- [ ] Add an `"my_evaluator"` block under `"evaluators"` with:
+  - `"enabled": true`
+  - `"lookback_time"` — game-time window for counting events
+  - `"expiration_offset"` — how long the interpretation stays relevant
+  - `"thresholds"` — `minor_max`, `moderate_max`, `significant_max` (or equivalent)
+  - `"narrative_templates"` — `with_region` and `no_region` (or type-specific variants)
+  - `"description"` — one-line summary
+
+### 6. Prompt Fragments (`world_system/config/prompt_fragments.json`)
+- [ ] Add `"domain:X"` fragment if this domain is new (describes what the domain IS)
+- [ ] Add `"action:verb_noun"` fragment if a new action subtype is introduced
+  (describes what the action MEANS for narration — what distinguishes it from similar actions)
+- [ ] Update `_meta.total_fragments` count and bump `_meta.version`
+
+### 7. Interpreter Registration (`world_system/world_memory/interpreter.py`)
+- [ ] Add `("world_system.world_memory.evaluators.my_evaluator", "MyEvaluator")` to
+  `_register_all_evaluators()` in the appropriate category comment block
+- [ ] Update the module docstring evaluator count
+
+### 8. Tests (`world_system/tests/test_new_evaluators.py` or a dedicated file)
+- [ ] `TestEventSchema*` — verify new EventType value and BUS_TO_MEMORY_TYPE mapping
+- [ ] `TestEventRecorderSubtypes` — test `_derive_subtype()` for all data permutations
+  (happy path, fallback values, unknown fallback)
+- [ ] `TestEventRecorderDomainTags` — test `_build_event_tags()` for new domain/source/rarity tags
+- [ ] `TestMyEvaluator.test_relevant_for_*` — is_relevant returns True/False correctly
+- [ ] `TestMyEvaluator.test_returns_none_when_count_zero` — evaluator short-circuits on 0
+- [ ] `TestMyEvaluator.test_severity_*` — ladder covers minor, moderate, significant, major
+- [ ] `TestMyEvaluator.test_*_boost_*` — tier/rarity boost if applicable
+- [ ] `TestMyEvaluator.test_narrative_*` — region vs global fallback narratives
+- [ ] `TestMyEvaluator.test_affects_tags_*` — domain tag, action tag, and content tags present
+- [ ] `TestMyEvaluator.test_category_is_*` — correct category string
+- [ ] `TestInterpreterRegistration.test_*_registered` — evaluator appears in `._evaluators`
+- [ ] `TestConfigPresence.test_*_config_present` — config block exists in memory-config.json
+- [ ] `TestPromptFragments.test_*_fragment_present` — fragment exists in prompt_fragments.json
+- [ ] Run full discover: `python -m unittest discover -s world_system/tests -p "test_*.py"`
+
+### 9. HANDOFF_STATUS.md
+- [ ] Update test count
+- [ ] Update evaluator count
+- [ ] Update Layer 2 key files line (prompt_fragments.json count, evaluator file count)
+- [ ] Update "Resolved gaps" list under Priority 1
+- [ ] Check the Verification checklist at the bottom

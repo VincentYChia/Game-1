@@ -11,8 +11,8 @@ what data it queries and how it processes it. The same raw event can trigger
 multiple evaluators because each reads it through a different lens
 (e.g., regional vs global, per-species vs per-tier).
 
-33 evaluators covering combat, gathering, crafting, progression,
-exploration, social, economy, and items.
+36 evaluators covering combat, gathering, crafting, progression,
+exploration, social, economy, items, fishing, engineering, and chest looting.
 """
 
 from __future__ import annotations
@@ -133,6 +133,12 @@ class WorldInterpreter:
             # Items evaluators
             ("world_system.world_memory.evaluators.items_equipment", "ItemsEquipmentEvaluator"),
             ("world_system.world_memory.evaluators.items_inventory", "ItemsInventoryEvaluator"),
+            # Gathering sub-discipline: fishing
+            ("world_system.world_memory.evaluators.fishing_activity", "FishingActivityEvaluator"),
+            # Engineering / defense
+            ("world_system.world_memory.evaluators.turret_activity", "TurretActivityEvaluator"),
+            # Exploration: chest looting
+            ("world_system.world_memory.evaluators.chest_loot", "ChestLootEvaluator"),
         ]
 
         import importlib

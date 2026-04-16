@@ -67,6 +67,12 @@ class EventType(Enum):
     WORLD_EVENT = "world_event"
     POSITION_SAMPLE = "position_sample"
 
+    # Engineering / Defense / Exploration (new)
+    FISH_CAUGHT = "fish_caught"
+    CHEST_OPENED = "chest_opened"
+    TURRET_PLACED = "turret_placed"
+    BARRIER_PLACED = "barrier_placed"
+
 
 # Bus event names that map to memory event types
 BUS_TO_MEMORY_TYPE = {
@@ -98,6 +104,11 @@ BUS_TO_MEMORY_TYPE = {
     "QUEST_FAILED": EventType.QUEST_FAILED,
     "WORLD_EVENT": EventType.WORLD_EVENT,
     "POSITION_SAMPLE": EventType.POSITION_SAMPLE,
+    # New: fishing, chests, engineering/defense
+    "FISH_CAUGHT": EventType.FISH_CAUGHT,
+    "CHEST_OPENED": EventType.CHEST_OPENED,
+    "TURRET_PLACED": EventType.TURRET_PLACED,
+    "BARRIER_PLACED": EventType.BARRIER_PLACED,
 }
 
 # Bus events to skip (visual-only, high-frequency noise)
