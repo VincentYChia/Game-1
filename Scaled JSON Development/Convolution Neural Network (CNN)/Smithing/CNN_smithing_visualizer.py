@@ -20,20 +20,11 @@ from pathlib import Path
 import json
 from colorsys import hsv_to_rgb
 import random
+from valid_smithing_data_v2 import RecipeDataProcessorV2, ColorAugmentor
 
 
 class SmithingDatasetVisualizer:
-    """Data model for smithing CNN dataset."""
-
-    CATEGORY_SHAPES = {
-        'metal': np.array([[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]], dtype=np.float32),
-        'wood':  np.array([[1,1,1,1],[0,0,0,0],[1,1,1,1],[0,0,0,0]], dtype=np.float32),
-        'stone': np.array([[1,0,0,1],[0,1,1,0],[0,1,1,0],[1,0,0,1]], dtype=np.float32),
-        'monster_drop': np.array([[0,1,1,0],[1,1,1,1],[1,1,1,1],[0,1,1,0]], dtype=np.float32),
-        'elemental':    np.array([[0,1,1,0],[1,1,1,1],[1,1,1,1],[0,1,1,0]], dtype=np.float32),
-    }
-    DEFAULT_SHAPE = np.ones((4, 4), dtype=np.float32)
-    TIER_FILL_SIZES = {1: 1, 2: 2, 3: 3, 4: 4}
+    """Data model for smithing CNN dataset. Rendering delegates to RecipeDataProcessorV2."""
 
     def __init__(self, dataset_path, materials_path, placements_path, use_shapes=True):
         self.use_shapes = use_shapes
@@ -61,6 +52,9 @@ class SmithingDatasetVisualizer:
             if not any(p['recipeId'].endswith(f'_t{i}') for i in range(1, 5))
         ]
 
+        # Delegate all rendering to the training pipeline — visualizer is a pure reflection
+        self.processor = RecipeDataProcessorV2(self.materials_dict, self.original_recipes)
+
         print("Rendering original recipes...")
         self.original_images = [self._render_recipe(r) for r in self.original_recipes]
 
@@ -69,192 +63,18 @@ class SmithingDatasetVisualizer:
               f"total={len(self.X_all)}, shape={self.X_all.shape[1:]}")
 
     def _material_to_color(self, material_id):
-        if material_id is None:
-            return np.zeros(3)
-        if material_id not in self.materials_dict:
-            return np.full(3, 0.3)
-
-        mat = self.materials_dict[material_id]
-        cat = mat.get('category', 'unknown')
-        tier = mat.get('tier', 1)
-        tags = mat.get('metadata', {}).get('tags', [])
-
-        if cat == 'elemental':
-            hues = {'fire':0, 'water':210, 'earth':120, 'air':60, 'lightning':270, 'ice':180, 'light':45, 'dark':280, 'void':290, 'chaos':330}
-            hue = next((hues[t] for t in tags if t in hues), 280)
-        else:
-            hue = {
-                'metal': 210,
-                'wood':  45,   # bright yellow-orange (was 30, too brown)
-                'stone': 200,  # cool slate blue-gray (was 0/red, too muted)
-                'monster_drop': 300,
-                'gem': 280,
-                'herb': 120,
-                'fabric': 45,
-            }.get(cat, 0)
-
-        value = {1: 0.50, 2: 0.65, 3: 0.80, 4: 0.95}.get(tier, 0.5)
-
-        # Per-category saturation — stone very desaturated (slate look),
-        # wood boosted (was 0.6, too muddy at low tiers)
-        if cat == 'stone':
-            sat = 0.12
-        elif cat == 'wood':
-            sat = 0.75
-        else:
-            sat = 0.6
-
-        if any(t in tags for t in ['legendary', 'mythical']):
-            sat = min(1.0, sat + 0.2)
-        elif any(t in tags for t in ['magical', 'ancient']):
-            sat = min(1.0, sat + 0.1)
-
-        return np.array(hsv_to_rgb(hue / 360.0, sat, value))
-
-    def _get_shape_mask(self, material_id):
-        if material_id is None or material_id not in self.materials_dict:
-            return self.DEFAULT_SHAPE
-        cat = self.materials_dict[material_id].get('category', 'unknown')
-        return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
-
-    def _get_tier_fill_mask(self, material_id, cell_size=4):
-        if material_id is None or material_id not in self.materials_dict:
-            return np.zeros((cell_size, cell_size), dtype=np.float32)
-        tier = self.materials_dict[material_id].get('tier', 1)
-        fill_size = self.TIER_FILL_SIZES.get(tier, 4)
-        mask = np.zeros((cell_size, cell_size), dtype=np.float32)
-        off = (cell_size - fill_size) // 2
-        mask[off:off+fill_size, off:off+fill_size] = 1.0
-        return mask
-
-    def _get_tier_aware_mask(self, material_id, cell_size=4):
-        """Get shape mask with tier-aware patterns for better low-tier visibility.
-
-        Args:
-            material_id: Material ID
-            cell_size: Cell size (usually 4)
-
-        Returns:
-            4x4 float mask for the material
-        """
-        if material_id is None or material_id not in self.materials_dict:
-            return self.DEFAULT_SHAPE
-
-        mat = self.materials_dict[material_id]
-        cat = mat.get('category', 'unknown')
-        tier = mat.get('tier', 1)
-
-        # Wood: / diagonal T1, 2×2 solid T2, original stripes T3-4
-        if cat == 'wood':
-            if tier == 1:
-                # / diagonal (top-right to bottom-left)
-                return np.array([
-                    [0, 0, 0, 1],
-                    [0, 0, 1, 0],
-                    [0, 1, 0, 0],
-                    [1, 0, 0, 0]
-                ], dtype=np.float32)
-            elif tier == 2:
-                # Solid 2×2 center block
-                return np.array([
-                    [0, 0, 0, 0],
-                    [0, 1, 1, 0],
-                    [0, 1, 1, 0],
-                    [0, 0, 0, 0]
-                ], dtype=np.float32)
-            else:
-                # Original horizontal stripes for T3-4
-                return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
-
-        # Stone: \ diagonal T1, 2×2 solid T2, original X T3-4
-        if cat == 'stone':
-            if tier == 1:
-                # \ diagonal (top-left to bottom-right) — opposite to wood
-                return np.array([
-                    [1, 0, 0, 0],
-                    [0, 1, 0, 0],
-                    [0, 0, 1, 0],
-                    [0, 0, 0, 1]
-                ], dtype=np.float32)
-            elif tier == 2:
-                # Solid 2×2 center block
-                return np.array([
-                    [0, 0, 0, 0],
-                    [0, 1, 1, 0],
-                    [0, 1, 1, 0],
-                    [0, 0, 0, 0]
-                ], dtype=np.float32)
-            else:
-                # Original X pattern for T3-4
-                return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
-
-        # Metal: 2×2 solid T1-2, full 4×4 solid T3-4
-        # Brightness (value) distinguishes within each pair
-        if cat == 'metal':
-            if tier <= 2:
-                return np.array([
-                    [0, 0, 0, 0],
-                    [0, 1, 1, 0],
-                    [0, 1, 1, 0],
-                    [0, 0, 0, 0]
-                ], dtype=np.float32)
-            else:
-                return self.DEFAULT_SHAPE  # full 4×4 solid
-
-        # Monster_drop and elemental: hollow diamond T1-2, filled diamond T3-4
-        # Hollow→filled is the major shape transition; brightness within each pair
-        if cat in ('monster_drop', 'elemental'):
-            if tier <= 2:
-                # Hollow diamond outline — clearly distinct from filled T3-4
-                return np.array([
-                    [0, 1, 1, 0],
-                    [1, 0, 0, 1],
-                    [1, 0, 0, 1],
-                    [0, 1, 1, 0]
-                ], dtype=np.float32)
-            else:
-                # Filled diamond (existing CATEGORY_SHAPES pattern)
-                return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
-
-        # All other/unknown categories: full solid
-        return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
-
-    def _placement_to_grid(self, placement):
-        grid = [[None]*9 for _ in range(9)]
-        positions = [tuple(map(int, k.split(','))) for k in placement['placementMap']]
-        if not positions:
-            return grid
-        min_y, max_y = min(p[0] for p in positions), max(p[0] for p in positions)
-        min_x, max_x = min(p[1] for p in positions), max(p[1] for p in positions)
-        off_y = (9 - (max_y - min_y + 1)) // 2
-        off_x = (9 - (max_x - min_x + 1)) // 2
-        for pos_str, mat_id in placement['placementMap'].items():
-            y, x = map(int, pos_str.split(','))
-            fy, fx = off_y + (y - min_y), off_x + (x - min_x)
-            if 0 <= fy < 9 and 0 <= fx < 9:
-                grid[fy][fx] = mat_id
-        return grid
+        return self.processor.exact_augmentor.material_to_color(material_id)
 
     def _grid_to_image(self, grid, cell_size=4):
-        sz = 9 * cell_size
-        img = np.zeros((sz, sz, 3), dtype=np.float32)
-        for i in range(9):
-            for j in range(9):
-                mat = grid[i][j]
-                if mat is None:
-                    continue
-                color = self._material_to_color(mat)
-                if self.use_shapes:
-                    # Use tier-aware mask for better low-tier visibility
-                    mask = self._get_tier_aware_mask(mat, cell_size)
-                    for c in range(3):
-                        img[i*cell_size:(i+1)*cell_size, j*cell_size:(j+1)*cell_size, c] = color[c] * mask
-                else:
-                    img[i*cell_size:(i+1)*cell_size, j*cell_size:(j+1)*cell_size] = color
-        return img
+        return self.processor.grid_to_image(
+            grid,
+            self.processor.exact_augmentor.material_to_color,
+            cell_size,
+            use_shapes=self.use_shapes,
+        )
 
     def _render_recipe(self, recipe):
-        return self._grid_to_image(self._placement_to_grid(recipe))
+        return self._grid_to_image(self.processor.placement_to_grid(recipe))
 
     def get_materials_for_recipe(self, recipe):
         result = []
@@ -686,8 +506,6 @@ class SmithingVisualizerApp:
 
         for row, (cat, col_rgb, hue, sat) in enumerate(cats):
             for tier in range(1, 5):
-                # Build a mock material id lookup so we can call _get_tier_aware_mask
-                # via a synthetic entry — easier to just replicate the mask logic inline
                 mask = self._tier_legend_mask(cat, tier)
                 val  = {1: 0.50, 2: 0.65, 3: 0.80, 4: 0.95}[tier]
                 rgb  = hsv_to_rgb(hue / 360.0, sat, val)
@@ -717,7 +535,7 @@ class SmithingVisualizerApp:
 
     def _tier_legend_mask(self, cat, tier):
         """Return the tier-aware mask for the legend without needing a material lookup."""
-        SHAPES = self.viz.CATEGORY_SHAPES
+        SHAPES = self.viz.processor.CATEGORY_SHAPES
 
         if cat == 'wood':
             if tier == 1:
