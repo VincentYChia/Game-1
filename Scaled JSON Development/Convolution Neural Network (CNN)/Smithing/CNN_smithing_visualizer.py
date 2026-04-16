@@ -154,6 +154,42 @@ class SmithingDatasetVisualizer:
                 result.append((m.get('name', mat_id), m.get('category','?'), m.get('tier',1)))
         return result
 
+    def add_cell_borders(self, img, cell_size=4, border_boost=0.25):
+        """Add 1px borders between cells with boosted brightness.
+
+        Args:
+            img: 36x36x3 float image
+            cell_size: pixels per cell (4 for 9x9 grid)
+            border_boost: brightness boost for borders (0.0-1.0)
+
+        Returns:
+            Modified image with cell borders
+        """
+        img_bordered = img.copy()
+
+        # Draw vertical grid lines
+        for x in range(cell_size, 36, cell_size):
+            for y in range(36):
+                # Boost the brightness of border pixels
+                current = img_bordered[y, x]
+                if np.any(current > 0):
+                    # Brighten existing colors
+                    img_bordered[y, x] = np.clip(current + border_boost, 0, 1)
+                else:
+                    # Draw light gray on empty cells
+                    img_bordered[y, x] = np.full(3, 0.15)
+
+        # Draw horizontal grid lines
+        for y in range(cell_size, 36, cell_size):
+            for x in range(36):
+                current = img_bordered[y, x]
+                if np.any(current > 0):
+                    img_bordered[y, x] = np.clip(current + border_boost, 0, 1)
+                else:
+                    img_bordered[y, x] = np.full(3, 0.15)
+
+        return img_bordered
+
 
 class SmithingVisualizerApp:
     """Tkinter GUI for smithing dataset."""
@@ -172,6 +208,7 @@ class SmithingVisualizerApp:
         self.per_page = 25
         self.seed = 42
         self._items = []
+        self.show_borders = False
 
         self.root = tk.Tk()
         self.root.title("CNN Smithing Dataset Viewer")
@@ -290,6 +327,10 @@ class SmithingVisualizerApp:
         right = tk.Frame(parent, bg=self.BAR)
         right.pack(side='right', padx=12)
         tk.Button(right, text='⟳  Shuffle', command=self._shuffle, **btn_kw).pack(side='left', padx=4)
+        self._border_btn = tk.Button(right, text='🔲  Borders OFF', command=self._toggle_borders,
+                                      bg=self.PANEL, fg=self.FG_DIM, font=('Helvetica', 9),
+                                      relief='flat', padx=8, pady=4, cursor='hand2')
+        self._border_btn.pack(side='left', padx=4)
 
     def _switch_tab(self, tab):
         self.tab = tab
@@ -331,6 +372,13 @@ class SmithingVisualizerApp:
             self.seed = random.randint(0, 99999)
             self.page = 0
             self._refresh()
+
+    def _toggle_borders(self):
+        self.show_borders = not self.show_borders
+        self._border_btn.configure(text=f"🔲  Borders {'ON' if self.show_borders else 'OFF'}",
+                                   bg='#1a4080' if self.show_borders else self.PANEL,
+                                   fg=self.FG if self.show_borders else self.FG_DIM)
+        self._refresh()
 
     def _total_pages(self):
         if self.tab == 'original':
@@ -390,6 +438,10 @@ class SmithingVisualizerApp:
             ax.set_facecolor(self.BG)
             return
 
+        # Apply borders if enabled
+        if self.show_borders:
+            items = [(self.viz.add_cell_borders(img), label, recipe) for img, label, recipe in items]
+
         n = len(items)
         cols = max(1, int(np.ceil(np.sqrt(self.per_page))))
         rows = max(1, (self.per_page + cols - 1) // cols)
@@ -442,6 +494,8 @@ class SmithingVisualizerApp:
 
         for col, idx in enumerate(v_idx):
             img = self.viz.X_all[idx]
+            if self.show_borders:
+                img = self.viz.add_cell_borders(img)
             axes[0, col].imshow(img, interpolation='nearest')
             axes[0, col].set_title(f'V#{idx}', fontsize=7, color=self.TAB_COLORS['valid'], pad=2)
             axes[0, col].axis('off')
@@ -450,6 +504,8 @@ class SmithingVisualizerApp:
 
         for col, idx in enumerate(i_idx):
             img = self.viz.X_all[idx]
+            if self.show_borders:
+                img = self.viz.add_cell_borders(img)
             axes[1, col].imshow(img, interpolation='nearest')
             axes[1, col].set_title(f'X#{idx}', fontsize=7, color=self.TAB_COLORS['invalid'], pad=2)
             axes[1, col].axis('off')
