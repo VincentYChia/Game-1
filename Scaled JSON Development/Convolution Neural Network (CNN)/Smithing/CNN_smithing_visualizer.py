@@ -83,10 +83,27 @@ class SmithingDatasetVisualizer:
             hues = {'fire':0, 'water':210, 'earth':120, 'air':60, 'lightning':270, 'ice':180, 'light':45, 'dark':280, 'void':290, 'chaos':330}
             hue = next((hues[t] for t in tags if t in hues), 280)
         else:
-            hue = {'metal':210, 'wood':30, 'stone':0, 'monster_drop':300, 'gem':280, 'herb':120, 'fabric':45}.get(cat, 0)
+            hue = {
+                'metal': 210,
+                'wood':  45,   # bright yellow-orange (was 30, too brown)
+                'stone': 200,  # cool slate blue-gray (was 0/red, too muted)
+                'monster_drop': 300,
+                'gem': 280,
+                'herb': 120,
+                'fabric': 45,
+            }.get(cat, 0)
 
         value = {1: 0.50, 2: 0.65, 3: 0.80, 4: 0.95}.get(tier, 0.5)
-        sat = 0.2 if cat == 'stone' else 0.6
+
+        # Per-category saturation — stone very desaturated (slate look),
+        # wood boosted (was 0.6, too muddy at low tiers)
+        if cat == 'stone':
+            sat = 0.12
+        elif cat == 'wood':
+            sat = 0.75
+        else:
+            sat = 0.6
+
         if any(t in tags for t in ['legendary', 'mythical']):
             sat = min(1.0, sat + 0.2)
         elif any(t in tags for t in ['magical', 'ancient']):
@@ -127,24 +144,32 @@ class SmithingDatasetVisualizer:
         cat = mat.get('category', 'unknown')
         tier = mat.get('tier', 1)
 
-        # Wood: T1-2 stripe, T3-4 normal
+        # Wood: / diagonal T1, 2×2 solid T2, original stripes T3-4
         if cat == 'wood':
-            if tier <= 2:
-                # Simple horizontal stripe for T1-2
+            if tier == 1:
+                # / diagonal (top-right to bottom-left)
                 return np.array([
-                    [1, 1, 1, 1],
+                    [0, 0, 0, 1],
+                    [0, 0, 1, 0],
+                    [0, 1, 0, 0],
+                    [1, 0, 0, 0]
+                ], dtype=np.float32)
+            elif tier == 2:
+                # Solid 2×2 center block
+                return np.array([
                     [0, 0, 0, 0],
-                    [0, 0, 0, 0],
+                    [0, 1, 1, 0],
+                    [0, 1, 1, 0],
                     [0, 0, 0, 0]
                 ], dtype=np.float32)
             else:
-                # Keep original stripes for T3-4
+                # Original horizontal stripes for T3-4
                 return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
 
-        # Stone: T1 checkerboard, T2 solid, T3-4 normal
+        # Stone: \ diagonal T1, 2×2 solid T2, original X T3-4
         if cat == 'stone':
             if tier == 1:
-                # Checkerboard for T1
+                # \ diagonal (top-left to bottom-right) — opposite to wood
                 return np.array([
                     [1, 0, 0, 0],
                     [0, 1, 0, 0],
@@ -152,7 +177,7 @@ class SmithingDatasetVisualizer:
                     [0, 0, 0, 1]
                 ], dtype=np.float32)
             elif tier == 2:
-                # Solid 2x2 in center for T2
+                # Solid 2×2 center block
                 return np.array([
                     [0, 0, 0, 0],
                     [0, 1, 1, 0],
@@ -160,7 +185,7 @@ class SmithingDatasetVisualizer:
                     [0, 0, 0, 0]
                 ], dtype=np.float32)
             else:
-                # Keep original X for T3-4
+                # Original X pattern for T3-4
                 return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
 
         # All other materials: use standard shape masks
