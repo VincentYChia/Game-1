@@ -5,19 +5,62 @@ Generates training data for:
 - VLM (Vision-Language Models): Smithing & Adornments (images + recipes → item JSON)
 - LLM (Language Models): Refining, Alchemy, Engineering (recipes → item JSON)
 
+===========================================================================
+FULL PIPELINE — run these steps in order when rebuilding training data
+===========================================================================
+
+STEP 1 — Regenerate input data (this file)
+    cd "Scaled JSON Development/LLM Training Data"
+    python crafting_training_data.py --mode 4 --discipline smithing adornment --output ./Synthetic_Training/
+
+    Mode 4 = quality-ordered. Reads placement JSONs, writes:
+      Synthetic_Training/smithing_custom_data.json   (indexed inputs + base64 images)
+      Synthetic_Training/adornment_custom_data.json  (indexed inputs + base64 images)
+
+    Only re-run for LLM-only disciplines if their placements changed:
+      python crafting_training_data.py --mode 4 --discipline alchemy refining engineering --output ./Synthetic_Training/
+
+STEP 2 — Ensure outputs exist
+    Synthetic_Training/Synthetic_outputs/{discipline}/*.json must be present.
+    These are LLM-generated item definitions (the TARGET side of each training pair).
+    They are matched to inputs by "index" field — do NOT renumber or reorder them.
+    Only regenerate outputs via the Ollama inference pipeline if adding new recipes.
+
+STEP 3 — Match inputs → outputs and convert to JSONL (convert_to_jsonl.py)
+    python convert_to_jsonl.py
+    When prompted, select "All files".
+    Writes to: jsonl_outputs/
+      all_combined.jsonl, all_train.jsonl, all_validation.jsonl
+      {discipline}.jsonl, {discipline}_train.jsonl, {discipline}_validation.jsonl
+    Split: 80/20 train/val, seed=42 (reproducible).
+
+STEP 4 — Upload to Together.ai
+    Use {discipline}_train.jsonl + {discipline}_validation.jsonl per discipline,
+    or all_train.jsonl + all_validation.jsonl for a combined model.
+
+===========================================================================
+IMAGE RENDERING — source of truth and duplicates
+===========================================================================
+The ImageGenerator class below encodes category→hue, tier→brightness,
+tags→saturation, and renders tier-aware shape masks per cell.
+
+SOURCE OF TRUTH:
+  Scaled JSON Development/Convolution Neural Network (CNN)/Smithing/valid_smithing_data_v2.py
+  (ColorAugmentor + RecipeDataProcessorV2)
+
+DUPLICATES that must be kept in sync when changing colors or masks:
+  THIS FILE                               ImageGenerator class
+  Game-1-modular/systems/crafting_classifier.py   MaterialColorEncoder + SmithingImageRenderer
+
+Images are upscaled 8x with NEAREST resampling before base64 encoding
+(smithing 36×36 → 288×288, adornment 56×56 → 448×448) for VLM readability.
+===========================================================================
+
 Key Features:
-- Base64-encoded PNG images for VLM training (max 10MB each)
+- Base64-encoded PNG images for VLM training
 - Material-enriched recipe format with full metadata
 - Natural variation naming (light_iron_ingot, shiny_copper_ingot, etc.)
 - Automatic tag augmentation with variation descriptors
-
-Output Format:
-- Structured JSON matching material_enricher.py format
-- Tags are preserved and augmented with variation descriptors
-
-Usage:
-    python crafting_training_data.py --discipline smithing --output ./Synthetic_Training/
-    python crafting_training_data.py --discipline all --output ./Synthetic_Training/
 
 Author: Claude
 Created: 2026-02-04
