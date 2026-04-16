@@ -110,6 +110,62 @@ class SmithingDatasetVisualizer:
         mask[off:off+fill_size, off:off+fill_size] = 1.0
         return mask
 
+    def _get_tier_aware_mask(self, material_id, cell_size=4):
+        """Get shape mask with tier-aware patterns for better low-tier visibility.
+
+        Args:
+            material_id: Material ID
+            cell_size: Cell size (usually 4)
+
+        Returns:
+            4x4 float mask for the material
+        """
+        if material_id is None or material_id not in self.materials_dict:
+            return self.DEFAULT_SHAPE
+
+        mat = self.materials_dict[material_id]
+        cat = mat.get('category', 'unknown')
+        tier = mat.get('tier', 1)
+
+        # Wood: T1-2 stripe, T3-4 normal
+        if cat == 'wood':
+            if tier <= 2:
+                # Simple horizontal stripe for T1-2
+                return np.array([
+                    [1, 1, 1, 1],
+                    [0, 0, 0, 0],
+                    [0, 0, 0, 0],
+                    [0, 0, 0, 0]
+                ], dtype=np.float32)
+            else:
+                # Keep original stripes for T3-4
+                return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
+
+        # Stone: T1 checkerboard, T2 solid, T3-4 normal
+        if cat == 'stone':
+            if tier == 1:
+                # Checkerboard for T1
+                return np.array([
+                    [1, 0, 0, 0],
+                    [0, 1, 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 0, 0, 1]
+                ], dtype=np.float32)
+            elif tier == 2:
+                # Solid 2x2 in center for T2
+                return np.array([
+                    [0, 0, 0, 0],
+                    [0, 1, 1, 0],
+                    [0, 1, 1, 0],
+                    [0, 0, 0, 0]
+                ], dtype=np.float32)
+            else:
+                # Keep original X for T3-4
+                return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
+
+        # All other materials: use standard shape masks
+        return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
+
     def _placement_to_grid(self, placement):
         grid = [[None]*9 for _ in range(9)]
         positions = [tuple(map(int, k.split(','))) for k in placement['placementMap']]
@@ -136,9 +192,10 @@ class SmithingDatasetVisualizer:
                     continue
                 color = self._material_to_color(mat)
                 if self.use_shapes:
-                    combined = self._get_shape_mask(mat) * self._get_tier_fill_mask(mat, cell_size)
+                    # Use tier-aware mask for better low-tier visibility
+                    mask = self._get_tier_aware_mask(mat, cell_size)
                     for c in range(3):
-                        img[i*cell_size:(i+1)*cell_size, j*cell_size:(j+1)*cell_size, c] = color[c] * combined
+                        img[i*cell_size:(i+1)*cell_size, j*cell_size:(j+1)*cell_size, c] = color[c] * mask
                 else:
                     img[i*cell_size:(i+1)*cell_size, j*cell_size:(j+1)*cell_size] = color
         return img
