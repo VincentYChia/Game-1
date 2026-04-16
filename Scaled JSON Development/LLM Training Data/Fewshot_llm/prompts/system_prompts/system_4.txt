@@ -10,6 +10,8 @@ Generate a JSON object following this structure. Stay within tier limits and sta
     "narrative": "Short narrative about the item (2-3 sentences). Describe its purpose and feel.",
     "tags": ["Pick 2-5 from: "advanced", "area", "basic", "bomb", "cluster", "device", "elemental", "explosive", "fire", "frost", "immobilize", "light", "lightning", "physical", "precision", "projectile", "trap", "turret"]
   },
+"itemId": "itemId_here",
+ "name": "item name here",
   "category": "Pick one: ["device"]",
   "subtype": "Pick one: ["area", "elemental", "energy", "explosive", "physical", "projectile"]",
   "type": "Pick one: ["bomb", "trap", "turret"]",

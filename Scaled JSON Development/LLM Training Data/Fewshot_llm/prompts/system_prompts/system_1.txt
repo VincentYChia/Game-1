@@ -10,6 +10,8 @@ Generate a JSON object following this template, there is a library of tags to se
     "narrative": "Short narrative about the item (2-3 sentences). Describe its purpose and feel.",
     "tags": ["Pick 2-5 from: "1H", "2H", "accessory", "alchemy", "amulet", "armor", "armor_breaker", "axe", "bash", "bow", "bracelet", "brewing", "chest", "cleaving", "crushing", "dagger", "defensive", "elemental", "engineering", "fast", "feet", "fire", "flexible", "forge", "forging", "hands", "head", "heavy", "legendary", "legs", "light", "lightning", "mace", "master", "mechanical", "melee", "metal", "pickaxe", "precision", "quality", "ranged", "reach", "refinery", "ring", "shield", "smithing", "spear", "staff", "standard", "starter", "station", "sword", "tool", "versatile", "water"]
   },
+"itemId": "itemId_here",
+ "name": "item name here",
   "category": "Pick one: ["equipment", "station"]",
   "slot": "Pick one: ["accessory", "chest", "feet", "hands", "head", "legs", "mainHand"]", (for tools omit the slot selection entirely, skip from category straight to type)
   "type": "Pick one: ["accessory", "alchemy", "armor", "axe", "bow", "dagger", "engineering", "mace", "refining", "shield", "smithing", "staff", "tool", "weapon"]",
