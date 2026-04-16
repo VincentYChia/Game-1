@@ -190,6 +190,21 @@ class SmithingDatasetVisualizer:
 
         return img_bordered
 
+    def set_white_background(self, img):
+        """Convert black background to white, keeping material colors.
+
+        Args:
+            img: 36x36x3 float image with black (0,0,0) background
+
+        Returns:
+            Image with white (1,1,1) background
+        """
+        img_white = img.copy()
+        # Detect black/near-black pixels (all channels < 0.05)
+        black_mask = np.all(img < 0.05, axis=2)
+        img_white[black_mask] = 1.0  # Replace with white
+        return img_white
+
 
 class SmithingVisualizerApp:
     """Tkinter GUI for smithing dataset."""
@@ -209,6 +224,7 @@ class SmithingVisualizerApp:
         self.seed = 42
         self._items = []
         self.show_borders = False
+        self.white_background = False
 
         self.root = tk.Tk()
         self.root.title("CNN Smithing Dataset Viewer")
@@ -331,6 +347,10 @@ class SmithingVisualizerApp:
                                       bg=self.PANEL, fg=self.FG_DIM, font=('Helvetica', 9),
                                       relief='flat', padx=8, pady=4, cursor='hand2')
         self._border_btn.pack(side='left', padx=4)
+        self._white_btn = tk.Button(right, text='⬜  BG: Black', command=self._toggle_background,
+                                     bg=self.PANEL, fg=self.FG_DIM, font=('Helvetica', 9),
+                                     relief='flat', padx=8, pady=4, cursor='hand2')
+        self._white_btn.pack(side='left', padx=4)
 
     def _switch_tab(self, tab):
         self.tab = tab
@@ -378,6 +398,14 @@ class SmithingVisualizerApp:
         self._border_btn.configure(text=f"🔲  Borders {'ON' if self.show_borders else 'OFF'}",
                                    bg='#1a4080' if self.show_borders else self.PANEL,
                                    fg=self.FG if self.show_borders else self.FG_DIM)
+        self._refresh()
+
+    def _toggle_background(self):
+        self.white_background = not self.white_background
+        bg_text = 'White' if self.white_background else 'Black'
+        self._white_btn.configure(text=f"⬜  BG: {bg_text}",
+                                  bg='#1a4080' if self.white_background else self.PANEL,
+                                  fg=self.FG if self.white_background else self.FG_DIM)
         self._refresh()
 
     def _total_pages(self):
@@ -438,9 +466,16 @@ class SmithingVisualizerApp:
             ax.set_facecolor(self.BG)
             return
 
-        # Apply borders if enabled
-        if self.show_borders:
-            items = [(self.viz.add_cell_borders(img), label, recipe) for img, label, recipe in items]
+        # Apply background and borders if enabled
+        if self.white_background or self.show_borders:
+            processed = []
+            for img, label, recipe in items:
+                if self.white_background:
+                    img = self.viz.set_white_background(img)
+                if self.show_borders:
+                    img = self.viz.add_cell_borders(img)
+                processed.append((img, label, recipe))
+            items = processed
 
         n = len(items)
         cols = max(1, int(np.ceil(np.sqrt(self.per_page))))
@@ -494,6 +529,8 @@ class SmithingVisualizerApp:
 
         for col, idx in enumerate(v_idx):
             img = self.viz.X_all[idx]
+            if self.white_background:
+                img = self.viz.set_white_background(img)
             if self.show_borders:
                 img = self.viz.add_cell_borders(img)
             axes[0, col].imshow(img, interpolation='nearest')
@@ -504,6 +541,8 @@ class SmithingVisualizerApp:
 
         for col, idx in enumerate(i_idx):
             img = self.viz.X_all[idx]
+            if self.white_background:
+                img = self.viz.set_white_background(img)
             if self.show_borders:
                 img = self.viz.add_cell_borders(img)
             axes[1, col].imshow(img, interpolation='nearest')
