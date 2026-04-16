@@ -187,6 +187,21 @@ class TurretSystem:
         if enemy.current_health <= 0:
             enemy.is_alive = False
             enemy.current_health = 0
+            # Route turret kills through the WMS combat pipeline
+            try:
+                from events.event_bus import get_event_bus
+                defn = enemy.definition
+                get_event_bus().publish("ENEMY_KILLED", {
+                    "enemy_id": getattr(defn, 'enemy_id', getattr(defn, 'name', 'unknown')),
+                    "enemy_type": getattr(defn, 'name', 'unknown'),
+                    "tier": getattr(defn, 'tier', 1),
+                    "is_boss": getattr(defn, 'is_boss', False),
+                    "source": "turret",
+                    "position_x": float(enemy.position[0]),
+                    "position_y": float(enemy.position[1]),
+                })
+            except Exception:
+                pass
 
     def get_turret_target_line(self, turret: PlacedEntity) -> Optional[tuple]:
         """Get line from turret to its target for rendering"""

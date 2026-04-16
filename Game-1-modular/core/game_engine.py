@@ -2233,6 +2233,20 @@ class GameEngine:
                                         else:
                                             self.character.inventory.slots[idx] = None
 
+                                        # Publish TURRET_PLACED to WMS pipeline
+                                        if entity_type == PlacedEntityType.TURRET:
+                                            try:
+                                                from events.event_bus import get_event_bus
+                                                get_event_bus().publish("TURRET_PLACED", {
+                                                    "item_id": item_stack.item_id,
+                                                    "tier": mat_def.tier if mat_def else 1,
+                                                    "tags": effect_tags,
+                                                    "position_x": float(player_pos.x),
+                                                    "position_y": float(player_pos.y),
+                                                })
+                                            except Exception:
+                                                pass
+
                                         self.add_notification(f"Placed {mat_def.name}", (100, 255, 100))
                                         print(f"✓ Placed {mat_def.name} at player position")
                                     elif mat_def and mat_def.category == "consumable":
@@ -6656,9 +6670,18 @@ class GameEngine:
                         self.character.inventory.dragging_stack = None
                         self.character.inventory.dragging_slot = None
 
-                        # Track barrier placement in stat tracker
+                        # Track barrier placement in stat tracker + publish WMS event
                         if hasattr(self.character, 'stat_tracker'):
                             self.character.stat_tracker.record_barrier_placed(dragging_stack.item_id)
+                        try:
+                            from events.event_bus import get_event_bus
+                            get_event_bus().publish("BARRIER_PLACED", {
+                                "material_id": dragging_stack.item_id,
+                                "position_x": float(wx),
+                                "position_y": float(wy),
+                            })
+                        except Exception:
+                            pass
 
                         self.add_notification(f"Placed {mat_def.name} barrier", (100, 255, 100))
                         print(f"✓ Placed {mat_def.name} barrier at ({wx:.1f}, {wy:.1f})")
@@ -7464,6 +7487,17 @@ class GameEngine:
             if hasattr(self.character, 'stat_tracker') and not hasattr(chest, '_tracked'):
                 chest._tracked = True
                 self.character.stat_tracker.record_dungeon_chest_opened(quantity)
+                # Publish CHEST_OPENED to WMS pipeline
+                try:
+                    from events.event_bus import get_event_bus
+                    get_event_bus().publish("CHEST_OPENED", {
+                        "chest_id": str(id(chest)),
+                        "chest_type": "dungeon",
+                        "position_x": float(getattr(self.character, 'x', 0)),
+                        "position_y": float(getattr(self.character, 'y', 0)),
+                    })
+                except Exception:
+                    pass
 
             return True
         else:
@@ -11054,7 +11088,7 @@ class GameEngine:
 
             self.add_notification(f"{result.get('quality_tier', 'Good')} catch!", (100, 255, 150))
 
-            # Track fishing success in stat tracker
+            # Track fishing success in stat tracker + publish WMS event
             if hasattr(self.character, 'stat_tracker'):
                 tracker = self.character.stat_tracker
                 fishing_tier = self.fishing_spot.tier if self.fishing_spot else 1
@@ -11062,6 +11096,25 @@ class GameEngine:
                 # Record each loot item as a fish caught
                 for item_id, qty in process_result.get('loot', []):
                     tracker.record_fish_caught(item_id, qty, fishing_tier, rarity, 0)
+
+            # Publish FISH_CAUGHT to WMS pipeline (one event per catch session)
+            if process_result.get('loot'):
+                try:
+                    from events.event_bus import get_event_bus
+                    fishing_tier = self.fishing_spot.tier if self.fishing_spot else 1
+                    rarity = result.get('quality_tier', 'common').lower()
+                    loot = process_result.get('loot', [])
+                    primary_fish = loot[0][0] if loot else "fish"
+                    get_event_bus().publish("FISH_CAUGHT", {
+                        "fish_id": primary_fish,
+                        "quantity": sum(qty for _, qty in loot),
+                        "tier": fishing_tier,
+                        "rarity": rarity,
+                        "position_x": float(getattr(self.character, 'x', 0)),
+                        "position_y": float(getattr(self.character, 'y', 0)),
+                    })
+                except Exception:
+                    pass
 
             # Check for new titles based on fishing achievements
             new_title = self.character.titles.check_for_title(self.character)

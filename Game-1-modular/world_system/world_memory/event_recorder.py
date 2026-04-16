@@ -262,6 +262,22 @@ class EventRecorder:
         if mem_type == EventType.QUEST_COMPLETED:
             return f"completed_{data.get('quest_id', 'unknown')}"
 
+        if mem_type == EventType.FISH_CAUGHT:
+            fish_id = data.get("fish_id", data.get("resource_id", "unknown"))
+            return f"caught_{fish_id}"
+
+        if mem_type == EventType.CHEST_OPENED:
+            chest_type = data.get("chest_type", "chest")
+            return f"opened_{chest_type}"
+
+        if mem_type == EventType.TURRET_PLACED:
+            item_id = data.get("item_id", "unknown")
+            return f"placed_{item_id}"
+
+        if mem_type == EventType.BARRIER_PLACED:
+            material_id = data.get("material_id", data.get("item_id", "unknown"))
+            return f"placed_{material_id}"
+
         return mem_type.value
 
     def _build_event_tags(self, event, mem_type: EventType) -> List[str]:
@@ -315,6 +331,22 @@ class EventRecorder:
         # Quest tags
         if "quest_id" in data and data["quest_id"]:
             tags.append(f"quest:{data['quest_id']}")
+
+        # Rarity tags (fishing / chest loot)
+        if "rarity" in data and data["rarity"]:
+            tags.append(f"rarity:{data['rarity']}")
+
+        # Source tag (turret kills routed through ENEMY_KILLED)
+        if "source" in data and data["source"]:
+            tags.append(f"source:{data['source']}")
+
+        # Engineering / defense domain
+        if mem_type in (EventType.TURRET_PLACED, EventType.BARRIER_PLACED):
+            tags.append("domain:engineering")
+        if mem_type == EventType.FISH_CAUGHT:
+            tags.append("domain:fishing")
+        if mem_type == EventType.CHEST_OPENED:
+            tags.append("domain:exploration")
 
         # Skill tags (from game tag system)
         if "tags" in data and isinstance(data["tags"], list):

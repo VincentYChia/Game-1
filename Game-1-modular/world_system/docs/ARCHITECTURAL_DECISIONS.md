@@ -311,6 +311,16 @@ full list.
 
 ## 7. Document History
 
+- **2026-04-16 (Layer 7 completion)**: Layer 7 world-level aggregation
+  completed. 195 tests passing (54 L3 + 39 L4 + 37 L5 + 36 L6 + 29 L7).
+  Added `WorldSummaryEvent` dataclass, `Layer7Manager` and
+  `Layer7Summarizer` following the identical mechanical pattern as Layer 6.
+  Single per-world trigger bucket (`layer7_world_world_0`) with 200-pt
+  threshold (25 events @ 8pts/event), two-layers-down L5 visibility. No
+  Layer 8 callback (final tier). `wms_ai.py` and `prompt_assembler.py`
+  updated with L7 dispatch and `assemble_l7`. Test suite in `test_layer7.py`
+  (29 tests) covers dataclass, summarizer, manager, integration, and prompt
+  assembly. HANDOFF_STATUS.md playbook replaced with completion summary.
 - **2026-04-16 (Layer 6 completion)**: Layer 6 nation-level aggregation
   completed. 166 tests passing (54 L3 + 39 L4 + 37 L5 + 36 L6). Added
   `NationSummaryEvent` dataclass, `Layer6Manager` and `Layer6Summarizer`
@@ -319,8 +329,7 @@ full list.
   L5→L6 callback wired. `wms_ai.py` updated with L6 dispatch,
   `prompt_assembler.py` with `assemble_l6`, `memory-config.json` with
   L6 config. Test suite in `test_layer6.py` (36 tests) covers dataclass,
-  summarizer, manager, integration, and prompt assembly. Layer 7 playbook
-  sketched in HANDOFF_STATUS.md.
+  summarizer, manager, integration, and prompt assembly.
 - **2026-04-16 (earlier)**: Added §6 formalizing the 1-tier-per-layer
   aggregation rule and address-tag immutability rule. Aligned WMS
   hierarchy 1:1 with the game's geography system

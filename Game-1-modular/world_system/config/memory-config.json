@@ -95,6 +95,13 @@
     "description": "Layer 6 nation summarization config (game Nation tier). Same per-nation WeightedTriggerBucket pattern as Layer 5 but one tier coarser. trigger_threshold defaults to 200 (higher than Layer 5's 100) because nation summaries should be rarer than region summaries. max_l5_per_nation = max L5 events included in prompt. max_l4_relevance = max Layer 4 supporting-detail events (two-layers-down visibility, filtered by fired-tag overlap). min_regions_contributing = optional minimum region diversity gate. NOTE: defaults are placeholders — real tuning happens after the full WMS is built."
   },
 
+  "layer7": {
+    "trigger_threshold": 200,
+    "max_l6_per_world": 20,
+    "max_l5_relevance": 8,
+    "description": "Layer 7 world summarization config (game World tier, singleton). Same WeightedTriggerBucket pattern as Layer 6 but single world bucket. trigger_threshold defaults to 200 (same as Layer 6 — world summaries are the rarest tier). max_l6_per_world = max L6 nation events included in prompt. max_l5_relevance = max Layer 5 supporting-detail events (two-layers-down visibility, filtered by fired-tag overlap). L6 events carry scope:nation at pos 0 (structural skip), so first content tag lands at pos 1 = 8 pts — threshold 200 fires after 25 events. NOTE: defaults are placeholders — real tuning happens after the full WMS is built."
+  },
+
   "evaluators": {
     "population_change": {
       "enabled": true,
@@ -323,6 +330,56 @@
       "enabled": true,
       "thresholds": {"minimum_trigger": 1, "moderate_min": 5, "significant_min": 20, "major_min": 50},
       "description": "Narrates per-item acquisition and consumption counts."
+    },
+
+    "fishing_activity": {
+      "enabled": true,
+      "lookback_time": 80.0,
+      "expiration_offset": 120.0,
+      "thresholds": {
+        "minor_max": 3,
+        "moderate_max": 10,
+        "significant_max": 25
+      },
+      "narrative_templates": {
+        "with_region": "Player has caught {count} fish in {region}.",
+        "no_region": "Player has caught {count} fish."
+      },
+      "description": "Narrates fish catch counts in a locality. Rare/legendary catches boost severity by one tier."
+    },
+
+    "turret_activity": {
+      "enabled": true,
+      "lookback_time": 80.0,
+      "expiration_offset": 120.0,
+      "thresholds": {
+        "minor_max": 3,
+        "moderate_max": 8,
+        "significant_max": 20
+      },
+      "narrative_templates": {
+        "turret_with_region": "Player has placed {count} turrets in {region}.",
+        "turret_no_region": "Player has placed {count} turrets.",
+        "barrier_with_region": "Player has placed {count} barriers in {region}.",
+        "barrier_no_region": "Player has placed {count} barriers."
+      },
+      "description": "Narrates turret and barrier placement counts in a locality. T3/T4 deployments boost severity by one tier."
+    },
+
+    "chest_loot": {
+      "enabled": true,
+      "lookback_time": 100.0,
+      "expiration_offset": 150.0,
+      "thresholds": {
+        "minor_max": 3,
+        "moderate_max": 8,
+        "significant_max": 15
+      },
+      "narrative_templates": {
+        "with_region": "Player has opened {count} chests in {region}.",
+        "no_region": "Player has opened {count} chests."
+      },
+      "description": "Narrates chest opening counts in a locality. Dungeon/boss chests guarantee at least moderate severity."
     }
   }
 }
