@@ -5,19 +5,62 @@ Generates training data for:
 - VLM (Vision-Language Models): Smithing & Adornments (images + recipes → item JSON)
 - LLM (Language Models): Refining, Alchemy, Engineering (recipes → item JSON)
 
+===========================================================================
+FULL PIPELINE — run these steps in order when rebuilding training data
+===========================================================================
+
+STEP 1 — Regenerate input data (this file)
+    cd "Scaled JSON Development/LLM Training Data"
+    python crafting_training_data.py --mode 4 --discipline smithing adornment --output ./Synthetic_Training/
+
+    Mode 4 = quality-ordered. Reads placement JSONs, writes:
+      Synthetic_Training/smithing_custom_data.json   (indexed inputs + base64 images)
+      Synthetic_Training/adornment_custom_data.json  (indexed inputs + base64 images)
+
+    Only re-run for LLM-only disciplines if their placements changed:
+      python crafting_training_data.py --mode 4 --discipline alchemy refining engineering --output ./Synthetic_Training/
+
+STEP 2 — Ensure outputs exist
+    Synthetic_Training/Synthetic_outputs/{discipline}/*.json must be present.
+    These are LLM-generated item definitions (the TARGET side of each training pair).
+    They are matched to inputs by "index" field — do NOT renumber or reorder them.
+    Only regenerate outputs via the Ollama inference pipeline if adding new recipes.
+
+STEP 3 — Match inputs → outputs and convert to JSONL (convert_to_jsonl.py)
+    python convert_to_jsonl.py
+    When prompted, select "All files".
+    Writes to: jsonl_outputs/
+      all_combined.jsonl, all_train.jsonl, all_validation.jsonl
+      {discipline}.jsonl, {discipline}_train.jsonl, {discipline}_validation.jsonl
+    Split: 80/20 train/val, seed=42 (reproducible).
+
+STEP 4 — Upload to Together.ai
+    Use {discipline}_train.jsonl + {discipline}_validation.jsonl per discipline,
+    or all_train.jsonl + all_validation.jsonl for a combined model.
+
+===========================================================================
+IMAGE RENDERING — source of truth and duplicates
+===========================================================================
+The ImageGenerator class below encodes category→hue, tier→brightness,
+tags→saturation, and renders tier-aware shape masks per cell.
+
+SOURCE OF TRUTH:
+  Scaled JSON Development/Convolution Neural Network (CNN)/Smithing/valid_smithing_data_v2.py
+  (ColorAugmentor + RecipeDataProcessorV2)
+
+DUPLICATES that must be kept in sync when changing colors or masks:
+  THIS FILE                               ImageGenerator class
+  Game-1-modular/systems/crafting_classifier.py   MaterialColorEncoder + SmithingImageRenderer
+
+Images are upscaled 8x with NEAREST resampling before base64 encoding
+(smithing 36×36 → 288×288, adornment 56×56 → 448×448) for VLM readability.
+===========================================================================
+
 Key Features:
-- Base64-encoded PNG images for VLM training (max 10MB each)
+- Base64-encoded PNG images for VLM training
 - Material-enriched recipe format with full metadata
 - Natural variation naming (light_iron_ingot, shiny_copper_ingot, etc.)
 - Automatic tag augmentation with variation descriptors
-
-Output Format:
-- Structured JSON matching material_enricher.py format
-- Tags are preserved and augmented with variation descriptors
-
-Usage:
-    python crafting_training_data.py --discipline smithing --output ./Synthetic_Training/
-    python crafting_training_data.py --discipline all --output ./Synthetic_Training/
 
 Author: Claude
 Created: 2026-02-04
@@ -297,11 +340,16 @@ class ImageGenerator:
     Uses HSV color encoding with natural variation names.
     """
 
+    # *** DUPLICATE — source of truth is valid_smithing_data_v2.py (ColorAugmentor) ***
+    # If you change colors/shapes here, mirror them in:
+    #   Scaled JSON Development/Convolution Neural Network (CNN)/Smithing/valid_smithing_data_v2.py
+    #   Game-1-modular/systems/crafting_classifier.py (MaterialColorEncoder + SmithingImageRenderer)
+
     # Category hues (CONSTANT - encodes category)
     CATEGORY_HUES = {
         'metal': 210,
-        'wood': 30,
-        'stone': 0,
+        'wood': 45,    # bright yellow-orange (was 30, too brown)
+        'stone': 200,  # cool slate blue-gray (was 0/red, too muted)
         'monster_drop': 300,
         'gem': 280,
         'herb': 120,
@@ -362,7 +410,9 @@ class ImageGenerator:
         # Saturation from tags
         saturation = 0.6
         if category == 'stone':
-            saturation = 0.2
+            saturation = 0.12   # very desaturated slate look
+        elif category == 'wood':
+            saturation = 0.75   # vivid yellow-orange
         if 'legendary' in tags or 'mythical' in tags:
             saturation = min(1.0, saturation + 0.2)
         elif 'magical' in tags or 'ancient' in tags:
@@ -404,44 +454,62 @@ class ImageGenerator:
         rgb = hsv_to_rgb(hue / 360.0, saturation, value)
         return np.array(rgb)
 
-    def get_shape_mask(self, material_id: str) -> np.ndarray:
-        """Get 4x4 shape mask for a material's category."""
-        base_id = material_id
-        # Handle variation prefixes
+    def _resolve_base_id(self, material_id: str) -> str:
+        """Strip variation prefixes to get the canonical material ID."""
         for prefix_pair in VariationNamer.BRIGHTNESS_PREFIXES + VariationNamer.SATURATION_PREFIXES + \
-                          VariationNamer.ELEMENTAL_PREFIXES + VariationNamer.QUALITY_PREFIXES:
+                           VariationNamer.ELEMENTAL_PREFIXES + VariationNamer.QUALITY_PREFIXES:
             for prefix in prefix_pair:
                 if material_id.startswith(f"{prefix}_"):
-                    base_id = material_id[len(prefix) + 1:]
-                    break
+                    return material_id[len(prefix) + 1:]
+        return material_id
 
+    def get_tier_aware_mask(self, material_id: str) -> np.ndarray:
+        """
+        Tier-aware 4×4 shape mask. MUST MATCH valid_smithing_data_v2.get_tier_aware_mask().
+
+          wood:         T1=/ diagonal, T2=2×2 solid, T3-4=horizontal stripes
+          stone:        T1=\\ diagonal, T2=2×2 solid, T3-4=X pattern
+          metal:        T1-2=2×2 solid, T3-4=full 4×4 solid
+          monster_drop: T1-2=hollow diamond, T3-4=filled diamond
+          elemental:    T1-2=hollow diamond, T3-4=filled diamond
+        """
+        base_id = self._resolve_base_id(material_id)
         if base_id not in self.materials_dict:
             return np.ones((4, 4), dtype=np.float32)
 
-        category = self.materials_dict[base_id].get('category', 'unknown')
-        return self.CATEGORY_SHAPES.get(category, np.ones((4, 4), dtype=np.float32))
+        mat = self.materials_dict[base_id]
+        cat = mat.get('category', 'unknown')
+        tier = mat.get('tier', 1)
 
-    def get_tier_fill_mask(self, material_id: str, cell_size: int = 4) -> np.ndarray:
-        """Get tier-based fill mask."""
-        base_id = material_id
-        for prefix_pair in VariationNamer.BRIGHTNESS_PREFIXES + VariationNamer.SATURATION_PREFIXES + \
-                          VariationNamer.ELEMENTAL_PREFIXES + VariationNamer.QUALITY_PREFIXES:
-            for prefix in prefix_pair:
-                if material_id.startswith(f"{prefix}_"):
-                    base_id = material_id[len(prefix) + 1:]
-                    break
+        if cat == 'wood':
+            if tier == 1:
+                return np.array([[0,0,0,1],[0,0,1,0],[0,1,0,0],[1,0,0,0]], dtype=np.float32)
+            elif tier == 2:
+                return np.array([[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]], dtype=np.float32)
+            else:
+                return self.CATEGORY_SHAPES.get(cat, np.ones((4, 4), dtype=np.float32))
 
-        if base_id not in self.materials_dict:
-            return np.zeros((cell_size, cell_size), dtype=np.float32)
+        if cat == 'stone':
+            if tier == 1:
+                return np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], dtype=np.float32)
+            elif tier == 2:
+                return np.array([[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]], dtype=np.float32)
+            else:
+                return self.CATEGORY_SHAPES.get(cat, np.ones((4, 4), dtype=np.float32))
 
-        tier = self.materials_dict[base_id].get('tier', 1)
-        fill_size = self.TIER_FILL_SIZES.get(tier, 4)
+        if cat == 'metal':
+            if tier <= 2:
+                return np.array([[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]], dtype=np.float32)
+            else:
+                return np.ones((4, 4), dtype=np.float32)
 
-        mask = np.zeros((cell_size, cell_size), dtype=np.float32)
-        offset = (cell_size - fill_size) // 2
-        mask[offset:offset+fill_size, offset:offset+fill_size] = 1.0
+        if cat in ('monster_drop', 'elemental'):
+            if tier <= 2:
+                return np.array([[0,1,1,0],[1,0,0,1],[1,0,0,1],[0,1,1,0]], dtype=np.float32)
+            else:
+                return self.CATEGORY_SHAPES.get(cat, np.ones((4, 4), dtype=np.float32))
 
-        return mask
+        return self.CATEGORY_SHAPES.get(cat, np.ones((4, 4), dtype=np.float32))
 
 
 # ============================================================================
@@ -562,10 +630,7 @@ class SmithingVLMDataGenerator:
                     continue
 
                 color = self.image_gen.material_to_color(material_id, value_offset, sat_offset)
-                shape_mask = self.image_gen.get_shape_mask(material_id)
-                tier_mask = self.image_gen.get_tier_fill_mask(material_id, cell_size)
-
-                combined_mask = shape_mask * tier_mask
+                combined_mask = self.image_gen.get_tier_aware_mask(material_id)
 
                 cell = np.zeros((cell_size, cell_size, 3), dtype=np.float32)
                 for c in range(3):
@@ -576,23 +641,23 @@ class SmithingVLMDataGenerator:
 
         return img
 
-    def image_to_base64(self, img_array: np.ndarray) -> str:
-        """Convert numpy array to base64-encoded PNG."""
+    def image_to_base64(self, img_array: np.ndarray, upscale: int = 8) -> str:
+        """Convert numpy array to base64-encoded PNG, upscaled for VLM readability."""
         if not PIL_AVAILABLE:
             raise RuntimeError("PIL required for image generation")
 
-        # Convert to 8-bit RGB
         img_uint8 = (img_array * 255).astype(np.uint8)
         img = Image.fromarray(img_uint8, mode='RGB')
 
-        # Save to buffer
+        # Upscale with NEAREST to preserve pixel-art sharpness (36x36 → 288x288)
+        new_size = (img.width * upscale, img.height * upscale)
+        img = img.resize(new_size, Image.NEAREST)
+
         buffer = io.BytesIO()
         img.save(buffer, format='PNG')
         buffer.seek(0)
 
-        # Encode to base64
         img_base64 = base64.b64encode(buffer.read()).decode('utf-8')
-
         return f"data:image/png;base64,{img_base64}"
 
     def save_image_to_disk(self, img_array: np.ndarray, path: str):
@@ -1103,13 +1168,17 @@ class AdornmentVLMDataGenerator:
 
         return img
 
-    def image_to_base64(self, img_array: np.ndarray) -> str:
-        """Convert numpy array to base64-encoded PNG."""
+    def image_to_base64(self, img_array: np.ndarray, upscale: int = 8) -> str:
+        """Convert numpy array to base64-encoded PNG, upscaled for VLM readability."""
         if not PIL_AVAILABLE:
             return None
 
         img_uint8 = (img_array * 255).astype(np.uint8)
         img = Image.fromarray(img_uint8, mode='RGB')
+
+        # Upscale with NEAREST to preserve crisp geometry (56x56 → 448x448)
+        new_size = (img.width * upscale, img.height * upscale)
+        img = img.resize(new_size, Image.NEAREST)
 
         buffer = io.BytesIO()
         img.save(buffer, format='PNG')
