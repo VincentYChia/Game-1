@@ -188,7 +188,35 @@ class SmithingDatasetVisualizer:
                 # Original X pattern for T3-4
                 return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
 
-        # All other materials: use standard shape masks
+        # Metal: 2×2 solid T1-2, full 4×4 solid T3-4
+        # Brightness (value) distinguishes within each pair
+        if cat == 'metal':
+            if tier <= 2:
+                return np.array([
+                    [0, 0, 0, 0],
+                    [0, 1, 1, 0],
+                    [0, 1, 1, 0],
+                    [0, 0, 0, 0]
+                ], dtype=np.float32)
+            else:
+                return self.DEFAULT_SHAPE  # full 4×4 solid
+
+        # Monster_drop and elemental: hollow diamond T1-2, filled diamond T3-4
+        # Hollow→filled is the major shape transition; brightness within each pair
+        if cat in ('monster_drop', 'elemental'):
+            if tier <= 2:
+                # Hollow diamond outline — clearly distinct from filled T3-4
+                return np.array([
+                    [0, 1, 1, 0],
+                    [1, 0, 0, 1],
+                    [1, 0, 0, 1],
+                    [0, 1, 1, 0]
+                ], dtype=np.float32)
+            else:
+                # Filled diamond (existing CATEGORY_SHAPES pattern)
+                return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
+
+        # All other/unknown categories: full solid
         return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
 
     def _placement_to_grid(self, placement):
@@ -640,54 +668,86 @@ class SmithingVisualizerApp:
         self._status.set(f"Compare | {len(v_idx)} valid vs {len(i_idx)} invalid | Seed: {self.seed}")
 
     def _draw_legend(self, accent):
-        self.fig.suptitle("Category Shapes & Tier Fills", color=accent, fontsize=13, fontweight='bold')
-        self.fig.subplots_adjust(left=0.08, right=0.98, top=0.88, bottom=0.08, wspace=0.4, hspace=0.6)
+        self.fig.suptitle("Category Shapes by Tier — Tier-Aware Rendering", color=accent,
+                          fontsize=13, fontweight='bold')
+        self.fig.subplots_adjust(left=0.10, right=0.98, top=0.90, bottom=0.06,
+                                 wspace=0.25, hspace=0.55)
 
-        cats = ['metal', 'wood', 'stone', 'monster_drop', 'elemental']
-        colors = [(0.4,0.6,0.8), (0.6,0.4,0.2), (0.5,0.5,0.5), (0.8,0.3,0.8), (0.3,0.8,0.3)]
-        axes = self.fig.subplots(3, 5)
+        # Rows = categories, Cols = tiers 1-4 + hue swatch
+        cats = [
+            ('metal',        (0.40, 0.60, 0.80), 210, 0.6),
+            ('wood',         (0.85, 0.70, 0.10), 45,  0.75),
+            ('stone',        (0.47, 0.51, 0.55), 200, 0.12),
+            ('monster_drop', (0.75, 0.25, 0.75), 300, 0.6),
+            ('elemental',    (0.55, 0.25, 0.80), 280, 0.6),
+        ]
 
-        for col, (cat, col_rgb) in enumerate(zip(cats, colors)):
-            shape = self.viz.CATEGORY_SHAPES.get(cat, self.viz.DEFAULT_SHAPE)
-            img = np.zeros((4, 4, 3))
-            for c in range(3):
-                img[:, :, c] = shape * col_rgb[c]
-            axes[0, col].imshow(img, interpolation='nearest')
-            axes[0, col].set_title(cat.replace('_', '\n'), fontsize=8, color=self.FG, pad=3)
-            axes[0, col].set_facecolor(self.BG)
-            axes[0, col].axis('off')
-        axes[0, 0].set_ylabel('Shapes', fontsize=9, color=self.FG_DIM)
+        axes = self.fig.subplots(len(cats), 5)
 
-        base_shape = self.viz.CATEGORY_SHAPES['metal']
-        base_rgb = (0.4, 0.6, 0.8)
-        for tier in range(1, 5):
-            fs = self.viz.TIER_FILL_SIZES[tier]
-            mask = np.zeros((4, 4))
-            off = (4 - fs) // 2
-            mask[off:off+fs, off:off+fs] = 1.0
-            comb = base_shape * mask
-            img = np.zeros((4, 4, 3))
-            for c in range(3):
-                img[:, :, c] = comb * base_rgb[c]
-            axes[1, tier-1].imshow(img, interpolation='nearest')
-            axes[1, tier-1].set_title(f'T{tier} ({fs}×{fs})', fontsize=8, color=self.FG, pad=3)
-            axes[1, tier-1].set_facecolor(self.BG)
-            axes[1, tier-1].axis('off')
-        axes[1, 4].axis('off')
-        axes[1, 0].set_ylabel('Tiers', fontsize=9, color=self.FG_DIM)
+        for row, (cat, col_rgb, hue, sat) in enumerate(cats):
+            for tier in range(1, 5):
+                # Build a mock material id lookup so we can call _get_tier_aware_mask
+                # via a synthetic entry — easier to just replicate the mask logic inline
+                mask = self._tier_legend_mask(cat, tier)
+                val  = {1: 0.50, 2: 0.65, 3: 0.80, 4: 0.95}[tier]
+                rgb  = hsv_to_rgb(hue / 360.0, sat, val)
 
-        hues = {'metal':210, 'wood':30, 'stone':0, 'monster_drop':300, 'elemental':280}
-        for col, (cat, hue) in enumerate(hues.items()):
-            rgb = hsv_to_rgb(hue/360, 0.7, 0.75)
-            swatch = np.full((4, 8, 3), rgb, dtype=np.float32)
-            axes[2, col].imshow(swatch, interpolation='nearest', aspect='auto')
-            axes[2, col].set_title(f'{hue}°', fontsize=8, color=self.FG, pad=3)
-            axes[2, col].set_facecolor(self.BG)
-            axes[2, col].axis('off')
-        axes[2, 0].set_ylabel('Hues', fontsize=9, color=self.FG_DIM)
+                img = np.zeros((4, 4, 3))
+                for c in range(3):
+                    img[:, :, c] = mask * rgb[c]
+
+                ax = axes[row, tier - 1]
+                ax.imshow(img, interpolation='nearest')
+                ax.set_title(f'T{tier}', fontsize=7, color=self.FG, pad=2)
+                ax.set_facecolor(self.BG)
+                ax.axis('off')
+
+            # Hue swatch in last column
+            swatch_rgb = hsv_to_rgb(hue / 360.0, sat, 0.75)
+            swatch = np.full((4, 8, 3), swatch_rgb, dtype=np.float32)
+            axes[row, 4].imshow(swatch, interpolation='nearest', aspect='auto')
+            axes[row, 4].set_title(f'{hue}°', fontsize=7, color=self.FG, pad=2)
+            axes[row, 4].set_facecolor(self.BG)
+            axes[row, 4].axis('off')
+            axes[row, 0].set_ylabel(cat.replace('_', '\n'), fontsize=8,
+                                    color=self.FG_DIM, rotation=0, labelpad=36, va='center')
 
         self.fig.set_facecolor(self.BG)
-        self._status.set("Legend view | Category shapes · Tier fills · Color hues")
+        self._status.set("Legend | Each row = category · Cols = T1→T4 · Last col = hue swatch")
+
+    def _tier_legend_mask(self, cat, tier):
+        """Return the tier-aware mask for the legend without needing a material lookup."""
+        SHAPES = self.viz.CATEGORY_SHAPES
+
+        if cat == 'wood':
+            if tier == 1:
+                return np.array([[0,0,0,1],[0,0,1,0],[0,1,0,0],[1,0,0,0]], dtype=np.float32)
+            elif tier == 2:
+                return np.array([[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]], dtype=np.float32)
+            else:
+                return SHAPES['wood']
+
+        if cat == 'stone':
+            if tier == 1:
+                return np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], dtype=np.float32)
+            elif tier == 2:
+                return np.array([[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]], dtype=np.float32)
+            else:
+                return SHAPES['stone']
+
+        if cat == 'metal':
+            if tier <= 2:
+                return np.array([[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]], dtype=np.float32)
+            else:
+                return np.ones((4, 4), dtype=np.float32)
+
+        if cat in ('monster_drop', 'elemental'):
+            if tier <= 2:
+                return np.array([[0,1,1,0],[1,0,0,1],[1,0,0,1],[0,1,1,0]], dtype=np.float32)
+            else:
+                return SHAPES.get(cat, np.ones((4, 4), dtype=np.float32))
+
+        return SHAPES.get(cat, np.ones((4, 4), dtype=np.float32))
 
     def _on_click(self, event):
         if event.inaxes is None:
