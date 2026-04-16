@@ -95,6 +95,13 @@
     "description": "Layer 6 nation summarization config (game Nation tier). Same per-nation WeightedTriggerBucket pattern as Layer 5 but one tier coarser. trigger_threshold defaults to 200 (higher than Layer 5's 100) because nation summaries should be rarer than region summaries. max_l5_per_nation = max L5 events included in prompt. max_l4_relevance = max Layer 4 supporting-detail events (two-layers-down visibility, filtered by fired-tag overlap). min_regions_contributing = optional minimum region diversity gate. NOTE: defaults are placeholders — real tuning happens after the full WMS is built."
   },
 
+  "layer7": {
+    "trigger_threshold": 200,
+    "max_l6_per_world": 20,
+    "max_l5_relevance": 8,
+    "description": "Layer 7 world summarization config (game World tier, singleton). Same WeightedTriggerBucket pattern as Layer 6 but single world bucket. trigger_threshold defaults to 200 (same as Layer 6 — world summaries are the rarest tier). max_l6_per_world = max L6 nation events included in prompt. max_l5_relevance = max Layer 5 supporting-detail events (two-layers-down visibility, filtered by fired-tag overlap). L6 events carry scope:nation at pos 0 (structural skip), so first content tag lands at pos 1 = 8 pts — threshold 200 fires after 25 events. NOTE: defaults are placeholders — real tuning happens after the full WMS is built."
+  },
+
   "evaluators": {
     "population_change": {
       "enabled": true,
