@@ -36,6 +36,7 @@ from world_system.world_memory.layer3_manager import Layer3Manager
 from world_system.world_memory.layer4_manager import Layer4Manager
 from world_system.world_memory.layer5_manager import Layer5Manager
 from world_system.world_memory.layer6_manager import Layer6Manager
+from world_system.world_memory.layer7_manager import Layer7Manager
 from world_system.world_memory.trigger_registry import TriggerRegistry
 
 
@@ -61,6 +62,7 @@ class WorldMemorySystem:
         self.layer4_manager: Optional[Layer4Manager] = None
         self.layer5_manager: Optional[Layer5Manager] = None
         self.layer6_manager: Optional[Layer6Manager] = None
+        self.layer7_manager: Optional[Layer7Manager] = None
         self.trigger_registry: Optional[TriggerRegistry] = None
 
         self._initialized: bool = False
@@ -260,6 +262,26 @@ class WorldMemorySystem:
         except Exception as e:
             print(f"[WorldMemory] Layer6Manager init failed (non-fatal): {e}")
             self.layer6_manager = None
+
+        # 7f. Layer 7 Manager (world summarization — game World tier, singleton)
+        try:
+            if self.trigger_registry is None:
+                self.trigger_registry = TriggerRegistry.get_instance()
+            self.layer7_manager = Layer7Manager.get_instance()
+            self.layer7_manager.initialize(
+                layer_store=self.layer_store,
+                geo_registry=self.geo_registry,
+                wms_ai=self.wms_ai,
+                trigger_registry=self.trigger_registry,
+            )
+            # Wire L7 callback to L6 manager so it gets notified of L6 events
+            if self.layer6_manager:
+                self.layer6_manager.set_layer7_callback(
+                    self.layer7_manager.on_layer6_created)
+            print(f"[WorldMemory] Layer7Manager initialized — {self.layer7_manager.stats}")
+        except Exception as e:
+            print(f"[WorldMemory] Layer7Manager init failed (non-fatal): {e}")
+            self.layer7_manager = None
 
         # 8. Query Interface
         self.world_query = WorldQuery.get_instance()
@@ -482,6 +504,13 @@ class WorldMemorySystem:
             except Exception as e:
                 print(f"[WorldMemory] Layer 6 summarization error: {e}")
 
+        # Layer 7 world summarization check
+        if self.layer7_manager and self.layer7_manager.should_run():
+            try:
+                self.layer7_manager.run_summarization(game_time)
+            except Exception as e:
+                print(f"[WorldMemory] Layer 7 summarization error: {e}")
+
         # Periodic retention pruning
         if self.retention_manager.should_prune(game_time):
             self.retention_manager.prune(self.event_store, game_time)
@@ -605,6 +634,7 @@ class WorldMemorySystem:
         Layer4Manager.reset()
         Layer5Manager.reset()
         Layer6Manager.reset()
+        Layer7Manager.reset()
         TriggerRegistry.reset()
 
     # ── Debug / Stats ────────────────────────────────────────────────

@@ -28,6 +28,7 @@ _L3_FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments_l3.json"
 _L4_FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments_l4.json"
 _L5_FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments_l5.json"
 _L6_FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments_l6.json"
+_L7_FRAGMENTS_PATH = _CONFIG_DIR / "prompt_fragments_l7.json"
 
 # Fragment categories that get matched from trigger tags
 FRAGMENT_CATEGORIES = frozenset({
@@ -84,6 +85,7 @@ class PromptAssembler:
         self._l4_fragments: Dict[str, Any] = {}
         self._l5_fragments: Dict[str, Any] = {}
         self._l6_fragments: Dict[str, Any] = {}
+        self._l7_fragments: Dict[str, Any] = {}
         self._loaded = False
 
     def load(self) -> int:
@@ -127,6 +129,13 @@ class PromptAssembler:
             with open(l6_path) as f:
                 self._l6_fragments = json.load(f)
             total += self._l6_fragments.get("_meta", {}).get("total_fragments", 0)
+
+        # Load Layer 7 fragments from separate file
+        l7_path = self._path.parent / "prompt_fragments_l7.json"
+        if l7_path.exists():
+            with open(l7_path) as f:
+                self._l7_fragments = json.load(f)
+            total += self._l7_fragments.get("_meta", {}).get("total_fragments", 0)
 
         self._loaded = True
         return total
@@ -443,6 +452,13 @@ class PromptAssembler:
             return val
         return self.get_l5_fragment(key)
 
+    def get_l7_fragment(self, key: str) -> str:
+        """Get a Layer 7 fragment by key. Falls back to L6 → L5 → L4 → L3 → L2."""
+        val = self._l7_fragments.get(key, "")
+        if isinstance(val, str) and val:
+            return val
+        return self.get_l6_fragment(key)
+
     def _collect_all_tag_fragments(self, event_tags: List[str]) -> List[Tuple[str, str]]:
         """Collect matching tag fragments from ALL layers (L2 + L3 + L4 + L5).
 
@@ -453,10 +469,10 @@ class PromptAssembler:
         selected = []
         seen_texts: Set[str] = set()
 
-        # Check all fragment sources in priority order: L6 → L5 → L4 → L3 → L2
+        # Check all fragment sources in priority order: L7 → L6 → L5 → L4 → L3 → L2
         all_sources = [
-            self._l6_fragments, self._l5_fragments, self._l4_fragments,
-            self._l3_fragments, self.fragments,
+            self._l7_fragments, self._l6_fragments, self._l5_fragments,
+            self._l4_fragments, self._l3_fragments, self.fragments,
         ]
 
         for tag in event_tags:
@@ -666,6 +682,73 @@ class PromptAssembler:
             user=user,
             fragments_used=selected,
             tags=["layer:6", "scope:nation"],
+            token_estimate=estimate_tokens(system) + estimate_tokens(user),
+        )
+
+
+    # ── Layer 7 Assembly ───────────────────────────────────────────
+
+    def assemble_l7(self, data_block: str = "",
+                    event_tags: Optional[List[str]] = None,
+                    ) -> "AssembledPrompt":
+        """Assemble a Layer 7 prompt for world summarization.
+
+        Aggregates fragments from ALL lower layers (L2 + L3 + L4 + L5 + L6 + L7).
+        This is the final aggregation tier. Like Layer 6, the LLM performs a
+        full content-tag rewrite; address tags (world only at this tier) are
+        preserved by layer code and explicitly excluded from LLM output.
+
+        Args:
+            data_block: XML-formatted Layer 6 + L5 events data.
+            event_tags: Optional aggregate tags from input events — used
+                        to pull matching entity/context fragments from
+                        any lower layer.
+
+        Returns:
+            AssembledPrompt with system and user components.
+        """
+        selected = []
+
+        # L7 core (always)
+        core = self.get_l7_fragment("_l7_core")
+        if core:
+            selected.append(("_l7_core", core))
+
+        # World summary context fragment
+        ctx_key = "l7_context:world_summary"
+        ctx_frag = self.get_l7_fragment(ctx_key)
+        if ctx_frag:
+            selected.append((ctx_key, ctx_frag))
+
+        # Aggregate entity/context fragments from ALL lower layers
+        # based on tags present in the input events
+        if event_tags:
+            tag_frags = self._collect_all_tag_fragments(event_tags)
+            selected.extend(tag_frags)
+
+        # Example if available
+        example_key = "l7_example:world"
+        example_frag = self.get_l7_fragment(example_key)
+        if example_frag:
+            selected.append((example_key, example_frag))
+
+        # L7 output instruction
+        output_text = self.get_l7_fragment("_l7_output")
+
+        # Build system prompt
+        system_parts = [text for _, text in selected]
+        system = "\n\n".join(system_parts)
+
+        # Build user prompt
+        user = data_block
+        if output_text:
+            user = f"{data_block}\n\n{output_text}" if data_block else output_text
+
+        return AssembledPrompt(
+            system=system,
+            user=user,
+            fragments_used=selected,
+            tags=["layer:7", "scope:world"],
             token_estimate=estimate_tokens(system) + estimate_tokens(user),
         )
 
