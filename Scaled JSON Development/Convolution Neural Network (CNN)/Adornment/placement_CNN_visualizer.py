@@ -1,67 +1,87 @@
+"""
+CNN Adornment Dataset Visualizer — Tkinter GUI Edition
+
+Interactive visualization of adornment CNN training data with:
+  • Original geometric placements
+  • Valid/Invalid augmented samples
+  • Side-by-side comparison
+  • Category/vertex legend
+
+Usage:
+  python placement_CNN_visualizer.py
+"""
+
 import numpy as np
-import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+import tkinter as tk
+from tkinter import ttk, simpledialog, filedialog
 from pathlib import Path
 import json
 from colorsys import hsv_to_rgb
+import random
 
 
 class AugmentedDatasetVisualizer:
-    """Visualize augmented training data with tabs for original/valid/invalid"""
+    """Data model for adornment CNN dataset with geometric rendering."""
 
     def __init__(self, dataset_path, materials_path, placements_path):
-        """
-        Args:
-            dataset_path: Path to adornment_dataset.npz
-            materials_path: Path to materials JSON
-            placements_path: Path to placements JSON
-        """
         print("Loading dataset...")
-        data = np.load(dataset_path)
 
-        # Load augmented data
+        data = np.load(dataset_path)
         self.X_train = data['X_train']
         self.y_train = data['y_train']
         self.X_val = data['X_val']
         self.y_val = data['y_val']
 
-        # Combine for visualization
         self.X_all = np.concatenate([self.X_train, self.X_val])
         self.y_all = np.concatenate([self.y_train, self.y_val])
-
-        # Separate valid and invalid
         self.valid_indices = np.where(self.y_all == 1)[0]
         self.invalid_indices = np.where(self.y_all == 0)[0]
 
-        # Load original recipes
-        with open(materials_path, 'r') as f:
+        with open(materials_path) as f:
             materials_data = json.load(f)
-        self.materials_dict = {
-            mat['materialId']: mat
-            for mat in materials_data['materials']
-        }
+        self.materials_dict = {m['materialId']: m for m in materials_data['materials']}
 
-        with open(placements_path, 'r') as f:
+        with open(placements_path) as f:
             placements_data = json.load(f)
         self.original_recipes = placements_data['placements']
 
-        # Render original recipes
         print("Rendering original recipes...")
-        self.original_images = []
-        for recipe in self.original_recipes:
-            img = self._render_recipe(recipe)
-            self.original_images.append(img)
+        self.original_images = [self._render_recipe(r) for r in self.original_recipes]
 
-        print(f"✓ Dataset loaded")
-        print(f"  Original recipes: {len(self.original_recipes)}")
-        print(f"  Augmented samples: {len(self.X_all)}")
-        print(f"    Valid: {len(self.valid_indices)} ({len(self.valid_indices) / len(self.X_all) * 100:.1f}%)")
-        print(f"    Invalid: {len(self.invalid_indices)} ({len(self.invalid_indices) / len(self.X_all) * 100:.1f}%)")
-        print(f"  Image shape: {self.X_all.shape[1:]}\n")
+        print(f"✓ Loaded: original={len(self.original_recipes)}, "
+              f"valid={len(self.valid_indices)}, invalid={len(self.invalid_indices)}, "
+              f"total={len(self.X_all)}, shape={self.X_all.shape[1:]}")
+
+    def _material_to_color(self, material_id):
+        if material_id is None:
+            return (0.5, 0.5, 0.5)
+        if material_id not in self.materials_dict:
+            return (0.3, 0.3, 0.3)
+
+        mat = self.materials_dict[material_id]
+        cat = mat.get('category', 'unknown')
+        tier = mat.get('tier', 1)
+        tags = mat.get('metadata', {}).get('tags', [])
+
+        if cat == 'elemental':
+            hues = {'fire':0, 'water':210, 'earth':120, 'air':60, 'lightning':270, 'ice':180, 'light':45, 'dark':280, 'void':290, 'chaos':330}
+            hue = next((hues[t] for t in tags if t in hues), 280)
+        else:
+            hue = {'metal':210, 'wood':30, 'stone':0, 'monster_drop':300}.get(cat, 0)
+
+        value = {1: 0.50, 2: 0.65, 3: 0.80, 4: 0.95}.get(tier, 0.5)
+        sat = 0.2 if cat == 'stone' else 0.6
+        if any(t in tags for t in ['legendary', 'mythical']):
+            sat = min(1.0, sat + 0.2)
+        elif any(t in tags for t in ['magical', 'ancient']):
+            sat = min(1.0, sat + 0.1)
+
+        return hsv_to_rgb(hue / 360.0, sat, value)
 
     def _render_recipe(self, recipe):
-        """Render original recipe to 56x56 image"""
         img = np.zeros((56, 56, 3), dtype=np.float32)
-
         vertices = recipe['placementMap']['vertices']
         shapes = recipe['placementMap']['shapes']
 
@@ -70,54 +90,13 @@ class AugmentedDatasetVisualizer:
             py = int((7 - y) * 4)
             return px, py
 
-        def material_to_color(material_id):
-            if material_id is None:
-                return (0.5, 0.5, 0.5)
-
-            material = self.materials_dict[material_id]
-            category = material['category']
-            tier = material['tier']
-            tags = material['metadata']['tags']
-
-            if category == 'elemental':
-                element_hues = {
-                    'fire': 0, 'water': 210, 'earth': 120, 'air': 60,
-                    'lightning': 270, 'ice': 180, 'light': 45,
-                    'dark': 280, 'void': 290, 'chaos': 330,
-                }
-                hue = 280
-                for tag in tags:
-                    if tag in element_hues:
-                        hue = element_hues[tag]
-                        break
-            else:
-                category_hues = {
-                    'metal': 210, 'wood': 30, 'stone': 0, 'monster_drop': 300
-                }
-                hue = category_hues.get(category, 0)
-
-            tier_values = {1: 0.50, 2: 0.65, 3: 0.80, 4: 0.95}
-            value = tier_values.get(tier, 0.5)
-
-            base_saturation = 0.6
-            if category == 'stone':
-                base_saturation = 0.2
-            if 'legendary' in tags or 'mythical' in tags:
-                base_saturation = min(1.0, base_saturation + 0.2)
-            elif 'magical' in tags or 'ancient' in tags:
-                base_saturation = min(1.0, base_saturation + 0.1)
-
-            rgb = hsv_to_rgb(hue / 360.0, base_saturation, value)
-            return rgb
-
-        # Draw lines
         for shape in shapes:
-            shape_vertices = shape['vertices']
-            n = len(shape_vertices)
+            shape_verts = shape['vertices']
+            n = len(shape_verts)
 
             for i in range(n):
-                v1_str = shape_vertices[i]
-                v2_str = shape_vertices[(i + 1) % n]
+                v1_str = shape_verts[i]
+                v2_str = shape_verts[(i + 1) % n]
 
                 x1, y1 = map(int, v1_str.split(','))
                 x2, y2 = map(int, v2_str.split(','))
@@ -128,33 +107,28 @@ class AugmentedDatasetVisualizer:
                 mat2 = vertices.get(v2_str, {}).get('materialId')
 
                 if mat1 and mat2:
-                    color = tuple((np.array(material_to_color(mat1)) +
-                                   np.array(material_to_color(mat2))) / 2)
+                    color = tuple((np.array(self._material_to_color(mat1)) + np.array(self._material_to_color(mat2))) / 2)
                 elif mat1:
-                    color = material_to_color(mat1)
+                    color = self._material_to_color(mat1)
                 elif mat2:
-                    color = material_to_color(mat2)
+                    color = self._material_to_color(mat2)
                 else:
                     color = (0.3, 0.3, 0.3)
 
                 self._draw_line(img, px1, py1, px2, py2, color, thickness=2)
 
-        # Draw vertices
         for coord_str, vertex_data in vertices.items():
             x, y = map(int, coord_str.split(','))
             px, py = coord_to_pixel(x, y)
             material_id = vertex_data.get('materialId')
-            color = material_to_color(material_id)
+            color = self._material_to_color(material_id)
             self._draw_circle(img, px, py, radius=3, color=color)
 
         return img
 
     def _draw_line(self, img, x0, y0, x1, y1, color, thickness=1):
-        """Draw line with Bresenham's algorithm"""
-        dx = abs(x1 - x0)
-        dy = abs(y1 - y0)
-        sx = 1 if x0 < x1 else -1
-        sy = 1 if y0 < y1 else -1
+        dx, dy = abs(x1 - x0), abs(y1 - y0)
+        sx, sy = (1 if x0 < x1 else -1), (1 if y0 < y1 else -1)
         err = dx - dy
 
         while True:
@@ -179,480 +153,449 @@ class AugmentedDatasetVisualizer:
                 y0 += sy
 
     def _draw_circle(self, img, cx, cy, radius, color):
-        """Draw filled circle"""
         for y in range(max(0, cy - radius), min(img.shape[0], cy + radius + 1)):
             for x in range(max(0, cx - radius), min(img.shape[1], cx + radius + 1)):
                 if (x - cx) ** 2 + (y - cy) ** 2 <= radius ** 2:
                     img[y, x] = color
 
-    def show_page(self, tab='original', page=0, recipes_per_page=25):
-        """
-        Show a page of recipes in 5x5 grid
+    def get_vertices_for_recipe(self, recipe):
+        result = []
+        for coord, vertex_data in recipe['placementMap']['vertices'].items():
+            mat_id = vertex_data.get('materialId')
+            if mat_id and mat_id in self.materials_dict:
+                m = self.materials_dict[mat_id]
+                result.append((coord, m.get('name', mat_id), m.get('category','?'), m.get('tier',1)))
+        return result
 
-        Args:
-            tab: 'original', 'valid', or 'invalid'
-            page: Page number (0-indexed)
-            recipes_per_page: Number of recipes per page (max 25 for 5x5 grid)
-        """
-        recipes_per_page = min(recipes_per_page, 25)  # Max 5x5 = 25
 
-        # Get data for this tab
-        if tab == 'original':
-            images = self.original_images
-            labels = [recipe['recipeId'] for recipe in self.original_recipes]
-            title_color = 'blue'
-            tab_name = 'ORIGINAL PLACEMENTS'
-        elif tab == 'valid':
-            # Random sample from valid augmented
-            np.random.seed(42 + page)  # Different samples per page
-            sample_indices = np.random.choice(
-                self.valid_indices,
-                min(recipes_per_page, len(self.valid_indices)),
-                replace=False
-            )
-            images = [self.X_all[idx] for idx in sample_indices]
-            labels = [f"Valid #{idx}" for idx in sample_indices]
-            title_color = 'green'
-            tab_name = 'VALID AUGMENTED'
-        else:  # invalid
-            # Random sample from invalid augmented
-            np.random.seed(42 + page)
-            sample_indices = np.random.choice(
-                self.invalid_indices,
-                min(recipes_per_page, len(self.invalid_indices)),
-                replace=False
-            )
-            images = [self.X_all[idx] for idx in sample_indices]
-            labels = [f"Invalid #{idx}" for idx in sample_indices]
-            title_color = 'red'
-            tab_name = 'INVALID AUGMENTED'
+class AdornmentVisualizerApp:
+    """Tkinter GUI for adornment dataset."""
 
-        # Calculate page range
-        start_idx = page * recipes_per_page
-        end_idx = min(start_idx + recipes_per_page, len(images))
+    BG, PANEL, BAR = '#1a1a2e', '#16213e', '#0f3460'
+    FG, FG_DIM = '#e0e0e0', '#888888'
+    TAB_KEYS = ['original', 'valid', 'invalid', 'compare', 'legend']
+    TAB_LABELS = ['Original', 'Valid', 'Invalid', 'Compare', 'Legend']
+    TAB_COLORS = {'original':'#4A90D9', 'valid':'#27AE60', 'invalid':'#E74C3C', 'compare':'#8E44AD', 'legend':'#F39C12'}
+    GRID_OPTIONS = [1, 4, 9, 16, 25]
 
-        if start_idx >= len(images):
-            print(f"Page {page + 1} is beyond available data!")
+    def __init__(self, viz: AugmentedDatasetVisualizer):
+        self.viz = viz
+        self.tab = 'original'
+        self.page = 0
+        self.per_page = 25
+        self.seed = 42
+        self._items = []
+
+        self.root = tk.Tk()
+        self.root.title("CNN Adornment Dataset Viewer")
+        self.root.geometry("1280x900")
+        self.root.configure(bg=self.BG)
+        self.root.minsize(900, 650)
+
+        self._apply_style()
+        self._build_ui()
+        self._switch_tab('original')
+
+    def _apply_style(self):
+        ttk.Style().theme_use('clam')
+
+    def _build_ui(self):
+        hdr = tk.Frame(self.root, bg=self.PANEL, height=55)
+        hdr.pack(fill='x')
+        hdr.pack_propagate(False)
+
+        tk.Label(hdr, text="Adornment CNN Dataset", font=('Helvetica', 15, 'bold'),
+                 fg=self.FG, bg=self.PANEL).pack(side='left', padx=18, pady=12)
+
+        stats = (f"Original: {len(self.viz.original_recipes)} · Valid: {len(self.viz.valid_indices)} · "
+                 f"Invalid: {len(self.viz.invalid_indices)} · Total: {len(self.viz.X_all)}")
+        tk.Label(hdr, text=stats, font=('Helvetica', 9), fg=self.FG_DIM, bg=self.PANEL).pack(side='left')
+
+        tab_bar = tk.Frame(self.root, bg=self.BAR, height=38)
+        tab_bar.pack(fill='x')
+        tab_bar.pack_propagate(False)
+        self._tab_btns = {}
+        for key, label in zip(self.TAB_KEYS, self.TAB_LABELS):
+            btn = tk.Button(tab_bar, text=f"  {label}  ", font=('Helvetica', 10, 'bold'),
+                            bg=self.BAR, fg=self.FG_DIM, relief='flat', cursor='hand2', bd=0,
+                            command=lambda k=key: self._switch_tab(k))
+            btn.pack(side='left', fill='y', ipady=4)
+            self._tab_btns[key] = btn
+
+        body = tk.Frame(self.root, bg=self.BG)
+        body.pack(fill='both', expand=True)
+
+        sb = tk.Frame(body, bg=self.PANEL, width=210)
+        sb.pack(side='right', fill='y')
+        sb.pack_propagate(False)
+        self._build_sidebar(sb)
+
+        self.fig = Figure(facecolor=self.BG)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=body)
+        self.canvas.get_tk_widget().pack(side='left', fill='both', expand=True)
+        self.canvas.mpl_connect('button_press_event', self._on_click)
+
+        ctrl = tk.Frame(self.root, bg=self.BAR, height=46)
+        ctrl.pack(fill='x')
+        ctrl.pack_propagate(False)
+        self._build_controls(ctrl)
+
+        self._status = tk.StringVar(value="Ready")
+        tk.Label(self.root, textvariable=self._status, font=('Helvetica', 8),
+                 fg=self.FG_DIM, bg='#0a0a1a', anchor='w', padx=8).pack(fill='x', side='bottom')
+
+    def _build_sidebar(self, parent):
+        tk.Label(parent, text="INFO", font=('Helvetica', 9, 'bold'),
+                 fg=self.FG_DIM, bg=self.PANEL).pack(pady=(12, 4), padx=10, anchor='w')
+        ttk.Separator(parent, orient='horizontal').pack(fill='x', padx=10)
+
+        self._sb_title = tk.Label(parent, text="Click a recipe", wraplength=190,
+                                   font=('Helvetica', 9), fg=self.FG, bg=self.PANEL, justify='left')
+        self._sb_title.pack(padx=10, pady=6, anchor='w')
+
+        self._sb_body = tk.Text(parent, font=('Helvetica', 8), fg=self.FG,
+                                 bg=self.PANEL, relief='flat', wrap='word', state='disabled',
+                                 height=14, width=24)
+        self._sb_body.pack(padx=8, pady=4, fill='x')
+
+        ttk.Separator(parent, orient='horizontal').pack(fill='x', padx=10, pady=6)
+        tk.Label(parent, text="KEYS", font=('Helvetica', 9, 'bold'),
+                 fg=self.FG_DIM, bg=self.PANEL).pack(padx=10, anchor='w')
+        for key, desc in [("←/→", "Page"), ("1–5", "Tabs"), ("S", "Shuffle"), ("G", "Grid"), ("J", "Jump"), ("Q", "Quit")]:
+            r = tk.Frame(parent, bg=self.PANEL)
+            r.pack(fill='x', padx=10, pady=1)
+            tk.Label(r, text=key, font=('Courier', 8, 'bold'),
+                     fg='#4A90D9', bg=self.PANEL, width=5).pack(side='left')
+            tk.Label(r, text=desc, font=('Helvetica', 8),
+                     fg=self.FG_DIM, bg=self.PANEL).pack(side='left')
+
+    def _build_controls(self, parent):
+        nav = tk.Frame(parent, bg=self.BAR)
+        nav.pack(side='left', padx=12, pady=6)
+
+        btn_kw = dict(font=('Helvetica', 10, 'bold'), bg='#1a4080', fg=self.FG,
+                      relief='flat', padx=10, pady=4, cursor='hand2')
+
+        tk.Button(nav, text='◀  Prev', command=self._prev_page, **btn_kw).pack(side='left', padx=3)
+        self._page_var = tk.StringVar(value="Page 1 / 1")
+        tk.Label(nav, textvariable=self._page_var, font=('Helvetica', 10),
+                 fg=self.FG, bg=self.BAR, width=14).pack(side='left', padx=6)
+        tk.Button(nav, text='Next  ▶', command=self._next_page, **btn_kw).pack(side='left', padx=3)
+        tk.Button(nav, text='Jump...', command=self._jump_page, **btn_kw).pack(side='left', padx=8)
+
+        grid_frame = tk.Frame(parent, bg=self.BAR)
+        grid_frame.pack(side='left', padx=16)
+        tk.Label(grid_frame, text="Grid:", font=('Helvetica', 9),
+                 fg=self.FG_DIM, bg=self.BAR).pack(side='left', padx=(0, 4))
+
+        self._grid_btns = {}
+        dims = {1:'1×1', 4:'2×2', 9:'3×3', 16:'4×4', 25:'5×5'}
+        for n, label in dims.items():
+            b = tk.Button(grid_frame, text=label, font=('Helvetica', 9),
+                          bg=self.PANEL, fg=self.FG_DIM, relief='flat', padx=6, pady=2,
+                          command=lambda v=n: self._set_grid(v))
+            b.pack(side='left', padx=2)
+            self._grid_btns[n] = b
+        self._grid_btns[25].configure(fg=self.FG, bg='#1a4080')
+
+        right = tk.Frame(parent, bg=self.BAR)
+        right.pack(side='right', padx=12)
+        tk.Button(right, text='⟳  Shuffle', command=self._shuffle, **btn_kw).pack(side='left', padx=4)
+
+    def _switch_tab(self, tab):
+        self.tab = tab
+        self.page = 0
+        color = self.TAB_COLORS[tab]
+        for k, btn in self._tab_btns.items():
+            btn.configure(fg=color if k == tab else self.FG_DIM,
+                         bg=self.BG if k == tab else self.BAR)
+        self._refresh()
+
+    def _set_grid(self, n):
+        self.per_page = n
+        self.page = 0
+        for k, b in self._grid_btns.items():
+            b.configure(bg='#1a4080' if k == n else self.PANEL,
+                        fg=self.FG if k == n else self.FG_DIM)
+        self._refresh()
+
+    def _next_page(self):
+        total = self._total_pages()
+        if self.page < total - 1:
+            self.page += 1
+            self._refresh()
+
+    def _prev_page(self):
+        if self.page > 0:
+            self.page -= 1
+            self._refresh()
+
+    def _jump_page(self):
+        total = self._total_pages()
+        p = simpledialog.askinteger("Jump to Page", f"Page (1–{total}):", minvalue=1, maxvalue=total, parent=self.root)
+        if p:
+            self.page = p - 1
+            self._refresh()
+
+    def _shuffle(self):
+        if self.tab in ('valid', 'invalid', 'compare'):
+            self.seed = random.randint(0, 99999)
+            self.page = 0
+            self._refresh()
+
+    def _total_pages(self):
+        if self.tab == 'original':
+            total = len(self.viz.original_images)
+        elif self.tab == 'valid':
+            total = len(self.viz.valid_indices)
+        elif self.tab == 'invalid':
+            total = len(self.viz.invalid_indices)
+        elif self.tab == 'compare':
+            total = min(len(self.viz.valid_indices), len(self.viz.invalid_indices))
+        else:
+            total = 1
+        return max(1, (total + self.per_page - 1) // self.per_page)
+
+    def _refresh(self):
+        self.fig.clear()
+        self._items = []
+        color = self.TAB_COLORS[self.tab]
+        total_pages = self._total_pages()
+        self._page_var.set(f"Page {self.page + 1} / {total_pages}")
+
+        if self.tab == 'legend':
+            self._draw_legend(color)
+        elif self.tab == 'compare':
+            self._draw_compare(color)
+        else:
+            self._draw_grid(color)
+
+        self.canvas.draw()
+
+    def _get_page_items(self):
+        start, end = self.page * self.per_page, (self.page + 1) * self.per_page
+
+        if self.tab == 'original':
+            imgs = self.viz.original_images[start:end]
+            labels = [r['recipeId'] for r in self.viz.original_recipes[start:end]]
+            recipes = self.viz.original_recipes[start:end]
+            return list(zip(imgs, labels, recipes))
+
+        if self.tab in ('valid', 'invalid'):
+            rng = np.random.RandomState(self.seed + self.page)
+            pool = self.viz.valid_indices if self.tab == 'valid' else self.viz.invalid_indices
+            sample = rng.choice(pool, min(self.per_page, len(pool)), replace=False)
+            imgs = [self.viz.X_all[i] for i in sample]
+            labels = [f"{'Valid' if self.tab == 'valid' else 'Invalid'} #{i}" for i in sample]
+            return [(img, lbl, None) for img, lbl in zip(imgs, labels)]
+
+        return []
+
+    def _draw_grid(self, accent):
+        items = self._get_page_items()
+        self._items = items
+        if not items:
+            ax = self.fig.add_subplot(111)
+            ax.text(0.5, 0.5, "No data", ha='center', va='center',
+                    color=self.FG, fontsize=14, transform=ax.transAxes)
+            ax.set_facecolor(self.BG)
             return
 
-        page_images = images[start_idx:end_idx]
-        page_labels = labels[start_idx:end_idx]
-
-        # Calculate total pages
-        total_pages = (len(images) + recipes_per_page - 1) // recipes_per_page
-
-        # Create 5x5 grid
-        fig, axes = plt.subplots(5, 5, figsize=(15, 15))
-        axes = axes.flatten()
-
-        # Title with page info
-        fig.suptitle(
-            f'{tab_name} - Page {page + 1}/{total_pages} ({len(page_images)} recipes)',
-            fontsize=18, fontweight='bold', color=title_color
-        )
-
-        # Plot images
-        for i, (img, label) in enumerate(zip(page_images, page_labels)):
-            axes[i].imshow(img)
-            # Truncate long labels
-            display_label = label if len(label) <= 20 else label[:17] + "..."
-            axes[i].set_title(display_label, fontsize=8, color=title_color)
-            axes[i].axis('off')
-
-        # Hide unused subplots
-        for i in range(len(page_images), 25):
-            axes[i].axis('off')
-
-        plt.tight_layout()
-        plt.show()
-
-    def interactive_viewer(self):
-        """Interactive tabbed viewer with page navigation"""
-
-        print("\n" + "=" * 80)
-        print("AUGMENTED DATASET VIEWER - TABBED INTERFACE")
-        print("=" * 80)
-        print(f"Tabs available:")
-        print(f"  1. Original ({len(self.original_recipes)} recipes)")
-        print(f"  2. Valid Augmented ({len(self.valid_indices)} samples)")
-        print(f"  3. Invalid Augmented ({len(self.invalid_indices)} samples)")
-        print(f"\nGrid: 5×5 (25 recipes per page)")
-
-        print("\nCommands:")
-        print("  '1' or 'original' - View original placements")
-        print("  '2' or 'valid' - View valid augmented samples")
-        print("  '3' or 'invalid' - View invalid augmented samples")
-        print("  'next' or 'n' - Next page")
-        print("  'prev' or 'p' - Previous page")
-        print("  'page N' - Jump to page N")
-        print("  'grid N' - Change recipes per page (1-25)")
-        print("  'shuffle' - Reshuffle random samples (for valid/invalid tabs)")
-        print("  'quit' or 'q' - Exit")
-
-        current_tab = 'original'
-        current_page = 0
-        recipes_per_page = 25
-
-        # Show first page
-        self.show_page(current_tab, current_page, recipes_per_page)
-
-        while True:
-            print("\n" + "-" * 80)
-            print(f"Current: {current_tab.upper()} tab, Page {current_page + 1}")
-            choice = input("Your choice: ").strip().lower()
-
-            if choice in ['quit', 'q']:
-                break
-
-            elif choice in ['1', 'original']:
-                current_tab = 'original'
-                current_page = 0
-                self.show_page(current_tab, current_page, recipes_per_page)
-
-            elif choice in ['2', 'valid']:
-                current_tab = 'valid'
-                current_page = 0
-                self.show_page(current_tab, current_page, recipes_per_page)
-
-            elif choice in ['3', 'invalid']:
-                current_tab = 'invalid'
-                current_page = 0
-                self.show_page(current_tab, current_page, recipes_per_page)
-
-            elif choice in ['next', 'n']:
-                current_page += 1
-                self.show_page(current_tab, current_page, recipes_per_page)
-
-            elif choice in ['prev', 'p']:
-                current_page = max(0, current_page - 1)
-                self.show_page(current_tab, current_page, recipes_per_page)
-
-            elif choice.startswith('page'):
-                try:
-                    page_num = int(choice.split()[1]) - 1
-                    current_page = max(0, page_num)
-                    self.show_page(current_tab, current_page, recipes_per_page)
-                except:
-                    print("Invalid format. Use: page N")
-
-            elif choice.startswith('grid'):
-                try:
-                    n = int(choice.split()[1])
-                    recipes_per_page = max(1, min(25, n))
-                    current_page = 0
-                    print(f"Grid size set to {recipes_per_page} recipes per page")
-                    self.show_page(current_tab, current_page, recipes_per_page)
-                except:
-                    print("Invalid format. Use: grid N (1-25)")
-
-            elif choice == 'shuffle':
-                if current_tab in ['valid', 'invalid']:
-                    import random
-                    # Use random seed based on time
-                    np.random.seed(random.randint(0, 100000))
-                    current_page = 0
-                    self.show_page(current_tab, current_page, recipes_per_page)
-                    print("Shuffled!")
-                else:
-                    print("Shuffle only works on valid/invalid tabs")
-
-            else:
-                print("Invalid command. Try: 1/2/3, next, prev, page N, grid N, shuffle, or quit")
-
-
-# Example usage
-if __name__ == "__main__":
-    import sys
-
-    # Default paths
-    DATASET_PATH = "adornment_dataset.npz"
-    MATERIALS_PATH = "C:/Users/Vincent/PycharmProjects/Game-1/Game-1-modular/items.JSON/items-materials-1.JSON"
-    PLACEMENTS_PATH = "C:/Users/Vincent/PycharmProjects/Game-1/Game-1-modular/placements.JSON/placements-adornments-1.JSON"
-
-    # Get paths
-    dataset_path = DATASET_PATH if Path(DATASET_PATH).exists() else input("Dataset path: ").strip()
-    materials_path = MATERIALS_PATH if Path(MATERIALS_PATH).exists() else input("Materials path: ").strip()
-    placements_path = PLACEMENTS_PATH if Path(PLACEMENTS_PATH).exists() else input("Placements path: ").strip()
-
-    # Create visualizer
-    viz = AugmentedDatasetVisualizer(dataset_path, materials_path, placements_path)
-
-    # Interactive mode
-    viz.interactive_viewer()
-
-
-    def show_random_samples(self, n_valid=10, n_invalid=10, seed=None):
-        """Show random samples of valid and invalid recipes"""
-
-        if seed is not None:
-            random.seed(seed)
-            np.random.seed(seed)
-
-        # Sample random indices
-        valid_sample_idx = np.random.choice(self.valid_indices, min(n_valid, len(self.valid_indices)), replace=False)
-        invalid_sample_idx = np.random.choice(self.invalid_indices, min(n_invalid, len(self.invalid_indices)),
-                                              replace=False)
-
-        # Create figure
-        fig, axes = plt.subplots(2, max(n_valid, n_invalid), figsize=(max(n_valid, n_invalid) * 2, 5))
-
-        if max(n_valid, n_invalid) == 1:
-            axes = axes.reshape(-1, 1)
-
-        fig.suptitle('Augmented Dataset: Valid vs Invalid Recipes', fontsize=16, fontweight='bold')
-
-        # Plot valid recipes (top row)
-        for i in range(max(n_valid, n_invalid)):
-            if i < len(valid_sample_idx):
-                idx = valid_sample_idx[i]
-                axes[0, i].imshow(self.X_all[idx])
-                axes[0, i].set_title(f'Valid #{idx}', fontsize=9, color='green', fontweight='bold')
-            axes[0, i].axis('off')
-
-        # Plot invalid recipes (bottom row)
-        for i in range(max(n_valid, n_invalid)):
-            if i < len(invalid_sample_idx):
-                idx = invalid_sample_idx[i]
-                axes[1, i].imshow(self.X_all[idx])
-                axes[1, i].set_title(f'Invalid #{idx}', fontsize=9, color='red', fontweight='bold')
-            axes[1, i].axis('off')
-
-        # Row labels
-        fig.text(0.02, 0.75, 'VALID\nRECIPES', ha='center', va='center',
-                 fontsize=12, fontweight='bold', color='green', rotation=90)
-        fig.text(0.02, 0.25, 'INVALID\nRECIPES', ha='center', va='center',
-                 fontsize=12, fontweight='bold', color='red', rotation=90)
-
-        plt.tight_layout()
-        plt.subplots_adjust(left=0.05)
-        plt.show()
-
-
-    def show_side_by_side_grid(self, samples_per_page=25, page=0, seed=None):
-        """Show valid and invalid side by side in a grid"""
-
-        if seed is not None:
-            random.seed(seed + page)  # Different seed per page
-            np.random.seed(seed + page)
-
-        # Calculate grid size
-        cols = 10  # 5 valid + 5 invalid per row
-        rows = (samples_per_page + 1) // 2
-
-        # Sample random indices
-        n_pairs = samples_per_page // 2
-        valid_sample_idx = np.random.choice(self.valid_indices, min(n_pairs, len(self.valid_indices)), replace=False)
-        invalid_sample_idx = np.random.choice(self.invalid_indices, min(n_pairs, len(self.invalid_indices)),
-                                              replace=False)
-
-        # Create figure
-        fig, axes = plt.subplots(rows, cols, figsize=(20, rows * 2))
-        axes = axes.flatten()
-
-        fig.suptitle(f'Augmented Dataset - Page {page + 1} (Random Samples)',
-                     fontsize=16, fontweight='bold')
-
-        idx = 0
-        for i in range(n_pairs):
-            # Valid recipe
-            if i < len(valid_sample_idx):
-                axes[idx].imshow(self.X_all[valid_sample_idx[i]])
-                axes[idx].set_title('Valid', fontsize=8, color='green', fontweight='bold')
-                axes[idx].axis('off')
-                idx += 1
-
-            # Invalid recipe
-            if i < len(invalid_sample_idx):
-                axes[idx].imshow(self.X_all[invalid_sample_idx[i]])
-                axes[idx].set_title('Invalid', fontsize=8, color='red', fontweight='bold')
-                axes[idx].axis('off')
-                idx += 1
-
-        # Hide unused subplots
-        for i in range(idx, len(axes)):
-            axes[i].axis('off')
-
-        plt.tight_layout()
-        plt.show()
-
-
-    def show_mixed_grid(self, samples_per_page=50, page=0, seed=None):
-        """Show randomly mixed valid and invalid recipes"""
-
-        if seed is not None:
-            random.seed(seed + page)
-            np.random.seed(seed + page)
-
-        # Sample random indices from both
-        n_valid = samples_per_page // 2
-        n_invalid = samples_per_page - n_valid
-
-        valid_sample_idx = np.random.choice(self.valid_indices, min(n_valid, len(self.valid_indices)), replace=False)
-        invalid_sample_idx = np.random.choice(self.invalid_indices, min(n_invalid, len(self.invalid_indices)),
-                                              replace=False)
-
-        # Combine and shuffle
-        sample_indices = list(valid_sample_idx) + list(invalid_sample_idx)
-        random.shuffle(sample_indices)
-
-        # Calculate grid
-        cols = 10
-        rows = (len(sample_indices) + cols - 1) // cols
-
-        fig, axes = plt.subplots(rows, cols, figsize=(20, rows * 2))
-        axes = axes.flatten()
-
-        fig.suptitle(f'Augmented Dataset - Mixed (Page {page + 1})',
-                     fontsize=16, fontweight='bold')
-
-        for i, idx in enumerate(sample_indices):
-            axes[i].imshow(self.X_all[idx])
-
-            # Color code the border
-            is_valid = self.y_all[idx] == 1
-            color = 'green' if is_valid else 'red'
-            label = 'V' if is_valid else 'X'
-
-            axes[i].set_title(label, fontsize=10, color=color, fontweight='bold')
-            axes[i].axis('off')
-
-            # Add colored border
-            for spine in axes[i].spines.values():
-                spine.set_edgecolor(color)
-                spine.set_linewidth(2)
-
-        # Hide unused subplots
-        for i in range(len(sample_indices), len(axes)):
-            axes[i].axis('off')
-
-        plt.tight_layout()
-        plt.show()
-
-
-    def compare_augmentations(self, n_examples=5, seed=None):
-        """Show how augmentation creates variations"""
-
-        if seed is not None:
-            random.seed(seed)
-            np.random.seed(seed)
-
-        # Find similar valid recipes (they might be augmentations of same base)
-        valid_sample_idx = np.random.choice(self.valid_indices, n_examples * 3, replace=False)
-
-        fig, axes = plt.subplots(n_examples, 3, figsize=(9, n_examples * 3))
-
-        if n_examples == 1:
+        n = len(items)
+        cols = max(1, int(np.ceil(np.sqrt(self.per_page))))
+        rows = max(1, (self.per_page + cols - 1) // cols)
+
+        self.fig.subplots_adjust(left=0.01, right=0.99, top=0.94, bottom=0.02, wspace=0.05, hspace=0.3)
+        tab_name = {'original':'Original', 'valid':'Valid', 'invalid':'Invalid'}.get(self.tab, self.tab)
+        self.fig.suptitle(f"{tab_name}  —  Page {self.page+1}/{self._total_pages()}  ({n} shown)",
+                         color=accent, fontsize=12, fontweight='bold', y=0.99)
+
+        axes = self.fig.subplots(rows, cols)
+        if not hasattr(axes, '__len__'):
+            axes = np.array([[axes]])
+        elif axes.ndim == 1:
             axes = axes.reshape(1, -1)
+        axes_flat = axes.flatten()
 
-        fig.suptitle('Augmented Variations (Likely from same base recipe)',
-                     fontsize=14, fontweight='bold')
+        for idx, (img, label, _) in enumerate(items):
+            ax = axes_flat[idx]
+            ax.imshow(img, interpolation='nearest')
+            ax.set_title(label if len(label) <= 22 else label[:19] + '...', fontsize=7, color=accent, pad=2)
+            ax.set_facecolor(self.BG)
+            ax.axis('off')
+            for spine in ax.spines.values():
+                spine.set_edgecolor(accent)
+                spine.set_linewidth(0.6)
 
-        for i in range(n_examples):
-            for j in range(3):
-                idx = valid_sample_idx[i * 3 + j]
-                axes[i, j].imshow(self.X_all[idx])
-                axes[i, j].set_title(f'Sample #{idx}', fontsize=8)
-                axes[i, j].axis('off')
+        for idx in range(n, len(axes_flat)):
+            axes_flat[idx].axis('off')
+            axes_flat[idx].set_facecolor(self.BG)
 
-        plt.tight_layout()
-        plt.show()
+        total = (len(self.viz.original_images) if self.tab == 'original' else
+                 len(self.viz.valid_indices) if self.tab == 'valid' else len(self.viz.invalid_indices))
+        self._status.set(f"Tab: {self.tab} | Page {self.page+1}/{self._total_pages()} | {n}/{total} | Seed: {self.seed}")
+
+    def _draw_compare(self, accent):
+        rng = np.random.RandomState(self.seed + self.page)
+        n = self.per_page // 2
+        v_idx = rng.choice(self.viz.valid_indices, min(n, len(self.viz.valid_indices)), replace=False)
+        i_idx = rng.choice(self.viz.invalid_indices, min(n, len(self.viz.invalid_indices)), replace=False)
+
+        self.fig.subplots_adjust(left=0.04, right=0.99, top=0.92, bottom=0.02, wspace=0.05, hspace=0.3)
+        self.fig.suptitle(f"Compare  —  Valid (top) vs Invalid (bottom)  |  Page {self.page+1}",
+                         color=accent, fontsize=12, fontweight='bold', y=0.99)
+
+        self._items = []
+        rows, cols = 2, max(1, len(v_idx))
+        axes = self.fig.subplots(rows, cols)
+        if cols == 1:
+            axes = axes.reshape(2, 1)
+
+        for col, idx in enumerate(v_idx):
+            img = self.viz.X_all[idx]
+            axes[0, col].imshow(img, interpolation='nearest')
+            axes[0, col].set_title(f'V#{idx}', fontsize=7, color=self.TAB_COLORS['valid'], pad=2)
+            axes[0, col].axis('off')
+            axes[0, col].set_facecolor(self.BG)
+            self._items.append((img, f'Valid #{idx}', None))
+
+        for col, idx in enumerate(i_idx):
+            img = self.viz.X_all[idx]
+            axes[1, col].imshow(img, interpolation='nearest')
+            axes[1, col].set_title(f'X#{idx}', fontsize=7, color=self.TAB_COLORS['invalid'], pad=2)
+            axes[1, col].axis('off')
+            axes[1, col].set_facecolor(self.BG)
+            self._items.append((img, f'Invalid #{idx}', None))
+
+        self.fig.text(0.01, 0.73, 'VALID', color=self.TAB_COLORS['valid'],
+                      fontsize=9, fontweight='bold', rotation=90, va='center')
+        self.fig.text(0.01, 0.27, 'INVALID', color=self.TAB_COLORS['invalid'],
+                      fontsize=9, fontweight='bold', rotation=90, va='center')
+        self._status.set(f"Compare | {len(v_idx)} valid vs {len(i_idx)} invalid | Seed: {self.seed}")
+
+    def _draw_legend(self, accent):
+        self.fig.suptitle("Category Colors & Vertex Rendering", color=accent, fontsize=13, fontweight='bold')
+        self.fig.subplots_adjust(left=0.08, right=0.98, top=0.88, bottom=0.08, wspace=0.3, hspace=0.5)
+
+        cats = ['metal', 'wood', 'stone', 'monster_drop', 'elemental']
+        hues = {'metal':210, 'wood':30, 'stone':0, 'monster_drop':300, 'elemental':280}
+        axes = self.fig.subplots(2, 5)
+
+        for col, cat in enumerate(cats):
+            hue = hues[cat]
+            rgb = hsv_to_rgb(hue/360, 0.7, 0.75)
+            swatch = np.full((56, 56, 3), rgb, dtype=np.float32)
+            axes[0, col].imshow(swatch, interpolation='nearest')
+            axes[0, col].set_title(f'{cat}\n{hue}°', fontsize=8, color=self.FG, pad=3)
+            axes[0, col].set_facecolor(self.BG)
+            axes[0, col].axis('off')
+        axes[0, 0].set_ylabel('Categories', fontsize=9, color=self.FG_DIM)
+
+        for tier in range(1, 5):
+            vertex_size = 2 + tier
+            img = np.zeros((56, 56, 3), dtype=np.float32)
+            color = (0.4, 0.6, 0.8)
+            # Draw center vertex
+            for dy in range(-vertex_size, vertex_size + 1):
+                for dx in range(-vertex_size, vertex_size + 1):
+                    if dx**2 + dy**2 <= vertex_size**2:
+                        y, x = 28 + dy, 28 + dx
+                        if 0 <= y < 56 and 0 <= x < 56:
+                            img[y, x] = color
+            axes[1, tier-1].imshow(img, interpolation='nearest')
+            axes[1, tier-1].set_title(f'T{tier}\n(r={vertex_size})', fontsize=8, color=self.FG, pad=3)
+            axes[1, tier-1].set_facecolor(self.BG)
+            axes[1, tier-1].axis('off')
+        axes[1, 4].axis('off')
+        axes[1, 0].set_ylabel('Vertex Sizes', fontsize=9, color=self.FG_DIM)
+
+        self.fig.set_facecolor(self.BG)
+        self._status.set("Legend view | Category colors · Vertex rendering · Geometric edges")
+
+    def _on_click(self, event):
+        if event.inaxes is None:
+            return
+        all_axes = self.fig.get_axes()
+        try:
+            idx = all_axes.index(event.inaxes)
+        except ValueError:
+            return
+        if idx < len(self._items):
+            img, label, recipe = self._items[idx]
+            self._show_detail(img, label, recipe)
+
+    def _show_detail(self, img, label, recipe):
+        win = tk.Toplevel(self.root)
+        win.title(label[:60])
+        win.configure(bg=self.PANEL)
+        win.geometry("420x520")
+
+        fig2 = Figure(figsize=(4, 4), facecolor=self.PANEL)
+        ax = fig2.add_subplot(111)
+        ax.imshow(img, interpolation='nearest')
+        ax.set_title(label, fontsize=9, color=self.FG, pad=4)
+        ax.set_facecolor(self.PANEL)
+        ax.axis('off')
+        fig2.subplots_adjust(left=0.02, right=0.98, top=0.92, bottom=0.02)
+
+        c2 = FigureCanvasTkAgg(fig2, master=win)
+        c2.get_tk_widget().pack(fill='both', expand=True, padx=8, pady=8)
+        c2.draw()
+
+        if recipe:
+            verts = self.viz.get_vertices_for_recipe(recipe)
+            info = tk.Text(win, font=('Courier', 9), fg=self.FG, bg=self.BG,
+                          relief='flat', height=6, state='disabled')
+            info.pack(fill='x', padx=8, pady=(0, 8))
+            info.configure(state='normal')
+            info.insert('end', f"Recipe: {recipe['recipeId']}\n\n")
+            for coord, name, cat, tier in sorted(verts):
+                info.insert('end', f"  [{coord}] T{tier} {cat:<10} {name}\n")
+            info.configure(state='disabled')
+
+        tk.Button(win, text="Close", bg='#1a4080', fg=self.FG, relief='flat',
+                  font=('Helvetica', 9), padx=10, pady=4, command=win.destroy).pack(pady=(0, 8))
+
+    def _bind_keys(self):
+        self.root.bind('<Left>', lambda _: self._prev_page())
+        self.root.bind('<Right>', lambda _: self._next_page())
+        for i, k in enumerate(self.TAB_KEYS, 1):
+            self.root.bind(str(i), lambda _, key=k: self._switch_tab(key))
+        for c in ['s', 'S']:
+            self.root.bind(c, lambda _: self._shuffle())
+        for c in ['j', 'J']:
+            self.root.bind(c, lambda _: self._jump_page())
+        for c in ['g', 'G']:
+            self.root.bind(c, lambda _: self._cycle_grid())
+        for c in ['q', 'Q']:
+            self.root.bind(c, lambda _: self.root.quit())
+
+    def _cycle_grid(self):
+        opts = self.GRID_OPTIONS
+        idx = opts.index(self.per_page) if self.per_page in opts else 0
+        self._set_grid(opts[(idx + 1) % len(opts)])
+
+    def run(self):
+        self._bind_keys()
+        self.root.mainloop()
 
 
-    def interactive_browser(self):
-        """Interactive browser for dataset"""
-
-        print("\n" + "=" * 80)
-        print("AUGMENTED DATASET BROWSER")
-        print("=" * 80)
-        print(f"Total samples: {len(self.X_all)}")
-        print(f"Valid: {len(self.valid_indices)}")
-        print(f"Invalid: {len(self.invalid_indices)}")
-
-        print("\nCommands:")
-        print("  'random N' - Show N random valid and N random invalid (e.g., 'random 10')")
-        print("  'side N' - Show N samples side-by-side (e.g., 'side 25')")
-        print("  'mixed N' - Show N mixed samples (e.g., 'mixed 50')")
-        print("  'compare N' - Show N sets of augmented variations (e.g., 'compare 5')")
-        print("  'next' - Show next page (for paginated views)")
-        print("  'new' - Reshuffle with new random seed")
-        print("  'quit' - Exit")
-
-        current_page = 0
-        current_mode = None
-        current_n = 50
-        current_seed = 42
-
-        while True:
-            print("\n" + "-" * 80)
-            choice = input("Your choice: ").strip().lower()
-
-            if choice == 'quit':
-                break
-
-            elif choice.startswith('random'):
-                parts = choice.split()
-                n = int(parts[1]) if len(parts) > 1 else 10
-                self.show_random_samples(n_valid=n, n_invalid=n, seed=current_seed)
-                current_mode = 'random'
-                current_n = n
-                current_page = 0
-
-            elif choice.startswith('side'):
-                parts = choice.split()
-                n = int(parts[1]) if len(parts) > 1 else 25
-                self.show_side_by_side_grid(samples_per_page=n, page=current_page, seed=current_seed)
-                current_mode = 'side'
-                current_n = n
-
-            elif choice.startswith('mixed'):
-                parts = choice.split()
-                n = int(parts[1]) if len(parts) > 1 else 50
-                self.show_mixed_grid(samples_per_page=n, page=current_page, seed=current_seed)
-                current_mode = 'mixed'
-                current_n = n
-
-            elif choice.startswith('compare'):
-                parts = choice.split()
-                n = int(parts[1]) if len(parts) > 1 else 5
-                self.compare_augmentations(n_examples=n, seed=current_seed)
-                current_mode = 'compare'
-                current_n = n
-
-            elif choice == 'next':
-                current_page += 1
-                if current_mode == 'side':
-                    self.show_side_by_side_grid(samples_per_page=current_n, page=current_page, seed=current_seed)
-                elif current_mode == 'mixed':
-                    self.show_mixed_grid(samples_per_page=current_n, page=current_page, seed=current_seed)
-                else:
-                    print("Use 'side N' or 'mixed N' first")
-
-            elif choice == 'new':
-                current_seed = random.randint(0, 10000)
-                current_page = 0
-                print(f"New random seed: {current_seed}")
-
-            else:
-                print("Invalid command. Try 'random 10', 'side 25', 'mixed 50', 'compare 5', 'next', 'new', or 'quit'")
-
-# Example usage
 if __name__ == "__main__":
-    import sys
+    adorn_dir = Path(__file__).parent
 
-    # Get dataset path
-    dataset_path = "adornment_dataset.npz"
+    dataset_v2 = adorn_dir / "adornment_dataset_v2.npz"
+    dataset_v1 = adorn_dir / "adornment_dataset.npz"
+    materials = adorn_dir / "../../../Game-1-modular/items.JSON/items-materials-1.JSON"
+    placements = adorn_dir / "../../../Game-1-modular/placements.JSON/placements-adornments-1.JSON"
 
-    if len(sys.argv) > 1:
-        dataset_path = sys.argv[1]
-    elif not Path(dataset_path).exists():
-        dataset_path = input("Enter path to adornment_dataset.npz: ").strip()
+    dataset_path = dataset_v2 if dataset_v2.exists() else dataset_v1
+    if not dataset_path.exists():
+        dataset_path = Path(filedialog.askopenfilename(title="Select dataset .npz file", filetypes=[("NPZ files", "*.npz")]))
+    if not materials.exists():
+        materials = Path(filedialog.askopenfilename(title="Select materials JSON", filetypes=[("JSON files", "*.JSON")]))
+    if not placements.exists():
+        placements = Path(filedialog.askopenfilename(title="Select placements JSON", filetypes=[("JSON files", "*.JSON")]))
 
-    if not Path(dataset_path).exists():
-        print(f"Error: Dataset not found at {dataset_path}")
-        sys.exit(1)
-
-    # Create visualizer
-    viz = AugmentedDatasetVisualizer(dataset_path)
-
-    # Interactive mode
-    viz.interactive_browser()
+    viz = AugmentedDatasetVisualizer(str(dataset_path), str(materials), str(placements))
+    app = AdornmentVisualizerApp(viz)
+    app.run()

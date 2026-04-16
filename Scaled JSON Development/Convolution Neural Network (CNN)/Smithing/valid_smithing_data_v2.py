@@ -56,8 +56,8 @@ class ColorAugmentor:
     # Base category hues (same as MaterialColorEncoder) - NEVER VARIED
     CATEGORY_HUES = {
         'metal': 210,
-        'wood': 30,
-        'stone': 0,
+        'wood': 45,    # bright yellow-orange (was 30, too brown)
+        'stone': 200,  # cool slate blue-gray (was 0/red, too muted)
         'monster_drop': 300,
         'gem': 280,
         'herb': 120,
@@ -118,7 +118,9 @@ class ColorAugmentor:
         # Determine base saturation from tags
         base_saturation = 0.6
         if category == 'stone':
-            base_saturation = 0.2
+            base_saturation = 0.12   # very desaturated slate look
+        elif category == 'wood':
+            base_saturation = 0.75   # vivid yellow-orange (was 0.6, too muddy)
         if 'legendary' in tags or 'mythical' in tags:
             base_saturation = min(1.0, base_saturation + 0.2)
         elif 'magical' in tags or 'ancient' in tags:
@@ -333,14 +335,6 @@ class RecipeDataProcessorV2:
 
         return cls(materials_dict, placements, num_augment_passes)
 
-    def get_shape_mask(self, material_id: str) -> np.ndarray:
-        """Get the 4x4 shape mask for a material's category."""
-        if material_id is None or material_id not in self.materials_dict:
-            return self.DEFAULT_SHAPE
-
-        category = self.materials_dict[material_id].get('category', 'unknown')
-        return self.CATEGORY_SHAPES.get(category, self.DEFAULT_SHAPE)
-
     def get_tier_fill_mask(self, material_id: str, cell_size: int = 4) -> np.ndarray:
         """
         Get a mask that limits fill based on tier.
@@ -357,6 +351,55 @@ class RecipeDataProcessorV2:
         mask[offset:offset+fill_size, offset:offset+fill_size] = 1.0
 
         return mask
+
+    def get_tier_aware_mask(self, material_id: str) -> np.ndarray:
+        """
+        Tier-aware 4×4 shape mask. Shape changes with tier so low-tier cells
+        remain visually distinct rather than becoming invisible 1×1 dots.
+
+        Patterns:
+          wood:         T1=/ diagonal, T2=2×2 solid, T3-4=horizontal stripes
+          stone:        T1=\\ diagonal, T2=2×2 solid, T3-4=X pattern
+          metal:        T1-2=2×2 solid, T3-4=full 4×4 solid
+          monster_drop: T1-2=hollow diamond, T3-4=filled diamond
+          elemental:    T1-2=hollow diamond, T3-4=filled diamond
+        """
+        if material_id is None or material_id not in self.materials_dict:
+            return self.DEFAULT_SHAPE
+
+        mat = self.materials_dict[material_id]
+        cat = mat.get('category', 'unknown')
+        tier = mat.get('tier', 1)
+
+        if cat == 'wood':
+            if tier == 1:
+                return np.array([[0,0,0,1],[0,0,1,0],[0,1,0,0],[1,0,0,0]], dtype=np.float32)
+            elif tier == 2:
+                return np.array([[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]], dtype=np.float32)
+            else:
+                return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
+
+        if cat == 'stone':
+            if tier == 1:
+                return np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], dtype=np.float32)
+            elif tier == 2:
+                return np.array([[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]], dtype=np.float32)
+            else:
+                return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
+
+        if cat == 'metal':
+            if tier <= 2:
+                return np.array([[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]], dtype=np.float32)
+            else:
+                return self.DEFAULT_SHAPE
+
+        if cat in ('monster_drop', 'elemental'):
+            if tier <= 2:
+                return np.array([[0,1,1,0],[1,0,0,1],[1,0,0,1],[0,1,1,0]], dtype=np.float32)
+            else:
+                return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
+
+        return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
 
     def is_station(self, recipe_id: str) -> bool:
         """Check if recipe is a station/bench (ends with _t1, _t2, _t3, _t4)"""
@@ -436,20 +479,13 @@ class RecipeDataProcessorV2:
                 # Start with full cell
                 cell = np.zeros((cell_size, cell_size, 3), dtype=np.float32)
 
-                # Apply shape mask based on category
+                # Tier-aware mask encodes both shape and tier in one step
                 if use_shapes:
-                    shape_mask = self.get_shape_mask(material_id)
+                    combined_mask = self.get_tier_aware_mask(material_id)
+                elif use_tier_fill:
+                    combined_mask = self.get_tier_fill_mask(material_id, cell_size)
                 else:
-                    shape_mask = np.ones((cell_size, cell_size), dtype=np.float32)
-
-                # Apply tier fill mask
-                if use_tier_fill:
-                    tier_mask = self.get_tier_fill_mask(material_id, cell_size)
-                else:
-                    tier_mask = np.ones((cell_size, cell_size), dtype=np.float32)
-
-                # Combined mask: shape AND tier
-                combined_mask = shape_mask * tier_mask
+                    combined_mask = np.ones((cell_size, cell_size), dtype=np.float32)
 
                 # Apply color through mask
                 for c in range(3):

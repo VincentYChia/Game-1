@@ -28,7 +28,19 @@ Output files (18 total for 5 disciplines):
 
 Usage:
     python convert_to_jsonl.py
-    (Follow the prompts)
+    (Follow the prompts — select "All files" to process every discipline)
+
+This is STEP 3 of the training data pipeline. Run AFTER crafting_training_data.py
+(Step 1) has produced {discipline}_custom_data.json files with fresh images.
+See crafting_training_data.py module docstring for the full pipeline.
+
+Matching mechanism:
+  Each entry in *_custom_data.json has an "index" field.
+  Each entry in Synthetic_outputs/{discipline}/*.json also has an "index" field.
+  This script joins on that index. Missing outputs are reported but not fatal.
+  Do NOT renumber or reorder the Synthetic_outputs files.
+
+Output location: LLM Training Data/jsonl_outputs/
 
 Author: Claude
 Created: 2026-02-05
