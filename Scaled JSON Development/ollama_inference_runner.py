@@ -45,6 +45,9 @@ LIVE_PROMPT_MAP = {
 
 OLLAMA_API = "http://localhost:11434"
 
+# JSON validator — set this to the path of json_validator.py
+VALIDATOR_PATH = r"C:\Users\vipVi\PycharmProjects\Game-1\Scaled JSON Development\json_validator.py"
+
 # ============================================================================
 # Flask app
 # ============================================================================
@@ -265,6 +268,104 @@ def api_models():
         return jsonify({"models": [], "error": str(e)})
 
 
+# ── Validator ───────────────────────────────────────────────────────────────
+
+_validator_module = None
+
+def _get_validator():
+    """Dynamically import json_validator.py"""
+    global _validator_module
+    if _validator_module is not None:
+        return _validator_module
+    if not os.path.isfile(VALIDATOR_PATH):
+        print(f"  [validator] ⚠ Not found: {VALIDATOR_PATH}", flush=True)
+        return None
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("json_validator", VALIDATOR_PATH)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    _validator_module = mod
+    print(f"  [validator] ✓ Loaded from {VALIDATOR_PATH}", flush=True)
+    return mod
+
+
+# Map discipline → validator method name
+DISCIPLINE_VALIDATOR = {
+    "smithing":    "_validate_recipes",
+    "alchemy":     "_validate_recipes",
+    "refining":    "_validate_recipes",
+    "engineering": "_validate_recipes",
+    "adornment":   "_validate_recipes",
+}
+
+
+@app.route("/api/validate", methods=["POST"])
+def api_validate():
+    body = request.json
+    raw_json = body.get("json_text", "")
+    discipline = body.get("discipline", "").lower()
+    expected_json = body.get("expected_text", "")
+
+    results = {"errors": [], "warnings": [], "valid": False, "json_parsed": False}
+
+    # Step 1: parse JSON
+    try:
+        parsed = json.loads(raw_json)
+        results["json_parsed"] = True
+    except json.JSONDecodeError as e:
+        results["errors"].append(f"JSON parse error: {e}")
+        return jsonify(results)
+
+    # Step 2: structural validation via validator
+    mod = _get_validator()
+    if mod:
+        try:
+            validator = mod.GameJSONValidator()
+            method_name = DISCIPLINE_VALIDATOR.get(discipline, "_validate_recipes")
+            method = getattr(validator, method_name, None)
+
+            if method and isinstance(parsed, dict):
+                # Wrap single recipe in expected structure if needed
+                if 'recipes' not in parsed and 'recipeId' in parsed:
+                    wrapped = {"recipes": [parsed]}
+                elif 'recipes' not in parsed and isinstance(parsed, dict):
+                    # Try to detect: might be a full file already
+                    wrapped = parsed
+                else:
+                    wrapped = parsed
+                errs = method(wrapped, "<model_output>")
+                for e in errs:
+                    results["errors"].append(e)
+            elif method and isinstance(parsed, list):
+                # Array of recipes
+                wrapped = {"recipes": parsed}
+                errs = method(wrapped, "<model_output>")
+                for e in errs:
+                    results["errors"].append(e)
+        except Exception as e:
+            results["warnings"].append(f"Validator error: {e}")
+
+    # Step 3: compare structure with expected (if provided)
+    if expected_json:
+        try:
+            expected = json.loads(expected_json)
+            # Key-level comparison
+            if isinstance(parsed, dict) and isinstance(expected, dict):
+                missing_keys = set(expected.keys()) - set(parsed.keys())
+                extra_keys = set(parsed.keys()) - set(expected.keys())
+                if missing_keys:
+                    results["warnings"].append(f"Missing keys vs expected: {', '.join(sorted(missing_keys))}")
+                if extra_keys:
+                    results["warnings"].append(f"Extra keys vs expected: {', '.join(sorted(extra_keys))}")
+        except:
+            pass
+
+    results["valid"] = len(results["errors"]) == 0
+    print(f"  [validate] discipline={discipline} parsed={results['json_parsed']} "
+          f"errors={len(results['errors'])} warnings={len(results['warnings'])}", flush=True)
+    return jsonify(results)
+
+
 # ── HTML UI ─────────────────────────────────────────────────────────────────
 
 @app.route("/")
@@ -468,7 +569,7 @@ select option { background: var(--bg2); }
   border: 1px solid var(--border);
 }
 .image-preview img {
-  image-rendering: pixelated; max-width: 144px;
+  image-rendering: pixelated; width: 256px; height: 256px;
   border: 1px solid var(--border); border-radius: 4px;
 }
 
@@ -538,6 +639,47 @@ select option { background: var(--bg2); }
   display: flex; align-items: center; gap: 12px;
   font-family: var(--mono); font-size: 0.7rem; color: var(--text3);
 }
+
+/* Validation results */
+.val-panel {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+}
+.val-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.val-badge {
+  font-family: var(--mono); font-size: 0.7rem; font-weight: 700;
+  padding: 2px 10px; border-radius: 12px;
+}
+.val-badge.pass { color: var(--green); background: var(--green-bg); }
+.val-badge.fail { color: var(--red); background: rgba(204,51,68,0.08); }
+.val-badge.warn { color: var(--orange); background: var(--orange-bg); }
+.val-body { padding: 10px 14px; }
+.val-item {
+  font-family: var(--mono); font-size: 0.72rem;
+  padding: 4px 0; line-height: 1.5;
+  border-bottom: 1px solid var(--bg3);
+  display: flex; gap: 8px; align-items: baseline;
+}
+.val-item:last-child { border-bottom: none; }
+.val-tag {
+  font-size: 0.63rem; font-weight: 700; padding: 1px 6px;
+  border-radius: 3px; flex-shrink: 0;
+}
+.val-tag.err { color: var(--red); background: rgba(204,51,68,0.08); }
+.val-tag.wrn { color: var(--orange); background: var(--orange-bg); }
+.val-msg { color: var(--text2); word-break: break-word; }
+.btn-validate {
+  font-family: var(--mono); font-size: 0.68rem; font-weight: 600;
+  padding: 3px 10px; border-radius: 4px; border: 1px solid var(--border);
+  background: var(--bg2); color: var(--text2); cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-validate:hover { border-color: var(--green); color: var(--green); }
+.btn-validate:disabled { opacity: 0.35; cursor: default; }
 </style>
 </head>
 <body>
@@ -605,6 +747,7 @@ select option { background: var(--bg2); }
 let disciplines=[], entries=[], currentFile="", currentIndex=-1, currentEntry=null, running=false;
 let abortController=null;
 let promptMode="training"; // "training" or "live"
+let lastOutput=""; // raw model output for validation
 
 function setPromptMode(mode){
   promptMode=mode;
@@ -699,10 +842,12 @@ function renderEntry(){
   let exp=currentEntry.expected_completion||"";
   try{exp=JSON.stringify(JSON.parse(exp),null,2);}catch{}
   c.innerHTML=`${imgHtml}
-    <div class="panel"><div class="panel-header"><div class="panel-dot" style="background:var(--accent)"></div><div class="panel-title">Prompt</div></div><div class="panel-body" style="max-height:180px;">${esc(currentEntry.prompt_text||"")}</div></div>
     <div class="compare-grid">
       <div class="panel"><div class="panel-header"><div class="panel-dot" style="background:var(--green)"></div><div class="panel-title">Expected (Ground Truth)</div></div><div class="panel-body" id="expected-body">${esc(exp)}</div></div>
-      <div class="panel"><div class="panel-header"><div class="panel-dot" style="background:var(--orange)"></div><div class="panel-title">Model Output</div><div class="spacer"></div><span id="run-indicator" style="display:none"><span class="spinner"></span></span></div><div class="panel-body" id="model-body" style="color:var(--text3);">Click &#9654; Run Inference</div><div class="stats-bar" id="stats-bar" style="display:none;"></div></div>
+      <div class="panel"><div class="panel-header"><div class="panel-dot" style="background:var(--orange)"></div><div class="panel-title">Model Output</div><div class="spacer"></div><span id="run-indicator" style="display:none;margin-left:6px;"><span class="spinner"></span></span></div><div class="panel-body" id="model-body" style="color:var(--text3);">Click &#9654; Run Inference</div><div class="stats-bar" id="stats-bar" style="display:none;"></div></div>
+    </div>
+    <div id="validation-results">
+      <div class="val-panel"><div class="val-header"><span class="panel-title">Validation</span></div><div class="val-body"><div class="val-item"><span class="val-msg" style="color:var(--text3);">Run inference to auto-validate model output.</span></div></div></div>
     </div>`;
 }
 
@@ -779,6 +924,9 @@ async function runInference(){
   const sb=document.getElementById("stats-bar");
   mb.textContent=""; mb.style.color="var(--text)";
   ind.style.display="inline"; sb.style.display="none";
+  lastOutput="";
+  const vr=document.getElementById("validation-results");
+  if(vr)vr.innerHTML='<div class="val-panel"><div class="val-header"><span class="panel-title">Validation</span></div><div class="val-body"><div class="val-item"><span class="val-msg" style="color:var(--text3);">Waiting for inference…</span></div></div></div>';
   try{
     const resp=await fetch("/api/infer",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),signal:abortController.signal});
     const reader=resp.body.getReader();
@@ -800,6 +948,7 @@ async function runInference(){
       }
     }
     try{mb.textContent=JSON.stringify(JSON.parse(full),null,2);}catch{}
+    lastOutput=full;
   }catch(err){
     if(err.name==="AbortError"){
       mb.textContent+="\n\n— stopped —";
@@ -813,6 +962,63 @@ async function runInference(){
   abortController=null;
   document.getElementById("btn-run").disabled=false;
   document.getElementById("btn-stop").style.display="none";
+  // Auto-validate output
+  if(lastOutput) validateOutput();
+}
+
+async function validateOutput(){
+  if(!lastOutput)return;
+  const sel=document.getElementById("sel-discipline");
+  const base=sel.options[sel.selectedIndex]?.dataset.base||"";
+  const vr=document.getElementById("validation-results");
+  if(!vr)return;
+  vr.innerHTML='<div class="val-panel"><div class="val-header"><span class="spinner"></span><span class="panel-title" style="margin-left:6px;">Validating…</span></div></div>';
+
+  // Get expected text for comparison
+  const expectedText=currentEntry?.expected_completion||"";
+
+  try{
+    const res=await fetch("/api/validate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({json_text:lastOutput,discipline:base,expected_text:expectedText})});
+    const data=await res.json();
+    renderValidation(data);
+  }catch(err){
+    vr.innerHTML=`<div class="val-panel"><div class="val-header"><span class="val-badge fail">ERROR</span><span class="panel-title">Validation Failed</span></div><div class="val-body"><div class="val-item"><span class="val-tag err">ERR</span><span class="val-msg">${esc(err.message)}</span></div></div></div>`;
+  }
+}
+
+function renderValidation(data){
+  const vr=document.getElementById("validation-results");
+  if(!vr)return;
+  const errs=data.errors||[];
+  const warns=data.warnings||[];
+
+  let badge,label;
+  if(!data.json_parsed){
+    badge='<span class="val-badge fail">INVALID JSON</span>';
+    label="Output is not valid JSON";
+  }else if(errs.length>0){
+    badge='<span class="val-badge fail">'+errs.length+' ERROR'+(errs.length>1?'S':'')+'</span>';
+    label="Structural issues found";
+  }else if(warns.length>0){
+    badge='<span class="val-badge warn">'+warns.length+' WARNING'+(warns.length>1?'S':'')+'</span>';
+    label="Passed with warnings";
+  }else{
+    badge='<span class="val-badge pass">VALID</span>';
+    label="JSON structure passed all checks";
+  }
+
+  let items="";
+  for(const e of errs){
+    items+=`<div class="val-item"><span class="val-tag err">ERR</span><span class="val-msg">${esc(String(e))}</span></div>`;
+  }
+  for(const w of warns){
+    items+=`<div class="val-item"><span class="val-tag wrn">WARN</span><span class="val-msg">${esc(String(w))}</span></div>`;
+  }
+  if(!items&&data.json_parsed){
+    items='<div class="val-item"><span class="val-msg" style="color:var(--green);">No issues detected.</span></div>';
+  }
+
+  vr.innerHTML=`<div class="val-panel"><div class="val-header">${badge}<span class="panel-title">${esc(label)}</span><div class="spacer"></div><button class="btn-validate" onclick="validateOutput()">&#8635; Re-validate</button></div><div class="val-body">${items}</div></div>`;
 }
 
 function showStats(s,mode,sysLen){
@@ -847,6 +1053,8 @@ if __name__ == "__main__":
         status = "✓ found" if os.path.isfile(fp) else "✗ MISSING"
         print(f"    {disc:15s} → {fname:15s} {status}")
     print(f"  Ollama API:    {OLLAMA_API}")
+    val_status = "✓ found" if os.path.isfile(VALIDATOR_PATH) else "✗ MISSING"
+    print(f"  Validator:     {VALIDATOR_PATH}  {val_status}")
     print(f"  UI:            http://localhost:{port}")
     print()
     threading.Timer(1.0, lambda: webbrowser.open(f"http://localhost:{port}")).start()
