@@ -482,9 +482,70 @@ Layer 7 World Summarization is now fully implemented and tested. The 7-layer
 hierarchy (World → Nation → Region → Province → District → Locality) provides
 complete aggregation from raw facts to world-scale narrative.
 
-**No Layer 8 is currently planned.** If a future layer is added, follow the
-established pattern from Layers 3-7: mechanical copy of the parent layer,
-one tier coarser, adjusted bucket naming, and wired callback chain.
+**No Layer 8 is currently planned.**
+
+---
+
+## WMS Next Steps
+
+### Priority 1 — Evaluator Coverage Expansion (DO NEXT)
+
+The WMS pipeline is complete, but the *data flowing into it* has gaps. The 33
+evaluators cover combat/crafting/gathering/progression/social well, but are
+entirely blind to several domains:
+
+**High-impact gaps:**
+- **Faction standing changes**: `FACTION_REP_CHANGED` is deliberately excluded
+  from the pipeline, but a lightweight faction evaluator (emitting
+  `domain:faction` + `faction:X`) is the prerequisite for the political
+  pipeline. Requires the faction interactive system to be built first.
+- **Skills / elemental specialization**: `SKILL_ACTIVATED` is only captured
+  via `combat_style.py` as an aggregate. No evaluator for skill *learning
+  paths*, elemental mastery, or skill *tree* specialization patterns.
+- **Attack mechanics depth**: No combo tracking, no attack-phase analysis.
+  `combat_style.py` counts dodges/attacks/statuses but not *patterns*.
+- **Fishing**: `StatTracker.record_fish_caught()` exists but no evaluator
+  exposes fishing data to the WMS pipeline.
+- **Turrets/Barriers**: `StatTracker.record_barrier_placed()` exists but
+  placed-entity events are not evaluated.
+
+**Roadmap**: See `Development-Plan/PART_2_LIVING_WORLD.md` for the full
+political pipeline dependency chain. Faction evaluators are the bridge between
+the interactive faction system and the WMS narrative layer.
+
+---
+
+### TODO — WMS Consumer Integration (Future)
+
+These are the next WMS milestones after evaluator expansion is complete:
+
+- **TODO**: NPC agents (`world_system/living_world/npc/`) should query Layer 7
+  summaries to inform behavior decisions (e.g., `world_condition == "crisis"` →
+  NPCs flee, hoard, close shops). Currently no WMS query calls exist in NPC code.
+  Requires: `WorldMemorySystem.get_world_summary(world_id)` query method.
+- **TODO**: World Chronicle UI — player-facing panel displaying the latest Layer
+  7 summary and drillable history (L7 → L6 → L5). Part of the Living World
+  feature set, after basic NPC reactivity is working.
+
+---
+
+### Long-Term WMS Features (Low Burner)
+
+These require the functional WMS and faction pipeline to be operational first.
+Do not start before the priority items above are complete.
+
+- **LONG-TERM**: StatTracker Export / Analytics Dashboard — time-series queries,
+  export to CSV, region-over-region comparisons, live dev dashboard. The
+  StatTracker is write-only now; readable aggregation queries need `get_count()`,
+  `get_total()`, `get_max()` chained with time windows. Currently no time-series
+  support exists.
+- **LONG-TERM**: Query Optimization / Materialized Views — denormalize Layer 6-7
+  summaries into a fast-lookup cache table. Relevant when save files are large
+  and live queries get slow.
+- **LONG-TERM**: Memory Retention / Archival — archive old Layer 2-3 events after
+  N game-days, compress to summaries only. Relevant for very long game saves.
+
+---
 
 ### Current Test Status
 
@@ -503,18 +564,16 @@ OK (54 L3 + 39 L4 + 37 L5 + 36 L6 + 29 L7)
 ### Commands to Know
 
 ```bash
-# Full test ladder (run frequently)
-python -m unittest world_system.world_memory.test_layer3 \
-    world_system.tests.test_layer4 world_system.tests.test_layer5 \
-    world_system.tests.test_layer6 -v
+# Full test ladder (run frequently — all 195 tests)
+python -m unittest \
+    world_system.world_memory.test_layer3 \
+    world_system.tests.test_layer4 \
+    world_system.tests.test_layer5 \
+    world_system.tests.test_layer6 \
+    world_system.tests.test_layer7 -v
 
-# Individual layer tests (for debugging)
-python -m unittest world_system.tests.test_layer6 -v
-
-# After creating Layer 7 code, add to ladder:
-python -m unittest world_system.world_memory.test_layer3 \
-    world_system.tests.test_layer4 world_system.tests.test_layer5 \
-    world_system.tests.test_layer6 world_system.tests.test_layer7 -v
+# Individual layer tests
+python -m unittest world_system.tests.test_layer7 -v
 
 # LLM testing (requires ANTHROPIC_API_KEY set)
 export ANTHROPIC_API_KEY="sk-ant-..."
