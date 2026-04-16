@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Item Validator - Validate item JSON files for correctness
 
@@ -114,19 +115,19 @@ class ItemValidator:
         print(f"{'='*70}")
 
         if is_valid:
-            print(f" VALID - {len(self.seen_ids)} items checked")
+            print(f"VALID - {len(self.seen_ids)} items checked")
         else:
-            print(f"L INVALID - {len(errors)} errors found")
+            print(f"INVALID - {len(errors)} errors found")
 
         if errors:
-            print(f"\n=4 Errors ({len(errors)}):")
+            print(f"\nErrors ({len(errors)}):")
             for error in errors[:10]:  # Show first 10
                 print(f"  - {error}")
             if len(errors) > 10:
                 print(f"  ... and {len(errors) - 10} more")
 
         if warnings:
-            print(f"\n   Warnings ({len(warnings)}):")
+            print(f"\nWarnings ({len(warnings)}):")
             for warning in warnings[:10]:  # Show first 10
                 print(f"  - {warning}")
             if len(warnings) > 10:
