@@ -72,8 +72,8 @@ class MaterialColorEncoder:
     # Category to Hue mapping (degrees, 0-360)
     CATEGORY_HUES = {
         'metal': 210,
-        'wood': 30,
-        'stone': 0,
+        'wood': 45,    # bright yellow-orange (was 30, too brown)
+        'stone': 200,  # cool slate blue-gray (was 0/red, too muted)
         'monster_drop': 300,
         'gem': 280,
         'herb': 120,
@@ -200,7 +200,9 @@ class MaterialColorEncoder:
         # TAGS -> SATURATION
         base_saturation = 0.6
         if category == 'stone':
-            base_saturation = 0.2
+            base_saturation = 0.12   # very desaturated slate look
+        elif category == 'wood':
+            base_saturation = 0.75   # vivid yellow-orange
         if 'legendary' in tags or 'mythical' in tags:
             base_saturation = min(1.0, base_saturation + 0.2)
         elif 'magical' in tags or 'ancient' in tags:
@@ -231,61 +233,31 @@ class SmithingImageRenderer:
     CELL_SIZE = 4
     GRID_SIZE = 9
 
-    # Shape masks by category - MUST MATCH training (valid_smithing_data_v2.py)
+    # Shape masks by category — high-tier fallback patterns
+    # MUST MATCH training (valid_smithing_data_v2.py CATEGORY_SHAPES)
     CATEGORY_SHAPES = {
-        # Metal: Full square (solid, industrial)
-        'metal': np.array([
-            [1, 1, 1, 1],
-            [1, 1, 1, 1],
-            [1, 1, 1, 1],
-            [1, 1, 1, 1]
-        ], dtype=np.float32),
-
-        # Wood: Horizontal lines (grain pattern)
-        'wood': np.array([
-            [1, 1, 1, 1],
-            [0, 0, 0, 0],
-            [1, 1, 1, 1],
-            [0, 0, 0, 0]
-        ], dtype=np.float32),
-
-        # Stone: X pattern (angular, rocky)
-        'stone': np.array([
-            [1, 0, 0, 1],
-            [0, 1, 1, 0],
-            [0, 1, 1, 0],
-            [1, 0, 0, 1]
-        ], dtype=np.float32),
-
-        # Monster drop: Diamond shape (organic)
-        'monster_drop': np.array([
-            [0, 1, 1, 0],
-            [1, 1, 1, 1],
-            [1, 1, 1, 1],
-            [0, 1, 1, 0]
-        ], dtype=np.float32),
-
-        # Elemental: Plus/cross pattern (radiating energy)
-        'elemental': np.array([
-            [0, 1, 1, 0],
-            [1, 1, 1, 1],
-            [1, 1, 1, 1],
-            [0, 1, 1, 0]
-        ], dtype=np.float32),
+        'metal':        np.ones((4, 4), dtype=np.float32),
+        'wood':         np.array([[1,1,1,1],[0,0,0,0],[1,1,1,1],[0,0,0,0]], dtype=np.float32),
+        'stone':        np.array([[1,0,0,1],[0,1,1,0],[0,1,1,0],[1,0,0,1]], dtype=np.float32),
+        'monster_drop': np.array([[0,1,1,0],[1,1,1,1],[1,1,1,1],[0,1,1,0]], dtype=np.float32),
+        'elemental':    np.array([[0,1,1,0],[1,1,1,1],[1,1,1,1],[0,1,1,0]], dtype=np.float32),
     }
 
-    # Default shape for unknown categories
     DEFAULT_SHAPE = np.ones((4, 4), dtype=np.float32)
-
-    # Tier fill sizes (centered in 4x4 cell)
-    # T1=1x1, T2=2x2, T3=3x3, T4=full 4x4
-    TIER_FILL_SIZES = {1: 1, 2: 2, 3: 3, 4: 4}
 
     def __init__(self, color_encoder: MaterialColorEncoder):
         self.color_encoder = color_encoder
 
-    def _get_shape_mask(self, material_id: str) -> np.ndarray:
-        """Get the 4x4 shape mask for a material's category."""
+    def _get_tier_aware_mask(self, material_id: str) -> np.ndarray:
+        """
+        Tier-aware 4×4 shape mask. MUST MATCH training (valid_smithing_data_v2.get_tier_aware_mask).
+
+          wood:         T1=/ diagonal, T2=2×2 solid, T3-4=horizontal stripes
+          stone:        T1=\\ diagonal, T2=2×2 solid, T3-4=X pattern
+          metal:        T1-2=2×2 solid, T3-4=full 4×4 solid
+          monster_drop: T1-2=hollow diamond, T3-4=filled diamond
+          elemental:    T1-2=hollow diamond, T3-4=filled diamond
+        """
         if material_id is None:
             return self.DEFAULT_SHAPE
 
@@ -293,29 +265,38 @@ class SmithingImageRenderer:
         if mat_data is None:
             return self.DEFAULT_SHAPE
 
-        category = mat_data.get('category', 'unknown')
-        return self.CATEGORY_SHAPES.get(category, self.DEFAULT_SHAPE)
-
-    def _get_tier_fill_mask(self, material_id: str) -> np.ndarray:
-        """
-        Get a mask that limits fill based on tier.
-        T1=1x1 center, T2=2x2 center, T3=3x3 center, T4=full 4x4
-        """
-        if material_id is None:
-            return np.zeros((self.CELL_SIZE, self.CELL_SIZE), dtype=np.float32)
-
-        mat_data = self.color_encoder.get_material_data(material_id)
-        if mat_data is None:
-            return np.zeros((self.CELL_SIZE, self.CELL_SIZE), dtype=np.float32)
-
+        cat = mat_data.get('category', 'unknown')
         tier = mat_data.get('tier', 1)
-        fill_size = self.TIER_FILL_SIZES.get(tier, 4)
 
-        mask = np.zeros((self.CELL_SIZE, self.CELL_SIZE), dtype=np.float32)
-        offset = (self.CELL_SIZE - fill_size) // 2
-        mask[offset:offset+fill_size, offset:offset+fill_size] = 1.0
+        if cat == 'wood':
+            if tier == 1:
+                return np.array([[0,0,0,1],[0,0,1,0],[0,1,0,0],[1,0,0,0]], dtype=np.float32)
+            elif tier == 2:
+                return np.array([[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]], dtype=np.float32)
+            else:
+                return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
 
-        return mask
+        if cat == 'stone':
+            if tier == 1:
+                return np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], dtype=np.float32)
+            elif tier == 2:
+                return np.array([[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]], dtype=np.float32)
+            else:
+                return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
+
+        if cat == 'metal':
+            if tier <= 2:
+                return np.array([[0,0,0,0],[0,1,1,0],[0,1,1,0],[0,0,0,0]], dtype=np.float32)
+            else:
+                return self.DEFAULT_SHAPE
+
+        if cat in ('monster_drop', 'elemental'):
+            if tier <= 2:
+                return np.array([[0,1,1,0],[1,0,0,1],[1,0,0,1],[0,1,1,0]], dtype=np.float32)
+            else:
+                return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
+
+        return self.CATEGORY_SHAPES.get(cat, self.DEFAULT_SHAPE)
 
     def render(self, interactive_ui) -> np.ndarray:
         """
@@ -363,14 +344,8 @@ class SmithingImageRenderer:
                 # Get base color
                 color = self.color_encoder.encode(material_id)
 
-                # Get shape mask based on category
-                shape_mask = self._get_shape_mask(material_id)
-
-                # Get tier fill mask
-                tier_mask = self._get_tier_fill_mask(material_id)
-
-                # Combined mask: shape AND tier
-                combined_mask = shape_mask * tier_mask
+                # Tier-aware mask (MUST MATCH training pipeline)
+                combined_mask = self._get_tier_aware_mask(material_id)
 
                 # Create cell with masked color
                 cell = np.zeros((self.CELL_SIZE, self.CELL_SIZE, 3), dtype=np.float32)
