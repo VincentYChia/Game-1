@@ -10,6 +10,7 @@ Usage:
 
 from __future__ import annotations
 
+import time
 from typing import List, Tuple
 
 FACTION_SCHEMA_VERSION = 1
@@ -211,7 +212,7 @@ class FactionDatabaseSchema:
             if cursor.fetchone()[0] == 0:
                 cursor.execute(
                     "INSERT INTO faction_schema_version (version, created_at) VALUES (?, ?)",
-                    (FACTION_SCHEMA_VERSION, __import__('time').time())
+                    (FACTION_SCHEMA_VERSION, time.time())
                 )
 
             connection.commit()

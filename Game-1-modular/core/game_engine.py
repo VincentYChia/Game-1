@@ -4459,11 +4459,11 @@ class GameEngine:
 
     def _init_world_memory(self):
         """Initialize the World Memory System and Faction Systems (AI foundation layer)."""
-        # Initialize Faction Systems (Phase 1 foundation: TagRegistry, AffinityDefaults)
+        # Initialize Faction Systems (Phase 2: SQLite-backed NPC profiles & affinity)
         try:
             from world_system.living_world.factions import initialize_faction_systems
             initialize_faction_systems()
-            print("[Faction] Systems initialized (TagRegistry, AffinityDefaults)")
+            print("[Faction] FactionDatabase initialized")
         except Exception as e:
             print(f"[Faction] Init failed (non-fatal): {e}")
 

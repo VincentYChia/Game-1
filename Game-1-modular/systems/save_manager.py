@@ -71,7 +71,7 @@ class SaveManager:
         if map_system:
             save_data["map_state"] = map_system.get_save_data()
 
-        # Add faction system state (Phase 1 foundation: tag registry, affinity defaults)
+        # Add faction system state (Phase 2: SQLite-backed NPC profiles & affinity)
         try:
             from world_system.living_world.factions import save_faction_systems
             save_data["faction_state"] = save_faction_systems()
@@ -570,15 +570,14 @@ class SaveManager:
         """
         Restore faction system state from save data.
 
-        Faction systems (TagRegistry, AffinityDefaults) load from disk automatically
-        during initialization. This method is a stub for consistency with other
-        system restoration patterns.
+        FactionDatabase loads from disk (faction.db) automatically during initialization.
+        This method is provided for consistency with other system restoration patterns.
 
         Args:
             save_data: The loaded save data dictionary
 
         Returns:
-            True if faction state was present, False otherwise
+            True if restore completed successfully, False otherwise
         """
         faction_state = save_data.get("faction_state", {})
         if not faction_state:

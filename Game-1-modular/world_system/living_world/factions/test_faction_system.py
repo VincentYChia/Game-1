@@ -34,17 +34,17 @@ class FactionTestFixture:
     def __init__(self):
         self.temp_dir = None
         self.db_path = None
-        self.original_db_path = None
+        self.original_get_path = None
 
     def setup(self):
         """Create temporary database for testing."""
         self.temp_dir = tempfile.mkdtemp()
         self.db_path = Path(self.temp_dir) / "test_faction.db"
 
-        # Patch get_faction_db_path to use test database
-        from core import paths
-        self.original_get_path = paths.get_faction_db_path
-        paths.get_faction_db_path = lambda: self.db_path
+        # Patch get_faction_db_path at the point of use (in database module)
+        from world_system.living_world.factions import database
+        self.original_get_path = database.get_faction_db_path
+        database.get_faction_db_path = lambda: self.db_path
 
         # Reset singleton
         FactionDatabase.reset()
@@ -54,9 +54,9 @@ class FactionTestFixture:
         FactionDatabase.reset()
 
         # Restore original function
-        if self.original_db_path:
-            from core import paths
-            paths.get_faction_db_path = self.original_get_path
+        if self.original_get_path is not None:
+            from world_system.living_world.factions import database
+            database.get_faction_db_path = self.original_get_path
 
         # Clean up temp files
         if self.temp_dir and os.path.exists(self.temp_dir):
@@ -86,7 +86,7 @@ def test_database_initialization():
         expected = {
             'npc_profiles', 'npc_belonging', 'player_affinity',
             'affinity_defaults', 'cultural_affinity_cache', 'quest_log',
-            'schema_version'
+            'faction_schema_version'
         }
         assert expected.issubset(tables), f"Missing tables. Have: {tables}, expected: {expected}"
 

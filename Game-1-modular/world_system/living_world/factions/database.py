@@ -15,6 +15,7 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import sqlite3
 import time
 from pathlib import Path
@@ -119,7 +120,7 @@ class FactionDatabase:
             raise RuntimeError("Database not initialized")
 
         current_time = time.time()
-        metadata_json = __import__('json').dumps(metadata or {})
+        metadata_json = json.dumps(metadata or {})
 
         cursor = self.connection.cursor()
         try:
@@ -158,7 +159,7 @@ class FactionDatabase:
         if not row:
             return None
 
-        metadata = __import__('json').loads(row[6] or '{}')
+        metadata = json.loads(row[6] or '{}')
         return NPCFactionProfile(
             npc_id=row[0],
             location_id=row[1],
@@ -202,7 +203,7 @@ class FactionDatabase:
         if not self.connection:
             return False
 
-        hooks_json = __import__('json').dumps(narrative_hooks or [])
+        hooks_json = json.dumps(narrative_hooks or [])
 
         cursor = self.connection.cursor()
         try:
@@ -231,7 +232,7 @@ class FactionDatabase:
 
         tags = []
         for row in cursor.fetchall():
-            hooks = __import__('json').loads(row[3] or '[]')
+            hooks = json.loads(row[3] or '[]')
             tags.append(NPCBelongingTag(
                 tag=row[0],
                 significance=row[1],
@@ -273,13 +274,16 @@ class FactionDatabase:
     # ========================================================================
 
     def initialize_player_affinity(self, player_id: str) -> PlayerAffinityProfile:
-        """Initialize player affinity (all tags start at 0)."""
+        """Load or initialize player affinity profile.
+
+        Reads all existing affinity values from the database, or returns
+        an empty profile if no affinity exists yet.
+        """
         if not self.connection:
             raise RuntimeError("Database not initialized")
 
-        # Just return a profile with empty affinity dict
-        # First access will populate it
-        return PlayerAffinityProfile(player_id=player_id, affinity={})
+        affinity = self.get_all_player_affinities(player_id)
+        return PlayerAffinityProfile(player_id=player_id, affinity=affinity)
 
     def get_player_affinity(self, player_id: str, tag: str) -> float:
         """Get player's current affinity with a tag (default 0)."""
@@ -320,31 +324,51 @@ class FactionDatabase:
 
         Returns:
             New affinity value (clamped to -100 to 100)
+
+        Note: Uses BEGIN IMMEDIATE for atomicity across concurrent writes.
         """
         if not self.connection:
-            return 0.0
+            raise RuntimeError("Database not initialized")
 
         current_time = time.time()
-        current_value = self.get_player_affinity(player_id, tag)
-        new_value = max(-100.0, min(100.0, current_value + delta))
-        total_gained = max(0.0, self.get_player_total_gained(player_id, tag) + max(0, delta))
-
         cursor = self.connection.cursor()
+
         try:
+            # Begin immediate transaction to prevent concurrent writes
+            cursor.execute("BEGIN IMMEDIATE")
+
+            # Read current value atomically
             cursor.execute("""
-                INSERT INTO player_affinity
+                SELECT current_value, total_gained FROM player_affinity
+                WHERE player_id = ? AND tag = ?
+            """, (player_id, tag))
+            row = cursor.fetchone()
+
+            if row:
+                # Update existing row
+                current_value = row[0]
+                current_total_gained = row[1]
+            else:
+                # New row
+                current_value = 0.0
+                current_total_gained = 0.0
+
+            new_value = max(-100.0, min(100.0, current_value + delta))
+            new_total_gained = current_total_gained + max(0.0, delta)
+
+            # Atomic insert or replace
+            cursor.execute("""
+                INSERT OR REPLACE INTO player_affinity
                 (player_id, tag, current_value, total_gained, updated_at)
                 VALUES (?, ?, ?, ?, ?)
-            """, (player_id, tag, new_value, total_gained, current_time))
-        except sqlite3.IntegrityError:
-            cursor.execute("""
-                UPDATE player_affinity
-                SET current_value = ?, total_gained = ?, updated_at = ?
-                WHERE player_id = ? AND tag = ?
-            """, (new_value, total_gained, current_time, player_id, tag))
+            """, (player_id, tag, new_value, new_total_gained, current_time))
 
-        self.connection.commit()
-        return new_value
+            self.connection.commit()
+            return new_value
+
+        except Exception as e:
+            self.connection.rollback()
+            raise RuntimeError(f"Error applying affinity delta: {e}")
 
     def get_player_total_gained(self, player_id: str, tag: str) -> float:
         """Get total positive affinity gained for a tag (for tracking)."""
@@ -377,7 +401,7 @@ class FactionDatabase:
             Sum of all affinity_defaults for this address and tag (-100 to +100)
         """
         if not self.connection:
-            return 0.0
+            raise RuntimeError("Database not initialized")
 
         total_affinity = 0.0
         cursor = self.connection.cursor()
@@ -526,14 +550,17 @@ class FactionDatabase:
     # ========================================================================
 
     def get_all_tags(self) -> List[str]:
-        """Get all unique tags in the system."""
+        """Get all unique tags in the system from all sources."""
         if not self.connection:
             return []
 
         cursor = self.connection.cursor()
         cursor.execute("""
-            SELECT DISTINCT tag
-            FROM affinity_defaults
+            SELECT DISTINCT tag FROM affinity_defaults
+            UNION
+            SELECT DISTINCT tag FROM npc_belonging
+            UNION
+            SELECT DISTINCT tag FROM player_affinity
             ORDER BY tag
         """)
 

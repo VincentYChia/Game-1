@@ -12,7 +12,7 @@ Phase 2 implements the core NPC faction profile system, player affinity tracking
 
 ### Core Module Files
 
-#### 1. `models.py` (181 lines)
+#### 1. `models.py` (180 lines)
 Pure data classes (dataclasses) representing faction system entities:
 
 - **NPCBelongingTag**: NPC identity tags with significance, role, and narrative hooks
@@ -25,19 +25,18 @@ Pure data classes (dataclasses) representing faction system entities:
 
 **Key Design**: Each dataclass mirrors SQLite schema structure. Models are immutable after creation (no setters).
 
-#### 2. `schema.py` (450 lines)
+#### 2. `schema.py` (361 lines)
 SQLite schema definitions and bootstrap data:
 
 - **FactionDatabaseSchema** class: Manages table creation
-- **8 Tables**:
-  1. `npc_profiles` (MAIN): npc_id (PK), location_id, narrative, primary_tag, created_at, last_updated, metadata
-  2. `npc_belonging` (NORMALIZED): npc_id (FK), tag (PK), significance, role, narrative_hooks
-  3. `player_affinity` (MAIN): player_id (FK), tag (PK), current_value, total_gained, updated_at
-  4. `affinity_defaults` (CONFIG): tier (PK), location_id (PK), tag (PK), delta
-  5. `cultural_affinity_cache` (CACHE): tier, location_id, tag, cultural_affinity (unused in Phase 2, for future optimization)
+- **7 Tables**:
+  1. `affinity_defaults` (CONFIG): tier (PK), location_id (PK), tag (PK), delta
+  2. `cultural_affinity_cache` (CACHE): tier, location_id, tag, cultural_affinity (unused in Phase 2, for future optimization)
+  3. `npc_profiles` (MAIN): npc_id (PK), location_id, narrative, primary_tag, created_at, last_updated, metadata
+  4. `npc_belonging` (NORMALIZED): npc_id (FK), tag (PK), significance, role, narrative_hooks
+  5. `player_affinity` (MAIN): player_id (FK), tag (PK), current_value, total_gained, updated_at
   6. `quest_log` (LOG): player_id, quest_id (PK), npc_id, status, offered_at, completed_at
-  7. `schema_version` (META): version tracking for migrations
-  8. Additional tables for future phases (faction_relationships, reputation_milestones)
+  7. `faction_schema_version` (META): version tracking for migrations
 
 - **Bootstrap Data**: `BOOTSTRAP_AFFINITY_DEFAULTS_SQL` with 50+ INSERT statements covering:
   - World tier: None location_id (global affinity)
@@ -49,7 +48,7 @@ SQLite schema definitions and bootstrap data:
 
 **Key Design**: Additive tier summation (not hierarchical). All tiers contribute equally to cultural affinity calculation.
 
-#### 3. `database.py` (580 lines)
+#### 3. `database.py` (574 lines)
 FactionDatabase singleton managing all SQLite operations:
 
 - **Initialization**: `initialize()` creates connection, tables, seeds bootstrap data
@@ -258,7 +257,7 @@ python3 world_system/living_world/factions/test_faction_system.py
 ## Code Quality Metrics
 
 - **Files**: 4 new (models, schema, database, test) + 1 updated (paths) + 4 modified (init, game_engine, save_manager, paths)
-- **Total New LOC**: 1,800+ lines
+- **Total New LOC**: 1,789 lines (180 models + 361 schema + 574 database + 72 init + 602 test)
 - **Test Coverage**: 9 test functions covering core operations
 - **Documentation**: This file + docstrings in all classes/methods
 - **Type Hints**: All public methods have complete type annotations
