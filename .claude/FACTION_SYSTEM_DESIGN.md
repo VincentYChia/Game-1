@@ -414,32 +414,30 @@ Then NPCs would be shaped by location narrative. For now, we don't have that.
 
 ---
 
-## Significance Buckets
+## Significance Buckets (Final)
 
-(Awaiting user's final 10-bucket terms. Placeholders below.)
+Used to name both belonging significance and affinity values:
 
-Used to name affinity values and belonging significance:
-
-```python
-# Example (not final):
-SIGNIFICANCE_BUCKETS = [
-    (1.0, "cardinal"),
-    (0.9, "vital"),
-    (0.8, "principal"),
-    (0.7, "integral"),
-    (0.6, "committed"),
-    (0.5, "engaged"),
-    (0.4, "involved"),
-    (0.3, "affiliated"),
-    (0.2, "regular"),
-    (0.1, "nominal")
-]
-```
+| Value | Term | Meaning |
+|-------|------|---------|
+| **1.0** | **Nucleus** | The center — the group forms around them |
+| **0.9** | **Inner Circle** | Among the innermost — the group is built around them |
+| **0.8** | **Pillar** | A principal upholder |
+| **0.7** | **Fixture** | A permanent, reliable presence |
+| **0.6** | **Devoted** | Chosen deep commitment |
+| **0.5** | **Active** | Regularly participating |
+| **0.4** | **Involved** | Present, taking part |
+| **0.3** | **Member** | Baseline belonging |
+| **0.2** | **Affiliate** | Loose tie |
+| **0.1** | **Nominal** | In name only |
 
 In practice:
-- NPC is "cardinal" to nation:stormguard (singular defining figure)
-- NPC is "nominal" to guild:merchants (just a basic member)
-- Player's affinity toward nation:stormguard is 0.4 ("involved" in their affairs)
+- NPC is "Nucleus" to nation:stormguard (singular defining leader)
+- NPC is "Nominal" to guild:merchants (just a basic member, peripheral)
+- NPC is "Devoted" to profession:blacksmith (deep commitment to craft)
+- Player's affinity toward nation:stormguard is 0.4 ("Involved" in their affairs)
+
+These terms scale identically across all tag types — no institutional baggage, pure centrality language.
 
 ---
 
