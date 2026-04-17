@@ -1,0 +1,314 @@
+{
+  "metadata": {
+    "version": 1,
+    "last_updated_game_time": 0.0,
+    "description": "Durable dictionary of all faction tags ever used in the game",
+    "total_tags": 40
+  },
+  "tags": {
+    "nation:stormguard": {
+      "namespace": "nation",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A major northern kingdom known for defensive strength",
+      "is_generated": false,
+      "aliases": []
+    },
+    "nation:blackoak": {
+      "namespace": "nation",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A trade-oriented kingdom in the south",
+      "is_generated": false,
+      "aliases": []
+    },
+    "nation:shattered_isles": {
+      "namespace": "nation",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "An archipelago of independent settlements",
+      "is_generated": false,
+      "aliases": []
+    },
+    "nation:verdant_reaches": {
+      "namespace": "nation",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A forested realm with strong nature ties",
+      "is_generated": false,
+      "aliases": []
+    },
+    "guild:merchants": {
+      "namespace": "guild",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A widespread trading consortium with regional chapters",
+      "is_generated": false,
+      "aliases": ["guild:merchant_union", "guild:merchants_union"]
+    },
+    "guild:smiths": {
+      "namespace": "guild",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A fraternity of blacksmiths and metalworkers",
+      "is_generated": false,
+      "aliases": ["guild:blacksmiths"]
+    },
+    "guild:fishers": {
+      "namespace": "guild",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A cooperative of fishers and water harvesters",
+      "is_generated": false,
+      "aliases": []
+    },
+    "profession:blacksmith": {
+      "namespace": "profession",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Craft profession: working with metal and stone",
+      "is_generated": false,
+      "aliases": []
+    },
+    "profession:merchant": {
+      "namespace": "profession",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Trade profession: buying, selling, traveling",
+      "is_generated": false,
+      "aliases": []
+    },
+    "profession:guard": {
+      "namespace": "profession",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Defense profession: protecting settlements or persons",
+      "is_generated": false,
+      "aliases": ["profession:soldier", "profession:watchman"]
+    },
+    "profession:farmer": {
+      "namespace": "profession",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Agricultural profession: tending crops and livestock",
+      "is_generated": false,
+      "aliases": []
+    },
+    "profession:fisher": {
+      "namespace": "profession",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Extraction profession: fishing and water harvesting",
+      "is_generated": false,
+      "aliases": []
+    },
+    "profession:scholar": {
+      "namespace": "profession",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Knowledge profession: learning, teaching, research",
+      "is_generated": false,
+      "aliases": []
+    },
+    "locality:village_westhollow": {
+      "namespace": "locality",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A small grain farming settlement",
+      "is_generated": false,
+      "aliases": []
+    },
+    "locality:city_ironhold": {
+      "namespace": "locality",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Major smithing and mining city",
+      "is_generated": false,
+      "aliases": []
+    },
+    "locality:port_tidemark": {
+      "namespace": "locality",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A coastal trading port",
+      "is_generated": false,
+      "aliases": []
+    },
+    "locality:forest_haven": {
+      "namespace": "locality",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A hidden woodland settlement",
+      "is_generated": false,
+      "aliases": []
+    },
+    "district:whispering_woods": {
+      "namespace": "district",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A forest district",
+      "is_generated": false,
+      "aliases": []
+    },
+    "district:iron_hills": {
+      "namespace": "district",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A mining district with mountain terrain",
+      "is_generated": false,
+      "aliases": []
+    },
+    "district:grain_fields": {
+      "namespace": "district",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Agricultural district",
+      "is_generated": false,
+      "aliases": []
+    },
+    "district:coastal_reach": {
+      "namespace": "district",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A coastal district with ports and fishing",
+      "is_generated": false,
+      "aliases": []
+    },
+    "region:northern_marches": {
+      "namespace": "region",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A border region",
+      "is_generated": false,
+      "aliases": []
+    },
+    "region:central_heartland": {
+      "namespace": "region",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A central trade and culture hub",
+      "is_generated": false,
+      "aliases": []
+    },
+    "region:southern_reach": {
+      "namespace": "region",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A southern region",
+      "is_generated": false,
+      "aliases": []
+    },
+    "region:western_frontier": {
+      "namespace": "region",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A frontier region",
+      "is_generated": false,
+      "aliases": []
+    },
+    "clan:harrow": {
+      "namespace": "clan",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A notable family lineage",
+      "is_generated": false,
+      "aliases": []
+    },
+    "cult:verdant": {
+      "namespace": "cult",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A secretive nature-worship movement",
+      "is_generated": false,
+      "aliases": []
+    },
+    "cult:deep": {
+      "namespace": "cult",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "An earth-cult with underground ties",
+      "is_generated": false,
+      "aliases": []
+    },
+    "cult:thorn": {
+      "namespace": "cult",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "A radical political movement",
+      "is_generated": false,
+      "aliases": ["cult:thorns"]
+    },
+    "ideology:separatist": {
+      "namespace": "ideology",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Advocates for independence from larger powers",
+      "is_generated": false,
+      "aliases": []
+    },
+    "ideology:unifier": {
+      "namespace": "ideology",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Advocates for unity under one rule",
+      "is_generated": false,
+      "aliases": []
+    },
+    "ideology:wilderness_first": {
+      "namespace": "ideology",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Anti-expansion, pro-nature preservation",
+      "is_generated": false,
+      "aliases": []
+    },
+    "rank:noble": {
+      "namespace": "rank",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "High-born, privileged birth status",
+      "is_generated": false,
+      "aliases": []
+    },
+    "rank:commoner": {
+      "namespace": "rank",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Ordinary person without special privilege",
+      "is_generated": false,
+      "aliases": []
+    },
+    "rank:serf": {
+      "namespace": "rank",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Bonded to land or lord",
+      "is_generated": false,
+      "aliases": []
+    },
+    "allegiance:lord_ashwood": {
+      "namespace": "allegiance",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Sworn to a particular noble house",
+      "is_generated": false,
+      "aliases": []
+    },
+    "oath:silent_brotherhood": {
+      "namespace": "oath",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "Bound by secretive vows",
+      "is_generated": false,
+      "aliases": []
+    },
+    "enemy_of:blackoak": {
+      "namespace": "enemy_of",
+      "appearance_count": 0,
+      "first_seen_game_time": 0.0,
+      "human_gloss": "In conflict with nation:blackoak",
+      "is_generated": false,
+      "aliases": []
+    }
+  }
+}

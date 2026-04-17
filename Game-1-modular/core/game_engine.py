@@ -4449,7 +4449,16 @@ class GameEngine:
             self.add_notification("Item generation failed", (255, 100, 100))
 
     def _init_world_memory(self):
-        """Initialize the World Memory System (AI foundation layer)."""
+        """Initialize the World Memory System and Faction Systems (AI foundation layer)."""
+        # Initialize Faction Systems (Phase 1 foundation: TagRegistry, AffinityDefaults)
+        try:
+            from world_system.living_world.factions import initialize_faction_systems
+            initialize_faction_systems()
+            print("[Faction] Systems initialized (TagRegistry, AffinityDefaults)")
+        except Exception as e:
+            print(f"[Faction] Init failed (non-fatal): {e}")
+
+        # Initialize World Memory System
         try:
             from world_system.world_memory.world_memory_system import WorldMemorySystem
             from core.paths import PathManager

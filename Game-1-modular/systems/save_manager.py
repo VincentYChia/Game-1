@@ -71,6 +71,14 @@ class SaveManager:
         if map_system:
             save_data["map_state"] = map_system.get_save_data()
 
+        # Add faction system state (Phase 1 foundation: tag registry, affinity defaults)
+        try:
+            from world_system.living_world.factions import save_faction_systems
+            save_data["faction_state"] = save_faction_systems()
+        except Exception as e:
+            print(f"⚠ Warning: Could not save faction state: {e}")
+            save_data["faction_state"] = {}
+
         return save_data
 
     def _serialize_game_settings(self) -> Dict[str, Any]:
@@ -556,6 +564,32 @@ class SaveManager:
 
         except Exception as e:
             print(f"Error restoring dungeon state: {e}")
+            return False
+
+    def restore_faction_state(self, save_data: Dict[str, Any]) -> bool:
+        """
+        Restore faction system state from save data.
+
+        Faction systems (TagRegistry, AffinityDefaults) load from disk automatically
+        during initialization. This method is a stub for consistency with other
+        system restoration patterns.
+
+        Args:
+            save_data: The loaded save data dictionary
+
+        Returns:
+            True if faction state was present, False otherwise
+        """
+        faction_state = save_data.get("faction_state", {})
+        if not faction_state:
+            return False
+
+        try:
+            from world_system.living_world.factions import restore_faction_systems
+            restore_faction_systems(faction_state)
+            return True
+        except Exception as e:
+            print(f"⚠ Warning: Could not restore faction state: {e}")
             return False
 
     def get_save_files(self) -> List[Dict[str, Any]]:
