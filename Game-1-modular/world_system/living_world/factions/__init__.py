@@ -1,70 +1,72 @@
 """Faction System - NPC belonging, affinity, and reputation tracking.
 
+Phase 2 Implementation: NPC Faction Profiles & Player Affinity
+
 Core components:
-- TagRegistry: Durable dictionary of all tags used in game
-- AffinityDefaults: Hierarchical affinity defaults (world → nation → locality)
-- FactionSystem: Main system (player rep, faction relationships, ripple effects)
+- FactionDatabase: Singleton SQLite database for NPC profiles, player affinity, quest logs
+- Models: NPCFactionProfile, PlayerAffinityProfile, NPCBelongingTag, etc.
+- Schema: Table definitions (affinity_defaults, npc_profiles, npc_belonging, player_affinity, quest_log)
 
 Usage:
-    from world_system.living_world.factions import initialize_faction_systems
+    from world_system.living_world.factions import initialize_faction_systems, save_faction_systems, restore_faction_systems
+
+    # Initialize at startup
     initialize_faction_systems()
 
-    registry = TagRegistry.get_instance()
-    affinity = AffinityDefaults.get_instance()
-    faction = FactionSystem.get_instance()
+    # Access database
+    from world_system.living_world.factions.database import FactionDatabase
+    db = FactionDatabase.get_instance()
+    npc = db.get_npc_profile("npc_1")
+
+    # Save/restore
+    faction_state = save_faction_systems()
+    restore_faction_systems(faction_state)
 """
 
-from .tag_registry import TagRegistry
-from .affinity_defaults import AffinityDefaults
-from .faction_system import FactionSystem
+from .database import FactionDatabase
 from typing import Dict, Any
 
 
 def initialize_faction_systems() -> None:
-    """Initialize all faction system components.
+    """Initialize FactionDatabase and create schema.
 
-    Called from game_engine._init_world_memory().
-    Ensures TagRegistry and AffinityDefaults are loaded before any faction logic.
+    Called from game_engine._init_world_memory() before WMS.
+    Sets up SQLite connection, creates tables, and seeds bootstrap affinity defaults.
     """
     try:
-        # Load registries first (no dependencies)
-        TagRegistry.get_instance()
-        AffinityDefaults.get_instance()
-        print("✓ Faction systems initialized (TagRegistry, AffinityDefaults)")
+        db = FactionDatabase.get_instance()
+        db.initialize()
+        print("✓ Faction database initialized")
     except Exception as e:
-        print(f"⚠ Faction system init failed (non-fatal): {e}")
+        print(f"✗ Faction system initialization failed: {e}")
+        raise
 
 
 def save_faction_systems() -> Dict[str, Any]:
-    """Serialize all faction system state for saving.
+    """Prepare faction state for save file.
 
     Returns:
-        Dictionary containing faction state (for save_manager.create_save_data)
+        Empty dict (faction data persists in SQLite, not in save file)
     """
-    save_data = {
-        "tag_registry": {},  # Registry is persisted automatically
-        "affinity_defaults": {}  # Affinity defaults are persisted automatically
-    }
-
-    # FactionSystem state (if using old system)
     try:
-        faction = FactionSystem.get_instance()
-        # FactionSystem has its own save mechanism (see faction_system.py)
+        db = FactionDatabase.get_instance()
+        # FactionDatabase persists automatically to faction.db in save directory
+        # No additional save needed beyond database commits
+        return {}
     except Exception as e:
         print(f"⚠ Error saving faction state: {e}")
-
-    return save_data
+        return {}
 
 
 def restore_faction_systems(save_data: Dict[str, Any]) -> None:
-    """Restore faction system state from save data.
+    """Restore faction database from save.
 
     Args:
-        save_data: Dictionary from save file
+        save_data: Dictionary from save file (unused, faction data in SQLite)
     """
     try:
-        # Registries load from disk automatically
-        # FactionSystem restoration handled internally
+        # Database connection persists across load cycles
+        # No restoration needed—faction.db is already open
         pass
     except Exception as e:
         print(f"⚠ Error restoring faction state: {e}")

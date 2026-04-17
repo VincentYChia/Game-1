@@ -1166,6 +1166,9 @@ class GameEngine:
                         # Restore NPC state
                         SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
 
+                        # Restore faction state
+                        self.save_manager.restore_faction_state(save_data)
+
                         # Restore dungeon state (if present)
                         self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
 
@@ -1601,6 +1604,9 @@ class GameEngine:
                 # Restore NPC state
                 SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
 
+                # Restore faction state
+                self.save_manager.restore_faction_state(save_data)
+
                 # Restore game time for day/night cycle
                 self.game_time = world_state.get("game_time", 0.0)
                 print(f"⏰ Restored game time: {self.game_time:.1f}s")
@@ -1685,6 +1691,9 @@ class GameEngine:
 
                 # Restore NPC state
                 SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
+
+                # Restore faction state
+                self.save_manager.restore_faction_state(save_data)
 
                 # Restore game time for day/night cycle
                 self.game_time = world_state.get("game_time", 0.0)

@@ -119,6 +119,15 @@ class PathManager:
         """
         return self.get_resource_path(relative_path).exists()
 
+    def get_faction_db_path(self) -> Path:
+        """
+        Get path to faction system SQLite database.
+
+        Returns:
+            Path to faction.db in the save directory
+        """
+        return self.save_path / "faction.db"
+
 
 # Global singleton instance
 _path_manager = PathManager()
@@ -143,3 +152,8 @@ def resource_exists(relative_path: Union[str, Path]) -> bool:
 def is_bundled() -> bool:
     """Check if running as packaged executable."""
     return _path_manager.is_bundled
+
+
+def get_faction_db_path() -> Path:
+    """Get path to faction system SQLite database."""
+    return _path_manager.get_faction_db_path()
