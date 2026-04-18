@@ -24,19 +24,28 @@ Usage:
 """
 
 from .database import FactionDatabase
+from .quest_listener import FactionQuestListener
 from typing import Dict, Any
 
 
 def initialize_faction_systems() -> None:
-    """Initialize FactionDatabase and create schema.
+    """Initialize FactionDatabase, schema, and quest event listener.
 
     Called from game_engine._init_world_memory() before WMS.
-    Sets up SQLite connection, creates tables, and seeds bootstrap affinity defaults.
+    Sets up SQLite connection, creates tables, seeds bootstrap affinity defaults,
+    and subscribes to quest completion events for automatic affinity updates.
     """
     try:
+        # Initialize database
         db = FactionDatabase.get_instance()
         db.initialize()
         print("✓ Faction database initialized")
+
+        # Initialize quest event listener (Phase 3 integration)
+        listener = FactionQuestListener.get_instance()
+        listener.initialize()
+        print("✓ Faction quest listener initialized")
+
     except Exception as e:
         print(f"✗ Faction system initialization failed: {e}")
         raise

@@ -282,9 +282,15 @@ class QuestManager:
             )
         try:
             from events.event_bus import get_event_bus
+            # Use "player" as player_id (single-player game convention)
+            player_id = "player"
+            if character and hasattr(character, 'name'):
+                player_id = character.name or "player"
             get_event_bus().publish("QUEST_COMPLETED", {
                 "quest_id": quest_id,
+                "player_id": player_id,
                 "quest_type": quest.quest_def.objectives.objective_type,
+                "npc_id": quest.quest_def.npc_id,
                 "rewards": {
                     "experience": quest.quest_def.rewards.experience,
                     "gold": quest.quest_def.rewards.gold,
