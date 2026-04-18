@@ -79,14 +79,14 @@ class FactionDatabaseSchema:
     CREATE INDEX IF NOT EXISTS idx_player_affinity_tag ON player_affinity(player_id, tag);
     """
 
-    # LOCATION AFFINITY DEFAULTS: Cultural baseline for each location + tag (sparse, 0-1)
+    # LOCATION AFFINITY DEFAULTS: Cultural baseline for each location + tag (-100 to 100)
     # Inherited: locality → district → region → nation → world
     CREATE_LOCATION_AFFINITY_DEFAULTS = """
     CREATE TABLE IF NOT EXISTS location_affinity_defaults (
         address_tier TEXT NOT NULL,
         location_id TEXT,
         tag TEXT NOT NULL,
-        significance REAL NOT NULL CHECK(significance >= 0 AND significance <= 1),
+        affinity REAL NOT NULL CHECK(affinity >= -100 AND affinity <= 100),
         PRIMARY KEY (address_tier, location_id, tag)
     );
     """
@@ -94,6 +94,17 @@ class FactionDatabaseSchema:
     CREATE_LOCATION_AFFINITY_DEFAULTS_INDEX = """
     CREATE INDEX IF NOT EXISTS idx_location_affinity_defaults_tier_tag
     ON location_affinity_defaults(address_tier, tag);
+    """
+
+    # NPC AFFINITY TOWARD PLAYER: How each NPC personally feels about the player
+    # Per-NPC, independent of tag-based standing. Default 0.
+    CREATE_NPC_AFFINITY_TOWARD_PLAYER = """
+    CREATE TABLE IF NOT EXISTS npc_affinity_toward_player (
+        npc_id TEXT PRIMARY KEY,
+        affinity REAL NOT NULL CHECK(affinity >= -100 AND affinity <= 100),
+        last_updated REAL NOT NULL,
+        FOREIGN KEY (npc_id) REFERENCES npc_profiles(npc_id) ON DELETE CASCADE
+    );
     """
 
     # SCHEMA VERSION
@@ -113,6 +124,7 @@ class FactionDatabaseSchema:
             FactionDatabaseSchema.CREATE_NPC_BELONGING_TAGS_INDEX,
             FactionDatabaseSchema.CREATE_NPC_AFFINITY,
             FactionDatabaseSchema.CREATE_NPC_AFFINITY_INDEX,
+            FactionDatabaseSchema.CREATE_NPC_AFFINITY_TOWARD_PLAYER,
             FactionDatabaseSchema.CREATE_PLAYER_AFFINITY,
             FactionDatabaseSchema.CREATE_PLAYER_AFFINITY_INDEX,
             FactionDatabaseSchema.CREATE_LOCATION_AFFINITY_DEFAULTS,
@@ -171,30 +183,30 @@ class FactionDatabaseSchema:
 # For now, using a minimal set to get the system working.
 
 BOOTSTRAP_LOCATION_AFFINITY_DEFAULTS = [
-    # World-level baseline defaults (minimal set)
-    ("world", None, "guild:merchants", 0.3),
-    ("world", None, "guild:smiths", 0.5),
-    ("world", None, "profession:guard", 0.4),
-    ("world", None, "profession:merchant", 0.3),
-    ("world", None, "rank:commoner", 0.5),
+    # World-level baseline defaults (minimal set, -100 to 100)
+    ("world", None, "guild:merchants", 10),
+    ("world", None, "guild:smiths", 20),
+    ("world", None, "profession:guard", 15),
+    ("world", None, "profession:merchant", 5),
+    ("world", None, "rank:commoner", 0),
 
     # Nation-level (stormguard: military-focused)
-    ("nation", "nation:stormguard", "guild:smiths", 0.7),
-    ("nation", "nation:stormguard", "profession:guard", 0.8),
-    ("nation", "nation:stormguard", "profession:merchant", 0.2),
+    ("nation", "nation:stormguard", "guild:smiths", 30),
+    ("nation", "nation:stormguard", "profession:guard", 40),
+    ("nation", "nation:stormguard", "profession:merchant", -15),
 
     # Nation-level (blackoak: trade-focused)
-    ("nation", "nation:blackoak", "guild:merchants", 0.8),
-    ("nation", "nation:blackoak", "profession:merchant", 0.8),
-    ("nation", "nation:blackoak", "profession:guard", 0.3),
+    ("nation", "nation:blackoak", "guild:merchants", 50),
+    ("nation", "nation:blackoak", "profession:merchant", 45),
+    ("nation", "nation:blackoak", "profession:guard", -10),
 
     # District-level (iron_hills: smithing)
-    ("district", "district:iron_hills", "guild:smiths", 0.9),
-    ("district", "district:iron_hills", "profession:blacksmith", 0.8),
+    ("district", "district:iron_hills", "guild:smiths", 60),
+    ("district", "district:iron_hills", "profession:blacksmith", 50),
 
     # District-level (coastal_reach: fishing/trade)
-    ("district", "district:coastal_reach", "guild:fishers", 0.7),
-    ("district", "district:coastal_reach", "guild:merchants", 0.6),
+    ("district", "district:coastal_reach", "guild:fishers", 40),
+    ("district", "district:coastal_reach", "guild:merchants", 35),
 ]
 
 

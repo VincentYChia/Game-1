@@ -97,24 +97,22 @@ class PlayerProfile:
 class LocationAffinityDefault:
     """Cultural affinity default for a location.
 
-    Maps a location address (at a specific tier) to a tag with a default significance.
+    Cultural baseline for how a location feels about a tag.
     Stored sparsely: only non-zero values.
     Inherited hierarchically: locality → district → region → nation → world.
     """
     address_tier: str                  # "world", "nation", "region", "province", "district", "locality"
     location_id: str                   # e.g., "nation:stormguard", NULL for world
     tag: str                           # e.g., "guild:merchants"
-    significance: float                # 0.0-1.0 (cultural default for this tag at this location)
+    affinity: float                    # -100 to 100 (cultural default for this tag at this location)
 
 
 @dataclass
-class ReputationRule:
-    """A rule for how events affect affinity.
+class NPCAffinityTowardPlayer:
+    """How an individual NPC personally feels about the player.
 
-    Minimal schema: event_type + tag patterns → affinity delta.
-    Will be expanded to JSON config later; for now, in-memory.
+    Separate from player's global affinity with NPC's tags.
+    This is per-NPC personal opinion, independent of tag-based standing.
     """
-    event_type: str                    # e.g., "ENEMY_KILLED", "QUEST_COMPLETED"
-    target_tag_pattern: Optional[str]  # e.g., "nation:*", None = all tags
-    delta: float                       # affinity change
-    description: str = ""
+    npc_id: str
+    affinity: float                    # -100 to 100 (how this NPC feels about the player)
