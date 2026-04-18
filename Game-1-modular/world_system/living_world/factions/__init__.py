@@ -14,7 +14,6 @@ Usage:
 """
 
 from .faction_system import FactionSystem
-from .reputation_rules import ReputationRulesEngine, get_rules_engine
 from typing import Dict, Any
 
 
@@ -22,17 +21,13 @@ def initialize_faction_systems() -> None:
     """Initialize faction system at game startup.
 
     Called from game_engine._init_world_memory().
-    Sets up SQLite, creates tables, bootstraps data, and initializes rules engine.
+    Sets up SQLite, creates tables, and bootstraps location affinity defaults.
     """
     try:
         # Initialize FactionSystem database
         faction_sys = FactionSystem.get_instance()
         faction_sys.initialize()
         print("✓ Faction system initialized")
-
-        # Initialize reputation rules engine
-        rules = get_rules_engine()
-        print("✓ Reputation rules engine initialized")
 
     except Exception as e:
         print(f"✗ Faction system initialization failed: {e}")

@@ -14,7 +14,6 @@ from unittest.mock import patch
 
 from .faction_system import FactionSystem
 from .models import NPCProfile, PlayerProfile, FactionTag
-from .reputation_rules import ReputationRulesEngine, ReputationRule, ReputationDelta
 from .schema import FactionDatabaseSchema
 
 
@@ -179,45 +178,6 @@ class TestLocationAffinity:
         assert len(accumulated) > 0
 
 
-class TestReputationRules:
-    """Test reputation rules engine."""
-
-    def setup_method(self):
-        """Set up rules engine."""
-        self.engine = ReputationRulesEngine()
-
-    def test_apply_quest_completion_rule(self):
-        """Test applying quest completion rule."""
-        npc_tags = ["guild:smiths", "nation:stormguard"]
-
-        deltas = self.engine.apply_rules("QUEST_COMPLETED", npc_tags)
-
-        # Should get +10 for each tag
-        assert deltas["guild:smiths"] == 10.0
-        assert deltas["nation:stormguard"] == 10.0
-
-    def test_apply_wildcard_rule(self):
-        """Test applying rule with wildcard patterns."""
-        npc_tags = ["guild:smiths", "guild:merchants", "profession:blacksmith"]
-
-        deltas = self.engine.apply_rules("ITEM_CRAFTED", npc_tags)
-
-        # Should apply to guild:* tags matching the rule
-        assert "guild:crafters" in deltas or len(deltas) > 0
-
-    def test_add_custom_rule(self):
-        """Test adding a custom rule."""
-        custom_rule = ReputationRule(
-            event_type="TEST_EVENT",
-            target_tag_pattern="test:*",
-            deltas=[ReputationDelta("test:faction", 25.0, "Test delta")]
-        )
-        self.engine.add_rule(custom_rule)
-
-        deltas = self.engine.apply_rules("TEST_EVENT", ["test:faction", "test:other"])
-        assert deltas["test:faction"] == 25.0
-
-
 class TestIntegration:
     """Integration tests combining multiple systems."""
 
@@ -231,8 +191,6 @@ class TestIntegration:
             self.faction_sys = FactionSystem.get_instance()
             self.faction_sys.initialize()
 
-        self.rules_engine = ReputationRulesEngine()
-
     def teardown_method(self):
         """Clean up."""
         FactionSystem.reset()
@@ -241,7 +199,11 @@ class TestIntegration:
         os.rmdir(self.temp_dir)
 
     def test_quest_completion_workflow(self):
-        """Test complete quest completion → affinity flow."""
+        """Test complete quest completion → affinity flow.
+
+        In the actual system, the quest system provides deltas directly.
+        This test simulates that by applying deltas manually.
+        """
         # Create NPC
         self.faction_sys.add_npc("smith_1", "Master Smith", 0.0)
         self.faction_sys.add_npc_belonging_tag("smith_1", "guild:smiths", 0.8)
@@ -251,8 +213,8 @@ class TestIntegration:
         tags = self.faction_sys.get_npc_belonging_tags("smith_1")
         tag_names = [t.tag for t in tags]
 
-        # Apply quest completion rule
-        deltas = self.rules_engine.apply_rules("QUEST_COMPLETED", tag_names)
+        # Simulate quest providing deltas (in reality, quest system provides these)
+        deltas = {tag: 10.0 for tag in tag_names}
 
         # Apply deltas to player affinity
         for tag, delta in deltas.items():

@@ -1,13 +1,18 @@
 """Faction System Database Manager — Phase 2+.
 
-Singleton manager for all faction data: NPC profiles, player affinity, location defaults.
-Separate SQLite database (faction.db) from WMS.
+Singleton manager for all faction data: NPC profiles, player affinity, NPC affinity toward player,
+location defaults. Separate SQLite database (faction.db) from WMS.
 
-Information flow:
-- Events (quests, combat, trades) → reputation rules → affinity deltas
-- Reputation deltas → player_affinity table (recorded)
-- NPCs' belonging tags + location defaults → NPC affinity context
-- Player affinity + NPC affinity → dialogue tone via NPC agent
+Information flow (Recording):
+- Game events (quests, combat) → quest/combat system provides affinity deltas
+- Deltas → FactionSystem.adjust_player_affinity() → player_affinity table
+- NPC personal opinion adjustments → FactionSystem.adjust_npc_affinity_toward_player()
+
+Information flow (Retrieval — Dialogue Context):
+- NPC dialogue requested → FactionSystem.get_npc_profile() + get_npc_affinity_toward_player()
+- Player affinity with NPC's tags → get_all_player_affinities()
+- Location affinity defaults → compute_inherited_affinity()
+- Context assembled for LLM dialogue generation
 """
 
 from __future__ import annotations
@@ -253,18 +258,54 @@ class FactionSystem:
         row = cursor.fetchone()
         return row[0] if row else 0.0
 
+    def set_npc_affinity_toward_player(self, npc_id: str, value: float, game_time: float = 0.0) -> None:
+        """Set NPC personal affinity toward player (-100 to 100)."""
+        if not self.connection:
+            raise RuntimeError("Database not initialized")
+
+        clamped = max(-100.0, min(100.0, value))
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "INSERT OR REPLACE INTO npc_affinity_toward_player (npc_id, affinity, last_updated) VALUES (?, ?, ?)",
+            (npc_id, clamped, game_time)
+        )
+        self.connection.commit()
+
+    def adjust_npc_affinity_toward_player(self, npc_id: str, delta: float, game_time: float = 0.0) -> float:
+        """Adjust NPC affinity toward player by delta, return new value."""
+        if not self.connection:
+            raise RuntimeError("Database not initialized")
+
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT affinity FROM npc_affinity_toward_player WHERE npc_id = ?", (npc_id,))
+        row = cursor.fetchone()
+        current = row[0] if row else 0.0
+        new_value = max(-100.0, min(100.0, current + delta))
+        self.set_npc_affinity_toward_player(npc_id, new_value, game_time)
+        return new_value
+
+    def get_npc_affinity_toward_player(self, npc_id: str) -> float:
+        """Get NPC personal affinity toward player (default 0)."""
+        if not self.connection:
+            raise RuntimeError("Database not initialized")
+
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT affinity FROM npc_affinity_toward_player WHERE npc_id = ?", (npc_id,))
+        row = cursor.fetchone()
+        return row[0] if row else 0.0
+
     # ========================================================================
     # LOCATION AFFINITY OPERATIONS
     # ========================================================================
 
     def get_location_affinity_defaults(self, address_tier: str, location_id: Optional[str]) -> Dict[str, float]:
-        """Get all affinity defaults for a location (tag → significance)."""
+        """Get all affinity defaults for a location (tag → affinity, -100 to 100)."""
         if not self.connection:
             raise RuntimeError("Database not initialized")
 
         cursor = self.connection.cursor()
         cursor.execute(
-            "SELECT tag, significance FROM location_affinity_defaults WHERE address_tier = ? AND location_id = ?",
+            "SELECT tag, affinity FROM location_affinity_defaults WHERE address_tier = ? AND location_id = ?",
             (address_tier, location_id)
         )
         return {row[0]: row[1] for row in cursor.fetchall()}
@@ -277,7 +318,7 @@ class FactionSystem:
             Example: [("locality", "village_westhollow"), ("district", "grain_fields"), ...]
 
         Returns:
-            Accumulated affinity dict (tag → significance).
+            Accumulated affinity dict (tag → affinity, -100 to 100, summed across hierarchy).
         """
         if not self.connection:
             raise RuntimeError("Database not initialized")
@@ -285,9 +326,9 @@ class FactionSystem:
         accumulated = {}
         for tier, location_id in address_hierarchy:
             tier_defaults = self.get_location_affinity_defaults(tier, location_id)
-            for tag, significance in tier_defaults.items():
+            for tag, affinity in tier_defaults.items():
                 # Additive: sum all defaults along the hierarchy
-                accumulated[tag] = accumulated.get(tag, 0.0) + significance
+                accumulated[tag] = accumulated.get(tag, 0.0) + affinity
 
         return accumulated
 
