@@ -79,7 +79,7 @@ FactionSystem.adjust_player_affinity(player_id, tag, delta)
     ↓
 Database updated (sparse: only non-zero)
     ↓
-FACTION_REP_CHANGED event published
+FACTION_AFFINITY_CHANGED event published
     ↓
 WMS FactionReputationEvaluator listens, produces InterpretedEvent
 ```
@@ -137,7 +137,7 @@ Ten-point log scale, scale-agnostic (works for kingdom, guild, village):
 ## WMS Integration (Layer 2)
 
 FactionReputationEvaluator:
-- Listens to FACTION_REP_CHANGED events (published when affinity changes)
+- Listens to FACTION_AFFINITY_CHANGED events (published when affinity changes)
 - Produces InterpretedEvent with rich tags:
   - domain:faction
   - faction:{tag}

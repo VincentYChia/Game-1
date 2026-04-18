@@ -22,7 +22,7 @@
    }
 3. FactionSystem.adjust_player_affinity() called for each delta
 4. Database updated (sparse: only non-zero values)
-5. GameEventBus publishes FACTION_REP_CHANGED event
+5. GameEventBus publishes FACTION_AFFINITY_CHANGED event
 6. WMS Layer 2 Evaluator listens, produces narrative
 ```
 
@@ -38,7 +38,7 @@ for tag, delta in deltas.items():
 ```
 1. Dialogue system or game event triggers NPC opinion shift
 2. FactionSystem.adjust_npc_affinity_toward_player() called
-3. npc_affinity_toward_player table updated
+3. npc_affinity table updated (under reserved tag `_player`)
 4. (Optional) GameEventBus event published for WMS
 ```
 
@@ -250,7 +250,7 @@ dialogue = backend_manager.generate_dialogue(
 
 ### What Happens
 
-When `FACTION_REP_CHANGED` event is published:
+When `FACTION_AFFINITY_CHANGED` event is published:
 
 ```
 1. WMS FactionReputationEvaluator listens
@@ -290,7 +290,7 @@ Results in narrative/NPC behavior changes
 ### For Quest System
 - [ ] Implement `Quest.get_affinity_deltas()` method
 - [ ] Call `faction_sys.adjust_player_affinity()` when quest completes
-- [ ] Publish `FACTION_REP_CHANGED` event
+- [ ] Publish `FACTION_AFFINITY_CHANGED` event
 
 ### For NPC Agent
 - [ ] Use `faction_sys.get_npc_profile()` for dialogue context
@@ -305,7 +305,7 @@ Results in narrative/NPC behavior changes
 - [ ] Cache dialogue for performance
 
 ### For WMS Integration
-- [ ] FactionReputationEvaluator listens to `FACTION_REP_CHANGED`
+- [ ] FactionReputationEvaluator listens to `FACTION_AFFINITY_CHANGED`
 - [ ] Produces InterpretedEvent with faction tags
 - [ ] Feeds into Layer 3+ consolidation
 

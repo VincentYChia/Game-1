@@ -1,9 +1,9 @@
-"""Faction System — Parallel recording layer to WMS.
+"""Faction System — parallel recording layer to WMS.
 
 Core components:
 - FactionSystem: SQLite-backed NPC + player affinity tracking
-- ReputationRulesEngine: Maps events to affinity deltas
-- WMS Evaluator: Consolidates affinity changes into narratives
+- WMS FactionReputationEvaluator (in world_memory/evaluators): consolidates
+  FACTION_AFFINITY_CHANGED events into Layer 2 narratives.
 
 Usage:
     from world_system.living_world.factions import initialize_faction_systems
@@ -13,41 +13,46 @@ Usage:
     faction_sys = FactionSystem.get_instance()
 """
 
-from .faction_system import FactionSystem
-from typing import Dict, Any
+from typing import Any, Dict
+
+from .faction_system import FactionSystem, FACTION_AFFINITY_CHANGED
+
+__all__ = [
+    "FactionSystem",
+    "FACTION_AFFINITY_CHANGED",
+    "initialize_faction_systems",
+    "save_faction_systems",
+    "restore_faction_systems",
+]
 
 
 def initialize_faction_systems() -> None:
     """Initialize faction system at game startup.
 
-    Called from game_engine._init_world_memory().
-    Sets up SQLite, creates tables, and bootstraps location affinity defaults.
+    Called from game_engine._init_world_memory(). Creates SQLite tables and
+    bootstraps location affinity defaults.
     """
     try:
-        # Initialize FactionSystem database
         faction_sys = FactionSystem.get_instance()
         faction_sys.initialize()
-        print("✓ Faction system initialized")
-
+        print("[Factions] System initialized")
     except Exception as e:
-        print(f"✗ Faction system initialization failed: {e}")
+        print(f"[Factions] Initialization failed: {e}")
         raise
 
 
 def save_faction_systems() -> Dict[str, Any]:
-    """Save faction state (database persists independently)."""
+    """Save faction state (SQLite file persists independently)."""
     try:
-        faction_sys = FactionSystem.get_instance()
-        return faction_sys.save()
+        return FactionSystem.get_instance().save()
     except Exception as e:
-        print(f"⚠ Error saving faction state: {e}")
+        print(f"[Factions] Error saving state: {e}")
         return {}
 
 
 def restore_faction_systems(data: Dict[str, Any]) -> None:
     """Restore faction state."""
     try:
-        faction_sys = FactionSystem.get_instance()
-        faction_sys.load(data)
+        FactionSystem.get_instance().load(data)
     except Exception as e:
-        print(f"⚠ Error restoring faction state: {e}")
+        print(f"[Factions] Error restoring state: {e}")

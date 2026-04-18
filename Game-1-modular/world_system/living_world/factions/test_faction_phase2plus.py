@@ -1,44 +1,50 @@
-"""Tests for Faction System Phases 2+.
+"""Tests for Faction System Phase 2+.
 
 Tests the complete faction recording and retrieval system:
-- NPC profiles with belonging tags and affinity
+- NPC profiles with belonging tags and affinity toward tags
 - Player affinity tracking (-100 to 100)
-- Location affinity defaults with inheritance
-- Reputation rules engine
+- NPC affinity toward the player (stored in npc_affinity under reserved tag)
+- Location affinity defaults with hierarchical inheritance
+- FACTION_AFFINITY_CHANGED event publication
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
 from unittest.mock import patch
 
-from .faction_system import FactionSystem
-from .models import NPCProfile, PlayerProfile, FactionTag
-from .schema import FactionDatabaseSchema
+from events.event_bus import GameEventBus, get_event_bus
+
+from .faction_system import FACTION_AFFINITY_CHANGED, FactionSystem
+from .schema import NPC_AFFINITY_PLAYER_TAG
 
 
-class TestNPCProfiles:
-    """Test NPC profile operations."""
+class _FactionTestBase:
+    """Shared setup/teardown — uses a temp SQLite file per test."""
 
     def setup_method(self):
-        """Set up test database."""
         self.temp_dir = tempfile.mkdtemp()
         self.db_path = os.path.join(self.temp_dir, "test_faction.db")
 
-        with patch("world_system.living_world.factions.faction_system.get_faction_db_path") as mock_path:
+        with patch(
+            "world_system.living_world.factions.faction_system.get_faction_db_path"
+        ) as mock_path:
             mock_path.return_value = self.db_path
+            FactionSystem.reset()
             self.faction_sys = FactionSystem.get_instance()
             self.faction_sys.initialize()
 
     def teardown_method(self):
-        """Clean up test database."""
         FactionSystem.reset()
+        GameEventBus.reset()
         if os.path.exists(self.db_path):
             os.remove(self.db_path)
         os.rmdir(self.temp_dir)
 
+
+class TestNPCProfiles(_FactionTestBase):
+    """Test NPC profile operations."""
+
     def test_add_and_retrieve_npc(self):
-        """Test adding and retrieving NPC profile."""
         self.faction_sys.add_npc("smith_1", "A master blacksmith from the north", 0.0)
 
         profile = self.faction_sys.get_npc_profile("smith_1")
@@ -47,14 +53,13 @@ class TestNPCProfiles:
         assert profile.narrative == "A master blacksmith from the north"
 
     def test_add_npc_belonging_tag(self):
-        """Test adding belonging tags to NPC."""
         self.faction_sys.add_npc("smith_1", "A blacksmith", 0.0)
         self.faction_sys.add_npc_belonging_tag(
             "smith_1",
             "profession:blacksmith",
             0.8,
             role="master",
-            narrative_hooks=["Skilled craftsperson", "Respected locally"]
+            narrative_hooks=["Skilled craftsperson", "Respected locally"],
         )
 
         tags = self.faction_sys.get_npc_belonging_tags("smith_1")
@@ -62,9 +67,9 @@ class TestNPCProfiles:
         assert tags[0].tag == "profession:blacksmith"
         assert tags[0].significance == 0.8
         assert tags[0].role == "master"
+        assert tags[0].narrative_hooks == ["Skilled craftsperson", "Respected locally"]
 
     def test_get_all_npcs_with_tag(self):
-        """Test querying NPCs by tag."""
         self.faction_sys.add_npc("smith_1", "Smith 1", 0.0)
         self.faction_sys.add_npc("smith_2", "Smith 2", 0.0)
         self.faction_sys.add_npc("merchant_1", "Merchant 1", 0.0)
@@ -75,56 +80,31 @@ class TestNPCProfiles:
 
         smiths = self.faction_sys.get_all_npcs_with_tag("guild:smiths")
         assert len(smiths) == 2
-        assert "smith_1" in smiths
-        assert "smith_2" in smiths
+        assert set(smiths) == {"smith_1", "smith_2"}
 
 
-class TestPlayerAffinity:
+class TestPlayerAffinity(_FactionTestBase):
     """Test player affinity operations."""
 
-    def setup_method(self):
-        """Set up test database."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.db_path = os.path.join(self.temp_dir, "test_faction.db")
-
-        with patch("world_system.living_world.factions.faction_system.get_faction_db_path") as mock_path:
-            mock_path.return_value = self.db_path
-            self.faction_sys = FactionSystem.get_instance()
-            self.faction_sys.initialize()
-
-    def teardown_method(self):
-        """Clean up test database."""
-        FactionSystem.reset()
-        if os.path.exists(self.db_path):
-            os.remove(self.db_path)
-        os.rmdir(self.temp_dir)
-
     def test_set_and_get_player_affinity(self):
-        """Test setting and retrieving player affinity."""
         self.faction_sys.set_player_affinity("player_1", "guild:smiths", 50.0)
-
-        aff = self.faction_sys.get_player_affinity("player_1", "guild:smiths")
-        assert aff == 50.0
+        assert self.faction_sys.get_player_affinity("player_1", "guild:smiths") == 50.0
 
     def test_adjust_player_affinity(self):
-        """Test adjusting player affinity."""
         self.faction_sys.set_player_affinity("player_1", "guild:smiths", 40.0)
-        new_aff = self.faction_sys.adjust_player_affinity("player_1", "guild:smiths", 15.0)
-
+        new_aff = self.faction_sys.adjust_player_affinity(
+            "player_1", "guild:smiths", 15.0
+        )
         assert new_aff == 55.0
 
     def test_affinity_clamping(self):
-        """Test that affinity is clamped to -100/100."""
         self.faction_sys.set_player_affinity("player_1", "guild:smiths", 150.0)
-        aff = self.faction_sys.get_player_affinity("player_1", "guild:smiths")
-        assert aff == 100.0
+        assert self.faction_sys.get_player_affinity("player_1", "guild:smiths") == 100.0
 
         self.faction_sys.set_player_affinity("player_1", "guild:smiths", -200.0)
-        aff = self.faction_sys.get_player_affinity("player_1", "guild:smiths")
-        assert aff == -100.0
+        assert self.faction_sys.get_player_affinity("player_1", "guild:smiths") == -100.0
 
     def test_get_all_player_affinities(self):
-        """Test retrieving all player affinities."""
         self.faction_sys.set_player_affinity("player_1", "guild:smiths", 30.0)
         self.faction_sys.set_player_affinity("player_1", "guild:merchants", -20.0)
         self.faction_sys.set_player_affinity("player_1", "nation:stormguard", 50.0)
@@ -135,94 +115,147 @@ class TestPlayerAffinity:
         assert affs["guild:merchants"] == -20.0
 
 
-class TestLocationAffinity:
-    """Test location affinity defaults and inheritance."""
+class TestNPCAffinityTowardPlayer(_FactionTestBase):
+    """NPC personal opinion of the player — stored in npc_affinity under
+    the reserved tag, not in a separate table."""
 
-    def setup_method(self):
-        """Set up test database."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.db_path = os.path.join(self.temp_dir, "test_faction.db")
+    def test_default_is_zero(self):
+        self.faction_sys.add_npc("npc_1", "Someone", 0.0)
+        assert self.faction_sys.get_npc_affinity_toward_player("npc_1") == 0.0
 
-        with patch("world_system.living_world.factions.faction_system.get_faction_db_path") as mock_path:
-            mock_path.return_value = self.db_path
-            self.faction_sys = FactionSystem.get_instance()
-            self.faction_sys.initialize()
+    def test_set_and_get(self):
+        self.faction_sys.add_npc("npc_1", "Someone", 0.0)
+        self.faction_sys.set_npc_affinity_toward_player("npc_1", 25.0)
+        assert self.faction_sys.get_npc_affinity_toward_player("npc_1") == 25.0
 
-    def teardown_method(self):
-        """Clean up test database."""
-        FactionSystem.reset()
-        if os.path.exists(self.db_path):
-            os.remove(self.db_path)
-        os.rmdir(self.temp_dir)
+    def test_adjust(self):
+        self.faction_sys.add_npc("npc_1", "Someone", 0.0)
+        self.faction_sys.set_npc_affinity_toward_player("npc_1", 10.0)
+        new_val = self.faction_sys.adjust_npc_affinity_toward_player("npc_1", -15.0)
+        assert new_val == -5.0
 
-    def test_get_location_affinity_defaults(self):
-        """Test retrieving affinity defaults for a location."""
-        defaults = self.faction_sys.get_location_affinity_defaults("nation", "nation:stormguard")
-        # Should have bootstrap data
+    def test_stored_in_npc_affinity_table(self):
+        """Verify the user's directive: no separate table, uses reserved tag."""
+        self.faction_sys.add_npc("npc_1", "Someone", 0.0)
+        self.faction_sys.set_npc_affinity_toward_player("npc_1", 30.0)
+
+        # Same value readable via the generic npc_affinity accessor
+        assert (
+            self.faction_sys.get_npc_affinity("npc_1", NPC_AFFINITY_PLAYER_TAG) == 30.0
+        )
+
+    def test_does_not_collide_with_tag_affinity(self):
+        self.faction_sys.add_npc("npc_1", "Someone", 0.0)
+        self.faction_sys.set_npc_affinity("npc_1", "guild:smiths", 70.0)
+        self.faction_sys.set_npc_affinity_toward_player("npc_1", -20.0)
+
+        assert self.faction_sys.get_npc_affinity("npc_1", "guild:smiths") == 70.0
+        assert self.faction_sys.get_npc_affinity_toward_player("npc_1") == -20.0
+
+
+class TestLocationAffinity(_FactionTestBase):
+    """Location affinity defaults and hierarchical inheritance."""
+
+    def test_bootstrap_defaults_loaded(self):
+        defaults = self.faction_sys.get_location_affinity_defaults(
+            "nation", "nation:stormguard"
+        )
         assert len(defaults) > 0
-        # Smiths should be high affinity in stormguard
         assert defaults.get("guild:smiths", 0.0) > 0.0
 
-    def test_compute_inherited_affinity(self):
-        """Test computing accumulated affinity through hierarchy."""
-        # Build a hierarchy: world → nation → district → locality
+    def test_world_tier_uses_null_location(self):
+        defaults = self.faction_sys.get_location_affinity_defaults("world", None)
+        assert len(defaults) > 0
+        assert "guild:smiths" in defaults
+
+    def test_compute_inherited_affinity_sums(self):
         hierarchy = [
-            ("locality", "village_westhollow"),
-            ("district", "grain_fields"),
+            ("district", "district:iron_hills"),
             ("nation", "nation:stormguard"),
             ("world", None),
         ]
-
         accumulated = self.faction_sys.compute_inherited_affinity(hierarchy)
-        # Should sum all defaults along the path
-        assert len(accumulated) > 0
+        # world (20) + nation (30) + district (60) = 100 (clamped to 100)
+        assert accumulated["guild:smiths"] == 100.0
+
+    def test_inheritance_clamps_at_100(self):
+        hierarchy = [
+            ("district", "district:iron_hills"),
+            ("nation", "nation:stormguard"),
+            ("world", None),
+        ]
+        accumulated = self.faction_sys.compute_inherited_affinity(hierarchy)
+        for value in accumulated.values():
+            assert -100.0 <= value <= 100.0
 
 
-class TestIntegration:
-    """Integration tests combining multiple systems."""
+class TestEventPublishing(_FactionTestBase):
+    """adjust_player_affinity and set_player_affinity must publish
+    FACTION_AFFINITY_CHANGED for the WMS evaluator to consume."""
 
     def setup_method(self):
-        """Set up test environment."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.db_path = os.path.join(self.temp_dir, "test_faction.db")
+        super().setup_method()
+        self.events = []
+        get_event_bus().subscribe(
+            FACTION_AFFINITY_CHANGED, lambda e: self.events.append(e)
+        )
 
-        with patch("world_system.living_world.factions.faction_system.get_faction_db_path") as mock_path:
-            mock_path.return_value = self.db_path
-            self.faction_sys = FactionSystem.get_instance()
-            self.faction_sys.initialize()
+    def test_adjust_publishes_event(self):
+        self.faction_sys.adjust_player_affinity("player_1", "guild:smiths", 15.0)
 
-    def teardown_method(self):
-        """Clean up."""
-        FactionSystem.reset()
-        if os.path.exists(self.db_path):
-            os.remove(self.db_path)
-        os.rmdir(self.temp_dir)
+        assert len(self.events) == 1
+        evt = self.events[0]
+        assert evt.event_type == FACTION_AFFINITY_CHANGED
+        assert evt.data["player_id"] == "player_1"
+        assert evt.data["tag"] == "guild:smiths"
+        assert evt.data["delta"] == 15.0
+        assert evt.data["new_value"] == 15.0
+        assert evt.data["source"] == "adjust"
+
+    def test_set_publishes_delta(self):
+        self.faction_sys.set_player_affinity("player_1", "guild:smiths", 40.0)
+        self.faction_sys.set_player_affinity("player_1", "guild:smiths", 60.0)
+
+        assert len(self.events) == 2
+        assert self.events[0].data["delta"] == 40.0
+        assert self.events[1].data["delta"] == 20.0
+
+    def test_no_event_when_value_unchanged(self):
+        self.faction_sys.set_player_affinity("player_1", "guild:smiths", 40.0)
+        self.events.clear()
+
+        self.faction_sys.adjust_player_affinity("player_1", "guild:smiths", 0.0)
+        assert len(self.events) == 0
+
+    def test_event_delta_reflects_clamping(self):
+        self.faction_sys.set_player_affinity("player_1", "guild:smiths", 95.0)
+        self.events.clear()
+
+        # Requested +50 but clamp to 100, so actual delta is +5
+        self.faction_sys.adjust_player_affinity("player_1", "guild:smiths", 50.0)
+        assert len(self.events) == 1
+        assert self.events[0].data["delta"] == 5.0
+        assert self.events[0].data["new_value"] == 100.0
+
+
+class TestIntegration(_FactionTestBase):
+    """End-to-end workflow: quest-style affinity application."""
 
     def test_quest_completion_workflow(self):
-        """Test complete quest completion → affinity flow.
-
-        In the actual system, the quest system provides deltas directly.
-        This test simulates that by applying deltas manually.
-        """
-        # Create NPC
+        """Quest system provides deltas; FactionSystem records them."""
         self.faction_sys.add_npc("smith_1", "Master Smith", 0.0)
         self.faction_sys.add_npc_belonging_tag("smith_1", "guild:smiths", 0.8)
         self.faction_sys.add_npc_belonging_tag("smith_1", "profession:blacksmith", 0.9)
 
-        # Get NPC's tags
         tags = self.faction_sys.get_npc_belonging_tags("smith_1")
         tag_names = [t.tag for t in tags]
 
-        # Simulate quest providing deltas (in reality, quest system provides these)
         deltas = {tag: 10.0 for tag in tag_names}
-
-        # Apply deltas to player affinity
         for tag, delta in deltas.items():
             self.faction_sys.adjust_player_affinity("player_1", tag, delta)
 
-        # Verify player affinity updated
-        smith_aff = self.faction_sys.get_player_affinity("player_1", "guild:smiths")
-        assert smith_aff == 10.0
-
-        blacksmith_aff = self.faction_sys.get_player_affinity("player_1", "profession:blacksmith")
-        assert blacksmith_aff == 10.0
+        assert self.faction_sys.get_player_affinity("player_1", "guild:smiths") == 10.0
+        assert (
+            self.faction_sys.get_player_affinity("player_1", "profession:blacksmith")
+            == 10.0
+        )

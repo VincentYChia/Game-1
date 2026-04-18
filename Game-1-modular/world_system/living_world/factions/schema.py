@@ -3,18 +3,27 @@
 Defines all tables for NPC profiles, player affinity, location affinity defaults.
 Sparse storage: only non-zero values stored.
 
-Corrected model:
+Model:
 - NPC: narrative + belonging_tags (tag + significance 0-1) + affinity (tag → -100 to 100)
 - Player: affinity (tag → -100 to 100)
-- Location: cultural_affinity_defaults (tag → significance 0-1, hierarchical)
+- Location: cultural affinity defaults (tag → affinity_value -100 to 100, hierarchical)
+
+NPC personal affinity toward the player is stored in the same `npc_affinity`
+table using the reserved tag ``NPC_AFFINITY_PLAYER_TAG`` (see below). There
+is no separate table for it.
 """
 
 from __future__ import annotations
 import sqlite3
 import time
-from typing import Optional, Dict, List
+from typing import List
 
-FACTION_SCHEMA_VERSION = 2
+FACTION_SCHEMA_VERSION = 3
+
+# Reserved tag used inside the `npc_affinity` table to record an NPC's personal
+# opinion of the player. The leading underscore prevents collision with real
+# faction tags (which use the "<namespace>:<name>" form, e.g. "guild:smiths").
+NPC_AFFINITY_PLAYER_TAG = "_player"
 
 
 class FactionDatabaseSchema:
@@ -48,7 +57,9 @@ class FactionDatabaseSchema:
     CREATE INDEX IF NOT EXISTS idx_npc_belonging_tags_tag ON npc_belonging_tags(tag);
     """
 
-    # NPC AFFINITY: How NPCs feel about tags (-100 to 100, sparse)
+    # NPC AFFINITY: How NPCs feel about tags (-100 to 100, sparse).
+    # NPC personal opinion of the player is stored here under the reserved tag
+    # NPC_AFFINITY_PLAYER_TAG.
     CREATE_NPC_AFFINITY = """
     CREATE TABLE IF NOT EXISTS npc_affinity (
         npc_id TEXT NOT NULL,
@@ -80,13 +91,13 @@ class FactionDatabaseSchema:
     """
 
     # LOCATION AFFINITY DEFAULTS: Cultural baseline for each location + tag (-100 to 100)
-    # Inherited: locality → district → region → nation → world
+    # Inherited: locality → district → province → region → nation → world
     CREATE_LOCATION_AFFINITY_DEFAULTS = """
     CREATE TABLE IF NOT EXISTS location_affinity_defaults (
         address_tier TEXT NOT NULL,
         location_id TEXT,
         tag TEXT NOT NULL,
-        affinity REAL NOT NULL CHECK(affinity >= -100 AND affinity <= 100),
+        affinity_value REAL NOT NULL CHECK(affinity_value >= -100 AND affinity_value <= 100),
         PRIMARY KEY (address_tier, location_id, tag)
     );
     """
@@ -94,17 +105,6 @@ class FactionDatabaseSchema:
     CREATE_LOCATION_AFFINITY_DEFAULTS_INDEX = """
     CREATE INDEX IF NOT EXISTS idx_location_affinity_defaults_tier_tag
     ON location_affinity_defaults(address_tier, tag);
-    """
-
-    # NPC AFFINITY TOWARD PLAYER: How each NPC personally feels about the player
-    # Per-NPC, independent of tag-based standing. Default 0.
-    CREATE_NPC_AFFINITY_TOWARD_PLAYER = """
-    CREATE TABLE IF NOT EXISTS npc_affinity_toward_player (
-        npc_id TEXT PRIMARY KEY,
-        affinity REAL NOT NULL CHECK(affinity >= -100 AND affinity <= 100),
-        last_updated REAL NOT NULL,
-        FOREIGN KEY (npc_id) REFERENCES npc_profiles(npc_id) ON DELETE CASCADE
-    );
     """
 
     # SCHEMA VERSION
@@ -124,7 +124,6 @@ class FactionDatabaseSchema:
             FactionDatabaseSchema.CREATE_NPC_BELONGING_TAGS_INDEX,
             FactionDatabaseSchema.CREATE_NPC_AFFINITY,
             FactionDatabaseSchema.CREATE_NPC_AFFINITY_INDEX,
-            FactionDatabaseSchema.CREATE_NPC_AFFINITY_TOWARD_PLAYER,
             FactionDatabaseSchema.CREATE_PLAYER_AFFINITY,
             FactionDatabaseSchema.CREATE_PLAYER_AFFINITY_INDEX,
             FactionDatabaseSchema.CREATE_LOCATION_AFFINITY_DEFAULTS,
@@ -140,7 +139,6 @@ class FactionDatabaseSchema:
             for statement in FactionDatabaseSchema.get_all_create_statements():
                 cursor.execute(statement)
 
-            # Initialize version if not present
             cursor.execute("SELECT COUNT(*) FROM faction_schema_version")
             if cursor.fetchone()[0] == 0:
                 cursor.execute(
@@ -149,10 +147,10 @@ class FactionDatabaseSchema:
                 )
 
             connection.commit()
-            print(f"✓ Faction schema initialized (version {FACTION_SCHEMA_VERSION})")
+            print(f"[FactionSchema] Initialized (version {FACTION_SCHEMA_VERSION})")
         except Exception as e:
             connection.rollback()
-            print(f"✗ Error creating faction schema: {e}")
+            print(f"[FactionSchema] Error creating tables: {e}")
             raise
 
     @staticmethod
@@ -163,7 +161,7 @@ class FactionDatabaseSchema:
             cursor.execute("SELECT MAX(version) FROM faction_schema_version")
             result = cursor.fetchone()
             return result[0] if result and result[0] else 0
-        except:
+        except sqlite3.Error:
             return 0
 
     @staticmethod
@@ -177,34 +175,34 @@ class FactionDatabaseSchema:
 
 
 # ============================================================================
-# Placeholder: Location Affinity Defaults (to be generated LLM)
+# Bootstrap Location Affinity Defaults (to be LLM-generated in the future)
 # ============================================================================
-# These will be generated by LLM or loaded from JSON eventually.
-# For now, using a minimal set to get the system working.
+# Minimal set to get the system working. See LLM_INTEGRATION.md § 2 for the
+# planned generation pipeline.
 
 BOOTSTRAP_LOCATION_AFFINITY_DEFAULTS = [
-    # World-level baseline defaults (minimal set, -100 to 100)
+    # World-level baseline defaults (-100 to 100)
     ("world", None, "guild:merchants", 10),
     ("world", None, "guild:smiths", 20),
     ("world", None, "profession:guard", 15),
     ("world", None, "profession:merchant", 5),
     ("world", None, "rank:commoner", 0),
 
-    # Nation-level (stormguard: military-focused)
+    # Nation: stormguard (military-focused)
     ("nation", "nation:stormguard", "guild:smiths", 30),
     ("nation", "nation:stormguard", "profession:guard", 40),
     ("nation", "nation:stormguard", "profession:merchant", -15),
 
-    # Nation-level (blackoak: trade-focused)
+    # Nation: blackoak (trade-focused)
     ("nation", "nation:blackoak", "guild:merchants", 50),
     ("nation", "nation:blackoak", "profession:merchant", 45),
     ("nation", "nation:blackoak", "profession:guard", -10),
 
-    # District-level (iron_hills: smithing)
+    # District: iron_hills (smithing)
     ("district", "district:iron_hills", "guild:smiths", 60),
     ("district", "district:iron_hills", "profession:blacksmith", 50),
 
-    # District-level (coastal_reach: fishing/trade)
+    # District: coastal_reach (fishing/trade)
     ("district", "district:coastal_reach", "guild:fishers", 40),
     ("district", "district:coastal_reach", "guild:merchants", 35),
 ]
@@ -213,11 +211,11 @@ BOOTSTRAP_LOCATION_AFFINITY_DEFAULTS = [
 def bootstrap_location_defaults(connection: sqlite3.Connection) -> None:
     """Load bootstrap location affinity defaults. Called on init."""
     cursor = connection.cursor()
-    for address_tier, location_id, tag, significance in BOOTSTRAP_LOCATION_AFFINITY_DEFAULTS:
+    for address_tier, location_id, tag, affinity_value in BOOTSTRAP_LOCATION_AFFINITY_DEFAULTS:
         cursor.execute(
             """INSERT OR IGNORE INTO location_affinity_defaults
-               (address_tier, location_id, tag, significance)
+               (address_tier, location_id, tag, affinity_value)
                VALUES (?, ?, ?, ?)""",
-            (address_tier, location_id, tag, significance)
+            (address_tier, location_id, tag, affinity_value)
         )
     connection.commit()

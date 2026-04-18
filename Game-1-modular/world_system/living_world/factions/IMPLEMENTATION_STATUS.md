@@ -82,7 +82,7 @@ All components are in place to:
 deltas = quest.get_affinity_deltas()  # Provides estimates
 for tag, delta in deltas.items():
     faction_sys.adjust_player_affinity(player_id, tag, delta)
-# GameEventBus automatically publishes FACTION_REP_CHANGED
+# GameEventBus automatically publishes FACTION_AFFINITY_CHANGED
 ```
 
 **Status**: Not yet implemented (external to faction system)
@@ -112,7 +112,7 @@ dialogue = backend.generate_dialogue(
 ### WMS Consolidation Integration
 
 **What happens**:
-1. adjust_player_affinity() publishes FACTION_REP_CHANGED event
+1. adjust_player_affinity() publishes FACTION_AFFINITY_CHANGED event
 2. WMS FactionReputationEvaluator listens
 3. Evaluator produces InterpretedEvent with faction tags
 4. Event feeds into Layer 3+ consolidation pipeline
@@ -133,7 +133,7 @@ FactionSystem.adjust_player_affinity()
   ↓
 Database updated (sparse)
   ↓
-FACTION_REP_CHANGED event published
+FACTION_AFFINITY_CHANGED event published
   ↓
 WMS consolidation pipeline
 ```

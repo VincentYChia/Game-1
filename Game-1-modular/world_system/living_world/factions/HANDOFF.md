@@ -34,10 +34,9 @@ The faction system is a **parallel recording and retrieval layer** for NPC/playe
 |-------|---------|-----------|
 | `npc_profiles` | NPC core data | npc_id, narrative, created_at, last_updated |
 | `npc_belonging_tags` | NPC's faction memberships | npc_id, tag, significance (0-1), role, narrative_hooks, since_game_time |
-| `npc_affinity` | NPC's feelings about tags | npc_id, tag, affinity_value (-100 to 100), last_updated |
-| `npc_affinity_toward_player` | NPC's personal opinion of player | npc_id, affinity (-100 to 100), last_updated |
+| `npc_affinity` | NPC's feelings about tags; personal opinion of player stored under reserved tag `_player` | npc_id, tag, affinity_value (-100 to 100), last_updated |
 | `player_affinity` | Player's standing with tags | player_id, tag, affinity_value (-100 to 100), last_updated |
-| `location_affinity_defaults` | Cultural defaults for locations | address_tier, location_id, tag, affinity (-100 to 100) |
+| `location_affinity_defaults` | Cultural defaults for locations | address_tier, location_id, tag, affinity_value (-100 to 100) |
 | `faction_schema_version` | Schema versioning | version, updated_at |
 
 **Data Models** (`models.py` — 119 lines):
@@ -185,14 +184,14 @@ accumulated = faction_sys.compute_inherited_affinity(hierarchy)
 
 **GameEventBus** (`events/event_bus.py`):
 - Exists ✓ (pub/sub system)
-- FactionSystem already publishes: `FACTION_REP_CHANGED` (on affinity changes)
+- FactionSystem already publishes: `FACTION_AFFINITY_CHANGED` (on affinity changes)
 - New event: `FACTION_AFFINITY_CONSOLIDATED` (after consolidator runs)
 - No changes to FactionSystem; just documentation
 
 **WMS (Optional)** (`world_system/world_memory/`):
 - Exists ✓ (Layers 1-7 complete)
 - **NOT integrated** by design (see HANDOFF_STATUS.md)
-- Future: FactionReputationEvaluator can listen to `FACTION_REP_CHANGED` if desired
+- Future: FactionReputationEvaluator can listen to `FACTION_AFFINITY_CHANGED` if desired
 - No blocking dependency; faction works standalone
 
 ### 3.2 Data Flow Through System
@@ -625,8 +624,7 @@ DATABASE LAYER (Phase 2):
 ├──────────────────────────────────────────────────────────────┤
 │ npc_profiles                                                 │
 │ npc_belonging_tags                                           │
-│ npc_affinity                                                 │
-│ npc_affinity_toward_player                                   │
+│ npc_affinity  (includes reserved tag `_player` row per NPC)  │
 │ player_affinity                                              │
 │ location_affinity_defaults                                   │
 │ faction_schema_version                                       │
