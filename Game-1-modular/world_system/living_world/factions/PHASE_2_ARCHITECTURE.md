@@ -67,37 +67,38 @@ location_id = NULL for world tier, else actual location ID
 
 ## Information Flow
 
+**See INFORMATION_FLOW.md for detailed, simplified explanation.**
+
 ### Recording (Primary)
 ```
-Game Event (QUEST_COMPLETED, ENEMY_KILLED, etc.)
+Game Event (Quest Completion, Combat, etc.)
     ↓
-Quest/Combat System publishes to GameEventBus
-    ↓
-ReputationRulesEngine.apply_rules(event_type, npc_tags)
-    ↓
-Returns: tag → delta map
+Quest/Combat System provides affinity deltas directly
     ↓
 FactionSystem.adjust_player_affinity(player_id, tag, delta)
     ↓
-Database updated; FACTION_REP_CHANGED event published
+Database updated (sparse: only non-zero)
     ↓
-WMS FactionReputationEvaluator listens, consolidates into narrative
+FACTION_REP_CHANGED event published
+    ↓
+WMS FactionReputationEvaluator listens, produces InterpretedEvent
 ```
 
 ### Retrieval (For Dialogue)
 ```
 NPC dialogue requested
     ↓
-FactionSystem.get_npc_profile(npc_id)
-    ↓ (returns: narrative + belonging_tags + npc_affinity)
-NPC Dialogue Context built:
-  - NPC narrative + tags
-  - Player affinity with NPC's tags
-  - Location affinity defaults (inherited from address hierarchy)
+NPC Agent gathers context:
+  - get_npc_profile(npc_id) → narrative + belonging_tags
+  - get_all_player_affinities(player_id) → player standing with tags
+  - get_npc_affinity_toward_player(npc_id) → NPC's personal opinion
+  - compute_inherited_affinity(hierarchy) → location cultural baseline
     ↓
-Passed to LLM (Claude via BackendManager) for dialogue generation
+Assemble context dict
     ↓
-Dialogue tone modulated by affinity (high affinity = friendly, etc.)
+Pass to BackendManager.generate_dialogue()
+    ↓
+Dialogue returned to game (tone modulated by affinity)
 ```
 
 ## Significance Buckets (0-1 Scale)
@@ -117,21 +118,21 @@ Ten-point log scale, scale-agnostic (works for kingdom, guild, village):
 | 0.2 | Affiliate | Loose tie |
 | 0.1 | Nominal | In name only |
 
-## Reputation Rules Engine
+## Reputation Delta Estimation
 
-Simple rule matching: when event E occurs with NPC having tag pattern T, apply delta D.
+**Removed**: ReputationRulesEngine class (no longer needed)
 
-**Example rules**:
-- QUEST_COMPLETED, target_tag=*, → +10 to all NPC's belonging tags
-- ENEMY_KILLED, target_tag=allegiance:*, → -5 to member's allegiance
-- ITEM_CRAFTED, target_tag=guild:*, → +2 to guild:crafters
+**New Pattern**:
+- Quest system directly provides affinity delta estimates when quest completes
+- Example: `quest.get_affinity_deltas()` → `{"guild:smiths": +10, "profession:blacksmith": +5}`
+- FactionSystem records these deltas immediately
 
-Rules are:
-- Event-type driven (QUEST_COMPLETED, ENEMY_KILLED, ITEM_CRAFTED, etc.)
-- Pattern-matched on NPC's belonging tags
-- Produce tag → delta map
-
-Currently hardcoded; will load from JSON later.
+**Affinity Consolidation** (WMS Layer 2):
+- WMS evaluator refines delta estimates with context factors:
+  - Time elapsed since quest completion
+  - Quality of work (if relevant)
+  - Player's past behavior with that faction
+- Produces consolidated narrative for higher WMS layers
 
 ## WMS Integration (Layer 2)
 
@@ -162,21 +163,25 @@ These emerge naturally from WMS consolidation + dialogue + quest generation logi
 ## Files (Phase 2-3)
 
 **Schema & Data**:
-- `schema.py` — SQLite table definitions
-- `models.py` — Python dataclasses (NPCProfile, PlayerProfile, FactionTag, LocationAffinityDefault)
+- `schema.py` — SQLite table definitions (8 tables + indexes)
+- `models.py` — Python dataclasses (FactionTag, NPCProfile, PlayerProfile, LocationAffinityDefault, NPCAffinityTowardPlayer)
 
 **Core Logic**:
-- `faction_system.py` — FactionSystem singleton, all CRUD operations
-- `reputation_rules.py` — ReputationRulesEngine, event → delta mapping
+- `faction_system.py` — FactionSystem singleton, all CRUD operations (17 methods)
+- `__init__.py` — Initialization and save/restore functions
 
-**Integration**:
-- `__init__.py` — Initialization functions
-- `test_faction_phase2plus.py` — Comprehensive test suite
+**Testing**:
+- `test_faction_phase2plus.py` — Comprehensive test suite (4 test classes, 11 test methods)
 
-**Config**:
-- `tag-registry.json` (Phase 1) — All valid tags
-- `faction-archetypes.json` (Phase 1) — NPC creation seeds
-- `location-affinity-defaults` (hardcoded in schema.py bootstrap, to be LLM-generated)
+**Documentation** (NEW):
+- `PHASE_2_ARCHITECTURE.md` — This file, high-level design (you are here)
+- `INFORMATION_FLOW.md` — Detailed data flow explanation (READ FIRST for understanding)
+- `LLM_INTEGRATION.md` — LLM prompts, payloads, integration patterns
+
+**Config** (Phase 1, external):
+- `tag-registry.json` — All valid tags
+- `faction-archetypes.json` — NPC creation seeds
+- `location-affinity-defaults` — Bootstrapped in schema.py, to be LLM-generated
 
 ## Pending (Phase 4-6)
 
@@ -200,7 +205,27 @@ python -m pytest world_system/living_world/factions/test_faction_phase2plus.py -
 
 ## Known Limitations
 
-1. **Hardcoded rules**: Reputation rules are hardcoded; should load from JSON
-2. **No multi-character support**: Using "player" as placeholder; should be character save slot ID
-3. **Location defaults bootstrap**: Hardcoded in schema.py; should be generated by LLM or loaded from config
-4. **No NPC generation**: NPC creation still manual; future: LLM-driven with narrative → tags
+1. **Location affinity defaults**: Hardcoded in schema.py BOOTSTRAP_LOCATION_AFFINITY_DEFAULTS; future: LLM-generated via LLM_INTEGRATION.md § 2
+2. **NPC dialogue not yet wired**: Faction context available, but not yet integrated into NPC agent dialogue generation
+3. **NPC creation**: Still manual; future: LLM-driven via LLM_INTEGRATION.md § 3
+4. **No multi-character support**: Using "player_1" as placeholder; should be character save slot ID
+5. **Location affinity refinement**: Quest/combat systems need to call adjust_player_affinity(); WMS consolidator will refine values
+
+## What's Ready (Phase 2 Complete)
+
+- ✅ Complete database schema (8 tables)
+- ✅ All data models (5 dataclasses)
+- ✅ FactionSystem CRUD (17 methods covering all operations)
+- ✅ Sparse storage (only non-zero values)
+- ✅ Hierarchical location affinity (compute_inherited_affinity with summing)
+- ✅ NPC affinity toward player (separate per-NPC opinion track)
+- ✅ Test suite (4 test classes, 11 test methods)
+- ✅ Information flow documentation (clear, simplified)
+- ✅ LLM integration documentation (prompts, payloads, patterns)
+
+## What's Needed (Phase 3+)
+
+- [ ] Wire quest system to call adjust_player_affinity()
+- [ ] Wire NPC agent to gather context and call BackendManager for dialogue
+- [ ] Implement location affinity generation (LLM § 2)
+- [ ] Implement NPC creation pipeline (LLM § 3)
