@@ -26,6 +26,8 @@ from dataclasses import dataclass, field
 from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
 from world_system.living_world.npc.npc_memory import NPCMemory, NPCMemoryManager
+from world_system.living_world.factions import FactionSystem
+from world_system.living_world.factions.dialogue_helper import assemble_dialogue_context
 
 
 @dataclass
@@ -203,6 +205,9 @@ class NPCAgentSystem:
         # Conversation history
         history_text = memory.conversation_summary or "No previous conversations."
 
+        # Add faction context if available
+        faction_context = self._build_faction_context(npc_id)
+
         return (
             f"You are {npc_name}, an NPC in a crafting RPG.\n"
             f"Personality: {voice}\n"
@@ -213,11 +218,34 @@ class NPCAgentSystem:
             f"Things you know about the world:\n{knowledge_text or 'Nothing notable yet.'}\n\n"
             f"Previous conversation summary:\n{history_text}\n\n"
             f"Player reputation: {', '.join(memory.player_reputation_tags) or 'Unknown'}\n\n"
+            f"{faction_context}"
             f"Respond in-character. Keep response under {max_len} characters.\n"
             f"Return JSON: {{\"dialogue\": \"your response\", \"emotion\": \"your_emotion\", "
             f"\"disposition_change\": 0.0}}\n"
             f"disposition_change should be between -0.1 and 0.1 based on the interaction."
         )
+
+    def _build_faction_context(self, npc_id: str) -> str:
+        """Build faction affinity context for dialogue.
+
+        Returns formatted faction information or empty string if unavailable.
+        """
+        try:
+            fs = FactionSystem.get_instance()
+            npc_profile = fs.get_npc_profile(npc_id)
+            if not npc_profile or not npc_profile.belonging_tags:
+                return ""
+
+            # Summarize NPC's top 5 faction tags by significance
+            sorted_tags = sorted(
+                npc_profile.belonging_tags.values(),
+                key=lambda t: t.significance,
+                reverse=True,
+            )[:5]
+            tags = [f"{t.tag} ({t.significance:.1%})" for t in sorted_tags]
+            return f"NPC affiliations: {', '.join(tags)}\n\n"
+        except Exception:
+            return ""
 
     def _build_user_prompt(self, player_input: str, character,
                            memory: NPCMemory) -> str:

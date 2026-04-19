@@ -1,0 +1,172 @@
+{
+  "metadata": {
+    "version": 1,
+    "description": "NPC archetype guidance for LLM-driven NPC creation",
+    "note": "These are seeds, not chains. LLM may override, skip, or add tags."
+  },
+  "archetypes": {
+    "village_blacksmith": {
+      "description": "A master craftsperson in a small settlement",
+      "narrative_seed": "Skilled at their craft, known locally, tied to the town through generations or circumstance. Protective of their craft's reputation, wary of trends that bypass traditional methods.",
+      "suggested_tags": [
+        {
+          "tag": "profession:blacksmith",
+          "suggested_significance": 0.8,
+          "role": "master",
+          "rationale": "Central to their identity"
+        },
+        {
+          "tag": "locality:{location_name}",
+          "suggested_significance": 0.7,
+          "role": "resident",
+          "rationale": "They live and work here"
+        },
+        {
+          "tag": "guild:smiths",
+          "suggested_significance": 0.5,
+          "role": "member",
+          "rationale": "Professional affiliation, maintains standards"
+        }
+      ],
+      "affinity_notes": "Smiths typically value nobles (they commission weapons) and distrust merchants (who undercut prices). Affinity modulated by local sentiment."
+    },
+    "merchant_trader": {
+      "description": "A traveling or settled merchant working for a larger guild",
+      "narrative_seed": "Mobile, profit-driven, networked across regions. Sees opportunity in supply chains and market gaps. May be cynical about local politics.",
+      "suggested_tags": [
+        {
+          "tag": "guild:merchants",
+          "suggested_significance": 0.8,
+          "role": "member",
+          "rationale": "Professional identity"
+        },
+        {
+          "tag": "locality:{location_name}",
+          "suggested_significance": 0.4,
+          "role": "regular",
+          "rationale": "They trade here but aren't rooted"
+        },
+        {
+          "tag": "profession:merchant",
+          "suggested_significance": 0.7,
+          "role": "trader",
+          "rationale": "Job defines them"
+        }
+      ],
+      "affinity_notes": "Merchants have affinity toward wealthy NPCs and cities. May be suspicious of isolationist factions. Affinity can shift rapidly based on profit."
+    },
+    "town_guard": {
+      "description": "A soldier or watchman defending a settlement",
+      "narrative_seed": "Duty-bound, protective, often concerned with local threats and order. May be cynical or idealistic depending on tenure. Reports to authority.",
+      "suggested_tags": [
+        {
+          "tag": "profession:guard",
+          "suggested_significance": 0.9,
+          "role": "active_duty",
+          "rationale": "Central professional identity"
+        },
+        {
+          "tag": "nation:{nation_name}",
+          "suggested_significance": 0.6,
+          "role": "soldier",
+          "rationale": "Sworn to broader authority"
+        },
+        {
+          "tag": "locality:{location_name}",
+          "suggested_significance": 0.7,
+          "role": "protector",
+          "rationale": "This is their assigned post"
+        }
+      ],
+      "affinity_notes": "High affinity for order and law. Affinity varies by nation's current politics. May distrust merchants or separatists depending on assignment."
+    },
+    "village_mayor": {
+      "description": "A local administrator and community leader",
+      "narrative_seed": "Responsible for the settlement's welfare. Balances local needs against external pressures. Often carries burden of difficult decisions.",
+      "suggested_tags": [
+        {
+          "tag": "locality:{location_name}",
+          "suggested_significance": 0.9,
+          "role": "leader",
+          "rationale": "Central to their identity and responsibility"
+        },
+        {
+          "tag": "nation:{nation_name}",
+          "suggested_significance": 0.5,
+          "role": "representative",
+          "rationale": "Answers to higher authority"
+        },
+        {
+          "tag": "rank:noble",
+          "suggested_significance": 0.4,
+          "role": "minor_nobility",
+          "rationale": "May have been granted or earned title"
+        }
+      ],
+      "affinity_notes": "Deep ties to locality. Affinity depends on whether they see nation as protective or exploitative. May have complex relationship with merchants (trade vs. fair dealing)."
+    },
+    "fisher": {
+      "description": "A person who makes their living from water",
+      "narrative_seed": "Independent, knowledgeable about water and seasons. May live on margins of society. Connected to guild or solo operator.",
+      "suggested_tags": [
+        {
+          "tag": "profession:fisher",
+          "suggested_significance": 0.8,
+          "role": "practitioner",
+          "rationale": "Central to survival and identity"
+        },
+        {
+          "tag": "locality:{location_name}",
+          "suggested_significance": 0.7,
+          "role": "resident",
+          "rationale": "Tied to fishing grounds"
+        },
+        {
+          "tag": "guild:fishers",
+          "suggested_significance": 0.5,
+          "role": "member",
+          "rationale": "May be independent or guild-affiliated"
+        }
+      ],
+      "affinity_notes": "Fishers often value independence and nature. Affinity toward merchants depends on whether they feel exploited. May have ties to coast-specific factions."
+    },
+    "scholar": {
+      "description": "A learned person devoted to knowledge",
+      "narrative_seed": "Values learning, research, and truth. May be idealistic or jaded about knowledge's impact on the world. Often isolated from common folk.",
+      "suggested_tags": [
+        {
+          "tag": "profession:scholar",
+          "suggested_significance": 0.8,
+          "role": "practitioner",
+          "rationale": "Central to identity"
+        },
+        {
+          "tag": "rank:noble",
+          "suggested_significance": 0.3,
+          "role": "noble_sponsored",
+          "rationale": "Often patronized or trained by nobility"
+        }
+      ],
+      "affinity_notes": "Scholars may have complex relationships with power. Affinity depends on whether they're independent or institutional. May value certain ideologies highly."
+    },
+    "wanderer": {
+      "description": "A traveler without fixed settlement",
+      "narrative_seed": "Rootless, independent, experienced across regions. May be escaping something or seeking something. Sees different perspectives.",
+      "suggested_tags": [
+        {
+          "tag": "locality:{location_name}",
+          "suggested_significance": 0.1,
+          "role": "visitor",
+          "rationale": "Passing through, not rooted"
+        }
+      ],
+      "affinity_notes": "Wanderers often have baseline affinities across nations (from experience). May be cynical about factionalism. Quick to move if local sentiment turns."
+    }
+  },
+  "guidelines": {
+    "use_in_prompt": "If NPC role matches an archetype, include suggested_tags. LLM may override, combine, or ignore.",
+    "override_note": "Archetypes are seeds, not constraints. LLM should feel free to create unique tags or personalities.",
+    "location_templating": "Replace {location_name} and {nation_name} with actual geography from geographic-map.json",
+    "affinity_note": "Affinity is NOT stored in archetype. LLM infers from narrative and context. Affinity overrides are applied ONLY if NPC diverges significantly from location defaults."
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "metadata": {
+    "version": 1,
+    "last_updated": 0.0,
+    "description": "Hierarchical affinity defaults: world → nation → region → province → district → locality"
+  },
+  "affinity_defaults": {
+    "world": {
+      "comment": "Baseline affinity for all tags everywhere (unless overridden)",
+      "guild:merchants": -0.1,
+      "guild:smiths": 0.05,
+      "guild:fishers": 0.0,
+      "profession:guard": 0.1,
+      "profession:blacksmith": 0.05,
+      "profession:merchant": -0.05,
+      "profession:farmer": 0.0,
+      "profession:fisher": 0.0,
+      "ideology:separatist": -0.2,
+      "ideology:unifier": 0.0,
+      "rank:noble": 0.0,
+      "rank:commoner": 0.0,
+      "rank:serf": -0.1
+    },
+    "nation": {
+      "nation:stormguard": {
+        "comment": "Kingdom values defensive strength",
+        "guild:merchants": -0.2,
+        "guild:smiths": 0.15,
+        "profession:guard": 0.2,
+        "profession:merchant": -0.15,
+        "profession:blacksmith": 0.1,
+        "ideology:separatist": -0.3,
+        "ideology:unifier": 0.1,
+        "rank:noble": 0.05
+      },
+      "nation:blackoak": {
+        "comment": "Trade-oriented, mercantile",
+        "guild:merchants": 0.2,
+        "guild:smiths": 0.0,
+        "profession:merchant": 0.25,
+        "profession:guard": -0.05,
+        "profession:blacksmith": -0.05,
+        "ideology:unifier": 0.15,
+        "ideology:separatist": -0.1
+      },
+      "nation:shattered_isles": {
+        "comment": "Independent-minded, suspicious of outside power",
+        "guild:merchants": 0.1,
+        "profession:merchant": 0.1,
+        "profession:fisher": 0.15,
+        "ideology:separatist": 0.2,
+        "ideology:unifier": -0.2,
+        "rank:noble": -0.1
+      },
+      "nation:verdant_reaches": {
+        "comment": "Nature-aligned, anti-exploitation",
+        "guild:merchants": -0.3,
+        "profession:merchant": -0.25,
+        "profession:farmer": 0.15,
+        "profession:fisher": 0.1,
+        "ideology:wilderness_first": 0.2,
+        "ideology:separatist": 0.1,
+        "cult:verdant": 0.15
+      }
+    },
+    "region": {
+      "region:northern_marches": {
+        "comment": "Border region, defensive mindset",
+        "guild:merchants": -0.25,
+        "profession:guard": 0.3,
+        "profession:merchant": -0.2,
+        "ideology:unifier": 0.15,
+        "rank:noble": 0.05
+      },
+      "region:central_heartland": {
+        "comment": "Hub of trade and culture",
+        "guild:merchants": 0.1,
+        "profession:merchant": 0.15,
+        "profession:scholar": 0.1,
+        "ideology:unifier": 0.2
+      },
+      "region:southern_reach": {
+        "comment": "Agricultural breadbasket",
+        "profession:farmer": 0.2,
+        "profession:merchant": 0.05,
+        "guild:merchants": -0.05
+      },
+      "region:western_frontier": {
+        "comment": "Frontier mentality, independence valued",
+        "profession:merchant": 0.05,
+        "profession:guard": 0.1,
+        "ideology:separatist": 0.15,
+        "ideology:wilderness_first": 0.1
+      }
+    },
+    "province": {},
+    "district": {
+      "district:iron_hills": {
+        "comment": "Mining/smithing center, built on extraction",
+        "guild:smiths": 0.25,
+        "profession:blacksmith": 0.3,
+        "guild:merchants": -0.35,
+        "profession:merchant": -0.2
+      },
+      "district:grain_fields": {
+        "comment": "Agricultural core, distrustful of non-locals",
+        "profession:farmer": 0.25,
+        "guild:merchants": -0.15,
+        "profession:merchant": -0.1
+      },
+      "district:coastal_reach": {
+        "comment": "Fishing and maritime trade",
+        "profession:fisher": 0.2,
+        "guild:fishers": 0.2,
+        "guild:merchants": 0.05,
+        "profession:merchant": 0.1
+      },
+      "district:whispering_woods": {
+        "comment": "Forest area, nature-inclined",
+        "cult:verdant": 0.15,
+        "ideology:wilderness_first": 0.2,
+        "profession:merchant": -0.1,
+        "guild:merchants": -0.15
+      }
+    },
+    "locality": {
+      "village_westhollow": {
+        "comment": "Small grain farming settlement, self-reliant",
+        "guild:merchants": -0.3,
+        "profession:farmer": 0.25,
+        "nation:stormguard": 0.05,
+        "profession:merchant": -0.2
+      },
+      "city_ironhold": {
+        "comment": "Major smithing and mining city, industrial center",
+        "guild:smiths": 0.3,
+        "profession:blacksmith": 0.25,
+        "guild:merchants": -0.1,
+        "nation:stormguard": 0.1,
+        "rank:noble": 0.05
+      },
+      "port_tidemark": {
+        "comment": "Coastal trade hub",
+        "guild:merchants": 0.25,
+        "profession:merchant": 0.3,
+        "profession:fisher": 0.15,
+        "guild:fishers": 0.1,
+        "nation:blackoak": 0.1
+      },
+      "forest_haven": {
+        "comment": "Hidden woodland settlement, nature-focused",
+        "cult:verdant": 0.25,
+        "ideology:wilderness_first": 0.3,
+        "profession:farmer": 0.1,
+        "guild:merchants": -0.4,
+        "nation:verdant_reaches": 0.15
+      }
+    }
+  }
+}

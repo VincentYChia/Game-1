@@ -35,17 +35,22 @@ GEOGRAPHIC_MAP_PATH = (
 # Colors per category
 CATEGORY_COLORS = {
     "_core": "#4A90D9", "_output": "#4A90D9",
+    "_faction_context": "#8E44AD",
     "domain": "#2ECC71", "species": "#E67E22",
     "material_category": "#8B4513", "discipline": "#9B59B6",
     "tier": "#F39C12", "element": "#E74C3C",
     "rank": "#C0392B", "status_effect": "#1ABC9C",
     "action": "#3498DB", "result": "#16A085",
+    "affinity": "#D35400", "interaction": "#27AE60",
+    "faction": "#8E44AD",
 }
 
 CATEGORY_ORDER = [
-    "_core", "_output", "domain", "species", "material_category",
+    "_core", "_output", "_faction_context",
+    "domain", "species", "material_category",
     "discipline", "tier", "element", "rank", "status_effect",
     "action", "result",
+    "affinity", "interaction", "faction",
 ]
 
 

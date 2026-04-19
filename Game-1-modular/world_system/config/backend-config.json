@@ -33,6 +33,10 @@
       "primary": "ollama",
       "description": "NPC dialogue generation"
     },
+    "faction_dialogue": {
+      "primary": "claude",
+      "description": "NPC dialogue enhanced with faction affinity context"
+    },
     "quests": {
       "primary": "ollama",
       "description": "Quest narrative generation"

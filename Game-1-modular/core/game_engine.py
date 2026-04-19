@@ -1166,6 +1166,9 @@ class GameEngine:
                         # Restore NPC state
                         SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
 
+                        # Restore faction state
+                        self.save_manager.restore_faction_state(save_data)
+
                         # Restore dungeon state (if present)
                         self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
 
@@ -1601,6 +1604,9 @@ class GameEngine:
                 # Restore NPC state
                 SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
 
+                # Restore faction state
+                self.save_manager.restore_faction_state(save_data)
+
                 # Restore game time for day/night cycle
                 self.game_time = world_state.get("game_time", 0.0)
                 print(f"⏰ Restored game time: {self.game_time:.1f}s")
@@ -1685,6 +1691,9 @@ class GameEngine:
 
                 # Restore NPC state
                 SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
+
+                # Restore faction state
+                self.save_manager.restore_faction_state(save_data)
 
                 # Restore game time for day/night cycle
                 self.game_time = world_state.get("game_time", 0.0)
@@ -4449,7 +4458,16 @@ class GameEngine:
             self.add_notification("Item generation failed", (255, 100, 100))
 
     def _init_world_memory(self):
-        """Initialize the World Memory System (AI foundation layer)."""
+        """Initialize the World Memory System and Faction Systems (AI foundation layer)."""
+        # Initialize Faction Systems (Phase 2: SQLite-backed NPC profiles & affinity)
+        try:
+            from world_system.living_world.factions import initialize_faction_systems
+            initialize_faction_systems()
+            print("[Faction] FactionDatabase initialized")
+        except Exception as e:
+            print(f"[Faction] Init failed (non-fatal): {e}")
+
+        # Initialize World Memory System
         try:
             from world_system.world_memory.world_memory_system import WorldMemorySystem
             from core.paths import PathManager

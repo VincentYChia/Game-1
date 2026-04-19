@@ -1,463 +1,455 @@
-"""FactionSystem — manages faction relationships, reputation, and ripple effects.
+"""Faction System Database Manager — Phase 2+.
 
-Tracks player reputation with each faction (-1.0 to 1.0), inter-faction
-relationships, reputation history, and milestone unlocks.
+Singleton manager for all faction data: NPC profiles, player affinity,
+NPC affinity toward other tags (including the player), and location defaults.
+Separate SQLite database (faction.db) from WMS.
 
-Key mechanics:
-- Reputation changes from world events (kills, crafting, gathering)
-- Ripple effects: changing rep with one faction affects allied/hostile factions
-- Milestones at 0.25/0.5/0.75 unlock content (dialogue, quests, recipes)
-- Reputation history for narrative context
+Information flow (Recording):
+- Game events (quests, combat) → quest/combat system provides affinity deltas
+- Deltas → FactionSystem.adjust_player_affinity() → player_affinity table
+- adjust_player_affinity() publishes FACTION_AFFINITY_CHANGED on GameEventBus
+- WMS FactionReputationEvaluator listens to FACTION_AFFINITY_CHANGED and
+  produces Layer 2 narratives.
 
-Configuration driven by AI-Config.JSON/faction-definitions.json.
-
-Usage:
-    system = FactionSystem.get_instance()
-    system.initialize()
-    system.modify_reputation("village_guard", 0.05, "Killed a wolf pack")
-    label = system.get_reputation_label("village_guard")
-    disposition = system.get_npc_disposition(npc_id)
+Information flow (Retrieval — dialogue context):
+- NPC dialogue requested → FactionSystem.get_npc_profile()
+  + get_npc_affinity_toward_player()
+- Player affinity with NPC's tags → get_all_player_affinities()
+- Location affinity defaults → compute_inherited_affinity()
+- Context assembled for LLM dialogue generation (see LLM_INTEGRATION.md)
 """
 
 from __future__ import annotations
 
 import json
-import os
-import time
-from dataclasses import dataclass, field
-from typing import Any, ClassVar, Dict, List, Optional, Tuple
+import sqlite3
+from typing import ClassVar, Dict, List, Optional, Tuple
 
+from core.paths import get_faction_db_path
 from events.event_bus import get_event_bus
 
-
-@dataclass
-class FactionDefinition:
-    """Static faction definition loaded from JSON."""
-    faction_id: str
-    name: str
-    description: str = ""
-    territory_regions: List[str] = field(default_factory=list)
-    member_npc_ids: List[str] = field(default_factory=list)
-    hostile_threshold: float = -0.5
-    allied_threshold: float = 0.5
-    tags: List[str] = field(default_factory=list)
+from .models import FactionTag, NPCProfile
+from .schema import (
+    NPC_AFFINITY_PLAYER_TAG,
+    FactionDatabaseSchema,
+    bootstrap_location_defaults,
+)
 
 
-@dataclass
-class ReputationChange:
-    """Record of a reputation change for history tracking."""
-    faction_id: str
-    delta: float
-    new_score: float
-    reason: str
-    game_time: float
-    is_ripple: bool = False
+FACTION_AFFINITY_CHANGED = "FACTION_AFFINITY_CHANGED"
 
 
 class FactionSystem:
-    """Singleton system managing all faction state and reputation.
+    """Singleton manager for faction SQLite database."""
 
-    Subscribes to GameEventBus for automatic reputation adjustments.
-    Publishes FACTION_REP_CHANGED events when reputation shifts.
-    """
-
-    _instance: ClassVar[Optional[FactionSystem]] = None
+    _instance: ClassVar[Optional["FactionSystem"]] = None
 
     def __init__(self):
-        self._factions: Dict[str, FactionDefinition] = {}
-        self._player_reputation: Dict[str, float] = {}  # faction_id → score
-        self._inter_faction: Dict[str, Dict[str, float]] = {}  # a → {b → relationship}
-        self._reputation_history: List[ReputationChange] = []
-        self._reputation_events: Dict[str, Dict[str, Dict]] = {}
-        self._milestones: List[Dict[str, Any]] = []
-        self._ripple_config: Dict[str, float] = {}
-        self._crossed_milestones: Dict[str, List[float]] = {}  # faction_id → [thresholds crossed]
-        self._npc_faction_map: Dict[str, str] = {}  # npc_id → faction_id
-        self._initialized: bool = False
-        self._bus_connected: bool = False
+        self.db_path = get_faction_db_path()
+        self.connection: Optional[sqlite3.Connection] = None
+        self._initialized = False
 
     @classmethod
-    def get_instance(cls) -> FactionSystem:
+    def get_instance(cls) -> "FactionSystem":
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     @classmethod
     def reset(cls) -> None:
-        if cls._instance and cls._instance._bus_connected:
-            cls._instance._disconnect_bus()
+        """Reset singleton (for testing)."""
+        if cls._instance and cls._instance.connection:
+            cls._instance.connection.close()
         cls._instance = None
 
-    def initialize(self, config_path: Optional[str] = None) -> None:
-        """Load faction definitions and subscribe to events.
-
-        Args:
-            config_path: Path to faction-definitions.json.
-        """
+    def initialize(self) -> None:
+        """Initialize database connection, schema, and bootstrap defaults."""
         if self._initialized:
             return
 
-        # Load config
-        config = self._load_config(config_path)
-
-        # Parse faction definitions
-        for fid, fdata in config.get("factions", {}).items():
-            self._factions[fid] = FactionDefinition(
-                faction_id=fid,
-                name=fdata.get("name", fid),
-                description=fdata.get("description", ""),
-                territory_regions=fdata.get("territory_regions", []),
-                member_npc_ids=fdata.get("member_npc_ids", []),
-                hostile_threshold=fdata.get("hostile_threshold", -0.5),
-                allied_threshold=fdata.get("allied_threshold", 0.5),
-                tags=fdata.get("tags", []),
+        try:
+            self.connection = sqlite3.connect(
+                str(self.db_path),
+                check_same_thread=False,
             )
-            # Initialize reputation at 0
-            self._player_reputation[fid] = 0.0
-            self._crossed_milestones[fid] = []
+            self.connection.row_factory = sqlite3.Row
 
-            # Build NPC→faction map
-            for npc_id in fdata.get("member_npc_ids", []):
-                self._npc_faction_map[npc_id] = fid
+            FactionDatabaseSchema.create_all_tables(self.connection)
+            bootstrap_location_defaults(self.connection)
 
-        # Inter-faction relationships
-        self._inter_faction = config.get("inter_faction_relationships", {})
+            self._initialized = True
+            print(f"[FactionSystem] Initialized at {self.db_path}")
+        except Exception as e:
+            print(f"[FactionSystem] Initialization error: {e}")
+            raise
 
-        # Reputation event modifiers
-        self._reputation_events = config.get("reputation_events", {})
+    # ------------------------------------------------------------------
+    # NPC profile operations
+    # ------------------------------------------------------------------
 
-        # Milestones
-        self._milestones = config.get("reputation_milestones", [])
-
-        # Ripple config
-        self._ripple_config = config.get("ripple_config", {
-            "ally_ripple_factor": 0.3,
-            "enemy_ripple_factor": -0.2,
-            "neutral_ripple_factor": 0.0,
-            "ripple_threshold": 0.1,
-        })
-
-        # Subscribe to relevant events on the bus
-        self._connect_bus()
-
-        self._initialized = True
-        print(f"[FactionSystem] Initialized with {len(self._factions)} factions")
-
-    def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
-        if config_path and os.path.exists(config_path):
-            with open(config_path, "r") as f:
-                return json.load(f)
-
-        module_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(module_dir)))
-        default_path = os.path.join(
-            project_root, "world_system", "config", "faction-definitions.json"
+    def add_npc(self, npc_id: str, narrative: str, game_time: float = 0.0) -> None:
+        """Add or update NPC profile."""
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "INSERT OR REPLACE INTO npc_profiles "
+            "(npc_id, narrative, created_at, last_updated) VALUES (?, ?, ?, ?)",
+            (npc_id, narrative, game_time, game_time),
         )
-        if os.path.exists(default_path):
-            with open(default_path, "r") as f:
-                return json.load(f)
+        self.connection.commit()
 
-        return {}
+    def get_npc_profile(self, npc_id: str) -> Optional[NPCProfile]:
+        """Get NPC profile with belonging tags and affinity toward tags.
 
-    def _connect_bus(self) -> None:
-        """Subscribe to GameEventBus for automatic reputation changes."""
-        bus = get_event_bus()
-        bus.subscribe("ENEMY_KILLED", self._on_event, priority=5)
-        bus.subscribe("ITEM_CRAFTED", self._on_event, priority=5)
-        bus.subscribe("RESOURCE_GATHERED", self._on_event, priority=5)
-        bus.subscribe("LEVEL_UP", self._on_event, priority=5)
-        self._bus_connected = True
-
-    def _disconnect_bus(self) -> None:
-        """Unsubscribe from GameEventBus."""
-        bus = get_event_bus()
-        bus.unsubscribe("ENEMY_KILLED", self._on_event)
-        bus.unsubscribe("ITEM_CRAFTED", self._on_event)
-        bus.unsubscribe("RESOURCE_GATHERED", self._on_event)
-        bus.unsubscribe("LEVEL_UP", self._on_event)
-        self._bus_connected = False
-
-    # ── Event Handler ─────────────────────────────────────────────────
-
-    def _on_event(self, event) -> None:
-        """Handle a GameEventBus event and adjust reputations."""
-        event_type = event.event_type
-        modifiers = self._reputation_events.get(event_type, {})
-
-        for faction_id, mod in modifiers.items():
-            if faction_id not in self._factions:
-                continue
-            delta = mod.get("delta", 0.0)
-            reason = mod.get("description", event_type)
-            if delta != 0:
-                self.modify_reputation(
-                    faction_id, delta, reason,
-                    game_time=getattr(event, "timestamp", 0.0),
-                )
-
-    # ── Public API ────────────────────────────────────────────────────
-
-    def modify_reputation(self, faction_id: str, delta: float, reason: str,
-                          game_time: float = 0.0,
-                          apply_ripple: bool = True) -> Optional[float]:
-        """Change player's reputation with a faction.
-
-        Args:
-            faction_id: Target faction.
-            delta: Amount to change (-1.0 to 1.0 range).
-            reason: Human-readable reason for change.
-            game_time: Current game time.
-            apply_ripple: If True, propagate to allied/hostile factions.
-
-        Returns:
-            New reputation score, or None if faction not found.
+        The NPC's personal affinity toward the player is stored under the
+        reserved tag NPC_AFFINITY_PLAYER_TAG and appears in the returned
+        profile.affinity dict. Callers who want tag-only affinity should
+        filter it out, or use ``get_npc_affinity_toward_player`` directly.
         """
-        if faction_id not in self._factions:
+        self._require_connection()
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            "SELECT narrative, created_at, last_updated FROM npc_profiles WHERE npc_id = ?",
+            (npc_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
             return None
 
-        old_score = self._player_reputation.get(faction_id, 0.0)
-        new_score = max(-1.0, min(1.0, old_score + delta))
-        self._player_reputation[faction_id] = new_score
-
-        # Record history
-        change = ReputationChange(
-            faction_id=faction_id,
-            delta=delta,
-            new_score=new_score,
-            reason=reason,
-            game_time=game_time,
-            is_ripple=False,
+        profile = NPCProfile(
+            npc_id=npc_id,
+            narrative=row[0],
+            created_at=row[1],
+            last_updated=row[2],
         )
-        self._reputation_history.append(change)
-        # Keep history bounded
-        if len(self._reputation_history) > 500:
-            self._reputation_history = self._reputation_history[-500:]
 
-        # Check milestones
-        self._check_milestones(faction_id, old_score, new_score, game_time)
+        cursor.execute(
+            "SELECT tag, significance, role, narrative_hooks, since_game_time "
+            "FROM npc_belonging_tags WHERE npc_id = ?",
+            (npc_id,),
+        )
+        for tag_row in cursor.fetchall():
+            hooks = json.loads(tag_row[3]) if tag_row[3] else []
+            profile.add_tag(
+                tag=tag_row[0],
+                significance=tag_row[1],
+                role=tag_row[2],
+                narrative_hooks=hooks,
+                game_time=tag_row[4],
+            )
 
-        # Publish event
-        bus = get_event_bus()
-        bus.publish("FACTION_REP_CHANGED", {
-            "faction_id": faction_id,
-            "old_score": old_score,
-            "new_score": new_score,
-            "delta": delta,
-            "reason": reason,
-        }, source="FactionSystem")
+        cursor.execute(
+            "SELECT tag, affinity_value FROM npc_affinity WHERE npc_id = ?",
+            (npc_id,),
+        )
+        for aff_row in cursor.fetchall():
+            profile.set_affinity(aff_row[0], aff_row[1])
 
-        # Ripple to related factions
-        if apply_ripple and abs(delta) >= self._ripple_config.get("ripple_threshold", 0.1):
-            self._apply_ripple(faction_id, delta, reason, game_time)
+        return profile
 
-        return new_score
+    def add_npc_belonging_tag(
+        self,
+        npc_id: str,
+        tag: str,
+        significance: float,
+        role: Optional[str] = None,
+        narrative_hooks: Optional[List[str]] = None,
+        game_time: float = 0.0,
+    ) -> None:
+        """Add or update an NPC belonging tag."""
+        self._require_connection()
+        hooks_json = json.dumps(narrative_hooks or [])
+        cursor = self.connection.cursor()
+        cursor.execute(
+            """INSERT OR REPLACE INTO npc_belonging_tags
+               (npc_id, tag, significance, role, narrative_hooks, since_game_time)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (npc_id, tag, significance, role, hooks_json, game_time),
+        )
+        self.connection.commit()
 
-    def _apply_ripple(self, source_faction: str, delta: float,
-                      reason: str, game_time: float) -> None:
-        """Propagate reputation change to allied/hostile factions."""
-        relationships = self._inter_faction.get(source_faction, {})
-        ally_factor = self._ripple_config.get("ally_ripple_factor", 0.3)
-        enemy_factor = self._ripple_config.get("enemy_ripple_factor", -0.2)
+    def get_npc_belonging_tags(self, npc_id: str) -> List[FactionTag]:
+        """Get all belonging tags for an NPC."""
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            """SELECT tag, significance, role, narrative_hooks, since_game_time
+               FROM npc_belonging_tags WHERE npc_id = ?""",
+            (npc_id,),
+        )
+        tags = []
+        for row in cursor.fetchall():
+            hooks = json.loads(row[3]) if row[3] else []
+            tags.append(
+                FactionTag(
+                    tag=row[0],
+                    significance=row[1],
+                    role=row[2],
+                    narrative_hooks=hooks,
+                    since_game_time=row[4],
+                )
+            )
+        return tags
 
-        for target_faction, relationship in relationships.items():
-            if target_faction == source_faction:
-                continue
-            if target_faction not in self._factions:
-                continue
+    def get_all_npcs_with_tag(self, tag: str) -> List[str]:
+        """Get all NPC IDs that have a specific belonging tag."""
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "SELECT DISTINCT npc_id FROM npc_belonging_tags WHERE tag = ?",
+            (tag,),
+        )
+        return [row[0] for row in cursor.fetchall()]
 
-            # Determine ripple factor based on relationship
-            if relationship > 0.1:
-                ripple_factor = ally_factor * relationship
-            elif relationship < -0.1:
-                ripple_factor = enemy_factor * abs(relationship)
-            else:
-                continue
+    # ------------------------------------------------------------------
+    # Player affinity
+    # ------------------------------------------------------------------
 
-            ripple_delta = delta * ripple_factor
-            if abs(ripple_delta) < 0.001:
-                continue
+    def set_player_affinity(
+        self, player_id: str, tag: str, value: float, game_time: float = 0.0
+    ) -> float:
+        """Set player affinity with tag (-100 to 100). Returns clamped value.
 
-            old_score = self._player_reputation.get(target_faction, 0.0)
-            new_score = max(-1.0, min(1.0, old_score + ripple_delta))
-            self._player_reputation[target_faction] = new_score
+        Publishes FACTION_AFFINITY_CHANGED with source="set".
+        """
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "SELECT affinity_value FROM player_affinity WHERE player_id = ? AND tag = ?",
+            (player_id, tag),
+        )
+        row = cursor.fetchone()
+        previous = row[0] if row else 0.0
 
-            self._reputation_history.append(ReputationChange(
-                faction_id=target_faction,
-                delta=ripple_delta,
-                new_score=new_score,
-                reason=f"Ripple from {source_faction}: {reason}",
-                game_time=game_time,
-                is_ripple=True,
-            ))
+        clamped = max(-100.0, min(100.0, value))
+        cursor.execute(
+            "INSERT OR REPLACE INTO player_affinity "
+            "(player_id, tag, affinity_value, last_updated) VALUES (?, ?, ?, ?)",
+            (player_id, tag, clamped, game_time),
+        )
+        self.connection.commit()
 
-    def _check_milestones(self, faction_id: str, old_score: float,
-                          new_score: float, game_time: float) -> None:
-        """Check if a reputation milestone was crossed."""
-        crossed = self._crossed_milestones.get(faction_id, [])
-        for milestone in self._milestones:
-            threshold = milestone.get("threshold", 0.0)
-            if threshold in crossed:
-                continue
+        delta = clamped - previous
+        if delta != 0.0:
+            self._publish_affinity_changed(
+                player_id=player_id,
+                tag=tag,
+                delta=delta,
+                new_value=clamped,
+                source="set",
+            )
+        return clamped
 
-            # Check if we crossed this threshold (in either direction)
-            if threshold > 0:
-                if old_score < threshold <= new_score:
-                    crossed.append(threshold)
-                    self._on_milestone_reached(
-                        faction_id, milestone, new_score, game_time
-                    )
-            elif threshold < 0:
-                if old_score > threshold >= new_score:
-                    crossed.append(threshold)
-                    self._on_milestone_reached(
-                        faction_id, milestone, new_score, game_time
-                    )
+    def adjust_player_affinity(
+        self, player_id: str, tag: str, delta: float, game_time: float = 0.0
+    ) -> float:
+        """Adjust player affinity by delta, return new value.
 
-        self._crossed_milestones[faction_id] = crossed
+        Publishes FACTION_AFFINITY_CHANGED with source="adjust".
+        """
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "SELECT affinity_value FROM player_affinity WHERE player_id = ? AND tag = ?",
+            (player_id, tag),
+        )
+        row = cursor.fetchone()
+        current = row[0] if row else 0.0
+        new_value = max(-100.0, min(100.0, current + delta))
 
-    def _on_milestone_reached(self, faction_id: str, milestone: Dict,
-                              score: float, game_time: float) -> None:
-        """Handle a reputation milestone being reached."""
-        label = milestone.get("label", "Unknown")
-        unlock_type = milestone.get("unlock_type", "")
-        faction = self._factions[faction_id]
+        cursor.execute(
+            "INSERT OR REPLACE INTO player_affinity "
+            "(player_id, tag, affinity_value, last_updated) VALUES (?, ?, ?, ?)",
+            (player_id, tag, new_value, game_time),
+        )
+        self.connection.commit()
 
-        bus = get_event_bus()
-        bus.publish("FACTION_MILESTONE_REACHED", {
-            "faction_id": faction_id,
-            "faction_name": faction.name,
-            "milestone_label": label,
-            "threshold": milestone.get("threshold", 0.0),
-            "score": score,
-            "unlock_type": unlock_type,
-        }, source="FactionSystem")
+        actual_delta = new_value - current
+        if actual_delta != 0.0:
+            self._publish_affinity_changed(
+                player_id=player_id,
+                tag=tag,
+                delta=actual_delta,
+                new_value=new_value,
+                source="adjust",
+            )
+        return new_value
 
-        print(f"[FactionSystem] Milestone: {faction.name} → {label} "
-              f"(score: {score:.2f}, unlock: {unlock_type})")
+    def get_player_affinity(self, player_id: str, tag: str) -> float:
+        """Get player affinity with tag (default 0)."""
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "SELECT affinity_value FROM player_affinity WHERE player_id = ? AND tag = ?",
+            (player_id, tag),
+        )
+        row = cursor.fetchone()
+        return row[0] if row else 0.0
 
-    def get_reputation(self, faction_id: str) -> float:
-        """Get player's current reputation with a faction."""
-        return self._player_reputation.get(faction_id, 0.0)
+    def get_all_player_affinities(self, player_id: str) -> Dict[str, float]:
+        """Get all affinity values for a player (tag → -100..100)."""
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "SELECT tag, affinity_value FROM player_affinity WHERE player_id = ?",
+            (player_id,),
+        )
+        return {row[0]: row[1] for row in cursor.fetchall()}
 
-    def get_all_reputations(self) -> Dict[str, float]:
-        """Get all faction reputations."""
-        return dict(self._player_reputation)
+    # ------------------------------------------------------------------
+    # NPC affinity toward tags (and toward player via reserved tag)
+    # ------------------------------------------------------------------
 
-    def get_reputation_label(self, faction_id: str) -> str:
-        """Get human-readable reputation label for a faction."""
-        score = self._player_reputation.get(faction_id, 0.0)
-        faction = self._factions.get(faction_id)
-        if not faction:
-            return "unknown"
+    def set_npc_affinity(
+        self, npc_id: str, tag: str, value: float, game_time: float = 0.0
+    ) -> float:
+        """Set NPC affinity with a tag (-100 to 100). Returns clamped value."""
+        self._require_connection()
+        clamped = max(-100.0, min(100.0, value))
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "INSERT OR REPLACE INTO npc_affinity "
+            "(npc_id, tag, affinity_value, last_updated) VALUES (?, ?, ?, ?)",
+            (npc_id, tag, clamped, game_time),
+        )
+        self.connection.commit()
+        return clamped
 
-        if score <= faction.hostile_threshold:
-            return "hostile"
-        elif score <= -0.25:
-            return "unfriendly"
-        elif score < 0.1:
-            return "neutral"
-        elif score < 0.25:
-            return "recognized"
-        elif score < faction.allied_threshold:
-            return "friendly"
-        elif score < 0.75:
-            return "respected"
-        else:
-            return "honored"
+    def adjust_npc_affinity(
+        self, npc_id: str, tag: str, delta: float, game_time: float = 0.0
+    ) -> float:
+        """Adjust NPC affinity with a tag by delta, return new value."""
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "SELECT affinity_value FROM npc_affinity WHERE npc_id = ? AND tag = ?",
+            (npc_id, tag),
+        )
+        row = cursor.fetchone()
+        current = row[0] if row else 0.0
+        new_value = max(-100.0, min(100.0, current + delta))
+        return self.set_npc_affinity(npc_id, tag, new_value, game_time)
 
-    def get_npc_disposition(self, npc_id: str) -> str:
-        """Get disposition of an NPC based on their faction's player rep."""
-        faction_id = self._npc_faction_map.get(npc_id)
-        if not faction_id:
-            return "neutral"
-        return self.get_reputation_label(faction_id)
+    def get_npc_affinity(self, npc_id: str, tag: str) -> float:
+        """Get NPC affinity with a tag (default 0)."""
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "SELECT affinity_value FROM npc_affinity WHERE npc_id = ? AND tag = ?",
+            (npc_id, tag),
+        )
+        row = cursor.fetchone()
+        return row[0] if row else 0.0
 
-    def get_npc_faction(self, npc_id: str) -> Optional[str]:
-        """Get the faction an NPC belongs to."""
-        return self._npc_faction_map.get(npc_id)
+    # NPC personal opinion of the player — stored in npc_affinity under the
+    # reserved NPC_AFFINITY_PLAYER_TAG.
 
-    def assign_npc_to_faction(self, npc_id: str, faction_id: str) -> None:
-        """Assign an NPC to a faction at runtime."""
-        if faction_id in self._factions:
-            self._npc_faction_map[npc_id] = faction_id
-            if npc_id not in self._factions[faction_id].member_npc_ids:
-                self._factions[faction_id].member_npc_ids.append(npc_id)
+    def set_npc_affinity_toward_player(
+        self, npc_id: str, value: float, game_time: float = 0.0
+    ) -> float:
+        return self.set_npc_affinity(npc_id, NPC_AFFINITY_PLAYER_TAG, value, game_time)
 
-    def get_faction(self, faction_id: str) -> Optional[FactionDefinition]:
-        """Get a faction definition."""
-        return self._factions.get(faction_id)
+    def adjust_npc_affinity_toward_player(
+        self, npc_id: str, delta: float, game_time: float = 0.0
+    ) -> float:
+        return self.adjust_npc_affinity(npc_id, NPC_AFFINITY_PLAYER_TAG, delta, game_time)
 
-    def get_recent_history(self, faction_id: Optional[str] = None,
-                           limit: int = 20) -> List[ReputationChange]:
-        """Get recent reputation change history."""
-        history = self._reputation_history
-        if faction_id:
-            history = [h for h in history if h.faction_id == faction_id]
-        return history[-limit:]
+    def get_npc_affinity_toward_player(self, npc_id: str) -> float:
+        return self.get_npc_affinity(npc_id, NPC_AFFINITY_PLAYER_TAG)
 
-    def get_crossed_milestones(self, faction_id: str) -> List[float]:
-        """Get thresholds already crossed for a faction."""
-        return list(self._crossed_milestones.get(faction_id, []))
+    # ------------------------------------------------------------------
+    # Location affinity defaults
+    # ------------------------------------------------------------------
 
-    # ── Serialization ─────────────────────────────────────────────────
+    def get_location_affinity_defaults(
+        self, address_tier: str, location_id: Optional[str]
+    ) -> Dict[str, float]:
+        """Get all affinity defaults for a single location (tag → -100..100)."""
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "SELECT tag, affinity_value FROM location_affinity_defaults "
+            "WHERE address_tier = ? AND location_id IS ?",
+            (address_tier, location_id),
+        )
+        return {row[0]: row[1] for row in cursor.fetchall()}
 
-    def save(self) -> Dict[str, Any]:
-        """Serialize faction state for persistence."""
+    def compute_inherited_affinity(
+        self, address_hierarchy: List[Tuple[str, Optional[str]]]
+    ) -> Dict[str, float]:
+        """Sum location affinity defaults along an address hierarchy.
+
+        Args:
+            address_hierarchy: (tier, location_id) tuples in any order.
+                Example: [("locality", "village_westhollow"),
+                          ("district", "grain_fields"),
+                          ("nation", "nation:stormguard"),
+                          ("world", None)]
+
+        Returns:
+            Accumulated affinity dict (tag → -100..100, summed and clamped).
+        """
+        self._require_connection()
+        accumulated: Dict[str, float] = {}
+        for tier, location_id in address_hierarchy:
+            for tag, value in self.get_location_affinity_defaults(tier, location_id).items():
+                accumulated[tag] = accumulated.get(tag, 0.0) + value
+
+        for tag, value in accumulated.items():
+            accumulated[tag] = max(-100.0, min(100.0, value))
+        return accumulated
+
+    # ------------------------------------------------------------------
+    # Save / load — SQLite persists independently; these are placeholders
+    # for the save manager contract.
+    # ------------------------------------------------------------------
+
+    def save(self) -> Dict:
         return {
-            "player_reputation": dict(self._player_reputation),
-            "reputation_history": [
-                {
-                    "faction_id": rc.faction_id,
-                    "delta": rc.delta,
-                    "new_score": rc.new_score,
-                    "reason": rc.reason,
-                    "game_time": rc.game_time,
-                    "is_ripple": rc.is_ripple,
-                }
-                for rc in self._reputation_history[-100:]  # Keep last 100
-            ],
-            "crossed_milestones": {
-                fid: list(thresholds)
-                for fid, thresholds in self._crossed_milestones.items()
-            },
-            "npc_faction_map": dict(self._npc_faction_map),
-        }
-
-    def load(self, data: Dict[str, Any]) -> None:
-        """Restore faction state from saved data."""
-        self._player_reputation = data.get("player_reputation", {})
-        # Ensure all factions have a score
-        for fid in self._factions:
-            if fid not in self._player_reputation:
-                self._player_reputation[fid] = 0.0
-
-        self._crossed_milestones = {
-            fid: list(thresholds)
-            for fid, thresholds in data.get("crossed_milestones", {}).items()
-        }
-
-        self._npc_faction_map = data.get("npc_faction_map", {})
-
-        # Restore history
-        for entry in data.get("reputation_history", []):
-            self._reputation_history.append(ReputationChange(
-                faction_id=entry.get("faction_id", ""),
-                delta=entry.get("delta", 0.0),
-                new_score=entry.get("new_score", 0.0),
-                reason=entry.get("reason", ""),
-                game_time=entry.get("game_time", 0.0),
-                is_ripple=entry.get("is_ripple", False),
-            ))
-
-    @property
-    def stats(self) -> Dict[str, Any]:
-        return {
+            "version": FactionDatabaseSchema.get_schema_version(self.connection)
+            if self.connection else 0,
+            "db_path": str(self.db_path),
             "initialized": self._initialized,
-            "faction_count": len(self._factions),
-            "reputations": dict(self._player_reputation),
-            "history_length": len(self._reputation_history),
-            "milestones_crossed": {
-                fid: len(thresholds)
-                for fid, thresholds in self._crossed_milestones.items()
-            },
         }
+
+    def load(self, data: Dict) -> None:
+        # SQLite file is authoritative; nothing to restore from the save blob.
+        pass
+
+    # ------------------------------------------------------------------
+    # Internals
+    # ------------------------------------------------------------------
+
+    def _require_connection(self) -> None:
+        if not self.connection:
+            raise RuntimeError("FactionSystem not initialized — call initialize() first")
+
+    def _publish_affinity_changed(
+        self,
+        *,
+        player_id: str,
+        tag: str,
+        delta: float,
+        new_value: float,
+        source: str,
+    ) -> None:
+        """Publish FACTION_AFFINITY_CHANGED. WMS evaluator listens for this.
+
+        Best-effort: never raises — a broken event bus must not break affinity
+        recording.
+        """
+        try:
+            get_event_bus().publish(
+                FACTION_AFFINITY_CHANGED,
+                {
+                    "player_id": player_id,
+                    "tag": tag,
+                    "delta": delta,
+                    "new_value": new_value,
+                    "source": source,
+                },
+                source="FactionSystem",
+            )
+        except Exception as e:
+            print(f"[FactionSystem] Event publish failed ({e}); continuing")
