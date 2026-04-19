@@ -16,10 +16,15 @@ Usage:
 from typing import Any, Dict
 
 from .faction_system import FactionSystem, FACTION_AFFINITY_CHANGED
+from .consolidator import AffinityConsolidator, FACTION_AFFINITY_CONSOLIDATED
+from .quest_tool import QuestGenerator
 
 __all__ = [
     "FactionSystem",
     "FACTION_AFFINITY_CHANGED",
+    "AffinityConsolidator",
+    "FACTION_AFFINITY_CONSOLIDATED",
+    "QuestGenerator",
     "initialize_faction_systems",
     "save_faction_systems",
     "restore_faction_systems",
