@@ -1,11 +1,12 @@
 {
   "_meta": {
-    "version": "3.1",
-    "total_fragments": 127,
+    "version": "3.2",
+    "total_fragments": 154,
     "categories": {
       "_core": 1,
       "_output": 1,
-      "domain": 17,
+      "_faction_context": 1,
+      "domain": 18,
       "species": 13,
       "material_category": 9,
       "discipline": 6,
@@ -22,7 +23,10 @@
       "tool": 4,
       "npc": 3,
       "source": 5,
-      "resource": 3
+      "resource": 3,
+      "affinity": 5,
+      "interaction": 4,
+      "faction": 14
     },
     "design_principles": [
       "P1: Simple language. A tiny LLM needs CLARITY over PRECISION.",
@@ -170,5 +174,31 @@
   "source:fishing": "Earned from fishing activities.",
   "resource:gold": "Gold. The primary in-game currency.",
   "resource:exp": "Experience points. Accumulated toward level progression.",
-  "resource:mana": "Mana. Consumed when activating skills."
+  "resource:mana": "Mana. Consumed when activating skills.",
+  "domain:faction": "This is a faction event. The world has factions (guilds, nations, districts, professions). Players build affinity (-100 to +100) with each faction through actions. NPCs belong to factions and react based on player standing.",
+  "affinity:revered": "Revered reputation (70 to 100). The faction sees the player as a hero or champion. Their members treat the player with deep respect.",
+  "affinity:trusted": "Trusted reputation (30 to 69). The faction considers the player an ally. Their members are warm and helpful.",
+  "affinity:neutral": "Neutral reputation (-29 to 29). The faction has no strong opinion. Their members are professional and cautious.",
+  "affinity:disliked": "Disliked reputation (-69 to -30). The faction mistrusts the player. Their members are cold and dismissive.",
+  "affinity:hated": "Hated reputation (-100 to -70). The faction considers the player an enemy. Their members are openly hostile.",
+  "interaction:greet": "Greeting interaction. First contact or casual acknowledgment between NPC and player.",
+  "interaction:trade": "Trade interaction. NPC and player are negotiating exchange of goods or services.",
+  "interaction:ask": "Question interaction. Player is asking NPC about information, quests, or world state.",
+  "interaction:threaten": "Hostile interaction. Verbal confrontation that may escalate based on affinity.",
+  "_faction_context": "PLACEHOLDER. When factions are stylized, this fragment will describe how to interpret faction data in NPC dialogue: NPC belonging tags (significance 0.0-1.0 role weight), NPC opinion of player (-100 to 100), player affinity with NPC's factions, and location cultural defaults.",
+  "faction:guild_smiths": "PLACEHOLDER for guild:smiths. When stylized, this will describe the Smiths Guild identity, culture, and how members should speak.",
+  "faction:guild_merchants": "PLACEHOLDER for guild:merchants. When stylized, this will describe the Merchants Guild identity, culture, and how members should speak.",
+  "faction:guild_thieves": "PLACEHOLDER for guild:thieves. When stylized, this will describe the Thieves Guild identity, culture, and how members should speak.",
+  "faction:guild_fishers": "PLACEHOLDER for guild:fishers. When stylized, this will describe the Fishers Guild identity, culture, and how members should speak.",
+  "faction:nation_stormguard": "PLACEHOLDER for nation:stormguard. When stylized, this will describe Stormguard nation's identity, military focus, and speech patterns.",
+  "faction:nation_blackoak": "PLACEHOLDER for nation:blackoak. When stylized, this will describe Blackoak nation's identity, trade focus, and speech patterns.",
+  "faction:profession_blacksmith": "PLACEHOLDER for profession:blacksmith. When stylized, this will describe what a blacksmith's professional identity means.",
+  "faction:profession_guard": "PLACEHOLDER for profession:guard. When stylized, this will describe what a guard's professional identity means.",
+  "faction:profession_merchant": "PLACEHOLDER for profession:merchant. When stylized, this will describe what a merchant's professional identity means.",
+  "faction:profession_miner": "PLACEHOLDER for profession:miner. When stylized, this will describe what a miner's professional identity means.",
+  "faction:district_iron_hills": "PLACEHOLDER for district:iron_hills. When stylized, this will describe Iron Hills district's identity and cultural attitudes.",
+  "faction:district_coastal_reach": "PLACEHOLDER for district:coastal_reach. When stylized, this will describe Coastal Reach district's identity and cultural attitudes.",
+  "faction:rank_commoner": "PLACEHOLDER for rank:commoner. When stylized, this will describe common social rank and expectations.",
+  "faction:rank_hero": "PLACEHOLDER for rank:hero. When stylized, this will describe heroic social rank and how NPCs treat it.",
+  "faction:rank_criminal": "PLACEHOLDER for rank:criminal. When stylized, this will describe criminal social rank and how NPCs react."
 }

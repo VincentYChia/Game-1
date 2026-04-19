@@ -236,9 +236,13 @@ class NPCAgentSystem:
             if not npc_profile or not npc_profile.belonging_tags:
                 return ""
 
-            # Summarize NPC's faction tags
-            tags = [f"{tag.tag} ({tag.significance:.1%})"
-                    for tag in npc_profile.belonging_tags.values()[:5]]
+            # Summarize NPC's top 5 faction tags by significance
+            sorted_tags = sorted(
+                npc_profile.belonging_tags.values(),
+                key=lambda t: t.significance,
+                reverse=True,
+            )[:5]
+            tags = [f"{t.tag} ({t.significance:.1%})" for t in sorted_tags]
             return f"NPC affiliations: {', '.join(tags)}\n\n"
         except Exception:
             return ""

@@ -36,6 +36,7 @@ FRAGMENT_CATEGORIES = frozenset({
     "tier", "element", "rank", "status_effect",
     "action", "result", "attack_type", "item_category",
     "tool", "npc", "source", "resource", "quality", "rarity",
+    "affinity", "interaction", "faction",
 })
 
 # Domain mapping from event types
@@ -56,6 +57,9 @@ EVENT_TO_DOMAIN = {
     "repair_performed": "economy",
     "world_event": "combat",
     "position_sample": "exploration",
+    # Faction events (Phase 3) → domain:faction
+    "FACTION_AFFINITY_CHANGED": "faction",
+    "FACTION_AFFINITY_CONSOLIDATED": "faction",
 }
 
 
