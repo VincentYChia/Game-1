@@ -38,7 +38,7 @@ This plan is split into focused documents for maintainability:
 | AI/ML | LLM item gen (Claude API), CNN/LightGBM classifiers | `systems/llm_item_generator.py`, `crafting_classifier.py` | ~2,811 |
 | Events | **GameEventBus pub/sub connecting all systems** | `events/event_bus.py` | ~194 |
 | **World Memory** | **Layers 1-2 complete, 33 evaluators, tag library, 56 tests** | `world_system/` (71 files) | **~14,269** |
-| **Living World** | **BackendManager, NPC agents, factions, ecosystem (consumers)** | `world_system/living_world/` | ~2,079 |
+| **Living World** | **BackendManager, NPC agents, factions complete (Phase 2+); ecosystem as tool** | `world_system/living_world/` | ~2,079 |
 | **StatTracker** | **65 SQL-backed recording methods wired into Character** | `entities/components/stat_tracker.py` | ~1,149 |
 | Assets | 3,749 PNGs, all enemy sprites 1024x1024, no sprite sheets | `assets/` | — |
 
@@ -65,9 +65,10 @@ PART 1: Combat Visuals
 PART 2: Living World (starts after Phase 1.3 complete)
   Phase 2.1: Memory Layer (FOUNDATION) ────────────────┐  ✅ COMPLETE (world_system/world_memory/ — Layers 1-2, 33 evaluators)
   Phase 2.2: Model Backend Abstraction ────────────────┤  ✅ COMPLETE (world_system/living_world/backends/backend_manager.py)
-  Phase 2.3: NPC Agent System ─────────────────────────┤──→ Phase 2.7: Quest Generator  ⚠️ SCAFFOLDED (npc_agent.py exists, needs game integration)
-  Phase 2.4: Faction System ───────────────────────────┤  ⚠️ SCAFFOLDED (faction_system.py exists, needs game integration)
-  Phase 2.5: Ecosystem Model ──────────────────────────┤──→ Phase 2.6: World Events  ⚠️ SCAFFOLDED (ecosystem_agent.py exists, needs game integration)
+  Phase 2.3: NPC Agent System ─────────────────────────┤  ⚠️ SCAFFOLDED (npc_agent.py exists, needs game integration)
+  Phase 2.4: Faction System ───────────────────────────┤  ✅ PHASE 2+ COMPLETE (Phase 2, 3A/B/C done; stylization pending)
+  Phase 2.5: World Event System ───────────────────────┼──→ Phase 2.6: Quest Generator  ⚠️ SCAFFOLDED
+  Phase 2.6: Ecosystem as Tool ────────────────────────┘  (queries only — no separate agent)
 
 PART 3: Player Intelligence (starts after Phase 2.1)
   Phase 3.1: Behavior Classifier ──────────────────────┐
@@ -131,8 +132,8 @@ Game-1-modular/
 │   ├── living_world/                # Consumer systems (NOT part of WMS)
 │   │   ├── backends/                # BackendManager — LLM abstraction (553 lines)
 │   │   ├── npc/                     # NPCAgentSystem + NPCMemory (665 lines)
-│   │   ├── factions/                # FactionSystem (463 lines)
-│   │   └── ecosystem/               # EcosystemAgent (398 lines)
+│   │   ├── factions/                # FactionSystem Phase 2+ (1,300 LOC, 50 tests)
+│   │   └── ecosystem/               # Tool interface for resource queries (no state)
 │   ├── config/                      # 7 JSON configs
 │   │   ├── memory-config.json       # Event types, evaluator config, retention rules
 │   │   ├── backend-config.json      # LLM backend routing

@@ -35,13 +35,13 @@ All development targets the **2D Python/Pygame version**. Unity migration is pau
 ### Development Plan
 - **Start here**: `Development-Plan/OVERVIEW.md` — roadmap and dependency graph
 - **Part 1**: `Development-Plan/PART_1_COMBAT_VISUALS.md` — Action combat, animations, hitboxes, projectiles
-- **Part 2**: `Development-Plan/PART_2_LIVING_WORLD.md` — Memory layer, NPC agents, factions, ecosystem, events
+- **Part 2**: `Development-Plan/PART_2_LIVING_WORLD.md` — Memory layer, NPC agents, factions, world events, quests (ecosystem as tool)
 - **Part 3**: `Development-Plan/PART_3_PLAYER_INTELLIGENCE.md` — Behavior classifier, preferences, arc tracking
 - **Shared**: `Development-Plan/SHARED_INFRASTRUCTURE.md` — Balance validator, async runner, event integration
 
 ### Priority Order
 1. **Combat Visuals** (P1): Animation framework → attack state machine → hitboxes → projectiles → dodge → enemy scaling → polish
-2. **Living World AI** (P2): Memory layer → model backends → NPC agents → factions → ecosystem → world events → quests
+2. **Living World AI** (P2): Memory layer → model backends → NPC agents → factions → world events → quests (ecosystem as query tool)
 3. **Player Intelligence** (P3): Behavior classifier → preference model → arc tracker
 
 ### Key Architecture Additions
@@ -49,8 +49,8 @@ All development targets the **2D Python/Pygame version**. Unity migration is pau
 - `Combat/` — Attack state machine, hitbox system, projectile system (expanded from original 3 files to 11)
 - `world_system/` — World Memory System (SQLite-backed 7-layer event architecture, ~20,600 LOC)
   - `world_memory/` — StatStore, EventStore, evaluators, tag library, triggers, daily ledger
-  - `living_world/` — BackendManager (Ollama/Claude/Mock), NPC agents, factions, ecosystem
-  - `config/` — 7 JSON config files (memory, geographic, backend, faction, ecosystem, NPC, tags)
+  - `living_world/` — BackendManager (Ollama/Claude/Mock), NPC agents, factions, ecosystem (tool interface only)
+  - `config/` — 7 JSON config files (memory, geographic, backend, faction, event-triggers, npc, tags)
 - `events/` — GameEventBus pub/sub system connecting all systems
 - `entities/components/stat_tracker.py` — 65 `record_*` methods writing to SQL via StatStore (1,149 lines)
 
@@ -139,7 +139,7 @@ Game-1/
 - **GameEventBus** pub/sub system (events/event_bus.py)
 - **StatTracker** — 65 SQL-backed recording methods for comprehensive player analytics
 - **Faction System** — Phase 2+ complete (SQLite NPC/player affinity tracking, 19-method API, 21 tests, events published to WMS)
-- **Living World consumers** — BackendManager, NPC agents, factions, ecosystem (pre-existing, external to WMS)
+- **Living World consumers** — BackendManager, NPC agents, factions (Phase 2+ complete); ecosystem as tool interface (queries only)
 
 ### Partially Implemented
 - World generation (basic chunks, detailed templates pending)
@@ -287,8 +287,8 @@ Game-1-modular/
 │   ├── living_world/            # Consumer systems (NOT part of WMS)
 │   │   ├── backends/            # BackendManager — LLM abstraction (553 lines)
 │   │   ├── npc/                 # NPCAgentSystem + NPCMemory (665 lines)
-│   │   ├── factions/            # FactionSystem Phase 2+ (1,094 LOC + 1,020 docs, 21 tests)
-│   │   └── ecosystem/           # EcosystemAgent (398 lines)
+│   │   ├── factions/            # FactionSystem Phase 2+ (1,300+ LOC, 50 tests, prompt UI wired)
+│   │   └── ecosystem/           # Tool interface for resource queries (stateless, no agent)
 │   ├── config/                  # 7 JSON configs (memory, geographic, backend, etc.)
 │   ├── tests/                   # 56 passing tests across 4 test files
 │   └── docs/                    # WORLD_MEMORY_SYSTEM.md (canonical design doc)

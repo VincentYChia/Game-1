@@ -134,7 +134,7 @@ When debug mode is active, add an AI panel showing:
 - Recent world events (last 10)
 - NPC memory summaries for nearby NPCs
 - Faction reputation bars
-- Ecosystem scarcity alerts
+- Ecosystem resource pressure (from event queries)
 - Pacing model tension gauge
 
 ### Logging
@@ -154,7 +154,7 @@ All AI agent calls logged to `ai_debug_logs/` (same pattern as existing `llm_deb
 | World events | SQLite (`save_X_memory.db`) | Auto-commit on write |
 | NPC memories | JSON (in save file) | On game save |
 | Faction state | JSON (in save file) | On game save |
-| Ecosystem state | JSON (in save file) | On game save |
+| Ecosystem state | Computed from EventStore queries (not persisted separately) | Real-time |
 | Player archetypes | JSON (in save file) | On game save |
 | Preferences | JSON (in save file) | On game save |
 | Arc stage | Computed (not saved) | Derived on load |
