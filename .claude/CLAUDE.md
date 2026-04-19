@@ -138,6 +138,7 @@ Game-1/
 - **World Memory System** — Layers 1-4 complete, 33 evaluators + 4 consolidators + province summarizer, 93 passing tests (~20,600 LOC)
 - **GameEventBus** pub/sub system (events/event_bus.py)
 - **StatTracker** — 65 SQL-backed recording methods for comprehensive player analytics
+- **Faction System** — Phase 2+ complete (SQLite NPC/player affinity tracking, 19-method API, 21 tests, events published to WMS)
 - **Living World consumers** — BackendManager, NPC agents, factions, ecosystem (pre-existing, external to WMS)
 
 ### Partially Implemented
@@ -286,7 +287,7 @@ Game-1-modular/
 │   ├── living_world/            # Consumer systems (NOT part of WMS)
 │   │   ├── backends/            # BackendManager — LLM abstraction (553 lines)
 │   │   ├── npc/                 # NPCAgentSystem + NPCMemory (665 lines)
-│   │   ├── factions/            # FactionSystem (463 lines)
+│   │   ├── factions/            # FactionSystem Phase 2+ (1,094 LOC + 1,020 docs, 21 tests)
 │   │   └── ecosystem/           # EcosystemAgent (398 lines)
 │   ├── config/                  # 7 JSON configs (memory, geographic, backend, etc.)
 │   ├── tests/                   # 56 passing tests across 4 test files
@@ -340,6 +341,7 @@ Game-1-modular/
 - `LLMItemGenerator` - Claude API integration for invented items
 - `CraftingClassifierManager` - CNN/LightGBM validation
 - `WorldMemorySystem` - 7-layer event tracking facade (world_system/)
+- `FactionSystem` - NPC/player affinity tracking + hierarchy (world_system/living_world/factions/) — **Phase 2+ complete**
 - `StatTracker` - SQL-backed player analytics (65 record methods)
 - `GameEventBus` - Pub/sub event system (events/event_bus.py)
 - `BackendManager` - LLM abstraction layer (Ollama/Claude/Mock)
