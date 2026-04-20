@@ -1502,8 +1502,12 @@ class GameEngine:
             self.npc_dialogue_open = True
             self.active_npc = nearby_npc
 
-            # Get dialogue lines
-            self.npc_dialogue_lines = [nearby_npc.get_next_dialogue()]
+            # Get opening dialogue. Prefer the LLM-powered NPCAgentSystem when
+            # available; fall back to the hardcoded cycling lines otherwise.
+            # NOTE: the generate_dialogue() call is synchronous — the UI will
+            # block for the LLM round-trip. Making this async is tracked in
+            # Development-Plan/WORLD_SYSTEM_WORKING_DOC.md.
+            self.npc_dialogue_lines = [self._generate_npc_opening(nearby_npc)]
 
             # Check for available quests
             self.npc_available_quests = nearby_npc.get_available_quests(self.character.quests)
@@ -1532,6 +1536,30 @@ class GameEngine:
                 pass
         else:
             self.add_notification("No one nearby to talk to", (200, 200, 200))
+
+    def _generate_npc_opening(self, npc) -> str:
+        """Generate the opening dialogue line for an NPC interaction.
+
+        Routes through NPCAgentSystem when available, which pulls NPC
+        memory, personality, faction context, and current world
+        conditions. Falls back to the NPC's hardcoded cycling lines
+        if the agent system is absent or errors out.
+        """
+        agent = getattr(self, "npc_agent_system", None)
+        if agent is None:
+            return npc.get_next_dialogue()
+        try:
+            result = agent.generate_dialogue(
+                npc_id=npc.npc_def.npc_id,
+                player_input="*approaches and greets you*",
+                character=self.character,
+                npc_name=npc.npc_def.name,
+            )
+            if result and result.text:
+                return result.text
+        except Exception as e:
+            print(f"[NPCAgent] generate_dialogue failed for {npc.npc_def.npc_id}: {e}")
+        return npc.get_next_dialogue()
 
     def handle_start_menu_selection(self, option_index: int):
         """Handle start menu option selection (0=New World, 1=Load World, 2=Load Default Save, 3=Temporary World)"""
@@ -4485,6 +4513,28 @@ class GameEngine:
         except Exception as e:
             print(f"[WorldMemory] Init failed (non-fatal): {e}")
             self.world_memory = None
+
+        # Initialize Living World consumers (BackendManager + NPCAgentSystem).
+        # These depend on WorldMemorySystem.world_query for context and on
+        # BackendManager for LLM calls. Failure is non-fatal — dialogue falls
+        # back to hardcoded lines when the agent system is unavailable.
+        self.npc_agent_system = None
+        try:
+            from world_system.living_world.backends.backend_manager import BackendManager
+            from world_system.living_world.npc.npc_agent import NPCAgentSystem
+
+            backend_manager = BackendManager.get_instance()
+            backend_manager.initialize()
+
+            world_query = self.world_memory.world_query if self.world_memory else None
+            self.npc_agent_system = NPCAgentSystem.get_instance()
+            self.npc_agent_system.initialize(
+                world_query=world_query,
+                backend_manager=backend_manager,
+            )
+        except Exception as e:
+            print(f"[NPCAgent] Init failed (non-fatal, hardcoded dialogue will be used): {e}")
+            self.npc_agent_system = None
 
     def _check_background_generation(self):
         """Check if background LLM generation has completed and process the result."""
