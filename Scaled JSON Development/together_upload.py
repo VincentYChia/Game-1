@@ -9,7 +9,7 @@ from together import Together
 # CHANGE THIS
 # ============================================================================
 
-FILE_PATH = r"C:\Users\vipVi\PycharmProjects\Game-1\Scaled JSON Development\LLM Training Data\jsonl_outputs\all_combined.jsonl"  # Your JSONL file to upload
+FILE_PATH = r"C:\Users\vipVi\PycharmProjects\Game-1\Scaled JSON Development\LLM Training Data\jsonl_outputs\smithing.jsonl"  # Your JSONL file to upload
 
 # ============================================================================
 # API KEY (from environment)

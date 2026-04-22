@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git fetch *)",
+      "Bash(git checkout *)",
+      "Bash(git pull *)",
+      "Bash(git add *)",
+      "WebSearch",
+      "Bash(git commit -m ' *)",
+      "Bash(git commit -m 'Framework A Pass 1: archive v1, write Lantern-Year sections 1-4 *)",
+      "Bash(git commit -m 'Framework A Pass 2: Lantern-Year sections 5-8 *)"
+    ]
+  }
+}
