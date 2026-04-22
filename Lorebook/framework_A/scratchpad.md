@@ -12,24 +12,24 @@ A league of sunlit islands in a wide warm sea, connected by familiar trade route
 
 ## 2. Cosmology & Physical Laws — The Eight Tides as Practiced Intuition
 
-A Tide is an embodied relationship with one aspect of the living world. Years of apprenticeship teach your attention to settle into a material — flame, brine, charge, root, stone, dusk, dawn, word — the way a glassblower's lungs learn a pipe. You pick an outcome; your body, environment, and practice carry you there. An Ember-Tide baker walks into a cold kitchen and within a breath the oven is coming up to temper; she could not tell you *how*, any more than you can tell a child exactly how you balance a bicycle.
+A Tide is an embodied relationship with one aspect of the living world. Years of apprenticeship teach your attention to settle into a material — flame, brine, charge, root, stone, dusk, dawn, word — the way a glassblower's lungs learn a pipe. You pick an outcome; your body, environment, and practice carry you there. An Ember-Tide baker walks into a cold kitchen and within a breath the oven is coming up to temper; she could not tell you *how*, any more than you can tell a child how you balance a bicycle.
 
-**Costs:** time — years of practice, a small fatigue like an hour of reading. **Hard:** anything outside your Tide feels foreign; a first-year warms a kettle in the half-hour a master does in a heartbeat. **Impossible:** pulling a thing from *nowhere*. You cannot make fire in a vacuum; you work *with* fire that already lives — a coal, a sparkstone, a friend's lantern. Magic is relationship, not creation. The world is already lit.
+**Costs:** years of practice, small fatigue. **Hard:** anything outside your Tide feels foreign; a first-year warms a kettle in the half-hour a master does in a heartbeat. **Impossible:** pulling a thing from *nowhere*. You work *with* fire that already lives — a coal, a sparkstone, a friend's lantern. Magic is relationship, not creation. The world is already lit.
 
 **The Eight Tides:**
 
-- **Ember-Tide** *(fire)* — the catch of an oven, the temper of metal. *Leaning into a held breath and finding it already bright.* Glassblowing, bread, lantern-festivals.
-- **Wave-Tide** *(ice / cold-water)* — cellars cold in summer, sweet water from brackish, the reading of currents. *A long cool exhale into cupped hands.* Dairying, brewing, harbor-pilots.
-- **Storm-Tide** *(lightning / charge)* — the ignition of lamps, the quickening of looms, call-bells between islands in fog. *A small pleasant shock at the base of the thumb.* Clockwork, signal-lights, racing-sloops.
-- **Tide-of-Roots** *(poison / bitterness)* — bitterness pulled from a root, dye set fast, medicine brewed. *Tasting the air of a garden and knowing what grows where.* Herbalism, indigo-dye, perfumery.
-- **Hearthstone-Tide** *(physical / earth)* — the set of a good wall, the plumb-line's truth, the patience of clay. *Standing with both feet and feeling the island under you answer.* Masonry, pottery, terracing.
-- **Shadow-Tide** *(shadow / dusk)* — darks that do not fade, the keeping of wine, night-navigation by low stars. *The quiet moment after a candle is blown out, but kept.* Dyers, vintners, shadow-puppet troupes.
-- **Dawn-Tide** *(holy / radiance)* — clean water, healing-light, copper mirrors between headlands. *The first sun over a harbor coming up your arms.* Physicians, mirror-smiths, choirs.
-- **Word-Tide** *(arcane / old-speech)* — the old names of things, the binding of ledgers, the composition of maps. *A sentence settling into its right shape.* Cartography, law, librarianship.
+- **Ember-Tide** *(fire)* — oven-catch, metal-temper; *a held breath found already bright.* Glassblowing, bread, lanterns.
+- **Wave-Tide** *(ice / cold-water)* — cellars cold in summer, sweet water from brackish, reading currents; *a long cool exhale into cupped hands.* Dairying, brewing, harbor-pilots.
+- **Storm-Tide** *(lightning / charge)* — lamps ignited, looms quickened, fog-bells between islands; *a pleasant small shock at the thumb.* Clockwork, signal-lights, racing-sloops.
+- **Tide-of-Roots** *(poison / bitterness)* — bitterness pulled from a root, dyes set, medicines brewed; *tasting the air of a garden and knowing what grows where.* Herbalism, indigo, perfumery.
+- **Hearthstone-Tide** *(physical / earth)* — the set of a good wall, the plumb-line's truth, the patience of clay; *standing with both feet and feeling the island answer.* Masonry, pottery, terracing.
+- **Shadow-Tide** *(shadow / dusk)* — darks that do not fade, the keeping of wine, night-navigation by low stars; *the quiet moment after a candle is blown out, but kept.* Dyers, vintners, shadow-puppet troupes.
+- **Dawn-Tide** *(holy / radiance)* — clean water, healing-light, copper mirrors between headlands; *the first sun over a harbor coming up your arms.* Physicians, mirror-smiths, choirs.
+- **Word-Tide** *(arcane / old-speech)* — the names of things, the binding of ledgers, the composition of maps; *a sentence settling into its right shape.* Cartography, law, librarianship.
 
 Tides are taught, blended, travelled between. A famous composer of the last century held three — rare, not mythic. People are spoken of by what they have *learned to listen to.*
 
-**The six disciplines in this world:** *Smithing → the Forging-hand* (Ember leading, Hearthstone underneath; a smith reads iron the way a pilot reads current). *Alchemy → the Still-work* (Roots leading, Wave steadying; alchemists describe a reaction by its rhythm, like a tide-chart). *Refining → the Cleaning-craft* (Ember and Wave — ore to ingot, cream to cheese, grape to wine). *Engineering → the Clockwork-trade* (Storm leads, Hearthstone grounds — clocks, lanterns, looms). *Enchanting → the Adorning-art* (Word, Shadow, and Dawn braided; an enchanter sets a quality into an object the way a dyer sets a color). *Fishing → the Net-and-Line* (Wave with a thread of Word for knot-names and chart-reading; in Kalm, more respected than smithing).
+**The six disciplines in this world:** *Smithing → Forging-hand* (Ember with Hearthstone; a smith reads iron as a pilot reads current). *Alchemy → Still-work* (Roots with Wave; reactions described by their rhythm, like a tide-chart). *Refining → Cleaning-craft* (Ember and Wave — ore to ingot, cream to cheese, grape to wine). *Engineering → Clockwork-trade* (Storm and Hearthstone — clocks, lanterns, looms). *Enchanting → Adorning-art* (Word, Shadow, Dawn braided; a quality set into an object the way a dyer sets a color). *Fishing → Net-and-Line* (Wave with a thread of Word for knots and charts; in Kalm, more respected than smithing).
 
 ## 3. Deep History — Three Horizons, All Bright
 
@@ -41,32 +41,32 @@ Tides are taught, blended, travelled between. A famous composer of the last cent
 
 ## 4. Geography & Material Economy
 
-A warm inland sea roughly a hundred tiles across — a dozen significant islands, smaller ones scattered, and the Open Blue beyond the outer chain where charts grow thin.
+A warm inland sea roughly a hundred tiles across — a dozen significant islands, smaller ones scattered, the Open Blue beyond the outer chain where charts grow thin.
 
 - **Isoë** — largest; Ember and Word; glass, library-quay, bread. Capital by consensus.
 - **Teremeth** — the switching island; currently Storm-Tide, famous for clockwork harbor-lanterns.
-- **Kalm** — Wave-Tide cellar-island, cliffs tunneled into cheese-caves. Long naps.
-- **Sorrun** — Hearthstone-Tide; terraced olives, red-roofed potteries.
+- **Kalm** — Wave cellar-island, cliffs tunneled into cheese-caves. Long naps.
+- **Sorrun** — Hearthstone; terraced olives, red-roofed potteries.
 - **Vael** — Shadow and Roots; dyers and vintners; a blue sailors use to describe the night.
 - **Herelon** — Dawn; mirror-smiths and physicians; long choral tradition at the solstice.
 - **Narrow Shoals** — small Word and Wave communities; cartographers and pilots.
 - **Southern Reach** — the newest port, half a generation old, where southeast winds bring spices nobody yet has names for.
 
-Plus fishing-isles, monastic retreats, seasonal festival-islands, and the Open Blue. Trade: olives, figs, wine, cheese, cured fish, glass, copper, indigo, dyed wool, clockwork, paper, charts, lanterns, songs. The league pays in the *moot*, struck on Isoë.
+Plus fishing-isles, monastic retreats, seasonal festival-islands, and the Open Blue. Trade: olives, figs, wine, cheese, cured fish, glass, copper, indigo, wool, clockwork, paper, charts, lanterns, songs. The league pays in the *moot*, struck on Isoë.
 
-**T1–T4 as depth of practice:** T1 is sound everyday work (a journeyman's loaf, a first-year smith's knife); T2 is guild-rated (the bread your household orders weekly); T3 is a master's signed piece, celebrated in its home market; T4 is a named work, signed by a master whose name other masters know. A T4 loaf has a *history*; a T4 sword has a name; a T4 net lasts three generations and is mended, not replaced; a T4 potion is spoken of thirty years later. Tier is depth of practice made visible, not rarity of ore.
+**T1–T4 as depth of practice:** T1 — sound everyday work (a journeyman's loaf). T2 — guild-rated (weekly bread). T3 — a master's signed piece, celebrated in its home market. T4 — a named work by a master whose name other masters know: a T4 loaf has a *history*, a T4 sword has a name, a T4 net lasts three generations and is mended, a T4 potion is spoken of thirty years later. Tier is depth of practice made visible, not rarity of ore.
 
 ---
 
 ## 5. Peoples & Cultures
 
-- **The Isoäni** (Anarë, Telim, Osoë) — cosmopolitan, bookish. Ember and Word. White bread with olive oil, fig-and-goat-cheese, toasted-herb tea. Greeting: hand to opposite shoulder, then open palm — *"bright noon to you."* The eight-string *lyrel*. Festival: the Lantern-Year itself, a week in late summer when every window holds a blown lamp and the city reads aloud to itself. Pale limestone, glazed-blue domes.
-- **The Kalmari** (Brann, Holva, Meek) — slow, funny, cellar-proud. Wave. Hard cheese, buttered root-bread, rope-colored beer. Greeting: both hands on the forearms — *"come inside, come down."* The *cellar-pipe*. Festival: First Frost Supper — the new cheese unwrapped and named by the oldest present. Cliff-cut halls, sod roofs flowering with sea-thyme.
-- **The Sorruni** (Daru, Pell, Ose) — patient, clay-handed. Hearthstone. Oil with sea salt, lamb with fig, kiln flatbread. Greeting: small bow, hand on heart — *"may your foot find the stone."* Goat-hide hand-drum. Festival: the Kiln-Open, a spring firing where the year's big pots come out and children break the failures for gravel. White-and-red terraces climbing the hills.
-- **The Vaelin** (Sevaara, Linné, Ualem) — elegant, night-owlish, fond of riddles. Shadow and Roots. Dark bread, grape-leaf parcels, cool purple wine in clay cups. Greeting: wrists touched — *"stars over both of us."* The *vael-lute*. Festival: the Blue Evening, on the darkest new moon of summer, when dye-masters dip one communal banner. Deep-arched courtyards, lattice windows.
-- **The Hereloni** (Alerin, Mira, Toel) — open-voiced, early risers, disarmingly direct. Dawn. Honey on milk-bread, citrus salad, clear fish broth at noon. Greeting: palms up at chest — *"sun finds you."* Unaccompanied choir. Festival: the Solstice Choir, headlands relaying the first sunrise in copper mirrors. East-facing amphitheatres, citrus-painted homes.
+- **Isoäni** (Anarë, Telim, Osoë) — cosmopolitan, bookish; Ember and Word. White bread with olive oil, fig-and-goat-cheese, toasted-herb tea. Greeting: hand to opposite shoulder then open palm — *"bright noon to you."* The eight-string *lyrel*. Festival: the Lantern-Year, when every window holds a blown lamp and the city reads aloud to itself. Pale limestone, glazed-blue domes.
+- **Kalmari** (Brann, Holva, Meek) — slow, funny, cellar-proud; Wave. Hard cheese, buttered root-bread, rope-colored beer. Greeting: both hands on the forearms — *"come inside, come down."* The *cellar-pipe*. Festival: First Frost Supper — new cheese named by the oldest present. Cliff-cut halls, sod roofs flowering with sea-thyme.
+- **Sorruni** (Daru, Pell, Ose) — patient, clay-handed; Hearthstone. Oil with sea salt, lamb with fig, kiln flatbread. Greeting: small bow, hand on heart — *"may your foot find the stone."* Goat-hide hand-drum. Festival: the Kiln-Open, a spring firing where the children break the failures for gravel. White-and-red terraces climbing the hills.
+- **Vaelin** (Sevaara, Linné, Ualem) — elegant, night-owlish, riddle-fond; Shadow and Roots. Dark bread, grape-leaf parcels, cool purple wine in clay cups. Greeting: wrists touched — *"stars over both of us."* The *vael-lute*. Festival: the Blue Evening, on the darkest new moon of summer, when dye-masters dip one communal banner. Deep-arched courtyards, lattice windows.
+- **Hereloni** (Alerin, Mira, Toel) — open-voiced, early risers, disarmingly direct; Dawn. Honey on milk-bread, citrus salad, clear fish broth. Greeting: palms up at chest — *"sun finds you."* Unaccompanied choir. Festival: the Solstice Choir, headlands relaying the first sunrise in copper mirrors. East-facing amphitheatres, citrus-painted homes.
 
-Beyond these are Narrow Shoals cartographers, Teremethi artisans, outer-chain fishers, and Southern Reach voyagers. People move; a Vaelin dyer who apprenticed ten years on Isoë will speak all four greetings.
+Beyond: Narrow Shoals cartographers, Teremethi artisans, outer-chain fishers, Southern Reach voyagers. People move; a Vaelin dyer apprenticed ten years on Isoë speaks all four greetings.
 
 **The six virtues (how this world grounds the stats):** STR is *a strong back at harvest, a willing shoulder at the harbor*. DEF is *a settled stance — Sorruni for someone reliable in a long argument*. VIT is *good appetite, the long wind of a festival dancer*. LCK is *a good eye for the small opening — the fisher who sees the fish rise*. AGI is *sailor's footing on wet planks, a dancer's turn*. INT is *a reader's eye — patience with texture, with the slow settling-in a Tide asks.*
 
@@ -84,23 +84,23 @@ Beyond these are Narrow Shoals cartographers, Teremethi artisans, outer-chain fi
 
 ## 7. Living Currents — What the World is Doing Right Now
 
-- **The Southern Spice.** A dried red flower from an uncharted archipelago southeast of the Reach is appearing in kitchens — warm smoke and tangerine peel. Three cookbooks are being written at once. Will it grow on Sorrun's terraces, or insist on its home?
+- **The Southern Spice.** A dried red flower from an uncharted archipelago southeast of the Reach is appearing in kitchens — warm smoke and tangerine peel. Three cookbooks underway. Will it grow on Sorrun's terraces, or insist on its home?
 - **The Glass Argument.** Teremethi glassblowers have a faster annealing method; lighter, clearer panes. The classical Isoäni method makes heavier, more resonant glass. Neither is wrong. The first hybrid workshop has opened.
-- **The Blue-Bell Music.** A composer trained in both Vael and Herelon is writing a processional that lays Shadow-Tide bells beneath a Dawn-Tide choir. Two performances so far, both to weeping audiences. Festival-Orders are asking for the score.
-- **The Far Chart.** A young Narrow-Shoals cartographer has returned with revised deep-shelf surveys — new reefs, new currents, the hint of a larger island-chain two weeks further southeast. Nobody is alarmed; everybody is packing.
-- **The Teremeth Turn.** Teremeth is in the last decade of its Storm-Tide generation; young apprentices there are taking interest in Word-Tide. The harbor is quietly building a bigger library. This is just what Teremeth does.
+- **The Blue-Bell Music.** A composer trained in both Vael and Herelon is writing a processional that lays Shadow-Tide bells beneath a Dawn-Tide choir. Two performances, both to weeping audiences. Festival-Orders are asking for the score.
+- **The Far Chart.** A young Narrow-Shoals cartographer has returned with revised deep-shelf surveys — new reefs, new currents, the hint of a larger island-chain two weeks further southeast. Nobody alarmed; everybody packing.
+- **The Teremeth Turn.** Teremeth is in the last decade of its Storm-Tide generation; young apprentices are taking interest in Word-Tide. The harbor is quietly building a bigger library. This is just what Teremeth does.
 
 ## 8. Human-Scale Texture & Negative Space
 
-**Market morning on Isoë:** warm bread, citrus peel, sea-rope, hot copper. Vendors call in two languages. Someone is tuning a lyrel on a crate. The fish are packed in crushed ice a Wave-Tide girl keeps cold with her hand on the box; she is reading a book and not paying much attention. An old man gives a child a fig and waves off the coin.
+**Market morning on Isoë:** warm bread, citrus peel, sea-rope, hot copper. Vendors call in two languages. Someone tunes a lyrel on a crate. The fish are packed in crushed ice a Wave-Tide girl keeps cold with her hand on the box; she is reading and not paying much attention. An old man gives a child a fig and waves off the coin.
 
 **Kalmari supper:** dim cellar, long table, cheese and bread and wine. Everyone talks at once until the host's grandmother taps her cup; then one person speaks, then the next, in a slow round. Three hours, easily. Nobody hurries.
 
 **Wedding on Herelon:** the couple stands on a cliff facing east. A Dawn-Tide master catches the first clear ray on a copper mirror and throws it onto their joined hands. The choir begins very softly. Later, honey-cakes.
 
-**Harbor-arrival:** the lighthouse lamp is visible a day out. A pilot meets you at the outer buoys, reads the currents with her palm on the water, walks you in. Customs is a conversation and a cup of tea. Your first meal ashore is whatever is fresh that morning.
+**Harbor-arrival:** the lighthouse lamp is visible a day out. A pilot meets you at the outer buoys, reads the currents with her palm on the water, walks you in. Customs is a conversation and a cup of tea. Your first meal ashore is whatever is fresh.
 
-**Deliberate negative space:** the far-island chain the young cartographer has sketched but not landed on. The exact mechanism by which a Tide "answers." The southeastern trade-language. The deep-sea phenomena charted only as rumors. The oldest origin of the first masters. The outer edges of the map, drawn honest and blank.
+**Deliberate negative space:** the far-island chain the young cartographer has sketched but not landed on; the exact mechanism by which a Tide "answers"; the southeastern trade-language; the deep-sea phenomena charted only as rumors; the oldest origin of the first masters; the outer edges of the map, drawn honest and blank.
 
 ---
 
