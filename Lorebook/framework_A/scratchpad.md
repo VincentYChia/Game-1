@@ -208,5 +208,90 @@ Six priestly-craft lineages and two trans-regional orders. Each has a founding m
 
 **Current corruption.** The last three moots have been shorter than the three before them. Delegates arrive later, leave earlier. The renewal oath is spoken; the feast afterward is thinner every cycle. The Dawn-Court, asked directly by a junior priest whether the thinning registers with her, declined to answer. This is — priests agree, privately — the worst of the omens.
 
-<!-- PASS 2 COMPLETE — sections 7-8 and appendix to follow -->
+## 7. Central Tensions (Fronts)
+
+Four Fronts, each a slow pressure the fiction is asking a question about, each with named actors and a clock. They interact: advancing one often advances another.
+
+### Front I — The Saltless Years
+
+**Stakes question.** *Will the Rime-Court withdraw her patience from the Cold Shoulder, and if she does, does the Reach's tin supply survive it?*
+
+The small oath-failures of the last five years (see Section 3) are most concentrated in the Pale-Seam Kindreds — the people who remember the most oaths and have therefore the most oaths to fray. The Rime-Court, who rewards patience and remembers every grievance, has been subtly withdrawing: midsummer frosts on inland tin-barges, dreams of the dead that arrive a half-beat late, a kindred-matriarch who swore an oath three years ago and cannot, now, remember the exact words. The Smelter-Priest shortcuts (Section 6) make it worse. The Kindreds blame the Lapfolk leagues, who are buying tin faster than it can be properly refined.
+
+**Named actors.** Ivenna Seam-Keeper (matriarch, Horl Kindred, trying to hold the old forms); Dugr Nine-Winter (her rival, arguing for faster refining to meet demand); the Rime-Court itself, silent.
+
+**Clock.** Six stages: Grievance remembered → First bad batch → Kindred quarrel open → Rime-Court sign withdrawn (e.g., the Seams frost over in summer) → First tin-famine year → The Seams close. Currently at stage two.
+
+### Front II — The Thinning Moot
+
+**Stakes question.** *Does the Salt Concordat still mean what it meant, and if the Dawn-Court stops attending the renewal, what holds the Reach together?*
+
+The League-Moots have thinned (Section 6). The Dawn-Court's silence on the question of whether she still attends is itself the omen. If the next moot passes with the renewal oath spoken to an absent Court, the Concordat becomes a piece of paper — and every league that has been quietly cheating becomes free to cheat openly. The Brightwake Yard, the Forge of Black Gulls, the Reedmouth Consort, and two major Lapfolk trading houses all have motive to let the Concordat hollow.
+
+**Named actors.** Ossen Bright-of-Tongue (Lapfolk league-captain, publicly Concordat-loyal, privately the biggest beneficiary of its thinning); Warden-of-the-Eighth-Stair (Veilwise archivist, knows where the missing oath-records are); Dara of Oakfall (Ridge-House elder, the last delegate to walk out of a moot in visible protest); the Dawn-Court, not answering.
+
+**Clock.** Five stages: First missing record → Second skipped delegate → First failed enforcement → Dawn-Court absence at next moot → Concordat collapse. Currently at stage two. The next moot is eighteen months out.
+
+### Front III — The Bronze Wyrm's Quarrel
+
+**Stakes question.** *When more than one hero claims the same deed, which song does the world choose to remember — and what does the Undersong Court do with the names of the rivals?*
+
+The killing of the Bronze Wyrm of Hail Reach is twenty years old and still contested. Three living men and one living woman publicly claim the killing blow. At least two are lying. The Veilwise Orders have refused, unusually, to adjudicate — the records from that expedition were lost (some say destroyed) in a harbor fire the same year. The Undersong Court, patron of what is true but not said, has begun visiting the four claimants in their sleep. One has gone quiet and stopped claiming the title; one has doubled down and taken to wearing a wyrm-scale pendant; one is drinking; one — the woman, **Maren Tallwake**, a Lapfolk league-captain — has announced she will sail to Hail Reach at midsummer to "settle the account," which no one knows how to interpret.
+
+**Named actors.** Maren Tallwake; Perrin of White-Scarp (Ridge-House claimant, drinking); Jole of Nineoaks (Ridge-House claimant, pendant-wearer); Ossen Bright-of-Tongue (yes — the same; his claim is the suspected-false one); the Undersong Court, dreaming.
+
+**Clock.** Four stages: Claimant quiet → Claimant breaks down → Midsummer reckoning → The song settles (one name remembered, three forgotten — and forgetting, to the Undersong, is a kind of second death). Currently at stage two.
+
+### Front IV — What Rises in the Thresh
+
+**Stakes question.** *Are the Unhoused Courts — the drowned, exiled ones — waking, and if so, who among the living has been bargaining with them?*
+
+The Thresh-Walkers have, this past year, reported three new things: a channel that was shallow is now fathoms deep; a song no living walker was taught is being hummed by children; Eshka Reedmother dreamed of a Court with no name that offered her healing for her granddaughter in exchange for "only a small oath, nothing you would miss." She refused. Nen Who-Named-the-Eel did not refuse the same Court's same offer, and his granddaughter is well, and Nen will not meet anyone's eyes.
+
+The Reedmouth Consort's deliberate mis-marking of vials (Section 6) is suspected, by at least one Veilwise, of being an Unhoused bargain: the Green-Court looks away because an older, hungrier Court has been paid to ask her to.
+
+**Named actors.** Eshka Reedmother (refused the bargain, will not be quiet about it); Nen Who-Named-the-Eel (took the bargain, will not speak of it); the Reedmouth Consort (suspected conduit); an Unhoused Court, *not named here because naming it is a thread pulled*.
+
+**Clock.** Five stages: Isolated bargains → Pattern visible to outsiders → An Unhoused name spoken aloud in public → A Housed Court reacts → What the reaction costs. Currently at stage two.
+
+### How the Fronts interact
+
+The Saltless Years stresses the Pale-Seam Kindreds; stressed Kindreds refine tin faster; fast-refined tin makes cheaper bronze; cheap bronze empowers the Lapfolk leagues who are hollowing the Concordat. The Bronze Wyrm's Quarrel names Ossen Bright-of-Tongue, who is also the league-captain most benefiting from the Thinning Moot. The Reedmouth Consort (Thresh Front) supplies vials to those same leagues. A player who pulls one thread pulls all four.
+
+## 8. Human-Scale Texture & Negative Space
+
+### What a day feels like
+
+**A greeting.** Two Lapfolk meeting on a dock clasp the left forearm, not the hand — the right hand is for oaths, and unsworn greetings don't touch it. A Ridge-House greeting adds the house-name: "Dara of Oakfall greets you." A Pale-Seam greeting is a single word, the guest's name, said flat. A Thresh-Walker greeting is a question about the tide.
+
+**A meal.** A share of the first bite goes to the hearth — not to a god, to *the hearth itself*, because the Hearth-Court is jealous and lives in the fire that cooked the food. Bread is torn, not cut. Fish, if Net-Sung, has a bone returned to the water at the end of the meal — even a meal inland, into a bowl of saltwater kept for the purpose. Wine is poured with the left hand; wine poured with the right is an oath-wine, and someone had better be about to swear something.
+
+**A market.** Loud. Sunlit. Weights are sworn on — every scale in a Reach market is registered with the local Veilwise, and the vendor touches the scale with the right hand before the first weighing of the day, which is a small silent oath to weigh true. A vendor caught thumbing the scale is not fined; the scale is taken from her and not returned for a year, and everyone knows why. T2 goods are marked openly. T3 goods are kept in back and shown only to buyers the vendor knows. T4 goods are not sold; they are *given*, against a later oath, and the giving is itself a rite.
+
+**A wedding.** Outdoors, in sun, three witnesses minimum — the Dawn-Court's bare requirement. The couple swear two oaths: the first, said together, is the oath to each other; the second, said separately, is the oath to the marriage's *future ancestors*, the unborn, whose weight they are promising to carry. A widow or widower remarrying swears a third oath to the first spouse, apologizing and asking permission; the Undersong Court attends this one, and the attending is felt.
+
+**A funeral.** Names are spoken once, loudly, by someone who loved the dead. Then not spoken again for a year and a day. The Undersong Court takes the name in trust for that year; pulling it back early — speaking the dead's name in anger, in song, in a tavern — is the third forbidden thing (Section 2). After a year, the name returns to common use, and the dead becomes an ancestor, weight that can be leaned on.
+
+**A contract.** Signed in front of Veilwise witnesses on a registered slip of vellum. The slip is split: the buyer's half, the seller's half. Re-joining the two halves (an act called *the matching*) is how a dispute is resolved — if the halves no longer match, one party has altered theirs, and the Veilwise can see that from across the room because altered vellum *smells wrong* to Name-Sight.
+
+**A curse.** Casual cursing exists — "by the Hearth!" is as common as the English "damn" — but *naming* a Court in anger is different. A Lapfolk dockworker who snarls "Lash take you!" at a rival has said something real, and the rival is entitled to demand a public retraction. Most days, most of the time, nothing happens. Sometimes — reportedly — the Lash does take someone, and that is the story told for a generation.
+
+### What is deliberately left unspecified
+
+A lorebook is more honest when it names its gaps. The following are chosen holes, not lazy ones, and each is chosen because the setting works better if the answer isn't fixed:
+
+- **The fate of the Unhoused Courts.** Drowned? Dormant? Still bargaining? The songs disagree and priests have different theories, and a campaign or story set in the Reach should be free to decide this for its own purposes.
+- **The true count of original Courts.** Twelve, nineteen, thirty-three — the songs disagree and the Veilwise have been quietly destroying the count-records for centuries, for reasons they will not explain.
+- **Whether the First Oath is actually unbreakable.** It has never been tested in living memory. Every priest suspects it could be broken. No priest will be the one to test it. This is a tension the setting keeps live.
+- **What the Dawn-Court's three-day silence forty years ago actually was.** No satisfactory explanation exists. Every explanation is a potential plot.
+- **Whether the Courts are conscious in a human sense or merely vast appetites with rules.** This matters enormously and is never resolved in-setting; scholars argue both ways, and the Courts decline to clarify.
+- **Lands beyond the Reach.** The Long Dark Water holds other shores. They are not described. Travelers from them exist and are rare and strange; what they are like is a gap a later pass or a specific story can fill.
+- **The actual mechanism of enchantment-binding at T4.** We know it requires name, sun, witnesses, and a vow; we do not specify the exact liturgy, because no two Name-Binder houses perform it the same and the variance is part of their mystique.
+
+### Titles — a note on heroic epithets
+
+The ~40 titles of Game-1 map, in this setting, to earned heroic epithets in the old style: *Seam-Keeper*, *Long-Breath*, *Nine-Winter*, *Killer of the Bronze Wyrm*, *Reedmother*, *Under-the-Sand*, *Bright-of-Tongue*, *Two-Hands*, *Cold-Forge*, *Tallwake*, *Who-Named-the-Eel*. They are not granted by authorities. They are earned by deed and confirmed by song — which means the Veilwise eventually registers them, which means the Courts eventually recognize them, which means a titled person can spend standing on a scale an untitled one cannot. To lose a title (through disproof, through oath-failure, through a song that turns) is a specific and nameable disgrace: one becomes *Ill-Sung*, and Ill-Sung is its own kind of social weight.
+
+<!-- PASS 3 COMPLETE — self-audit and Open Questions appendix follow -->
+
 
