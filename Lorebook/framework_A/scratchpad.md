@@ -72,7 +72,7 @@ Roughly four to six generations ago, a wave of metallurgical awakening spread ac
 
 The Courts did not, so far as anyone can tell, object. But the drift left a residue. Every smith today owes a devotional debt they did not knowingly take on. Every alchemist's vial is, technically, a libation vessel. The old forms survive as superstitions — a smith who taps the anvil three times before the first heat is not being quaint; a great-great-grandparent of theirs was invoking the Hearth-Court, and the tap still works, and nobody is sure whether the Court is listening the way it used to.
 
-The Bronze Tide also brought the **Sea-League Wars** — a century of city-states and island confederations fighting over tin, harbors, and Court-patronage. The wars ended in the signing of the **Salt Concordat**, the loose framework under which most of the known world still operates: free passage between harbors, hospitality for any sworn traveler, and the neutrality of the oracular orders.
+The Bronze Tide also brought the **Sea-League Wars** — a century of city-states and island confederations fighting over tin, harbors, and Court-patronage. The wars ended in the **Salt Concordat**: free passage between harbors, hospitality for any sworn traveler, and the neutrality of the oracular orders.
 
 ### Living memory — *the last three generations*
 
@@ -104,7 +104,7 @@ The Lap is sunlit, bronze-warm, and shallow enough in many places that a galley'
 
 Tin is the axis. The Reach has copper in abundance (Ridge mines, two of the Spine Isles) but only one reliable tin source — the **Pale Seams** on the Cold Shoulder's inner coast. Every bronze blade, cauldron, oar-lock, and temple-gong in the Reach owes something to a cold, grudging northern league that knows exactly what its tin is worth. The Bronze Tide was a bronze tide because of the Pale Seams; the Sea-League Wars were fought over them; the Salt Concordat exists because a war over them could not be finished.
 
-Secondary scarcities: deep-water timber (only the Ridge has proper shipbuilding wood; island hulls are pieced); salt of the right grade for certain Green-Court rites (only the Thresh); the peculiar black sand used in T3+ enchanting glass (only one beach, contested).
+Secondary scarcities: deep-water shipbuilding timber (the Ridge only; island hulls are pieced); the salt grade required for certain Green-Court rites (the Thresh only); the black sand for T3+ enchanting glass (one beach, contested).
 
 ### The four tiers, read materially
 
@@ -292,6 +292,23 @@ A lorebook is more honest when it names its gaps. The following are chosen holes
 
 The ~40 titles of Game-1 map, in this setting, to earned heroic epithets in the old style: *Seam-Keeper*, *Long-Breath*, *Nine-Winter*, *Killer of the Bronze Wyrm*, *Reedmother*, *Under-the-Sand*, *Bright-of-Tongue*, *Two-Hands*, *Cold-Forge*, *Tallwake*, *Who-Named-the-Eel*. They are not granted by authorities. They are earned by deed and confirmed by song — which means the Veilwise eventually registers them, which means the Courts eventually recognize them, which means a titled person can spend standing on a scale an untitled one cannot. To lose a title (through disproof, through oath-failure, through a song that turns) is a specific and nameable disgrace: one becomes *Ill-Sung*, and Ill-Sung is its own kind of social weight.
 
-<!-- PASS 3 COMPLETE — self-audit and Open Questions appendix follow -->
+---
+
+## Appendix — Open Questions for the User
+
+The framework is ready to use, but five decisions are worth your signal before any downstream work (character generation, quest seeding, faction prompts, WES tool integrations). Each is a live gap, not a placeholder:
+
+1. **Are the Unhoused Courts still conscious bargainers, or echoes?** The Thresh Front (IV) currently treats them as active. But the tone changes sharply depending: conscious Unhoused make this a cosmic horror adjacent to sunlit fantasy; echo-only Unhoused make it a story about mortals corrupting themselves with ritual fragments. I've written it to support either, but the tone and the pacing of Front IV tighten fast once you pick. Which do you want?
+
+2. **How explicit should Court personalities be in mechanical terms?** Right now a Court is a character (Rime "patient as widowhood," Lash "loves a bold stroke"). The game's existing combat tags (fire, ice, etc.) would map naturally to Court-flavored damage, but I've avoided stat-ifying the Courts themselves. Do you want Courts to have numerical standing thresholds (e.g., "Rime withdraws at -20 standing"), or stay entirely qualitative / narrative?
+
+3. **Is the player a member of one of the five peoples, or an outsider?** Massive difference in starting oath-debt, family pressure, and Court-affinity defaults. A Pale-Seam player starts under forty sworn oaths and a clan obligation; a Lapfolk player starts with a personal ledger and no clan; a Thresh-Walker player is already uncanny. The whole first hour of play feels different per choice. Do you want one canonical starting people, player's choice at char creation, or a default of "outsider from beyond the Reach"?
+
+4. **How central should the Bronze Wyrm's Quarrel (Front III) be?** It's the most narratively ready Front — named rivals, midsummer deadline, quick to dramatize. But it risks becoming the main plot by default. Should I treat it as the starting emergency (explicit main arc), one of four equally weighted Fronts, or background color a player can ignore entirely?
+
+5. **What's beyond the Long Dark Water?** I deliberately left this blank (Section 8), but it's the single biggest potential tonal intrusion: if outsiders from beyond arrive in play, their strangeness can either deepen the sunlit-mythic register (they seem *older*, like the Long First Morning returning) or rupture it (they seem *modern*, industrial, alien to the oath-economy). Do you have a preference, or want me to leave it permanently unwritten and write around it?
+
+<!-- PASS 4 COMPLETE — framework ready for review -->
+
 
 
