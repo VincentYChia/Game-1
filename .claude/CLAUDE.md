@@ -24,6 +24,7 @@
 **Project Duration**: October 19, 2025 - Present (Python/Pygame — active development)
 **Development Plan**: `Development-Plan/OVERVIEW.md` (active roadmap — Living World + Combat Overhaul)
 **World Memory System**: `world_system/docs/HANDOFF_STATUS.md` (current implementation state)
+**Living World (WNS/WES) Plan**: `Development-Plan/WORLD_SYSTEM_WORKING_DOC.md` — **canonical spec for the downstream half of Living World (World Narrative System + World Executor System + tool mini-stacks). Supersedes `Development-Plan/WORLD_SYSTEM_SCRATCHPAD.md` as the planning doc. Currently v3 (2026-04-21) awaiting user read-through + feedback before implementation begins.**
 **Migration Plan**: `archive/Migration-Plan/COMPLETION_STATUS.md` (paused indefinitely — retained for reference)
 
 ---
@@ -35,9 +36,11 @@ All development targets the **2D Python/Pygame version**. Unity migration is pau
 ### Development Plan
 - **Start here**: `Development-Plan/OVERVIEW.md` — roadmap and dependency graph
 - **Part 1**: `Development-Plan/PART_1_COMBAT_VISUALS.md` — Action combat, animations, hitboxes, projectiles
-- **Part 2**: `Development-Plan/PART_2_LIVING_WORLD.md` — Memory layer, NPC agents, factions, world events, quests (ecosystem as tool)
+- **Part 2**: `Development-Plan/PART_2_LIVING_WORLD.md` — Memory layer, NPC agents, factions, world events, quests (ecosystem as tool). **For the next phase downstream of the memory layer (World Narrative System + World Executor System + tool mini-stacks), see `Development-Plan/WORLD_SYSTEM_WORKING_DOC.md` — the canonical spec.**
 - **Part 3**: `Development-Plan/PART_3_PLAYER_INTELLIGENCE.md` — Behavior classifier, preferences, arc tracking
 - **Shared**: `Development-Plan/SHARED_INFRASTRUCTURE.md` — Balance validator, async runner, event integration
+
+> **⚠️ Resuming Living World work:** If the user asks about WNS, WES, narrative generation, content generation tools (hostiles/materials/nodes/skills/titles), the content registry, or anything downstream of the WMS, the **first action** is to point them at `Development-Plan/WORLD_SYSTEM_WORKING_DOC.md` and ask them to read it + provide feedback on v3 (unless they've already confirmed they've read it). Two rounds of structured feedback shaped v3; a third pass from them is the next step before any implementation.
 
 ### Priority Order
 1. **Combat Visuals** (P1): Animation framework → attack state machine → hitboxes → projectiles → dodge → enemy scaling → polish

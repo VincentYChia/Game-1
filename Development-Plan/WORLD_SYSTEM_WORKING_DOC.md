@@ -1,9 +1,17 @@
 # World System Working Document
 
-**Status**: Active planning — Living World architecture
+**Status**: Active planning — Living World architecture (**v3, awaiting user review**)
 **Created**: 2026-04-20
+**Last Updated**: 2026-04-21 (v3 — after second round of user feedback)
 **Owner**: Development
-**Supersedes as planning doc**: None (this is fresh; the 2026-03-14 `WORLD_SYSTEM_SCRATCHPAD.md` is kept for research citations but its "Tier 1/2/3" framing is retired in favor of the WNS/WES vocabulary below)
+**Supersedes as planning doc**: `Development-Plan/WORLD_SYSTEM_SCRATCHPAD.md` (2026-03-14). The scratchpad is retained for its research citations only; its "Tier 1/2/3" framing is retired in favor of the WNS/WES vocabulary below.
+
+> **⚠️ RESUMPTION PROTOCOL — READ FIRST.** When a new session resumes work on the Living World / World System, the *first* action should be to ask the user to read this doc (v3) end-to-end and give feedback. The user has been actively co-authoring this via two rounds of structured feedback (v1→v2, v2→v3) and has not yet done a full read-through of v3. Do NOT start implementation work, refactoring, or generating further revisions until they've confirmed the doc lands. Save the extra-round that would otherwise be spent guessing.
+>
+> Specifically surface:
+> 1. "Your last instruction was to treat v3 as a handoff and postpone the read-through. You've since been working on a parallel topic. Want to read v3 now and give feedback?"
+> 2. Point at §4 (WNS as extraction→weaving→embroidery), §5 (WES three-tier with renamed roles), §8 (live-query model replacing shared-immutable-context) as the v3 high-impact changes to sanity-check.
+> 3. Only after feedback is incorporated should any code phases (§10 P0-P9) begin.
 
 ---
 

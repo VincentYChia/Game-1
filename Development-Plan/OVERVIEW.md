@@ -20,6 +20,7 @@ This plan is split into focused documents for maintainability:
 |----------|----------|-------------|
 | [PART_1_COMBAT_VISUALS.md](PART_1_COMBAT_VISUALS.md) | **P1 — First** | Animation system, action combat, hitboxes, projectiles, enemy scaling, visual polish |
 | [PART_2_LIVING_WORLD.md](PART_2_LIVING_WORLD.md) | **P2 — Second** | Memory layer, model backend, NPC agents, factions, ecosystem, world events, quests |
+| [**WORLD_SYSTEM_WORKING_DOC.md**](WORLD_SYSTEM_WORKING_DOC.md) | **P2 — Canonical spec for next phase** | **World Narrative System (WNS) + World Executor System (WES) + 5 tool mini-stacks + Content Registry. Canonical design for the downstream half of Living World. Currently v3 (2026-04-21), awaiting user read-through before implementation.** |
 | [PART_3_PLAYER_INTELLIGENCE.md](PART_3_PLAYER_INTELLIGENCE.md) | **P3 — Last** | Behavior classifier, preference model, adaptive content |
 | [SHARED_INFRASTRUCTURE.md](SHARED_INFRASTRUCTURE.md) | **Cross-cutting** | Balance validator, embedding model, event schema |
 
