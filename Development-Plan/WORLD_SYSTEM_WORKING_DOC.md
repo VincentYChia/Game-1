@@ -24,15 +24,14 @@ Everything in this doc orbits those three framings: WNS/WES are coupled, tools g
 ## Revision History
 
 - **v1** (2026-04-20) — initial doc.
-- **v2** (2026-04-20) — restructured after user feedback. Major changes:
-  - Unidirectional flow `WMS → WNS → WES → Tools → Game` (dropped bidirectional WNS↔WES).
-  - WNS reframed as a **parallel WMS for narratives** with geographic addressing (NL1-NL7), not a single LLM call.
-  - WES reframed as a **three-tier orchestrator-workers compound AI system** (Orchestrator → Coordinator → Specialist).
-  - Each tool is a Coordinator+Specialist mini-stack, not a single LLM call.
-  - Shared immutable context object propagates through every tier (game-of-telephone mitigation).
-  - Dropped: LLM self-critique, WES→WNS clarification loop, universal `ContextEnvelope` with fixed tier ratios.
-  - Added: LLM Roster (§2.5), narrative address system (§4.2), NPC mention tracking as NL1 (§4.4), emergent narrative threads (§4.5), observability (§5.7, §8.10).
-  - Roadmap expanded from 7 to 10 phases to reflect WNS-as-pipeline scope.
+- **v2** (2026-04-20) — first major restructure after user feedback. Unidirectional flow, WNS as parallel-WMS, three-tier WES stack, Coordinator+Specialist tool mini-stacks, shared immutable context object, LLM Roster. 7→10 phase roadmap.
+- **v3** (2026-04-21) — second restructure after user feedback. Major changes:
+  - **WNS reframed via string-thread-embroidery metaphor.** WMS provides the string (raw facts). Low WNS layers *extract* narrative threads from events ("given event Y, what narrative thread exists?"). High WNS layers *weave* threads into embroidered world narrative. Aggregation is the wrong word — *extraction* at the bottom, *weaving* at the top.
+  - **Layer count is TBD.** v2 assumed 7 NL layers (mirroring WMS L1-L7). That is a starting point, not a commitment. The number depends on how extraction/weaving divides naturally.
+  - **Assume every WMS and WNS layer is LLM-driven.** v2 noted WMS L2 is currently template-only. The design now assumes WMS will also be fully LLM once a tuned model lands. WNS is LLM at every layer from the start.
+  - **Shared immutable context object deleted.** v2 made it first-class; user prefers flexibility. Each LLM queries the current narrative-interpretation store live. The only cross-cutting "context" is (1) overall game awareness — the game's rules, taxonomies, canonical constants — and (2) task awareness — what this specific LLM is being asked to produce. Both are small enough not to need a propagation schema.
+  - **Tier names renamed** to user's preferred vocabulary: Orchestrator → `execution_planner`, Coordinator → `execution_hub_<tool>`, Specialist → `executor_tool_<tool>`. Published pattern names (Anthropic's Orchestrator-Workers, Berkeley's compound AI) kept as citations.
+  - **Narrative thread retention is forever, archived.** Same model as WMS events: retain in SQLite; context budget limits inclusion, not retention.
 
 ## Table of Contents
 
@@ -40,8 +39,8 @@ Everything in this doc orbits those three framings: WNS/WES are coupled, tools g
 2. [System Architecture: WMS → WNS → WES → Tools → Game (unidirectional)](#2-system-architecture)
 3. [Trigger Signal Chain (L7 feeds WNS, NL7 fires WES)](#3-trigger-signal-chain)
 4. [WNS Design — Parallel WMS for Narratives](#4-wns-design)
-5. [WES Loop — Three-Tier Orchestrator-Workers Stack](#5-wes-loop)
-6. [Tool Architecture (5 Coordinator+Specialist Mini-Stacks)](#6-tool-architecture)
+5. [WES Loop — Three-Tier Stack (Planner → Hub → Tool)](#5-wes-loop)
+6. [Tool Architecture (5 Hub+Tool Mini-Stacks)](#6-tool-architecture)
 7. [Content Registry (Anti-Orphan Cross-Reference)](#7-content-registry)
 8. [Information / Context Flow — The Hard Problem](#8-information-flow--the-hard-problem)
 9. [Open Questions & Decisions Needed](#9-open-questions--decisions-needed)
@@ -160,24 +159,24 @@ def _generate_npc_opening(self, npc) -> str:
                  │ latest narrative summary ("what the story is")
                  ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│  WES — World Executor System (NEW, orchestrator-workers)         │
+│  WES — World Executor System (NEW, orchestrator-workers topology) │
 │                                                                  │
 │   ┌──────────────────────────────────────────────────────────┐   │
-│   │  Tier 1: ORCHESTRATOR (1 LLM, cloud-eligible)            │   │
+│   │  Tier 1: execution_planner (1 LLM, cloud-eligible)       │   │
 │   │  Plans what to build from the narrative summary.         │   │
 │   └─────────────────────────┬────────────────────────────────┘   │
 │                             │ structured plan                    │
 │                             ▼                                    │
 │   ┌──────────────────────────────────────────────────────────┐   │
-│   │  Tier 2: COORDINATORS (1 LLM per tool, local)            │   │
-│   │  Owns flavor + context shaping. Feeds items one-by-one   │   │
-│   │  into the Specialist below it.                           │   │
+│   │  Tier 2: execution_hub_<tool> (1 LLM per tool, local)    │   │
+│   │  Owns flavor + per-item spec shaping. Feeds items one-   │   │
+│   │  by-one into its executor_tool below.                    │   │
 │   └─────────────────────────┬────────────────────────────────┘   │
 │                             │ per-item spec                      │
 │                             ▼                                    │
 │   ┌──────────────────────────────────────────────────────────┐   │
-│   │  Tier 3: SPECIALISTS (1 LLM per call, local)             │   │
-│   │  Raw JSON generators — pure "one input → one JSON" calls │   │
+│   │  Tier 3: executor_tool_<tool> (1 LLM per JSON, local)    │   │
+│   │  Raw JSON generator — pure "one input → one JSON" calls  │   │
 │   └─────────────────────────┬────────────────────────────────┘   │
 └─────────────────────────────┼────────────────────────────────────┘
                               │ JSON outputs
@@ -199,7 +198,7 @@ def _generate_npc_opening(self, npc) -> str:
 | **Role** | Produces narrative state (a parallel WMS for story) | Turns the current narrative state into game reality |
 | **Input** | WMS L7 summaries + ongoing conditions + NPC mention log | Latest WNS narrative summary + registry snapshot |
 | **Output** | Narrative events at layers NL1-NL7; emergent narrative threads | Staged content across 6 tool types |
-| **LLM style** | Flat — each narrative layer = one focused call (mirrors WMS) | Layered — orchestrator-workers (three tiers) |
+| **LLM style** | Flat per layer (each narrative layer = one focused call). Pipeline depth varies. | Layered — three tiers: planner → hub → executor_tool |
 | **Writes to game?** | No. Reads game, records narrative. | Yes. Writes registered content. |
 | **Talks to the other?** | No direct call. | No direct call. |
 
@@ -215,19 +214,26 @@ The user's earlier statement — "they feed into each other" — describes the *
 
 The loop closes through the game. WES does not call WNS. WNS does not read WES output. Each subsystem reads the output of the one above it and writes its own artifact. **This is a compound AI system (Berkeley BAIR terminology) with a hierarchical topology, not an agent dialogue.**
 
-### 2.4 The shared immutable context object
+### 2.4 Live queries over stored narrative interpretations
 
-One principle cuts across every LLM call in the system: **each call takes one focused input, produces one output, and that output becomes a reusable artifact downstream.** LLMs are treated as composable transforms, not agents.
+> **Revision note (v3):** Earlier drafts designed a "shared immutable context object" that propagated through every tier as a game-of-telephone mitigation. **Deleted.** User preference is flexibility. The substitute: each LLM call queries live from canonical stores, and the canonical narrative stores are the WNS's own layer outputs (stored the same way WMS stores its layers). Each LLM reads from source; nothing is serialized through multiple hops of prose.
 
-But a danger in hierarchical stacks is **game of telephone** — by the time a Specialist LLM runs, the original narrative intent has been paraphrased three times and critical detail is gone. Mitigation: every call at every tier receives the same **shared immutable context object** alongside its tier-specific prompt. This object carries the non-negotiable invariants of the current run:
+One principle cuts across every LLM call in the system: **each call takes one focused input, produces one output, and that output becomes a reusable artifact stored in a canonical store.** LLMs are treated as composable transforms, not agents. Later calls read from stores, not from propagated snapshots.
 
-- The narrative beat ID + headline (verbatim, never paraphrased)
-- The geographic address(es) in scope
-- The active narrative threads
-- The calling player's profile snapshot (future, from Part 3)
-- Hard constraints (tier range, biome restrictions, faction refs)
+Consequences:
 
-Each layer appends its interpretation to its prompt; the **shared context is never rewritten**. Specialists see both their Coordinator's instructions *and* the original intent. This is the single highest-leverage choice in the whole design.
+- WMS layer outputs → queried live via `WorldQuery` / `LayerStore` (shipped).
+- WNS layer outputs → queried live via a parallel `WorldNarrativeSystem` facade (new). Stored in SQLite alongside WMS data.
+- Game state (registries, taxonomies, faction state, etc.) → queried live via existing singletons.
+
+**The only cross-cutting "context" each LLM receives is small enough not to need a schema:**
+
+1. **Game awareness** — the game's canonical rules: tier multipliers (T1-T4), biome taxonomy, domain taxonomy, stat names, ADDRESS_TAG_PREFIXES. Static per-session, loaded from JSON at boot.
+2. **Task awareness** — what this specific LLM is being asked to produce: its role, its output schema, its single input.
+
+That's it. No propagating narrative headlines through three tiers. No frozen snapshots. If an LLM needs the latest narrative summary, it queries the narrative store at call time. If the world shifted during a long-running plan, downstream LLMs see the newer state — that's a feature, not a flaw.
+
+**Why game-of-telephone doesn't apply:** telephone is a problem when each tier paraphrases the tier above. Here, no tier paraphrases narrative state — each tier *queries* it. Freshness replaces fidelity as the guarantee.
 
 ### 2.5 LLM Roster
 
@@ -238,17 +244,19 @@ Naming every LLM in the system, with its tier, backend preference, and call shap
 | WMS L3 consolidator | WMS internal | Local (Ollama) | 1 call per district per interval | Moderate |
 | WMS L4/L5/L6 summarizer | WMS internal | Local | 1 call per aggregation unit on weighted fire | Low |
 | WMS L7 summarizer | WMS internal | Local | 1 call when world bucket fires | Very low |
-| **WNS NL3-NL7 summarizers** | WNS | Local (mirrors WMS) | 1 call per narrative aggregation unit | Low-moderate |
-| **WES Orchestrator** | WES Tier 1 | Cloud-eligible (Claude) | 1 call per WNS summary delivery | Low |
-| **WES Tool Coordinators** | WES Tier 2 | Local | N calls per run (one per item fed to Specialist) | Moderate |
-| **WES Tool Specialists** | WES Tier 3 | Local | N calls per run (one per JSON artifact) | High |
+| **WNS low-layer extractors** (NL1-mid) | WNS | Local | 1 call per narrative-worthy event cluster | Moderate |
+| **WNS mid-layer weavers** (regional/national) | WNS | Local | 1 call per aggregation unit on weighted fire | Low |
+| **WNS top-layer embroiderer** (world) | WNS | Local (Cloud tolerated) | 1 call when world bucket fires | Very low |
+| **WES `execution_planner`** | WES Tier 1 | Cloud-tolerated | 1 call per WNS world-summary update | Low |
+| **WES `execution_hub_<tool>`** | WES Tier 2 | Local | N calls per run (one per item fed to executor_tool) | Moderate |
+| **WES `executor_tool_<tool>`** | WES Tier 3 | Local | N calls per run (one per JSON artifact) | High |
 | NPC dialogue | Existing (NPCAgentSystem) | Local | 1 per player-NPC exchange | Variable |
 
-**Cloud minimization rule:** cloud APIs (Claude) are reserved for the WES Orchestrator and *possibly* the WNS top layer (NL7 summarizer). Everything else runs locally. Cloud latency is tolerable here because orchestrator and high-layer summaries don't need to be instant — they represent slow-moving world state, not per-frame reactions.
+**Cloud minimization rule:** cloud APIs (Claude) are *tolerated* only for the WES `execution_planner` and *possibly* the WNS top-layer embroiderer. Everything else runs locally. These calls don't need to be fast — they represent slow-moving world state, not per-frame reactions. Per user: *"Ideally none"* — cloud is the fallback, not the default.
 
 **Layered vs flat:**
 - **Flat LLM** = single focused call, no LLM-to-LLM dispatch. WMS layers, WNS layers, NPC dialogue.
-- **Layered LLM** = an LLM whose job is to orchestrate other LLMs. Only the WES has this, and only because generating content coherently across 6 tool types with cross-refs requires planning that a flat call can't do.
+- **Layered LLM** = an LLM whose job is to orchestrate other LLMs. Only WES has this shape. Its three tiers are `execution_planner` → `execution_hub_<tool>` → `executor_tool_<tool>`. Each tier is deterministically invoked by code between tiers — LLMs never call LLMs directly.
 
 ### 2.6 Vocabulary this doc uses (and the published equivalents)
 
@@ -261,7 +269,7 @@ Grounding terminology in the published literature so future contributors can sea
 | Three-tier stack | Hierarchical agent teams | LangGraph |
 | Local-at-bottom, cloud-at-top | LLM cascading / model routing | FrugalGPT (Chen et al. 2023) |
 | One-input-one-output-reusable | LLM-as-function / functional pipelines | DSPy, Outlines, Mirascope |
-| Shared immutable context object | Shared blackboard / invariant context | Cognition AI "Don't Build Multi-Agents" (anti-pattern mitigation) |
+| Live query over stored interpretations | Blackboard / shared store | Standard blackboard architecture; replaces "shared immutable context" pattern |
 
 ### 2.7 Philosophy: LLMs write content, code owns structure
 
@@ -270,7 +278,7 @@ Every LLM call in the system follows the discipline the WMS already uses ([layer
 - **Code builds the prompt and assembles context.** LLMs never see raw SQL results.
 - **Code validates every output.** LLM JSON is parsed, schema-checked, retried on failure.
 - **Address tags are facts, never LLM-writable.** This rule extends verbatim to WNS's narrative address tags (§4).
-- **Structured artifacts between layers, not prose.** Coordinators receive JSON plans from the Orchestrator; Specialists receive JSON specs from Coordinators. Prose is for humans; machines pass typed data.
+- **Structured artifacts between layers, not prose.** The `execution_hub` receives JSON plans from the `execution_planner`; `executor_tool` receives JSON specs from `execution_hub`. Prose is for humans; machines pass typed data.
 
 ---
 
@@ -368,28 +376,66 @@ WNS registers itself during boot. The callback fires synchronously but should qu
 
 ## 4. WNS Design
 
-> **Revision note (2026-04-20, v2):** Previous draft treated WNS as a single LLM call producing a `NarrativeBeat`. **That is wrong.** WNS is a **parallel WMS for narratives** with its own geographic addressing and its own 7-layer pipeline mirroring the WMS. Narrative threads are an *emergent property* of good WNS output, not a bolted-on schema.
+> **Revision note (v3):** v2 treated WNS as a parallel WMS with 7 layers mirroring L1-L7 and characterized each layer as "aggregation." **Both refined.** Per user:
+>
+> > *"The Narrative firing might honestly be something more akin to narrative extraction. Like given Y event what narrative thread exists? Then that goes up the WNS so a full narrative can be woven. The string is WMS, the thread is made by the lower levels of WNS, than the final embroidery is framed by the WNS."*
+>
+> The operation WNS performs is **extraction → weaving → embroidery**, not aggregation. The number of layers is a starting design choice (likely 4-7), not a commitment to mirror WMS exactly. And WNS is LLM-driven at every layer, not template at the bottom.
 
-### 4.1 WNS is a parallel WMS for narratives
+### 4.1 The string / thread / embroidery framing (canonical)
 
-The WMS compresses gameplay events into a geographically-addressed 7-layer pipeline ([layer3..7_manager.py](Game-1-modular/world_system/world_memory/)). Each higher WMS layer is one focused LLM call that takes an aggregation unit's events and writes a narration with rewritten content tags (the address tags are facts, never rewritten).
-
-WNS does the same thing, but for **narrative state** rather than factual state. The inputs are different (WMS narrations, NPC mentions, player milestones); the outputs are different (beats, threads, locale-flavored rumors); but **the structural pipeline is the same**.
+The user's metaphor is the design's anchor:
 
 ```
-WMS:  L1 raw events → L2 evaluator narrations → L3..L7 geographic summaries
-WNS:  NL1 narrative events → NL2 local beats → NL3..NL7 aggregated story at wider scopes
+┌─────────────────────────────────────────────────────────────┐
+│  STRING — WMS                                               │
+│  Raw factual events + layered factual narrations.           │
+│  Continuous, granular, address-tagged.                      │
+│  (Already built. Assume LLM-driven at every layer.)         │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│  THREAD — LOW WNS LAYERS                                    │
+│  NARRATIVE EXTRACTION. Given an event (or a cluster of      │
+│  them), what narrative thread does it create or extend?     │
+│  Extracted threads are first-class artifacts, stored in     │
+│  SQLite, queryable, address-tagged.                         │
+│  One focused LLM call per extraction event.                 │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│  EMBROIDERY — HIGH WNS LAYERS                               │
+│  NARRATIVE WEAVING. Given many threads in an area (region,  │
+│  nation, world), how do they fit together into a coherent   │
+│  narrative frame? Each higher layer weaves threads from     │
+│  below into a summary whose content is itself queryable.    │
+│  One focused LLM call per aggregation unit on fire.         │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-This means WNS reuses, directly:
+Three operations, not seven-layer aggregation:
+- **Extraction** (low WNS): "what story does this event or event-cluster tell?" — a per-event or per-small-cluster LLM call that produces a thread fragment.
+- **Weaving** (middle WNS): "what do the threads in this region add up to?" — local narrative assembly.
+- **Embroidery** (top WNS): "what is the world's current story?" — the frame that gives everything below it coherence.
 
-- The address-tag immutability pattern (§2.7, [geographic_registry.py:81-106](Game-1-modular/world_system/world_memory/geographic_registry.py#L81-L106)) — narrative address tags are facts, never LLM-written.
-- The prompt-fragment JSON structure (`_meta`, `_core`, `_output`, `context:X`, `example:Y`) pioneered in `prompt_fragments_l*.json`.
-- The "partition address vs content, strip before LLM, reattach after" mechanism from each WMS layer manager.
-- The lazy evaluation / `should_run()` triggering pattern.
-- The `BackendManager.generate(task, system_prompt, user_prompt)` call shape and layer-specific temperature/max_tokens config.
+The distinction from v2: v2 described all layers as the same operation (aggregation via weighted triggers). v3 says the operation changes by tier.
 
-**What WNS does NOT reuse:** trigger conditions. Narrative fires on narratively-interesting patterns, not on factual accumulation. See §4.5.
+### 4.2 Relationship to WMS (parallel, not identical)
+
+WNS still reuses most WMS infrastructure:
+
+- **Address-tag immutability** ([geographic_registry.py:81-106](Game-1-modular/world_system/world_memory/geographic_registry.py#L81-L106)) — narrative layer events carry geographic addresses as facts, never LLM-written.
+- **Prompt-fragment JSON structure** (`_meta`, `_core`, `_output`, `context:X`, `example:Y`) from `prompt_fragments_l*.json`.
+- **Address-partition-before-LLM-reattach-after** pattern from each WMS layer manager.
+- **Lazy evaluation** via `should_run()`.
+- **`BackendManager.generate(task, system_prompt, user_prompt)`** call shape.
+
+**What WNS does *differently* from WMS:**
+
+- Operation per layer varies (extraction / weaving / embroidery). WMS layers are all the same operation (tag-rewriting narrations).
+- Layer count is TBD. 7 is a starting point for matching WMS address hierarchy, but extraction might want fewer / different-shaped layers. We commit to the operational distinction, not the count.
+- Triggers fire less often than WMS. Narrative moves slower than fact. Early guess: WMS thresholds × 2 per-layer, then tune.
+- WNS is LLM at every layer from v1. No template-only pipeline tiers. (Assumes WMS will also move to LLM-at-every-layer once a tuned model lands — design for the future state.)
 
 ### 4.2 The narrative address system
 
@@ -407,26 +453,34 @@ Narrative events may *also* carry additional narrative-specific address tags tha
 
 Same immutability rule as WMS address tags: these are facts about the narrative event, set at capture, never rewritten by an LLM.
 
-### 4.3 The narrative layers (NL1 through NL7)
+### 4.3 The narrative layers — a working starting shape
 
-Mirroring WMS, but with narrative-appropriate content at each layer:
+The layer count is TBD. The starting shape below is a candidate to build against and tune:
 
-| Layer | Aggregation unit | Input | LLM? | Contents |
+| Layer | Operation | Unit | Input | Contents |
 |---|---|---|---|---|
-| **NL1** | (raw event) | Raw narrative events: NPC mentions, player milestones, dialogue-introduced rumors, WMS L2 narrations tagged narratively interesting | No (template) | Like WMS L1 — captured, not narrated |
-| **NL2** | Locality / district | NL1 events clustered per district | No (template, mirrors WMS L2 evaluators being template-based today) | "Local color" narrations: a particular village's ongoing gossip |
-| **NL3** | District → Region | NL2 beats clustered per region | Yes, 1 LLM call per region per interval | Regional story — e.g. "the mines of the Ashen Hills are emptying, and people have started blaming the guild" |
-| **NL4** | Region → Province | NL3 + selected NL2 | Yes, weighted trigger | Province-level narrative arc |
-| **NL5** | Province → Region-band | NL4 + selected NL3 | Yes, weighted trigger | Multi-province narrative crosscurrents |
-| **NL6** | Region-band → Nation | NL5 + selected NL4 | Yes, weighted trigger | National narrative state — tensions, triumphs, dominant arcs |
-| **NL7** | Nation → World | NL6 + selected NL5 | Yes, weighted trigger | **The world narrative summary** — the artifact WES consumes |
+| **NL1** | Capture | Per raw event | WMS L2+ narrations tagged narratively-interesting; NPC mentions; player milestones | Narrative events — address-tagged, tagged for thread hints, stored |
+| **NL2** | **Extraction** | Per event / small cluster | NL1 events | **Thread fragments**: "given this event or cluster, what narrative thread does it create or extend?" One LLM call per extraction event |
+| **NL3** | **Weaving (local)** | Per district / locality | NL2 thread fragments in an address | Local narrative: "what story is this village telling this week?" |
+| **NL4** | Weaving (regional) | Per region | NL3 + relevant NL2 | Regional narrative state |
+| **NL5** | Weaving (national) | Per nation | NL4 + relevant NL3 | National-scale narrative arcs, tensions |
+| **NL6** | **Embroidery (world)** | World | NL5 + selected NL4 | The world narrative summary — the artifact WES consumes |
 
-Each layer's LLM call is **one focused transform**: aggregation-unit narrative events (address-tagged) → rewritten content tags + narrative text. Exactly the WMS pattern ([layer4_manager.py:237-240](Game-1-modular/world_system/world_memory/layer4_manager.py#L237-L240) being the canonical reference).
+**NL6 may be the terminal layer** (six total), or we may add an NL7 "world-arc retrospective" layer later. Starting with six is aligned with the address hierarchy (locality → district → region → nation → world) collapsing one level into extraction.
 
-Prompt fragment files (one per layer, following the existing pattern):
-- `narrative_fragments_nl2.json` through `narrative_fragments_nl7.json`
+**Every layer is an LLM call.** No template layers. Each is one focused transform: address-tagged input → narrative output + rewritten content tags. Address tags pass through unchanged.
 
-Backend task names follow `BackendManager` conventions: `"wns_layer3"`, `"wns_layer4"`, ..., `"wns_layer7"`. Config lives in `backend-config.json` alongside the existing `wms_layer*` tasks.
+Prompt fragment files follow the existing pattern:
+- `narrative_fragments_nl2.json` (extraction) through `narrative_fragments_nl6.json` (embroidery)
+
+Backend task names: `"wns_layer2"` through `"wns_layer6"` in `backend-config.json`.
+
+**This is a starting point, not a commitment.** Concrete layer count and per-layer responsibilities will shift during early playtest. What we commit to:
+- NL1 is capture (no LLM).
+- There is at least one extraction layer near the bottom.
+- There is at least one embroidery layer at the top.
+- Layers in between do progressively wider weaving.
+- Every layer (except NL1 capture) is an LLM call.
 
 ### 4.4 NPC mentions as NL1 inputs (not NL1 creators)
 
@@ -446,20 +500,26 @@ WNS captures NPC mentions as **NL1 grounding inputs**. Mechanism:
 
 This is the mechanism that makes "big events don't come from nothing" real. NPC hallucinations get filtered through the narrative pipeline's aggregation logic. Only patterns survive.
 
-### 4.5 Narrative threads — emergent, not bolted on
+### 4.5 Narrative threads — the active product of extraction
 
-Earlier draft proposed a `NarrativeThread` schema where WNS explicitly tags each beat with a thread_id. User correction:
+> **Revision note (v3):** v2 framed threads as purely emergent (a supersession chain, discovered retrospectively). **Promoted in v3 to the explicit product of the NL2 extraction layer.** The user's metaphor requires it — *"the thread is made by the lower levels of WNS"* — threads are what extraction produces, not a side-effect of summarization.
 
-> The narrative threads are actually a really cool idea... Ideally I would want the WNS produce as it will, but hopefully creating something like narrative threading.
+A narrative thread is the primary artifact of the extraction layer. When NL2 receives an event (or small cluster of events) from NL1, it asks: **"given this event, what narrative thread does it create or extend?"** The answer is a thread fragment — a small, address-tagged, content-tagged narrative atom that is either:
 
-Threading is the **aspirational emergent property** of a well-tuned WNS pipeline, not a schema. Mechanism:
+- a new thread opening, or
+- a continuation of an existing thread in scope, or
+- a variation / reframing of a recent thread.
 
-- Each NL3+ summarizer has access to prior summaries from the same aggregation unit (WMS already does this via `_find_supersedable`).
-- When a new summary references narrative elements from the prior one (same factions, same arc stage, same named entities) — *that continuity is threading, by emergence*.
-- We do NOT force thread IDs. We do log which summaries superseded which. Thread identity is the chain of supersession.
-- A retrospective thread detector (dev-tool, runs offline) can assign thread labels by clustering chained summaries. Useful for debug UI and observability, not required for system function.
+Thread fragments are first-class events, stored in SQLite, queryable, and directly consumed by the weaving layers above.
 
-**What this means for implementation**: no `narrative_threads` table in v1. Just the narrative layer tables with supersession backlinks. Thread-as-concept lives in the LLM's prompt context ("your last summary for this region said X — keep continuity or show evolution") but is not a first-class schema field until we prove it's needed.
+Concrete implications:
+
+- NL2's LLM call outputs a thread fragment with fields: headline, content_tags, parent_thread_id (nullable), relationship (open/continue/reframe/close), address tags (pass-through from input).
+- Extraction reads prior threads in the same address scope as context — continuity is informed, not imposed.
+- Thread identity is the chain of parent_thread_id links. A dev tool can walk these chains to show named thread arcs, but the chain itself IS the thread — no separate "thread" table needed.
+- Threads are forever. Archived, never deleted (per §9.Q10). Context budget manages inclusion; retention is unbounded.
+
+**What this replaces:** v2's "emergent supersession chain" was closer than v1's explicit schema, but still underspecified. v3 makes threads the explicit output of one layer, which makes them first-class without making them heavyweight.
 
 ### 4.6 Inputs (what flows into WNS)
 
@@ -508,7 +568,7 @@ class WorldNarrativeSummary:
 
 When WES is invoked (§5), it reads the latest `WorldNarrativeSummary`. No `NarrativeBeat` dataclass is needed — a summary IS the artifact the executor plans against.
 
-Lower-layer summaries (NL3-NL6) also exist as queryable narrative state but aren't directly consumed by WES; they're used as context when a later NL7 summary is being written, and may be consulted by WES Coordinators for region/faction-specific flavor (§6).
+Lower-layer summaries also exist as queryable narrative state but aren't directly consumed by WES's `execution_planner`; they're used as context when a later embroidery-layer summary is being written, and may be consulted by individual `execution_hub_<tool>` calls (via live queries) for region/faction-specific flavor (§6).
 
 ### 4.8 Triggering (lazy, mirroring WMS)
 
@@ -550,26 +610,35 @@ CREATE TABLE nl7_tags (...);
 
 Same SQLite file as WMS (keeps save/load atomic). Save-file version bumped on introduction.
 
-### 4.11 Template fallback
+### 4.11 No template fallbacks
 
-Every NL3+ LLM call has a template fallback. When the backend is unavailable, the summarizer falls back to a deterministic synthesis: concatenate headline strings from contributing lower-layer events, attach pass-through tags, set severity from the max contributor. Uglier than LLM output; still structurally valid. Same invariant as before: the fallback path must produce valid events that higher layers can consume.
+v2 proposed template fallbacks at every NL layer (so the pipeline still produces valid events when backends are offline). **Removed in v3.**
 
-### 4.12 Summary — what changes vs. the v1 draft
+Per user direction, WNS is LLM-driven at every layer. The design assumes:
+- Ollama local inference is available whenever a layer fires.
+- If Ollama is unreachable, the layer does not fire — it queues its pending work and retries on the next tick. Nothing crashes; nothing gets bypassed with a template.
+- For dev/offline iteration, `MockBackend` (existing in `BackendManager`) still returns deterministic placeholder JSON. That's a backend-level fallback, not a layer-level template.
 
-| v1 draft | v2 (this doc) |
-|---|---|
-| Single LLM call producing `NarrativeBeat` | Parallel WMS pipeline NL1-NL7 |
-| `narrative_beats` + `narrative_beat_tags` tables | Per-layer `nl1..nl7_events` tables + tag junctions |
-| `NarrativeThread` as explicit schema | Threads as emergent supersession chains |
-| WNS fires on L7 callback directly | NL layers fire lazily; NL7 fires on bucket threshold; NL7 output triggers WES |
-| Beat → WES input | `WorldNarrativeSummary` → WES input |
-| NPC dialogue doesn't affect narrative | NPC mentions feed NL1 (tracked, not event-creating) |
+The invariant: a layer either produces a valid LLM-generated event, or produces no event at that tick. No halfway state with flat template output polluting higher layers.
+
+### 4.12 Summary of changes
+
+| v1 (single-call WNS) | v2 (parallel WMS, 7 layers, emergent threads) | v3 (extraction → weaving → embroidery) |
+|---|---|---|
+| `NarrativeBeat` schema | NL1-NL7 layer tables | Same table structure; operation per layer is different |
+| — | 7 layers mirroring L1-L7 | **6 layers starting**; count is tunable; operation = extraction at bottom, embroidery at top |
+| — | WNS L2 is template, rest LLM | **Every layer is LLM** (NL1 is capture-only, no synthesis) |
+| `NarrativeThread` explicit schema | Threads emergent from supersession | **Threads are the explicit output of the extraction layer (NL2)** — first-class artifacts, address-tagged, retained forever |
+| — | Template fallbacks at every LLM layer | **No template layers.** If LLM is unavailable, layer defers; MockBackend handles offline dev |
+| Beat → WES input | `WorldNarrativeSummary` → WES input | Same — embroidery layer's output is what WES consumes |
 
 ---
 
 ## 5. WES Loop
 
-> **Revision note (2026-04-20, v2):** Previous draft framed WES as a four-phase linear pipeline (Plan → Reason → Call → Verify) with LLM self-critique in Verify. **Replaced.** WES is now an **orchestrator-workers compound AI system** — a three-tier LLM stack. Reason is folded into the Orchestrator. Self-critique LLM is dropped per user direction: "a robust architecture with some smart detection and calls is enough." Mid-execution clarification calls to WNS are removed: narrative leads, execution serves, execution does not talk back to narrative.
+> **Revision notes across versions.**
+> - **v2:** Reframed as three-tier orchestrator-workers compound AI system; LLM self-critique dropped; mid-execution WES→WNS clarification dropped.
+> - **v3:** Tier names renamed per user's preferred vocabulary. Shared immutable context object deleted; live queries against WNS's narrative-interpretation store take its place.
 
 The **World Executor System** is where the user's description gets concrete. The WES must:
 
@@ -577,84 +646,104 @@ The **World Executor System** is where the user's description gets concrete. The
 
 The user also described WES specifically as layered: *"LLMs as layers... WES needs to call LLM tools, then ensure balance, ensure proper handling, etc. So in some way agentic because of LLM tool calling connected to simpler LLMs."*
 
-That is the **Orchestrator-Workers pattern** ([Anthropic, "Building Effective Agents"](https://www.anthropic.com/research/building-effective-agents)): a central LLM dynamically breaks down tasks, delegates to worker LLMs, and synthesizes results. The WES has three tiers of LLMs, with deterministic code at every boundary.
+Architecturally, this is the **Orchestrator-Workers pattern** ([Anthropic, "Building Effective Agents"](https://www.anthropic.com/research/building-effective-agents)): a central LLM dynamically breaks down tasks, delegates to worker LLMs, and synthesizes results. WES has three tiers, named per the user's vocabulary:
+
+| Tier | Name | Role | Count |
+|---|---|---|---|
+| 1 | `execution_planner` | Decomposes narrative state into a structured plan of tool invocations. | One per invocation. Cloud-tolerated. |
+| 2 | `execution_hub_<tool>` | Tool-specific coordinator. Turns one plan step into per-item specs, feeding them one-by-one into its executor_tool. Where flavor lives. | One LLM per tool type. Local. |
+| 3 | `executor_tool_<tool>` | Pure JSON generator. One spec → one schema-valid artifact. | One LLM per JSON artifact. Local. |
+
+Published equivalents (for searchability): planner ≈ Orchestrator / Supervisor; hub ≈ Coordinator / Worker-Supervisor; executor_tool ≈ Specialist / Worker.
 
 ### 5.1 The three-tier stack
 
 ```
-Input: latest WorldNarrativeSummary (from WNS NL7)
+Input: latest WorldNarrativeSummary (from WNS's top / embroidery layer)
 
-            ┌──────────────────────────────────────────────┐
-            │  TIER 1 — ORCHESTRATOR (1 LLM, cloud-tier)   │
-            │                                              │
-            │  Reads: narrative summary + registry counts  │
-            │         + game constraints (shared ctx)      │
-            │  Produces: structured WESPlan (JSON)         │
-            │  - ordered tool steps with slots and         │
-            │    dependencies                              │
-            │  - or explicit abandonment with reason       │
-            └────────────────────┬─────────────────────────┘
-                                 │ WESPlan (JSON, immutable)
-                                 ▼
-  ┌──────────────────────────────────────────────────────────────┐
-  │  Deterministic code: resolve deps, build per-tool envelopes, │
-  │  reject circular deps, verify known biomes/factions,         │
-  │  check registry for duplicates / diversity constraints.      │
-  │  (This replaces the old "Phase 2: REASON" LLM step.)         │
-  └──────────────────────────────┬───────────────────────────────┘
-                                 ▼
+        ┌──────────────────────────────────────────────────┐
+        │  TIER 1 — execution_planner  (1 LLM)             │
+        │                                                  │
+        │  Reads (live query, at call time):               │
+        │    - latest world narrative summary              │
+        │    - registry counts (what content exists)       │
+        │    - game awareness (tiers, biomes, domains)     │
+        │                                                  │
+        │  Produces: WESPlan (JSON) — ordered steps, slots,│
+        │  dependencies, or explicit abandonment.          │
+        └──────────────────────┬───────────────────────────┘
+                               │ WESPlan
+                               ▼
+  ┌────────────────────────────────────────────────────────────┐
+  │  Deterministic code: resolve deps, topo-sort steps,        │
+  │  reject cycles, verify known biomes/factions/tiers,        │
+  │  check registry for duplicate IDs.                         │
+  └────────────────────────────┬───────────────────────────────┘
+                               ▼
   Plan dispatched step-by-step in topological order:
-                                 │
-                                 ▼
-            ┌──────────────────────────────────────────────┐
-            │  TIER 2 — COORDINATOR (1 LLM, per tool type) │
-            │                                              │
-            │  Reads: step intent + slots + envelope       │
-            │         + shared immutable context           │
-            │  Produces: one or more specialist prompts    │
-            │  This is where flavor, cross-ref hints, and  │
-            │  per-item narrative framing live.            │
-            └────────────────────┬─────────────────────────┘
-                                 │ per-item specialist spec
-                                 ▼ (fed one by one)
-            ┌──────────────────────────────────────────────┐
-            │  TIER 3 — SPECIALIST (1 LLM, per JSON item)  │
-            │                                              │
-            │  Reads: single item spec + shared ctx        │
-            │  Produces: raw JSON matching game schema     │
-            │                                              │
-            │  One input → one JSON → composable artifact  │
-            └────────────────────┬─────────────────────────┘
-                                 │ JSON
-                                 ▼
-  ┌──────────────────────────────────────────────────────────────┐
-  │  Deterministic code: parse + schema-validate + cross-ref     │
-  │  check + balance-range check. Stage into Content Registry.   │
-  └──────────────────────────────┬───────────────────────────────┘
-                                 ▼
-                      [next step in plan]
-                                 │
-                                 ▼ (after all steps)
-  ┌──────────────────────────────────────────────────────────────┐
-  │  Deterministic verification (no LLM): registry-wide          │
-  │  orphan check, duplicate check, schema-wide consistency.     │
-  │  COMMIT or ROLLBACK atomically.                              │
-  └──────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+        ┌──────────────────────────────────────────────────┐
+        │  TIER 2 — execution_hub_<tool>  (1 LLM per tool) │
+        │                                                  │
+        │  Reads (live query, at call time):               │
+        │    - the plan step (handed in by code)           │
+        │    - game awareness (same as planner)            │
+        │    - tool-specific registry slice (live)         │
+        │    - relevant narrative threads (live from WNS)  │
+        │    - prior outputs from this hub's executor_tool │
+        │      (sequential feedback within this plan step) │
+        │                                                  │
+        │  Produces: list of ExecutorSpecs, one per JSON   │
+        │  artifact to be generated.                       │
+        └──────────────────────┬───────────────────────────┘
+                               │ ExecutorSpec (fed one by one)
+                               ▼
+        ┌──────────────────────────────────────────────────┐
+        │  TIER 3 — executor_tool_<tool>  (1 LLM per JSON) │
+        │                                                  │
+        │  Reads (handed in by code):                      │
+        │    - one ExecutorSpec                            │
+        │    - task awareness (output schema, constraints) │
+        │                                                  │
+        │  Produces: one JSON dict matching tool's schema. │
+        │  Pure "one input → one JSON" transform.          │
+        └──────────────────────┬───────────────────────────┘
+                               │ JSON
+                               ▼
+  ┌────────────────────────────────────────────────────────────┐
+  │  Deterministic code: parse + schema-validate + cross-ref   │
+  │  check + balance-range check. Stage into Content Registry. │
+  └────────────────────────────┬───────────────────────────────┘
+                               ▼
+                    [next ExecutorSpec, or next plan step]
+                               │
+                               ▼ (after all steps)
+  ┌────────────────────────────────────────────────────────────┐
+  │  Deterministic verification (no LLM): registry-wide orphan │
+  │  scan, duplicate check, schema-wide consistency.           │
+  │  COMMIT or ROLLBACK atomically.                            │
+  └────────────────────────────────────────────────────────────┘
 ```
 
-The Orchestrator, Coordinators, and Specialists never talk directly LLM-to-LLM. **Deterministic code is the only thing that crosses tier boundaries.** Each LLM takes a prompt constructed by code and produces structured output that code parses and hands to the next tier. This is the user's "one input for one LLM" principle enforced architecturally.
+The three tiers never call each other directly. **Deterministic code is the only thing that crosses tier boundaries.** Each LLM takes a prompt constructed by code and produces structured output that code parses and hands to the next tier. This is the user's "one input for one LLM" principle enforced architecturally.
 
-Abandonment is the only "escape hatch": at any tier, a failure may cause the Orchestrator's plan to be marked `abandoned`. The beat-summary that triggered the plan stays in history; nothing commits. No clarification loop with WNS — execution does not ask narrative for help.
+Abandonment is the only escape hatch: at any tier, failure may cause the plan to be marked `abandoned`. The narrative summary that justified the plan stays in history; nothing commits. No clarification loop with WNS — execution does not ask narrative for help.
 
-### 5.2 Tier 1 — Orchestrator
+### 5.2 Tier 1 — `execution_planner`
 
-**Role**: single LLM call that decomposes a narrative summary into a structured plan of tool invocations.
+**Role**: single LLM call that decomposes a narrative summary into a structured plan.
 
-**Backend**: cloud-eligible (Claude via `BackendManager`, task `"wes_orchestrator"`). Per user: *"Maybe the highest level executor and WNS"* gets cloud. Everything else local.
+**Backend**: cloud-tolerated (Claude via `BackendManager`, task `"wes_execution_planner"`). Per user: cloud only where necessary. The planner is one of the few roles where cloud is tolerated because (a) it's infrequent — once per WNS summary update — and (b) plan quality drives everything downstream. Local Ollama is the default; Claude is the escalation path when local output is structurally invalid on retry.
 
-**Input**: a `WorldNarrativeSummary` + registry snapshot + geographic/domain taxonomies (the **shared immutable context object**, §2.4).
+**What it reads (live, at call time):**
+- The latest world narrative summary from `WorldNarrativeSystem.get_latest_summary()`.
+- Registry counts via `ContentRegistry` (what exists, what's saturated).
+- Game awareness block (tier definitions, biome taxonomy, domain taxonomy, faction registry, address tag prefixes).
 
-**Output**: `WESPlan` (structured JSON).
+No snapshot. No frozen context. When the planner runs, it sees the state of the world *right now*.
+
+**Output: `WESPlan` (structured JSON)**
 
 ```python
 @dataclass
@@ -676,28 +765,34 @@ class WESPlan:
     abandonment_reason: str = ""
 ```
 
-**Why a plan first, not direct dispatch to Coordinators?** Two reasons:
-1. **Dependencies.** A new hostile that drops a new material needs the material to exist first. Plan graph makes this explicit.
-2. **Veto.** The Orchestrator can look at the full plan and say "this would create 12 orphan materials; abort" before any Specialist runs.
+**Why produce a plan first, instead of dispatching to hubs directly?** Two reasons:
 
-**What the Orchestrator does NOT do:**
-- It does not call Coordinators or Specialists. It outputs JSON that code dispatches.
-- It does not see raw events or stats — only the pre-compressed narrative summary.
-- It does not write flavor text or per-item prose — that's the Coordinator's job.
+1. **Dependencies.** A hostile that drops a new material needs the material to exist first. Plan graph makes this explicit.
+2. **Veto.** The planner can look at the whole plan and abort if it would produce orphan content or saturated tiers, before any executor_tool runs.
 
-### 5.3 Tier 2 — Coordinators (one LLM per tool type)
+**What the planner does NOT do:**
+- It does not call hubs or executor_tools. It outputs JSON that code dispatches.
+- It does not see raw events or stats — it queries already-compressed narrative state.
+- It does not write flavor text or per-item prose — that's the hub's job.
 
-**Role**: each tool (hostiles, materials, nodes, skills, titles) has a Coordinator LLM that takes one `WESPlanStep` and expands it into one or more specialist specs to be generated. **This is where the tool becomes "agentic"** — the Coordinator can decide "this step says make 3 hostiles; let me plan each one to feel distinct" and feed three specs into the Specialist below.
+### 5.3 Tier 2 — `execution_hub_<tool>`
 
-**Backend**: local (Ollama, task `"wes_coord_<tool>"`). Quality/creativity important but volume is manageable.
+**Role**: each tool type (hostiles, materials, nodes, skills, titles) has its own hub. Given one plan step, the hub expands it into per-item ExecutorSpecs and dispatches each one to the executor_tool below. **This is where the tool becomes "agentic"** — the hub can decide "this step says make 3 hostiles; let me plan each one to feel distinct" and feed three specs in sequence.
 
-**Input**: a single `WESPlanStep` + the shared immutable context object + a tool-specific context envelope assembled by code (registry slice relevant to this tool, see §8).
+**Backend**: local (Ollama, task `"wes_hub_<tool>"`).
 
-**Output**: a list of **Specialist specs** — one per JSON artifact the Specialist will generate.
+**What it reads (live, at call time):**
+- The plan step (handed in by code).
+- Game awareness (same as planner).
+- Tool-specific registry slice — queried live from `ContentRegistry` just before this hub's call.
+- Relevant narrative threads — queried live from the WNS narrative store (e.g., active threads in the plan step's focal address).
+- Prior outputs from this hub's own executor_tool within the same plan step (the sequential feedback loop).
+
+**Output: a list of `ExecutorSpec`s**, dispatched one at a time to the executor_tool below.
 
 ```python
 @dataclass
-class SpecialistSpec:
+class ExecutorSpec:
     spec_id: str
     plan_step_id: str
     item_intent: str                      # e.g. "a T3 apex predator, ambush hunter, tundra-adapted"
@@ -706,56 +801,30 @@ class SpecialistSpec:
     hard_constraints: Dict[str, Any]      # tier range, biome, balance envelope
 ```
 
-The Coordinator is where **narrative flavor lives** — the user was explicit: *"The very bottom output of tools will be just the JSON. They are agentic because an LLM above the final tools... will feed one by one into the tools. This is where the flavor text would exist."*
+The hub is where **narrative flavor lives** — the user was explicit: *"The very bottom output of tools will be just the JSON. They are agentic because an LLM above the final tools... will feed one by one into the tools. This is where the flavor text would exist."*
 
-**The "feed one by one" rule:** Coordinators produce a list of specs but dispatch them to Specialists **sequentially**. Each Specialist call is focused on one artifact; the Coordinator sees each output before generating the next spec. This lets the Coordinator adapt — "the first hostile came out as a wolf variant, so the second spec should diverge more." It's a classic feedback loop that stays within the Coordinator→Specialist pair.
+**The "feed one by one" rule:** the hub emits one ExecutorSpec, waits for the executor_tool's JSON output, queries the registry fresh, then emits the next spec. Each executor_tool call is focused on one artifact; the hub adapts between calls — *"the first hostile came out as a wolf variant, so the second spec should diverge more."* It's a classic feedback loop that stays within the hub ↔ executor_tool pair. No other LLM in the system sees this loop.
 
-### 5.4 Tier 3 — Specialists (one LLM per JSON artifact)
+### 5.4 Tier 3 — `executor_tool_<tool>`
 
-**Role**: produce a single schema-valid JSON artifact from a single `SpecialistSpec`.
+**Role**: produce one schema-valid JSON artifact from one `ExecutorSpec`.
 
-**Backend**: local (Ollama, task `"wes_spec_<tool>"`). High volume. Tuned for JSON correctness. Structured-output constrained decoding (via Ollama's grammar support or server-side schema enforcement) where possible.
+**Backend**: local (Ollama, task `"wes_tool_<tool>"`). High volume. Tuned for JSON correctness. Structured-output constrained decoding (Ollama grammars or server-side schema enforcement) where possible.
 
-**Input**: one `SpecialistSpec` + the shared immutable context object.
+**What it reads:**
+- The single ExecutorSpec (handed in by code from the hub above).
+- Task awareness (its output schema, hard constraints).
 
-**Output**: one JSON dict matching the tool's output schema.
+That's it. No registry queries, no narrative queries, no game-state lookups — the hub has already done that work and compressed it into the spec. The executor_tool is a pure functional transform: **one spec in, one JSON out**.
 
-Specialists are **pure functional transforms**. One spec in, one JSON out. No loops, no multi-step reasoning, no awareness of other specialists. They exist at this tier because:
+Why this tier is thin on purpose:
+- Local 7-13B models can be fine-tuned or prompt-engineered aggressively for *one focused JSON output*.
+- Structured decoding is cheap when the output schema is fixed.
+- Pure-function semantics makes parallel dispatch trivial later (deferred, see §6.7).
 
-- Local models can be fine-tuned or prompt-engineered aggressively for *one focused JSON output*
-- Structured decoding (e.g., JSON schema enforcement) is cheap when the output shape is fixed
-- Parallel dispatch across multiple Specialists becomes possible once the Coordinator has stopped needing feedback
+**No LLM-to-LLM calls.** The executor_tool cannot invoke another executor_tool, cannot query another hub, cannot reach back up to the planner. If it needs information the spec doesn't have, that's a design-error in the hub above it.
 
-In v1, Specialists dispatch sequentially (driven by the Coordinator's feedback loop). In v2, independent specs may be dispatched in parallel to a local inference server.
-
-### 5.5 The shared immutable context object
-
-Propagated through every LLM call at every tier. Never rewritten, only read. Mitigates the "game of telephone" failure mode identified as the single highest-risk issue in hierarchical LLM stacks ([Cognition AI: Don't Build Multi-Agents](https://cognition.ai/blog/dont-build-multi-agents)).
-
-```python
-@dataclass(frozen=True)
-class WESSharedContext:
-    # From WNS — the narrative that justifies this run
-    narrative_summary_id: str
-    narrative_headline: str              # verbatim NL7 narrative field
-    focal_regions: List[str]             # address tags from the summary
-    focal_factions: List[str]
-    focal_arcs: List[str]
-
-    # Invariants from the game
-    tier_definitions: Dict[int, float]   # T1..T4 multipliers (canonical)
-    biome_taxonomy: List[str]            # known biomes
-    domain_taxonomy: List[str]           # known domains
-    faction_registry: List[str]          # existing faction_ids
-    address_prefixes: List[str]          # ADDRESS_TAG_PREFIXES (for tag validation)
-
-    # Player profile (stub until Part 3 ships)
-    player_profile: Optional[Dict[str, Any]] = None
-```
-
-Every prompt at every tier embeds a fixed `<shared_context>` block derived from this object. Coordinators and Specialists see **exactly what the Orchestrator saw**, plus their tier-specific additions. A Specialist generating the 5th hostile has the same narrative_headline the Orchestrator saw 20 LLM calls ago.
-
-### 5.6 Deterministic glue — between every tier
+### 5.5 Deterministic glue — between every tier
 
 The code between tiers is load-bearing. At each boundary:
 
@@ -766,9 +835,9 @@ The code between tiers is load-bearing. At each boundary:
 5. **Balance-range check** — stat values within tier multiplier envelope. Uses the `BalanceValidator` stub (§Q3).
 6. **Stage** — insert into Content Registry with `staged=1`.
 
-No verification LLM. Per user: *"robust architecture with some smart detection and calls is enough."*
+No verification LLM. Per user: *"a robust architecture with some smart detection and calls is enough."*
 
-### 5.7 Final verification and commit
+### 5.6 Final verification and commit
 
 After all plan steps have staged outputs, one last deterministic pass runs registry-wide checks:
 
@@ -780,96 +849,96 @@ On pass → commit: flip all staged rows to live, publish `CONTENT_GENERATED` ev
 
 On fail → rollback: delete all staged rows for this plan, emit `PLAN_ABANDONED`, log for developer review.
 
-**Observability is mandatory** (from Agent B's research — hierarchical stacks are debugging nightmares): every tier logs its prompt + response + latency + token usage to `llm_debug_logs/wes/<plan_id>/<tier>_<step>_<spec>.json`. Root-cause analysis of "why did the hostile come out as a wolf again?" requires seeing all three tiers' I/O for that specific specialist.
+**Observability is mandatory** (hierarchical LLM stacks are debugging nightmares without it): every tier logs its prompt + response + latency + token usage to `llm_debug_logs/wes/<plan_id>/<tier>_<step>_<spec>.json`. Root-cause analysis of "why did the hostile come out as a wolf again?" requires seeing all three tiers' I/O for that specific executor_tool call.
 
-### 5.8 Asynchrony
+### 5.7 Asynchrony
 
 Every LLM call goes through a unified async runner (extracted from `llm_item_generator.generate_async`). The game thread never blocks for a WES plan — plans run as background jobs on their own task queue. When a plan commits, new content appears "later that day" from the player's perspective. The world is in motion; we're not waiting.
 
-### 5.9 What this shape rules out (intentionally)
+### 5.8 What this shape rules out (intentionally)
 
-- **No WES → WNS clarification calls.** Narrative leads. If a summary is under-specified, the Orchestrator abandons and waits for the next NL7 summary.
+- **No WES → WNS clarification calls.** Narrative leads. If a summary is under-specified, the planner abandons and waits for the next world-narrative update.
 - **No LLM verifier.** Code owns verification. Smart detection is the deterministic cross-reference / balance / schema pipeline.
-- **No per-tool custom topology.** Every tool uses the same Coordinator → Specialist pair. Differences are in prompts and envelope contents, not structure.
+- **No per-tool custom topology.** Every tool uses the same `execution_hub_<tool>` ↔ `executor_tool_<tool>` pair. Differences are in prompts, not structure.
+- **No frozen context snapshot passed through tiers.** Each tier queries live from canonical stores at its own call time. If the world shifted between the planner and the executor_tool, the executor_tool sees the newer state — that's the flexibility the design deliberately chose.
 
 ---
 
 ## 6. Tool Architecture
 
-> **Revision note (2026-04-20, v2):** Earlier draft treated each tool as a single LLM call + validator. **Replaced.** Per user: *"The very bottom output of tools will be just the JSON. They are agentic because an LLM above the final tools (but still part of the same tool from the executors perspective) will feed one by one into the tools. This is where the flavor text would exist."* Every tool is now a **Coordinator + Specialist mini-stack** (§5.3-5.4). From the Orchestrator's perspective it's one tool; internally it's a two-LLM pipeline.
+> **Revision notes across versions.**
+> - **v2:** each tool reframed as a Coordinator+Specialist mini-stack (not a single LLM call).
+> - **v3:** tier names renamed — each tool is an `execution_hub_<tool>` + `executor_tool_<tool>` pair. Contract updated to remove `shared_context` / `envelope` parameters; each tier reads live from canonical stores instead.
 
-Six tools. Each is a Coordinator+Specialist pair, not a single LLM call. From WES Tier 1's perspective, the Orchestrator calls a named tool with a plan step. What happens inside that tool is:
+Five active tools (quests deferred). Each is a 2-LLM mini-stack. From the `execution_planner`'s perspective it's one tool; internally it's a hub + executor_tool pair.
 
-1. The **Coordinator LLM** takes the plan step, thinks about what items to generate, and produces a list of per-item Specialist specs with flavor framing.
-2. The **Specialist LLM** is invoked once per spec, producing one JSON artifact per call.
-3. Coordinator sees each Specialist output before emitting the next spec (sequential feedback within the tool).
+1. The **`execution_hub_<tool>`** LLM takes one plan step, thinks about what items to generate, and produces a list of per-item ExecutorSpecs with flavor framing.
+2. The **`executor_tool_<tool>`** LLM is invoked once per spec, producing one JSON artifact per call.
+3. The hub sees each executor_tool output before emitting the next spec (sequential feedback within the mini-stack).
 
-The Orchestrator and the verification pipeline don't need to know this — they see "tool was invoked, N artifacts were produced, here they are staged." But everyone writing a new tool works inside this two-LLM structure.
+The planner and the final verification pipeline don't need to know this — they see "tool was invoked, N artifacts were staged." But everyone implementing a new tool works inside this two-LLM structure.
 
 ### 6.1 The mini-stack contract
 
 ```python
-class WESToolCoordinator(Protocol):
+class ExecutionHub(Protocol):
     name: str                       # "hostiles" | "materials" | "nodes" | "skills" | "titles"
     registry_type: str              # registry table to write into
 
-    def build_specs(self, step: WESPlanStep,
-                    shared_context: WESSharedContext,
-                    envelope: ContextEnvelope) -> List[SpecialistSpec]:
-        """One LLM call: convert a plan step into a list of per-item specs."""
+    def build_specs(self, step: WESPlanStep) -> List[ExecutorSpec]:
+        """One LLM call: convert a plan step into a list of per-item specs.
+        Reads live from ContentRegistry, WorldNarrativeSystem, and game-awareness
+        sources internally — no context envelope passed in."""
 
-    def adapt_after_specialist(self, previous_specs: List[SpecialistSpec],
-                               previous_outputs: List[Dict[str, Any]],
-                               remaining_specs: List[SpecialistSpec]
-                               ) -> List[SpecialistSpec]:
-        """Optional LLM call: adjust remaining specs based on prior Specialist outputs.
-        Default implementation is a passthrough (no adaptation)."""
+    def adapt_after_output(self,
+                           previous_specs: List[ExecutorSpec],
+                           previous_outputs: List[Dict[str, Any]],
+                           remaining_specs: List[ExecutorSpec]
+                           ) -> List[ExecutorSpec]:
+        """Optional LLM call: adjust remaining specs based on prior executor_tool
+        outputs. Default implementation is a passthrough."""
 
 
-class WESToolSpecialist(Protocol):
-    name: str                       # same tool name as the Coordinator
+class ExecutorTool(Protocol):
+    name: str                       # same tool name as the hub
     schema_path: str                # JSON schema for the output
 
-    def generate(self, spec: SpecialistSpec,
-                 shared_context: WESSharedContext) -> Dict[str, Any]:
+    def generate(self, spec: ExecutorSpec) -> Dict[str, Any]:
         """One LLM call: spec → JSON artifact. Purely functional."""
 
     def validate(self, output: Dict[str, Any],
                  registry: ContentRegistry) -> List[str]:
-        """Return list of validation issues (empty = OK).
-        Deterministic code, not an LLM call."""
+        """Deterministic code — return list of validation issues (empty = OK)."""
 
     def stage(self, output: Dict[str, Any],
               registry: ContentRegistry, plan_id: str) -> str:
         """Insert into registry with staged=True; return content_id."""
 ```
 
-Shared infrastructure (one implementation, reused across all 5 tool mini-stacks):
+Shared infrastructure (one implementation, reused across all 5 mini-stacks):
 - JSON parsing with markdown-fence stripping (reuse `npc_agent._parse_dialogue_response` pattern).
 - Schema validation via `jsonschema` or lightweight dataclass validators.
 - Retry policy (one retry on parse failure with stricter prompt).
-- Observability: per-tier logs per spec to `llm_debug_logs/wes/<plan_id>/tool_<name>/<spec_id>_{coord,spec}.json`.
+- Observability: per-tier logs per spec to `llm_debug_logs/wes/<plan_id>/<tool>/<spec_id>_{hub,executor}.json`.
 
-### 6.2 What goes where — Coordinator vs Specialist
+### 6.2 What goes where — hub vs executor_tool
 
-A useful split-of-concerns rubric:
-
-| Concern | Coordinator | Specialist |
+| Concern | `execution_hub_<tool>` | `executor_tool_<tool>` |
 |---|---|---|
-| Reads the narrative flavor | ✅ | Sees only the distilled spec |
+| Reads the narrative / threads | ✅ (live query) | Sees only the distilled spec |
 | Decides how many items to generate | ✅ | One spec → one output |
-| Writes prose / name hints | ✅ | Fills schema fields |
+| Writes prose / name hints / flavor | ✅ | Fills schema fields |
 | Chooses cross-references | ✅ | Honors references given |
 | Enforces tier / biome constraints | — | ✅ (via schema + validator) |
 | Produces game-valid JSON | — | ✅ |
 | Backend | Local (Ollama) | Local (Ollama) |
 | Frequency | 1 call per plan step | N calls per plan step |
 
-The Coordinator is where the tool becomes "agentic." The Specialist is a pure transform.
+The hub is where the tool becomes "agentic." The executor_tool is a pure transform.
 
 ### 6.3 The 5 tool mini-stacks
 
-The six tools listed originally have **quests deferred**. Five are active. Each is a Coordinator + Specialist pair following §6.1.
+Five active tools; quests deferred. Each is an `execution_hub_<tool>` + `executor_tool_<tool>` pair following §6.1.
 
 Each tool is described below with: **purpose**, **input slots**, **output schema**, **cross-refs to other tools**.
 
@@ -991,7 +1060,7 @@ Until WES reaches the quest phase, the planner prompt explicitly excludes `quest
 
 ### 6.4 Generation order within a plan
 
-Dependencies are naturally ordered and enforced by Orchestrator `depends_on` + code-level topo sort:
+Dependencies are naturally ordered and enforced by `execution_planner`'s `depends_on` output + code-level topo sort:
 
 ```
 materials  ──┐
@@ -1008,34 +1077,35 @@ materials  ──┐
 
 ### 6.5 The "agentic" behavior — precisely defined
 
-The user's phrasing: *"agentic because of LLM tool calling connected to simpler LLMs."* Within each tool mini-stack, the Coordinator is the "agentic" one because:
+The user's phrasing: *"agentic because of LLM tool calling connected to simpler LLMs."* Within each mini-stack, the `execution_hub_<tool>` is the "agentic" one because:
 
-- **It sees and responds to Specialist outputs** before emitting the next spec (`adapt_after_specialist`). Classic feedback loop.
-- **It owns narrative flavor** — cross-references, naming, prose framing. The Specialist is mechanical.
-- **It can decide to produce more or fewer items than the plan step suggested** within constraints, if the beat calls for it.
+- **It sees and responds to executor_tool outputs** before emitting the next spec (`adapt_after_output`). Classic feedback loop.
+- **It owns narrative flavor** — cross-references, naming, prose framing. The executor_tool is mechanical.
+- **It can decide to produce more or fewer items than the plan step suggested** within constraints, if the narrative calls for it.
+- **It queries live** — ContentRegistry, WNS narrative store, faction state — all at call time. No pre-built envelope is handed to it.
 
-**What the Coordinator cannot do:**
-- It cannot call another tool (that's the Orchestrator's job).
-- It cannot create plan steps (Orchestrator's job).
-- It cannot query WNS or WMS directly — it only sees what the deterministic envelope-builder hands it.
+**What the hub cannot do:**
+- It cannot call another tool's hub (that's the `execution_planner`'s job via the plan).
+- It cannot create plan steps.
+- It cannot skip its executor_tool (every artifact must go through the bottom tier for schema validation).
 
-This bounds the agency: Coordinators iterate on their own Specialist's outputs within the scope of one plan step. Cross-tool coordination is always mediated by the Orchestrator and deterministic code.
+This bounds the agency: each hub iterates on its own executor_tool's outputs within the scope of one plan step. Cross-tool coordination is mediated by the `execution_planner` and deterministic code, never by direct hub-to-hub calls.
 
 ### 6.6 Where prompts live
 
 Two prompt fragment files per tool (one per tier):
 
-- `prompt_fragments_coord_<tool>.json` — Coordinator prompts (fan-out, flavor, specs)
-- `prompt_fragments_spec_<tool>.json` — Specialist prompts (spec → JSON schema)
+- `prompt_fragments_hub_<tool>.json` — hub prompts (fan-out, flavor, specs)
+- `prompt_fragments_tool_<tool>.json` — executor_tool prompts (spec → JSON schema)
 
 Follows the existing `prompt_fragments_l*.json` layout (`_meta`, `_core`, `_output`, per-context variants). Same structure greppable across the whole config directory.
 
 ### 6.7 Parallelism (future, not v1)
 
-In v1, Specialists within a single tool run sequentially so the Coordinator can adapt. Two future parallelization opportunities, both deferred:
+In v1, an executor_tool within a single hub runs sequentially so the hub can adapt between calls. Two future parallelization opportunities, both deferred:
 
-- **Parallel tools within a plan step** — if `depends_on` is empty between two plan steps of different tools, run their Coordinators in parallel.
-- **Parallel independent specs** — if the Coordinator declares "these 3 specs don't depend on each other's outputs," skip sequential feedback and batch to the Specialist in parallel.
+- **Parallel tools within a plan** — if two plan steps have no cross-dependency, run their hubs in parallel.
+- **Parallel independent specs** — if the hub declares "these 3 specs don't depend on each other's outputs," skip sequential feedback and batch them to the executor_tool in parallel.
 
 Both require infrastructure from `AsyncLLMRunner` that doesn't exist yet.
 
@@ -1140,7 +1210,9 @@ The databases remain the runtime truth. The registry is the coordination layer +
 
 ## 8. Information Flow — The Hard Problem
 
-> **Revision note (2026-04-20, v2):** The earlier draft invented a single `ContextEnvelope` dataclass with fixed 20/50/25/5 tier ratios, and framed `NarrativeThread` as a context-budget device. **Replaced.** No universal ratios (per user: *"Tune for everything. It needs to be different by each LLM. I can't really give a strong rule."*). Per-LLM-role envelopes instead, plus the shared immutable context object as a first-class cross-cutting invariant. Threads as a context notion are folded into §4.5 (emergent supersession chains), not a separate schema.
+> **Revision notes across versions.**
+> - **v2:** Dropped universal `ContextEnvelope` with 20/50/25/5 ratios; introduced per-LLM assemblers + shared immutable context as cross-cutting invariant.
+> - **v3:** **Shared immutable context deleted entirely.** Each LLM queries canonical stores live at its own call time. "Context" shrinks to two things: game awareness (static, boot-loaded) and task awareness (what this call is asked to produce). The substitute for immutability is that every LLM reads from the *same canonical stores*, so there's no telephone to play.
 
 The user's framing, preserved:
 
@@ -1148,79 +1220,104 @@ The user's framing, preserved:
 
 Every LLM call in this system is a focused transform: one input, one output. The entire system works only if each of those inputs is composed well — enough context for the call to succeed, nothing more. This section is the doc's center of gravity.
 
-### 8.1 The core principle: LLMs as composable transforms
+### 8.1 The core principle: LLMs as composable transforms reading from stores
 
 Paraphrasing the user's framing:
 
 > **"Usually for most LLMs it will be one input for one LLM, that output is then more useful and may or may not be used multiple times."**
 
-This is a **functional pipeline** model, not an agent loop. It matches the DSPy / Outlines / Mirascope school of thought: treat prompts as compiled-ish functions, their outputs as typed artifacts, and build compound behavior by composing them. The theoretical frame (Berkeley BAIR): this is a **compound AI system**, not an agent.
+And, on how context flows:
+
+> **"It would be as it is. So we query in real time, just nicer and easier that way. But that's why we will store the narrative interpretations though. So the WNS high level will see only the narrative interpretations of events and use those."**
+
+Two ideas, combined:
+
+1. **LLMs are functions.** One input → one output → reusable artifact. Matches DSPy / Outlines / Mirascope. (Berkeley BAIR frames the whole thing as a **compound AI system**.)
+2. **The "reusable artifact" lives in a canonical store.** Later LLMs read from that store directly — not from a propagated snapshot, not from paraphrased prose, not from a frozen dataclass. **Live queries over canonical stores.**
 
 Three implications:
 
 1. **Each LLM has one job.** Not "decide whether to do X or Y." One transform. Routing decisions are code.
-2. **Outputs are artifacts, not conversations.** A WMS L6 summary is a structured event that six different downstream callers can read. Don't discard it after one use.
-3. **Inputs are assembled per-call, per-role, from artifacts.** No universal envelope, no LLM shared memory.
+2. **Outputs are stored, not paraphrased.** A WMS L6 summary is a row in SQLite that six different downstream callers can query. A NL3 regional narrative is a row in SQLite that the NL5 summarizer reads when it fires. No intermediate prose-paraphrase hop.
+3. **Inputs are assembled per-call, per-role, via live queries.** No universal envelope. No LLM-shared memory. No snapshot propagation.
 
-### 8.2 The shape of the problem
+### 8.2 Why this replaces the "shared immutable context" idea
+
+v2 had a `WESSharedContext` dataclass frozen at plan start, propagated through every tier. The goal was to mitigate **game of telephone** in a hierarchical LLM stack (by the time the bottom tier runs, the original intent has been paraphrased through the middle tiers and details are lost).
+
+v3 solves the same problem a different way: **each tier reads from the same canonical stores**, so there is no telephone.
+
+- The `execution_planner` reads the narrative summary from `WorldNarrativeSystem.get_latest_summary()`.
+- The `execution_hub_<tool>` reads the **same** `get_latest_summary()` at its own call time, plus tool-relevant registry slices.
+- The `executor_tool_<tool>` needs less — it sees only the ExecutorSpec prepared by the hub.
+
+If the narrative shifts mid-plan (because new WMS events accumulated and a new embroidery-layer summary landed), downstream tiers see the newer state. Per user: *"It would be as it is"* — we accept that flexibility, and we accept the small risk that a late-running spec might diverge slightly from the plan that justified it. In practice the shift would be minor (narrative layers fire rarely), and the hub's registry-check step would catch any actual cross-reference breakage.
+
+### 8.3 The two small things that DO propagate
+
+Per user: *"There really isn't a shared immutable context besides overall game awareness and task awareness."*
+
+Two tiny blocks travel with every prompt:
+
+- **Game awareness** — static canonical constants loaded from JSON at boot:
+  - Tier multipliers (T1=1.0x .. T4=8.0x)
+  - Biome taxonomy
+  - Domain taxonomy
+  - Known faction_ids
+  - `ADDRESS_TAG_PREFIXES` (for tag validation)
+  - Narrative tag vocabulary
+- **Task awareness** — what this call is asked to do:
+  - Role (e.g., "you are an execution_hub_hostiles")
+  - Output schema pointer
+  - Hard constraints for this invocation
+
+Both blocks are small (~500 tokens combined), stable across a session, and cheap to embed. Neither is a "context object" in the dataclass sense — they are small prompt fragments assembled from config plus per-call specifics.
+
+### 8.4 The shape of the problem
 
 Every LLM call has a budget:
 - **Token budget** — local 7-13B models handle 4-8k context comfortably; degrade past ~8k. Cloud models handle 200k but at cost and latency.
 - **Cognitive budget** — quality drops on dense, unstructured context regardless of max tokens. Relevant tokens > total tokens.
 - **Coherence budget** — more context means more chances for self-contradiction, more places to hallucinate a cross-reference.
 
-Meanwhile, the data available in this system is enormous:
-- WMS accumulates thousands of L1 events per play session.
-- ~33 WMS evaluators produce L2 narrations continuously.
-- WNS mirrors this with NL1-NL7 accumulating in parallel.
+Meanwhile, the data available is enormous:
+- WMS accumulates thousands of L1 events per play session (becomes LLM-narrated once tuned model lands).
+- WNS mirrors this in parallel with narrative-specific extraction and weaving.
 - Faction affinity, geographic registry, entity registry — hundreds of rows.
 - Content Registry grows with every generated entity.
 
 **Composing the right ~2-4k tokens per call is the entire game.**
 
-### 8.3 Per-LLM context envelopes (no universal ratios)
+### 8.5 Per-LLM context assemblers (no universal ratios)
 
-There is no `ContextEnvelope` dataclass with fixed tier ratios. Instead, each LLM *role* has its own `ContextAssembler` class that builds the prompt from first principles for that role.
+There is no `ContextEnvelope` dataclass with fixed tier ratios. Each LLM role has its own `ContextAssembler` that composes its prompt from live queries. "Tune for everything" is the rule — assemblers iterate independently.
 
 Current assemblers (one per LLM role):
 
-| Assembler | Feeds | Tuned for |
+| Assembler | Feeds | Queries (live) |
 |---|---|---|
-| `WNSLayerNAssembler` (one per narrative layer) | WNS NL3-NL7 summarizers | Aggregation-unit narrative events + upstream facts + prior same-unit summary |
-| `WESOrchestratorAssembler` | WES Tier 1 | Latest NL7 summary + registry counts + taxonomies + shared immutable context |
-| `WESCoordinatorAssembler` (one per tool) | WES Tier 2 | Plan step + tool-specific registry slice + shared immutable context |
-| `WESSpecialistAssembler` (one per tool) | WES Tier 3 | Single SpecialistSpec + schema pointer + shared immutable context |
+| `WNSExtractionAssembler` (low layers) | NL2 extraction LLMs | NL1 events in scope + prior threads in same address |
+| `WNSWeavingAssembler` (mid layers) | NL3-NL5 weaving LLMs | Same-layer prior summary (supersession chain) + lower-layer events in the aggregation unit |
+| `WNSEmbroideryAssembler` (top) | NL6 embroidery LLM | NL5 nation summaries + selected NL4 + current ongoing conditions from WMS facade |
+| `ExecutionPlannerAssembler` | WES Tier 1 | `get_latest_summary()` + `ContentRegistry.counts()` + game-awareness |
+| `ExecutionHubAssembler_<tool>` (one per tool) | WES Tier 2 | Plan step (handed in) + tool-specific registry slice + narrative threads in focal address |
+| `ExecutorToolAssembler_<tool>` (one per tool) | WES Tier 3 | Single ExecutorSpec + schema |
+| `NPCDialogueAssembler` (existing) | NPCAgentSystem | NPC memory + faction context + latest world summary |
 
-Each assembler is free to pick its own token budget target, its own tier priorities, its own inclusion rules. **"Tune for everything"** is a real engineering constraint — we expect to iterate on each assembler independently as we see what each role actually needs.
+Each assembler is free to pick its own token budget target, its own priorities, its own inclusion rules. Assemblers share NO universal structure beyond "embed the small game-awareness + task-awareness blocks from §8.3."
 
-The only universal rule: **every assembler emits a `<shared_context>` block with identical content** (the immutable context object, §5.5). This is the game-of-telephone mitigation.
-
-### 8.4 The shared immutable context object — propagated, never rewritten
-
-Re-covered from §5.5 because it belongs here too: every LLM call at every tier receives the same immutable snapshot of:
-
-- The narrative summary that justified this run (headline verbatim, not paraphrased)
-- Geographic address(es) in scope
-- Relevant emergent threads (from NL supersession chains)
-- Tier definitions, biome taxonomy, domain taxonomy, faction registry
-- Player profile snapshot (stub until Part 3)
-
-**Why this matters:** in a three-tier stack, by the time a Specialist runs, the Orchestrator's intent has been paraphrased through the Coordinator. The Specialist is generating JSON from a third-hand summary — classic game-of-telephone (Cognition AI: *Don't Build Multi-Agents*). The shared immutable context is the canonical source of truth alongside every tier-specific prompt. The Specialist sees the same narrative headline the Orchestrator saw.
-
-This is the single most important design choice across the whole system. Retrofitting it later means rewriting every prompt template.
-
-### 8.5 Pre-compression via WMS + WNS layers
+### 8.6 Pre-compression via WMS + WNS layers
 
 Both pipelines are context-compression pyramids:
 
-- **WMS**: L1 events (thousands) → L2 narrations (~100) → L3-L7 summaries (tens). By the time WES reads, it's seeing a small set of pre-compressed artifacts.
-- **WNS**: NL1 narrative inputs (many) → NL2 local color (some) → NL3-NL7 aggregated narrative (few).
+- **WMS**: raw events (thousands) → layer narrations (fewer at each step) → world-level summary (one).
+- **WNS**: narrative-worthy events → thread fragments (extraction) → regional/national narrative (weaving) → world narrative (embroidery).
 
-This means **WES context assembly never walks raw events**. It reads the top of the pyramid. The bulk of the compression work already happened in layers below — and those layers were each one focused LLM call, exactly the one-input-one-output principle applied recursively.
+This means **later LLMs never walk raw events**. They read from the top of their pyramid. Each layer's LLM call was already one focused transform — the one-input-one-output principle applied recursively. By the time WES reads the WNS embroidery output, thousands of underlying events have been compressed through multiple LLM-driven passes.
 
-This is also why WNS needs to *be* a parallel pipeline, not a single call. A single-call WNS would have to compress thousands of events in one prompt. A layered WNS compresses incrementally at every address level, and each layer's output is a reusable artifact multiple upstream layers can draw from.
+This is why WNS must *be* a pipeline, not a single call. A single-call WNS would have to compress thousands of events in one prompt. A layered WNS compresses incrementally, producing reusable artifacts at each level that higher layers query live.
 
-### 8.6 NPC mention tracking — grounding without event creation
+### 8.7 NPC mention tracking — grounding without event creation
 
 Per §4.4, NPC dialogue doesn't create canonical events. But NPC mentions *do* flow into NL1 as grounding inputs, and eventually bubble into regional narratives if they recur.
 
@@ -1228,12 +1325,12 @@ Information-flow mechanics:
 
 1. After each NPC exchange, a **deterministic mention extractor** (no LLM call) runs over dialogue text — keyword patterns, named-entity hints, significance heuristics.
 2. Extracted mentions become NL1 events with the NPC's locality address.
-3. NL2 consolidators see mentions alongside WMS-derived narrations. Only mentions that recur (same entity mentioned by multiple NPCs in the same region) gain weight.
-4. Single-NPC hallucinations fade via time-decay on NL1 retention.
+3. The NL2 extraction layer sees mentions alongside WMS-derived narrations. Only mentions that recur (same entity mentioned by multiple NPCs in the same region) gain enough weight to be extracted into a thread fragment.
+4. Single-NPC hallucinations never get extracted. They stay as isolated NL1 entries, archived forever but ignored by weaving layers.
 
-This gives NPCs a path to seed future narrative without letting any one NPC control the narrative. The aggregation logic is the filter.
+This gives NPCs a path to seed future narrative without letting any one NPC control it. The extraction layer's pattern-recognition (and its own LLM judgment) is the filter.
 
-### 8.7 Distance decay (narrative address system)
+### 8.8 Distance decay (narrative address system)
 
 Narrative address tags (§4.2) enable geographic filtering for local consumers:
 
@@ -1248,13 +1345,13 @@ Event occurs at (region_R, locality_L)
 
 This matters for:
 - **NPC dialogue assembler** (existing, in `NPCAgentSystem`) — distant events should not appear as casual NPC knowledge.
-- **Future WES localized runs** — if WES generates content tied to a specific region, the Coordinator's context should weight same-region narrative state more heavily than world-level.
+- **Future WES localized runs** — if WES generates content tied to a specific region, the hub's live queries should weight same-region narrative state more heavily than world-level.
 
 Implementation: the `GeographicRegistry` already computes parent-child relationships. A `NarrativeDistanceFilter` utility class on top of it is small work; the harder piece is deciding the concrete decay curve per consumer, which is playtest-tuned.
 
 Out of scope for WNS v1 (world-scope only). In scope when WES starts producing localized content.
 
-### 8.8 Context poisoning — mitigations across the whole stack
+### 8.9 Context poisoning — mitigations across the whole stack
 
 A single bad LLM output anywhere in WMS or WNS can pollute downstream. Mitigations:
 
@@ -1266,38 +1363,40 @@ A single bad LLM output anywhere in WMS or WNS can pollute downstream. Mitigatio
 **New in WNS (mirrored):**
 - Narrative address tags (`thread:`, `arc:`, `witness:`) follow the same immutability rule.
 - NL-layer LLM calls strip address tags before the call, re-attach after.
-- NL layers inherit the content-tag-vocabulary rule: NL summarizers pick from a known narrative-tag taxonomy, cannot invent.
+- NL summarizers pick content tags from a known narrative-tag taxonomy, cannot invent.
 
 **New in WES:**
 - No LLM-to-LLM direct calls, so no tier-to-tier pollution vector.
-- Shared immutable context object = canonical source of truth, never rewritten.
-- Every Specialist output goes through schema validation + registry cross-reference check before being staged.
+- Each tier queries canonical stores live — no stale context to pollute a downstream call.
+- Every `executor_tool` output goes through schema validation + registry cross-reference check before being staged.
 - Observability: full prompt+response logs per tier per spec. "Why did this happen?" is answerable by reading the logs.
 
-### 8.9 Where context actually comes from — concrete sources
+### 8.10 Where context actually comes from — concrete sources
 
-| Source | API | Consumed by |
+| Source | API | Queried by (live, at call time) |
 |---|---|---|
-| `WorldMemorySystem.get_world_summary()` | facade (shipped) | WNS NL-assemblers, WES Orchestrator |
-| `LayerStore.query_by_tags(layer=N, ...)` | existing | WNS NL-assemblers (WMS layer N narrations as input) |
-| `WorldNarrativeSystem.get_latest_summary()` | **NEW** (§4.7) | WES Orchestrator assembler |
-| `WNLayerStore.query_by_tags(layer=N, ...)` | **NEW** (§4.10, mirrors WMS) | WNS NL-assemblers (prior same-unit summaries), WES Coordinator assemblers (regional flavor) |
-| `FactionSystem.stats` / `get_npc_profile()` | existing | WNS NL assemblers, WES Coordinators |
+| `WorldMemorySystem.get_world_summary()` | facade (shipped) | WNS assemblers, `execution_planner` |
+| `LayerStore.query_by_tags(layer=N, ...)` | existing | WNS assemblers (WMS layer N narrations as input) |
+| `WorldNarrativeSystem.get_latest_summary()` | **NEW** (§4.7) | `execution_planner` assembler |
+| `WorldNarrativeSystem.query_threads(address, ...)` | **NEW** (§4.5) | `execution_hub_<tool>` assemblers (flavor in focal address) |
+| `NLLayerStore.query_by_tags(layer=N, ...)` | **NEW** (§4.10) | WNS assemblers (prior same-unit summaries) |
+| `FactionSystem.stats` / `get_npc_profile()` | existing | WNS assemblers, `execution_hub_<tool>` |
 | `GeographicRegistry` | existing singleton | All (address resolution, name humanization) |
-| `EntityRegistry` | existing singleton | WES Coordinators (what NPCs/enemies exist) |
-| `StatTracker.get_summary()` | existing | `titles` Coordinator (unlock hints) |
-| `ContentRegistry` | **NEW** (§7) | WES Orchestrator, Coordinators, Specialists (anti-orphan, diversity) |
-| NPC mention log | **NEW** (§4.4, §8.6) | NL1 input source |
+| `EntityRegistry` | existing singleton | `execution_hub_<tool>` (what NPCs/enemies exist) |
+| `StatTracker.get_summary()` | existing | `execution_hub_titles` (unlock hints) |
+| `ContentRegistry` | **NEW** (§7) | `execution_planner`, `execution_hub_<tool>`, verify step (anti-orphan, diversity) |
+| NPC mention log | **NEW** (§4.4, §8.7) | NL1 input source |
 
 Everything shipped is battle-tested. Everything NEW is green-field for this phase.
 
-### 8.10 Observability — non-negotiable
+### 8.11 Observability — non-negotiable
 
-From Agent B's research: hierarchical LLM stacks are debugging nightmares. Without tracing, "why did this hostile come out as a wolf variant again?" is unanswerable.
+Hierarchical LLM stacks are debugging nightmares without tracing. "Why did this hostile come out as a wolf variant again?" must be answerable.
 
-Every LLM call in the system logs:
+Every LLM call logs:
 - Assembled prompt (system + user)
-- Shared immutable context snapshot
+- Game-awareness + task-awareness blocks that were embedded
+- The queries that were run (store + filter + result count)
 - Raw response
 - Parsed output
 - Token usage + latency
@@ -1309,15 +1408,15 @@ llm_debug_logs/
   ├─ wms/                          # Existing
   │  └─ <timestamp>_<layer>.json
   ├─ wns/                          # New
-  │  ├─ nl3/<timestamp>_<region>.json
-  │  ├─ nl4/<timestamp>_<province>.json
+  │  ├─ nl2/<timestamp>_<address>.json    # extraction
+  │  ├─ nl3/<timestamp>_<address>.json    # weaving (local)
   │  ├─ ...
-  │  └─ nl7/<timestamp>.json
+  │  └─ nl6/<timestamp>.json              # embroidery
   └─ wes/                          # New
      └─ <plan_id>/
-        ├─ orchestrator.json
-        ├─ coord_<tool>_<step>.json
-        └─ spec_<tool>_<step>_<spec>.json
+        ├─ execution_planner.json
+        ├─ hub_<tool>_<step>.json
+        └─ tool_<tool>_<step>_<spec>.json
 ```
 
 This makes every generation event root-causeable by reading files on disk. No special UI required; grep and jq suffice. Observability tools like LangSmith or Langfuse can be layered on later if the log volume warrants.
@@ -1326,35 +1425,39 @@ This makes every generation event root-causeable by reading files on disk. No sp
 
 ## 9. Open Questions & Decisions Needed
 
-> **Revision note (2026-04-20, v2):** Several questions from v1 were resolved by user feedback. Resolved items kept as "[RESOLVED]" with the decision for traceability; active questions re-numbered. New questions raised by the restructure are appended.
+> **Revision notes across versions.**
+> - **v2:** First round of resolved items captured.
+> - **v3:** Four more questions resolved (NL2 LLM-everywhere, live queries, threads-forever, tier names). Q1 reframed around extraction/weaving.
 
 ### Active questions
 
-#### Q1. NL layer trigger configuration
+#### Q1. NL layer trigger configuration + extraction granularity
 
-**Problem**: WNS is a parallel WMS pipeline with 7 layers. Each layer needs a `should_run()` trigger: interval-based for NL2 (mirrors WMS L3's 15-event interval), weighted buckets per aggregation unit for NL3+. The concrete thresholds are open.
+**Problem**: WNS layers must fire — but at what granularity?
 
-**Options**:
-- **A**: Copy WMS thresholds exactly (interval=15, weighted=50 at NL3, escalating to 200 at NL7). Pro: consistent. Con: WMS thresholds were tuned for factual aggregation, not narrative pacing.
-- **B**: Start with WMS values × 2 for all NL layers (narrative is "slower" than facts). Measure in playtest.
-- **C**: Hybrid — copy for NL2-NL5, double for NL6-NL7 (where narrative pacing matters most to player experience).
+User's framing:
+> *"The Narrative firing might honestly be something more akin to narrative extraction. Like given Y event what narrative thread exists? Then that goes up the WNS so a full narrative can be woven."*
+> *"Depends on how many layers for the NL, but likely something like every X amount of events by layer. Less often for sure."*
 
-**Lean**: B. Easier to tune down than up — over-production is worse than under-production for narrative coherence.
+So: fewer fires than WMS, and the bottom NL layer isn't an aggregation — it's an extraction. Two independent sub-questions:
 
-#### Q2. NL2 template or LLM?
+**Q1a. Extraction granularity at NL2.** When does the extraction layer fire — per single NL1 event? per small cluster? per fixed interval?
+- Per-event: every narratively-interesting event triggers an extraction LLM call. Highest resolution, highest volume.
+- Per-cluster: extraction waits for N NL1 events in a locality, then extracts what thread(s) they form together. Lower volume, may miss fast single-event threads.
+- Per-interval: extraction runs on a timer regardless of event count. Predictable, may miss bursts.
 
-**Problem**: WMS L2 evaluators are template-based (template narrations, no LLM). Does NL2 follow that, or does NL2 need LLM voice because "narratives need narrative voice"?
+**Lean**: per-cluster at first (N≈3-5 events per locality), with a cluster-timeout so an event that's alone for a while still gets extracted. Tune in playtest.
 
-**Options**:
-- **A**: Template at NL2 (mirror WMS). Narratives start sounding "real" at NL3+. Pro: cheap, deterministic, fast. Con: NL3+ gets flat inputs.
-- **B**: LLM at NL2 — every locality narration is a focused LLM call. Pro: narrative voice from the ground up. Con: high-volume local LLM calls (thousands per session), even on Ollama this is heavy.
-- **C**: Hybrid — NL2 is template by default but upgrades to LLM when a locality has crossed a "significance" floor (enough going on that voice matters).
+**Q1b. Weaving cadence at middle/upper layers.** How much narrative aggregation before NL3-NL6 fires?
+- Direct copy of WMS thresholds = too frequent for narrative.
+- WMS thresholds × 2 = reasonable first guess.
+- "Every X amount of events by layer" (user's phrasing) = match WMS's event-count + weighted-bucket pattern but scaled up.
 
-**Lean**: C. Default template keeps volume manageable; LLM voice kicks in only for places the player actually spends time.
+**Lean**: start with WMS values × 2 for each NL weaving layer. Every layer logs its fire rate so we can tune in playtest.
 
 #### Q3. BalanceValidator — stub, build, or skip?
 
-**Problem**: Same as v1. CLAUDE.md flags BalanceValidator as designed-not-built. WES Specialist outputs need balance checking.
+**Problem**: Same as v1. CLAUDE.md flags BalanceValidator as designed-not-built. `executor_tool` outputs need balance checking.
 
 **Options**:
 - **A**: Minimal stub (~50 LOC) reading tier multipliers from `Definitions.JSON/stats-calculations.JSON`, rejecting outliers.
@@ -1372,7 +1475,7 @@ This makes every generation event root-causeable by reading files on disk. No sp
 - **B**: Registry-resident only — databases learn to union live JSON with registry rows.
 - **C**: Both — registry is authoritative, JSON written as backup / export.
 
-**Lean**: B. Avoids touching sacred directories; cleaner save/load; registry is already the authority for cross-references. Writing JSON files adds latency and file churn for no benefit.
+**Lean**: B. Avoids touching sacred directories; cleaner save/load; registry is already the authority for cross-references.
 
 #### Q5. Narrative tag taxonomy — new file or extension of existing?
 
@@ -1387,7 +1490,7 @@ This makes every generation event root-causeable by reading files on disk. No sp
 
 #### Q6. SQLite database — shared with WMS or separate?
 
-**Problem**: WNS needs tables for NL1-NL7 events + tag junctions. Co-locate in the WMS SQLite file (`world_memory.db`) or separate (`world_narrative.db`)?
+**Problem**: WNS needs tables for narrative layer events + tag junctions. Co-locate in the WMS SQLite file (`world_memory.db`) or separate (`world_narrative.db`)?
 
 **Options**:
 - **A**: Shared database. Pro: atomic save/load, single connection, easy cross-table queries. Con: file grows.
@@ -1395,207 +1498,189 @@ This makes every generation event root-causeable by reading files on disk. No sp
 
 **Lean**: A. The save system already handles the WMS SQLite file. Adding narrative tables to it is zero extra save/load work.
 
-#### Q7. Shared context object — snapshot or live?
-
-**Problem**: The shared immutable context object propagates through every tier (§5.5). If a WES plan runs for several minutes and world state shifts mid-run, should a later Specialist call see the frozen snapshot or a refreshed one?
-
-**Options**:
-- **A**: Snapshotted at plan start, immutable for the whole plan. Pro: coherence. Con: stale if the world moved.
-- **B**: Refreshed before each tier transition. Pro: current. Con: game-of-telephone risk partially returns.
-- **C**: Snapshot for intent invariants (narrative, thread IDs); refresh for fact invariants (registry counts).
-
-**Lean**: A. The plan was justified by a specific NL7 summary; executing it against a newer summary risks incoherence. If the world shifts significantly mid-run, the next NL7 fire will produce a new plan.
-
 #### Q8. Player Intelligence (Part 3) — dependency or defer?
 
-Same as v1. Part 3 (player profile) isn't built. WNS/WES would benefit.
+Part 3 (player profile) isn't built. WNS/WES would benefit.
 
-**Lean**: B — ship WNS/WES with a no-op profile slot in the shared context; fill it when Part 3 arrives.
+**Lean**: B — ship WNS/WES without it; `execution_planner` and hubs run without player profile; add it later when Part 3 arrives.
 
-#### Q9. When do Specialists run in parallel?
+#### Q9. When do executor_tool calls within a hub run in parallel?
 
-**Problem**: §6.7 notes parallelism is deferred. Real question: when should the Coordinator declare "these specs are independent" vs. "I need to see each output before emitting the next"?
+**Problem**: §6.7 notes parallelism is deferred. Real question: when should a hub declare "these specs are independent" vs. "I need to see each output before emitting the next"?
 
 **Options**:
 - **A**: Always sequential in v1.
-- **B**: Parallel when Coordinator flags `independent=true` on a batch.
+- **B**: Parallel when the hub flags `independent=true` on a batch.
 - **C**: Auto-parallelize any spec that doesn't reference a prior spec's output.
 
 **Lean**: A in v1, B in v2. C requires static analysis of spec references — more infrastructure than we want to build early.
-
-#### Q10. Narrative thread retention — how long before dormant beats get pruned?
-
-**Problem**: Threads emerge via supersession chains (§4.5). Old threads whose pattern stops recurring will stop being "touched." When do they prune from active context?
-
-**Options**:
-- **A**: Time-based — thread is dormant if not touched for N game-days, pruned after M days.
-- **B**: Count-based — thread needs at least K mentions per N summaries to stay active.
-- **C**: Never prune — dormant threads stay queryable forever (save file grows).
-
-**Lean**: A. Simple, predictable. Defaults to something like 30 game-days dormant / 180 game-days pruned; tune in playtest.
 
 ---
 
 ### Resolved (decision captured, no longer blocking)
 
-- **[RESOLVED] Backend selection per LLM call** — Cloud (Claude) only for WES Orchestrator and possibly WNS NL7. Everything else local (Ollama). Routing via `backend-config.json` task types; no per-call overrides in v1.
-- **[RESOLVED] Unified async runner** — Yes. Build `AsyncLLMRunner` for WES; migrate NPC dialogue to it; leave `llm_item_generator` alone until it needs touching.
-- **[RESOLVED] Thread detection seeded vs. emergent** — Emergent, via supersession chains in WNS layers. No explicit `NarrativeThread` schema in v1. Retrospective thread detector can be a dev tool.
-- **[RESOLVED] Rollback semantics** — Hard rollback (all-or-nothing per plan) in v1. Soft rollback / partial commit is a future optimization.
-- **[RESOLVED] LLM verifier / evaluator** — None. Verification is deterministic code (schema + cross-ref + balance stub) plus observability logging. Per user: *"a robust architecture with some smart detection and calls is enough."*
-- **[RESOLVED] WES → WNS clarification loop** — Dropped. Narrative leads, execution serves. If a WNS summary is under-specified for execution, Orchestrator abandons. The next NL7 fire produces a new summary.
-- **[RESOLVED] Universal ContextEnvelope with fixed tier ratios** — Dropped. Per-LLM-role assemblers with individual tuning. Only universal element: the shared immutable context block.
+- **[RESOLVED v2] Backend selection per LLM call** — Cloud (Claude) only for `execution_planner` and possibly the WNS top layer. Everything else local (Ollama). Per user: *"Ideally none"* — cloud is fallback, not default. Routing via `backend-config.json` task types.
+- **[RESOLVED v2] Unified async runner** — Yes. Build `AsyncLLMRunner` for WES; migrate NPC dialogue to it; leave `llm_item_generator` alone until it needs touching.
+- **[RESOLVED v2] Rollback semantics** — Hard rollback (all-or-nothing per plan) in v1.
+- **[RESOLVED v2] LLM verifier / evaluator** — None. Verification is deterministic code plus observability logging. Per user: *"a robust architecture with some smart detection and calls is enough."*
+- **[RESOLVED v2] WES → WNS clarification loop** — Dropped. Narrative leads, execution serves. If a narrative summary is under-specified, the `execution_planner` abandons. The next narrative update produces a new summary.
+- **[RESOLVED v2] Universal ContextEnvelope with fixed tier ratios** — Dropped. Per-LLM-role assemblers with individual tuning.
+- **[RESOLVED v3] NL2 template vs LLM** → **LLM at every layer.** No template-only NL tiers. Assume WMS also moves to LLM-at-every-layer once the tuned model lands. For offline dev, MockBackend is the fallback at the backend level, not at the layer level.
+- **[RESOLVED v3] Thread retention** → **Forever, archived.** No time-based pruning. Threads remain queryable indefinitely. Context budget manages inclusion, not retention — same model as WMS events.
+- **[RESOLVED v3] Threading — emergent schema vs first-class** → **First-class output of NL2 extraction layer.** Not an explicit `NarrativeThread` dataclass table, but thread fragments are the primary artifact extraction produces, address- and tag-tagged, with `parent_thread_id` forming the thread chain.
+- **[RESOLVED v3] Shared context — snapshot vs live** → **Live queries.** No frozen context propagates through tiers. Each LLM queries canonical stores at its own call time. Two tiny things travel with every prompt: game awareness (static constants) and task awareness (what to produce). Per user: *"we query in real time, just nicer and easier that way."*
+- **[RESOLVED v3] Tier naming** → `execution_planner` → `execution_hub_<tool>` → `executor_tool_<tool>`. Published pattern names (Orchestrator-Workers, etc.) retained as citations.
 
 ---
 
 ## 10. Phased Implementation Roadmap
 
-> **Revision note (2026-04-20, v2):** v1 roadmap assumed WNS was a single LLM call. **Replaced.** WNS is now a parallel 7-layer pipeline; the roadmap reflects that scope. Tools are Coordinator+Specialist pairs. Thread schema phase is dropped (threads are emergent). Self-critique phase is dropped (no LLM verifier per §9.RESOLVED). New observability phase added (per Agent B research).
+> **Revision notes across versions.**
+> - **v2:** 7→10 phase expansion to reflect WNS-as-pipeline scope.
+> - **v3:** Template-NL2 step removed (LLM at every layer). Tier names renamed. `WESSharedContext` removed (live queries instead). NL layer count loosened from 7 to "extraction + weaving + embroidery, ~6 starting."
 
-Each phase produces a shippable increment. No phase requires the next phase to provide value. Estimated effort is engineering-time, not calendar-time. The total scope is larger than v1 — WNS alone is most of P1+P2, not a one-phase item.
+Each phase produces a shippable increment. No phase requires the next phase to provide value. The total scope is larger than a single-call WNS would have been — narrative extraction + weaving + embroidery is a real pipeline.
 
 ### P0 — Shared Infrastructure
 
 Plumbing. Every later phase needs it.
 
 - **P0.1** `AsyncLLMRunner` — unified background-thread executor with dependency-ordered step execution. Extract from `llm_item_generator.generate_async` into `world_system/living_world/async_runner.py`.
-- **P0.2** `WESSharedContext` dataclass + builder (§5.5). Frozen snapshot pattern.
-- **P0.3** `ContextAssemblerBase` — framework class for per-LLM-role assemblers (§8.3). No universal ratios; subclasses own their logic. Shared concern: the `<shared_context>` block gets formatted identically everywhere.
+- **P0.2** Game-awareness + task-awareness prompt blocks — small helper that emits the two tiny context blocks described in §8.3. Used by every assembler.
+- **P0.3** `ContextAssemblerBase` — framework class for per-LLM-role assemblers. Subclasses own their query logic; base provides the two awareness blocks and the logging hook.
 - **P0.4** NPC dialogue async migration — move synchronous `_generate_npc_opening` onto the new runner. Acceptance test for P0.1.
 - **P0.5** L7 subscription hook — `Layer7Manager.register_world_summary_callback()` for WMS→WNS notification.
 
-Exit criteria: NPC dialogue no longer blocks the UI; ≥5 new passing tests covering the runner + shared context + assembler base.
+Exit criteria: NPC dialogue no longer blocks the UI; ≥5 new passing tests covering the runner + assembler base.
 
 ---
 
-### P1 — WNS Foundation (NL1, NL2, NL3)
+### P1 — WNS Foundation (NL1 capture + NL2 extraction)
 
-The bottom of the narrative pipeline. NL1 ingestion, NL2 template consolidation, NL3 first real LLM narrations.
+The bottom of the narrative pipeline: ingesting events into NL1, and producing the first thread fragments via LLM extraction at NL2. **Every LLM layer in WNS is real — no template tier.**
 
 - **P1.1** Narrative tag taxonomy — new `narrative-tag-definitions.JSON` + extended `TagLibrary`. Includes narrative address prefixes (`thread:`, `arc:`, `witness:`) appended to `ADDRESS_TAG_PREFIXES`.
-- **P1.2** NL layer storage — SQLite tables `nl1_events` through `nl7_events` + tag junctions. Co-located in the WMS database (per §9.Q6).
+- **P1.2** NL layer storage — SQLite tables `nl1_events` through `nl6_events` (starting shape — count TBD per §4.3) + tag junctions. Co-located in the WMS database.
 - **P1.3** NL1 ingestion pipeline:
-  - Subscribe to WMS L2 events tagged "narratively interesting"
+  - Subscribe to WMS L2+ events tagged "narratively interesting"
   - Subscribe to player milestone events
   - Deterministic NPC-mention extractor (no LLM) ingests dialogue output
-- **P1.4** NL2 template consolidator — mirrors WMS L2 pattern (template-only). Interval-based trigger (start with 15 NL1 events per locality).
-- **P1.5** NL3 LLM consolidator — first narrative LLM call. Prompt fragments in `narrative_fragments_nl3.json`. BackendManager task: `"wns_layer3"`. Template fallback mandatory.
-- **P1.6** `NLTriggerManager` — parallel to `TriggerManager`. Weighted buckets per aggregation unit.
+- **P1.4** NL2 extraction LLM — *given a cluster of NL1 events, what thread does it create/extend?* Output: thread fragments with address tags, content tags, `parent_thread_id` (nullable). Prompt fragments in `narrative_fragments_nl2.json`. BackendManager task: `"wns_layer2"`. Per-cluster trigger (~3-5 events per locality, with cluster-timeout).
+- **P1.5** `NLTriggerManager` — parallel to `TriggerManager`. Interval/cluster triggers for NL2, weighted buckets for higher layers.
+- **P1.6** `WorldNarrativeSystem` facade (parallel to `WorldMemorySystem`) with initial methods: `initialize()`, `get_instance()`, `query_threads(address)`.
 
-Exit criteria: a play session produces at least one valid NL3 narrative for an active region. NL1/NL2 fill up observably. Template fallback works when Ollama is offline.
-
----
-
-### P2 — WNS Upper Layers (NL4-NL7) + WorldNarrativeSummary
-
-The rest of the narrative pipeline up to the world-level artifact WES consumes.
-
-- **P2.1** NL4 summarizer — weighted bucket per province, LLM call, address-tag partitioning. `narrative_fragments_nl4.json`.
-- **P2.2** NL5 summarizer — weighted bucket per region-band. `narrative_fragments_nl5.json`.
-- **P2.3** NL6 summarizer — weighted bucket per nation. `narrative_fragments_nl6.json`.
-- **P2.4** NL7 summarizer — single world bucket, world narrative summary output. `narrative_fragments_nl7.json`. Supersession logic (mirrors `_find_supersedable` from WMS L7).
-- **P2.5** `WorldNarrativeSummary` event schema (§4.7).
-- **P2.6** Publish `WORLD_NARRATIVE_SUMMARY_UPDATED` on GameEventBus when NL7 fires.
-- **P2.7** `WorldNarrativeSystem` facade (mirror of `WorldMemorySystem`) with `get_latest_summary()` for consumers.
-- **P2.8** Minimal dev UI — F-key overlay showing the latest NL7 summary. Sanity check.
-
-Exit criteria: L7 fires → NL pipeline responds → eventually NL7 fires → a new `WorldNarrativeSummary` appears in dev UI, reads plausibly, and is queryable by API.
+Exit criteria: a play session generates at least one thread fragment per active locality. Every NL2 fire writes a valid row to `nl2_events` with address + content tags. Threads are queryable by address.
 
 ---
 
-### P3 — Content Registry
+### P2 — WNS Weaving Layers (NL3-NL5)
+
+The middle of the pipeline: weaving thread fragments into local/regional/national narrative.
+
+- **P2.1** NL3 weaving LLM — per district/locality. Reads NL2 thread fragments in scope + prior NL3 for same address (supersession). Prompt fragments: `narrative_fragments_nl3.json`. Weighted trigger (start WMS threshold × 2).
+- **P2.2** NL4 weaving LLM — per region. Reads NL3 + selected NL2.
+- **P2.3** NL5 weaving LLM — per nation. Reads NL4 + selected NL3.
+- **P2.4** Address-tag immutability enforced at every layer — reuse `partition_address_and_content()` from `geographic_registry.py`.
+- **P2.5** Each layer has a template fallback for offline dev (MockBackend is fine — no layer-level template needed, just backend-level Mock).
+
+Exit criteria: a play session produces narrative state at all three scopes (local, regional, national) for areas with enough activity. Narrative reads coherently across layers (region summary references thread fragments that extraction produced).
+
+---
+
+### P3 — WNS Embroidery Layer (NL6) + WorldNarrativeSummary
+
+The top of the pipeline. The artifact WES consumes.
+
+- **P3.1** NL6 embroidery LLM — single world bucket, world narrative summary output. `narrative_fragments_nl6.json`. Supersession logic.
+- **P3.2** `WorldNarrativeSummary` event schema (§4.7).
+- **P3.3** Publish `WORLD_NARRATIVE_SUMMARY_UPDATED` on GameEventBus when NL6 fires.
+- **P3.4** `WorldNarrativeSystem.get_latest_summary()` — the method WES's `execution_planner` queries.
+- **P3.5** Minimal dev UI — F-key overlay showing the latest world-narrative summary. Sanity check for playtesters.
+
+Exit criteria: L7 fires → NL pipeline responds up through extraction + weaving → eventually NL6 fires → a new `WorldNarrativeSummary` is queryable and reads like actual story.
+
+---
+
+### P4 — Content Registry
 
 Coordination layer for generated content. No generators yet.
 
-- **P3.1** Registry SQLite tables (§7.2): per-tool tables + unified `content_xref`.
-- **P3.2** Registry API: `stage_content`, `commit`, `rollback`, `list_live`, `list_staged_by_plan`, `find_orphans`.
-- **P3.3** Integration with existing databases — `MaterialDatabase`, `EnemyDatabase`, etc. learn to union JSON-loaded content with registry-live content (option B from §Q4).
-- **P3.4** Save/load wiring — registry state persists atomically with the rest of the save.
+- **P4.1** Registry SQLite tables (§7.2): per-tool tables + unified `content_xref`.
+- **P4.2** Registry API: `stage_content`, `commit`, `rollback`, `list_live`, `list_staged_by_plan`, `find_orphans`, `counts()`.
+- **P4.3** Integration with existing databases — `MaterialDatabase`, `EnemyDatabase`, etc. learn to union JSON-loaded content with registry-live content.
+- **P4.4** Save/load wiring — registry state persists atomically with the rest of the save.
 
 Exit criteria: can manually stage a fake material, commit it, see it in `MaterialDatabase.get_instance().materials`, roll back via API.
 
 ---
 
-### P4 — WES Deterministic Shell (no LLM)
+### P5 — WES Deterministic Shell (no LLM)
 
 The whole WES pipeline except the LLM calls. Proves the plumbing before any prompt tuning.
 
-- **P4.1** `WESPlanStep` + `WESPlan` dataclasses (§5.2).
-- **P4.2** `SpecialistSpec` dataclass (§5.3).
-- **P4.3** Topological plan dispatcher — deterministic code that walks a plan and invokes tiers in order.
-- **P4.4** Staging + atomic commit/rollback flow.
-- **P4.5** Final verification pipeline (§5.7): orphan scan, duplicate scan, completeness.
-- **P4.6** Observability scaffolding — `llm_debug_logs/wes/<plan_id>/` directory structure, per-tier logging.
-- **P4.7** Stub Orchestrator + stub Coordinator + stub Specialist — produce hardcoded plans/specs/JSONs for test runs. No LLM calls yet.
+- **P5.1** `WESPlanStep` + `WESPlan` dataclasses (§5.2).
+- **P5.2** `ExecutorSpec` dataclass (§5.3).
+- **P5.3** Topological plan dispatcher — deterministic code that walks a plan and invokes tiers in order.
+- **P5.4** Staging + atomic commit/rollback flow.
+- **P5.5** Final verification pipeline (§5.6): orphan scan, duplicate scan, completeness.
+- **P5.6** Observability scaffolding — `llm_debug_logs/wes/<plan_id>/` directory structure, per-tier logging.
+- **P5.7** Stub `execution_planner` + stub `execution_hub` + stub `executor_tool` — hardcoded plans/specs/JSONs for test runs. No LLM calls yet.
 
 Exit criteria: a hardcoded stub plan with 2-3 stub tool steps runs end-to-end, stages content, commits, and the content is live in the relevant databases. Rollback also works.
 
 ---
 
-### P5 — WES Orchestrator (Tier 1 LLM)
+### P6 — WES `execution_planner` (Tier 1 LLM)
 
-Replace the stub Orchestrator with a real LLM call.
+Replace the stub planner with a real LLM call.
 
-- **P5.1** `WESOrchestratorAssembler` — per-LLM-role context assembler.
-- **P5.2** Orchestrator LLM integration — `BackendManager.generate(task="wes_orchestrator")`. Cloud backend (Claude) preferred; Ollama fallback for offline/dev.
-- **P5.3** Prompt fragments: `prompt_fragments_wes_orchestrator.json`.
-- **P5.4** Subscribe to `WORLD_NARRATIVE_SUMMARY_UPDATED`. On trigger, queue a plan-generation job.
-- **P5.5** Orchestrator template fallback — a deterministic plan generator from the summary's tags for when the backend is unavailable. Produces valid but flat plans.
+- **P6.1** `ExecutionPlannerAssembler` — queries latest world-narrative summary, registry counts, taxonomies live at call time.
+- **P6.2** Planner LLM integration — `BackendManager.generate(task="wes_execution_planner")`. Ollama default; cloud (Claude) as escalation on retry.
+- **P6.3** Prompt fragments: `prompt_fragments_wes_execution_planner.json`.
+- **P6.4** Subscribe to `WORLD_NARRATIVE_SUMMARY_UPDATED`. On trigger, queue a plan-generation job.
 
-Exit criteria: NL7 fires → Orchestrator runs → produces a valid (but still stub-executed) plan → stub tiers complete it → content appears. Plans are coherent with the summary they came from.
-
----
-
-### P6 — First Tool Mini-Stack: `materials`
-
-End-to-end LLM generation for one tool type. Proves the Coordinator+Specialist pattern.
-
-- **P6.1** `MaterialsCoordinator` — Tier 2 LLM call producing `SpecialistSpec` list. Prompt fragments: `prompt_fragments_coord_materials.json`.
-- **P6.2** `MaterialsSpecialist` — Tier 3 LLM call producing JSON material. Prompt fragments: `prompt_fragments_spec_materials.json`. Structured output via Ollama grammar if available.
-- **P6.3** BalanceValidator stub (§9.Q3) — tier multiplier range check.
-- **P6.4** Dev CLI `debug_create_material(plan_step)` — bypass Orchestrator, test Coordinator+Specialist in isolation.
-- **P6.5** Both template fallbacks — Coordinator and Specialist each have deterministic versions.
-
-Exit criteria: Orchestrator plan → materials mini-stack → valid staged material → commit → gathering the relevant node yields the new material. Real end-to-end play.
+Exit criteria: world-narrative summary updates → planner runs → produces a valid plan → stub tiers complete it → content appears in the registry. Plans are coherent with the summary they came from.
 
 ---
 
-### P7 — Tool Expansion
+### P7 — First Tool Mini-Stack: `materials`
 
-Remaining 4 tools. Each follows the P6 pattern.
+End-to-end LLM generation for one tool type. Proves the hub + executor_tool pattern.
 
-- **P7.1** `nodes` Coordinator+Specialist — cross-ref to materials. Proves the cross-reference path.
-- **P7.2** `skills` Coordinator+Specialist — compose from existing tags only (no tag invention).
-- **P7.3** `titles` Coordinator+Specialist — cross-ref to StatTracker stats + skills.
-- **P7.4** `hostiles` Coordinator+Specialist — capstone; cross-refs to materials (drops), skills (enemy skills), biomes, factions.
+- **P7.1** `execution_hub_materials` — Tier 2 LLM call producing `ExecutorSpec` list. Prompt fragments: `prompt_fragments_hub_materials.json`.
+- **P7.2** `executor_tool_materials` — Tier 3 LLM call producing JSON material. Prompt fragments: `prompt_fragments_tool_materials.json`. Structured output via Ollama grammar if available.
+- **P7.3** BalanceValidator stub (§9.Q3) — tier multiplier range check.
+- **P7.4** Dev CLI `debug_create_material(plan_step)` — bypass planner, test hub + executor_tool in isolation.
+
+Exit criteria: planner plan → materials mini-stack → valid staged material → commit → gathering the relevant node yields the new material. Real end-to-end play.
+
+---
+
+### P8 — Tool Expansion
+
+Remaining 4 tools. Each follows the P7 pattern.
+
+- **P8.1** `execution_hub_nodes` + `executor_tool_nodes` — cross-ref to materials. Proves the cross-reference path.
+- **P8.2** `execution_hub_skills` + `executor_tool_skills` — compose from existing tags only (no tag invention).
+- **P8.3** `execution_hub_titles` + `executor_tool_titles` — cross-ref to StatTracker stats + skills.
+- **P8.4** `execution_hub_hostiles` + `executor_tool_hostiles` — capstone; cross-refs to materials (drops), skills (enemy skills), biomes, factions.
 
 Exit criteria per tool: single-tool plans produce schema-valid, cross-ref-clean content. Full test: 4-step plan with all 4 new tools runs end-to-end.
 
 ---
 
-### P8 — Multi-Step Plans + Metrics
+### P9 — Multi-Step Plans + Observability
 
-Unlock the Orchestrator to produce multi-tool plans.
+Unlock the planner to produce multi-tool plans; ship the observability tools.
 
-- **P8.1** Orchestrator prompt updated to allow multi-step plans.
-- **P8.2** Topological dependency execution stress-tested (plans with 5+ steps, 2+ tools).
-- **P8.3** Cross-plan diversity — Orchestrator sees recent `CONTENT_GENERATED` history and avoids repetition.
-- **P8.4** Metrics dashboard — beats/hour, tool success %, orphan count, tier usage by backend.
+- **P9.1** Planner prompt updated to allow multi-step plans.
+- **P9.2** Topological dependency execution stress-tested (plans with 5+ steps, 2+ tools).
+- **P9.3** Cross-plan diversity — planner queries recent `CONTENT_GENERATED` history live, avoids repetition.
+- **P9.4** Metrics dashboard — plans/hour, tool success %, orphan count, tier usage by backend.
+- **P9.5** Retrospective thread detector — offline tool that clusters NL2 supersession chains into named threads for dev-side visualization.
+- **P9.6** "Why this output?" tracer — given a generated content_id, walk backwards through the logs to show the world-narrative summary, the planner plan, the hub specs, and the executor_tool prompt that produced it.
 
-Exit criteria: 10-minute play session produces ≥1 multi-tool plan that commits successfully; metrics dashboard shows non-zero values across all tracked dimensions.
-
----
-
-### P9 — Observability + Emergent Thread Detection
-
-Make the system debuggable and expose its emergent behavior.
-
-- **P9.1** Retrospective thread detector — offline tool that clusters NL supersession chains into named threads.
-- **P9.2** Thread dev UI — view active and dormant threads, trace beat→content chains.
-- **P9.3** Per-tier latency + cost reports.
-- **P9.4** "Why this output?" tracer — given a generated content_id, walk backwards through the logs to show the NL7 summary, the Orchestrator plan, the Coordinator specs, and the Specialist prompt that produced it.
-
-Exit criteria: a developer can pick any generated item in-game and get the full provenance chain from logs alone. Emergent threads are visible in the dev UI.
+Exit criteria: 10-minute play session produces ≥1 multi-tool plan that commits successfully. A developer can pick any generated item in-game and get the full provenance chain from logs alone.
 
 ---
 
@@ -1604,13 +1689,13 @@ Exit criteria: a developer can pick any generated item in-game and get the full 
 Per user direction. Re-open when P0-P9 are proven:
 
 - **Quest generation** (§6.3.6) — needs Content Registry + ≥3 active tools to have enough material to reference.
-- **Ecosystem integration** — `EcosystemAgent` exists as a query tool; extend WES Coordinators to consult `get_scarcity_report()` when planning `materials`/`nodes` generation.
-- **Player Intelligence (Part 3)** — `player_profile` slot in `WESSharedContext` stays stubbed until Part 3 lands.
-- **Distance-decayed context for localized content** — §8.7. Only needed when WES produces sub-regional content.
-- **NL2 LLM upgrade** — §9.Q2 option C. Template at NL2 by default; upgrade to LLM only when a locality crosses a significance floor.
-- **Parallel Specialist execution** — §6.7. Sequential in v1.
-- **Developer injection tool** — CLI for seeding NL7 summaries, bypassing the pipeline. Useful for playtest, not critical path.
+- **Ecosystem integration** — `EcosystemAgent` exists as a query tool; extend `execution_hub_materials` / `execution_hub_nodes` to consult `get_scarcity_report()` when planning.
+- **Player Intelligence (Part 3)** — WES and WNS run fine without it; add player-profile slot to the task-awareness block when Part 3 lands.
+- **Distance-decayed context for localized content** — §8.8. Only needed when WES produces sub-regional content.
+- **Parallel executor_tool execution within a hub** — §6.7. Sequential in v1.
+- **Developer injection tool** — CLI for seeding world-narrative summaries, bypassing the pipeline. Useful for playtest, not critical path.
 - **Replacing `llm_item_generator` with AsyncLLMRunner** — leave alone until it needs touching.
+- **WMS layers going LLM** — assumed to happen once user's tuned model lands; WNS is designed for the post-transition world so no WNS change is needed when it does.
 
 ---
 
