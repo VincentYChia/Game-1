@@ -1547,6 +1547,19 @@ class GameEngine:
         """
         agent = getattr(self, "npc_agent_system", None)
         if agent is None:
+            # Graceful degrade: agent not initialized (e.g. boot failed).
+            try:
+                from world_system.living_world.infra.graceful_degrade import log_degrade
+                log_degrade(
+                    subsystem="npc_agent",
+                    operation="generate_dialogue",
+                    failure_reason="NPCAgentSystem not initialized",
+                    fallback_taken="hardcoded cycling dialogue",
+                    severity="info",
+                    context={"npc_id": npc.npc_def.npc_id},
+                )
+            except Exception:
+                pass
             return npc.get_next_dialogue()
         try:
             result = agent.generate_dialogue(
@@ -1559,6 +1572,18 @@ class GameEngine:
                 return result.text
         except Exception as e:
             print(f"[NPCAgent] generate_dialogue failed for {npc.npc_def.npc_id}: {e}")
+            try:
+                from world_system.living_world.infra.graceful_degrade import log_degrade
+                log_degrade(
+                    subsystem="npc_agent",
+                    operation="generate_dialogue",
+                    failure_reason=f"{type(e).__name__}: {e}",
+                    fallback_taken="hardcoded cycling dialogue",
+                    severity="warning",
+                    context={"npc_id": npc.npc_def.npc_id, "npc_name": npc.npc_def.name},
+                )
+            except Exception:
+                pass
         return npc.get_next_dialogue()
 
     def handle_start_menu_selection(self, option_index: int):
@@ -4487,6 +4512,29 @@ class GameEngine:
 
     def _init_world_memory(self):
         """Initialize the World Memory System and Faction Systems (AI foundation layer)."""
+        # Graceful-degrade logger is always importable and never raises,
+        # so we import it once for all sibling init blocks.
+        try:
+            from world_system.living_world.infra.graceful_degrade import log_degrade
+        except Exception:
+            log_degrade = None  # type: ignore
+
+        def _report(subsystem: str, operation: str, exc: Exception,
+                    fallback_taken: str, severity: str = "warning") -> None:
+            if log_degrade is None:
+                return
+            try:
+                log_degrade(
+                    subsystem=subsystem,
+                    operation=operation,
+                    failure_reason=f"{type(exc).__name__}: {exc}",
+                    fallback_taken=fallback_taken,
+                    severity=severity,
+                    context={},
+                )
+            except Exception:
+                pass
+
         # Initialize Faction Systems (Phase 2: SQLite-backed NPC profiles & affinity)
         try:
             from world_system.living_world.factions import initialize_faction_systems
@@ -4494,6 +4542,8 @@ class GameEngine:
             print("[Faction] FactionDatabase initialized")
         except Exception as e:
             print(f"[Faction] Init failed (non-fatal): {e}")
+            _report("faction_system", "initialize_faction_systems", e,
+                    "faction system disabled")
 
         # Initialize World Memory System
         try:
@@ -4513,6 +4563,8 @@ class GameEngine:
         except Exception as e:
             print(f"[WorldMemory] Init failed (non-fatal): {e}")
             self.world_memory = None
+            _report("world_memory_system", "initialize", e,
+                    "WMS disabled; downstream consumers will no-op", "error")
 
         # Initialize Living World consumers (BackendManager + NPCAgentSystem).
         # These depend on WorldMemorySystem.world_query for context and on
@@ -4535,6 +4587,8 @@ class GameEngine:
         except Exception as e:
             print(f"[NPCAgent] Init failed (non-fatal, hardcoded dialogue will be used): {e}")
             self.npc_agent_system = None
+            _report("npc_agent_system", "initialize", e,
+                    "hardcoded dialogue will be used")
 
     def _check_background_generation(self):
         """Check if background LLM generation has completed and process the result."""
