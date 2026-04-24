@@ -401,6 +401,226 @@ class FactionSystem:
         return accumulated
 
     # ------------------------------------------------------------------
+    # NPC dynamic state — runtime mutables (v3+).
+    # Source of truth for current_emotion, last_interaction_time,
+    # interaction_count, conversation_summary, knowledge, reputation tags,
+    # quest_state. NOT relationship_score — that lives in npc_affinity
+    # under NPC_AFFINITY_PLAYER_TAG.
+    # ------------------------------------------------------------------
+
+    def get_npc_dynamic_state(self, npc_id: str) -> Optional[Dict]:
+        """Return the dynamic state row for an NPC, or None if no row exists.
+
+        Returns a dict with deserialized JSON columns (knowledge, reputation_tags,
+        quest_state become Python lists/dict).
+        """
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "SELECT npc_id, current_emotion, last_interaction_time, "
+            "interaction_count, conversation_summary, knowledge_json, "
+            "reputation_tags_json, quest_state_json, last_updated "
+            "FROM npc_dynamic_state WHERE npc_id = ?",
+            (npc_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return {
+            "npc_id": row["npc_id"],
+            "current_emotion": row["current_emotion"],
+            "last_interaction_time": row["last_interaction_time"],
+            "interaction_count": row["interaction_count"],
+            "conversation_summary": row["conversation_summary"],
+            "knowledge": json.loads(row["knowledge_json"] or "[]"),
+            "reputation_tags": json.loads(row["reputation_tags_json"] or "[]"),
+            "quest_state": json.loads(row["quest_state_json"] or "{}"),
+            "last_updated": row["last_updated"],
+        }
+
+    def upsert_npc_dynamic_state(
+        self,
+        npc_id: str,
+        *,
+        current_emotion: Optional[str] = None,
+        last_interaction_time: Optional[float] = None,
+        interaction_count: Optional[int] = None,
+        conversation_summary: Optional[str] = None,
+        knowledge: Optional[List[str]] = None,
+        reputation_tags: Optional[List[str]] = None,
+        quest_state: Optional[Dict[str, str]] = None,
+        game_time: float = 0.0,
+    ) -> None:
+        """Insert or update an NPC's dynamic state row.
+
+        Only provided fields are updated; omitted fields keep their existing
+        values (or defaults if the row is being created).
+        """
+        self._require_connection()
+        cursor = self.connection.cursor()
+
+        existing = self.get_npc_dynamic_state(npc_id)
+        merged = {
+            "current_emotion": current_emotion if current_emotion is not None
+                else (existing["current_emotion"] if existing else "neutral"),
+            "last_interaction_time": last_interaction_time if last_interaction_time is not None
+                else (existing["last_interaction_time"] if existing else 0.0),
+            "interaction_count": interaction_count if interaction_count is not None
+                else (existing["interaction_count"] if existing else 0),
+            "conversation_summary": conversation_summary if conversation_summary is not None
+                else (existing["conversation_summary"] if existing else ""),
+            "knowledge": knowledge if knowledge is not None
+                else (existing["knowledge"] if existing else []),
+            "reputation_tags": reputation_tags if reputation_tags is not None
+                else (existing["reputation_tags"] if existing else []),
+            "quest_state": quest_state if quest_state is not None
+                else (existing["quest_state"] if existing else {}),
+        }
+
+        cursor.execute(
+            "INSERT OR REPLACE INTO npc_dynamic_state "
+            "(npc_id, current_emotion, last_interaction_time, "
+            "interaction_count, conversation_summary, knowledge_json, "
+            "reputation_tags_json, quest_state_json, last_updated) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                npc_id,
+                merged["current_emotion"],
+                merged["last_interaction_time"],
+                merged["interaction_count"],
+                merged["conversation_summary"],
+                json.dumps(merged["knowledge"]),
+                json.dumps(merged["reputation_tags"]),
+                json.dumps(merged["quest_state"]),
+                game_time,
+            ),
+        )
+        self.connection.commit()
+
+    # ------------------------------------------------------------------
+    # NPC dialogue log — append-only, capped per NPC.
+    # ------------------------------------------------------------------
+
+    def append_dialogue_log(
+        self,
+        npc_id: str,
+        timestamp: float,
+        speaker: str,
+        utterance: str,
+        emotion_at_time: Optional[str] = None,
+        max_rows: Optional[int] = None,
+    ) -> int:
+        """Append a single dialogue line. Returns the inserted row id.
+
+        If max_rows is provided and the NPC's log exceeds it, oldest rows
+        are pruned. Default cap from schema.DEFAULT_DIALOGUE_LOG_MAX_ROWS.
+        """
+        from .schema import DEFAULT_DIALOGUE_LOG_MAX_ROWS
+
+        if speaker not in ("player", "npc"):
+            raise ValueError(f"speaker must be 'player' or 'npc', got {speaker!r}")
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "INSERT INTO npc_dialogue_log "
+            "(npc_id, timestamp, speaker, utterance, emotion_at_time) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (npc_id, timestamp, speaker, utterance, emotion_at_time),
+        )
+        row_id = cursor.lastrowid
+        self.connection.commit()
+
+        cap = max_rows if max_rows is not None else DEFAULT_DIALOGUE_LOG_MAX_ROWS
+        self.prune_dialogue_log(npc_id, max_rows=cap)
+        return row_id
+
+    def get_dialogue_log(
+        self, npc_id: str, limit: int = 50, oldest_first: bool = False
+    ) -> List[Dict]:
+        """Return up to `limit` dialogue entries for an NPC. Newest first by default."""
+        self._require_connection()
+        cursor = self.connection.cursor()
+        order = "ASC" if oldest_first else "DESC"
+        cursor.execute(
+            f"SELECT id, timestamp, speaker, utterance, emotion_at_time "
+            f"FROM npc_dialogue_log WHERE npc_id = ? "
+            f"ORDER BY timestamp {order}, id {order} LIMIT ?",
+            (npc_id, limit),
+        )
+        return [
+            {
+                "id": row["id"],
+                "timestamp": row["timestamp"],
+                "speaker": row["speaker"],
+                "utterance": row["utterance"],
+                "emotion_at_time": row["emotion_at_time"],
+            }
+            for row in cursor.fetchall()
+        ]
+
+    def prune_dialogue_log(self, npc_id: str, max_rows: int) -> int:
+        """Trim dialogue log for an NPC to at most `max_rows` newest entries.
+
+        Returns the number of rows deleted.
+        """
+        if max_rows <= 0:
+            return 0
+        self._require_connection()
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "SELECT COUNT(*) FROM npc_dialogue_log WHERE npc_id = ?",
+            (npc_id,),
+        )
+        total = cursor.fetchone()[0]
+        if total <= max_rows:
+            return 0
+        excess = total - max_rows
+        cursor.execute(
+            "DELETE FROM npc_dialogue_log "
+            "WHERE id IN (SELECT id FROM npc_dialogue_log "
+            "WHERE npc_id = ? ORDER BY timestamp ASC, id ASC LIMIT ?)",
+            (npc_id, excess),
+        )
+        self.connection.commit()
+        return excess
+
+    # ------------------------------------------------------------------
+    # NPC birth-time helpers — write affinity_seeds from a v3 NPCDefinition.
+    # ------------------------------------------------------------------
+
+    def seed_npc_affinity(
+        self,
+        npc_id: str,
+        affinity_seeds: Dict[str, int],
+        game_time: float = 0.0,
+        overwrite: bool = False,
+    ) -> int:
+        """Write initial affinity values into npc_affinity at NPC birth.
+
+        Args:
+            npc_id: target NPC id (must exist in npc_profiles).
+            affinity_seeds: dict of tag -> int in [-100, 100]. The reserved
+                tag '_player' represents the NPC's starting opinion of the
+                player (per NPC_AFFINITY_PLAYER_TAG).
+            game_time: timestamp for last_updated.
+            overwrite: if False (default), only writes seeds for tags that
+                don't already have a value. If True, replaces existing values.
+
+        Returns the number of rows written.
+        """
+        self._require_connection()
+        written = 0
+        for tag, value in affinity_seeds.items():
+            value_clamped = max(-100.0, min(100.0, float(value)))
+            if not overwrite:
+                existing = self.get_npc_affinity(npc_id, tag)
+                if existing != 0.0:
+                    continue
+            self.set_npc_affinity(npc_id, tag, value_clamped, game_time)
+            written += 1
+        return written
+
+    # ------------------------------------------------------------------
     # Save / load — SQLite persists independently; these are placeholders
     # for the save manager contract.
     # ------------------------------------------------------------------

@@ -120,7 +120,17 @@ class NPCMemory:
 
 
 class NPCMemoryManager:
-    """Manages NPCMemory instances for all NPCs. Singleton."""
+    """Manages NPCMemory instances for all NPCs. Singleton.
+
+    v3+ optionally backs memory by FactionSystem SQLite tables. Opt in via
+    ``wire_faction_system(fs)`` — when wired, ``hydrate_npc_from_db`` and
+    ``flush_npc_to_db`` (and their bulk siblings) move data between the
+    in-memory cache and ``npc_dynamic_state`` + ``npc_affinity[_player]``.
+
+    The in-memory contract (``get_memory``, ``save_all``, ``load_all``) stays
+    backward compatible — existing consumers see no change. SQLite is the
+    durable store when wired; the in-memory dict is the working cache.
+    """
 
     _instance: ClassVar[Optional[NPCMemoryManager]] = None
 
@@ -128,6 +138,7 @@ class NPCMemoryManager:
         self._memories: Dict[str, NPCMemory] = {}
         self._config: Dict[str, Any] = {}
         self._initialized: bool = False
+        self._faction_system: Any = None  # FactionSystem instance when wired
 
     @classmethod
     def get_instance(cls) -> NPCMemoryManager:
@@ -149,6 +160,15 @@ class NPCMemoryManager:
         self._max_summary = limits.get("max_conversation_summary_length", 500)
         self._max_tags = limits.get("max_reputation_tags", 10)
         self._initialized = True
+
+    def wire_faction_system(self, faction_system: Any) -> None:
+        """Opt into SQLite-backed persistence via FactionSystem.
+
+        After wiring, callers can use ``hydrate_npc_from_db`` /
+        ``flush_npc_to_db`` to move state between memory and SQLite.
+        Passing ``None`` unwires (back to pure in-memory mode).
+        """
+        self._faction_system = faction_system
 
     def get_memory(self, npc_id: str) -> NPCMemory:
         """Get or create memory for an NPC."""
@@ -173,6 +193,92 @@ class NPCMemoryManager:
         for npc_id, mem_data in data.items():
             self._memories[npc_id] = NPCMemory.from_dict(mem_data)
 
+    # ── SQLite-backed facade (opt-in via wire_faction_system) ─────────
+
+    def hydrate_npc_from_db(self, npc_id: str) -> NPCMemory:
+        """Pull this NPC's state from SQLite into the in-memory cache.
+
+        Reads ``npc_dynamic_state`` for runtime mutables and
+        ``npc_affinity[_player]`` for relationship_score. If no row exists,
+        returns a fresh NPCMemory with defaults. Requires
+        ``wire_faction_system`` to have been called.
+        """
+        if self._faction_system is None:
+            raise RuntimeError(
+                "NPCMemoryManager not wired to FactionSystem — "
+                "call wire_faction_system(fs) first"
+            )
+
+        state = self._faction_system.get_npc_dynamic_state(npc_id)
+        affinity_player = self._faction_system.get_npc_affinity_toward_player(npc_id)
+        relationship = max(-1.0, min(1.0, affinity_player / 100.0))
+
+        if state is None:
+            mem = self.get_memory(npc_id)
+            mem.relationship_score = relationship
+            return mem
+
+        mem = NPCMemory(
+            npc_id=npc_id,
+            relationship_score=relationship,
+            interaction_count=state["interaction_count"],
+            last_interaction_time=state["last_interaction_time"],
+            emotional_state=state["current_emotion"],
+            knowledge=list(state["knowledge"]),
+            conversation_summary=state["conversation_summary"],
+            player_reputation_tags=list(state["reputation_tags"]),
+            quest_state=dict(state["quest_state"]),
+        )
+        mem._max_knowledge = self._max_knowledge if self._initialized else 30
+        mem._max_summary_length = self._max_summary if self._initialized else 500
+        mem._max_reputation_tags = self._max_tags if self._initialized else 10
+        self._memories[npc_id] = mem
+        return mem
+
+    def flush_npc_to_db(self, npc_id: str, game_time: float = 0.0) -> None:
+        """Write this NPC's in-memory state to SQLite.
+
+        Writes runtime mutables to ``npc_dynamic_state`` and the
+        relationship_score (rescaled to -100..100) to
+        ``npc_affinity[_player]``. Requires ``wire_faction_system`` first.
+        """
+        if self._faction_system is None:
+            raise RuntimeError(
+                "NPCMemoryManager not wired to FactionSystem — "
+                "call wire_faction_system(fs) first"
+            )
+        if npc_id not in self._memories:
+            return
+
+        mem = self._memories[npc_id]
+        self._faction_system.upsert_npc_dynamic_state(
+            npc_id,
+            current_emotion=mem.emotional_state,
+            last_interaction_time=mem.last_interaction_time,
+            interaction_count=mem.interaction_count,
+            conversation_summary=mem.conversation_summary,
+            knowledge=list(mem.knowledge),
+            reputation_tags=list(mem.player_reputation_tags),
+            quest_state=dict(mem.quest_state),
+            game_time=game_time,
+        )
+        affinity_value = max(-100.0, min(100.0, mem.relationship_score * 100.0))
+        self._faction_system.set_npc_affinity_toward_player(
+            npc_id, affinity_value, game_time=game_time
+        )
+
+    def hydrate_all_from_db(self, npc_ids: List[str]) -> int:
+        """Hydrate multiple NPCs from SQLite. Returns count hydrated."""
+        for npc_id in npc_ids:
+            self.hydrate_npc_from_db(npc_id)
+        return len(npc_ids)
+
+    def flush_all_to_db(self, game_time: float = 0.0) -> int:
+        """Flush all in-memory NPCs to SQLite. Returns count flushed."""
+        for npc_id in list(self._memories.keys()):
+            self.flush_npc_to_db(npc_id, game_time=game_time)
+        return len(self._memories)
+
     @property
     def stats(self) -> Dict[str, Any]:
         return {
@@ -181,4 +287,5 @@ class NPCMemoryManager:
             "npcs_with_interactions": sum(
                 1 for m in self._memories.values() if m.interaction_count > 0
             ),
+            "faction_wired": self._faction_system is not None,
         }
