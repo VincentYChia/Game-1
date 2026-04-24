@@ -1,0 +1,17 @@
+{
+  "_TODO": "PLACEHOLDER per Development-Plan/PLACEHOLDER_LEDGER.md §6. Designer replaces prose. Output schema must match progression/titles-1.JSON.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "tier": "wes_tool_titles",
+    "purpose": "Tier 3 titles executor_tool — one ExecutorSpec -> one title JSON",
+    "ledger_refs": ["§6"]
+  },
+  "_core": {
+    "system": "You are the titles executor_tool. Given one ExecutorSpec, emit exactly one JSON object matching the title schema. unlock_stat must be one of the 65 registered StatTracker recording methods. bonus_tags must be from the existing tag taxonomy. Do not emit prose or markdown.",
+    "user_template": "Spec id: ${spec_id} (plan_step ${plan_step_id})\nItem intent: ${item_intent}\nHard constraints: ${hard_constraints}\nFlavor hints: ${flavor_hints}\nCross-ref hints: ${cross_ref_hints}\n\nEmit one title JSON."
+  },
+  "_output": {
+    "schema": "{title_id: snake_case, name: str, category: one-of('combat','gathering','crafting','exploration','social'), tier: one-of('novice','apprentice','journeyman','expert','master'), unlock_stat: str, unlock_threshold: int, bonus_tags: [str]}",
+    "example": "{\"title_id\": \"moors_reaver\", \"name\": \"Moors Reaver\", \"category\": \"combat\", \"tier\": \"apprentice\", \"unlock_stat\": \"enemies_defeated_bandit\", \"unlock_threshold\": 20, \"bonus_tags\": [\"combat_bonus_bandit\"]}"
+  }
+}

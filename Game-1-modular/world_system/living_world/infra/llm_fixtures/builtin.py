@@ -296,10 +296,12 @@ _WES_FIXTURES = [
             '"steps": ['
             '{"step_id": "s1", "tool": "materials", "intent": "new T2 copper variant unique to the moors", '
             '"depends_on": [], "slots": {"tier": 2, "biome": "moors"}}, '
-            '{"step_id": "s2", "tool": "hostiles", "intent": "new bandit type exploiting copper trade", '
-            '"depends_on": ["s1"], "slots": {"tier": 2, "biome": "moors", "role": "raider"}}'
+            '{"step_id": "s2", "tool": "skills", "intent": "bleed-themed lash skill for moors raiders", '
+            '"depends_on": [], "slots": {"domain": "physical", "geometry": "single"}}, '
+            '{"step_id": "s3", "tool": "hostiles", "intent": "new bandit type exploiting copper trade", '
+            '"depends_on": ["s1", "s2"], "slots": {"tier": 2, "biome": "moors", "role": "raider"}}'
             '], '
-            '"rationale": "Region-scope firing: add 1 material + 1 hostile tied to the economic arc. No world-shaking content.", '
+            '"rationale": "Region-scope firing: add 1 material + 1 skill + 1 hostile tied to the economic arc. Hostile depends on both. No world-shaking content.", '
             '"abandoned": false}'
         ),
     ),

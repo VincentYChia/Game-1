@@ -72,6 +72,96 @@
     "wms_layer7": {
       "primary": "claude",
       "description": "WMS Layer 7: world narrative threads"
+    },
+    "wns_layer2": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WNS NL2 locality weaver (placeholder — see PLACEHOLDER_LEDGER.md §12)"
+    },
+    "wns_layer3": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WNS NL3 district weaver (placeholder)"
+    },
+    "wns_layer4": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WNS NL4 region weaver (placeholder)"
+    },
+    "wns_layer5": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WNS NL5 nation weaver (placeholder)"
+    },
+    "wns_layer6": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WNS NL6 nation-to-world seam weaver (placeholder)"
+    },
+    "wns_layer7": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WNS NL7 world embroiderer (placeholder)"
+    },
+    "wes_execution_planner": {
+      "primary": "claude",
+      "fallback": "ollama",
+      "description": "WES Tier 1 planner — cloud tolerated (§5.2); Ollama local on escalation (placeholder — see PLACEHOLDER_LEDGER.md §12)"
+    },
+    "wes_hub_hostiles": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 2 hub — hostiles dispatcher (placeholder)"
+    },
+    "wes_hub_materials": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 2 hub — materials dispatcher (placeholder)"
+    },
+    "wes_hub_nodes": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 2 hub — resource nodes dispatcher (placeholder)"
+    },
+    "wes_hub_skills": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 2 hub — skills dispatcher (no tag invention) (placeholder)"
+    },
+    "wes_hub_titles": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 2 hub — titles dispatcher (placeholder)"
+    },
+    "wes_tool_hostiles": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 3 executor_tool — hostile JSON generator (placeholder)"
+    },
+    "wes_tool_materials": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 3 executor_tool — material JSON generator (placeholder)"
+    },
+    "wes_tool_nodes": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 3 executor_tool — resource-node JSON generator (placeholder)"
+    },
+    "wes_tool_skills": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 3 executor_tool — skill JSON generator (placeholder)"
+    },
+    "wes_tool_titles": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 3 executor_tool — title JSON generator (placeholder)"
+    },
+    "wes_supervisor": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES cross-tier common-sense reviewer (CC1, §5.6) (placeholder)"
     }
   },
 

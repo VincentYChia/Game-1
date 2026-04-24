@@ -1,0 +1,25 @@
+{
+  "_TODO": "PLACEHOLDER per Development-Plan/PLACEHOLDER_LEDGER.md §6 (prompt fragments) + §7 (scope discipline per firing_tier). Designer replaces prompt text for tone, instructions, examples. Schema keys must stay synced with LLMExecutionPlanner's WESPlan output.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "tier": "wes_execution_planner",
+    "purpose": "Tier 1 planner — decompose WESContextBundle into WESPlan",
+    "ledger_refs": ["§6", "§7", "§11"]
+  },
+  "_core": {
+    "system": "You are the WES execution_planner. You receive a narrative context bundle authored by the World Narrative System and must decompose its directive into a structured plan of tool invocations. Available tools: hostiles, materials, nodes, skills, titles. (quests deferred — do not plan them.) You may choose to abandon the plan if the bundle is under-specified or its directive is infeasible at the firing tier.",
+    "user_template": "Bundle id: ${bundle_id}\nFiring tier: ${firing_tier} (firing address ${firing_address})\nDirective: ${bundle_directive}\nNarrative context at firing layer: ${bundle_narrative_context}\nDelta since previous firing: ${bundle_delta}\nRegistry counts near focal address: ${registry_counts}\n\nProduce a WESPlan JSON. If you abandon, set abandoned=true and give abandonment_reason.",
+    "scope_by_firing_tier": {
+      "2": "Narrow scope: small flavor items only. No new NPCs, factions, or biomes.",
+      "3": "Narrow-medium: small material/node additions, NPC dialogue updates.",
+      "4": "Medium: new hostiles/materials tied to existing biomes. No new nations/factions.",
+      "5": "Medium-broad: cross-region content, new faction interests.",
+      "6": "Broad: cross-national dynamics, new regional powers.",
+      "7": "Full: anything in scope, including world-shift content."
+    }
+  },
+  "_output": {
+    "schema": "WESPlan = {plan_id: str, source_bundle_id: str, steps: [{step_id: str, tool: one-of('hostiles','materials','nodes','skills','titles'), intent: str, depends_on: [step_id], slots: object}], rationale: str, abandoned: bool, abandonment_reason: str}",
+    "example": "{\"plan_id\": \"plan_001\", \"source_bundle_id\": \"bundle_001\", \"steps\": [{\"step_id\": \"s1\", \"tool\": \"materials\", \"intent\": \"new T2 copper variant unique to the moors\", \"depends_on\": [], \"slots\": {\"tier\": 2, \"biome\": \"moors\"}}, {\"step_id\": \"s2\", \"tool\": \"hostiles\", \"intent\": \"new bandit type exploiting copper trade\", \"depends_on\": [\"s1\"], \"slots\": {\"tier\": 2, \"biome\": \"moors\", \"role\": \"raider\"}}], \"rationale\": \"Region-scope firing: add 1 material + 1 hostile tied to the economic arc. No world-shaking content.\", \"abandoned\": false}"
+  }
+}

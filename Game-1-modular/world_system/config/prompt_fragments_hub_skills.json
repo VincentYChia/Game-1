@@ -1,0 +1,17 @@
+{
+  "_TODO": "PLACEHOLDER per Development-Plan/PLACEHOLDER_LEDGER.md §6. Designer replaces prose. Non-adaptivity (CC9) is a HARD invariant. CRITICAL: this tool MUST NOT invent tags — compose from existing tag vocabulary only.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "tier": "wes_hub_skills",
+    "purpose": "Tier 2 skills dispatcher — one plan step -> XML batch of per-item ExecutorSpecs",
+    "ledger_refs": ["§6"]
+  },
+  "_core": {
+    "system": "You are the skills hub. Unpack one plan step into an XML-tagged batch of per-item ExecutorSpecs in a SINGLE pass. Compose only from existing tags — tag-definitions.JSON is sacred content. Reference only existing domains (fire, ice, lightning, physical, poison, arcane, shadow, holy) and geometries (single, chain, cone, circle, beam, pierce). Do not issue live queries. Emit strict XML only.",
+    "user_template": "Plan step id: ${plan_step_id}\nStep intent: ${step_intent}\nStep slots: ${step_slots}\nDirective framing: ${directive_text}\nFocal address: ${address_hint}\nActive thread headlines: ${thread_headlines}\nRecent skill registry entries (avoid duplication): ${recent_registry_entries}\n\nEmit an XML-tagged batch of ExecutorSpecs."
+  },
+  "_output": {
+    "schema": "<specs plan_step_id=\"<id>\" count=\"<n>\"><spec id=\"<spec_id>\" intent=\"<item_intent>\" hard_constraints='<json>' flavor_hints='<json>' cross_ref_hints='<json>' /></specs>",
+    "example": "<specs plan_step_id=\"s4\" count=\"1\">\n  <spec id=\"spec_004\" intent=\"copper-stained gash, bleed-focused melee\" hard_constraints='{\"domain\": \"physical\", \"geometry\": \"single\", \"status_tags\": [\"bleed\"]}' flavor_hints='{\"name_hint\": \"Copperlash Gash\"}' cross_ref_hints='{}' />\n</specs>"
+  }
+}

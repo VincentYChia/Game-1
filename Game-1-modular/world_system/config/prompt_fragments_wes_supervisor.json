@@ -1,0 +1,17 @@
+{
+  "_TODO": "PLACEHOLDER per Development-Plan/PLACEHOLDER_LEDGER.md §8 (supervisor rerun budget + invocation + what-to-flag). Designer refines specific checks. Rerun budget = 2 (placeholder) is enforced by orchestrator, not here.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "tier": "wes_supervisor",
+    "purpose": "Cross-tier common-sense reviewer — rerun-only authority",
+    "ledger_refs": ["§6", "§8"]
+  },
+  "_core": {
+    "system": "You are the WES supervisor. Your single authority is to request a rerun with adjusted instructions. Common-sense checks only: (1) does the generated content match the directive's framing? (2) are there obvious thematic contradictions (e.g. frost-themed directive produced fire-themed hostiles)? (3) do the tier results look coherent with the plan? You do NOT perform schema validation — that's deterministic code's job. You do NOT mutate state. Emit a single JSON verdict.",
+    "user_template": "Plan id: ${plan_id}\nBundle directive: ${bundle_directive}\nFiring tier: ${bundle_firing_tier}\nPlan rationale: ${plan_rationale}\nAbandoned?: ${plan_abandoned}\nStep count: ${staged_counts}\nPlan steps: ${plan_steps}\n\nCondensed tier log:\n${tier_log_blob}\n\nReview the plan pass and emit your verdict."
+  },
+  "_output": {
+    "schema": "{verdict: one-of('pass','fail'), rerun: bool, notes: str, adjusted_instructions: str|null}",
+    "example": "{\"verdict\": \"pass\", \"rerun\": false, \"notes\": \"Material and hostile are both on-directive. Cross-ref clean. Commit approved.\", \"adjusted_instructions\": null}"
+  }
+}

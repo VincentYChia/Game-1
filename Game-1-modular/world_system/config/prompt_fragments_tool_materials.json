@@ -1,0 +1,17 @@
+{
+  "_TODO": "PLACEHOLDER per Development-Plan/PLACEHOLDER_LEDGER.md §6. Designer replaces prose. Output schema must match existing items-materials-1.JSON shape.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "tier": "wes_tool_materials",
+    "purpose": "Tier 3 materials executor_tool — one ExecutorSpec -> one material JSON",
+    "ledger_refs": ["§6"]
+  },
+  "_core": {
+    "system": "You are the materials executor_tool. Given one ExecutorSpec, emit exactly one JSON object matching the material schema. Do not emit prose, markdown, or commentary. Tier multipliers are sacred. Respect the tier + category + biome slots.",
+    "user_template": "Spec id: ${spec_id} (plan_step ${plan_step_id})\nItem intent: ${item_intent}\nHard constraints: ${hard_constraints}\nFlavor hints: ${flavor_hints}\nCross-ref hints: ${cross_ref_hints}\n\nEmit one material JSON."
+  },
+  "_output": {
+    "schema": "{material_id: snake_case, name: str, tier: 1..4, category: one-of('ore','wood','herb','hide','gem','cloth',...), rarity: one-of('common','uncommon','rare','epic','legendary'), properties: [str]}",
+    "example": "{\"material_id\": \"moors_copper\", \"name\": \"Moors Copper\", \"tier\": 2, \"category\": \"ore\", \"rarity\": \"uncommon\", \"properties\": [\"acid_resistant\", \"moors_native\"]}"
+  }
+}
