@@ -648,6 +648,70 @@ _WES_FIXTURES = [
         ),
     ),
     LLMFixture(
+        code="wes_tool_chunks",
+        tier=TIER_WES,
+        description=(
+            "WES Tier 3 executor_tool for CHUNK TEMPLATES (new biome recipes, "
+            "not specific chunk instances). Emits one template JSON matching "
+            "Chunk-templates-2.JSON shape (chunkType + category + theme + "
+            "resourceDensity dict + enemySpawns dict + generationRules + "
+            "metadata). NEW tool domain — not in original v4 P0-P9. "
+            "Post-2026-04-24 ChunkType namespace-class refactor means new "
+            "chunkType strings are runtime-valid without code edits."
+        ),
+        canonical_system_prompt=(
+            "You are the chunks executor_tool. Given one ExecutorSpec, emit "
+            "one chunk-template JSON: chunkType (snake_case, new OR existing), "
+            "name, category (peaceful/dangerous/rare/water/rare_water), theme "
+            "(forest/quarry/cave/water), resourceDensity{resourceId: "
+            "{density, tierBias}}, enemySpawns{enemyId: {density, tier}}, "
+            "generationRules{rollWeight, spawnAreaAllowed, "
+            "adjacencyPreference[]}, metadata{narrative, tags}. "
+            "Cross-refs must resolve. No prose."
+        ),
+        canonical_user_prompt=(
+            "Spec id: spec_006 (plan step s6)\n"
+            "Item intent: dangerous moors biome featuring the new copper seam "
+            "nodes and copperlash riders\n"
+            "Hard constraints: {\"category\": \"dangerous\", "
+            "\"theme\": \"quarry\"}\n"
+            "Flavor hints: {\"theme\": \"salt-swept moors with rust-veined "
+            "cliffs\"}\n"
+            "Cross-ref hints: {\"resourceId\": \"moors_copper_seam\", "
+            "\"enemyId\": \"copperlash_rider\"}\n\n"
+            "Emit one chunk-template JSON following the schema."
+        ),
+        canonical_response=(
+            '{"chunkType": "dangerous_copper_moors", '
+            '"name": "Dangerous Copper Moors", '
+            '"category": "dangerous", "theme": "quarry", '
+            '"resourceDensity": {'
+            '"moors_copper_seam": {"density": "high", "tierBias": "mid"}, '
+            '"limestone_outcrop": {"density": "moderate", "tierBias": "low"}}, '
+            '"enemySpawns": {'
+            '"copperlash_rider": {"density": "moderate", "tier": 2}}, '
+            '"generationRules": {"rollWeight": 3, '
+            '"spawnAreaAllowed": false, '
+            '"adjacencyPreference": ["rocky_highlands", "dangerous_quarry"]}, '
+            '"metadata": {"narrative": "Windswept heath where rust-veined '
+            'cliffs meet boggy flats — the air smells of brine and green '
+            'copper. Moors raiders work the high trails, and the stone itself '
+            'sometimes shifts underfoot where old mining tunnels have '
+            'collapsed.", '
+            '"tags": ["dangerous", "mid-game", "ore-quality", "harsh", '
+            '"exposed"]}}'
+        ),
+        notes=(
+            "Cross-refs: resourceDensity.moors_copper_seam <- wes_tool_nodes; "
+            "enemySpawns.copperlash_rider <- wes_tool_hostiles; "
+            "limestone_outcrop is existing sacred resource. chunkType "
+            "'dangerous_copper_moors' is a NEW type — valid at runtime thanks "
+            "to the post-2026-04-24 ChunkType namespace-class refactor. Full "
+            "content_registry plumbing (reg_chunks table, xref extractor, "
+            "tool_registry entry) is follow-up work; fixture-only for now."
+        ),
+    ),
+    LLMFixture(
         code="wes_supervisor",
         tier=TIER_WES,
         description=(
