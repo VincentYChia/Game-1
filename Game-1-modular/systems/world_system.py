@@ -152,7 +152,7 @@ class WorldSystem:
         # Loaded chunk types (verify bridge table works)
         loaded_types = {}
         for chunk in self.loaded_chunks.values():
-            ct = chunk.chunk_type.value
+            ct = chunk.chunk_type
             loaded_types[ct] = loaded_types.get(ct, 0) + 1
         print(f"   Loaded chunk types (spawn area, {len(self.loaded_chunks)} chunks):")
         for ct, count in sorted(loaded_types.items()):
@@ -163,7 +163,7 @@ class WorldSystem:
         resource_types = {}
         for chunk in self.loaded_chunks.values():
             for res in chunk.resources:
-                rt = res.resource_type.value
+                rt = res.resource_type
                 resource_types[rt] = resource_types.get(rt, 0) + 1
         print(f"   Resources in loaded chunks: {total_resources}")
         for rt, count in sorted(resource_types.items(), key=lambda x: -x[1])[:10]:

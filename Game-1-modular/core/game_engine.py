@@ -2491,7 +2491,7 @@ class GameEngine:
             from data.models import ResourceType
             is_fishing_spot = (
                 resource.resource_type == ResourceType.FISHING_SPOT or
-                'fishing_spot' in resource.resource_type.value.lower()
+                'fishing_spot' in resource.resource_type.lower()
             )
 
             if is_fishing_spot and FISHING_MODULE_LOADED:
@@ -6758,7 +6758,7 @@ class GameEngine:
             return None
 
         # Map chunk type to display name and danger level
-        chunk_type_value = chunk.chunk_type.value
+        chunk_type_value = chunk.chunk_type
 
         # Display names for chunk types (more readable)
         chunk_display_names = {

@@ -11,7 +11,7 @@ class NaturalResource:
     # Class-level database reference
     _resource_db = None
 
-    def __init__(self, position: Position, resource_type: ResourceType, tier: int):
+    def __init__(self, position: Position, resource_type: str, tier: int):
         self.position = position
         self.resource_type = resource_type
         self.tier = tier
@@ -31,11 +31,11 @@ class NaturalResource:
         else:
             # Fallback to hardcoded defaults
             self.max_hp = {1: 100, 2: 200, 3: 400, 4: 800}.get(tier, 100)
-            if "tree" in resource_type.value:
+            if "tree" in resource_type:
                 self.required_tool = "axe"
                 self.respawns = True
                 self.respawn_timer = 60.0 if not Config.DEBUG_INFINITE_RESOURCES else 1.0
-            elif "fishing_spot" in resource_type.value:
+            elif "fishing_spot" in resource_type:
                 # All fishing spots (carp, sunfish, stormfin, etc.)
                 self.required_tool = "fishing_rod"
                 self.respawns = True
@@ -69,7 +69,7 @@ class NaturalResource:
         """Get the node definition from database"""
         db = self._get_resource_db()
         if db and db.loaded:
-            return db.get_node(self.resource_type.value)
+            return db.get_node(self.resource_type)
         return None
 
     def _generate_loot_table(self) -> List[LootDrop]:
@@ -183,7 +183,7 @@ class NaturalResource:
             return (50, 50, 50)
 
         # Determine color based on resource category
-        res_value = self.resource_type.value.lower()
+        res_value = self.resource_type.lower()
 
         # Trees: contain "tree" or "sapling"
         if "tree" in res_value or "sapling" in res_value:

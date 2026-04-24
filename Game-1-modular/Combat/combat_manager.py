@@ -253,7 +253,7 @@ class CombatManager:
             return danger_names.get(level_val, "moderate")
 
         # Legacy: string matching on chunk type
-        chunk_type_str = chunk.chunk_type.value
+        chunk_type_str = chunk.chunk_type
         if "peaceful" in chunk_type_str:
             return "peaceful"
         elif "dangerous" in chunk_type_str:
@@ -264,7 +264,7 @@ class CombatManager:
 
     def _get_chunk_template(self, chunk) -> Optional[dict]:
         """Get chunk template for a given chunk"""
-        chunk_type_str = chunk.chunk_type.value
+        chunk_type_str = chunk.chunk_type
         template_key = self.chunk_type_mapping.get(chunk_type_str, chunk_type_str)
         return self.chunk_templates.get(template_key)
 

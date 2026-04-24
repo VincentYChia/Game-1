@@ -78,7 +78,7 @@ class BiomeGenerator:
         self._dungeon_min_distance = self._config.dungeon_spawning.min_distance_from_spawn
 
         # Cache for chunk types (to ensure consistency when checking neighbors)
-        self._type_cache: Dict[Tuple[int, int], ChunkType] = {}
+        self._type_cache: Dict[Tuple[int, int], str] = {}
 
         # Debug tracking
         self._debug_enabled = self._config.debug.log_biome_assignments
@@ -309,7 +309,7 @@ class BiomeGenerator:
         spawn_radius = self._config.chunk_loading.spawn_always_loaded_radius
         return abs(chunk_x) <= spawn_radius and abs(chunk_y) <= spawn_radius
 
-    def get_chunk_type(self, chunk_x: int, chunk_y: int) -> ChunkType:
+    def get_chunk_type(self, chunk_x: int, chunk_y: int) -> str:
         """Get the chunk type for any coordinate.
 
         This is the main entry point for chunk type determination.
@@ -320,7 +320,7 @@ class BiomeGenerator:
             chunk_y: Chunk Y coordinate
 
         Returns:
-            ChunkType for this chunk
+            Chunk type string (e.g. "peaceful_forest").
         """
         # Check cache first
         cache_key = (chunk_x, chunk_y)
@@ -346,11 +346,11 @@ class BiomeGenerator:
         self._type_cache[cache_key] = chunk_type
 
         if self._debug_enabled:
-            print(f"Chunk ({chunk_x}, {chunk_y}): type={chunk_type.value}")
+            print(f"Chunk ({chunk_x}, {chunk_y}): type={chunk_type}")
 
         return chunk_type
 
-    def _get_spawn_area_type(self, chunk_x: int, chunk_y: int) -> ChunkType:
+    def _get_spawn_area_type(self, chunk_x: int, chunk_y: int) -> str:
         """Get chunk type for spawn area (always peaceful).
 
         Args:
@@ -371,8 +371,8 @@ class BiomeGenerator:
         ])
 
     def _biome_to_chunk_type(self, biome: BiomeCategory, danger: str,
-                             chunk_x: int, chunk_y: int) -> ChunkType:
-        """Convert biome category and danger to specific ChunkType.
+                             chunk_x: int, chunk_y: int) -> str:
+        """Convert biome category and danger to specific chunk type string.
 
         Args:
             biome: BiomeCategory (WATER, FOREST, or CAVE)
@@ -504,7 +504,7 @@ class BiomeGenerator:
             "biome_category": biome.value,
             "danger_level": danger,
             "danger_zone": zone,
-            "chunk_type": chunk_type.value,
+            "chunk_type": chunk_type,
             "is_spawn_area": self._is_spawn_area(chunk_x, chunk_y),
             "is_water": self.is_water_chunk(chunk_x, chunk_y),
             "has_dungeon": self.should_spawn_dungeon(chunk_x, chunk_y),

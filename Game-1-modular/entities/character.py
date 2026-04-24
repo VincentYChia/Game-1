@@ -1229,13 +1229,14 @@ class Character:
             total_items = sum(qty for _, qty in loot) if loot else 0
 
             # Determine resource category for tracking
-            resource_category = "ore" if "ore" in resource.resource_type.name.lower() else \
-                               "tree" if "tree" in resource.resource_type.name.lower() else \
-                               "stone" if "stone" in resource.resource_type.name.lower() else "plant"
+            rtype = resource.resource_type
+            resource_category = "ore" if "ore" in rtype else \
+                               "tree" if "tree" in rtype else \
+                               "stone" if "stone" in rtype else "plant"
 
             # Track resource gathering
             self.stat_tracker.record_resource_gathered(
-                resource_id=resource.resource_type.name,
+                resource_id=rtype,
                 quantity=total_items,
                 tier=resource.tier,
                 category=resource_category,

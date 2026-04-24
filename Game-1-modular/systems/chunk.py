@@ -112,8 +112,8 @@ class Chunk:
         self.generate_tiles()
         self.spawn_resources()
 
-    # Bridge: map geographic system's NewChunkType values to ChunkType enum
-    # New types use the new enum values; legacy types as fallbacks
+    # Bridge: map geographic system's NewChunkType string values to legacy
+    # ChunkType strings. Both sides are plain strings post-refactor.
     _GEO_TO_CHUNK_TYPE = {
         'forest': ChunkType.PEACEFUL_FOREST,
         'dense_thicket': ChunkType.DENSE_FOREST,
@@ -132,15 +132,16 @@ class Chunk:
         'cursed_marsh': ChunkType.WATER_CURSED_SWAMP,
     }
 
-    def _determine_chunk_type(self) -> ChunkType:
+    def _determine_chunk_type(self) -> str:
         """Determine chunk type using geographic data, BiomeGenerator, or legacy.
 
         Returns:
-            ChunkType for this chunk
+            Chunk type string (e.g. "peaceful_forest").
         """
         # New: use geographic system data if available
         if self._geographic_data is not None:
             geo_ct = self._geographic_data.chunk_type
+            # NewChunkType is a str-Enum, so .value or str() both yield the raw string.
             ct_value = geo_ct.value if hasattr(geo_ct, 'value') else str(geo_ct)
             return self._GEO_TO_CHUNK_TYPE.get(ct_value, ChunkType.PEACEFUL_FOREST)
 
@@ -205,7 +206,7 @@ class Chunk:
 
     def _generate_land_tiles(self, start_x: int, start_y: int):
         """Generate standard land tiles."""
-        is_stone_biome = "quarry" in self.chunk_type.value or "cave" in self.chunk_type.value
+        is_stone_biome = "quarry" in self.chunk_type or "cave" in self.chunk_type
         base_tile = TileType.STONE if is_stone_biome else TileType.GRASS
 
         for x in range(start_x, start_x + Config.CHUNK_SIZE):
@@ -299,9 +300,9 @@ class Chunk:
                 res_config = world_config.resource_spawning.dangerous_chunks
             else:
                 res_config = world_config.resource_spawning.rare_chunks
-        elif "peaceful" in self.chunk_type.value:
+        elif "peaceful" in self.chunk_type:
             res_config = world_config.resource_spawning.peaceful_chunks
-        elif "dangerous" in self.chunk_type.value:
+        elif "dangerous" in self.chunk_type:
             res_config = world_config.resource_spawning.dangerous_chunks
         else:
             res_config = world_config.resource_spawning.rare_chunks
@@ -315,7 +316,7 @@ class Chunk:
         # Get resource candidates from database
         db = self.get_resource_db()
         if db.loaded:
-            candidates = db.get_resources_for_chunk(self.chunk_type.value, tier_range)
+            candidates = db.get_resources_for_chunk(self.chunk_type, tier_range)
             if candidates:
                 for _ in range(resource_count):
                     pos = self._find_resource_position(
@@ -329,13 +330,10 @@ class Chunk:
                     valid = [r for r in candidates if r.tier <= tier]
                     if valid:
                         node_def = self._rng.choice(valid)
-                        try:
-                            resource_type = ResourceType(node_def.resource_id)
-                            self.resources.append(
-                                NaturalResource(pos, resource_type, node_def.tier)
-                            )
-                        except ValueError:
-                            continue
+                        # resource_type is a plain string (was ResourceType enum pre-refactor)
+                        self.resources.append(
+                            NaturalResource(pos, node_def.resource_id, node_def.tier)
+                        )
                 return
 
         # Fallback: Use hardcoded types if database not loaded
@@ -388,14 +386,14 @@ class Chunk:
                 continue
 
             # Determine resource types based on chunk category
-            if "forest" in self.chunk_type.value:
+            if "forest" in self.chunk_type:
                 types = [
                     ResourceType.OAK_TREE, ResourceType.PINE_TREE,
                     ResourceType.ASH_TREE, ResourceType.BIRCH_TREE,
                     ResourceType.MAPLE_TREE, ResourceType.IRONWOOD_TREE,
                     ResourceType.EBONY_TREE, ResourceType.WORLDTREE_SAPLING
                 ]
-            elif "quarry" in self.chunk_type.value:
+            elif "quarry" in self.chunk_type:
                 types = [
                     ResourceType.LIMESTONE_OUTCROP, ResourceType.GRANITE_FORMATION,
                     ResourceType.SHALE_BED, ResourceType.BASALT_COLUMN,
@@ -501,7 +499,7 @@ class Chunk:
         self._resource_modifications[local_key] = {
             "local_x": local_x,
             "local_y": local_y,
-            "resource_type": resource.resource_type.name,
+            "resource_type": resource.resource_type,
             "current_hp": resource.current_hp,
             "max_hp": resource.max_hp,
             "depleted": resource.depleted,
@@ -525,7 +523,7 @@ class Chunk:
         data = {
             "chunk_x": self.chunk_x,
             "chunk_y": self.chunk_y,
-            "chunk_type": self.chunk_type.value,
+            "chunk_type": self.chunk_type,
         }
 
         if self._resource_modifications:

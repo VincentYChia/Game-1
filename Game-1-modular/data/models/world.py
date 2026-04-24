@@ -65,11 +65,14 @@ class WorldTile:
         }.get(self.tile_type, Config.COLOR_GRASS)
 
 
-class ResourceType(Enum):
-    """Types of harvestable resources - matches resource-node-1.JSON
+class ResourceType:
+    """Namespace of known resource type IDs.
 
-    Note: Values match resourceId in JSON for easy lookup.
-    Use ResourceNodeDatabase for full resource definitions.
+    NOT a Python Enum — resource types are plain strings. Class attributes here
+    exist for code convenience (autocomplete, typed references in tier tables).
+    Any string is a valid resource_type at runtime; new types can ship via JSON
+    (resource-node-*.JSON) without touching this file. Use ResourceNodeDatabase
+    for full resource definitions.
     """
     # Trees (8 total)
     OAK_TREE = "oak_tree"
@@ -105,16 +108,16 @@ class ResourceType(Enum):
     PRIMORDIAL_FORMATION = "primordial_formation"
     GENESIS_STRUCTURE = "genesis_structure"
 
-    # Legacy aliases (for backwards compatibility with existing code)
-    # These map old names to new JSON-based names
-    COPPER_ORE = "copper_vein"  # Alias
-    IRON_ORE = "iron_deposit"  # Alias
-    STEEL_ORE = "steel_node"  # Alias
-    MITHRIL_ORE = "mithril_cache"  # Alias
-    LIMESTONE = "limestone_outcrop"  # Alias
-    GRANITE = "granite_formation"  # Alias
-    OBSIDIAN = "obsidian_flow"  # Alias
-    STAR_CRYSTAL = "diamond_geode"  # Alias (repurposed to diamond)
+    # Legacy aliases — these map to canonical IDs, kept for backwards
+    # compatibility with older code that referred to simpler names.
+    COPPER_ORE = "copper_vein"
+    IRON_ORE = "iron_deposit"
+    STEEL_ORE = "steel_node"
+    MITHRIL_ORE = "mithril_cache"
+    LIMESTONE = "limestone_outcrop"
+    GRANITE = "granite_formation"
+    OBSIDIAN = "obsidian_flow"
+    STAR_CRYSTAL = "diamond_geode"  # repurposed to diamond
 
     # Water resources
     FISHING_SPOT = "fishing_spot"
@@ -136,25 +139,48 @@ class ResourceType(Enum):
     FISHING_SPOT_CHAOSSCALE = "fishing_spot_chaosscale"
 
 
+# Canonical list of all known ResourceType IDs. Used for iteration where code
+# used to write `for x in ResourceType:`. Any JSON-defined resourceId works at
+# runtime even if it's not in this list — this is just the seed inventory.
+_ALL_RESOURCE_TYPES = [
+    ResourceType.OAK_TREE, ResourceType.PINE_TREE, ResourceType.ASH_TREE,
+    ResourceType.BIRCH_TREE, ResourceType.MAPLE_TREE, ResourceType.IRONWOOD_TREE,
+    ResourceType.EBONY_TREE, ResourceType.WORLDTREE_SAPLING,
+    ResourceType.COPPER_VEIN, ResourceType.IRON_DEPOSIT, ResourceType.TIN_SEAM,
+    ResourceType.STEEL_NODE, ResourceType.MITHRIL_CACHE, ResourceType.ADAMANTINE_LODE,
+    ResourceType.ORICHALCUM_TROVE, ResourceType.ETHERION_NEXUS,
+    ResourceType.LIMESTONE_OUTCROP, ResourceType.GRANITE_FORMATION, ResourceType.SHALE_BED,
+    ResourceType.BASALT_COLUMN, ResourceType.MARBLE_QUARRY, ResourceType.QUARTZ_CLUSTER,
+    ResourceType.OBSIDIAN_FLOW, ResourceType.VOIDSTONE_SHARD, ResourceType.DIAMOND_GEODE,
+    ResourceType.ETERNITY_MONOLITH, ResourceType.PRIMORDIAL_FORMATION, ResourceType.GENESIS_STRUCTURE,
+    ResourceType.FISHING_SPOT,
+    ResourceType.FISHING_SPOT_CARP, ResourceType.FISHING_SPOT_SUNFISH, ResourceType.FISHING_SPOT_MINNOW,
+    ResourceType.FISHING_SPOT_STORMFIN, ResourceType.FISHING_SPOT_FROSTBACK,
+    ResourceType.FISHING_SPOT_LIGHTEYE, ResourceType.FISHING_SPOT_SHADOWGILL,
+    ResourceType.FISHING_SPOT_PHOENIXKOI, ResourceType.FISHING_SPOT_VOIDSWIMMER,
+    ResourceType.FISHING_SPOT_TEMPESTEEL,
+    ResourceType.FISHING_SPOT_LEVIATHAN, ResourceType.FISHING_SPOT_CHAOSSCALE,
+]
+
+
 def _build_resource_tiers() -> dict:
     """Build RESOURCE_TIERS from ResourceNodeDatabase if loaded, else use defaults"""
-    # Try to get tiers from database
+    # Try to get tiers from database (authoritative source — follows JSON)
     try:
         from data.databases.resource_node_db import ResourceNodeDatabase
         db = ResourceNodeDatabase.get_instance()
         if db.loaded:
-            # Build tier map using ResourceType enum values
             tier_map = {}
-            for res_type in ResourceType:
-                node = db.get_node(res_type.value)
+            for res_id in _ALL_RESOURCE_TYPES:
+                node = db.get_node(res_id)
                 if node:
-                    tier_map[res_type] = node.tier
+                    tier_map[res_id] = node.tier
             if tier_map:
                 return tier_map
     except Exception:
         pass
 
-    # Default/fallback tiers (matches JSON definitions)
+    # Default/fallback tiers (matches JSON definitions). Keys are strings.
     return {
         # Trees
         ResourceType.OAK_TREE: 1,
@@ -187,15 +213,6 @@ def _build_resource_tiers() -> dict:
         ResourceType.ETERNITY_MONOLITH: 4,
         ResourceType.PRIMORDIAL_FORMATION: 4,
         ResourceType.GENESIS_STRUCTURE: 4,
-        # Legacy aliases
-        ResourceType.COPPER_ORE: 1,
-        ResourceType.IRON_ORE: 1,
-        ResourceType.STEEL_ORE: 2,
-        ResourceType.MITHRIL_ORE: 2,
-        ResourceType.LIMESTONE: 1,
-        ResourceType.GRANITE: 1,
-        ResourceType.OBSIDIAN: 3,
-        ResourceType.STAR_CRYSTAL: 3,
         # Water resources
         ResourceType.FISHING_SPOT: 1,
         # Fishing spots by tier
@@ -227,17 +244,21 @@ class LootDrop:
     chance: float = 1.0
 
 
-class ChunkType(Enum):
-    """Types of world chunks.
+class ChunkType:
+    """Namespace of known chunk type IDs.
+
+    NOT a Python Enum — chunk types are plain strings. Class attributes here
+    exist for code convenience. Any string is a valid chunk_type at runtime;
+    new types can ship via Chunk-templates-*.JSON without touching this file.
 
     Naming convention matters for resource spawning:
-    - Contains "forest" → spawns trees
-    - Contains "quarry" → spawns stones
-    - Contains "cave" → spawns ores
-    - Multiple keywords → spawns mixed resources
-    - Water types → spawns fishing spots
+    - Contains "forest" -> spawns trees
+    - Contains "quarry" -> spawns stones
+    - Contains "cave" -> spawns ores
+    - Multiple keywords -> spawns mixed resources
+    - Water types -> spawns fishing spots
     """
-    # ── Legacy types (original 12) ──
+    # Legacy types (original 12)
     PEACEFUL_FOREST = "peaceful_forest"
     PEACEFUL_QUARRY = "peaceful_quarry"
     PEACEFUL_CAVE = "peaceful_cave"
@@ -251,19 +272,15 @@ class ChunkType(Enum):
     WATER_RIVER = "water_river"
     WATER_CURSED_SWAMP = "water_cursed_swamp"
 
-    # ── New geographic types (from geographic system) ──
-    # Forest variants
+    # New geographic types (from geographic system)
     DENSE_FOREST = "dense_forest"          # Heavy trees, overgrown
-    ROCKY_FOREST = "rocky_forest_quarry"   # Trees + stones (both keywords)
-    # Cave variants
+    ROCKY_FOREST = "rocky_forest_quarry"   # Trees + stones
     DEEP_CAVE = "deep_cave"                # High-tier ores
     FLOODED_CAVE = "flooded_cave"          # Ores + water features
     CRYSTAL_CAVE = "crystal_cave"          # Ores + stones
-    # Quarry/open variants
     ROCKY_HIGHLANDS = "rocky_quarry"       # Stones, elevated terrain
     OVERGROWN_RUINS = "ruins_quarry"       # Stones + sparse trees
     BARREN_WASTE = "barren_quarry"         # Sparse stones, desolate
-    # Water variants
     WETLAND = "wetland"                    # Fish + sparse trees
 
 

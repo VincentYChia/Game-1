@@ -712,7 +712,7 @@ class FishingManager:
         # Check if resource is a fishing spot
         from data.models import ResourceType
         if resource.resource_type != ResourceType.FISHING_SPOT and \
-           'fishing_spot' not in resource.resource_type.value.lower():
+           'fishing_spot' not in resource.resource_type.lower():
             return False, "Not a fishing spot"
 
         # Check for equipped fishing rod

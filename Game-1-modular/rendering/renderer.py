@@ -1282,10 +1282,10 @@ class Renderer:
             try:
                 from data.databases.resource_node_db import ResourceNodeDatabase
                 resource_db = ResourceNodeDatabase.get_instance()
-                resource_icon_path = resource_db.get_icon_path(resource.resource_type.value)
+                resource_icon_path = resource_db.get_icon_path(resource.resource_type)
             except Exception:
                 # Fallback to legacy logic if database not available
-                resource_value = resource.resource_type.value
+                resource_value = resource.resource_type
                 if "tree" not in resource_value and "sapling" not in resource_value:
                     resource_icon_path = f"resources/{resource_value}_node.png"
                 else:
