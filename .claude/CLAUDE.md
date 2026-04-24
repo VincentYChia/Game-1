@@ -1,7 +1,7 @@
 # Claude.md - Game-1 Developer Guide
 
 **Quick Reference for AI Assistants & Developers**
-**Last Updated**: March 29, 2026
+**Last Updated**: April 24, 2026 (v8.0 — v4 World System + doc consolidation)
 
 ## Project Summary
 
@@ -23,8 +23,9 @@
 **Status Report**: `docs/REPOSITORY_STATUS_REPORT_2026-01-27.md`
 **Project Duration**: October 19, 2025 - Present (Python/Pygame — active development)
 **Development Plan**: `Development-Plan/OVERVIEW.md` (active roadmap — Living World + Combat Overhaul)
-**World Memory System**: `world_system/docs/HANDOFF_STATUS.md` (current implementation state)
-**Migration Plan**: `archive/Migration-Plan/COMPLETION_STATUS.md` (paused indefinitely — retained for reference)
+**World Memory System**: `world_system/docs/HANDOFF_STATUS.md` (current implementation state) + `world_system/docs/WORLD_MEMORY_SYSTEM.md` (unified canonical design)
+**Living World (WNS/WES) Plan**: `Development-Plan/WORLD_SYSTEM_WORKING_DOC.md` (v4, 2026-04-22) + `Development-Plan/PLACEHOLDER_LEDGER.md` (furnishing list). P0-P9 shipped as pseudo-mock pipeline; placeholders awaiting designer furnishing.
+**Migration Plan**: `archive/2026-04-24-doc-consolidation/paused-migration/Migration-Plan/COMPLETION_STATUS.md` (paused indefinitely — retained for reference)
 
 ---
 
@@ -34,10 +35,11 @@ All development targets the **2D Python/Pygame version**. Unity migration is pau
 
 ### Development Plan
 - **Start here**: `Development-Plan/OVERVIEW.md` — roadmap and dependency graph
-- **Part 1**: `Development-Plan/PART_1_COMBAT_VISUALS.md` — Action combat, animations, hitboxes, projectiles
-- **Part 2**: `Development-Plan/PART_2_LIVING_WORLD.md` — Memory layer, NPC agents, factions, world events, quests (ecosystem as tool)
-- **Part 3**: `Development-Plan/PART_3_PLAYER_INTELLIGENCE.md` — Behavior classifier, preferences, arc tracking
+- **Part 1**: `Development-Plan/PART_1_COMBAT_VISUALS.md` — Action combat, animations, hitboxes, projectiles (P1.1-P1.6 shipped; Phase 1.7 visual overhaul is open work)
+- **Part 2**: `Development-Plan/PART_2_LIVING_WORLD.md` — Memory layer, NPC agents, factions (shipped). For the WNS/WES downstream narrative + content pipeline (v4), see `Development-Plan/WORLD_SYSTEM_WORKING_DOC.md`
+- **Part 3**: `Development-Plan/PART_3_PLAYER_INTELLIGENCE.md` — Behavior classifier, preferences, arc tracking (not started)
 - **Shared**: `Development-Plan/SHARED_INFRASTRUCTURE.md` — Balance validator, async runner, event integration
+- **WNS/WES v4 spec**: `Development-Plan/WORLD_SYSTEM_WORKING_DOC.md` — canonical; `PLACEHOLDER_LEDGER.md` tracks designer-owned furnishings
 
 ### Priority Order
 1. **Combat Visuals** (P1): Animation framework → attack state machine → hitboxes → projectiles → dodge → enemy scaling → polish
@@ -58,7 +60,7 @@ All development targets the **2D Python/Pygame version**. Unity migration is pau
 
 ## Unity/C# Migration (PAUSED — February 2026)
 
-The Unity migration plan is retained in `archive/Migration-Plan/` for reference but is **not being actively developed**. See `archive/Migration-Plan/COMPLETION_STATUS.md` for the full plan if resuming later.
+The Unity migration plan is retained in `archive/2026-04-24-doc-consolidation/paused-migration/Migration-Plan/` for reference but is **not being actively developed**. See `archive/2026-04-24-doc-consolidation/paused-migration/Migration-Plan/COMPLETION_STATUS.md` for the full plan if resuming later.
 7. **Phase 7 — Polish & LLM Stub**: `IItemGenerator` interface, E2E testing, 3D verification (1,024 lines)
 
 ### Key Architecture Decisions (Migration)
@@ -784,42 +786,50 @@ The ~90 JSON game-definition files are spread across `items.JSON/`, `recipes.JSO
 
 ## Documentation Index
 
-### Migration Plan (in `archive/Migration-Plan/`)
-| Document | Purpose |
-|----------|---------|
-| **COMPLETION_STATUS.md** | Central hub — start here for migration |
-| **MIGRATION_PLAN.md** | Master overview (1,229 lines) |
-| **IMPROVEMENTS.md** | All architecture improvements (1,424 lines) |
-| **CONVENTIONS.md** | Living conventions for C# code (709 lines) |
-| **PHASE_CONTRACTS.md** | Phase inputs/outputs with C# types (641 lines) |
-| **phases/PHASE_1-7** | Detailed per-phase instructions (9,197 lines total) |
-| **reference/UNITY_PRIMER.md** | Unity crash course (679 lines) |
-| **reference/PYTHON_TO_CSHARP.md** | Type mappings and conversions (902 lines) |
+### Migration Plan — paused (in `archive/2026-04-24-doc-consolidation/paused-migration/Migration-Plan/`)
+Paused indefinitely. Kept under archive as backup; not used during active development. See that directory's `COMPLETION_STATUS.md` if Unity work ever resumes.
 
 ### Python Source Documentation (in `Game-1-modular/`)
 | Document | Purpose |
 |----------|---------|
 | **GAME_MECHANICS_V6.md** | Master reference - all mechanics (5,154 lines) |
-| **REPOSITORY_STATUS_REPORT_2026-01-27.md** | Current system state |
-| **MASTER_ISSUE_TRACKER.md** | Known bugs and improvements |
+| **REPOSITORY_STATUS_REPORT_2026-01-27.md** | Pre-consolidation status snapshot |
+| **MASTER_ISSUE_TRACKER.md** | Known bugs and improvements (most resolved; see strikethrough) |
 | **docs/tag-system/TAG-GUIDE.md** | Comprehensive tag system guide |
-| **docs/ARCHITECTURE.md** | System architecture overview |
+| **docs/MODULE_REFERENCE.md** | Per-file module documentation |
+| **docs/DEVELOPMENT_GUIDE.md** | Developer workflow |
+| **docs/DEVELOPER_GUIDE_JSON_INTEGRATION.md** | JSON content authoring paths |
+| **docs/UPDATE_N_SYSTEM.md** | Update-N deployment system (merged 2026-04-24) |
 | **NAMING_CONVENTIONS.md** | API naming standards |
 | **Fewshot_llm/README.md** | LLM system documentation |
 | **Fewshot_llm/MANUAL_TUNING_GUIDE.md** | LLM prompt editing guide |
 
-### World Memory System Documentation (in `Game-1-modular/world_system/docs/`)
+(`docs/ARCHITECTURE.md` was archived on 2026-04-24 — its contents are in this CLAUDE.md file and in `docs/MODULE_REFERENCE.md`.)
+
+### World System Documentation (in `Game-1-modular/world_system/docs/`)
 | Document | Purpose |
 |----------|---------|
-| **WORLD_MEMORY_SYSTEM.md** | Single source of truth — 1,864 lines covering all 16 design sections |
-| **HANDOFF_STATUS.md** | Implementation state as of 2026-03-28 |
-| **TAG_LIBRARY.md** | 65-category tag taxonomy across 7 layers |
-| **FOUNDATION_IMPLEMENTATION_PLAN.md** | Layer 1-2 build plan (mostly executed) |
+| **WORLD_MEMORY_SYSTEM.md** | Single source of truth for WMS — unified design doc |
+| **HANDOFF_STATUS.md** | Current implementation state of WMS |
+| **ARCHITECTURAL_DECISIONS.md** | Top-level decisions about what's in/out of the WMS pipeline |
+| **TAG_LIBRARY.md** | WMS tag taxonomy across 7 layers |
+| **POLITICAL_AND_WMS_USAGE_PLAN.md** | Faction system + WMS integration plan |
+| **WMS_TOOLS_AND_SIMULATION.md** | Tools + simulation reference |
+
+### Living World (WNS/WES) Documentation (in `Development-Plan/`)
+| Document | Purpose |
+|----------|---------|
+| **WORLD_SYSTEM_WORKING_DOC.md** | v4 canonical spec for WNS + WES + tools |
+| **PLACEHOLDER_LEDGER.md** | Furnishing list — every placeholder the designer should review |
+| **OVERVIEW.md** | Roadmap index |
+| **PART_1 / PART_2 / PART_3** | Phase-level plans for combat / living world / player intelligence |
+| **SHARED_INFRASTRUCTURE.md** | Cross-cutting infra (BalanceValidator + event integration points) |
 
 ---
 
 ## Version History
 
+- **v8.0** (April 24, 2026): v4 World System (WNS+WES) P0-P9 pipeline shipped as pseudo-mock end-to-end (486 tests pass). Doc consolidation pass: ~74K lines of superseded/duplicate/archived docs moved to `archive/2026-04-24-doc-consolidation/` (organized by reason-for-move). Active-tree docs now ~21K lines. Updated: Migration-Plan reference paths, removed stale `docs/ARCHITECTURE.md` pointer, merged `UPDATE_N_AUTOMATION_WORKFLOW.md` + `UPDATE_SYSTEM_DOCUMENTATION.md` → `UPDATE_N_SYSTEM.md`, added WNS/WES doc index section.
 - **v7.0** (March 29, 2026): Major accuracy update. Fixed all file/LOC counts against actual codebase (239 files, ~96,400 LOC). Added World Memory System (14,269 LOC, 71 files). Fixed directory layout (Migration-Plan moved to archive/, Python/ is not a symlink). Corrected ai/ → world_system/living_world/, combat/ → Combat/. Removed stale "BackendManager doesn't exist" warning. Added StatTracker, GameEventBus, fishing discipline. Updated all individual file line counts.
 - **v6.0** (March 8, 2026): Added Visual Overhaul Design Standards section. Clarified sacred boundaries (no content JSON, no icon PNGs, no formula changes). Corrected BalanceValidator status (designed, not implemented). Fixed JSON file count (60 game-definition files, not 398).
 - **v5.0** (March 6, 2026): Strategic pivot to Python/Pygame active development. Added Living World + Combat Overhaul development plan. Unity migration paused indefinitely.
@@ -830,6 +840,6 @@ The ~90 JSON game-definition files are spread across `items.JSON/`, `recipes.JSO
 
 ---
 
-**Last Updated**: 2026-03-29
+**Last Updated**: 2026-04-24
 **For**: AI assistants and developers working on Game-1 (Python/Pygame active development)
 **Maintained By**: Project developers

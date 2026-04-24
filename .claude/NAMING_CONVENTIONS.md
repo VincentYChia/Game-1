@@ -581,7 +581,7 @@ for (x, y), material in ui_grid.items():
 - **Method Names:** See "Method Naming Patterns" section above
 - **Data Structures:** See "Data Structure Naming" section
 - **Tag System:** See `docs/tag-system/TAG-GUIDE.md`
-- **Architecture:** See `docs/ARCHITECTURE.md`
+- **Architecture:** See `.claude/CLAUDE.md` (prior `docs/ARCHITECTURE.md` archived 2026-04-24)
 - **Issues:** See `MASTER_ISSUE_TRACKER.md`
 
 ---

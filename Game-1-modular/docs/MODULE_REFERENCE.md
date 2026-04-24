@@ -1704,7 +1704,7 @@ python verify_imports.py
 | stat_tracker.py | 1,149 | SQL-backed player analytics |
 | skill_manager.py | 1,124 | Skill system |
 
-For architecture overview, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For architecture overview, see [`.claude/CLAUDE.md`](../../.claude/CLAUDE.md) (canonical as of 2026-04-24; prior `docs/ARCHITECTURE.md` was archived).
 For development guide, see [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md).
 For LLM system, see [Fewshot_llm/README.md](../../Scaled%20JSON%20Development/LLM%20Training%20Data/Fewshot_llm/README.md).
 

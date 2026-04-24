@@ -1,9 +1,13 @@
 # Development Guide
 
-Guide for developers working on or extending Game-1-Modular.
+Guide for developers working on or extending Game-1-Modular. Focuses on **workflow, standards, and structural "how to extend"** — prerequisites, branching, coding style, LLM integration, debugging.
 
 **Audience**: Contributors, maintainers, future developers
-**Last Updated**: 2026-01-27
+**Last Updated**: 2026-01-27 (banner refreshed 2026-04-24)
+
+**Companion docs**:
+- [`DEVELOPER_GUIDE_JSON_INTEGRATION.md`](DEVELOPER_GUIDE_JSON_INTEGRATION.md) — full end-to-end JSON content authoring paths (JSON → Loader → Database → Runtime) for skills, items, enemies, recipes, resource nodes, plus PNG/asset generation.
+- [`UPDATE_N_SYSTEM.md`](UPDATE_N_SYSTEM.md) — packaged content updates via the Update-N system.
 
 ---
 
@@ -1029,8 +1033,10 @@ class GameEngine:
 
 ### Documentation
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture overview
+- [`.claude/CLAUDE.md`](../../.claude/CLAUDE.md) - System architecture overview (canonical; prior `ARCHITECTURE.md` archived 2026-04-24)
 - [MODULE_REFERENCE.md](MODULE_REFERENCE.md) - Per-file documentation
+- [DEVELOPER_GUIDE_JSON_INTEGRATION.md](DEVELOPER_GUIDE_JSON_INTEGRATION.md) - JSON content authoring paths
+- [UPDATE_N_SYSTEM.md](UPDATE_N_SYSTEM.md) - Update-N deployment system
 - [GAME_MECHANICS_V6.md](GAME_MECHANICS_V6.md) - Master reference (5,089 lines)
 - [REPOSITORY_STATUS_REPORT_2026-01-27.md](REPOSITORY_STATUS_REPORT_2026-01-27.md) - Current status
 - [HOW_TO_RUN.md](../HOW_TO_RUN.md) - Quick start guide

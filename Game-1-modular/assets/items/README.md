@@ -325,7 +325,7 @@ cache.clear_cache()
 
 - **Item Catalog**: `/assets/icons/ITEM_CATALOG_FOR_ICONS.md`
 - **JSON Templates**: `/Game-1-modular/Definitions.JSON/JSON Templates/`
-- **Code Documentation**: `/Game-1-modular/docs/ARCHITECTURE.md`
+- **Code Documentation**: `/.claude/CLAUDE.md` (prior `Game-1-modular/docs/ARCHITECTURE.md` archived 2026-04-24)
 
 ---
 

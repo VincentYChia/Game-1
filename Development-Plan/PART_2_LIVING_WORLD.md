@@ -3,6 +3,8 @@
 **Priority**: P2 — After Combat Visuals
 **Goal**: Build the agent infrastructure that makes the world feel alive — NPCs with memory, factions with relationships, world events with consequence, and dynamic quests grounded in real game state.
 
+> **STATUS (2026-04-24)**: Memory layer (WMS), BackendManager, NPC agents, and faction system are shipped. The narrative pipeline (WNS) + content-execution pipeline (WES) that sit downstream of the memory layer are now canonically specified in [`WORLD_SYSTEM_WORKING_DOC.md`](WORLD_SYSTEM_WORKING_DOC.md) **(v4)** — read that for all Phase 2.5+ work. This doc remains as the broader Living World roadmap + historical context for phases that are shipped or underway.
+
 ---
 
 ## What Exists Today

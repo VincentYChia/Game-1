@@ -2,8 +2,10 @@
 
 Complete documentation for Game-1-Modular.
 
-**Last Updated**: 2025-12-30
-**Version**: 2.0 (Modular)
+**Last Updated**: 2026-04-24 (doc consolidation pass)
+**Version**: 2.1 (post-consolidation)
+
+> **2026-04-24**: Documentation underwent a consolidation pass. Several superseded or shipped-design docs were moved to `../../archive/2026-04-24-doc-consolidation/`. Key reference docs for active development are listed below.
 
 ---
 
@@ -12,20 +14,11 @@ Complete documentation for Game-1-Modular.
 ### 🚀 Getting Started
 - **[HOW_TO_RUN.md](../HOW_TO_RUN.md)** - Quick start guide, installation, troubleshooting
 
-### 📋 Feature Reference
-- **[FEATURES_CHECKLIST.md](FEATURES_CHECKLIST.md)** - Complete feature list from original game
-  - Use this to verify feature parity
-  - 100% completion checklist
-  - Organized by system
+### 🎮 Game Mechanics
+- **[GAME_MECHANICS_V6.md](GAME_MECHANICS_V6.md)** — Master reference for all game mechanics (damage, stats, tiers, crafting, etc.)
 
 ### 🏗️ Architecture
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture overview
-  - Design principles
-  - Layer architecture
-  - Component system
-  - Database pattern
-  - Event & data flow
-  - Rendering pipeline
+- **[`../.claude/CLAUDE.md`](../../.claude/CLAUDE.md)** — Current architecture + directory layout (canonical). The prior `ARCHITECTURE.md` was archived on 2026-04-24 as its contents were subsumed by CLAUDE.md and its own header admitted staleness.
 
 ### 📚 Module Reference
 - **[MODULE_REFERENCE.md](MODULE_REFERENCE.md)** - Detailed documentation of every file
@@ -53,16 +46,16 @@ Complete documentation for Game-1-Modular.
 3. Press **F1** for debug mode (infinite materials for testing)
 
 ### For Developers
-1. Read [ARCHITECTURE.md](ARCHITECTURE.md) to understand the system design
+1. Read [`../../.claude/CLAUDE.md`](../../.claude/CLAUDE.md) for current architecture + directory layout
 2. Review [MODULE_REFERENCE.md](MODULE_REFERENCE.md) to find specific modules
 3. Follow [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) for coding standards
-4. Check [FEATURES_CHECKLIST.md](FEATURES_CHECKLIST.md) before adding features
+4. For JSON content authoring, see [DEVELOPER_GUIDE_JSON_INTEGRATION.md](DEVELOPER_GUIDE_JSON_INTEGRATION.md) and [UPDATE_N_SYSTEM.md](UPDATE_N_SYSTEM.md)
 
 ### For Maintainers
-1. Use [FEATURES_CHECKLIST.md](FEATURES_CHECKLIST.md) to verify completeness
-2. Update docs when making architectural changes
-3. Keep [MODULE_REFERENCE.md](MODULE_REFERENCE.md) in sync with code
-4. Document new features in all relevant guides
+1. Update docs when making architectural changes
+2. Keep [MODULE_REFERENCE.md](MODULE_REFERENCE.md) in sync with code
+3. Document new features in all relevant guides
+4. Feature-parity checklist (vs. original singular `main.py`) is archived at [`../../archive/2026-04-24-doc-consolidation/historical-planning/FEATURES_CHECKLIST.md`](../../archive/2026-04-24-doc-consolidation/historical-planning/FEATURES_CHECKLIST.md); the parity goal was achieved.
 
 ---
 
@@ -145,14 +138,22 @@ Documentation explains WHAT the function does for users of the API.
 
 ```
 docs/
-├── README.md                   # This file - documentation index
-├── FEATURES_CHECKLIST.md       # Complete feature list (verification)
-├── ARCHITECTURE.md             # System architecture overview
-├── MODULE_REFERENCE.md         # Per-file documentation
-└── DEVELOPMENT_GUIDE.md        # Developer guide
+├── README.md                             # This file - documentation index
+├── GAME_MECHANICS_V6.md                  # Master game mechanics reference
+├── MODULE_REFERENCE.md                   # Per-file documentation
+├── DEVELOPMENT_GUIDE.md                  # Developer workflow
+├── DEVELOPER_GUIDE_JSON_INTEGRATION.md   # JSON content authoring paths
+├── UPDATE_N_SYSTEM.md                    # Update-N deployment system
+├── INTERACTIVE_CRAFTING_SPECIFICATION.md # Crafting UI spec
+├── tag-system/                           # Tag system docs
+└── json-reference/                       # JSON structure references
 
 ../ (project root)
 └── HOW_TO_RUN.md              # Quick start guide
+
+Archived (see ../../archive/2026-04-24-doc-consolidation/):
+├── ARCHITECTURE.md             (superseded by ../.claude/CLAUDE.md)
+└── FEATURES_CHECKLIST.md       (parity goal achieved)
 ```
 
 ---

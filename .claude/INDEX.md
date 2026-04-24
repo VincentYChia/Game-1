@@ -128,19 +128,17 @@ This directory contains curated developer context for AI assistants and human de
 
 ---
 
-### 6. **docs/ARCHITECTURE.md**
-**Path**: `Game-1-modular/docs/ARCHITECTURE.md`
-**Purpose**: System architecture overview
+### 6. **Architecture Overview** (canonical location changed 2026-04-24)
+**Path**: `.claude/CLAUDE.md` (this folder)
+**Purpose**: System architecture overview + directory layout
 **Contains**:
 - Design principles (composition, singleton, layered)
 - Directory structure breakdown
-- Layer architecture diagram
-- Component system documentation
-- Database pattern explanation
-- Event and data flow diagrams
+- Layer architecture + event flow
+- Database pattern
 - Rendering pipeline
 
-**When to Use**: When understanding how systems connect, adding new modules, or debugging cross-system issues.
+**When to Use**: When understanding how systems connect, adding new modules, or debugging cross-system issues. The prior `Game-1-modular/docs/ARCHITECTURE.md` was archived on 2026-04-24 at `archive/2026-04-24-doc-consolidation/duplicate-architecture/` — its header had admitted staleness and its content was subsumed into CLAUDE.md.
 
 **Status**: Partially stale (January 27, 2026) - v3.0. Does not cover world_system/, events/, animation/, or expanded Combat/. See CLAUDE.md for current architecture.
 

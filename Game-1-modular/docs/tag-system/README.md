@@ -44,4 +44,4 @@ Game World (effects applied)
 
 ## Historical Documentation
 
-See `../../archive/tag-system-old/` for phase completion reports, old implementation notes, and archived guides.
+See `../../../archive/2026-04-24-doc-consolidation/pre-existing-archive-rollup/tag-system-old/` for phase completion reports, old implementation notes, and archived guides (relocated from `archive/tag-system-old/` on 2026-04-24).

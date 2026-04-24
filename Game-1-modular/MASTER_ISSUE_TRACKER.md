@@ -1,8 +1,10 @@
 # Master Issue Tracker
 
 **Created**: 2025-12-30
-**Last Updated**: 2026-01-28
+**Last Updated**: 2026-01-28 (most pre-2026 bugs resolved; see ~~strikethrough~~ rows for what's fixed)
 **Purpose**: Comprehensive tracking of all known issues, improvements, and testing requirements
+
+> **STATUS (2026-04-24)**: Most of this tracker's original bugs are resolved. Live items are the un-struck rows in the table below and in sections that do not begin with ✅. For current WNS/WES (2026-04 work) open questions, see [`Development-Plan/PLACEHOLDER_LEDGER.md`](../Development-Plan/PLACEHOLDER_LEDGER.md).
 
 ---
 

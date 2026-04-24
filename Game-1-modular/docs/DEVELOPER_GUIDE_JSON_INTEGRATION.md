@@ -1,7 +1,12 @@
 # Developer Guide: Complete JSON Integration System
 
-**Last Updated**: 2025-12-25
-**Purpose**: Comprehensive guide for adding new content to the game via JSON
+**Last Updated**: 2025-12-25 (banner refreshed 2026-04-24)
+**Purpose**: Comprehensive guide for adding new content to the game via JSON. This doc is the **content-author's deep reference** — full end-to-end paths from JSON file → Loader → Database → Runtime for every content type (skills, items, enemies, recipes, nodes), plus PNG/asset generation.
+
+**Companion docs**:
+- [`DEVELOPMENT_GUIDE.md`](DEVELOPMENT_GUIDE.md) — broader dev workflow (prerequisites, branching, coding standards, debugging, LLM integration overview).
+- [`UPDATE_N_SYSTEM.md`](UPDATE_N_SYSTEM.md) — packaged content updates via the Update-N system.
+- [`tag-system/TAG-GUIDE.md`](tag-system/TAG-GUIDE.md) — full tag vocabulary used across all content types.
 
 ---
 
