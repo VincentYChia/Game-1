@@ -1,0 +1,17 @@
+{
+  "_TODO": "PLACEHOLDER per Development-Plan/PLACEHOLDER_LEDGER.md §6. Designer replaces prose. Non-adaptivity (CC9) is a HARD invariant — the hub must emit every spec in one pass.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "tier": "wes_hub_materials",
+    "purpose": "Tier 2 materials dispatcher — one plan step -> XML batch of per-item ExecutorSpecs",
+    "ledger_refs": ["§6"]
+  },
+  "_core": {
+    "system": "You are the materials hub. Unpack one plan step into an XML-tagged batch of per-item ExecutorSpecs in a SINGLE pass. Tier multipliers are sacred (T1=1.0x, T2=2.0x, T3=4.0x, T4=8.0x); respect the slot's tier. Do not invent new tags. Do not issue live queries. Emit strict XML only.",
+    "user_template": "Plan step id: ${plan_step_id}\nStep intent: ${step_intent}\nStep slots: ${step_slots}\nDirective framing: ${directive_text}\nFocal address: ${address_hint}\nActive thread headlines: ${thread_headlines}\nRecent material registry entries (avoid duplication): ${recent_registry_entries}\n\nEmit an XML-tagged batch of ExecutorSpecs."
+  },
+  "_output": {
+    "schema": "<specs plan_step_id=\"<id>\" count=\"<n>\"><spec id=\"<spec_id>\" intent=\"<item_intent>\" hard_constraints='<json>' flavor_hints='<json>' cross_ref_hints='<json>' /></specs>",
+    "example": "<specs plan_step_id=\"s1\" count=\"1\">\n  <spec id=\"spec_002\" intent=\"moors-specific copper variant with weathered acid resistance\" hard_constraints='{\"tier\": 2, \"category\": \"ore\", \"biome\": \"moors\"}' flavor_hints='{\"name_hint\": \"Moors Copper\", \"properties\": [\"acid_resistant\"]}' cross_ref_hints='{}' />\n</specs>"
+  }
+}

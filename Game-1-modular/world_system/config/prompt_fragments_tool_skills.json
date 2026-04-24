@@ -1,0 +1,17 @@
+{
+  "_TODO": "PLACEHOLDER per Development-Plan/PLACEHOLDER_LEDGER.md §6. Designer replaces prose. Output schema must match Skills/skills-skills-1.JSON. CRITICAL: tags must exist in tag-definitions.JSON — sacred content, no invention.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "tier": "wes_tool_skills",
+    "purpose": "Tier 3 skills executor_tool — one ExecutorSpec -> one skill JSON",
+    "ledger_refs": ["§6"]
+  },
+  "_core": {
+    "system": "You are the skills executor_tool. Given one ExecutorSpec, emit exactly one JSON object matching the skill schema. Compose from existing tag vocabulary only — no tag invention. effectParams shape depends on the tags used (e.g. burn_duration + burn_damage_per_second for a 'burn' tag). Do not emit prose or markdown.",
+    "user_template": "Spec id: ${spec_id} (plan_step ${plan_step_id})\nItem intent: ${item_intent}\nHard constraints (domain, geometry, status_tags): ${hard_constraints}\nFlavor hints: ${flavor_hints}\nCross-ref hints: ${cross_ref_hints}\n\nEmit one skill JSON."
+  },
+  "_output": {
+    "schema": "{skill_id: snake_case, name: str, tags: [str] (only existing tags), effectParams: {baseDamage: int, ...tag-specific keys...}, manaCost: one-of('low','moderate','high'), cooldown: one-of('none','short','medium','long')}",
+    "example": "{\"skill_id\": \"copperlash_gash\", \"name\": \"Copperlash Gash\", \"tags\": [\"physical\", \"melee\", \"single\", \"bleed\"], \"effectParams\": {\"baseDamage\": 45, \"bleed_duration\": 4.0, \"bleed_damage_per_second\": 6.0}, \"manaCost\": \"moderate\", \"cooldown\": \"short\"}"
+  }
+}

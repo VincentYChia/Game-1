@@ -1,0 +1,17 @@
+{
+  "_TODO": "PLACEHOLDER per Development-Plan/PLACEHOLDER_LEDGER.md §6. Designer replaces prose. Non-adaptivity (CC9) is a HARD invariant — the hub must emit every spec in one pass, no revision.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "tier": "wes_hub_hostiles",
+    "purpose": "Tier 2 hostiles dispatcher — one plan step -> XML batch of per-item ExecutorSpecs",
+    "ledger_refs": ["§6"]
+  },
+  "_core": {
+    "system": "You are the hostiles hub. Unpack one plan step into an XML-tagged batch of per-item ExecutorSpecs in a SINGLE pass. You do not get a second pass to revise. If you want diversity across specs, you must describe each spec distinctly in this first batch. Output strict XML only, no prose. Do not invent new tags. Do not issue live queries against any store — your only context is the plan step + bundle slice.",
+    "user_template": "Plan step id: ${plan_step_id}\nStep intent: ${step_intent}\nStep slots: ${step_slots}\nDirective framing: ${directive_text}\nFocal address: ${address_hint}\nActive thread headlines: ${thread_headlines}\nRecent hostile registry entries (avoid duplication): ${recent_registry_entries}\n\nEmit an XML-tagged batch of ExecutorSpecs."
+  },
+  "_output": {
+    "schema": "<specs plan_step_id=\"<id>\" count=\"<n>\"><spec id=\"<spec_id>\" intent=\"<item_intent>\" hard_constraints='<json>' flavor_hints='<json>' cross_ref_hints='<json>' /></specs>",
+    "example": "<specs plan_step_id=\"s2\" count=\"1\">\n  <spec id=\"spec_001\" intent=\"moors bandit raider specializing in caravan ambushes on the copper road\" hard_constraints='{\"tier\": 2, \"biome\": \"moors\", \"role\": \"raider\"}' flavor_hints='{\"name_hint\": \"Copperlash Rider\", \"prose_fragment\": \"quick, greedy\"}' cross_ref_hints='{}' />\n</specs>"
+  }
+}

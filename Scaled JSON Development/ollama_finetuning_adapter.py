@@ -39,6 +39,9 @@ ADAPTERS = [
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_4", "vision": True},
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_5", "vision": True},
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_6", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_7", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_8", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Adornment_9", "vision": True},
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Alchemy_2"},
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Alchemy_3"},
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\New_Alchemy_1"},
@@ -51,6 +54,12 @@ ADAPTERS = [
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_12", "vision": True},
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_13", "vision": True},
     {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_14", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_15", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_16", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_17", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_18", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_19", "vision": True},
+    {"path": r"C:\Users\vipVi\Downloads\Game-1_LORA\Smithing_20", "vision": True},
 ]
 
 # ============================================================================

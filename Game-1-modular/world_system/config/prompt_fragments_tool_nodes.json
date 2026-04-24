@@ -1,0 +1,17 @@
+{
+  "_TODO": "PLACEHOLDER per Development-Plan/PLACEHOLDER_LEDGER.md §6. Designer replaces prose. Output schema must match existing Resource-node-1.JSON shape.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "tier": "wes_tool_nodes",
+    "purpose": "Tier 3 nodes executor_tool — one ExecutorSpec -> one resource-node JSON",
+    "ledger_refs": ["§6"]
+  },
+  "_core": {
+    "system": "You are the resource-nodes executor_tool. Given one ExecutorSpec, emit exactly one JSON object matching the resource-node schema. The material_id must match the spec's cross_ref_hints or hard_constraints. tool_required must be an existing tool type (axe, pickaxe, sickle, etc.). Do not emit prose or markdown.",
+    "user_template": "Spec id: ${spec_id} (plan_step ${plan_step_id})\nItem intent: ${item_intent}\nHard constraints: ${hard_constraints}\nFlavor hints: ${flavor_hints}\nCross-ref hints: ${cross_ref_hints}\n\nEmit one resource-node JSON."
+  },
+  "_output": {
+    "schema": "{node_id: snake_case, name: str, material_id: str, biome: str, tool_required: str, rarity: str, yield_range: [int, int]}",
+    "example": "{\"node_id\": \"moors_copper_seam\", \"name\": \"Copper Seam\", \"material_id\": \"moors_copper\", \"biome\": \"moors\", \"tool_required\": \"pickaxe\", \"rarity\": \"uncommon\", \"yield_range\": [2, 5]}"
+  }
+}

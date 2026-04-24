@@ -1502,8 +1502,12 @@ class GameEngine:
             self.npc_dialogue_open = True
             self.active_npc = nearby_npc
 
-            # Get dialogue lines
-            self.npc_dialogue_lines = [nearby_npc.get_next_dialogue()]
+            # Get opening dialogue. Prefer the LLM-powered NPCAgentSystem when
+            # available; fall back to the hardcoded cycling lines otherwise.
+            # NOTE: the generate_dialogue() call is synchronous — the UI will
+            # block for the LLM round-trip. Making this async is tracked in
+            # Development-Plan/WORLD_SYSTEM_WORKING_DOC.md.
+            self.npc_dialogue_lines = [self._generate_npc_opening(nearby_npc)]
 
             # Check for available quests
             self.npc_available_quests = nearby_npc.get_available_quests(self.character.quests)
@@ -1532,6 +1536,55 @@ class GameEngine:
                 pass
         else:
             self.add_notification("No one nearby to talk to", (200, 200, 200))
+
+    def _generate_npc_opening(self, npc) -> str:
+        """Generate the opening dialogue line for an NPC interaction.
+
+        Routes through NPCAgentSystem when available, which pulls NPC
+        memory, personality, faction context, and current world
+        conditions. Falls back to the NPC's hardcoded cycling lines
+        if the agent system is absent or errors out.
+        """
+        agent = getattr(self, "npc_agent_system", None)
+        if agent is None:
+            # Graceful degrade: agent not initialized (e.g. boot failed).
+            try:
+                from world_system.living_world.infra.graceful_degrade import log_degrade
+                log_degrade(
+                    subsystem="npc_agent",
+                    operation="generate_dialogue",
+                    failure_reason="NPCAgentSystem not initialized",
+                    fallback_taken="hardcoded cycling dialogue",
+                    severity="info",
+                    context={"npc_id": npc.npc_def.npc_id},
+                )
+            except Exception:
+                pass
+            return npc.get_next_dialogue()
+        try:
+            result = agent.generate_dialogue(
+                npc_id=npc.npc_def.npc_id,
+                player_input="*approaches and greets you*",
+                character=self.character,
+                npc_name=npc.npc_def.name,
+            )
+            if result and result.text:
+                return result.text
+        except Exception as e:
+            print(f"[NPCAgent] generate_dialogue failed for {npc.npc_def.npc_id}: {e}")
+            try:
+                from world_system.living_world.infra.graceful_degrade import log_degrade
+                log_degrade(
+                    subsystem="npc_agent",
+                    operation="generate_dialogue",
+                    failure_reason=f"{type(e).__name__}: {e}",
+                    fallback_taken="hardcoded cycling dialogue",
+                    severity="warning",
+                    context={"npc_id": npc.npc_def.npc_id, "npc_name": npc.npc_def.name},
+                )
+            except Exception:
+                pass
+        return npc.get_next_dialogue()
 
     def handle_start_menu_selection(self, option_index: int):
         """Handle start menu option selection (0=New World, 1=Load World, 2=Load Default Save, 3=Temporary World)"""
@@ -4459,6 +4512,29 @@ class GameEngine:
 
     def _init_world_memory(self):
         """Initialize the World Memory System and Faction Systems (AI foundation layer)."""
+        # Graceful-degrade logger is always importable and never raises,
+        # so we import it once for all sibling init blocks.
+        try:
+            from world_system.living_world.infra.graceful_degrade import log_degrade
+        except Exception:
+            log_degrade = None  # type: ignore
+
+        def _report(subsystem: str, operation: str, exc: Exception,
+                    fallback_taken: str, severity: str = "warning") -> None:
+            if log_degrade is None:
+                return
+            try:
+                log_degrade(
+                    subsystem=subsystem,
+                    operation=operation,
+                    failure_reason=f"{type(exc).__name__}: {exc}",
+                    fallback_taken=fallback_taken,
+                    severity=severity,
+                    context={},
+                )
+            except Exception:
+                pass
+
         # Initialize Faction Systems (Phase 2: SQLite-backed NPC profiles & affinity)
         try:
             from world_system.living_world.factions import initialize_faction_systems
@@ -4466,6 +4542,8 @@ class GameEngine:
             print("[Faction] FactionDatabase initialized")
         except Exception as e:
             print(f"[Faction] Init failed (non-fatal): {e}")
+            _report("faction_system", "initialize_faction_systems", e,
+                    "faction system disabled")
 
         # Initialize World Memory System
         try:
@@ -4485,6 +4563,58 @@ class GameEngine:
         except Exception as e:
             print(f"[WorldMemory] Init failed (non-fatal): {e}")
             self.world_memory = None
+            _report("world_memory_system", "initialize", e,
+                    "WMS disabled; downstream consumers will no-op", "error")
+
+        # Initialize World Narrative System (WNS) — sibling of WMS.
+        # Separate SQLite file (world_narrative.db). Per Development-Plan/
+        # WORLD_SYSTEM_WORKING_DOC.md §4, WNS is a sibling system: fails
+        # gracefully (no WMS disruption) and publishes WNS_CALL_WES_REQUESTED
+        # events that WES (future phase) will subscribe to.
+        self.world_narrative = None
+        try:
+            from world_system.wns.world_narrative_system import WorldNarrativeSystem
+            from core.paths import PathManager as _PM
+            _paths = _PM()
+            _wns_save_dir = str(_paths.save_path)
+            _wns_geo_path = str(
+                _paths.base_path / "world_system" / "config" / "geographic-map.json"
+            )
+            self.world_narrative = WorldNarrativeSystem.get_instance()
+            self.world_narrative.initialize(
+                save_dir=_wns_save_dir,
+                geo_map_path=_wns_geo_path,
+            )
+        except Exception as e:
+            print(f"[WorldNarrative] Init failed (non-fatal): {e}")
+            self.world_narrative = None
+            _report("world_narrative_system", "initialize", e,
+                    "WNS disabled; narrative weaving will not run",
+                    "warning")
+
+        # Initialize Living World consumers (BackendManager + NPCAgentSystem).
+        # These depend on WorldMemorySystem.world_query for context and on
+        # BackendManager for LLM calls. Failure is non-fatal — dialogue falls
+        # back to hardcoded lines when the agent system is unavailable.
+        self.npc_agent_system = None
+        try:
+            from world_system.living_world.backends.backend_manager import BackendManager
+            from world_system.living_world.npc.npc_agent import NPCAgentSystem
+
+            backend_manager = BackendManager.get_instance()
+            backend_manager.initialize()
+
+            world_query = self.world_memory.world_query if self.world_memory else None
+            self.npc_agent_system = NPCAgentSystem.get_instance()
+            self.npc_agent_system.initialize(
+                world_query=world_query,
+                backend_manager=backend_manager,
+            )
+        except Exception as e:
+            print(f"[NPCAgent] Init failed (non-fatal, hardcoded dialogue will be used): {e}")
+            self.npc_agent_system = None
+            _report("npc_agent_system", "initialize", e,
+                    "hardcoded dialogue will be used")
 
     def _check_background_generation(self):
         """Check if background LLM generation has completed and process the result."""

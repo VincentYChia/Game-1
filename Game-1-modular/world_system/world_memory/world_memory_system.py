@@ -637,6 +637,22 @@ class WorldMemorySystem:
         Layer7Manager.reset()
         TriggerRegistry.reset()
 
+    # ── Queries ──────────────────────────────────────────────────────
+
+    def get_world_summary(self, game_time: Optional[float] = None) -> Dict[str, Any]:
+        """High-level world state for narrative/NPC consumers.
+
+        Returns the current ``ongoing_conditions`` set plus aggregate
+        counts. Thin passthrough to :class:`WorldQuery`; exists so
+        consumers can depend on the facade rather than reaching into
+        ``world_memory.world_query`` directly.
+        """
+        if not self._initialized or not self.world_query:
+            return {"ongoing_conditions": [], "total_events_recorded": 0,
+                    "regions_with_activity": 0}
+        t = self._game_time if game_time is None else game_time
+        return self.world_query.get_world_summary(t)
+
     # ── Debug / Stats ────────────────────────────────────────────────
 
     @property

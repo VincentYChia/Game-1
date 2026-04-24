@@ -1,0 +1,17 @@
+{
+  "_TODO": "PLACEHOLDER per Development-Plan/PLACEHOLDER_LEDGER.md §6. Designer replaces prose. Non-adaptivity (CC9) is a HARD invariant.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "tier": "wes_hub_nodes",
+    "purpose": "Tier 2 resource nodes dispatcher — one plan step -> XML batch of per-item ExecutorSpecs",
+    "ledger_refs": ["§6"]
+  },
+  "_core": {
+    "system": "You are the resource-nodes hub. Unpack one plan step into an XML-tagged batch of per-item ExecutorSpecs in a SINGLE pass. Each spec must reference a material_id that exists or will be created in the same plan (cross_ref_hints). Do not issue live queries. Emit strict XML only.",
+    "user_template": "Plan step id: ${plan_step_id}\nStep intent: ${step_intent}\nStep slots: ${step_slots}\nDirective framing: ${directive_text}\nFocal address: ${address_hint}\nActive thread headlines: ${thread_headlines}\nRecent node registry entries (avoid duplication): ${recent_registry_entries}\n\nEmit an XML-tagged batch of ExecutorSpecs."
+  },
+  "_output": {
+    "schema": "<specs plan_step_id=\"<id>\" count=\"<n>\"><spec id=\"<spec_id>\" intent=\"<item_intent>\" hard_constraints='<json>' flavor_hints='<json>' cross_ref_hints='<json>' /></specs>",
+    "example": "<specs plan_step_id=\"s3\" count=\"1\">\n  <spec id=\"spec_003\" intent=\"cliff-face copper seam node in moors\" hard_constraints='{\"material_id\": \"moors_copper\", \"biome\": \"moors\", \"tool_required\": \"pickaxe\"}' flavor_hints='{\"rarity\": \"uncommon\"}' cross_ref_hints='{\"material_id\": \"moors_copper\"}' />\n</specs>"
+  }
+}

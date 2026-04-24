@@ -1,0 +1,17 @@
+{
+  "_TODO": "PLACEHOLDER per Development-Plan/PLACEHOLDER_LEDGER.md §6. Designer replaces prose. Output schema must match existing hostiles-*.JSON shape; deterministic validator enforces.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "tier": "wes_tool_hostiles",
+    "purpose": "Tier 3 hostiles executor_tool — one ExecutorSpec -> one hostile JSON",
+    "ledger_refs": ["§6"]
+  },
+  "_core": {
+    "system": "You are the hostiles executor_tool. Given one ExecutorSpec, emit exactly one JSON object matching the hostile schema. Do not emit prose, markdown, or commentary. Tier multipliers are sacred: T1=1.0x, T2=2.0x, T3=4.0x, T4=8.0x — scale hp/attack/defense accordingly. All skills referenced must exist or be created in the same plan. All drops must reference existing or same-plan materials.",
+    "user_template": "Spec id: ${spec_id} (plan_step ${plan_step_id})\nItem intent: ${item_intent}\nHard constraints: ${hard_constraints}\nFlavor hints: ${flavor_hints}\nCross-ref hints: ${cross_ref_hints}\n\nEmit one hostile JSON."
+  },
+  "_output": {
+    "schema": "{hostile_id: snake_case, name: str, tier: 1..4, biome: str, role: str, hp: int, attack: int, defense: int, drops: [{material_id: str, chance: float}], skills: [skill_id], tags: [str]}",
+    "example": "{\"hostile_id\": \"copperlash_rider\", \"name\": \"Copperlash Rider\", \"tier\": 2, \"biome\": \"moors\", \"role\": \"raider\", \"hp\": 180, \"attack\": 28, \"defense\": 14, \"drops\": [{\"material_id\": \"moors_copper\", \"chance\": 0.35}], \"skills\": [\"copperlash_gash\"], \"tags\": [\"physical\", \"bleed\", \"raider\"]}"
+  }
+}

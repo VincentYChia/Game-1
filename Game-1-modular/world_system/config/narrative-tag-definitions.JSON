@@ -1,0 +1,81 @@
+{
+  "_placeholder_notice": "PLACEHOLDER STARTER TAGS — designer owns the real narrative taxonomy. See Development-Plan/PLACEHOLDER_LEDGER.md §5 for the furnishing list. WNS agent seeded these thread-stage / tone / relationship categories so the pipeline compiles; all values are subject to replacement.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "purpose": "Narrative tag taxonomy for WNS (NL1-NL7). Mirrors the WMS tag-definitions pattern but scoped to narrative content. Separate file from WMS tag-definitions.JSON per CC5 (sibling system).",
+    "address_tag_prefixes_note": "Narrative address prefixes (thread:, arc:, witness:) are facts, never LLM-writable. See §4.2b of WORLD_SYSTEM_WORKING_DOC.md."
+  },
+
+  "address_prefixes": [
+    "thread:",
+    "arc:",
+    "witness:"
+  ],
+
+  "categories": {
+    "thread_stage": {
+      "description": "Where in its arc a thread fragment sits. Placeholder vocabulary.",
+      "layer_unlocked": 2,
+      "is_dynamic": false,
+      "values": [
+        "inciting_incident",
+        "rising_action",
+        "complication",
+        "turning_point",
+        "falling_action",
+        "resolution",
+        "coda"
+      ]
+    },
+    "tone": {
+      "description": "Narrative mood of the fragment. Placeholder vocabulary.",
+      "layer_unlocked": 2,
+      "is_dynamic": false,
+      "values": [
+        "hopeful",
+        "ominous",
+        "mundane",
+        "triumphant",
+        "grim",
+        "uneasy",
+        "tragic",
+        "comedic"
+      ]
+    },
+    "relationship": {
+      "description": "Inter-actor/faction relationship framed by the fragment. Placeholder vocabulary.",
+      "layer_unlocked": 2,
+      "is_dynamic": false,
+      "values": [
+        "alliance",
+        "rivalry",
+        "mentor_protege",
+        "betrayal",
+        "courtship",
+        "familial",
+        "adversarial",
+        "indifferent"
+      ]
+    },
+    "narrative_domain": {
+      "description": "What kind of story this fragment contributes to. Placeholder vocabulary.",
+      "layer_unlocked": 2,
+      "is_dynamic": false,
+      "values": [
+        "political",
+        "economic",
+        "martial",
+        "mystical",
+        "domestic",
+        "exploration",
+        "industrial"
+      ]
+    },
+    "emergent_entity": {
+      "description": "Dynamic (free-form) names surfaced by weaving — factions, places, persons the LLM leans on.",
+      "layer_unlocked": 2,
+      "is_dynamic": true,
+      "values": []
+    }
+  }
+}

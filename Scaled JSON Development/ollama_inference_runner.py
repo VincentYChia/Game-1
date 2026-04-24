@@ -45,9 +45,6 @@ LIVE_PROMPT_MAP = {
 
 OLLAMA_API = "http://localhost:11434"
 
-# JSON validator — set this to the path of json_validator.py
-VALIDATOR_PATH = r"C:\Users\vipVi\PycharmProjects\Game-1\Scaled JSON Development\json_validator.py"
-
 # ============================================================================
 # Flask app
 # ============================================================================
@@ -268,34 +265,15 @@ def api_models():
         return jsonify({"models": [], "error": str(e)})
 
 
-# ── Validator ───────────────────────────────────────────────────────────────
-
-_validator_module = None
-
-def _get_validator():
-    """Dynamically import json_validator.py"""
-    global _validator_module
-    if _validator_module is not None:
-        return _validator_module
-    if not os.path.isfile(VALIDATOR_PATH):
-        print(f"  [validator] ⚠ Not found: {VALIDATOR_PATH}", flush=True)
-        return None
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("json_validator", VALIDATOR_PATH)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    _validator_module = mod
-    print(f"  [validator] ✓ Loaded from {VALIDATOR_PATH}", flush=True)
-    return mod
+# ── Validation ──────────────────────────────────────────────────────────────
 
 
-# Map discipline → validator method name
-DISCIPLINE_VALIDATOR = {
-    "smithing":    "_validate_recipes",
-    "alchemy":     "_validate_recipes",
-    "refining":    "_validate_recipes",
-    "engineering": "_validate_recipes",
-    "adornment":   "_validate_recipes",
+# Known field aliases — model output using one is equivalent to the other
+FIELD_ALIASES = {
+    "type": "types",
+    "types": "type",
+    "subtype": "subtypes",
+    "subtypes": "subtype",
 }
 
 
@@ -306,7 +284,10 @@ def api_validate():
     discipline = body.get("discipline", "").lower()
     expected_json = body.get("expected_text", "")
 
-    results = {"errors": [], "warnings": [], "valid": False, "json_parsed": False}
+    results = {
+        "errors": [], "warnings": [], "valid": False, "json_parsed": False,
+        "field_count": 0, "fields_ok": 0,
+    }
 
     # Step 1: parse JSON
     try:
@@ -316,54 +297,142 @@ def api_validate():
         results["errors"].append(f"JSON parse error: {e}")
         return jsonify(results)
 
-    # Step 2: structural validation via validator
-    mod = _get_validator()
-    if mod:
-        try:
-            validator = mod.GameJSONValidator()
-            method_name = DISCIPLINE_VALIDATOR.get(discipline, "_validate_recipes")
-            method = getattr(validator, method_name, None)
-
-            if method and isinstance(parsed, dict):
-                # Wrap single recipe in expected structure if needed
-                if 'recipes' not in parsed and 'recipeId' in parsed:
-                    wrapped = {"recipes": [parsed]}
-                elif 'recipes' not in parsed and isinstance(parsed, dict):
-                    # Try to detect: might be a full file already
-                    wrapped = parsed
-                else:
-                    wrapped = parsed
-                errs = method(wrapped, "<model_output>")
-                for e in errs:
-                    results["errors"].append(e)
-            elif method and isinstance(parsed, list):
-                # Array of recipes
-                wrapped = {"recipes": parsed}
-                errs = method(wrapped, "<model_output>")
-                for e in errs:
-                    results["errors"].append(e)
-        except Exception as e:
-            results["warnings"].append(f"Validator error: {e}")
-
-    # Step 3: compare structure with expected (if provided)
+    # Step 2: rigorous comparison against expected ground truth
     if expected_json:
         try:
             expected = json.loads(expected_json)
-            # Key-level comparison
-            if isinstance(parsed, dict) and isinstance(expected, dict):
-                missing_keys = set(expected.keys()) - set(parsed.keys())
-                extra_keys = set(parsed.keys()) - set(expected.keys())
-                if missing_keys:
-                    results["warnings"].append(f"Missing keys vs expected: {', '.join(sorted(missing_keys))}")
-                if extra_keys:
-                    results["warnings"].append(f"Extra keys vs expected: {', '.join(sorted(extra_keys))}")
-        except:
-            pass
+            counters = {"total": 0, "ok": 0}
+            _compare_structure(parsed, expected, "", results, counters)
+            results["field_count"] = counters["total"]
+            results["fields_ok"] = counters["ok"]
+        except json.JSONDecodeError:
+            results["warnings"].append("Could not parse expected output for comparison")
+    else:
+        # No expected to compare — just do standalone checks
+        if isinstance(parsed, dict):
+            _check_standalone(parsed, "", results)
 
     results["valid"] = len(results["errors"]) == 0
-    print(f"  [validate] discipline={discipline} parsed={results['json_parsed']} "
-          f"errors={len(results['errors'])} warnings={len(results['warnings'])}", flush=True)
+    pct = (
+        f" ({results['fields_ok']}/{results['field_count']})"
+        if results["field_count"] > 0 else ""
+    )
+    print(f"  [validate] discipline={discipline} parsed={results['json_parsed']}"
+          f" errors={len(results['errors'])} warnings={len(results['warnings'])}"
+          f"{pct}", flush=True)
     return jsonify(results)
+
+
+def _resolve_key(actual_keys, expected_key):
+    """Find the actual key, accounting for aliases. Returns (actual_key, is_alias)."""
+    if expected_key in actual_keys:
+        return expected_key, False
+    alias = FIELD_ALIASES.get(expected_key)
+    if alias and alias in actual_keys:
+        return alias, True
+    return None, False
+
+
+def _compare_structure(actual, expected, path, results, counters):
+    """Deep structural comparison — expected output is the schema."""
+    prefix = path or "root"
+
+    # Type check
+    if type(actual) != type(expected):
+        # int/float interchange is fine
+        if isinstance(actual, (int, float)) and isinstance(expected, (int, float)):
+            return
+        # null vs something is an error
+        if actual is None:
+            results["errors"].append(f"{prefix}: got null, expected {type(expected).__name__}")
+        else:
+            results["errors"].append(
+                f"{prefix}: type mismatch — got {type(actual).__name__}, "
+                f"expected {type(expected).__name__}"
+            )
+        return
+
+    if isinstance(expected, dict):
+        expected_keys = set(expected.keys())
+        actual_keys = set(actual.keys())
+
+        # Check every expected key exists
+        for k in sorted(expected_keys):
+            counters["total"] += 1
+            resolved, is_alias = _resolve_key(actual_keys, k)
+
+            if resolved is None:
+                results["errors"].append(f"{prefix}.{k}: missing key")
+                continue
+
+            if is_alias:
+                results["warnings"].append(
+                    f"{prefix}: '{resolved}' instead of '{k}' (accepted alias)"
+                )
+
+            counters["ok"] += 1
+            # Recurse into the value
+            _compare_structure(actual[resolved], expected[k], f"{prefix}.{k}", results, counters)
+
+        # Check for extra keys not in expected (and not aliases of expected keys)
+        for k in sorted(actual_keys):
+            if k not in expected_keys:
+                alias = FIELD_ALIASES.get(k)
+                if alias and alias in expected_keys:
+                    pass  # already handled above
+                else:
+                    results["warnings"].append(f"{prefix}.{k}: unexpected extra key")
+
+    elif isinstance(expected, list):
+        if len(expected) == 0:
+            return  # nothing to validate against
+
+        if len(actual) == 0:
+            results["errors"].append(
+                f"{prefix}: empty array (expected {len(expected)} items)"
+            )
+            return
+
+        # Validate every element in actual against the structure of expected[0]
+        template = expected[0]
+        for i, item in enumerate(actual):
+            _compare_structure(item, template, f"{prefix}[{i}]", results, counters)
+
+        if len(actual) != len(expected):
+            results["warnings"].append(
+                f"{prefix}: {len(actual)} items vs expected {len(expected)}"
+            )
+
+    elif isinstance(expected, str):
+        # Flag empty strings where expected has content
+        if expected.strip() and not actual.strip():
+            results["errors"].append(f"{prefix}: empty string (expected content)")
+
+    elif isinstance(expected, (int, float)):
+        # Flag zero/negative where expected is positive (likely an error)
+        if expected > 0 and actual <= 0:
+            results["warnings"].append(
+                f"{prefix}: value {actual} (expected positive like {expected})"
+            )
+
+
+def _check_standalone(data, path, results):
+    """Standalone checks when no expected output is available."""
+    prefix = path or "root"
+
+    if isinstance(data, dict):
+        for key, val in data.items():
+            # Flag empty strings in any field
+            if isinstance(val, str) and not val.strip():
+                results["errors"].append(f"{prefix}.{key}: empty string")
+            elif isinstance(val, dict):
+                _check_standalone(val, f"{prefix}.{key}", results)
+            elif isinstance(val, list):
+                if len(val) == 0:
+                    results["warnings"].append(f"{prefix}.{key}: empty array")
+                for i, item in enumerate(val):
+                    if isinstance(item, dict):
+                        _check_standalone(item, f"{prefix}.{key}[{i}]", results)
 
 
 # ── HTML UI ─────────────────────────────────────────────────────────────────
@@ -991,6 +1060,9 @@ function renderValidation(data){
   if(!vr)return;
   const errs=data.errors||[];
   const warns=data.warnings||[];
+  const fc=data.field_count||0;
+  const fo=data.fields_ok||0;
+  const pct=fc>0?Math.round((fo/fc)*100):0;
 
   let badge,label;
   if(!data.json_parsed){
@@ -998,13 +1070,13 @@ function renderValidation(data){
     label="Output is not valid JSON";
   }else if(errs.length>0){
     badge='<span class="val-badge fail">'+errs.length+' ERROR'+(errs.length>1?'S':'')+'</span>';
-    label="Structural issues found";
+    label=fc>0?`${fo}/${fc} fields matched (${pct}%)`:"Structural issues found";
   }else if(warns.length>0){
-    badge='<span class="val-badge warn">'+warns.length+' WARNING'+(warns.length>1?'S':'')+'</span>';
-    label="Passed with warnings";
+    badge='<span class="val-badge warn">PASS</span>';
+    label=fc>0?`${fo}/${fc} fields matched (${pct}%) — ${warns.length} warning${warns.length>1?'s':''}`:"Passed with warnings";
   }else{
     badge='<span class="val-badge pass">VALID</span>';
-    label="JSON structure passed all checks";
+    label=fc>0?`${fo}/${fc} fields matched (${pct}%)`:"JSON structure passed all checks";
   }
 
   let items="";
@@ -1015,7 +1087,7 @@ function renderValidation(data){
     items+=`<div class="val-item"><span class="val-tag wrn">WARN</span><span class="val-msg">${esc(String(w))}</span></div>`;
   }
   if(!items&&data.json_parsed){
-    items='<div class="val-item"><span class="val-msg" style="color:var(--green);">No issues detected.</span></div>';
+    items='<div class="val-item"><span class="val-msg" style="color:var(--green);">All fields present with correct types. No issues.</span></div>';
   }
 
   vr.innerHTML=`<div class="val-panel"><div class="val-header">${badge}<span class="panel-title">${esc(label)}</span><div class="spacer"></div><button class="btn-validate" onclick="validateOutput()">&#8635; Re-validate</button></div><div class="val-body">${items}</div></div>`;
@@ -1053,8 +1125,6 @@ if __name__ == "__main__":
         status = "✓ found" if os.path.isfile(fp) else "✗ MISSING"
         print(f"    {disc:15s} → {fname:15s} {status}")
     print(f"  Ollama API:    {OLLAMA_API}")
-    val_status = "✓ found" if os.path.isfile(VALIDATOR_PATH) else "✗ MISSING"
-    print(f"  Validator:     {VALIDATOR_PATH}  {val_status}")
     print(f"  UI:            http://localhost:{port}")
     print()
     threading.Timer(1.0, lambda: webbrowser.open(f"http://localhost:{port}")).start()

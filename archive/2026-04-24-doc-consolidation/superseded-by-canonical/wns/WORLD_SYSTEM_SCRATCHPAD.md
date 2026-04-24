@@ -1,8 +1,10 @@
 # World System Architecture Scratchpad
 
-**Purpose**: Working document for reasoning through the information flow architecture of the Living World system. This is a thinking document, not a spec.
+> **⚠️ SUPERSEDED (2026-04-21):** This scratchpad has been replaced as the planning doc for the WNS/WES architecture by [`WORLD_SYSTEM_WORKING_DOC.md`](WORLD_SYSTEM_WORKING_DOC.md). The working doc's string → thread → embroidery framing retires the Tier 1/2/3 framing below. This file is retained for its **research bibliography** (Dwarf Fortress rumor systems, Gossamer, DSPy, compound AI systems, etc.) and for traceability of how the planning evolved. Do NOT use the architectural diagrams or schemas below as the current spec.
 
-**Date**: 2026-03-14
+**Purpose (original)**: Working document for reasoning through the information flow architecture of the Living World system. This was a thinking document, not a spec.
+
+**Date**: 2026-03-14 (superseded 2026-04-21)
 
 ---
 

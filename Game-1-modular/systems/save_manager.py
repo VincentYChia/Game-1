@@ -79,6 +79,49 @@ class SaveManager:
             print(f"⚠ Warning: Could not save faction state: {e}")
             save_data["faction_state"] = {}
 
+        # Flush Content Registry SQLite so content_registry.db is
+        # durable at the same instant the JSON save is written.
+        # The registry's .db file sits in the save directory alongside
+        # faction.db + world_memory.db and is reopened automatically
+        # on next game boot (the ContentRegistry singleton
+        # initializes from the save dir during _init_world_memory).
+        # See Development-Plan/WORLD_SYSTEM_WORKING_DOC.md §7.
+        try:
+            from world_system.content_registry import ContentRegistry
+            registry = ContentRegistry.get_instance()
+            if registry.initialized:
+                # Flush via the store's flush() method if exposed.
+                store = getattr(registry, "_store", None)
+                if store is not None and hasattr(store, "flush"):
+                    store.flush()
+                save_data["content_registry_state"] = {
+                    "db_path": registry.db_path,
+                    "stats": registry.stats,
+                }
+            else:
+                save_data["content_registry_state"] = {
+                    "initialized": False,
+                }
+        except Exception as e:
+            # Graceful degrade: save proceeds without registry flush.
+            # The registry db file may still be saved via the OS
+            # filesystem but won't be guaranteed synced to disk.
+            try:
+                from world_system.living_world.infra.graceful_degrade import (
+                    log_degrade,
+                )
+                log_degrade(
+                    subsystem="content_registry",
+                    operation="save_manager.flush",
+                    failure_reason=f"{type(e).__name__}: {e}",
+                    fallback_taken="save proceeds; registry db may "
+                                   "not be fully synced",
+                    severity="warning",
+                )
+            except Exception:
+                print(f"⚠ Warning: Could not flush content registry: {e}")
+            save_data["content_registry_state"] = {}
+
         return save_data
 
     def _serialize_game_settings(self) -> Dict[str, Any]:

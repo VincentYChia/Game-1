@@ -222,9 +222,19 @@ class ClaudeBackend(ModelBackend):
 # ── Mock Backend ──────────────────────────────────────────────────────
 
 class MockBackend(ModelBackend):
-    """Deterministic template-based backend for testing and graceful fallback.
+    """Deterministic backend for testing and graceful fallback.
 
-    Extracts keywords from the prompt to select a response template.
+    v4: Resolution order for every ``generate()`` call:
+        1. If the caller supplied a ``task`` via :meth:`set_current_task`
+           and the LLM Fixture Registry (``living_world.infra.llm_fixtures``)
+           has a canonical response for that task, return it.
+        2. Otherwise fall back to keyword matching on the prompt text
+           (legacy path, kept for NPC dialogue pre-v4 code).
+
+    Task-based lookup is thread-safe — ``set_current_task`` stores the task
+    in a thread-local. ``BackendManager.generate`` sets it before calling
+    any backend and clears it afterward.
+
     Always succeeds — the game never crashes due to AI failure.
     """
 
@@ -254,10 +264,50 @@ class MockBackend(ModelBackend):
         ),
     }
 
+    # Thread-local task hint set by BackendManager before dispatch.
+    _thread_local = threading.local()
+
+    @classmethod
+    def set_current_task(cls, task: Optional[str]) -> None:
+        """Set the current BackendManager task for this thread.
+
+        Called by BackendManager.generate() before delegating to the backend;
+        cleared afterward. Allows MockBackend to resolve via the Fixture
+        Registry when running under a task name.
+        """
+        cls._thread_local.task = task
+
+    @classmethod
+    def get_current_task(cls) -> Optional[str]:
+        return getattr(cls._thread_local, "task", None)
+
+    def _lookup_fixture(self) -> Optional[str]:
+        """Try the LLM Fixture Registry via the current thread-local task."""
+        task = self.get_current_task()
+        if not task:
+            return None
+        try:
+            # Import lazily so boot-time import graphs stay shallow and
+            # a missing infra package never hard-fails MockBackend.
+            from world_system.living_world.infra.llm_fixtures import (
+                get_fixture_registry,
+            )
+            fixture = get_fixture_registry().get(task)
+            if fixture is not None:
+                return fixture.canonical_response
+        except Exception:
+            return None
+        return None
+
     def generate(self, system_prompt: str, user_prompt: str,
                  temperature: float = 0.4,
                  max_tokens: int = 2000) -> Tuple[str, Optional[str]]:
-        # Keyword matching to select template
+        # Fixture Registry — task-based, preferred.
+        fixture_response = self._lookup_fixture()
+        if fixture_response is not None:
+            return fixture_response, None
+
+        # Legacy keyword matching to select template
         combined = (system_prompt + " " + user_prompt).lower()
         for keyword, template in self.TEMPLATES.items():
             if keyword in combined:
@@ -482,6 +532,9 @@ class BackendManager:
                 continue
 
             try:
+                # v4: expose task to backends (MockBackend uses it for
+                # Fixture Registry lookup; real backends ignore it).
+                MockBackend.set_current_task(task)
                 text, err = backend.generate(
                     system_prompt, user_prompt,
                     temperature=temp, max_tokens=tokens,
@@ -493,6 +546,7 @@ class BackendManager:
             except Exception as e:
                 errors.append(f"{name}: {e}")
             finally:
+                MockBackend.set_current_task(None)
                 if limiter:
                     limiter.release()
 
