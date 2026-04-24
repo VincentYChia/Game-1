@@ -419,13 +419,41 @@ _WES_FIXTURES = [
     LLMFixture(
         code="wes_tool_materials",
         tier=TIER_WES,
-        description="WES Tier 3 executor_tool for materials.",
-        canonical_system_prompt="Generate one material JSON.",
-        canonical_user_prompt="Spec: moors copper variant with acid resistance.",
+        description=(
+            "WES Tier 3 executor_tool for materials. Emits one material JSON "
+            "matching items-materials-1.JSON schema (materialId + metadata.tags "
+            "+ metadata.narrative, categories locked to metal/wood/stone/"
+            "elemental/monster_drop, rarities locked to common..legendary)."
+        ),
+        canonical_system_prompt=(
+            "You are the materials executor_tool. Given one ExecutorSpec, "
+            "emit one material JSON: materialId (snake_case), name (Title "
+            "Case), tier (1-4), category (one of metal/wood/stone/elemental/"
+            "monster_drop), rarity (one of common/uncommon/rare/epic/"
+            "legendary), metadata.{narrative, tags (2-5 from allow-list)}. "
+            "No prose."
+        ),
+        canonical_user_prompt=(
+            "Spec id: spec_001 (plan step s1)\n"
+            "Item intent: moors copper variant with acid resistance\n"
+            "Hard constraints: {\"tier\": 2, \"category\": \"metal\", \"biome\": \"moors\"}\n"
+            "Flavor hints: {\"name_hint\": \"Moors Copper\"}\n"
+            "Cross-ref hints: {}\n\n"
+            "Emit one material JSON following the schema."
+        ),
         canonical_response=(
-            '{"material_id": "moors_copper", "name": "Moors Copper", '
-            '"tier": 2, "category": "ore", "rarity": "uncommon", '
-            '"properties": ["acid_resistant", "moors_native"]}'
+            '{"materialId": "moors_copper", "name": "Moors Copper", '
+            '"tier": 2, "category": "metal", "rarity": "uncommon", '
+            '"metadata": {"narrative": "A pitted red-green ore dragged from '
+            'the fog-wrapped cliffs of the windward moors. Salt-etched veins '
+            'thread its matrix, and smiths say the resulting ingots ring thinly '
+            'when struck — a prized sign of honest metal.", '
+            '"tags": ["metal", "uncommon", "standard"]}}'
+        ),
+        notes=(
+            "Schema matches live items-materials-1.JSON shape so "
+            "ContentRegistry ingestion via xref_rules._get_content_id "
+            "(accepts both materialId + material_id) lands cleanly."
         ),
     ),
     LLMFixture(

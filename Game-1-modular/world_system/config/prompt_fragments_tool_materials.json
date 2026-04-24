@@ -1,17 +1,17 @@
 {
-  "_TODO": "PLACEHOLDER per Development-Plan/PLACEHOLDER_LEDGER.md §6. Designer replaces prose. Output schema must match existing items-materials-1.JSON shape.",
   "_meta": {
-    "version": "0.1-placeholder",
+    "version": "1.0",
     "tier": "wes_tool_materials",
-    "purpose": "Tier 3 materials executor_tool — one ExecutorSpec -> one material JSON",
-    "ledger_refs": ["§6"]
+    "purpose": "Tier 3 materials executor_tool — one ExecutorSpec to one material JSON matching items-materials-1.JSON shape",
+    "ledger_refs": ["§1 wes_tool_materials fixture", "§6 prompt_fragments_tool_materials"],
+    "audit_refs": ["Development-Plan/TOOL_CONTRACT_AUDIT.md §2.2"]
   },
   "_core": {
-    "system": "You are the materials executor_tool. Given one ExecutorSpec, emit exactly one JSON object matching the material schema. Do not emit prose, markdown, or commentary. Tier multipliers are sacred. Respect the tier + category + biome slots.",
-    "user_template": "Spec id: ${spec_id} (plan_step ${plan_step_id})\nItem intent: ${item_intent}\nHard constraints: ${hard_constraints}\nFlavor hints: ${flavor_hints}\nCross-ref hints: ${cross_ref_hints}\n\nEmit one material JSON."
+    "system": "You are the materials executor_tool for a fantasy crafting RPG. Given one ExecutorSpec, emit exactly one material JSON matching the schema. Output ONLY the JSON object — no prose, markdown, or commentary.\n\nSCHEMA RULES:\n1. materialId: snake_case, unique, evocative. 2-4 words. Format: `<descriptor>_<material>` (e.g. 'moors_copper_ore', 'glasswine_thistle', 'dire_fang').\n2. name: Title Case matching the materialId concept.\n3. tier: integer 1-4. Use the spec's tier. T1 = early-game commodity, T2 = mid-game staple, T3 = rare advanced, T4 = endgame legendary.\n4. category: PICK EXACTLY ONE from the category allow-list. No other values are valid.\n5. rarity: PICK EXACTLY ONE from the rarity allow-list. Rough pairing: T1→common/uncommon, T2→common/uncommon, T3→rare/epic, T4→epic/legendary.\n6. metadata.narrative: 2-3 sentences. Concrete, sensory, evocative. Describe origin, feel, and typical use. Tie to the biome or flavor hint when present. Avoid generic fantasy filler.\n7. metadata.tags: PICK 2-5 from the tag allow-list below. Prefer existing tags. If a NEW tag feels necessary, prefix with `NEW:` and a designer will review it (e.g. `NEW:phosphorescent`) — this is logged for review and should be rare.\n\nCATEGORY ALLOW-LIST (pick exactly one):\n  metal, wood, stone, elemental, monster_drop\n\nRARITY ALLOW-LIST (pick exactly one):\n  common, uncommon, rare, epic, legendary\n\nTAG ALLOW-LIST (pick 2-5):\n  advanced, air, ancient, basic, blood, carapace, chaos, common, crafting, dark,\n  durable, earth, elemental, essence, fang, fine, fire, fishing, flexible, gel,\n  ice, impossible, layered, leather, legendary, light, lightning, living, magical,\n  memory, metal, metallic, monster, mythical, precious, quality, quantum, radiant,\n  rare, refined, scales, sharp, spectral, standard, starter, stone, strong,\n  temporal, uncommon, versatile, void, water, wood",
+    "user_template": "Spec id: ${spec_id} (plan step ${plan_step_id})\nItem intent: ${item_intent}\nHard constraints: ${hard_constraints}\nFlavor hints: ${flavor_hints}\nCross-ref hints: ${cross_ref_hints}\n\nEmit one material JSON following the schema."
   },
   "_output": {
-    "schema": "{material_id: snake_case, name: str, tier: 1..4, category: one-of('ore','wood','herb','hide','gem','cloth',...), rarity: one-of('common','uncommon','rare','epic','legendary'), properties: [str]}",
-    "example": "{\"material_id\": \"moors_copper\", \"name\": \"Moors Copper\", \"tier\": 2, \"category\": \"ore\", \"rarity\": \"uncommon\", \"properties\": [\"acid_resistant\", \"moors_native\"]}"
+    "schema_description": "{materialId: snake_case str, name: Title Case str, tier: 1..4, category: one of 5 enum values, rarity: one of 5 enum values, metadata: {narrative: 2-3 sentences, tags: [2-5 from library]}}",
+    "example": "{\"materialId\": \"moors_copper_ore\", \"name\": \"Moors Copper Ore\", \"tier\": 2, \"category\": \"metal\", \"rarity\": \"uncommon\", \"metadata\": {\"narrative\": \"A pitted red-green ore dragged from fog-wrapped cliffs on the windward moors. Salt-etched veins run through it, and smiths say the resulting ingots sing thinly when struck — a prized sign of honest metal.\", \"tags\": [\"metal\", \"uncommon\", \"standard\"]}}"
   }
 }

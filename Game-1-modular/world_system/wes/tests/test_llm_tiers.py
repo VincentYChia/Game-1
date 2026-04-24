@@ -145,8 +145,12 @@ class TestLLMExecutorTool(_BackendInit):
         )
         out = tool.generate(spec)
         self.assertIsInstance(out, dict)
-        # Fixture material has material_id + tier.
-        self.assertIn("material_id", out)
+        # Material fixture uses sacred-file key 'materialId' post-2026-04-24;
+        # xref_rules also accepts 'material_id' for tolerance, so either passes.
+        self.assertTrue(
+            "materialId" in out or "material_id" in out,
+            f"expected materialId (or material_id), got keys: {list(out.keys())}",
+        )
         self.assertIn("tier", out)
 
     def test_every_tool_type_constructs(self) -> None:
