@@ -562,17 +562,54 @@ _WES_FIXTURES = [
     LLMFixture(
         code="wes_tool_titles",
         tier=TIER_WES,
-        description="WES Tier 3 executor_tool for titles.",
-        canonical_system_prompt="Generate one title JSON.",
+        description=(
+            "WES Tier 3 executor_tool for titles. Emits one title JSON "
+            "matching titles-1.JSON schema (titleId + titleType + "
+            "difficultyTier + bonuses dict + prerequisites.conditions[] + "
+            "acquisitionMethod + generationChance + isHidden + narrative). "
+            "Bonuses use consumer-verified camelCase keys resolved by "
+            "TitleSystem.get_total_bonus normalizer (Prereq B)."
+        ),
+        canonical_system_prompt=(
+            "You are the titles executor_tool. Given one ExecutorSpec, emit "
+            "one title JSON. titleType from [combat,crafting,gathering,"
+            "utility]. difficultyTier from [novice,apprentice,journeyman,"
+            "expert,master,special]. Bonuses from the consumer-verified "
+            "allow-list. Prerequisites.conditions[] with type-keyed objects "
+            "(level/stat_tracker/title/skill/quest/class/stat). "
+            "acquisitionMethod from 4 values paired with tier. No prose."
+        ),
         canonical_user_prompt=(
-            "Spec: Moors Reaver, apprentice tier, 20 bandit kills in moors."
+            "Spec id: spec_004 (plan step s4)\n"
+            "Item intent: apprentice-tier combat title earned via moors raider kills\n"
+            "Hard constraints: {\"tier\": \"apprentice\", \"titleType\": \"combat\"}\n"
+            "Flavor hints: {\"theme\": \"moors, reaver, kills\"}\n"
+            "Cross-ref hints: {}\n\n"
+            "Emit one title JSON following the schema."
         ),
         canonical_response=(
-            '{"title_id": "moors_reaver", "name": "Moors Reaver", '
-            '"category": "combat", "tier": "apprentice", '
-            '"unlock_stat": "enemies_defeated_bandit", '
-            '"unlock_threshold": 20, '
-            '"bonus_tags": ["combat_bonus_bandit"]}'
+            '{"titleId": "apprentice_moors_reaver", '
+            '"name": "Apprentice Moors Reaver", '
+            '"titleType": "combat", "difficultyTier": "apprentice", '
+            '"description": "The moors remember you. Your blade remembers them.", '
+            '"bonuses": {"meleeDamage": 0.25, "criticalChance": 0.05}, '
+            '"prerequisites": {"conditions": ['
+            '{"type": "stat_tracker", '
+            '"stat_path": "combat_kills.total_kills", "min_value": 500}, '
+            '{"type": "level", "min_level": 5}]}, '
+            '"acquisitionMethod": "event_based_rng", '
+            '"generationChance": 0.20, '
+            '"isHidden": false, '
+            '"narrative": "You have cut down enough copperlash riders to know '
+            'their rhythms in your sleep. The moors answer your arrival with a '
+            'silence that carries down into the fog."}'
+        ),
+        notes=(
+            "Bonus keys 'meleeDamage' + 'criticalChance' resolve via Prereq B "
+            "normalizer (camelCase -> snake_case -> 'melee_damage' / "
+            "'crit_chance' stored) so combat_manager get_total_bonus('meleeDamage') "
+            "calls hit these at runtime. stat_tracker path 'combat_kills."
+            "total_kills' is in the verified allow-list."
         ),
     ),
     LLMFixture(
