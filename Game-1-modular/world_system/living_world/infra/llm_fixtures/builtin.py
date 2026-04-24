@@ -712,6 +712,134 @@ _WES_FIXTURES = [
         ),
     ),
     LLMFixture(
+        code="wes_tool_npcs",
+        tier=TIER_WES,
+        description=(
+            "WES Tier 3 executor_tool for NPCs (v3 schema). Emits one NPC JSON "
+            "matching npcs-3.JSON / data/models/npcs.py NPCDefinition. v3 "
+            "splits static design data (this output) from dynamic SQLite state "
+            "(faction system tables: npc_dynamic_state, npc_dialogue_log, "
+            "npc_affinity). Personality is INLINE per-NPC (no template FK); "
+            "speechbank carries birth-time canned dialogue + cultural "
+            "phrase_bank for LLM context priming."
+        ),
+        canonical_system_prompt=(
+            "You are the NPCs executor_tool. Given one ExecutorSpec, emit one "
+            "NPC v3 JSON: npc_id, name, title, narrative (immutable past, 2-4 "
+            "sentences), personality{voice, knowledge_domains, "
+            "reaction_modifiers, gossip_interests, base_emotional_state, "
+            "dialogue_style}, locality{home_chunk}, faction{primary, "
+            "belonging_tags[]}, affinity_seeds{tag:int} (must include "
+            "_player), services, unlockConditions, speechbank{greeting[], "
+            "farewell[], idle_barks[], quest_offer, quest_complete, "
+            "phrase_bank{exclamations, oaths, endearments_friend, "
+            "endearments_enemy, fillers}}, quests, position, sprite_color, "
+            "interaction_radius, metadata{tags}. home_chunk + teachableSkills "
+            "+ quests must cross-ref. Faction tags are emergent (namespace "
+            "conventions only). No prose."
+        ),
+        canonical_user_prompt=(
+            "Spec id: spec_007 (plan step s7)\n"
+            "Item intent: a captain of the Copperlash Rider line, hardened by "
+            "the loss of a brother, anchored to the moors-stone\n"
+            "Hard constraints: {\"home_chunk\": \"dangerous_copper_moors\", "
+            "\"primary_faction\": \"guild:moors_raiders\"}\n"
+            "Flavor hints: {\"theme\": \"salt-dry, clipped speech, names "
+            "things by their parts\"}\n"
+            "Cross-ref hints: {\"home_chunk\": \"dangerous_copper_moors\", "
+            "\"teachable\": [\"copperlash_gash\"], \"rival_faction\": "
+            "\"guild:hubtown_militia\"}\n\n"
+            "Emit one NPC v3 JSON following the schema."
+        ),
+        canonical_response=(
+            '{"npc_id": "moors_copperlash_captain", '
+            '"name": "Captain Vell Sarn", '
+            '"title": "Copperlash Captain", '
+            '"narrative": "Vell rode his first salt-pony at twelve and led '
+            'his first whip-line raid at nineteen. Three winters ago he '
+            'buried his brother on the moors-stone after a hubtown ambush, '
+            'and the salt has not let him forget it. He commands the longest '
+            'copperlash line on the salt reach because no one beneath him '
+            'asks twice why the captain rides at the front.", '
+            '"personality": {'
+            '"voice": "Clipped, salt-dry, prone to long pauses before '
+            'answering. Names things by their parts rather than their wholes '
+            "— 'the line', 'the stone', 'the brother who fell'.\", "
+            '"knowledge_domains": ["combat", "tactics", "weapons", "factions"], '
+            '"reaction_modifiers": {'
+            '"ENEMY_KILLED": {"enemy_match": ["copperlash_rider"], '
+            '"relationship_delta": -0.08, "emotion": "cold", '
+            '"description": "Player killed one of his own."}, '
+            '"ITEM_CRAFTED": {"discipline_match": "smithing", '
+            '"relationship_delta": 0.02, "emotion": "approving"}, '
+            '"LEVEL_UP": {"relationship_delta": 0.01, "emotion": "watchful"}}, '
+            '"gossip_interests": ["area_danger", "faction_conflict", '
+            '"population_change"], '
+            '"base_emotional_state": "wary", '
+            '"dialogue_style": {"max_response_length": 140, '
+            '"formality": "stern", "uses_jargon": true}}, '
+            '"locality": {"home_chunk": "dangerous_copper_moors"}, '
+            '"faction": {"primary": "guild:moors_raiders", '
+            '"belonging_tags": ['
+            '{"tag": "guild:moors_raiders", "significance": 0.95, '
+            '"role": "captain", "narrative_hooks": "longest copperlash line on the reach"}, '
+            '{"tag": "region:salt_moors", "significance": 0.8, '
+            '"role": null, "narrative_hooks": "moors-stone burial"}, '
+            '{"tag": "family:sarn_clan", "significance": 0.7, '
+            '"role": "surviving brother", "narrative_hooks": null}]}, '
+            '"affinity_seeds": {"guild:moors_raiders": 95, '
+            '"region:salt_moors": 85, "family:sarn_clan": 90, '
+            '"guild:hubtown_militia": -85, "_player": 0}, '
+            '"services": {"canTrade": false, "canRepair": false, '
+            '"canTeach": true, "teachableSkills": ["copperlash_gash"], '
+            '"specialServices": []}, '
+            '"unlockConditions": {"alwaysAvailable": false, '
+            '"characterLevel": 8, "completedQuests": []}, '
+            '"speechbank": {'
+            '"greeting": ["Speak quick.", '
+            "\"You're a long way from forge-light, stranger.\", "
+            '"Stand where I can see you."], '
+            '"farewell": ["Salt sees.", "Walk light."], '
+            '"idle_barks": ['
+            '"Copper sings before it dulls.", '
+            '"The hubtown line breaks at dusk — every dusk.", '
+            '"My brother knew this stone.", '
+            '"Three riders went out at dawn. Two came back.", '
+            '"Salt remembers what mouths forget.", '
+            '"The fog is thick today. Good for us."], '
+            "\"quest_offer\": \"There is a thing the line needs done. You'll do it.\", "
+            '"quest_complete": "It is done. The salt knows your name now.", '
+            '"phrase_bank": {'
+            '"exclamations": ["By salt and copper!", "Stone-take it."], '
+            "\"oaths\": [\"On the moors-stone, I swear it.\", \"By my brother's name.\"], "
+            '"endearments_friend": ["salt-friend", "line-rider"], '
+            '"endearments_enemy": ["saltless", "hubtown wretch"], '
+            '"fillers": ["aye", "hmph", "speak"]}}, '
+            '"quests": [], '
+            '"position": {"x": -12.0, "y": 7.0, "z": 0.0}, '
+            '"sprite_color": [180, 80, 60], '
+            '"interaction_radius": 3.0, '
+            '"metadata": {"tags": ["humanoid", "trainer", "veteran", '
+            '"mid-game", "questgiver"]}}'
+        ),
+        notes=(
+            "Cross-refs: locality.home_chunk -> wes_tool_chunks "
+            "(dangerous_copper_moors); services.teachableSkills -> "
+            "wes_tool_skills (copperlash_gash); reaction_modifiers."
+            "ENEMY_KILLED.enemy_match -> wes_tool_hostiles "
+            "(copperlash_rider). Faction tags (guild:moors_raiders, "
+            "region:salt_moors, family:sarn_clan, guild:hubtown_militia) are "
+            "emergent — no faction registry validation. affinity_seeds "
+            "include the reserved '_player' tag for the NPC's starting "
+            "opinion of the player. Dynamic state (current emotion, "
+            "relationship drift, dialogue log) is NOT in this output — "
+            "lives in faction SQLite tables (npc_dynamic_state, "
+            "npc_dialogue_log, npc_affinity) and is initialized at NPC birth "
+            "from affinity_seeds. Full content_registry plumbing (reg_npcs "
+            "table, xref extractor wired to TOOL_NPCS) is follow-up work."
+        ),
+    ),
+    LLMFixture(
         code="wes_supervisor",
         tier=TIER_WES,
         description=(

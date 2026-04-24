@@ -45,9 +45,14 @@ TOOL_MATERIALS = "materials"
 TOOL_NODES = "nodes"
 TOOL_SKILLS = "skills"
 TOOL_TITLES = "titles"
+TOOL_CHUNKS = "chunks"
+TOOL_NPCS = "npcs"
 
 VALID_TOOLS = frozenset(
-    {TOOL_HOSTILES, TOOL_MATERIALS, TOOL_NODES, TOOL_SKILLS, TOOL_TITLES}
+    {
+        TOOL_HOSTILES, TOOL_MATERIALS, TOOL_NODES, TOOL_SKILLS, TOOL_TITLES,
+        TOOL_CHUNKS, TOOL_NPCS,
+    }
 )
 
 # Relationship strings — placeholder vocabulary (§10 / §17 in ledger).
@@ -56,6 +61,10 @@ REL_USES_SKILL = "uses_skill"
 REL_YIELDS = "yields"
 REL_UNLOCKS = "unlocks"
 REL_BONUS_TAG = "bonus_tag"
+REL_SPAWNS = "spawns"          # chunk -> resource node / hostile (template)
+REL_HOMES_AT = "homes_at"      # npc -> chunk (cultural anchor)
+REL_TEACHES = "teaches"        # npc -> skill
+REL_REACTS_TO = "reacts_to"    # npc -> material/hostile/skill (event triggers)
 
 
 def _get_content_id(content_json: Dict[str, Any], tool_name: str) -> str:
@@ -90,6 +99,10 @@ def _get_content_id(content_json: Dict[str, Any], tool_name: str) -> str:
         candidates.extend(["skillId", "skill_id"])
     elif tool_name == TOOL_TITLES:
         candidates.extend(["titleId", "title_id"])
+    elif tool_name == TOOL_CHUNKS:
+        candidates.extend(["chunkType", "chunk_type", "chunkTypeId"])
+    elif tool_name == TOOL_NPCS:
+        candidates.extend(["npc_id", "npcId"])
 
     for key in candidates:
         value = content_json.get(key)
@@ -269,6 +282,87 @@ def _extract_title_xrefs(
     return out
 
 
+def _extract_chunk_xrefs(
+    src_id: str, content_json: Dict[str, Any]
+) -> List[XrefTuple]:
+    """Chunks reference resource-node templates and hostile templates that
+    spawn within them. resourceDensity keys are nodeIds (resource node
+    templates), enemySpawns keys are enemyIds.
+    """
+    out: List[XrefTuple] = []
+
+    res_density = content_json.get("resourceDensity") or content_json.get("resource_density") or {}
+    if isinstance(res_density, dict):
+        for node_id in res_density.keys():
+            if isinstance(node_id, str) and node_id:
+                out.append(
+                    (TOOL_CHUNKS, src_id, TOOL_NODES, node_id, REL_SPAWNS)
+                )
+
+    enemy_spawns = content_json.get("enemySpawns") or content_json.get("enemy_spawns") or {}
+    if isinstance(enemy_spawns, dict):
+        for enemy_id in enemy_spawns.keys():
+            if isinstance(enemy_id, str) and enemy_id:
+                out.append(
+                    (TOOL_CHUNKS, src_id, TOOL_HOSTILES, enemy_id, REL_SPAWNS)
+                )
+
+    return out
+
+
+def _extract_npc_xrefs(
+    src_id: str, content_json: Dict[str, Any]
+) -> List[XrefTuple]:
+    """NPCs reference: home_chunk (locality), teachableSkills (services),
+    and event-trigger matches (personality.reaction_modifiers.*).
+
+    Faction tags are NOT registry rows (emergent vocabulary, not validated).
+    Quest references are skipped until TOOL_QUESTS is wired.
+    Wildcard resource_match entries (e.g. 'herb_*') are skipped — they don't
+    resolve to a single id.
+    """
+    out: List[XrefTuple] = []
+
+    locality = content_json.get("locality") or {}
+    home_chunk = locality.get("home_chunk") if isinstance(locality, dict) else None
+    if isinstance(home_chunk, str) and home_chunk:
+        out.append(
+            (TOOL_NPCS, src_id, TOOL_CHUNKS, home_chunk, REL_HOMES_AT)
+        )
+
+    services = content_json.get("services") or {}
+    if isinstance(services, dict):
+        for skill_id in services.get("teachableSkills") or []:
+            if isinstance(skill_id, str) and skill_id:
+                out.append(
+                    (TOOL_NPCS, src_id, TOOL_SKILLS, skill_id, REL_TEACHES)
+                )
+
+    personality = content_json.get("personality") or {}
+    reaction_modifiers = personality.get("reaction_modifiers") or {} if isinstance(personality, dict) else {}
+    if isinstance(reaction_modifiers, dict):
+        for _event_type, modifier in reaction_modifiers.items():
+            if not isinstance(modifier, dict):
+                continue
+            for mat_id in modifier.get("resource_match") or []:
+                if isinstance(mat_id, str) and mat_id and "*" not in mat_id:
+                    out.append(
+                        (TOOL_NPCS, src_id, TOOL_MATERIALS, mat_id, REL_REACTS_TO)
+                    )
+            for enemy_id in modifier.get("enemy_match") or []:
+                if isinstance(enemy_id, str) and enemy_id and "*" not in enemy_id:
+                    out.append(
+                        (TOOL_NPCS, src_id, TOOL_HOSTILES, enemy_id, REL_REACTS_TO)
+                    )
+            for skill_id in modifier.get("skill_match") or []:
+                if isinstance(skill_id, str) and skill_id and "*" not in skill_id:
+                    out.append(
+                        (TOOL_NPCS, src_id, TOOL_SKILLS, skill_id, REL_REACTS_TO)
+                    )
+
+    return out
+
+
 # Lookup table. Each extractor takes (src_id, content_json) and returns
 # a list of xref tuples (src_type included).
 _EXTRACTORS = {
@@ -277,6 +371,8 @@ _EXTRACTORS = {
     TOOL_NODES: _extract_node_xrefs,
     TOOL_SKILLS: _extract_skill_xrefs,
     TOOL_TITLES: _extract_title_xrefs,
+    TOOL_CHUNKS: _extract_chunk_xrefs,
+    TOOL_NPCS: _extract_npc_xrefs,
 }
 
 
@@ -324,6 +420,10 @@ SACRED_TOP_LEVEL_KEY = {
                                     # "skills".
     TOOL_TITLES: "titles",         # progression/titles-1.JSON uses
                                     # "titles".
+    TOOL_CHUNKS: "chunkTemplates", # Chunk-templates-2.JSON uses
+                                    # "chunkTemplates".
+    TOOL_NPCS: "npcs",             # progression/npcs-3.JSON uses
+                                    # "npcs".
 }
 
 
@@ -336,6 +436,8 @@ SACRED_OUTPUT_SUBDIR = {
     TOOL_NODES: "Definitions.JSON",
     TOOL_SKILLS: "Skills",
     TOOL_TITLES: "progression",
+    TOOL_CHUNKS: "world_system/config",
+    TOOL_NPCS: "progression",
 }
 
 
@@ -347,4 +449,6 @@ SACRED_OUTPUT_PREFIX = {
     TOOL_NODES: "Resource-node",
     TOOL_SKILLS: "skills",
     TOOL_TITLES: "titles",
+    TOOL_CHUNKS: "chunk-templates",
+    TOOL_NPCS: "npcs",
 }

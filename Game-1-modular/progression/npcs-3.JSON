@@ -1,0 +1,293 @@
+{
+  "metadata": {
+    "version": "3.0",
+    "description": "NPC v3 schema — static design data only. Dynamic runtime state (relationship, dialogue log, current emotion) lives in faction SQLite tables (npc_dynamic_state, npc_dialogue_log, npc_affinity).",
+    "schema_ref": "data/models/npcs.py NPCDefinition"
+  },
+
+  "npcs": [
+    {
+      "npc_id": "tutorial_guide",
+      "name": "Elder Sage",
+      "title": "Ancient Mentor",
+      "narrative": "The Elder Sage has guided countless travelers on their first steps into the wilds. He has watched thirty winters pass beneath these woods and remembers names long lost to other mouths. His wisdom is freely given — he believes the only debt teachers owe is the next student.",
+
+      "personality": {
+        "voice": "Patient, measured, fond of metaphor drawn from forests and seasons. Speaks in long sentences when given the chance.",
+        "knowledge_domains": ["forestry", "skills", "history", "world_lore"],
+        "reaction_modifiers": {
+          "ITEM_CRAFTED": {"relationship_delta": 0.02, "emotion": "approving"},
+          "RESOURCE_GATHERED": {"resource_match": ["oak_log", "ash_log", "willow_log"], "relationship_delta": 0.02, "emotion": "pleased"},
+          "ENEMY_KILLED": {"relationship_delta": -0.02, "emotion": "saddened", "description": "Mourns even the death of beasts"},
+          "LEVEL_UP": {"relationship_delta": 0.05, "emotion": "proud"}
+        },
+        "gossip_interests": ["population_change", "player_milestone", "skill_learning"],
+        "base_emotional_state": "calm",
+        "dialogue_style": {
+          "max_response_length": 200,
+          "formality": "gentle",
+          "uses_jargon": false
+        }
+      },
+
+      "locality": {
+        "home_chunk": "peaceful_forest"
+      },
+
+      "faction": {
+        "primary": "guild:elder_council",
+        "belonging_tags": [
+          {"tag": "guild:elder_council", "significance": 0.9, "role": "mentor", "narrative_hooks": "founding member"},
+          {"tag": "region:starter_woods", "significance": 0.6, "role": null, "narrative_hooks": null}
+        ]
+      },
+
+      "affinity_seeds": {
+        "guild:elder_council": 90,
+        "region:starter_woods": 70,
+        "_player": 10
+      },
+
+      "services": {
+        "canTrade": false,
+        "canRepair": false,
+        "canTeach": true,
+        "teachableSkills": ["sprint"],
+        "specialServices": []
+      },
+
+      "unlockConditions": {
+        "alwaysAvailable": true,
+        "characterLevel": 0,
+        "completedQuests": []
+      },
+
+      "speechbank": {
+        "greeting": [
+          "Welcome, traveler! I sense great potential within you.",
+          "Sit a moment, friend — the forest does not hurry, and neither should we.",
+          "You have the look of one ready to learn. Good."
+        ],
+        "farewell": [
+          "May your path be blessed with fortune!",
+          "Walk well, and return when the wind asks you to."
+        ],
+        "idle_barks": [
+          "These woods remember every footstep.",
+          "An old oak fell last month — even patience has its end.",
+          "There are skills the body learns and skills the heart learns.",
+          "Someone passed through here at dawn. Light tread.",
+          "The rains will come early this year, mark me."
+        ],
+        "quest_offer": "I have a small task for you, if you're willing to help.",
+        "quest_complete": "Well done. Return to me when ready to claim your rewards.",
+        "phrase_bank": {
+          "exclamations": ["By the great oak!", "Ah, the seasons turn."],
+          "oaths": ["I swear by root and ring."],
+          "endearments_friend": ["young one", "traveler"],
+          "endearments_enemy": ["stranger to all kindness"],
+          "fillers": ["mmm", "yes, yes", "as I was saying"]
+        }
+      },
+
+      "quests": ["tutorial_quest"],
+
+      "position": {"x": 3.0, "y": -5.0, "z": 0.0},
+      "sprite_color": [200, 150, 255],
+      "interaction_radius": 3.0,
+
+      "metadata": {
+        "tags": ["tutorial", "starter", "mentor", "essential"]
+      }
+    },
+
+    {
+      "npc_id": "mysterious_trader",
+      "name": "Wandering Trader",
+      "title": "Collector of Rarities",
+      "narrative": "A figure of indeterminate origin who appeared in these lands seven years ago carrying a leather pack twice his weight. He pays well for the unusual and asks no questions about provenance, but he keeps a ledger that nobody has ever seen the inside of.",
+
+      "personality": {
+        "voice": "Shrewd and warm in equal measure. Switches between confidant and bargainer mid-sentence. Drops phrases from at least three other languages.",
+        "knowledge_domains": ["trading", "materials", "rarities", "travel"],
+        "reaction_modifiers": {
+          "ITEM_CRAFTED": {"relationship_delta": 0.02, "emotion": "calculating"},
+          "RESOURCE_GATHERED": {"resource_match": ["mithril_ore", "voidstone", "obsidian"], "relationship_delta": 0.04, "emotion": "interested"},
+          "LEVEL_UP": {"relationship_delta": 0.03, "emotion": "respectful"}
+        },
+        "gossip_interests": ["resource_pressure", "population_change", "crafting", "player_milestone"],
+        "base_emotional_state": "cheerful",
+        "dialogue_style": {
+          "max_response_length": 180,
+          "formality": "polite",
+          "uses_jargon": false
+        }
+      },
+
+      "locality": {
+        "home_chunk": "peaceful_forest"
+      },
+
+      "faction": {
+        "primary": "guild:wanderers_guild",
+        "belonging_tags": [
+          {"tag": "guild:wanderers_guild", "significance": 0.8, "role": "agent", "narrative_hooks": "carries the seal"},
+          {"tag": "interest:rare_materials", "significance": 0.9, "role": null, "narrative_hooks": null}
+        ]
+      },
+
+      "affinity_seeds": {
+        "guild:wanderers_guild": 60,
+        "guild:elder_council": 30,
+        "_player": 5
+      },
+
+      "services": {
+        "canTrade": true,
+        "canRepair": false,
+        "canTeach": true,
+        "teachableSkills": ["miners_endurance"],
+        "specialServices": ["identify_items"]
+      },
+
+      "unlockConditions": {
+        "alwaysAvailable": true,
+        "characterLevel": 0,
+        "completedQuests": []
+      },
+
+      "speechbank": {
+        "greeting": [
+          "Greetings! I've traveled far and wide.",
+          "Ah, a face! Sit, sit — and what have you in those bags?",
+          "Salaam. You look like one who knows the value of a thing."
+        ],
+        "farewell": [
+          "Safe travels, and may you find rare treasures!",
+          "Until our roads cross again, friend."
+        ],
+        "idle_barks": [
+          "Three weeks since I tasted bread that wasn't road-bread.",
+          "There's a copper boom out east — mark my word.",
+          "I'll tell you what I told the last man — gold is heavy.",
+          "Saw a bird flying north out of season. Strange.",
+          "Every village has one good blacksmith and three bad ones."
+        ],
+        "quest_offer": "I seek brave adventurers to help with my research. Perhaps you could assist me?",
+        "quest_complete": "Excellent! Those will serve my research perfectly.",
+        "phrase_bank": {
+          "exclamations": ["Bismillah!", "By all the roads!"],
+          "oaths": ["On my ledger, I swear it.", "By the mark of the Wanderers."],
+          "endearments_friend": ["friend", "good buyer"],
+          "endearments_enemy": ["thief", "wretch"],
+          "fillers": ["aye", "indeed", "you see"]
+        }
+      },
+
+      "quests": ["gathering_quest"],
+
+      "position": {"x": -5.0, "y": -3.0, "z": 0.0},
+      "sprite_color": [255, 215, 0],
+      "interaction_radius": 3.0,
+
+      "metadata": {
+        "tags": ["trader", "wandering", "minerals", "starter"]
+      }
+    },
+
+    {
+      "npc_id": "combat_trainer",
+      "name": "Battle Master",
+      "title": "Weapons Instructor",
+      "narrative": "Once a captain in a war the elders no longer name aloud. He came home with three scars across his back and a quiet that follows him like a second shadow. He trains young fighters because, he says, the only way to put a blade down is to teach the next hand to hold it well.",
+
+      "personality": {
+        "voice": "Stern, economical with words. Praises by silence; criticizes by quoting old drill cadences.",
+        "knowledge_domains": ["combat", "weapons", "tactics", "discipline"],
+        "reaction_modifiers": {
+          "ENEMY_KILLED": {"relationship_delta": 0.04, "emotion": "approving"},
+          "PLAYER_DIED": {"relationship_delta": -0.01, "emotion": "concerned"},
+          "LEVEL_UP": {"relationship_delta": 0.03, "emotion": "impressed"},
+          "ITEM_CRAFTED": {"discipline_match": "smithing", "relationship_delta": 0.02, "emotion": "approving"}
+        },
+        "gossip_interests": ["area_danger", "combat", "population_change"],
+        "base_emotional_state": "neutral",
+        "dialogue_style": {
+          "max_response_length": 120,
+          "formality": "stern",
+          "uses_jargon": true
+        }
+      },
+
+      "locality": {
+        "home_chunk": "peaceful_forest"
+      },
+
+      "faction": {
+        "primary": "guild:hubtown_militia",
+        "belonging_tags": [
+          {"tag": "guild:hubtown_militia", "significance": 0.95, "role": "drillmaster", "narrative_hooks": "former captain"},
+          {"tag": "veteran:nameless_war", "significance": 0.9, "role": null, "narrative_hooks": "three scars"}
+        ]
+      },
+
+      "affinity_seeds": {
+        "guild:hubtown_militia": 95,
+        "guild:moors_raiders": -70,
+        "_player": 0
+      },
+
+      "services": {
+        "canTrade": false,
+        "canRepair": true,
+        "canTeach": true,
+        "teachableSkills": ["combat_strike", "fortify"],
+        "specialServices": ["skill_training"]
+      },
+
+      "unlockConditions": {
+        "alwaysAvailable": true,
+        "characterLevel": 0,
+        "completedQuests": []
+      },
+
+      "speechbank": {
+        "greeting": [
+          "Ho there, warrior! Ready to test your mettle?",
+          "Stand straight. State your business.",
+          "Hmph. Another one with calluses in the wrong places."
+        ],
+        "farewell": [
+          "Fight with honor!",
+          "Drill harder. Bleed less."
+        ],
+        "idle_barks": [
+          "Two weak points on every man — one above the collarbone, one below the belt. Memorize both.",
+          "Saw a crow circling east. There'll be a body in three days.",
+          "Steel sings when it's true and rattles when it's not.",
+          "Recruits are softer every year, I swear it.",
+          "Better a slow blade landed than a fast blade in the dirt."
+        ],
+        "quest_offer": "Defeat some enemies, and I'll reward your bravery.",
+        "quest_complete": "Impressive! You've earned my respect — and your rewards.",
+        "phrase_bank": {
+          "exclamations": ["Steel and breath!", "By the drill-yard."],
+          "oaths": ["On my old colors, I swear it."],
+          "endearments_friend": ["soldier", "bladework"],
+          "endearments_enemy": ["coward", "limp-arm"],
+          "fillers": ["hmph", "look here", "now then"]
+        }
+      },
+
+      "quests": ["combat_quest"],
+
+      "position": {"x": 5.0, "y": 3.0, "z": 0.0},
+      "sprite_color": [255, 100, 100],
+      "interaction_radius": 3.0,
+
+      "metadata": {
+        "tags": ["combat", "trainer", "veteran", "essential"]
+      }
+    }
+  ]
+}
