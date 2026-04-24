@@ -399,21 +399,56 @@ _WES_FIXTURES = [
     LLMFixture(
         code="wes_tool_hostiles",
         tier=TIER_WES,
-        description="WES Tier 3 executor_tool for hostiles. Spec → JSON.",
+        description=(
+            "WES Tier 3 executor_tool for hostiles. Emits one hostile JSON "
+            "matching hostiles-1.JSON schema (enemyId + nested stats + "
+            "qualitative drops + aiPattern with specialAbilities referring "
+            "to existing abilities library + metadata.{narrative, tags}). "
+            "Does NOT invent new abilities — atomic co-gen handled by a "
+            "separate plan step if needed."
+        ),
         canonical_system_prompt=(
-            "Generate one hostile JSON matching the schema. No other output."
+            "You are the hostiles executor_tool. Given one ExecutorSpec, "
+            "emit one hostile JSON. Categories: beast/ooze/insect/construct/"
+            "undead/elemental/aberration/humanoid/dragon. Drops use "
+            "quantity:[min,max] array and qualitative chance. aiPattern."
+            "specialAbilities references existing abilities only. No prose."
         ),
         canonical_user_prompt=(
-            "Spec: moors bandit raider specializing in caravan ambushes. "
-            "Tier 2. Biome moors. Role raider."
+            "Spec id: spec_005 (plan step s5)\n"
+            "Item intent: moors bandit raider specializing in caravan ambushes\n"
+            "Hard constraints: {\"tier\": 2, \"biome\": \"moors\", "
+            "\"role\": \"raider\"}\n"
+            "Flavor hints: {\"theme\": \"moors raider with copper-weighted whip\"}\n"
+            "Cross-ref hints: {\"materialId\": \"moors_copper\", "
+            "\"skillId\": \"copperlash_gash\"}\n\n"
+            "Emit one hostile JSON following the schema."
         ),
         canonical_response=(
-            '{"hostile_id": "copperlash_rider", "name": "Copperlash Rider", '
-            '"tier": 2, "biome": "moors", "role": "raider", '
-            '"hp": 180, "attack": 28, "defense": 14, '
-            '"drops": [{"material_id": "moors_copper", "chance": 0.35}], '
+            '{"enemyId": "copperlash_rider", "name": "Copperlash Rider", '
+            '"tier": 2, "category": "humanoid", "behavior": "aggressive_pack", '
+            '"stats": {"health": 180, "damage": [22, 30], "defense": 14, '
+            '"speed": 1.3, "aggroRange": 7, "attackSpeed": 1.1}, '
+            '"drops": [{"materialId": "moors_copper", "quantity": [1, 3], '
+            '"chance": "moderate"}], '
+            '"aiPattern": {"defaultState": "patrol", '
+            '"aggroOnDamage": true, "aggroOnProximity": true, '
+            '"fleeAtHealth": 0.15, "callForHelpRadius": 10, '
+            '"packCoordination": true, '
+            '"specialAbilities": ["leap_attack"]}, '
             '"skills": ["copperlash_gash"], '
-            '"tags": ["physical", "bleed", "raider"]}'
+            '"metadata": {"narrative": "Moors raiders in boiled-copper mail, '
+            'swinging short weighted whips from the backs of salt-caked '
+            'ponies. They ride in pairs — one harrier, one finisher — and '
+            'break contact the moment numbers turn against them.", '
+            '"tags": ["humanoid", "aggressive", "mid-game", "physical"]}}'
+        ),
+        notes=(
+            "Cross-refs: drops.materialId moors_copper <- wes_tool_materials; "
+            "skills copperlash_gash <- wes_tool_skills; "
+            "specialAbilities.leap_attack <- existing hostiles-1.JSON abilities "
+            "block (no co-gen needed). xref_rules._extract_hostile_xrefs "
+            "reads both drops[].materialId + skills[]."
         ),
     ),
     LLMFixture(
