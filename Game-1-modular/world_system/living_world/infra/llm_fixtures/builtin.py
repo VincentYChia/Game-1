@@ -459,14 +459,52 @@ _WES_FIXTURES = [
     LLMFixture(
         code="wes_tool_nodes",
         tier=TIER_WES,
-        description="WES Tier 3 executor_tool for resource nodes.",
-        canonical_system_prompt="Generate one node JSON.",
-        canonical_user_prompt="Spec: cliff-face copper seam in moors.",
+        description=(
+            "WES Tier 3 executor_tool for resource nodes. Emits one node JSON "
+            "matching resource-node-1.JSON schema (resourceId + category + "
+            "requiredTool + baseHealth + drops[] + respawnTime + "
+            "metadata.{narrative, tags}). ResourceType was refactored to a "
+            "namespace class post-2026-04-24 — new resourceIds are runtime-valid."
+        ),
+        canonical_system_prompt=(
+            "You are the nodes executor_tool. Given one ExecutorSpec, emit "
+            "one resource-node JSON: resourceId (snake_case), name, category "
+            "(tree/ore/stone/fishing), tier (1-4), requiredTool (axe/pickaxe/"
+            "fishing_rod), baseHealth (T1=100..T4=800), drops[{materialId, "
+            "quantity, chance}] (quantities few/several/many/abundant, "
+            "chances guaranteed/high/moderate/low/rare/improbable), "
+            "respawnTime (fast/normal/quick/slow/very_slow/null), "
+            "metadata.{narrative, tags from allow-list}. No prose."
+        ),
+        canonical_user_prompt=(
+            "Spec id: spec_002 (plan step s2)\n"
+            "Item intent: cliff-face copper seam matching the moors biome\n"
+            "Hard constraints: {\"tier\": 2, \"category\": \"ore\", \"biome\": \"moors\"}\n"
+            "Flavor hints: {\"name_hint\": \"Moors Copper Seam\", \"tool\": \"pickaxe\"}\n"
+            "Cross-ref hints: {\"materialId\": \"moors_copper\"}\n\n"
+            "Emit one resource-node JSON following the schema."
+        ),
         canonical_response=(
-            '{"node_id": "moors_copper_seam", "name": "Copper Seam", '
-            '"material_id": "moors_copper", "biome": "moors", '
-            '"tool_required": "pickaxe", "rarity": "uncommon", '
-            '"yield_range": [2, 5]}'
+            '{"resourceId": "moors_copper_seam", "name": "Moors Copper Seam", '
+            '"category": "ore", "tier": 2, "requiredTool": "pickaxe", '
+            '"baseHealth": 200, '
+            '"drops": [{"materialId": "moors_copper", "quantity": "several", '
+            '"chance": "high"}], '
+            '"respawnTime": "normal", '
+            '"metadata": {"narrative": "An exposed seam of red-green copper '
+            'knotted through the cliff face, where the salt-wind has carved '
+            'channels deep enough to rest a pick in. Local miners call these '
+            '\\u0027honest walls\\u0027 — the copper comes loose in clean '
+            'shards if you work with the stone rather than against it.", '
+            '"tags": ["ore", "metal", "standard"]}}'
+        ),
+        notes=(
+            "Schema matches live resource-node-1.JSON shape. "
+            "xref_rules._extract_node_xrefs reads either materialId or "
+            "material_id from drops[], so either casing is tolerated. "
+            "The drops[].materialId must resolve to a committed material "
+            "(orphan check) — this fixture cross-refs 'moors_copper' which "
+            "is emitted by wes_tool_materials."
         ),
     ),
     LLMFixture(
