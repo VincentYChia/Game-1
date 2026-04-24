@@ -42,6 +42,7 @@ class MaterialDatabase:
                     icon_path = f"{subdir}/{material_id}.png"
 
                 flags = mat_data.get('flags', {})
+                metadata = mat_data.get('metadata', {})
                 mat = MaterialDefinition(
                     material_id=material_id,
                     name=mat_data.get('name', ''),
@@ -57,7 +58,9 @@ class MaterialDatabase:
                     item_subtype=mat_data.get('subtype', ''),
                     effect=mat_data.get('effect', ''),
                     effect_tags=mat_data.get('effectTags', []),
-                    effect_params=mat_data.get('effectParams', {})
+                    effect_params=mat_data.get('effectParams', {}),
+                    narrative=metadata.get('narrative', ''),
+                    tags=metadata.get('tags', [])
                 )
                 self.materials[mat.material_id] = mat
             self.loaded = True
@@ -106,16 +109,19 @@ class MaterialDatabase:
                         if not icon_path and material_id:
                             icon_path = f"materials/{material_id}.png"
 
+                        metadata = item_data.get('metadata', {})
                         mat = MaterialDefinition(
                             material_id=material_id,
                             name=item_data.get('name', ''),
                             tier=item_data.get('tier', 1),
                             category=category,
                             rarity=item_data.get('rarity', 'common'),
-                            description=item_data.get('metadata', {}).get('narrative', ''),
+                            description=metadata.get('narrative', ''),
                             max_stack=item_data.get('stackSize', 256),
                             properties={},
-                            icon_path=icon_path
+                            icon_path=icon_path,
+                            narrative=metadata.get('narrative', ''),
+                            tags=metadata.get('tags', [])
                         )
                         if mat.material_id and mat.material_id not in self.materials:
                             self.materials[mat.material_id] = mat
@@ -174,13 +180,14 @@ class MaterialDatabase:
                                     subdir = 'materials'
                                 icon_path = f"{subdir}/{material_id}.png"
 
+                            metadata = item_data.get('metadata', {})
                             mat = MaterialDefinition(
                                 material_id=material_id,
                                 name=item_data.get('name', ''),
                                 tier=item_data.get('tier', 1),
                                 category=category,
                                 rarity=item_data.get('rarity', 'common'),
-                                description=item_data.get('metadata', {}).get('narrative', ''),
+                                description=metadata.get('narrative', ''),
                                 max_stack=item_data.get('stackSize', 99),
                                 properties={},
                                 icon_path=icon_path,
@@ -189,7 +196,9 @@ class MaterialDatabase:
                                 item_subtype=item_data.get('subtype', ''),
                                 effect=item_data.get('effect', ''),
                                 effect_tags=item_data.get('effectTags', []),
-                                effect_params=item_data.get('effectParams', {})
+                                effect_params=item_data.get('effectParams', {}),
+                                narrative=metadata.get('narrative', ''),
+                                tags=metadata.get('tags', [])
                             )
                             if mat.material_id and mat.material_id not in self.materials:
                                 self.materials[mat.material_id] = mat

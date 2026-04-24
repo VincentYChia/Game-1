@@ -1,7 +1,7 @@
 """Material definition data model"""
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -22,3 +22,5 @@ class MaterialDefinition:
     effect: str = ""  # Description of what the item does when used/placed
     effect_tags: list = field(default_factory=list)  # Combat effect tags (fire, cone, burn, etc.)
     effect_params: dict = field(default_factory=dict)  # Effect parameters (baseDamage, cone_angle, etc.)
+    narrative: str = ""  # Flavor text from metadata.narrative
+    tags: List[str] = field(default_factory=list)  # Descriptive tags from metadata.tags (drives UI/search/CNN input)
