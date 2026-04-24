@@ -1,0 +1,21 @@
+{
+  "_placeholder_notice": "PLACEHOLDER PROMPT — designer replaces. See Development-Plan/PLACEHOLDER_LEDGER.md §6.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "layer": 5,
+    "purpose": "NL5 nation weaver — reads NL4 + selected NL3 + WMS L5.",
+    "backend_task": "wns_layer5",
+    "design_notes": [
+      "TODO(designer): write real nation-scale prompt; this is where cross-region dynamics surface.",
+      "TODO(designer): decide how aggressively NL5 folds migration/politics cues from NL4 regions."
+    ]
+  },
+  "_core": {
+    "system": "You are the narrative weaver at nation scale. Given lower-layer narrative in this address, produce a thread fragment and narrative summary. Output JSON: {narrative, threads, call_wes}. [TODO(designer): replace — see PLACEHOLDER_LEDGER.md §6.]",
+    "user_template": "Nation address: ${address}\n\nLower-layer narrative (NL4 threads + WMS L5 at this nation):\n${lower_narrative}\n\nParent-layer narrative (world, brief):\n${parent_narrative}\n\nThreads currently in scope:\n${threads_in_scope}\n\nReconcile upward. Surface nation-scale arcs (politics, military, migration). Call WES only on nation-level patterns warranting new content."
+  },
+  "_output": {
+    "schema": "{\"narrative\": \"string (3-5 sentences)\", \"threads\": [{\"headline\": \"string\", \"content_tags\": [\"string\"], \"relationship\": \"open|continue|reframe|close\", \"parent_thread_id\": \"string|null\"}], \"call_wes\": \"boolean\", \"directive_hint\": \"string (required when call_wes=true)\"}",
+    "example": "{\"narrative\": \"Valdren's two crises converge: moor industrialization and thornmere famine push migration patterns the crown has not seen in decades.\", \"threads\": [{\"headline\": \"Internal migration crisis\", \"content_tags\": [\"migration\", \"social_pressure\"], \"relationship\": \"open\", \"parent_thread_id\": null}], \"call_wes\": false}"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "_placeholder_notice": "PLACEHOLDER PROMPT — designer replaces. See Development-Plan/PLACEHOLDER_LEDGER.md §6.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "layer": 3,
+    "purpose": "NL3 district weaver — reads NL2 threads + same-district WMS L3 + prior NL3 (supersession).",
+    "backend_task": "wns_layer3",
+    "design_notes": [
+      "TODO(designer): write real district-scale prompt; emphasize bottom-up reconciliation with NL2 locality narratives.",
+      "TODO(designer): tune how aggressively supersession happens (full replace vs. refined continuation)."
+    ]
+  },
+  "_core": {
+    "system": "You are the narrative weaver at district scale. Given lower-layer narrative in this address, produce a thread fragment and narrative summary. Output JSON: {narrative, threads, call_wes}. [TODO(designer): replace — see PLACEHOLDER_LEDGER.md §6.]",
+    "user_template": "District address: ${address}\n\nLower-layer narrative (NL2 threads + WMS L3 at this district):\n${lower_narrative}\n\nParent-layer narrative (region/nation/etc., brief):\n${parent_narrative}\n\nThreads currently in scope:\n${threads_in_scope}\n\nReconcile upward from locality-scale material without contradicting it. Emit thread fragments for district-scale patterns. Set call_wes=true only if execution is warranted."
+  },
+  "_output": {
+    "schema": "{\"narrative\": \"string (2-3 sentences)\", \"threads\": [{\"headline\": \"string\", \"content_tags\": [\"string\"], \"relationship\": \"open|continue|reframe|close\", \"parent_thread_id\": \"string|null\"}], \"call_wes\": \"boolean\", \"directive_hint\": \"string (required when call_wes=true)\"}",
+    "example": "{\"narrative\": \"Tarmouth splits: the coast booms on copper while the forge district loses hands to easier coin.\", \"threads\": [{\"headline\": \"Labor drain from ironrow\", \"content_tags\": [\"economic_shift\", \"labor\"], \"relationship\": \"open\", \"parent_thread_id\": null}], \"call_wes\": false}"
+  }
+}

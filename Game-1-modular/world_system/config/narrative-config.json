@@ -1,0 +1,45 @@
+{
+  "_placeholder_notice": "PLACEHOLDER TRIGGER VALUES — designer owns the real numbers. See Development-Plan/PLACEHOLDER_LEDGER.md §4 for the furnishing list. Every N value below is a playtest-tuned guess; replace once you've seen the pipeline fire in a real session.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "purpose": "Configuration for the World Narrative System — trigger thresholds per NL layer per address. Mirrors the WMS memory-config.json pattern.",
+    "pattern": "Every NL layer has an every-N-events-per-layer-per-address trigger bucket. Lower layers fire more often; higher layers accumulate from wider scope and fire less often."
+  },
+
+  "triggers": {
+    "nl2": {
+      "events_per_locality": 5,
+      "description": "NL2 (locality weaver) fires once per this many NL1 events at a locality. Placeholder."
+    },
+    "nl3": {
+      "events_per_district": 5,
+      "description": "NL3 (district weaver) fires once per this many NL2 events at a district. Placeholder."
+    },
+    "nl4": {
+      "events_per_region": 8,
+      "description": "NL4 (region weaver) fires once per this many NL3 events at a region. Placeholder."
+    },
+    "nl5": {
+      "events_per_nation": 12,
+      "description": "NL5 (nation weaver) fires once per this many NL4 events at a nation. Placeholder."
+    },
+    "nl6": {
+      "events_world": 15,
+      "description": "NL6 (nation-to-world seam weaver) fires once per this many NL5 events world-wide. Placeholder."
+    },
+    "nl7": {
+      "events_world": 20,
+      "description": "NL7 (world embroiderer) fires once per this many NL6 events world-wide. Placeholder."
+    }
+  },
+
+  "distance_filter": {
+    "_placeholder_notice": "Shallow-going-outward depth rules per firing tier. See PLACEHOLDER_LEDGER.md §15. Word/token budgets per depth TBD in playtest.",
+    "nl2": {"full_detail_layers": [2, 1], "brief_summary_layers": [3, 4, 5, 6, 7]},
+    "nl3": {"full_detail_layers": [3, 2], "brief_summary_layers": [4, 5, 6, 7]},
+    "nl4": {"full_detail_layers": [4, 3], "brief_summary_layers": [5, 6, 7]},
+    "nl5": {"full_detail_layers": [5, 4], "brief_summary_layers": [6, 7]},
+    "nl6": {"full_detail_layers": [6, 5], "brief_summary_layers": [7]},
+    "nl7": {"full_detail_layers": [7, 6, 5], "brief_summary_layers": []}
+  }
+}

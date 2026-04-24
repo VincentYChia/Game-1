@@ -1,0 +1,21 @@
+{
+  "_placeholder_notice": "PLACEHOLDER PROMPT — designer replaces. See Development-Plan/PLACEHOLDER_LEDGER.md §6.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "layer": 4,
+    "purpose": "NL4 region weaver — reads NL3 + selected NL2 + WMS L4. First layer where call_wes commonly fires (see fixture in PLACEHOLDER_LEDGER.md §1).",
+    "backend_task": "wns_layer4",
+    "design_notes": [
+      "TODO(designer): write real region-scale prompt emphasizing arcs (not just events).",
+      "TODO(designer): calibrate call_wes flag — this tier is where hostiles/materials tied to biome commonly fire per §5.8 scope rules."
+    ]
+  },
+  "_core": {
+    "system": "You are the narrative weaver at region scale. Given lower-layer narrative in this address, produce a thread fragment and narrative summary. Output JSON: {narrative, threads, call_wes}. [TODO(designer): replace — see PLACEHOLDER_LEDGER.md §6.]",
+    "user_template": "Region address: ${address}\n\nLower-layer narrative (NL3 threads + WMS L4 at this region):\n${lower_narrative}\n\nParent-layer narrative (nation/world, brief):\n${parent_narrative}\n\nThreads currently in scope:\n${threads_in_scope}\n\nReconcile upward. Surface regional arcs. Call WES when new biome-appropriate content (hostiles, materials, nodes) should be generated."
+  },
+  "_output": {
+    "schema": "{\"narrative\": \"string (2-4 sentences)\", \"threads\": [{\"headline\": \"string\", \"content_tags\": [\"string\"], \"relationship\": \"open|continue|reframe|close\", \"parent_thread_id\": \"string|null\"}], \"call_wes\": \"boolean\", \"directive_hint\": \"string (required when call_wes=true)\"}",
+    "example": "{\"narrative\": \"The moors are restructuring around the copper trade; old guild centers weaken.\", \"threads\": [{\"headline\": \"Smithing guild decline\", \"content_tags\": [\"institutional_decline\", \"economic_shift\"], \"relationship\": \"open\", \"parent_thread_id\": null}], \"call_wes\": true, \"directive_hint\": \"Generate content responding to the moors' economic realignment.\"}"
+  }
+}

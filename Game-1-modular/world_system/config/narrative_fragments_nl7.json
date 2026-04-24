@@ -1,0 +1,22 @@
+{
+  "_placeholder_notice": "PLACEHOLDER PROMPT — designer replaces. See Development-Plan/PLACEHOLDER_LEDGER.md §6.",
+  "_meta": {
+    "version": "0.1-placeholder",
+    "layer": 7,
+    "purpose": "NL7 world embroiderer — reads NL6 + WMS L7. Top-of-pyramid layer.",
+    "backend_task": "wns_layer7",
+    "design_notes": [
+      "TODO(designer): write real world-scale prompt emphasizing embroidery over event-tracking.",
+      "TODO(designer): output shape includes dominant_arcs/regions/factions + severity in addition to the standard fields — confirm schema is synced with fixture.",
+      "TODO(designer): call_wes at this layer implies world-shift content — very rare, very broad."
+    ]
+  },
+  "_core": {
+    "system": "You are the narrative embroiderer at world scale. Given lower-layer narrative in this address, produce a world-scale narrative summary plus dominant arcs/regions/factions. Output JSON: {narrative, threads, dominant_arcs, dominant_regions, dominant_factions, severity, call_wes}. [TODO(designer): replace — see PLACEHOLDER_LEDGER.md §6.]",
+    "user_template": "World address: ${address}\n\nLower-layer narrative (NL6 seams + WMS L7 world summary):\n${lower_narrative}\n\n(No parent layer — this is the top.)\n${parent_narrative}\n\nThreads currently in scope:\n${threads_in_scope}\n\nEmbroider: what is the world's current story? Only call WES for world-shift content (rare, broad scope)."
+  },
+  "_output": {
+    "schema": "{\"narrative\": \"string (4-6 sentences)\", \"threads\": [{\"headline\": \"string\", \"content_tags\": [\"string\"], \"relationship\": \"open|continue|reframe|close\", \"parent_thread_id\": \"string|null\"}], \"dominant_arcs\": [\"string\"], \"dominant_regions\": [\"string\"], \"dominant_factions\": [\"string\"], \"severity\": \"minor|moderate|significant|major|critical\", \"call_wes\": \"boolean\", \"directive_hint\": \"string (required when call_wes=true)\"}",
+    "example": "{\"narrative\": \"The world watches Valdren. A nation reshaping itself is a long story; the threads are opening faster than they are closing.\", \"threads\": [], \"dominant_arcs\": [\"valdren_restructuring\"], \"dominant_regions\": [\"ashfall_moors\", \"thornmere\"], \"dominant_factions\": [], \"severity\": \"significant\", \"call_wes\": false}"
+  }
+}
