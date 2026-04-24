@@ -389,6 +389,33 @@ Address prefixes `thread:` / `arc:` / `witness:` are **locked** (code-level inva
 
 ---
 
+## §WNS-A1 — WNS affinity modifier tool (separate queue)
+
+**Status**: design only, not yet implemented. See memory: `wns_affinity_modifier_tool.md`.
+
+**What it is**: lightweight WNS tool (not WES) that emits XML `<AffinityShift>` directives to nudge faction/NPC standing across geographic scopes. A deterministic resolver (not LLM) attaches time + causing-event id and commits deltas to faction system + NPC context registry.
+
+**Shape sketch**:
+```xml
+<AffinityShift>
+  <Target>faction:merchants</Target>
+  <Scope>nation:blackoak</Scope>
+  <Effect>standing_delta: -0.15</Effect>
+</AffinityShift>
+```
+
+**What you decide**:
+- [ ] Lock the Effect schema (numeric delta? typed? `affinity_change | belonging_shift | reputation_tweak`?)
+- [ ] Lock scope vocabulary (already geographic: nation / region / district / locality — confirm override rules work as described)
+- [ ] Which WNS layers emit these (NL3-NL6 probably, where faction/NPC dynamics live)
+- [ ] Integration point with NPC v3 dynamic context registry (see `npc_schema_overhaul_v3.md`)
+
+**Blocking?**: No. Queued for post-v4-tools implementation. Design captured.
+
+**When to implement**: After v4 content tools (Steps 2-6) ship and NPC schema overhaul is designed. This hooks into both.
+
+---
+
 ## Recovery / reference
 
 - Full ledger reference: [`PLACEHOLDER_LEDGER.md`](PLACEHOLDER_LEDGER.md)
