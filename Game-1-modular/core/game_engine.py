@@ -4566,6 +4566,32 @@ class GameEngine:
             _report("world_memory_system", "initialize", e,
                     "WMS disabled; downstream consumers will no-op", "error")
 
+        # Initialize World Narrative System (WNS) — sibling of WMS.
+        # Separate SQLite file (world_narrative.db). Per Development-Plan/
+        # WORLD_SYSTEM_WORKING_DOC.md §4, WNS is a sibling system: fails
+        # gracefully (no WMS disruption) and publishes WNS_CALL_WES_REQUESTED
+        # events that WES (future phase) will subscribe to.
+        self.world_narrative = None
+        try:
+            from world_system.wns.world_narrative_system import WorldNarrativeSystem
+            from core.paths import PathManager as _PM
+            _paths = _PM()
+            _wns_save_dir = str(_paths.save_path)
+            _wns_geo_path = str(
+                _paths.base_path / "world_system" / "config" / "geographic-map.json"
+            )
+            self.world_narrative = WorldNarrativeSystem.get_instance()
+            self.world_narrative.initialize(
+                save_dir=_wns_save_dir,
+                geo_map_path=_wns_geo_path,
+            )
+        except Exception as e:
+            print(f"[WorldNarrative] Init failed (non-fatal): {e}")
+            self.world_narrative = None
+            _report("world_narrative_system", "initialize", e,
+                    "WNS disabled; narrative weaving will not run",
+                    "warning")
+
         # Initialize Living World consumers (BackendManager + NPCAgentSystem).
         # These depend on WorldMemorySystem.world_query for context and on
         # BackendManager for LLM calls. Failure is non-fatal — dialogue falls

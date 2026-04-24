@@ -8,7 +8,24 @@
       "WebSearch",
       "Bash(git commit -m ' *)",
       "Bash(git commit -m 'Framework A Pass 1: archive v1, write Lantern-Year sections 1-4 *)",
-      "Bash(git commit -m 'Framework A Pass 2: Lantern-Year sections 5-8 *)"
+      "Bash(git commit -m 'Framework A Pass 2: Lantern-Year sections 5-8 *)",
+      "Bash(git commit -m 'Framework A Pass 3: audit, polish, Spaces to Write Into *)",
+      "Bash(python -m pytest world_system/living_world/tests/ -v)",
+      "Bash(python -m unittest world_system.living_world.tests.test_llm_fixture_registry world_system.living_world.tests.test_graceful_degrade world_system.living_world.tests.test_context_bundle -v)",
+      "Bash(python -m unittest discover world_system/living_world/ -v)",
+      "Bash(python -m unittest discover world_system/tests/ -v)",
+      "Bash(python -u -m unittest world_system.wes.tests.test_metrics)",
+      "Bash(python -c \"from world_system.wes.metrics import WESMetrics; print\\('ok'\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(wait)",
+      "Bash(python -c \"import unittest; unittest.main\\(module='world_system.wes.tests.test_metrics', exit=False, verbosity=2\\)\")",
+      "Bash(pkill -f \"python -c\")",
+      "Bash(pkill -f \"unittest world_system.wes\")",
+      "Bash(taskkill //IM python.exe //F)",
+      "Bash(python -m unittest world_system.wes.tests.test_dataclasses world_system.wes.tests.test_async_runner world_system.wes.tests.test_xml_batch_parser world_system.wes.tests.test_tool_registry)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }
