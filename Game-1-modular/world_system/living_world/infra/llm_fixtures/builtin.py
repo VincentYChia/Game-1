@@ -510,15 +510,53 @@ _WES_FIXTURES = [
     LLMFixture(
         code="wes_tool_skills",
         tier=TIER_WES,
-        description="WES Tier 3 executor_tool for skills.",
-        canonical_system_prompt="Generate one skill JSON.",
-        canonical_user_prompt="Spec: copperlash gash, physical, single, bleed.",
+        description=(
+            "WES Tier 3 executor_tool for skills. Emits one skill JSON "
+            "matching skills-skills-1.JSON schema (skillId + name + tier + "
+            "rarity + categories[1-3] + description + narrative + "
+            "tags[2-5 from descriptive allow-list] + effect{type, category, "
+            "magnitude, target, duration, additionalEffects} + cost{mana, "
+            "cooldown} + requirements{characterLevel, stats, titles})."
+        ),
+        canonical_system_prompt=(
+            "You are the skills executor_tool. Given one ExecutorSpec, emit "
+            "one skill JSON. tier 1-4, rarity from common..mythic, categories "
+            "from the 15-value allow-list, effect.type from 10 values with "
+            "locked per-type category constraints, magnitude minor..extreme, "
+            "duration instant..extended, target self/enemy/resource_node/"
+            "area, stats keys STR/DEF/VIT/LCK/AGI/INT. No prose."
+        ),
+        canonical_user_prompt=(
+            "Spec id: spec_003 (plan step s3)\n"
+            "Item intent: copperlash gash — moors raider bleeding strike\n"
+            "Hard constraints: {\"tier\": 2, \"effect_type\": \"devastate\", "
+            "\"effect_category\": \"damage\"}\n"
+            "Flavor hints: {\"theme\": \"moors raider, copper-weighted whip\"}\n"
+            "Cross-ref hints: {}\n\n"
+            "Emit one skill JSON following the schema."
+        ),
         canonical_response=(
-            '{"skill_id": "copperlash_gash", "name": "Copperlash Gash", '
-            '"tags": ["physical", "melee", "single", "bleed"], '
-            '"effectParams": {"baseDamage": 45, '
-            '"bleed_duration": 4.0, "bleed_damage_per_second": 6.0}, '
-            '"manaCost": "moderate", "cooldown": "short"}'
+            '{"skillId": "copperlash_gash", "name": "Copperlash Gash", '
+            '"tier": 2, "rarity": "uncommon", '
+            '"categories": ["combat"], '
+            '"description": "A lash-strike with a copper-weighted whip that '
+            'opens a bleeding wound.", '
+            '"narrative": "Moors raiders favor the copperlash — a short whip '
+            'weighted with ore slugs that draws deep cuts the salt wind salts '
+            'further.", '
+            '"tags": ["damage", "combat", "single_hit"], '
+            '"effect": {"type": "devastate", "category": "damage", '
+            '"magnitude": "moderate", "target": "enemy", "duration": "instant", '
+            '"additionalEffects": []}, '
+            '"cost": {"mana": 60, "cooldown": 180}, '
+            '"requirements": {"characterLevel": 5, '
+            '"stats": {"STR": 6, "AGI": 4}, "titles": []}}'
+        ),
+        notes=(
+            "skillId matches the skill reference in wes_tool_hostiles drops/"
+            "aiPattern so cross-refs resolve. Effect type+category pair must "
+            "validate against the type->categories matrix (devastate supports "
+            "damage/mining/combat)."
         ),
     ),
     LLMFixture(
