@@ -95,9 +95,9 @@ class TestGeneratedFileWriter(unittest.TestCase):
         self.assertEqual(files, {})
 
     def test_unknown_tool_ignored(self) -> None:
-        rows = [_row("q1", {"id": "q1"}, tool="quests")]
+        rows = [_row("q1", {"id": "q1"}, tool="fake_unknown_tool")]
         files = self.writer.write_commit_batch(
-            {"quests": rows}, "p1"
+            {"fake_unknown_tool": rows}, "p1"
         )
         self.assertEqual(files, {})
 

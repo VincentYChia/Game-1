@@ -60,7 +60,7 @@ class TestRegistryStoreSchema(unittest.TestCase):
     def test_unknown_tool_raises(self) -> None:
         with self.assertRaises(ValueError):
             self.store.insert_staged_row(
-                tool_name="quests",
+                tool_name="fake_unknown_tool",
                 content_id="q1",
                 display_name="",
                 tier=0,

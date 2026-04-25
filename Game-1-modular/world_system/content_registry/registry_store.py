@@ -123,6 +123,19 @@ CREATE TABLE IF NOT EXISTS reg_npcs (
     payload_json TEXT
 );
 
+CREATE TABLE IF NOT EXISTS reg_quests (
+    content_id TEXT PRIMARY KEY,
+    display_name TEXT,
+    tier INTEGER,
+    biome TEXT,
+    faction_id TEXT,
+    staged INTEGER DEFAULT 1,
+    plan_id TEXT,
+    created_at REAL,
+    source_bundle_id TEXT,
+    payload_json TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_reg_hostiles_plan   ON reg_hostiles(plan_id);
 CREATE INDEX IF NOT EXISTS idx_reg_hostiles_stage  ON reg_hostiles(staged);
 CREATE INDEX IF NOT EXISTS idx_reg_materials_plan  ON reg_materials(plan_id);
@@ -137,6 +150,8 @@ CREATE INDEX IF NOT EXISTS idx_reg_chunks_plan     ON reg_chunks(plan_id);
 CREATE INDEX IF NOT EXISTS idx_reg_chunks_stage    ON reg_chunks(staged);
 CREATE INDEX IF NOT EXISTS idx_reg_npcs_plan       ON reg_npcs(plan_id);
 CREATE INDEX IF NOT EXISTS idx_reg_npcs_stage      ON reg_npcs(staged);
+CREATE INDEX IF NOT EXISTS idx_reg_quests_plan     ON reg_quests(plan_id);
+CREATE INDEX IF NOT EXISTS idx_reg_quests_stage    ON reg_quests(staged);
 
 CREATE TABLE IF NOT EXISTS content_xref (
     src_type TEXT,
@@ -170,6 +185,7 @@ TOOL_TABLE = {
     "titles": "reg_titles",
     "chunks": "reg_chunks",
     "npcs": "reg_npcs",
+    "quests": "reg_quests",
 }
 
 

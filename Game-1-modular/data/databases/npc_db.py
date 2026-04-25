@@ -62,6 +62,128 @@ def _build_npc_from_v3(npc_data: Dict[str, Any]) -> NPCDefinition:
     )
 
 
+def _flatten_description(desc: Any) -> str:
+    """Coerce description to a string for legacy consumers.
+
+    v3 stores rich description in description_full (dict). The flat string
+    fallback prefers 'long' then 'short'.
+    """
+    if isinstance(desc, str):
+        return desc
+    if isinstance(desc, dict):
+        return desc.get("long") or desc.get("short") or ""
+    return ""
+
+
+def _build_quest_objective(obj_data: Dict[str, Any]) -> QuestObjective:
+    """Build QuestObjective from JSON. Tolerates 'type' or 'objective_type' keys."""
+    obj_type = obj_data.get("objective_type", obj_data.get("type", "gather"))
+    return QuestObjective(
+        objective_type=obj_type,
+        items=obj_data.get("items", []),
+        enemies_killed=obj_data.get("enemies_killed", 0),
+    )
+
+
+def _build_quest_rewards(rew_data: Dict[str, Any]) -> QuestRewards:
+    """Build QuestRewards from JSON. Tolerates camelCase + snake_case stat key."""
+    return QuestRewards(
+        experience=rew_data.get("experience", 0),
+        gold=rew_data.get("gold", 0),
+        health_restore=rew_data.get("health_restore", 0),
+        mana_restore=rew_data.get("mana_restore", 0),
+        skills=rew_data.get("skills", []),
+        items=rew_data.get("items", []),
+        title=rew_data.get("title") or "",
+        stat_points=rew_data.get("stat_points", rew_data.get("statPoints", 0)),
+        status_effects=rew_data.get("status_effects", []),
+        buffs=rew_data.get("buffs", []),
+    )
+
+
+def _build_quest_from_v3(quest_data: Dict[str, Any]) -> QuestDefinition:
+    """Build QuestDefinition from a v3 record (canonical schema)."""
+    quest_id = quest_data["quest_id"]
+    title = quest_data.get("title", quest_data.get("name", "Untitled Quest"))
+    name = quest_data.get("name", title)
+
+    description_full = quest_data.get("description_full", {})
+    description_str = _flatten_description(description_full or quest_data.get("description", ""))
+
+    npc_id = quest_data.get("npc_id", quest_data.get("given_by", ""))
+    given_by = quest_data.get("given_by", npc_id)
+    return_to = quest_data.get("return_to", given_by)
+
+    metadata = quest_data.get("metadata", {})
+
+    return QuestDefinition(
+        quest_id=quest_id,
+        title=title,
+        description=description_str,
+        npc_id=npc_id,
+        objectives=_build_quest_objective(quest_data.get("objectives", {})),
+        rewards=_build_quest_rewards(quest_data.get("rewards", {})),
+        completion_dialogue=quest_data.get("completion_dialogue", []),
+        name=name,
+        quest_type=quest_data.get("quest_type", "side"),
+        tier=int(quest_data.get("tier", 1)),
+        given_by=given_by,
+        return_to=return_to,
+        description_full=description_full if isinstance(description_full, dict) else {},
+        rewards_prose=quest_data.get("rewards_prose", {}),
+        requirements=quest_data.get("requirements", {}),
+        expiration=quest_data.get("expiration", {}),
+        progression=quest_data.get("progression", {}),
+        wns_thread_id=quest_data.get("wns_thread_id", ""),
+        tags=metadata.get("tags", []),
+        metadata=metadata,
+    )
+
+
+def _build_quest_from_v2(quest_data: Dict[str, Any]) -> QuestDefinition:
+    """Adapter: build QuestDefinition from a v2 (quests-enhanced) record.
+
+    v2 uses camelCase keys (givenBy, questType, returnTo) and lacks
+    rewards_prose / wns_thread_id / expiration. We populate v3 fields with
+    sensible defaults.
+    """
+    quest_id = quest_data.get("quest_id", quest_data.get("questId", ""))
+    title = quest_data.get("title", quest_data.get("name", "Untitled Quest"))
+    name = quest_data.get("name", title)
+
+    description_full = quest_data.get("description", {})
+    description_str = _flatten_description(description_full)
+
+    npc_id = quest_data.get("npc_id", quest_data.get("givenBy", ""))
+    given_by = quest_data.get("givenBy", npc_id)
+    return_to = quest_data.get("returnTo", given_by)
+
+    metadata = quest_data.get("metadata", {})
+
+    return QuestDefinition(
+        quest_id=quest_id,
+        title=title,
+        description=description_str,
+        npc_id=npc_id,
+        objectives=_build_quest_objective(quest_data.get("objectives", {})),
+        rewards=_build_quest_rewards(quest_data.get("rewards", {})),
+        completion_dialogue=quest_data.get("completion_dialogue", []),
+        name=name,
+        quest_type=quest_data.get("questType", "side"),
+        tier=int(quest_data.get("tier", 1)),
+        given_by=given_by,
+        return_to=return_to,
+        description_full=description_full if isinstance(description_full, dict) else {},
+        rewards_prose={},
+        requirements=quest_data.get("requirements", {}),
+        expiration={},
+        progression=quest_data.get("progression", {}),
+        wns_thread_id="",
+        tags=metadata.get("tags", []),
+        metadata=metadata,
+    )
+
+
 def _build_npc_from_v2(npc_data: Dict[str, Any]) -> NPCDefinition:
     """Adapter: build NPCDefinition from a v2 (npcs-enhanced) record.
 
@@ -120,7 +242,8 @@ class NPCDatabase:
         self.npcs: Dict[str, NPCDefinition] = {}
         self.quests: Dict[str, QuestDefinition] = {}
         self.loaded = False
-        self.source_version: str = ""  # which file version was actually loaded
+        self.source_version: str = ""        # which NPC file version was loaded
+        self.quest_source_version: str = ""  # which quest file version was loaded
 
     @classmethod
     def get_instance(cls):
@@ -156,68 +279,28 @@ class NPCDatabase:
             else:
                 print(f"[WARN] No NPC file found (looked for npcs-3.JSON, npcs-enhanced.JSON)")
 
-            # Try loading enhanced quests first, fallback to v1.0
-            quest_files = [
-                get_resource_path("progression/quests-enhanced.JSON"),
-                get_resource_path("progression/quests-1.JSON")
-            ]
+            # Quests: v3 preferred, v2 fallback. v1 dropped.
+            v3_quest_path = get_resource_path("progression/quests-3.JSON")
+            v2_quest_path = get_resource_path("progression/quests-enhanced.JSON")
 
-            for quest_path in quest_files:
-                if quest_path.exists():
-                    with open(quest_path, 'r') as f:
-                        data = json.load(f)
-                        for quest_data in data.get("quests", []):
-                            # Parse objectives (support both formats)
-                            obj_data = quest_data["objectives"]
-
-                            # Support both "type" and "objective_type"
-                            obj_type = obj_data.get("type", obj_data.get("objective_type", "gather"))
-
-                            objective = QuestObjective(
-                                objective_type=obj_type,
-                                items=obj_data.get("items", []),
-                                enemies_killed=obj_data.get("enemies_killed", 0)
-                            )
-
-                            # Parse rewards (support both formats)
-                            rew_data = quest_data["rewards"]
-                            rewards = QuestRewards(
-                                experience=rew_data.get("experience", 0),
-                                gold=rew_data.get("gold", 0),
-                                health_restore=rew_data.get("health_restore", 0),
-                                mana_restore=rew_data.get("mana_restore", 0),
-                                skills=rew_data.get("skills", []),
-                                items=rew_data.get("items", []),
-                                title=rew_data.get("title", ""),
-                                stat_points=rew_data.get("statPoints", rew_data.get("stat_points", 0)),
-                                status_effects=rew_data.get("status_effects", []),
-                                buffs=rew_data.get("buffs", [])
-                            )
-
-                            # Support both "quest_id" and "questId", "title" and "name"
-                            quest_id = quest_data.get("quest_id", quest_data.get("questId", ""))
-                            title = quest_data.get("title", quest_data.get("name", "Untitled Quest"))
-
-                            # Support both simple and complex description formats
-                            description = quest_data.get("description", "")
-                            if isinstance(description, dict):
-                                description = description.get("long", description.get("short", ""))
-
-                            # Support both "npc_id" and "givenBy"
-                            npc_id = quest_data.get("npc_id", quest_data.get("givenBy", ""))
-
-                            quest_def = QuestDefinition(
-                                quest_id=quest_id,
-                                title=title,
-                                description=description,
-                                npc_id=npc_id,
-                                objectives=objective,
-                                rewards=rewards,
-                                completion_dialogue=quest_data.get("completion_dialogue", [])
-                            )
-                            self.quests[quest_def.quest_id] = quest_def
-                    print(f"[OK] Loaded {len(self.quests)} quests from {quest_path.name}")
-                    break
+            if v3_quest_path.exists():
+                with open(v3_quest_path, 'r') as f:
+                    data = json.load(f)
+                    for quest_data in data.get("quests", []):
+                        quest_def = _build_quest_from_v3(quest_data)
+                        self.quests[quest_def.quest_id] = quest_def
+                self.quest_source_version = "v3"
+                print(f"[OK] Loaded {len(self.quests)} quests from {v3_quest_path.name} (v3)")
+            elif v2_quest_path.exists():
+                with open(v2_quest_path, 'r') as f:
+                    data = json.load(f)
+                    for quest_data in data.get("quests", []):
+                        quest_def = _build_quest_from_v2(quest_data)
+                        self.quests[quest_def.quest_id] = quest_def
+                self.quest_source_version = "v2"
+                print(f"[OK] Loaded {len(self.quests)} quests from {v2_quest_path.name} (v2 fallback)")
+            else:
+                print(f"[WARN] No quest file found (looked for quests-3.JSON, quests-enhanced.JSON)")
 
             self.loaded = True
         except Exception as e:

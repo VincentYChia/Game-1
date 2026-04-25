@@ -840,6 +840,110 @@ _WES_FIXTURES = [
         ),
     ),
     LLMFixture(
+        code="wes_tool_quests",
+        tier=TIER_WES,
+        description=(
+            "WES Tier 3 executor_tool for QUESTS (v3 schema). Emits one "
+            "quest JSON matching quests-3.JSON / data/models/quests.py "
+            "QuestDefinition. Quest v3 has a TWO-STATE lifecycle: static "
+            "JSON (this output) carries PROSE reward estimates only — "
+            "concrete numbers are materialized at quest-accept time by a "
+            "future resolver. Archive at turn-in records actual outcomes "
+            "for WNS narrative continuity (separate WMS-side schema, not "
+            "in this output)."
+        ),
+        canonical_system_prompt=(
+            "You are the quests executor_tool. Given one ExecutorSpec, "
+            "emit one v3 quest JSON: quest_id, name, title, quest_type "
+            "(tutorial/side/main/chain/repeatable/hidden), tier, "
+            "description_full{short, long, narrative}, given_by/npc_id/"
+            "return_to (cross-ref NPCS), objectives{objective_type "
+            "(gather/combat/kill_target/craft/deliver/explore/talk), "
+            "items, enemies_killed}, rewards (empty defaults — never "
+            "concrete numbers), rewards_prose{summary, experience_hint, "
+            "tier_hint, title_hint, skill_hint, item_hints[]}, "
+            "requirements{characterLevel, stats, titles, completedQuests, "
+            "factionAffinity?}, expiration{type, ...}, progression, "
+            "wns_thread_id, completion_dialogue, metadata{narrative, tags, "
+            "difficulty, estimatedTime}. Cross-refs must resolve. No prose."
+        ),
+        canonical_user_prompt=(
+            "Spec id: spec_008 (plan step s8)\n"
+            "Item intent: a vendetta hunt issued by Captain Vell against "
+            "his own copperlash riders for ambushing his line at the "
+            "moors-stone\n"
+            "Hard constraints: {\"objective_type\": \"kill_target\", "
+            "\"target_id\": \"copperlash_rider\", \"quantity\": 3}\n"
+            "Flavor hints: {\"theme\": \"vendetta, three-for-three, salt "
+            "and copper\"}\n"
+            "Cross-ref hints: {\"given_by\": \"moors_copperlash_captain\", "
+            "\"target\": \"copperlash_rider\", \"title_hint\": "
+            "\"apprentice_moors_reaver\", \"thread\": \"moors_hubtown_war\"}\n\n"
+            "Emit one v3 quest JSON following the schema."
+        ),
+        canonical_response=(
+            '{"quest_id": "salt_reach_hunt", '
+            '"name": "The Salt Reach Hunt", '
+            '"title": "The Salt Reach Hunt", '
+            '"quest_type": "side", "tier": 2, '
+            '"description_full": {'
+            '"short": "Hunt three copperlash riders for Captain Vell.", '
+            "\"long\": \"Captain Vell's line was ambushed at the "
+            'moors-stone three nights past. He wants three of the '
+            'copperlash riders dead in answer. Bring proof.", '
+            '"narrative": "Three for three. The salt remembers what mouths forget."}, '
+            '"given_by": "moors_copperlash_captain", '
+            '"npc_id": "moors_copperlash_captain", '
+            '"return_to": "moors_copperlash_captain", '
+            '"objectives": {'
+            '"objective_type": "kill_target", '
+            '"items": [{"target_id": "copperlash_rider", "quantity": 3, '
+            '"description": "Slay copperlash riders", "optional": false}], '
+            '"enemies_killed": 0}, '
+            '"rewards": {"experience": 0, "gold": 0, "health_restore": 0, '
+            '"mana_restore": 0, "skills": [], "items": [], "title": "", '
+            '"stat_points": 0}, '
+            '"rewards_prose": {'
+            "\"summary\": \"A captain's nod, a copperlash whip from his "
+            'own hand, and silver enough for a tavern week.", '
+            '"experience_hint": "moderate", "tier_hint": 2, '
+            '"title_hint": "apprentice_moors_reaver", '
+            '"skill_hint": null, '
+            '"item_hints": ["copperlash whip", "silver penny", "salt-cured rations"]}, '
+            '"requirements": {"characterLevel": 5, "stats": {}, '
+            '"titles": [], "completedQuests": [], '
+            '"factionAffinity": {"guild:moors_raiders": {"min": 20}}}, '
+            '"expiration": {"type": "npc_death", '
+            '"npc_id": "moors_copperlash_captain"}, '
+            '"progression": {"isRepeatable": false, "cooldown": null, '
+            '"nextQuest": null, "questChain": "moors_war_chain"}, '
+            '"wns_thread_id": "moors_hubtown_war", '
+            '"completion_dialogue": ['
+            '"It is done. The salt knows your name now.", '
+            "\"Take this whip. It cut its last man wrong — it'll cut yours right.\"], "
+            '"metadata": {'
+            '"narrative": "Faction-driven vendetta quest. Threads into '
+            'the moors-hubtown blood line.", '
+            '"tags": ["combat", "faction", "mid-game", "vendetta", "hunt"], '
+            '"difficulty": "moderate", '
+            '"estimatedTime": "20 minutes"}}'
+        ),
+        notes=(
+            "Cross-refs: given_by/npc_id/return_to/expiration.npc_id -> "
+            "wes_tool_npcs (moors_copperlash_captain); "
+            "objectives.items[].target_id -> wes_tool_hostiles "
+            "(copperlash_rider); rewards_prose.title_hint -> wes_tool_titles "
+            "(apprentice_moors_reaver). Faction-affinity gate "
+            "(guild:moors_raiders >= 20) makes this quest only available "
+            "to moors-aligned players. wns_thread_id 'moors_hubtown_war' "
+            "links to a WNS narrative thread (future wiring). "
+            "rewards_prose carries narrative hints — concrete numerical "
+            "rewards are NOT emitted by this tool; the materializer rolls "
+            "them at quest-accept time. Archive at turn-in is separate "
+            "(WMS-side schema, follow-up work)."
+        ),
+    ),
+    LLMFixture(
         code="wes_supervisor",
         tier=TIER_WES,
         description=(
