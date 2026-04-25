@@ -1,5 +1,15 @@
 {
   "description": "Model backend configuration for AI-powered systems. Controls which LLM backend is used for each task type, with fallback chains for resilience.",
+  "_model_choices_v1_rationale": {
+    "_note": "Per-role model assignment rationale. Adjust task_routing entries below to override.",
+    "wns_low_layers": "NL2 / NL3 / NL4 — ollama 8b. Locality / district / region scale, fast turnover, strong local context already provided by cascading inputs.",
+    "wns_high_layers": "NL5 / NL6 / NL7 — claude. Province / nation / world scale; broader synthesis benefits from cloud-class model.",
+    "wes_planner": "claude. Plan quality is load-bearing; cloud worth the cost.",
+    "wes_hubs": "ollama 8b. Hubs decompose plan steps mechanically; minimal creative load.",
+    "wes_tools_simple": "wes_tool_materials/nodes/skills/titles/hostiles/chunks — ollama 8b. Schema-bound generation; structured output suffices.",
+    "wes_tools_narrative": "wes_tool_npcs / wes_tool_quests — claude. v3 schemas demand voice fidelity (NPC speechbank + phrase_bank, quest rewards_prose + completion_dialogue) that smaller models flatten.",
+    "wes_supervisor": "ollama 8b. Common-sense check; doesn't generate, just judges."
+  },
 
   "backends": {
     "ollama": {
@@ -76,92 +86,122 @@
     "wns_layer2": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WNS NL2 locality weaver (placeholder — see PLACEHOLDER_LEDGER.md §12)"
+      "description": "WNS NL2 locality weaver (v1.0 model assignment)"
     },
     "wns_layer3": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WNS NL3 district weaver (placeholder)"
+      "description": "WNS NL3 district weaver (v1.0)"
     },
     "wns_layer4": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WNS NL4 region weaver (placeholder)"
+      "description": "WNS NL4 region weaver (v1.0)"
     },
     "wns_layer5": {
-      "primary": "ollama",
-      "fallback": "mock",
-      "description": "WNS NL5 nation weaver (placeholder)"
+      "primary": "claude",
+      "fallback": "ollama",
+      "description": "WNS NL5 province weaver — claude default (province-scale tides need broader synthesis); ollama on cloud failure (v1.0)"
     },
     "wns_layer6": {
-      "primary": "ollama",
-      "fallback": "mock",
-      "description": "WNS NL6 nation-to-world seam weaver (placeholder)"
+      "primary": "claude",
+      "fallback": "ollama",
+      "description": "WNS NL6 nation weaver — claude default (nation-scale arcs benefit from larger context); ollama on cloud failure (v1.0)"
     },
     "wns_layer7": {
-      "primary": "ollama",
-      "fallback": "mock",
-      "description": "WNS NL7 world embroiderer (placeholder)"
+      "primary": "claude",
+      "fallback": "ollama",
+      "description": "WNS NL7 world embroiderer — claude default (civilizational pulse needs the broadest synthesis); ollama fallback (v1.0)"
     },
     "wes_execution_planner": {
       "primary": "claude",
       "fallback": "ollama",
-      "description": "WES Tier 1 planner — cloud tolerated (§5.2); Ollama local on escalation (placeholder — see PLACEHOLDER_LEDGER.md §12)"
+      "description": "WES Tier 1 planner — cloud tolerated (§5.2); Ollama local on escalation (v1.0 model assignment)"
     },
     "wes_hub_hostiles": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WES Tier 2 hub — hostiles dispatcher (placeholder)"
+      "description": "WES Tier 2 hub — hostiles dispatcher (v1.0)"
     },
     "wes_hub_materials": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WES Tier 2 hub — materials dispatcher (placeholder)"
+      "description": "WES Tier 2 hub — materials dispatcher (v1.0)"
     },
     "wes_hub_nodes": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WES Tier 2 hub — resource nodes dispatcher (placeholder)"
+      "description": "WES Tier 2 hub — resource nodes dispatcher (v1.0)"
     },
     "wes_hub_skills": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WES Tier 2 hub — skills dispatcher (no tag invention) (placeholder)"
+      "description": "WES Tier 2 hub — skills dispatcher (no tag invention) (v1.0)"
     },
     "wes_hub_titles": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WES Tier 2 hub — titles dispatcher (placeholder)"
+      "description": "WES Tier 2 hub — titles dispatcher (v1.0)"
+    },
+    "wes_hub_chunks": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 2 hub — chunks (biome templates) dispatcher (v1.0)"
+    },
+    "wes_hub_npcs": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 2 hub — NPC dispatcher; home_chunk drives cultural tone (v1.0)"
+    },
+    "wes_hub_quests": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 2 hub — quest dispatcher (rewards_prose only) (v1.0)"
     },
     "wes_tool_hostiles": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WES Tier 3 executor_tool — hostile JSON generator (placeholder)"
+      "description": "WES Tier 3 executor_tool — hostile JSON generator (v1.0)"
     },
     "wes_tool_materials": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WES Tier 3 executor_tool — material JSON generator (placeholder)"
+      "description": "WES Tier 3 executor_tool — material JSON generator (v1.0)"
     },
     "wes_tool_nodes": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WES Tier 3 executor_tool — resource-node JSON generator (placeholder)"
+      "description": "WES Tier 3 executor_tool — resource-node JSON generator (v1.0)"
     },
     "wes_tool_skills": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WES Tier 3 executor_tool — skill JSON generator (placeholder)"
+      "description": "WES Tier 3 executor_tool — skill JSON generator (v1.0)"
     },
     "wes_tool_titles": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WES Tier 3 executor_tool — title JSON generator (placeholder)"
+      "description": "WES Tier 3 executor_tool — title JSON generator (v1.0)"
+    },
+    "wes_tool_chunks": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "WES Tier 3 executor_tool — chunk template (biome) generator (v1.0)"
+    },
+    "wes_tool_npcs": {
+      "primary": "claude",
+      "fallback": "ollama",
+      "description": "WES Tier 3 executor_tool — NPC v3 generator. Claude default — inline personality + speechbank + cultural phrase_bank benefit from richer synthesis. Ollama fallback for offline (v1.0)"
+    },
+    "wes_tool_quests": {
+      "primary": "claude",
+      "fallback": "ollama",
+      "description": "WES Tier 3 executor_tool — quest v3 generator. Claude default — narrative reward prose + completion_dialogue need quest-giver voice fidelity (v1.0)"
     },
     "wes_supervisor": {
       "primary": "ollama",
       "fallback": "mock",
-      "description": "WES cross-tier common-sense reviewer (CC1, §5.6) (placeholder)"
+      "description": "WES cross-tier common-sense reviewer (CC1, §5.6) (v1.0)"
     }
   },
 

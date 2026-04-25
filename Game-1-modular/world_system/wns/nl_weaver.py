@@ -449,6 +449,23 @@ class NLWeaver:
                 body=legacy_directive_hint,
             )]
 
+        # Snapshot existing thread_ids BEFORE we materialize the new
+        # batch — needed for the threads_minted vs threads_continued
+        # metric. Querying after insert would conflate.
+        pre_insert_thread_ids: set = set()
+        try:
+            for prior_row in self._store.query_by_address(
+                self._layer, address, limit=30
+            ):
+                for raw_t in (prior_row.payload.get("threads")
+                              if prior_row.payload else []) or []:
+                    if isinstance(raw_t, dict):
+                        tid = raw_t.get("thread_id")
+                        if tid:
+                            pre_insert_thread_ids.add(tid)
+        except Exception:
+            pre_insert_thread_ids = set()
+
         raw_threads = parsed.get("threads", []) or []
         threads = self._materialize_threads(
             raw_threads=raw_threads,
@@ -547,6 +564,23 @@ class NLWeaver:
                     context={"layer": self._layer, "address": address,
                              "shift_count": len(affinity_shifts)},
                 )
+
+        # WNS weaving counters (PLACEHOLDER §16). Best-effort — never
+        # break a successful weaving over a metrics import.
+        try:
+            from world_system.wes.metrics import WESMetrics
+            continued = sum(
+                1 for t in threads if t.thread_id in pre_insert_thread_ids
+            )
+            minted = len(threads) - continued
+            WESMetrics.get_instance().record_wns_weaving(
+                wes_call_count=len(wes_calls),
+                affinity_shift_count=len(affinity_shifts),
+                threads_minted=max(0, minted),
+                threads_continued=continued,
+            )
+        except Exception:
+            pass
 
         return WeaverRunResult(
             success=True,

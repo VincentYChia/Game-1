@@ -90,7 +90,14 @@ class WESOrchestrator:
     _instance: Optional["WESOrchestrator"] = None
     _lock = threading.Lock()
 
-    # Default rerun budget per §9.Q12 (1-2 per plan).
+    # Default rerun budget per plan (PLACEHOLDER_FURNISHING_WORKSHEET §8).
+    # Each rerun is consumed by EITHER:
+    #   - Plan-time bounce-back (unresolved cross-refs, planner replans
+    #     with adjusted_instructions warning), OR
+    #   - Supervisor rerun (post-dispatch, common-sense fail).
+    # Setting to 2 lets the planner have one bounce + one supervisor
+    # rerun before we fall through to runtime cascade / verification.
+    # Increase only if observed false-rerun rate stays <30% in playtest.
     DEFAULT_RERUN_BUDGET = 2
 
     def __init__(self) -> None:
@@ -425,6 +432,11 @@ class WESOrchestrator:
                     context={"plan_id": plan.plan_id,
                              "reruns_remaining": reruns_remaining},
                 )
+                try:
+                    from world_system.wes.metrics import WESMetrics
+                    WESMetrics.get_instance().record_plan_bounce()
+                except Exception:
+                    pass
                 return self.run_plan(
                     bundle,
                     reruns_remaining=reruns_remaining - 1,
@@ -664,6 +676,13 @@ class WESOrchestrator:
                          "depth": depth,
                          "step_count": len(ext_plan.steps)},
             )
+            try:
+                from world_system.wes.metrics import WESMetrics
+                WESMetrics.get_instance().record_runtime_cascade(
+                    len(ext_plan.steps)
+                )
+            except Exception:
+                pass
 
             try:
                 ext_result = dispatcher.run(ext_plan, bundle)

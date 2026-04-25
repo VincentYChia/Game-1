@@ -40,8 +40,17 @@ from typing import Any, Dict, List, Optional
 SEVERITY_INFO = "info"
 SEVERITY_WARNING = "warning"
 SEVERITY_ERROR = "error"
+SEVERITY_CRITICAL = "critical"  # PLACEHOLDER §3 v1.0: distinct from error —
+# critical means the subsystem CANNOT continue to function (DB corruption,
+# missing required config, etc.). Surface sinks treat critical as a hard
+# fail; error stays a soft fall-through.
 
-_VALID_SEVERITIES = {SEVERITY_INFO, SEVERITY_WARNING, SEVERITY_ERROR}
+_VALID_SEVERITIES = {
+    SEVERITY_INFO,
+    SEVERITY_WARNING,
+    SEVERITY_ERROR,
+    SEVERITY_CRITICAL,
+}
 
 
 @dataclass
@@ -79,7 +88,10 @@ class GracefulDegradeLogger:
     DEFAULT_LOG_DIR = os.path.join("llm_debug_logs", "graceful_degrade")
 
     # In-memory buffer size for test inspection + quick dev console.
-    MAX_BUFFER = 256
+    # Override via env var WES_GRACEFUL_DEGRADE_MAX_BUFFER for prod tuning.
+    # 256 is a dev-friendly default — recent enough to inspect after a
+    # session, small enough not to swallow memory.
+    MAX_BUFFER = int(os.environ.get("WES_GRACEFUL_DEGRADE_MAX_BUFFER", "256"))
 
     def __init__(self, log_dir: Optional[str] = None) -> None:
         self._log_dir = log_dir or self.DEFAULT_LOG_DIR
