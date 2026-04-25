@@ -1,9 +1,9 @@
 {
-  "_placeholder_notice": "PLACEHOLDER STARTER TAGS — designer owns the real narrative taxonomy. See Development-Plan/PLACEHOLDER_LEDGER.md §5 for the furnishing list. WNS agent seeded these thread-stage / tone / relationship categories so the pipeline compiles; all values are subject to replacement.",
   "_meta": {
-    "version": "0.1-placeholder",
+    "version": "1.0",
     "purpose": "Narrative tag taxonomy for WNS (NL1-NL7). Mirrors the WMS tag-definitions pattern but scoped to narrative content. Separate file from WMS tag-definitions.JSON per CC5 (sibling system).",
-    "address_tag_prefixes_note": "Narrative address prefixes (thread:, arc:, witness:) are facts, never LLM-writable. See §4.2b of WORLD_SYSTEM_WORKING_DOC.md."
+    "address_tag_prefixes_note": "Narrative address prefixes (thread:, arc:, witness:) are FACTS, never LLM-writable. Server populates them after LLM emits content. See §4.2b of WORLD_SYSTEM_WORKING_DOC.md.",
+    "spam_caps_note": "emergent_entity is dynamic / free-form. Runtime enforces caps (max 2 per fragment, max 5 per weaving run) so the LLM can't drown the registry in proper-noun spam."
   },
 
   "address_prefixes": [
@@ -14,7 +14,7 @@
 
   "categories": {
     "thread_stage": {
-      "description": "Where in its arc a thread fragment sits. Placeholder vocabulary.",
+      "description": "Where in its arc a thread fragment sits.",
       "layer_unlocked": 2,
       "is_dynamic": false,
       "values": [
@@ -28,9 +28,10 @@
       ]
     },
     "tone": {
-      "description": "Narrative mood of the fragment. Placeholder vocabulary.",
+      "description": "Narrative mood of the fragment. Multi-valued allowed (a fragment can be both grim and triumphant).",
       "layer_unlocked": 2,
       "is_dynamic": false,
+      "multi_valued": true,
       "values": [
         "hopeful",
         "ominous",
@@ -39,13 +40,16 @@
         "grim",
         "uneasy",
         "tragic",
-        "comedic"
+        "comedic",
+        "melancholy",
+        "defiant"
       ]
     },
     "relationship": {
-      "description": "Inter-actor/faction relationship framed by the fragment. Placeholder vocabulary.",
+      "description": "Inter-actor / faction relationship framed by the fragment. Multi-valued allowed.",
       "layer_unlocked": 2,
       "is_dynamic": false,
+      "multi_valued": true,
       "values": [
         "alliance",
         "rivalry",
@@ -54,13 +58,16 @@
         "courtship",
         "familial",
         "adversarial",
-        "indifferent"
+        "indifferent",
+        "subordination",
+        "schism"
       ]
     },
     "narrative_domain": {
-      "description": "What kind of story this fragment contributes to. Placeholder vocabulary.",
+      "description": "What kind of story this fragment contributes to. Multi-valued allowed.",
       "layer_unlocked": 2,
       "is_dynamic": false,
+      "multi_valued": true,
       "values": [
         "political",
         "economic",
@@ -68,11 +75,26 @@
         "mystical",
         "domestic",
         "exploration",
-        "industrial"
+        "industrial",
+        "religious",
+        "criminal",
+        "diplomatic"
+      ]
+    },
+    "agency": {
+      "description": "Who has the power to act on this thread. Helps WES decide whether new content should be player-encounterable (player/npc) or world-state (faction/world).",
+      "layer_unlocked": 2,
+      "is_dynamic": false,
+      "values": [
+        "player",
+        "npc",
+        "faction",
+        "world",
+        "unspecified"
       ]
     },
     "emergent_entity": {
-      "description": "Dynamic (free-form) names surfaced by weaving — factions, places, persons the LLM leans on.",
+      "description": "Dynamic (free-form) names surfaced by weaving — factions, places, persons the LLM leans on. Spam-capped at runtime: max 2 per fragment, max 5 per weaving run. Designer can later promote frequently-recurring entries to allow-listed categories.",
       "layer_unlocked": 2,
       "is_dynamic": true,
       "values": []

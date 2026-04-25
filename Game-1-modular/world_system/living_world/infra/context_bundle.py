@@ -105,14 +105,24 @@ class WMSLayerRow:
 @dataclass
 class ThreadFragment:
     """A narrative thread fragment — first-class at every weaving layer
-    (v4 change from v3 where threads lived only at NL2). See §4.5."""
+    (v4 change from v3 where threads lived only at NL2). See §4.5.
+
+    Identity model:
+    - fragment_id: unique per-instance UUID (one per LLM weaving emission).
+    - thread_id: cluster identity at THIS layer/address. Multiple fragments
+      share thread_id when their content_tags overlap enough (see
+      world_system.wns.thread_index). Server-assigned, NOT LLM-emitted.
+    - parent_thread_id: a thread_id at a LOWER layer that this fragment
+      aggregates from (cross-layer bottom-up promotion).
+    """
 
     fragment_id: str
     layer: int                          # 2..7
     address: str
     headline: str
     content_tags: List[str] = field(default_factory=list)
-    parent_thread_id: Optional[str] = None
+    thread_id: Optional[str] = None      # cluster id at this layer/address
+    parent_thread_id: Optional[str] = None  # thread_id at LOWER layer
     relationship: str = "open"          # open | continue | reframe | close
     created_at: float = 0.0
 
@@ -123,6 +133,7 @@ class ThreadFragment:
             "address": self.address,
             "headline": self.headline,
             "content_tags": list(self.content_tags),
+            "thread_id": self.thread_id,
             "parent_thread_id": self.parent_thread_id,
             "relationship": self.relationship,
             "created_at": self.created_at,
@@ -136,6 +147,7 @@ class ThreadFragment:
             address=d["address"],
             headline=d["headline"],
             content_tags=list(d.get("content_tags", [])),
+            thread_id=d.get("thread_id"),
             parent_thread_id=d.get("parent_thread_id"),
             relationship=d.get("relationship", "open"),
             created_at=float(d.get("created_at", 0.0)),

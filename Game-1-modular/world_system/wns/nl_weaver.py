@@ -29,12 +29,32 @@ from events.event_bus import get_event_bus
 from world_system.living_world.backends.backend_manager import BackendManager
 from world_system.living_world.infra.context_bundle import ThreadFragment
 from world_system.living_world.infra.graceful_degrade import log_degrade
+from world_system.wns.cascading_context import (
+    WeaverContext,
+    build_weaver_context,
+    extract_active_threads,
+)
+from world_system.wns.geographic_context import (
+    GeographicContext,
+    build_geographic_context,
+)
 from world_system.wns.narrative_distance_filter import (
     FilteredNarrative,
     NarrativeDistanceFilter,
 )
 from world_system.wns.narrative_store import NarrativeRow, NarrativeStore
 from world_system.wns.narrative_tag_library import NarrativeTagLibrary
+from world_system.wns.thread_index import (
+    DEFAULT_MATCH_THRESHOLD,
+    DEFAULT_TIME_WINDOW_SECONDS,
+    build_clusters_from_fragments,
+    match_or_mint,
+)
+from world_system.wns.wes_call_parser import (
+    DEFAULT_MAX_CALLS_PER_RUN,
+    WESCall,
+    parse_wes_calls,
+)
 
 
 # Event name published on call_wes=true. WES (later phase) subscribes.
@@ -47,6 +67,11 @@ class WeaverRunResult:
 
     Returned so callers / tests can inspect what happened without
     re-querying the store.
+
+    The ``call_wes`` / ``directive_hint`` legacy fields are populated
+    from the FIRST extracted ``<WES>`` call (if any) for backward
+    compatibility. ``wes_calls`` is the full list — cap-limited by
+    :data:`DEFAULT_MAX_CALLS_PER_RUN` (default 2).
     """
 
     success: bool
@@ -55,6 +80,7 @@ class WeaverRunResult:
     call_wes: bool = False
     directive_hint: str = ""
     error: str = ""
+    wes_calls: List[WESCall] = field(default_factory=list)
 
 
 class NLWeaver:
@@ -77,6 +103,7 @@ class NLWeaver:
         backend_manager: BackendManager,
         prompt_fragments_path: Optional[str] = None,
         distance_filter: Optional[NarrativeDistanceFilter] = None,
+        geographic_registry: Optional[Any] = None,
     ) -> None:
         if layer < 2 or layer > 7:
             raise ValueError(
@@ -90,6 +117,10 @@ class NLWeaver:
         self._prompt_fragments_path = prompt_fragments_path or self._default_prompt_path()
         self._prompt_fragments: Dict[str, Any] = {}
         self._load_prompt_fragments()
+        # Optional GeographicRegistry-like object. When supplied, the
+        # weaver injects a ``${geo_context}`` block into the user prompt
+        # describing where this firing sits in the world hierarchy.
+        self._geographic_registry = geographic_registry
 
     # ── Loading ──────────────────────────────────────────────────────
 
@@ -137,43 +168,133 @@ class NLWeaver:
         system = core.get("system", "")
         return str(system)
 
+    @staticmethod
+    def _render_threads(threads: List[ThreadFragment]) -> str:
+        if not threads:
+            return "(none)"
+        return "\n".join(
+            f"- [{t.thread_id or 'no-id'}] {t.headline} "
+            f"({t.relationship}, tags={t.content_tags})"
+            for t in threads
+        )
+
     def _build_user_prompt(
         self,
         address: str,
-        filtered: FilteredNarrative,
-        parent_narrative: str,
-        threads_in_scope: List[ThreadFragment],
+        weaver_ctx: WeaverContext,
+        geo_ctx: GeographicContext,
+        legacy_filtered: Optional[FilteredNarrative] = None,
     ) -> str:
+        """Build the user prompt from a WeaverContext + GeographicContext.
+
+        New template variables (replace these in the prompt JSON):
+        - ${address}                      firing address
+        - ${geo_context}                  rendered geographic descriptor
+        - ${self_narrative}               this layer's previous narrative at this address
+        - ${self_active_threads}          most recent state of THIS layer's threads
+        - ${lower_primary_narrative}      latest narrative from N-1 at this address
+        - ${lower_primary_threads}        active threads at N-1
+        - ${lower_fading_narrative}       brief from N-2 (sentence cap)
+        - ${above_primary_address}        parent address (N+1)
+        - ${above_primary_narrative}      narrative at parent address (N+1)
+        - ${above_primary_threads}        active threads at N+1
+        - ${above_fading_narrative}       grandparent narrative (sentence cap)
+
+        Legacy template variables (kept for backward compatibility):
+        - ${lower_narrative}, ${parent_narrative}, ${threads_in_scope}
+        """
         core = self._prompt_fragments.get("_core", {}) if isinstance(
             self._prompt_fragments, dict) else {}
         template = core.get("user_template", "")
 
-        # Render a simple text version of the filtered narrative.
-        lower_parts = []
-        for row in filtered.full_detail:
-            lower_parts.append(f"- [L{row.layer} @ {row.address}] {row.narrative}")
-        lower_narrative = "\n".join(lower_parts) if lower_parts else "(none)"
+        # New context blocks
+        self_threads_text = self._render_threads(weaver_ctx.self_active_threads)
+        lower_primary_threads_text = self._render_threads(weaver_ctx.lower_primary_threads)
+        above_primary_threads_text = self._render_threads(weaver_ctx.above_primary_threads)
 
-        threads_text = "\n".join(
-            f"- {t.headline} ({t.relationship}, tags={t.content_tags})"
-            for t in threads_in_scope
-        ) if threads_in_scope else "(none)"
+        # Legacy "lower_narrative" — concatenation of lower primary + fading.
+        # If a legacy filtered pool was supplied (test paths), use its detail.
+        if legacy_filtered is not None:
+            lower_parts = [
+                f"- [L{row.layer} @ {row.address}] {row.narrative}"
+                for row in legacy_filtered.full_detail
+            ]
+            lower_narrative = "\n".join(lower_parts) if lower_parts else "(none)"
+        else:
+            lower_parts = []
+            if weaver_ctx.lower_primary_narrative:
+                lower_parts.append(
+                    f"- [L{self._layer - 1} @ {address}] "
+                    f"{weaver_ctx.lower_primary_narrative}"
+                )
+            if weaver_ctx.lower_fading_narrative:
+                lower_parts.append(
+                    f"- [L{self._layer - 2} @ {address}] "
+                    f"{weaver_ctx.lower_fading_narrative}"
+                )
+            lower_narrative = "\n".join(lower_parts) if lower_parts else "(none)"
 
-        # Fall back if no template was loaded — still produce a useful prompt.
+        # Legacy "parent_narrative" — above_primary + above_fading.
+        parent_narrative_parts = []
+        if weaver_ctx.above_primary_narrative:
+            parent_narrative_parts.append(
+                f"[L{self._layer + 1} @ {weaver_ctx.above_primary_address}] "
+                f"{weaver_ctx.above_primary_narrative}"
+            )
+        if weaver_ctx.above_fading_narrative:
+            parent_narrative_parts.append(
+                f"[L{self._layer + 2} @ {weaver_ctx.above_fading_address}] "
+                f"{weaver_ctx.above_fading_narrative}"
+            )
+        parent_narrative_legacy = (
+            "\n".join(parent_narrative_parts) if parent_narrative_parts else "(none)"
+        )
+
+        # Legacy "threads_in_scope" — same-layer self-threads.
+        threads_in_scope_legacy = self_threads_text
+
+        # Fall back if no template was loaded.
         if not template:
             return (
                 f"Layer {self._layer} weaving at address {address}.\n"
+                f"Geographic context:\n{geo_ctx.rendered}\n\n"
+                f"Self (this layer at this address) narrative:\n"
+                f"{weaver_ctx.self_latest_narrative or '(none)'}\n"
+                f"Self active threads:\n{self_threads_text}\n\n"
                 f"Lower-layer narrative:\n{lower_narrative}\n"
-                f"Parent-layer narrative:\n{parent_narrative}\n"
-                f"Threads in scope:\n{threads_text}\n"
+                f"Above-layer narrative:\n{parent_narrative_legacy}\n"
             )
 
         return (
             str(template)
+            # New variables
             .replace("${address}", address)
+            .replace("${geo_context}", geo_ctx.rendered or "(none)")
+            .replace("${self_narrative}", weaver_ctx.self_latest_narrative or "(none)")
+            .replace("${self_active_threads}", self_threads_text)
+            .replace(
+                "${lower_primary_narrative}",
+                weaver_ctx.lower_primary_narrative or "(none)",
+            )
+            .replace("${lower_primary_threads}", lower_primary_threads_text)
+            .replace(
+                "${lower_fading_narrative}",
+                weaver_ctx.lower_fading_narrative or "(none)",
+            )
+            .replace("${above_primary_address}", weaver_ctx.above_primary_address or "(none)")
+            .replace(
+                "${above_primary_narrative}",
+                weaver_ctx.above_primary_narrative or "(none)",
+            )
+            .replace("${above_primary_threads}", above_primary_threads_text)
+            .replace(
+                "${above_fading_narrative}",
+                weaver_ctx.above_fading_narrative or "(none)",
+            )
+            # Legacy variables (still supported for unrevised prompts)
             .replace("${lower_narrative}", lower_narrative)
-            .replace("${parent_narrative}", parent_narrative or "(none)")
-            .replace("${threads_in_scope}", threads_text)
+            .replace("${parent_narrative}", parent_narrative_legacy)
+            .replace("${threads_in_scope}", threads_in_scope_legacy)
         )
 
     # ── Main entry point ─────────────────────────────────────────────
@@ -185,42 +306,77 @@ class NLWeaver:
         parent_narrative: str = "",
         threads_in_scope: Optional[List[ThreadFragment]] = None,
         game_time: Optional[float] = None,
+        parent_address: Optional[str] = None,
+        grandparent_address: Optional[str] = None,
     ) -> WeaverRunResult:
         """Run one weaving cycle.
 
         Args:
             address: Firing address (e.g. ``"locality:tarmouth_copperdocks"``).
-            lower_narratives: Candidate NL rows (weaver filters by distance).
-                If None, the weaver pulls recent rows at the target and
-                lower layers for the same address from the store.
-            parent_narrative: Brief summary of the parent layer(s). Free
-                text. Caller deals with brevity.
-            threads_in_scope: Existing :class:`ThreadFragment` instances to
-                feed as context.
+            lower_narratives: LEGACY — explicit candidate NL rows. When
+                None (default), the weaver auto-builds a WeaverContext
+                from the store via :func:`build_weaver_context`.
+            parent_narrative: LEGACY — free-text parent summary. Ignored
+                when ``parent_address`` is supplied (auto-built instead).
+            threads_in_scope: LEGACY — explicit thread list. Ignored when
+                building from store.
             game_time: Optional wall-clock override.
+            parent_address: Address one geographic tier up. Required for
+                above-cascading (NL_(N+1) at parent). Pass empty string
+                or omit to skip above-cascading.
+            grandparent_address: Address two tiers up. Used for
+                doubly-cascading fading context (NL_(N+2) at grandparent).
         """
         if game_time is None:
             game_time = time.time()
-        threads_in_scope = list(threads_in_scope or [])
 
-        # Pull default candidate pool if caller didn't supply one.
-        if lower_narratives is None:
-            lower_narratives = self._gather_candidates(address)
+        legacy_threads_in_scope = list(threads_in_scope or [])
 
-        filtered = self._distance_filter.filter_for_firing(
+        # Build the cascading context from the store. If callers passed
+        # legacy lower_narratives, route that through a separate filtered
+        # pool used ONLY for the legacy ${lower_narrative} variable in
+        # old prompts; the new variables are filled from WeaverContext.
+        weaver_ctx = build_weaver_context(
+            self._store,
             layer=self._layer,
             address=address,
-            all_narratives=lower_narratives,
+            parent_address=parent_address or None,
+            grandparent_address=grandparent_address or None,
         )
+
+        # Override self_active_threads with explicit legacy threads_in_scope
+        # if the caller supplied them (test paths).
+        if legacy_threads_in_scope:
+            weaver_ctx.self_active_threads = legacy_threads_in_scope
+
+        # Build geographic context if a registry was wired. None -> skipped.
+        geo_ctx = build_geographic_context(address, self._geographic_registry)
+
+        # Optional legacy filtered pool for ${lower_narrative} backward compat.
+        legacy_filtered: Optional[FilteredNarrative] = None
+        if lower_narratives is not None:
+            legacy_filtered = self._distance_filter.filter_for_firing(
+                layer=self._layer,
+                address=address,
+                all_narratives=lower_narratives,
+            )
 
         task = f"wns_layer{self._layer}"
         system_prompt = self._build_system_prompt()
         user_prompt = self._build_user_prompt(
             address=address,
-            filtered=filtered,
-            parent_narrative=parent_narrative,
-            threads_in_scope=threads_in_scope,
+            weaver_ctx=weaver_ctx,
+            geo_ctx=geo_ctx,
+            legacy_filtered=legacy_filtered,
         )
+
+        # Tuck a hint of the legacy parent_narrative kwarg into the prompt
+        # if the caller passed one and the new ${above_*_narrative} slots
+        # would otherwise be empty.
+        if parent_narrative and not weaver_ctx.above_primary_narrative:
+            user_prompt = user_prompt.replace(
+                "(none)\n", parent_narrative + "\n", 1
+            )
 
         text, err = self._backend.generate(
             task=task,
@@ -253,15 +409,34 @@ class NLWeaver:
             return WeaverRunResult(success=False, error="parse_failed")
 
         # Build narrative row + threads.
-        narrative = str(parsed.get("narrative", "")).strip()
+        raw_narrative = str(parsed.get("narrative", "")).strip()
+
+        # Extract any inline <WES purpose="...">...</WES> calls from the
+        # narrative. The cleaned narrative is what gets persisted; the
+        # extracted calls drive WES request events.
+        wes_calls, narrative = parse_wes_calls(raw_narrative)
+
+        # Backward compat: if the LLM emitted the legacy JSON-level
+        # call_wes/directive_hint fields, honor them by synthesizing a
+        # WESCall (so downstream sees one unified list).
+        legacy_call_wes = bool(parsed.get("call_wes", False))
+        legacy_directive_hint = str(parsed.get("directive_hint", "")).strip()
+        if legacy_call_wes and legacy_directive_hint and not wes_calls:
+            wes_calls = [WESCall(
+                purpose="legacy",
+                body=legacy_directive_hint,
+            )]
+
         raw_threads = parsed.get("threads", []) or []
         threads = self._materialize_threads(
             raw_threads=raw_threads,
             address=address,
             game_time=game_time,
         )
-        call_wes = bool(parsed.get("call_wes", False))
-        directive_hint = str(parsed.get("directive_hint", "")).strip()
+
+        # Top-level for legacy callers: True if any WES call was made.
+        call_wes = bool(wes_calls)
+        directive_hint = wes_calls[0].body if wes_calls else ""
 
         # Content tags: everything non-address in the parsed tags list,
         # if present. Address tags are facts about the event we control —
@@ -283,18 +458,24 @@ class NLWeaver:
                 "threads": [t.to_dict() for t in threads],
                 "call_wes": call_wes,
                 "directive_hint": directive_hint,
+                "wes_calls": [
+                    {"purpose": c.purpose, "body": c.body} for c in wes_calls
+                ],
                 "raw_response": text,
             },
         )
         self._store.insert_row(row)
 
-        # Publish WES request event (stub — WES invocation is a later phase).
-        if call_wes:
+        # Publish a WNS_CALL_WES_REQUESTED event per <WES> call. Each
+        # carries the purpose attribute as a hint plus the body as the
+        # directive text. WES (later phase) subscribes.
+        for call in wes_calls:
             self._publish_wes_request(
                 address=address,
-                directive_text=directive_hint,
+                directive_text=call.body,
                 source_row_id=row.id,
                 game_time=game_time,
+                purpose=call.purpose,
             )
 
         return WeaverRunResult(
@@ -303,6 +484,7 @@ class NLWeaver:
             threads=threads,
             call_wes=call_wes,
             directive_hint=directive_hint,
+            wes_calls=wes_calls,
         )
 
     # ── Helpers ──────────────────────────────────────────────────────
@@ -348,8 +530,32 @@ class NLWeaver:
         address: str,
         game_time: float,
     ) -> List[ThreadFragment]:
-        """Build :class:`ThreadFragment` instances, scrubbing any address
-        tags the LLM may have attempted to emit (they're facts we control)."""
+        """Build :class:`ThreadFragment` instances and assign thread_ids
+        via content-cluster matching.
+
+        - Address tags emitted by the LLM are scrubbed (we own those).
+        - thread_id is server-assigned via :func:`match_or_mint` against
+          existing clusters at this layer/address. The LLM does NOT
+          generate thread_ids.
+        - parent_thread_id is taken AS-IS from the LLM (cross-layer
+          promotion link). Validation against the lower-layer registry is
+          a future concern.
+        """
+        # Pre-fetch existing clusters at this layer/address for matching.
+        recent_rows = self._store.query_by_address(
+            self._layer, address, limit=30,
+        )
+        existing_fragments: List[ThreadFragment] = []
+        for row in recent_rows:
+            for raw_t in (row.payload.get("threads") if row.payload else []) or []:
+                if not isinstance(raw_t, dict):
+                    continue
+                try:
+                    existing_fragments.append(ThreadFragment.from_dict(raw_t))
+                except (KeyError, ValueError, TypeError):
+                    continue
+        existing_clusters = build_clusters_from_fragments(existing_fragments)
+
         out: List[ThreadFragment] = []
         for t in raw_threads:
             if not isinstance(t, dict):
@@ -357,18 +563,29 @@ class NLWeaver:
             _, content_tags = self._tag_library.partition_address_and_content(
                 [str(x) for x in (t.get("content_tags") or [])]
             )
-            out.append(
-                ThreadFragment(
-                    fragment_id=str(uuid.uuid4()),
-                    layer=self._layer,
-                    address=address,
-                    headline=str(t.get("headline", "")).strip(),
-                    content_tags=content_tags,
-                    parent_thread_id=t.get("parent_thread_id"),
-                    relationship=str(t.get("relationship", "open")),
-                    created_at=game_time,
-                )
+            tid = match_or_mint(
+                new_address=address,
+                new_content_tags=content_tags,
+                new_time=game_time,
+                existing_clusters=existing_clusters,
             )
+            new_frag = ThreadFragment(
+                fragment_id=str(uuid.uuid4()),
+                layer=self._layer,
+                address=address,
+                headline=str(t.get("headline", "")).strip(),
+                content_tags=content_tags,
+                thread_id=tid,
+                parent_thread_id=t.get("parent_thread_id"),
+                relationship=str(t.get("relationship", "open")),
+                created_at=game_time,
+            )
+            out.append(new_frag)
+            # If the new fragment minted (or hit) a thread_id not yet in
+            # existing_clusters, fold it in so subsequent threads in this
+            # batch can match it (intra-batch clustering).
+            existing_fragments.append(new_frag)
+            existing_clusters = build_clusters_from_fragments(existing_fragments)
         return out
 
     def _publish_wes_request(
@@ -378,6 +595,7 @@ class NLWeaver:
         directive_text: str,
         source_row_id: str,
         game_time: float,
+        purpose: str = "unspecified",
     ) -> None:
         """Publish ``WNS_CALL_WES_REQUESTED`` — WES is a later phase, so
         this is observational only. Agents C/D will subscribe downstream."""
@@ -389,6 +607,7 @@ class NLWeaver:
                     "layer": self._layer,
                     "address": address,
                     "directive_text": directive_text,
+                    "purpose": purpose,
                     "source_row_id": source_row_id,
                     "game_time": game_time,
                 },
