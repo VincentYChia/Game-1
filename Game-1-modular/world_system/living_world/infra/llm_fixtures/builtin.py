@@ -397,6 +397,117 @@ _WES_FIXTURES = [
         ),
     ),
     LLMFixture(
+        code="wes_hub_chunks",
+        tier=TIER_WES,
+        description=(
+            "WES Tier 2 hub for chunks (NEW domain). Decomposes a chunk "
+            "step into XML batch of ExecutorSpecs for wes_tool_chunks."
+        ),
+        canonical_system_prompt=(
+            "You are the chunks hub. Emit XML batch. Honor category/theme "
+            "enums. Cross-refs to nodes/hostiles must resolve."
+        ),
+        canonical_user_prompt=(
+            "Plan step: dangerous moors biome featuring copper seams + "
+            "copperlash riders.\nBundle: copper-trade pressure on moors."
+        ),
+        canonical_response=(
+            '<specs plan_step_id="s6" count="1">\n'
+            '  <spec id="spec_006" intent="dangerous moors biome featuring '
+            'rust-veined cliffs and copper seams — territory of the '
+            'copperlash riders" '
+            'hard_constraints=\'{"category": "dangerous", "theme": "quarry", '
+            '"biome": "moors", "tier_anchor": 2}\' '
+            'flavor_hints=\'{"name_hint": "Dangerous Copper Moors", '
+            '"prose_fragment": "windswept heath where rust-veined cliffs '
+            'meet boggy flats", '
+            '"thematic_anchors": ["salt", "copper", "moors"], '
+            '"adjacency_intent": ["rocky_highlands", "dangerous_quarry"]}\' '
+            'cross_ref_hints=\'{"primary_resource_ids": ["moors_copper_seam"], '
+            '"primary_enemy_ids": ["copperlash_rider"]}\' />\n'
+            "</specs>"
+        ),
+    ),
+    LLMFixture(
+        code="wes_hub_npcs",
+        tier=TIER_WES,
+        description=(
+            "WES Tier 2 hub for NPCs (NEW domain). Decomposes an NPC step "
+            "into XML batch of ExecutorSpecs for wes_tool_npcs. home_chunk "
+            "is load-bearing — drives speechbank cultural tone downstream."
+        ),
+        canonical_system_prompt=(
+            "You are the NPCs hub. Emit XML batch. home_chunk + "
+            "teachableSkills must resolve. Faction tags emergent."
+        ),
+        canonical_user_prompt=(
+            "Plan step: a captain for the Copperlash Rider line, hardened "
+            "by loss and anchored to the moors-stone.\n"
+            "Bundle: moors-hubtown war thread active."
+        ),
+        canonical_response=(
+            '<specs plan_step_id="s7" count="1">\n'
+            '  <spec id="spec_007" intent="a captain of the Copperlash '
+            'Rider line, hardened by the loss of a brother on the '
+            'moors-stone — issues vendetta quests against hubtown" '
+            'hard_constraints=\'{"home_chunk": "dangerous_copper_moors", '
+            '"primary_faction": "guild:moors_raiders", "role": "captain", '
+            '"tier": 2, "is_questgiver": true}\' '
+            'flavor_hints=\'{"name_hint": "Captain Vell Sarn", '
+            '"title_hint": "Copperlash Captain", '
+            '"prose_fragment": "buried his brother on the moors-stone three '
+            'winters ago; commands the longest copperlash line on the salt reach", '
+            "\"voice_anchor\": \"clipped, salt-dry, names things by their parts\", "
+            '"thematic_anchors": ["salt", "copper", "moors-stone", "brother-who-fell"]}\' '
+            'cross_ref_hints=\'{"home_chunk": "dangerous_copper_moors", '
+            '"teachable_skill_ids": ["copperlash_gash"], '
+            '"affinity_seed_factions": ["guild:moors_raiders", '
+            '"region:salt_moors", "family:sarn_clan", "guild:hubtown_militia"]}\' />\n'
+            "</specs>"
+        ),
+    ),
+    LLMFixture(
+        code="wes_hub_quests",
+        tier=TIER_WES,
+        description=(
+            "WES Tier 2 hub for quests (NEW domain). Decomposes a quest "
+            "step into XML batch of ExecutorSpecs for wes_tool_quests. "
+            "Static prose only — concrete reward numbers are NOT this "
+            "tier's concern."
+        ),
+        canonical_system_prompt=(
+            "You are the quests hub. Emit XML batch. Cross-refs to NPCs / "
+            "objective targets / titles / chained quests must resolve. "
+            "Reward hints are PROSE only."
+        ),
+        canonical_user_prompt=(
+            "Plan step: vendetta hunt issued by Captain Vell against his "
+            "own copperlash riders for ambushing his line.\n"
+            "Bundle: moors-hubtown war thread."
+        ),
+        canonical_response=(
+            '<specs plan_step_id="s8" count="1">\n'
+            '  <spec id="spec_008" intent="vendetta hunt issued by Captain '
+            'Vell against his own copperlash riders for ambushing his '
+            'line at the moors-stone" '
+            'hard_constraints=\'{"given_by": "moors_copperlash_captain", '
+            '"return_to": "moors_copperlash_captain", "quest_type": '
+            '"side", "tier": 2, "objective_type": "kill_target"}\' '
+            'flavor_hints=\'{"name_hint": "The Salt Reach Hunt", '
+            "\"prose_fragment\": \"three for three — the salt remembers what mouths forget\", "
+            '"thematic_anchors": ["vendetta", "salt", "copper", "moors-stone"], '
+            "\"summary_hint\": \"a captain's nod, a copperlash whip from his own hand, and silver enough for a tavern week\", "
+            '"experience_hint": "moderate", "tier_hint": 2, '
+            '"difficulty_hint": "moderate"}\' '
+            'cross_ref_hints=\'{"given_by_npc_id": "moors_copperlash_captain", '
+            '"target_id": "copperlash_rider", "target_tool": "hostiles", '
+            '"title_hint": "apprentice_moors_reaver", '
+            '"expiration_npc_id": "moors_copperlash_captain", '
+            '"wns_thread": "moors_hubtown_war"}\' />\n'
+            "</specs>"
+        ),
+    ),
+    LLMFixture(
         code="wes_tool_hostiles",
         tier=TIER_WES,
         description=(
