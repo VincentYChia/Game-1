@@ -29,6 +29,11 @@ from events.event_bus import get_event_bus
 from world_system.living_world.backends.backend_manager import BackendManager
 from world_system.living_world.infra.context_bundle import ThreadFragment
 from world_system.living_world.infra.graceful_degrade import log_degrade
+from world_system.wns.affinity_resolver import AffinityResolver
+from world_system.wns.affinity_shift_parser import (
+    AffinityShift,
+    parse_affinity_shifts,
+)
 from world_system.wns.cascading_context import (
     WeaverContext,
     build_weaver_context,
@@ -72,6 +77,12 @@ class WeaverRunResult:
     from the FIRST extracted ``<WES>`` call (if any) for backward
     compatibility. ``wes_calls`` is the full list — cap-limited by
     :data:`DEFAULT_MAX_CALLS_PER_RUN` (default 2).
+
+    ``affinity_shifts`` carries any ``<AffinityShift>`` directives the
+    weaver embedded inline. The resolver in
+    :mod:`world_system.wns.affinity_resolver` ledgers them; if the
+    weaver was constructed with a ``faction_system`` it also applies
+    them deterministically.
     """
 
     success: bool
@@ -81,6 +92,7 @@ class WeaverRunResult:
     directive_hint: str = ""
     error: str = ""
     wes_calls: List[WESCall] = field(default_factory=list)
+    affinity_shifts: List[AffinityShift] = field(default_factory=list)
 
 
 class NLWeaver:
@@ -104,6 +116,7 @@ class NLWeaver:
         prompt_fragments_path: Optional[str] = None,
         distance_filter: Optional[NarrativeDistanceFilter] = None,
         geographic_registry: Optional[Any] = None,
+        faction_system: Optional[Any] = None,
     ) -> None:
         if layer < 2 or layer > 7:
             raise ValueError(
@@ -121,6 +134,11 @@ class NLWeaver:
         # weaver injects a ``${geo_context}`` block into the user prompt
         # describing where this firing sits in the world hierarchy.
         self._geographic_registry = geographic_registry
+        # AffinityResolver — deterministic post-processor for inline
+        # ``<AffinityShift>`` directives. Always exists; faction_system
+        # is forwarded so applies actually hit the FactionSystem store
+        # when wired (otherwise resolver is ledger-only).
+        self._affinity_resolver = AffinityResolver(faction_system=faction_system)
 
     # ── Loading ──────────────────────────────────────────────────────
 
@@ -414,7 +432,11 @@ class NLWeaver:
         # Extract any inline <WES purpose="...">...</WES> calls from the
         # narrative. The cleaned narrative is what gets persisted; the
         # extracted calls drive WES request events.
-        wes_calls, narrative = parse_wes_calls(raw_narrative)
+        wes_calls, narrative_after_wes = parse_wes_calls(raw_narrative)
+        # Then extract any <AffinityShift> blocks from what remains.
+        # Affinity shifts are NARRATIVE state-deltas (not new content);
+        # they go through the deterministic resolver, not WES.
+        affinity_shifts, narrative = parse_affinity_shifts(narrative_after_wes)
 
         # Backward compat: if the LLM emitted the legacy JSON-level
         # call_wes/directive_hint fields, honor them by synthesizing a
@@ -467,16 +489,64 @@ class NLWeaver:
         self._store.insert_row(row)
 
         # Publish a WNS_CALL_WES_REQUESTED event per <WES> call. Each
-        # carries the purpose attribute as a hint plus the body as the
-        # directive text. WES (later phase) subscribes.
+        # carries a full WESContextBundle inheriting the WNS state at
+        # the call site (cascading narrative + active threads + geo
+        # descriptor + purpose) so WES subscribers can dispatch directly.
+        from world_system.wns.wns_to_wes_bridge import build_wes_bundle
         for call in wes_calls:
+            try:
+                wes_bundle = build_wes_bundle(
+                    layer=self._layer,
+                    address=address,
+                    wes_call=call,
+                    weaver_ctx=weaver_ctx,
+                    geo_ctx=geo_ctx,
+                    just_written_narrative=narrative,
+                    source_row_id=row.id,
+                    game_time=game_time,
+                )
+            except Exception as e:
+                log_degrade(
+                    subsystem="wns",
+                    operation=f"nl_weaver.build_wes_bundle (layer {self._layer})",
+                    failure_reason=f"{type(e).__name__}: {e}",
+                    fallback_taken="publishing minimal event without bundle",
+                    severity="warning",
+                    context={"layer": self._layer, "address": address,
+                             "purpose": call.purpose},
+                )
+                wes_bundle = None
             self._publish_wes_request(
                 address=address,
                 directive_text=call.body,
                 source_row_id=row.id,
                 game_time=game_time,
                 purpose=call.purpose,
+                wes_bundle=wes_bundle,
             )
+
+        # Resolve any <AffinityShift> directives the weaver embedded.
+        # The resolver always ledgers; it ALSO applies via FactionSystem
+        # if one was wired into the weaver at construction.
+        if affinity_shifts:
+            try:
+                self._affinity_resolver.resolve_batch(
+                    affinity_shifts,
+                    weaver_layer=self._layer,
+                    weaver_address=address,
+                    narrative_event_id=row.id,
+                    game_time=game_time,
+                )
+            except Exception as e:
+                log_degrade(
+                    subsystem="wns",
+                    operation=f"nl_weaver.affinity_resolve (layer {self._layer})",
+                    failure_reason=f"{type(e).__name__}: {e}",
+                    fallback_taken="shifts not applied this tick",
+                    severity="warning",
+                    context={"layer": self._layer, "address": address,
+                             "shift_count": len(affinity_shifts)},
+                )
 
         return WeaverRunResult(
             success=True,
@@ -485,6 +555,7 @@ class NLWeaver:
             call_wes=call_wes,
             directive_hint=directive_hint,
             wes_calls=wes_calls,
+            affinity_shifts=affinity_shifts,
         )
 
     # ── Helpers ──────────────────────────────────────────────────────
@@ -596,21 +667,32 @@ class NLWeaver:
         source_row_id: str,
         game_time: float,
         purpose: str = "unspecified",
+        wes_bundle: Optional[Any] = None,
     ) -> None:
-        """Publish ``WNS_CALL_WES_REQUESTED`` — WES is a later phase, so
-        this is observational only. Agents C/D will subscribe downstream."""
+        """Publish ``WNS_CALL_WES_REQUESTED``. The event payload includes
+        the directive_text + purpose for backward-compat plus the
+        serialized :class:`WESContextBundle` (when available) so
+        subscribers (the WES orchestrator) can dispatch directly without
+        re-querying WNS state.
+        """
         try:
             bus = get_event_bus()
+            payload: Dict[str, Any] = {
+                "layer": self._layer,
+                "address": address,
+                "directive_text": directive_text,
+                "purpose": purpose,
+                "source_row_id": source_row_id,
+                "game_time": game_time,
+            }
+            if wes_bundle is not None:
+                try:
+                    payload["wes_bundle"] = wes_bundle.to_dict()
+                except Exception:
+                    pass  # never break event publish over a serialization quirk
             bus.publish(
                 event_type=WNS_CALL_WES_EVENT,
-                data={
-                    "layer": self._layer,
-                    "address": address,
-                    "directive_text": directive_text,
-                    "purpose": purpose,
-                    "source_row_id": source_row_id,
-                    "game_time": game_time,
-                },
+                data=payload,
                 source=f"wns.nl_weaver.layer{self._layer}",
             )
         except Exception as e:
