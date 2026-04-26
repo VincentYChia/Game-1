@@ -75,6 +75,8 @@ class WorldNarrativeSystem:
         narrative_config_path: Optional[str] = None,
         narrative_tag_config_path: Optional[str] = None,
         backend_manager: Optional[BackendManager] = None,
+        geographic_registry: Optional[Any] = None,
+        faction_system: Optional[Any] = None,
     ) -> None:
         """Initialize all subsystems.
 
@@ -89,6 +91,16 @@ class WorldNarrativeSystem:
             narrative_tag_config_path: Optional override for
                 ``narrative-tag-definitions.JSON``.
             backend_manager: Optional override; defaults to the singleton.
+            geographic_registry: Optional GeographicRegistry-like object
+                used by weavers to render multi-tier geographic context
+                in their prompts. If ``None``, WNS attempts to look up
+                the project singleton; if that's unavailable, weavers
+                degrade to address-only context.
+            faction_system: Optional FactionSystem used by the deterministic
+                AffinityShift resolver. If ``None``, WNS attempts to look up
+                the project singleton; if it isn't initialized, the resolver
+                runs in ledger-only mode (shifts are recorded but not applied
+                to faction/NPC standings).
         """
         if self._initialized:
             return
@@ -145,6 +157,13 @@ class WorldNarrativeSystem:
         # NL1 ingestor
         self.ingestor = NL1Ingestor(store=self.store)
 
+        # Resolve optional dependencies the weavers can use to enrich
+        # context (geographic descriptor) and apply emitted directives
+        # (AffinityShift). Each is best-effort: weavers degrade
+        # gracefully when either is absent.
+        resolved_geo = self._resolve_geographic_registry(geographic_registry)
+        resolved_factions = self._resolve_faction_system(faction_system)
+
         # Weavers — one per layer 2..7
         self._weavers.clear()
         for layer in self.WEAVER_LAYERS:
@@ -154,6 +173,8 @@ class WorldNarrativeSystem:
                 tag_library=self.tag_library,
                 backend_manager=self._backend_manager,
                 distance_filter=self.distance_filter,
+                geographic_registry=resolved_geo,
+                faction_system=resolved_factions,
             )
 
         self._initialized = True
@@ -169,6 +190,64 @@ class WorldNarrativeSystem:
         return os.path.normpath(
             os.path.join(here, os.pardir, "config", "narrative-config.json")
         )
+
+    @staticmethod
+    def _resolve_geographic_registry(override: Optional[Any]) -> Optional[Any]:
+        """Return the override if provided, else the project singleton.
+
+        Falls back to ``None`` (and a degrade log) on any failure, so
+        weaver construction never blocks on geographic context being
+        ready. ``build_geographic_context`` already handles None and
+        empty registries gracefully.
+        """
+        if override is not None:
+            return override
+        try:
+            from world_system.world_memory.geographic_registry import (
+                GeographicRegistry,
+            )
+            return GeographicRegistry.get_instance()
+        except Exception as e:
+            log_degrade(
+                subsystem="wns",
+                operation="initialize.resolve_geographic_registry",
+                failure_reason=f"{type(e).__name__}: {e}",
+                fallback_taken="weavers run without geographic context",
+                severity="info",
+                context={},
+            )
+            return None
+
+    @staticmethod
+    def _resolve_faction_system(override: Optional[Any]) -> Optional[Any]:
+        """Return the override if provided, else the project singleton —
+        but only if it is initialized.
+
+        Passing an uninitialized FactionSystem to AffinityResolver would
+        cause shift-application to hit empty SQLite tables and silently
+        no-op. The resolver's ledger-only path (``faction_system=None``)
+        is the correct behavior in that case.
+        """
+        if override is not None:
+            return override
+        try:
+            from world_system.living_world.factions.faction_system import (
+                FactionSystem,
+            )
+            candidate = FactionSystem.get_instance()
+            if getattr(candidate, "_initialized", False):
+                return candidate
+            return None
+        except Exception as e:
+            log_degrade(
+                subsystem="wns",
+                operation="initialize.resolve_faction_system",
+                failure_reason=f"{type(e).__name__}: {e}",
+                fallback_taken="AffinityResolver runs in ledger-only mode",
+                severity="info",
+                context={},
+            )
+            return None
 
     # ── Public API ───────────────────────────────────────────────────
 

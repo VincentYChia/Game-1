@@ -27,8 +27,15 @@ from world_system.wes.protocols import (
 )
 
 
-# The five tool types shipped in v4 (quests deferred per §6.3.6).
-TOOL_NAMES = ("hostiles", "materials", "nodes", "skills", "titles")
+# All eight tool types shipped in v4. The original five (hostiles,
+# materials, nodes, skills, titles) were the P6/P7 baseline; chunks,
+# npcs, and quests landed in Steps 6-8 with their own hub + tool prompts
+# and fixtures. Keeping every tool registered lets a plan reference any
+# of them without the registry handing back a stub by accident.
+TOOL_NAMES = (
+    "hostiles", "materials", "nodes", "skills", "titles",
+    "chunks", "npcs", "quests",
+)
 
 
 class WESToolRegistry:

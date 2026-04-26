@@ -33,9 +33,13 @@ from world_system.wes.dataclasses import (
 from world_system.wes.xml_batch_parser import parse_xml_batch
 
 
-# Known tool names — the five mini-stacks shipping in P7/P8.
+# Known tool names — eight mini-stacks (the original five from P7/P8
+# plus chunks/npcs/quests added in Steps 6-8).
 _VALID_TOOLS = frozenset(
-    {"hostiles", "materials", "nodes", "skills", "titles"}
+    {
+        "hostiles", "materials", "nodes", "skills", "titles",
+        "chunks", "npcs", "quests",
+    }
 )
 
 

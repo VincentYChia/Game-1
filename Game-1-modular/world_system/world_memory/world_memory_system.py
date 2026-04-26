@@ -620,6 +620,8 @@ class WorldMemorySystem:
             self.event_recorder.disconnect()
         if self.event_store:
             self.event_store.close()
+        if self.layer_store:
+            self.layer_store.close()
         self._initialized = False
 
         # Reset singletons

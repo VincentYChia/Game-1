@@ -70,7 +70,10 @@ def _resolve_config_path(fragments_filename: str) -> str:
     )
 
 
-_KNOWN_TOOLS = {"hostiles", "materials", "nodes", "skills", "titles"}
+_KNOWN_TOOLS = {
+    "hostiles", "materials", "nodes", "skills", "titles",
+    "chunks", "npcs", "quests",
+}
 
 
 class LLMExecutionHub:

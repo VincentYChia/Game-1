@@ -123,7 +123,10 @@ class TestLLMExecutionHub(_BackendInit):
 
     def test_name_matches_every_tool(self) -> None:
         from world_system.wes.llm_tiers.llm_execution_hub import LLMExecutionHub
-        for tool in ("hostiles", "materials", "nodes", "skills", "titles"):
+        for tool in (
+            "hostiles", "materials", "nodes", "skills", "titles",
+            "chunks", "npcs", "quests",
+        ):
             h = LLMExecutionHub(tool_name=tool)
             self.assertEqual(h.name, tool)
 
@@ -155,7 +158,10 @@ class TestLLMExecutorTool(_BackendInit):
 
     def test_every_tool_type_constructs(self) -> None:
         from world_system.wes.llm_tiers.llm_executor_tool import LLMExecutorTool
-        for tool in ("hostiles", "materials", "nodes", "skills", "titles"):
+        for tool in (
+            "hostiles", "materials", "nodes", "skills", "titles",
+            "chunks", "npcs", "quests",
+        ):
             t = LLMExecutorTool(tool_name=tool)
             self.assertEqual(t.name, tool)
 

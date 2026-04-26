@@ -28,7 +28,10 @@ if TYPE_CHECKING:
     from world_system.wes.dataclasses import ExecutorSpec
 
 
-_KNOWN_TOOLS = {"hostiles", "materials", "nodes", "skills", "titles"}
+_KNOWN_TOOLS = {
+    "hostiles", "materials", "nodes", "skills", "titles",
+    "chunks", "npcs", "quests",
+}
 
 
 def _resolve_config_path(fragments_filename: str) -> str:
