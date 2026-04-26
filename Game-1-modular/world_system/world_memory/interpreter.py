@@ -162,6 +162,47 @@ class WorldInterpreter:
         """
         self._layer3_callback = callback
 
+    @staticmethod
+    def _publish_interpretation_created(interpretation: InterpretedEvent) -> None:
+        """Best-effort publish of the new interpretation on GameEventBus.
+
+        Topic: ``WMS_INTERPRETATION_CREATED``. Payload is a flat dict
+        (JSON-serializable) so subscribers don't depend on the
+        InterpretedEvent dataclass directly. Used by the WMS→WNS
+        bridge to drive cascade triggers without polling EventStore.
+
+        Failure paths (no bus available, publish raises) are swallowed
+        — the interpretation is already persisted; downstream loss is
+        acceptable and the bridge can fall back to polling if needed.
+        """
+        try:
+            from events.event_bus import get_event_bus
+        except Exception:
+            return
+        try:
+            bus = get_event_bus()
+        except Exception:
+            return
+        try:
+            bus.publish(
+                "WMS_INTERPRETATION_CREATED",
+                {
+                    "interpretation_id": interpretation.interpretation_id,
+                    "narrative": interpretation.narrative,
+                    "category": interpretation.category,
+                    "severity": interpretation.severity,
+                    "affected_locality_ids": list(
+                        interpretation.affected_locality_ids or []
+                    ),
+                    "affects_tags": list(interpretation.affects_tags or []),
+                    "created_at": interpretation.created_at,
+                },
+            )
+        except Exception:
+            # Bus failure is never fatal here. The interpretation is in
+            # SQLite; if downstream cares enough, it can poll.
+            pass
+
     def on_trigger(self, trigger_input) -> None:
         """Called when a threshold trigger fires.
 
@@ -218,6 +259,12 @@ class WorldInterpreter:
 
                 self.event_store.record_interpretation(interpretation)
                 self._interpretations_created += 1
+
+                # Publish on the bus so downstream consumers (e.g. the
+                # WMS→WNS bridge) can react to new interpretations
+                # without polling. Best-effort — failure here never
+                # blocks recording.
+                self._publish_interpretation_created(interpretation)
 
                 # Write to LayerStore (tag-indexed read-path)
                 if self.layer_store:

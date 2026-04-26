@@ -12,7 +12,7 @@ from __future__ import annotations
 import threading
 import time
 from collections import defaultdict, deque
-from typing import ClassVar, Deque, Dict, List, Optional
+from typing import Any, ClassVar, Deque, Dict, List, Optional
 
 
 # One-hour sliding window for plans/hour.
@@ -68,6 +68,21 @@ class WESMetrics:
         self.plan_bounces_total: int = 0             # planner replanned after warning
         self.runtime_cascade_passes_total: int = 0   # extension plans dispatched
         self.runtime_cascade_steps_total: int = 0    # synthetic steps generated
+
+        # WMS→WNS bridge counters (cascade_trigger feeds WNS from WMS
+        # interpretations). These mirror WMSToWNSBridge.stats so the
+        # dashboard can surface them alongside the rest of the pipeline.
+        self.bridge_events_received: int = 0
+        self.bridge_events_processed: int = 0
+        self.bridge_events_skipped_duplicate: int = 0
+        self.bridge_events_skipped_no_locality: int = 0
+        self.bridge_weaver_run_failures: int = 0
+        self.bridge_address_resolution_failures: int = 0
+        # Cascade fires per layer (NL2..NL7). Sum is total cascade
+        # firings since session start.
+        self.cascade_fires_by_layer: Dict[int, int] = defaultdict(int)
+        self.cascade_terminations_total: int = 0
+        self.cascade_overruns_total: int = 0
 
     # ── singleton ────────────────────────────────────────────────────
 
@@ -159,6 +174,50 @@ class WESMetrics:
             self.runtime_cascade_passes_total += 1
             self.runtime_cascade_steps_total += int(step_count)
 
+    def sync_from_wms_bridge(self, bridge: Any) -> None:  # noqa: ANN401
+        """Pull counters from a :class:`WMSToWNSBridge` snapshot.
+
+        Idempotent — assigns the latest bridge stats to the metrics
+        attributes (rather than incrementing). Safe to call on a timer
+        from the dashboard. Best-effort: swallows exceptions if the
+        bridge interface drifts.
+        """
+        if bridge is None:
+            return
+        try:
+            stats = bridge.stats
+        except Exception:
+            return
+        with self._lock:
+            self.bridge_events_received = int(stats.get("events_received", 0))
+            self.bridge_events_processed = int(stats.get("events_processed", 0))
+            self.bridge_events_skipped_duplicate = int(
+                stats.get("events_skipped_duplicate", 0)
+            )
+            self.bridge_events_skipped_no_locality = int(
+                stats.get("events_skipped_no_locality", 0)
+            )
+            self.bridge_weaver_run_failures = int(
+                stats.get("weaver_run_failures", 0)
+            )
+            self.bridge_address_resolution_failures = int(
+                stats.get("address_resolution_failures", 0)
+            )
+            cascade = stats.get("cascade") or {}
+            fires = cascade.get("fires_total_by_layer") or {}
+            self.cascade_fires_by_layer = defaultdict(int)
+            for layer, n in fires.items():
+                try:
+                    self.cascade_fires_by_layer[int(layer)] = int(n)
+                except (TypeError, ValueError):
+                    continue
+            self.cascade_terminations_total = int(
+                cascade.get("cascade_terminations", 0)
+            )
+            self.cascade_overruns_total = int(
+                cascade.get("cascade_overruns", 0)
+            )
+
     # ── derived ──────────────────────────────────────────────────────
 
     def plans_per_hour(self) -> float:
@@ -205,6 +264,15 @@ class WESMetrics:
                 "plan_bounces_total": self.plan_bounces_total,
                 "runtime_cascade_passes_total": self.runtime_cascade_passes_total,
                 "runtime_cascade_steps_total": self.runtime_cascade_steps_total,
+                "bridge_events_received": self.bridge_events_received,
+                "bridge_events_processed": self.bridge_events_processed,
+                "bridge_events_skipped_duplicate": self.bridge_events_skipped_duplicate,
+                "bridge_events_skipped_no_locality": self.bridge_events_skipped_no_locality,
+                "bridge_weaver_run_failures": self.bridge_weaver_run_failures,
+                "bridge_address_resolution_failures": self.bridge_address_resolution_failures,
+                "cascade_fires_by_layer": dict(self.cascade_fires_by_layer),
+                "cascade_terminations_total": self.cascade_terminations_total,
+                "cascade_overruns_total": self.cascade_overruns_total,
             }
 
     # ── graceful-degrade pull ────────────────────────────────────────

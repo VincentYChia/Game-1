@@ -668,6 +668,63 @@ class GeographicRegistry:
         self._locality_chain[start.region_id] = result
         return dict(result)
 
+    def get_address_chain(self, region_id: str) -> Dict[str, str]:
+        """Return the full hierarchy chain rooted at ``region_id``.
+
+        Walks ``region.parent_id`` from ``region_id`` up to the World
+        root and returns ``{level_name: region_id}`` for every tier
+        encountered (inclusive of ``region_id`` itself).
+
+        Returns ``{}`` if ``region_id`` is unknown or the chain breaks.
+        Used by the WMS→WNS bridge to project an interpretation's
+        affected locality into the full address hierarchy without
+        needing pixel coordinates.
+        """
+        start = self.regions.get(region_id)
+        if not start:
+            return {}
+
+        # Reuse the cached chain when the start IS a finest-tier region
+        # (the cache key is the finest tier's region_id).
+        if start.region_id in self._locality_chain:
+            return dict(self._locality_chain[start.region_id])
+
+        result: Dict[str, str] = {start.level.value: start.region_id}
+        current = start
+        # Hard cap matches the 6-tier hierarchy — defensive against any
+        # accidental cycle in parent_id.
+        for _ in range(6):
+            if not current.parent_id:
+                break
+            parent = self.regions.get(current.parent_id)
+            if not parent:
+                break
+            result[parent.level.value] = parent.region_id
+            current = parent
+        return result
+
+    def get_parent_address(self, address: str) -> Optional[str]:
+        """Given a typed address tag (``locality:X`` / ``district:Y`` /
+        etc.), return the parent address tag one tier up.
+
+        Returns ``None`` at the top of the hierarchy (``world:X``) or
+        when the chain can't be walked (unknown region, missing parent).
+        Format: ``{level}:{region_id}`` — same convention used by
+        WNS narrative addresses.
+        """
+        if not address or ":" not in address:
+            return None
+        _, _, region_id = address.partition(":")
+        if not region_id:
+            return None
+        region = self.regions.get(region_id)
+        if not region or not region.parent_id:
+            return None
+        parent = self.regions.get(region.parent_id)
+        if not parent:
+            return None
+        return f"{parent.level.value}:{parent.region_id}"
+
     def get_regions_by_level(self, level: RegionLevel) -> List[Region]:
         return [r for r in self.regions.values() if r.level == level]
 

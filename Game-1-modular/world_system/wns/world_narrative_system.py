@@ -46,6 +46,10 @@ class WorldNarrativeSystem:
         self.distance_filter: Optional[NarrativeDistanceFilter] = None
         self._weavers: Dict[int, NLWeaver] = {}
         self._backend_manager: Optional[BackendManager] = None
+        # The WMS→WNS bridge — instantiated only when a WMS facade is
+        # supplied to initialize(). Exposed as an attribute so tests
+        # and the dev dashboard can read its stats / cascade trigger.
+        self.wms_bridge = None  # type: ignore[assignment]
         self._initialized: bool = False
         self._session_id: str = str(uuid.uuid4())[:8]
         self._db_path: Optional[str] = None
@@ -61,8 +65,16 @@ class WorldNarrativeSystem:
     @classmethod
     def reset(cls) -> None:
         """Test helper. Closes the store if any and drops the singleton."""
-        if cls._instance and cls._instance.store:
-            cls._instance.store.close()
+        if cls._instance:
+            # Disconnect bridge before tearing down — leaving a stale
+            # subscriber on the bus would leak across tests.
+            try:
+                if cls._instance.wms_bridge:
+                    cls._instance.wms_bridge.disconnect()
+            except Exception:
+                pass
+            if cls._instance.store:
+                cls._instance.store.close()
         cls._instance = None
         NarrativeTagLibrary.reset()
 
@@ -77,6 +89,8 @@ class WorldNarrativeSystem:
         backend_manager: Optional[BackendManager] = None,
         geographic_registry: Optional[Any] = None,
         faction_system: Optional[Any] = None,
+        wms_facade: Optional[Any] = None,
+        connect_wms_bridge: bool = True,
     ) -> None:
         """Initialize all subsystems.
 
@@ -101,6 +115,15 @@ class WorldNarrativeSystem:
                 the project singleton; if it isn't initialized, the resolver
                 runs in ledger-only mode (shifts are recorded but not applied
                 to faction/NPC standings).
+            wms_facade: Optional WorldMemorySystem facade. When supplied
+                (and ``connect_wms_bridge`` is True), WNS constructs a
+                :class:`WMSToWNSBridge` and subscribes to
+                ``WMS_INTERPRETATION_CREATED`` on the bus. The cascade
+                fires WNS weavers from real WMS interpretations.
+            connect_wms_bridge: When False, the bridge is constructed
+                but not connected — the consumer can call
+                ``wns.wms_bridge.connect()`` explicitly. Useful for
+                tests that want bridge state without subscription.
         """
         if self._initialized:
             return
@@ -177,12 +200,139 @@ class WorldNarrativeSystem:
                 faction_system=resolved_factions,
             )
 
+        # Wire the WMS→WNS bridge if a WMS facade was supplied. The
+        # bridge takes ownership of the cascade trigger and the
+        # ``WMS_INTERPRETATION_CREATED`` subscription.
+        if wms_facade is not None:
+            cascade_threshold, wms_char_budget = self._read_bridge_config(
+                config_path
+            )
+            self._build_wms_bridge(
+                wms_facade=wms_facade,
+                geographic_registry=resolved_geo,
+                connect=connect_wms_bridge,
+                cascade_threshold=cascade_threshold,
+                wms_char_budget=wms_char_budget,
+            )
+
         self._initialized = True
+        bridge_status = (
+            "connected" if (self.wms_bridge and self.wms_bridge.connected)
+            else ("constructed (not connected)" if self.wms_bridge else "absent")
+        )
         print(
             f"[WorldNarrative] Initialized — session {self._session_id}, "
             f"{len(self._weavers)} weavers, "
-            f"{self.store.stats['total_rows']} rows in store"
+            f"{self.store.stats['total_rows']} rows in store; "
+            f"WMS bridge: {bridge_status}"
         )
+
+    @staticmethod
+    def _read_bridge_config(config_path: str) -> tuple:
+        """Pull (cascade_threshold, wms_char_budget) from narrative-config.
+
+        Returns sensible defaults on any failure — the bridge / cascade
+        ship safe defaults internally, this is just an override pipe.
+        """
+        from world_system.wns.cascade_trigger import DEFAULT_THRESHOLD
+        from world_system.wns.wms_context_builder import DEFAULT_CHAR_BUDGET
+        threshold = DEFAULT_THRESHOLD
+        char_budget = DEFAULT_CHAR_BUDGET
+        try:
+            import json as _json
+            with open(config_path, "r", encoding="utf-8") as f:
+                data = _json.load(f)
+            cascade_block = data.get("cascade", {}) or {}
+            wms_block = data.get("wms_context", {}) or {}
+            t = cascade_block.get("threshold")
+            if isinstance(t, int) and t >= 1:
+                threshold = t
+            cb = wms_block.get("char_budget_per_fire")
+            if isinstance(cb, int) and cb >= 0:
+                char_budget = cb
+        except Exception as e:
+            log_degrade(
+                subsystem="wns",
+                operation="_read_bridge_config",
+                failure_reason=f"{type(e).__name__}: {e}",
+                fallback_taken="using built-in defaults for cascade threshold + WMS char budget",
+                severity="info",
+                context={"config_path": config_path},
+            )
+        return threshold, char_budget
+
+    def _build_wms_bridge(
+        self,
+        *,
+        wms_facade: Any,
+        geographic_registry: Optional[Any],
+        connect: bool,
+        cascade_threshold: int = 3,
+        wms_char_budget: int = 600,
+    ) -> None:
+        """Construct + optionally connect the WMS→WNS bridge.
+
+        Defensive on every step — if the bridge can't import, the
+        WMS facade lacks ``event_store``, or no geographic registry
+        is available, the bridge is left as ``None`` and a degrade
+        is logged. WNS continues to function (manual ``run_weaver``
+        calls still work); the bridge is purely additive.
+        """
+        try:
+            from world_system.wns.wms_to_wns_bridge import WMSToWNSBridge
+        except Exception as e:
+            log_degrade(
+                subsystem="wns",
+                operation="initialize.wms_bridge_import",
+                failure_reason=f"{type(e).__name__}: {e}",
+                fallback_taken="bridge disabled; WNS will not fire from WMS events",
+                severity="warning",
+                context={},
+            )
+            return
+
+        event_store = getattr(wms_facade, "event_store", None)
+        if event_store is None:
+            log_degrade(
+                subsystem="wns",
+                operation="initialize.wms_bridge_event_store",
+                failure_reason="wms_facade.event_store is None",
+                fallback_taken="bridge disabled; WMS facade not initialized?",
+                severity="warning",
+                context={},
+            )
+            return
+        if geographic_registry is None:
+            log_degrade(
+                subsystem="wns",
+                operation="initialize.wms_bridge_geo_registry",
+                failure_reason="GeographicRegistry unavailable",
+                fallback_taken="bridge disabled; cannot walk address parents",
+                severity="warning",
+                context={},
+            )
+            return
+
+        try:
+            self.wms_bridge = WMSToWNSBridge(
+                wns=self,
+                event_store=event_store,
+                geographic_registry=geographic_registry,
+                threshold=cascade_threshold,
+                wms_char_budget=wms_char_budget,
+            )
+            if connect:
+                self.wms_bridge.connect()
+        except Exception as e:
+            self.wms_bridge = None
+            log_degrade(
+                subsystem="wns",
+                operation="initialize.wms_bridge_construct",
+                failure_reason=f"{type(e).__name__}: {e}",
+                fallback_taken="bridge disabled; WNS will not fire from WMS events",
+                severity="warning",
+                context={},
+            )
 
     @staticmethod
     def _default_narrative_config_path() -> str:
@@ -312,9 +462,21 @@ class WorldNarrativeSystem:
         parent_narrative: str = "",
         threads_in_scope: Optional[List[ThreadFragment]] = None,
         game_time: Optional[float] = None,
+        parent_address: str = "",
+        grandparent_address: str = "",
+        wms_brief: Optional[str] = None,
     ) -> Optional[WeaverRunResult]:
         """Run a weaver regardless of trigger state. Useful for testing
-        and for external callers driving the pipeline explicitly."""
+        and for external callers driving the pipeline explicitly.
+
+        ``parent_address`` and ``grandparent_address`` enable the
+        WeaverContext's above-cascading slots (N+1 / N+2 narrative).
+        ``wms_brief`` is a pre-rendered WMS context slice (see
+        :func:`world_system.wns.wms_context_builder.build_wms_brief`)
+        injected at the ``${wms_context}`` placeholder. The bridge
+        passes both during cascade fires; tests / direct callers can
+        omit them.
+        """
         if not self._initialized:
             return None
         weaver = self._weavers.get(layer)
@@ -326,6 +488,9 @@ class WorldNarrativeSystem:
             parent_narrative=parent_narrative,
             threads_in_scope=threads_in_scope,
             game_time=game_time,
+            parent_address=parent_address or None,
+            grandparent_address=grandparent_address or None,
+            wms_brief=wms_brief,
         )
 
     def query_threads(
@@ -362,6 +527,13 @@ class WorldNarrativeSystem:
     # ── Shutdown ─────────────────────────────────────────────────────
 
     def shutdown(self) -> None:
+        # Drop the bus subscription first so no late events arrive
+        # after the store is closed.
+        if self.wms_bridge:
+            try:
+                self.wms_bridge.disconnect()
+            except Exception:
+                pass
         if self.store:
             self.store.close()
         self._initialized = False

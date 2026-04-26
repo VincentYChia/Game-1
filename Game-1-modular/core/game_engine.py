@@ -4584,6 +4584,10 @@ class GameEngine:
             self.world_narrative.initialize(
                 save_dir=_wns_save_dir,
                 geo_map_path=_wns_geo_path,
+                # Hand WMS to WNS so the bridge can subscribe to
+                # WMS_INTERPRETATION_CREATED on the bus and drive the
+                # cascade trigger from real game events.
+                wms_facade=self.world_memory,
             )
         except Exception as e:
             print(f"[WorldNarrative] Init failed (non-fatal): {e}")

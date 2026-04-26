@@ -1,37 +1,33 @@
 {
   "_meta": {
-    "version": "1.0",
-    "purpose": "WNS configuration: trigger thresholds + distance-decay budgets per NL layer.",
-    "pattern": "Every NL layer fires every-N events at its own scope. Lower layers fire often; higher layers accumulate from wider scope and fire less often. Mirrors the WMS memory-config.json pattern.",
-    "tunable": "All values are playtest-tuned. Adjust the JSON and restart — no code changes."
+    "version": "2.0",
+    "purpose": "WNS configuration: cascade trigger threshold + distance-decay budgets per NL layer.",
+    "pattern": "Cascade-by-N. Each layer's counter is keyed by that layer's address tier (locality for NL2, district for NL3, ...). N events at one address fires that layer; the cascade then advances the parent counter at the layer above. Geometric — N=3 means ~3^5=243 leaf events per NL7 fire.",
+    "tunable": "Threshold playtest-tuned. Adjust the JSON and restart — no code changes.",
+    "schema_change_2026_04_26": "v1.0 had per-layer N thresholds (5/5/8/12/15/20) with the legacy NLTriggerManager. v2.0 replaces that with a single cascade threshold consumed by CascadeTriggerManager. The legacy keys under triggers.nl* are kept for backwards-read compatibility but ignored by the cascade path — the WMS→WNS bridge is the authoritative trigger source."
+  },
+
+  "cascade": {
+    "_note": "Single uniform threshold for the cascade trigger. CascadeTriggerManager increments per (layer, address) and fires when the count hits this value, then cascades the parent counter.",
+    "threshold": 3,
+    "rationale": "Three is the design default. Geometric progression (3^L for layer L above leaf) gives upper layers natural rarity without per-layer tuning. NL2 fires every 3 WMS interpretations at a locality; NL7 fires once per ~243 leaf events accumulated under one world. Designer can lower to 2 (more chatty) or raise to 5 (more rationed)."
+  },
+
+  "wms_context": {
+    "_note": "WMS interpretation slice rendered into ${wms_context} per fire. Char budget enforces the soft <40% rule (WMS contributes <40% of WNS prompt context).",
+    "char_budget_per_fire": 600,
+    "interpretation_limit_per_fire": 30,
+    "per_line_cap": 200
   },
 
   "triggers": {
-    "_note": "Per-layer firing thresholds. NL_N fires once per N events at the address scope.",
-    "nl2": {
-      "events_per_locality": 5,
-      "rationale": "Locality-scale. Five NL1 mentions at one locality is a reasonable threshold for the locality narrative to update — captures conversational turnover without firing on every line."
-    },
-    "nl3": {
-      "events_per_district": 5,
-      "rationale": "District-scale. Five NL2 fragments aggregated under a district means at least 2 distinct localities have stuff happening, enough to warrant district-scale weaving."
-    },
-    "nl4": {
-      "events_per_region": 8,
-      "rationale": "Region-scale. Eight NL3 fragments span multiple districts — region arcs need cross-district pattern density before they're worth committing to."
-    },
-    "nl5": {
-      "events_per_nation": 12,
-      "rationale": "Province-scale. Twelve NL4 fragments span multiple regions — province tides need real momentum."
-    },
-    "nl6": {
-      "events_world": 15,
-      "rationale": "Nation-scale. Fifteen NL5 fragments worldwide — a nation re-narrates itself when its provinces have all moved noticeably."
-    },
-    "nl7": {
-      "events_world": 20,
-      "rationale": "World-scale. Twenty NL6 fragments — civilizational pulse. Should fire rarely; most firings emit zero threads."
-    }
+    "_note": "Legacy v1.0 per-layer N thresholds. Still consumed by NLTriggerManager (used by the legacy maybe_weave() path). The new cascade-by-N path (the WMS→WNS bridge) ignores these and uses cascade.threshold instead. Both can coexist; the cascade is the authoritative source for production.",
+    "nl2": {"events_per_locality": 5},
+    "nl3": {"events_per_district": 5},
+    "nl4": {"events_per_region": 8},
+    "nl5": {"events_per_nation": 12},
+    "nl6": {"events_world": 15},
+    "nl7": {"events_world": 20}
   },
 
   "distance_filter": {

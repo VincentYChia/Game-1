@@ -202,6 +202,7 @@ class NLWeaver:
         weaver_ctx: WeaverContext,
         geo_ctx: GeographicContext,
         legacy_filtered: Optional[FilteredNarrative] = None,
+        wms_brief: Optional[str] = None,
     ) -> str:
         """Build the user prompt from a WeaverContext + GeographicContext.
 
@@ -217,6 +218,9 @@ class NLWeaver:
         - ${above_primary_narrative}      narrative at parent address (N+1)
         - ${above_primary_threads}        active threads at N+1
         - ${above_fading_narrative}       grandparent narrative (sentence cap)
+        - ${wms_context}                  WMS interpretation slice (factual
+                                           grounding from the world memory
+                                           system; char-capped <40% budget)
 
         Legacy template variables (kept for backward compatibility):
         - ${lower_narrative}, ${parent_narrative}, ${threads_in_scope}
@@ -309,6 +313,10 @@ class NLWeaver:
                 "${above_fading_narrative}",
                 weaver_ctx.above_fading_narrative or "(none)",
             )
+            .replace(
+                "${wms_context}",
+                wms_brief if wms_brief else "(no recent WMS events)",
+            )
             # Legacy variables (still supported for unrevised prompts)
             .replace("${lower_narrative}", lower_narrative)
             .replace("${parent_narrative}", parent_narrative_legacy)
@@ -326,6 +334,7 @@ class NLWeaver:
         game_time: Optional[float] = None,
         parent_address: Optional[str] = None,
         grandparent_address: Optional[str] = None,
+        wms_brief: Optional[str] = None,
     ) -> WeaverRunResult:
         """Run one weaving cycle.
 
@@ -344,6 +353,10 @@ class NLWeaver:
                 or omit to skip above-cascading.
             grandparent_address: Address two tiers up. Used for
                 doubly-cascading fading context (NL_(N+2) at grandparent).
+            wms_brief: Pre-rendered slice of recent WMS interpretations
+                relevant to ``address``. Rendered at the
+                ``${wms_context}`` template slot. The bridge supplies
+                this on cascade fires; direct callers may omit it.
         """
         if game_time is None:
             game_time = time.time()
@@ -386,6 +399,7 @@ class NLWeaver:
             weaver_ctx=weaver_ctx,
             geo_ctx=geo_ctx,
             legacy_filtered=legacy_filtered,
+            wms_brief=wms_brief,
         )
 
         # Tuck a hint of the legacy parent_narrative kwarg into the prompt
