@@ -30,6 +30,22 @@ from dataclasses import dataclass, field
 from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
 
+# ── Real-LLM toggle ───────────────────────────────────────────────────
+#
+# Setting ``WES_DISABLE_FIXTURES=1`` (or any truthy value) forces the
+# mock backend past the fixture-registry shortcut so live Ollama/Claude
+# actually receive prompts. Default OFF — fixtures-first keeps the
+# pipeline deterministic and free during dev.
+
+_TRUTHY_ENV_VALUES = frozenset({"1", "true", "yes", "on"})
+
+
+def _fixtures_disabled() -> bool:
+    """True iff WES_DISABLE_FIXTURES env var is set to a truthy value."""
+    val = os.environ.get("WES_DISABLE_FIXTURES", "").strip().lower()
+    return val in _TRUTHY_ENV_VALUES
+
+
 # ── Abstract Backend Interface ────────────────────────────────────────
 
 class ModelBackend(ABC):
@@ -302,10 +318,17 @@ class MockBackend(ModelBackend):
     def generate(self, system_prompt: str, user_prompt: str,
                  temperature: float = 0.4,
                  max_tokens: int = 2000) -> Tuple[str, Optional[str]]:
-        # Fixture Registry — task-based, preferred.
-        fixture_response = self._lookup_fixture()
-        if fixture_response is not None:
-            return fixture_response, None
+        # Fixture Registry — task-based, preferred unless the env-var
+        # toggle is set. ``WES_DISABLE_FIXTURES=1`` (truthy) forces the
+        # mock backend past the fixture path so the rest of the
+        # backend chain (ollama → claude → keyword templates) runs.
+        # Used during real-LLM playtest sessions where the designer
+        # wants to exercise live model output instead of canned
+        # fixture responses.
+        if not _fixtures_disabled():
+            fixture_response = self._lookup_fixture()
+            if fixture_response is not None:
+                return fixture_response, None
 
         # Legacy keyword matching to select template
         combined = (system_prompt + " " + user_prompt).lower()

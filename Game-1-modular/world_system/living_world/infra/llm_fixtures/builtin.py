@@ -1055,6 +1055,82 @@ _WES_FIXTURES = [
         ),
     ),
     LLMFixture(
+        code="wes_quest_reward_pregen",
+        tier=TIER_WES,
+        description=(
+            "Quest reward materializer. Converts a generated quest's "
+            "rewards_prose hints into concrete QuestRewards numbers + "
+            "completion dialogue at the moment the player accepts the "
+            "quest. Pre-warms LLM output so turn-in is instant."
+        ),
+        canonical_system_prompt=(
+            "You are the quest reward materializer. Convert prose reward "
+            "hints into a concrete QuestRewards bundle plus 2-3 line "
+            "completion dialogue. Emit ONLY a single JSON object "
+            "{rewards: {...}, completion_dialogue: [...]}."
+        ),
+        canonical_user_prompt=(
+            "Quest id: salt_reach_hunt\nTitle: The Salt Reach Hunt\nTier: 2\n"
+            "Narrative: Three for three. The salt remembers.\n"
+            "Objectives: kill 3 copperlash_rider.\n"
+            "Prose hints: experience_hint=moderate, tier_hint=2, "
+            "title_hint=apprentice_moors_reaver, "
+            "item_hints=[copperlash whip, silver penny]\n"
+            "Player level 5."
+        ),
+        canonical_response=(
+            '{"rewards": {"experience": 280, "gold": 65, "health_restore": 0, '
+            '"mana_restore": 0, "skills": [], '
+            '"items": [{"item_id": "copper_ingot", "quantity": 3}], '
+            '"title": "apprentice_moors_reaver", "stat_points": 0, '
+            '"status_effects": [], "buffs": []}, '
+            '"completion_dialogue": ['
+            '"You came back. The salt remembers \\u2014 and so do I.", '
+            '"Take this. It\'s small thanks for what you\'ve done.", '
+            '"May your blade stay sharp on the moors."'
+            ']}'
+        ),
+        notes=(
+            "Schema: rewards is the full QuestRewards dict; "
+            "completion_dialogue 2-3 lines in giver's voice. "
+            "Item hints are PROSE — the materializer picks existing "
+            "material_ids that fit, drops the rest. Conservative default: "
+            "smaller is better (turn-in adapter can scale up)."
+        ),
+    ),
+    LLMFixture(
+        code="wes_quest_reward_adapt",
+        tier=TIER_WES,
+        description=(
+            "Quest reward adapter. Adjusts a pre-generated reward bundle "
+            "at turn-in based on actual play context (time taken, "
+            "narrative urgency). Pre-generated reward is the floor; "
+            "adaptation is bounded 0.5x..1.5x with a 1.0x soft floor."
+        ),
+        canonical_system_prompt=(
+            "You are the quest reward adapter. Given pre_generated_rewards "
+            "(the floor) and play context, emit adjusted rewards. Output "
+            "ONLY {rewards: {...}}. Stay within bounded adaptation rules."
+        ),
+        canonical_user_prompt=(
+            "Quest id: salt_reach_hunt\nTier 2\n"
+            "Pre-generated rewards: {experience: 280, gold: 65, ...}\n"
+            "Time taken: 480 seconds. Expiration: npc_death (no time limit)."
+        ),
+        canonical_response=(
+            '{"rewards": {"experience": 336, "gold": 78, "health_restore": 0, '
+            '"mana_restore": 0, "skills": [], '
+            '"items": [{"item_id": "copper_ingot", "quantity": 3}], '
+            '"title": "apprentice_moors_reaver", "stat_points": 0, '
+            '"status_effects": [], "buffs": []}}'
+        ),
+        notes=(
+            "1.2x experience+gold bump for prompt completion. "
+            "Items unchanged. Title unchanged. Failure of this call "
+            "falls through to pre_generated_rewards — no harm."
+        ),
+    ),
+    LLMFixture(
         code="wes_supervisor",
         tier=TIER_WES,
         description=(

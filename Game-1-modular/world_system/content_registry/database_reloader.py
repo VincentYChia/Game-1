@@ -76,6 +76,34 @@ _RELOAD_TARGETS: Dict[str, List[Tuple[str, str, Tuple[str, ...]]]] = {
             ("reload", "_reload", "reload_all"),
         ),
     ],
+    "npcs": [
+        # NPCDatabase loads BOTH npcs and quests (single SQL-less
+        # database holding two cache dicts), so reloading either tool
+        # name routes to the same target. NPCDatabase.reload() picks
+        # up `progression/npcs-generated-*.JSON` siblings.
+        (
+            "data.databases.npc_db",
+            "NPCDatabase",
+            ("reload", "_reload"),
+        ),
+    ],
+    "quests": [
+        (
+            "data.databases.npc_db",
+            "NPCDatabase",
+            ("reload", "_reload"),
+        ),
+    ],
+    # NOTE(2026-04-27): "chunks" deliberately has no reload target yet.
+    # WES-generated chunk templates land in
+    # ``Definitions.JSON/chunks-generated-*.JSON`` but the biome
+    # generator + chunk dispatcher (systems/biome_generator.py,
+    # systems/chunk.py) don't yet consult a chunk-template database
+    # keyed by region — they use a code-locked geo→ChunkType dict.
+    # ChunkType is already a namespace class so new strings won't
+    # crash, but they also won't spawn until that runtime integration
+    # lands. Bridge work is registered (no-targets path), and the
+    # reloader's existing graceful-degrade log surfaces the gap.
 }
 
 

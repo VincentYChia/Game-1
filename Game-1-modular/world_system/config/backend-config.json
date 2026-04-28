@@ -202,6 +202,16 @@
       "primary": "ollama",
       "fallback": "mock",
       "description": "WES cross-tier common-sense reviewer (CC1, §5.6) (v1.0)"
+    },
+    "wes_quest_reward_pregen": {
+      "primary": "claude",
+      "fallback": "ollama",
+      "description": "Quest reward materializer — turns rewards_prose into concrete QuestRewards + completion_dialogue at quest accept time. Voice fidelity matters for the dialogue, so claude default; ollama on cloud failure."
+    },
+    "wes_quest_reward_adapt": {
+      "primary": "ollama",
+      "fallback": "mock",
+      "description": "Quest reward adapter — adjusts pre-generated rewards at turn-in based on play context (time taken, urgency). Numerical/bounded task; smaller model viable."
     }
   },
 

@@ -4596,6 +4596,36 @@ class GameEngine:
                     "WNS disabled; narrative weaving will not run",
                     "warning")
 
+        # Initialize the WES orchestrator. Subscribes to
+        # WNS_CALL_WES_REQUESTED on GameEventBus, so any inline <WES>
+        # directive a weaver emits is picked up and dispatched through
+        # planner → hub → executor_tool → ContentRegistry. Failure
+        # stays non-fatal — WNS still runs, just no content gets
+        # generated until the orchestrator can be brought up.
+        self.wes_orchestrator = None
+        try:
+            from world_system.content_registry.content_registry import (
+                ContentRegistry,
+            )
+            from world_system.wes.wes_orchestrator import WESOrchestrator
+
+            # ContentRegistry must be initialized before WES so the
+            # orchestrator's commit path has somewhere to stage to.
+            content_registry = ContentRegistry.get_instance()
+            content_registry.initialize(save_dir=_wns_save_dir)
+
+            self.wes_orchestrator = WESOrchestrator.get_instance()
+            self.wes_orchestrator.initialize(
+                registry=content_registry,
+                subscribe_to_bus=True,
+            )
+        except Exception as e:
+            print(f"[WES] Orchestrator init failed (non-fatal): {e}")
+            self.wes_orchestrator = None
+            _report("wes_orchestrator", "initialize", e,
+                    "WES disabled; <WES> directives from weavers will be dropped",
+                    "warning")
+
         # Initialize Living World consumers (BackendManager + NPCAgentSystem).
         # These depend on WorldMemorySystem.world_query for context and on
         # BackendManager for LLM calls. Failure is non-fatal — dialogue falls
@@ -4614,6 +4644,31 @@ class GameEngine:
                 world_query=world_query,
                 backend_manager=backend_manager,
             )
+
+            # Wire NPCMemoryManager to FactionSystem so per-NPC dynamic
+            # state (relationship, emotion, knowledge, conversation
+            # summary, reputation tags) actually persists into the
+            # SQLite tables already provisioned in faction_system.
+            # Without this call, NPCMemory operates in-memory-only and
+            # NPC continuity dies on session reset.
+            try:
+                from world_system.living_world.npc.npc_memory import (
+                    NPCMemoryManager,
+                )
+                from world_system.living_world.factions.faction_system import (
+                    FactionSystem,
+                )
+                fs = FactionSystem.get_instance()
+                if getattr(fs, "_initialized", False):
+                    NPCMemoryManager.get_instance().wire_faction_system(fs)
+                    print("[NPCAgent] NPCMemoryManager wired to FactionSystem (SQLite persistence active)")
+                else:
+                    print("[NPCAgent] FactionSystem not initialized; NPCMemory stays in-memory")
+            except Exception as wire_err:
+                print(f"[NPCAgent] NPCMemory→FactionSystem wiring skipped: {wire_err}")
+                _report("npc_memory_manager", "wire_faction_system", wire_err,
+                        "NPC dynamic state will not persist across sessions",
+                        "info")
         except Exception as e:
             print(f"[NPCAgent] Init failed (non-fatal, hardcoded dialogue will be used): {e}")
             self.npc_agent_system = None

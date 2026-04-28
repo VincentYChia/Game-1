@@ -308,3 +308,79 @@ class NPCDatabase:
             import traceback
             traceback.print_exc()
             self.loaded = False
+
+    def reload(self) -> None:
+        """Re-read NPC + Quest JSON files from disk.
+
+        Called by :func:`world_system.content_registry.database_reloader`
+        after the Content Registry commits new ``npcs-generated-*`` or
+        ``quests-generated-*`` files. Drops the existing in-memory
+        caches and reloads the canonical JSON sources, then merges any
+        ``progression/npcs-generated-*.JSON`` / ``progression/quests-
+        generated-*.JSON`` siblings on top.
+
+        Idempotent — safe to call multiple times. Never raises; on any
+        failure the in-memory state is left as-is (prefer stale-but-
+        intact over crashing the game loop).
+        """
+        old_npcs = dict(self.npcs)
+        old_quests = dict(self.quests)
+        old_loaded = self.loaded
+        try:
+            self.npcs = {}
+            self.quests = {}
+            self.loaded = False
+            self.load_from_files()
+            self._merge_generated_files()
+        except Exception as e:
+            print(f"[NPCDatabase] reload failed, keeping previous state: {e}")
+            self.npcs = old_npcs
+            self.quests = old_quests
+            self.loaded = old_loaded
+
+    def _merge_generated_files(self) -> None:
+        """Pick up any ``progression/npcs-generated-*.JSON`` or
+        ``progression/quests-generated-*.JSON`` siblings produced by
+        the Content Registry. Generated entries override duplicate
+        IDs in the canonical files (last-writer-wins, so the latest
+        WES generation is what the runtime sees).
+        """
+        try:
+            progression_dir = get_resource_path("progression")
+        except Exception:
+            return
+        try:
+            for path in sorted(progression_dir.glob("npcs-generated-*.JSON")):
+                try:
+                    with open(path, "r") as f:
+                        data = json.load(f)
+                    for npc_data in data.get("npcs", []):
+                        try:
+                            npc_def = _build_npc_from_v3(npc_data)
+                            self.npcs[npc_def.npc_id] = npc_def
+                        except Exception as inner:
+                            print(f"[NPCDatabase] skipping malformed npc in {path.name}: {inner}")
+                except Exception as outer:
+                    print(f"[NPCDatabase] failed to merge {path.name}: {outer}")
+
+            for path in sorted(progression_dir.glob("quests-generated-*.JSON")):
+                try:
+                    with open(path, "r") as f:
+                        data = json.load(f)
+                    for quest_data in data.get("quests", []):
+                        try:
+                            quest_def = _build_quest_from_v3(quest_data)
+                            # Generated quests opt into the adaptive
+                            # reward flow (pre-gen at receive + adapt
+                            # at turn-in). Canonical quests from
+                            # quests-3.JSON keep source_origin =
+                            # "canonical" (the default) and use their
+                            # hand-tuned rewards verbatim.
+                            quest_def.source_origin = "generated"
+                            self.quests[quest_def.quest_id] = quest_def
+                        except Exception as inner:
+                            print(f"[NPCDatabase] skipping malformed quest in {path.name}: {inner}")
+                except Exception as outer:
+                    print(f"[NPCDatabase] failed to merge {path.name}: {outer}")
+        except Exception as e:
+            print(f"[NPCDatabase] _merge_generated_files outer error: {e}")

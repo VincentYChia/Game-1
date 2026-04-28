@@ -115,3 +115,13 @@ class QuestDefinition:
     tags: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
     # {narrative, difficulty, estimatedTime} — tags promoted to top-level.
+
+    # Origin tag — set by the loader. ``"canonical"`` means the quest
+    # came from a hand-authored sacred file (e.g. ``quests-3.JSON``)
+    # whose ``rewards`` block is hand-tuned and must be preserved.
+    # ``"generated"`` means the quest was emitted by WES at runtime —
+    # its concrete ``rewards`` start empty and the adaptive reward
+    # flow (pre-gen at receive + adapt at turn-in) materializes them.
+    # The runtime checks this flag to decide whether to invoke the
+    # reward-materialization path or use the concrete rewards verbatim.
+    source_origin: str = "canonical"
