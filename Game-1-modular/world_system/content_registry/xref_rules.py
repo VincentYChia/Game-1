@@ -542,8 +542,11 @@ SACRED_TOP_LEVEL_KEY = {
                                     # "skills".
     TOOL_TITLES: "titles",         # progression/titles-1.JSON uses
                                     # "titles".
-    TOOL_CHUNKS: "chunkTemplates", # Chunk-templates-2.JSON uses
-                                    # "chunkTemplates".
+    TOOL_CHUNKS: "templates",      # Definitions.JSON/Chunk-templates-2.JSON
+                                    # uses "templates" as the wrapper key.
+                                    # ChunkTemplateDatabase tolerates the
+                                    # legacy "chunkTemplates" key for any
+                                    # historical generated files.
     TOOL_NPCS: "npcs",             # progression/npcs-3.JSON uses
                                     # "npcs".
     TOOL_QUESTS: "quests",         # progression/quests-3.JSON uses
@@ -560,7 +563,7 @@ SACRED_OUTPUT_SUBDIR = {
     TOOL_NODES: "Definitions.JSON",
     TOOL_SKILLS: "Skills",
     TOOL_TITLES: "progression",
-    TOOL_CHUNKS: "world_system/config",
+    TOOL_CHUNKS: "Definitions.JSON",  # matches sacred Chunk-templates-*.JSON
     TOOL_NPCS: "progression",
     TOOL_QUESTS: "progression",
 }
@@ -574,7 +577,7 @@ SACRED_OUTPUT_PREFIX = {
     TOOL_NODES: "Resource-node",
     TOOL_SKILLS: "skills",
     TOOL_TITLES: "titles",
-    TOOL_CHUNKS: "chunk-templates",
+    TOOL_CHUNKS: "Chunk-templates",  # capitalization matches sacred file
     TOOL_NPCS: "npcs",
     TOOL_QUESTS: "quests",
 }

@@ -94,16 +94,20 @@ _RELOAD_TARGETS: Dict[str, List[Tuple[str, str, Tuple[str, ...]]]] = {
             ("reload", "_reload"),
         ),
     ],
-    # NOTE(2026-04-27): "chunks" deliberately has no reload target yet.
-    # WES-generated chunk templates land in
-    # ``Definitions.JSON/chunks-generated-*.JSON`` but the biome
-    # generator + chunk dispatcher (systems/biome_generator.py,
-    # systems/chunk.py) don't yet consult a chunk-template database
-    # keyed by region — they use a code-locked geo→ChunkType dict.
-    # ChunkType is already a namespace class so new strings won't
-    # crash, but they also won't spawn until that runtime integration
-    # lands. Bridge work is registered (no-targets path), and the
-    # reloader's existing graceful-degrade log surfaces the gap.
+    "chunks": [
+        # ChunkTemplateDatabase reads the sacred
+        # ``Definitions.JSON/Chunk-templates-*.JSON`` file plus any
+        # ``Chunk-templates-generated-*.JSON`` siblings written by the
+        # Content Registry. Reloading after a WES commit picks the new
+        # templates up immediately so chunk dispatch + spawn pools see
+        # them on the next chunk load. Singleton pattern — same as the
+        # other reload targets above.
+        (
+            "data.databases.chunk_template_db",
+            "ChunkTemplateDatabase",
+            ("reload", "_reload"),
+        ),
+    ],
 }
 
 

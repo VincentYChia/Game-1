@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 from .enemy import Enemy, EnemyDatabase, EnemyDefinition, AIState
 from data.models.world import PlacedEntityType
+from data.databases.chunk_template_db import ChunkTemplateDatabase, ChunkTemplate
 from core.effect_executor import get_effect_executor
 from core.tag_debug import get_tag_debugger
 from core.debug_display import debug_print
@@ -124,8 +125,11 @@ class CombatManager:
         self.effect_executor = get_effect_executor()
         self.debugger = get_tag_debugger()
 
-        # Chunk templates for weighted spawn pool
-        self.chunk_templates: Dict[str, dict] = {}
+        # Chunk templates for weighted spawn pool — sourced from the
+        # singleton ChunkTemplateDatabase (loaded lazily on first lookup).
+        # The legacy ``self.chunk_templates`` dict and ``_load_chunk_templates``
+        # method were retired in favor of the shared singleton so WES-
+        # generated templates land in the same registry.
         self.chunk_type_mapping = {
             # Legacy ChunkType → template key mappings
             "peaceful_forest": "peaceful_forest",
@@ -192,40 +196,32 @@ class CombatManager:
         self.spawn_timers.pop(chunk_key, None)
 
     def load_config(self, config_path: str, enemies_path: str, chunk_templates_path: Optional[str] = None):
-        """Load combat configuration, enemy definitions, and chunk templates"""
+        """Load combat configuration, enemy definitions, and chunk templates.
+
+        ``chunk_templates_path`` is accepted for backwards compatibility
+        with older callers but is no longer required — the singleton
+        :class:`ChunkTemplateDatabase` reads ``Definitions.JSON/Chunk-templates-*.JSON``
+        plus any ``Chunk-templates-generated-*.JSON`` siblings on its own.
+        Passing a path is a no-op aside from logging that it was ignored.
+        """
         self.config.load_from_file(config_path)
         self.enemy_db.load_from_file(enemies_path)
 
-        # Load chunk templates if provided
+        # Force the shared chunk-template singleton to load (idempotent).
+        template_db = ChunkTemplateDatabase.get_instance()
+        if not template_db.loaded:
+            template_db.load_from_files()
+        stats = template_db.stats()
+        print(
+            f"✓ Loaded {stats['total']} chunk templates for spawning "
+            f"({stats['sacred']} sacred, {stats['generated']} generated)"
+        )
         if chunk_templates_path:
-            self._load_chunk_templates(chunk_templates_path)
-        else:
-            # Try default path (relative to game root directory)
-            default_path = Path("Definitions.JSON/Chunk-templates-2.JSON")
-            if default_path.exists():
-                self._load_chunk_templates(str(default_path))
-
-    def _load_chunk_templates(self, filepath: str):
-        """Load chunk template definitions for weighted spawn pools"""
-        try:
-            with open(filepath, 'r') as f:
-                data = json.load(f)
-
-            templates = data.get('templates', [])
-            for template in templates:
-                chunk_type = template.get('chunkType')
-                if chunk_type:
-                    self.chunk_templates[chunk_type] = template
-
-            print(f"✓ Loaded {len(self.chunk_templates)} chunk templates for spawning")
-            return True
-
-        except FileNotFoundError:
-            print(f"⚠ Chunk templates not found at {filepath}, using tier-only spawning")
-            return False
-        except Exception as e:
-            print(f"⚠ Error loading chunk templates: {e}")
-            return False
+            print(
+                f"⚠ chunk_templates_path={chunk_templates_path!r} is "
+                f"deprecated; ChunkTemplateDatabase loads sacred+generated "
+                f"files from Definitions.JSON automatically."
+            )
 
     def is_in_safe_zone(self, x: float, y: float) -> bool:
         """Check if position is in safe zone (no spawning)"""
@@ -262,11 +258,18 @@ class CombatManager:
             return "rare"
         return "normal"
 
-    def _get_chunk_template(self, chunk) -> Optional[dict]:
-        """Get chunk template for a given chunk"""
+    def _get_chunk_template(self, chunk) -> Optional[ChunkTemplate]:
+        """Get chunk template for a given chunk via the shared singleton.
+
+        Resolves ``chunk.chunk_type`` through the legacy alias map first
+        (``rare_hidden_forest`` → ``rare_forest``, etc.), then queries
+        :class:`ChunkTemplateDatabase`. Returns the typed dataclass so
+        callers can read ``template.enemy_spawns[id].density`` without
+        dict-key lookups.
+        """
         chunk_type_str = chunk.chunk_type
         template_key = self.chunk_type_mapping.get(chunk_type_str, chunk_type_str)
-        return self.chunk_templates.get(template_key)
+        return ChunkTemplateDatabase.get_instance().get(template_key)
 
     def _get_density_weight(self, density: str) -> float:
         """Get spawn weight for a density level"""
@@ -318,19 +321,22 @@ class CombatManager:
         # Try to get chunk template
         chunk_template = self._get_chunk_template(chunk)
 
-        # 1. Add priority enemies from enemySpawns (if template exists)
+        # 1. Add priority enemies from enemy_spawns (if template exists)
         priority_enemy_ids = set()
-        if chunk_template and 'enemySpawns' in chunk_template:
-            enemy_spawns = chunk_template['enemySpawns']
-            for enemy_id, spawn_info in enemy_spawns.items():
+        if chunk_template and chunk_template.enemy_spawns:
+            for enemy_id, spawn_spec in chunk_template.enemy_spawns.items():
                 # Get enemy definition
                 enemy_def = self.enemy_db.get_enemy(enemy_id)
                 if not enemy_def:
                     continue
 
-                # Get density weight
-                density = spawn_info.get('density', 'moderate')
+                # Density weight: prefer combat-config's density_weights
+                # (legacy override path) and fall back to the dataclass's
+                # canonical weight if the config didn't define it.
+                density = spawn_spec.density
                 weight = self._get_density_weight(density)
+                if weight == 1.0 and density != "moderate":
+                    weight = spawn_spec.spawn_weight
 
                 # Add to pool
                 spawn_pool.append((enemy_def, weight))
