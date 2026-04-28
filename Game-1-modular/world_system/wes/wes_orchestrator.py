@@ -240,6 +240,18 @@ class WESOrchestrator:
         failed), we fall back to a minimal fixture bundle so the
         pipeline still exercises end-to-end.
         """
+        # Best-effort runtime observability — never raises.
+        try:
+            from world_system.wes.observability_runtime import (
+                EVT_WES_DISPATCHED, obs_record,
+            )
+            obs_record(
+                EVT_WES_DISPATCHED,
+                "WES received WNS_CALL_WES_REQUESTED",
+            )
+        except Exception:
+            pass
+
         try:
             bundle = self._extract_bundle_from_event(event)
             if bundle is None:
@@ -248,17 +260,60 @@ class WESOrchestrator:
             # isn't blocked.
             if self._runner is not None:
                 self._runner.run_single(
-                    lambda: self.run_plan(bundle),
+                    lambda: self._run_plan_with_observability(bundle),
                     timeout_s=None,
                 )
             else:
-                self.run_plan(bundle)
+                self._run_plan_with_observability(bundle)
         except Exception as e:
             surface_visible_wes_failure(
                 operation="_on_bus_event",
                 failure_reason=f"{type(e).__name__}: {e}",
                 fallback_taken="plan run aborted",
             )
+
+    def _run_plan_with_observability(self, bundle) -> Dict[str, Any]:
+        """Wrap :meth:`run_plan` with start/complete observability events.
+
+        Keeps run_plan itself untouched (which has many early-return paths)
+        while still surfacing per-plan lifecycle events to the runtime
+        observability ring buffer.
+        """
+        try:
+            from world_system.wes.observability_runtime import (
+                EVT_WES_PLAN_COMPLETED,
+                EVT_WES_PLAN_STARTED,
+                obs_record,
+            )
+        except Exception:
+            return self.run_plan(bundle)
+
+        bundle_id = getattr(bundle, "bundle_id", None) or "?"
+        obs_record(
+            EVT_WES_PLAN_STARTED,
+            "WES plan starting",
+            bundle_id=bundle_id,
+        )
+        try:
+            result = self.run_plan(bundle)
+            status = (result or {}).get("status", "?")
+            obs_record(
+                EVT_WES_PLAN_COMPLETED,
+                f"WES plan {status}",
+                bundle_id=bundle_id,
+                status=status,
+                plan_id=(result or {}).get("plan_id", "?"),
+            )
+            return result
+        except Exception as e:
+            obs_record(
+                EVT_WES_PLAN_COMPLETED,
+                "WES plan errored",
+                bundle_id=bundle_id,
+                status="error",
+                err=type(e).__name__,
+            )
+            raise
 
     @staticmethod
     def _extract_bundle_from_event(event: Any) -> Any:

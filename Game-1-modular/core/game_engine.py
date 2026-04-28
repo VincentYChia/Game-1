@@ -1208,6 +1208,19 @@ class GameEngine:
                     self.add_notification(f"Switched to {mode} mode", (100, 200, 255))
                     print(f"🖥️  Switched to {mode}: {Config.SCREEN_WIDTH}x{Config.SCREEN_HEIGHT}")
 
+                elif event.key == pygame.K_F12:
+                    # Toggle the WES observability overlay (live ring buffer
+                    # of WMS→WNS→WES→Registry→Reload pipeline events). Useful
+                    # for debugging Living World generation in real time.
+                    self.wes_overlay_open = not getattr(
+                        self, "wes_overlay_open", False
+                    )
+                    state = "ON" if self.wes_overlay_open else "OFF"
+                    self.add_notification(
+                        f"WES observability overlay {state}",
+                        (100, 200, 255),
+                    )
+
             elif event.type == pygame.KEYUP:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
@@ -8140,6 +8153,18 @@ class GameEngine:
 
         self.renderer.render_notifications(self.notifications)
         self.renderer.render_debug_messages()
+
+        # Optional WES observability overlay (F12 toggle). Lives outside
+        # Renderer because it owns its own font and depends on the
+        # singleton observability ring buffer rather than any game state.
+        if getattr(self, "wes_overlay_open", False):
+            try:
+                from world_system.wes.observability_overlay import render_overlay
+                if not hasattr(self, "_wes_overlay_font"):
+                    self._wes_overlay_font = pygame.font.Font(None, 16)
+                render_overlay(self.screen, self._wes_overlay_font)
+            except Exception:
+                pass  # never let the overlay crash the game render
 
         # Render dungeon chest UI if open
         if self.dungeon_chest_open and self.dungeon_manager.in_dungeon:

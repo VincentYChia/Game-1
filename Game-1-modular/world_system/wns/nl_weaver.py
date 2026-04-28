@@ -596,6 +596,33 @@ class NLWeaver:
         except Exception:
             pass
 
+        # Live runtime observability — best-effort, never raises.
+        try:
+            from world_system.wes.observability_runtime import (
+                EVT_WNS_CALL_WES,
+                EVT_WNS_FIRED,
+                obs_record,
+            )
+            obs_record(
+                EVT_WNS_FIRED,
+                f"NL{self._layer} weaver completed",
+                layer=self._layer,
+                address=address,
+                threads=len(threads),
+                wes_calls=len(wes_calls),
+                shifts=len(affinity_shifts),
+            )
+            if call_wes:
+                obs_record(
+                    EVT_WNS_CALL_WES,
+                    f"NL{self._layer} requesting WES generation",
+                    layer=self._layer,
+                    address=address,
+                    call_count=len(wes_calls),
+                )
+        except Exception:
+            pass
+
         return WeaverRunResult(
             success=True,
             row=row,

@@ -38,6 +38,11 @@ from collections import deque
 from typing import Any, Callable, Deque, Optional, Set
 
 from world_system.living_world.infra.graceful_degrade import log_degrade
+from world_system.wes.observability_runtime import (
+    EVT_CASCADE_FIRED,
+    EVT_WMS_EVENT_RECEIVED,
+    obs_record,
+)
 from world_system.wns.cascade_trigger import (
     CascadeTriggerManager,
     DEFAULT_THRESHOLD,
@@ -202,6 +207,12 @@ class WMSToWNSBridge:
 
             self._events_processed += 1
             self._mark_seen(interp_id)
+            obs_record(
+                EVT_WMS_EVENT_RECEIVED,
+                "WMS interpretation routed to cascade",
+                interp_id=interp_id or "?",
+                localities=len(locality_ids),
+            )
 
     # ── Cascade fire callback (runs the weaver) ──────────────────────
 
@@ -238,6 +249,13 @@ class WMSToWNSBridge:
             parent_address = self._safe_parent_address(address)
             grandparent_address = (
                 self._safe_parent_address(parent_address) if parent_address else None
+            )
+            obs_record(
+                EVT_CASCADE_FIRED,
+                f"NL{layer} weaver firing",
+                layer=layer,
+                address=address,
+                wms_brief_chars=len(wms_brief or ""),
             )
             self._wns.run_weaver(
                 layer=layer,
