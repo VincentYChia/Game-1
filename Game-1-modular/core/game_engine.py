@@ -1462,8 +1462,15 @@ class GameEngine:
                             self.add_notification(f"Quest accepted: {quest_def.title}", (100, 255, 100))
                             # Update dialogue state
                             self.npc_available_quests.remove(quest_id)
-                            # Refresh NPC dialogue to show updated quest list
-                            self.npc_dialogue_lines = [self.active_npc.get_next_dialogue()]
+                            # Prefer the NPC's per-NPC quest_offer line
+                            # from the speechbank (NL1 deterministic).
+                            # Falls through to generic cycling when the
+                            # speechbank lacks a quest_offer string.
+                            offer_line = self.active_npc.get_quest_offer_line()
+                            if offer_line is not None:
+                                self.npc_dialogue_lines = [offer_line]
+                            else:
+                                self.npc_dialogue_lines = [self.active_npc.get_next_dialogue()]
                             self.npc_available_quests = self.active_npc.get_available_quests(self.character.quests)
                             self.npc_quest_to_turn_in = self.active_npc.has_quest_to_turn_in(self.character.quests, self.character)
                         else:
@@ -1478,10 +1485,27 @@ class GameEngine:
                             print(f"   {msg}")
                             self.add_notification(msg, (100, 255, 100))
 
-                        # Show completion dialogue
+                        # Show completion dialogue. Priority:
+                        #   1. quest_def.completion_dialogue — per-quest
+                        #      lines (most specific; LLM may have
+                        #      generated these for adaptive rewards).
+                        #   2. NPC speechbank.quest_complete — per-NPC
+                        #      voice fallback (NL1 deterministic).
+                        #   3. NPC.get_next_dialogue() — last-ditch
+                        #      cycling so dialogue panel never goes
+                        #      blank.
+                        completion_lines: list = []
                         if quest_id in npc_db.quests:
                             quest_def = npc_db.quests[quest_id]
-                            self.npc_dialogue_lines = quest_def.completion_dialogue
+                            if quest_def.completion_dialogue:
+                                completion_lines = list(quest_def.completion_dialogue)
+                        if not completion_lines:
+                            npc_complete = self.active_npc.get_quest_complete_line()
+                            if npc_complete is not None:
+                                completion_lines = [npc_complete]
+                        if not completion_lines:
+                            completion_lines = [self.active_npc.get_next_dialogue()]
+                        self.npc_dialogue_lines = completion_lines
 
                         # Update quest state
                         self.npc_quest_to_turn_in = None
@@ -1514,6 +1538,13 @@ class GameEngine:
             # Open dialogue with this NPC
             self.npc_dialogue_open = True
             self.active_npc = nearby_npc
+
+            # Each new conversation starts with a fresh greeting, even
+            # if the player has spoken to this NPC before. The cycle
+            # indices keep climbing across conversations so the player
+            # rotates through the greeting / idle bank rather than
+            # hearing the same first line every time.
+            nearby_npc.reset_dialogue_state()
 
             # Get opening dialogue. Prefer the LLM-powered NPCAgentSystem when
             # available; fall back to the hardcoded cycling lines otherwise.
