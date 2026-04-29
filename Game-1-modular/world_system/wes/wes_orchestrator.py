@@ -670,31 +670,50 @@ class WESOrchestrator:
         tap: "SupervisorTap",
     ) -> None:
         """Repeatedly walk staged content for unresolved cross-refs and
-        dispatch synthetic extension plans until either no orphans
-        remain or :data:`MAX_RUNTIME_CASCADE_DEPTH` is reached.
+        dispatch request-layer specs until either no orphans remain or
+        :data:`MAX_RUNTIME_CASCADE_DEPTH` is reached.
+
+        Architecture (2026-04-29 refactor):
+
+        Each pass calls
+        :func:`world_system.wes.plan_resolution.find_runtime_orphans`
+        for deterministic orphan detection, then hands the
+        recommendations to
+        :class:`world_system.wes.request_layer.RequestLayer`. The
+        request layer builds synthetic :class:`ExecutorSpec` objects
+        directly — no synthetic plan, no hub call, no re-planner round-
+        trip. The dispatcher's tool-only fan-out path
+        (:meth:`PlanDispatcher.run_request_specs`) processes them via
+        the same orphan-scan / balance / stage glue used by ``run()``.
 
         Per user direction: WES has authority to create whatever content
         it needs. When a chunk's enemySpawns names a new hostile, the
         hostile is auto-generated; when that hostile drops a new
-        material, the material is auto-generated; etc.
+        material, the material is auto-generated; etc. The cascade
+        loop is what propagates that chain.
 
         Cap controls runaway. Each pass is bounded by
-        :data:`MAX_CASCADE_STEPS_PER_PASS` synthetic steps so a single
-        malformed tool output can't queue dozens of follow-ups.
+        :data:`MAX_CASCADE_STEPS_PER_PASS` recommendations (deduped
+        upstream) so a single malformed tool output can't queue dozens
+        of follow-ups.
         """
         from world_system.wes.plan_resolution import (
             MAX_CASCADE_STEPS_PER_PASS,
             MAX_RUNTIME_CASCADE_DEPTH,
-            build_extension_plan,
             find_runtime_orphans,
         )
+        from world_system.wes.request_layer import RequestLayer
 
         if self._registry is None:
             return
 
+        request_layer = RequestLayer()
+
         for depth in range(1, MAX_RUNTIME_CASCADE_DEPTH + 1):
             try:
-                recs = find_runtime_orphans(self._registry, primary_plan.plan_id)
+                recs = find_runtime_orphans(
+                    self._registry, primary_plan.plan_id,
+                )
             except Exception as e:
                 log_degrade(
                     subsystem="wes",
@@ -709,38 +728,62 @@ class WESOrchestrator:
             if not recs:
                 return
 
-            ext_plan = build_extension_plan(
-                primary_plan, recs,
-                cascade_depth=depth,
-                max_steps=MAX_CASCADE_STEPS_PER_PASS,
-            )
-            if ext_plan is None:
+            # Cap before building specs — find_runtime_orphans already
+            # de-dupes, but a malformed payload could still queue many
+            # bogus refs. Trim here so we never exceed the per-pass cap.
+            capped = recs[:MAX_CASCADE_STEPS_PER_PASS]
+
+            try:
+                batch = request_layer.build_specs(
+                    capped,
+                    registry=self._registry,
+                    bundle=bundle,
+                    plan_id=primary_plan.plan_id,
+                    cascade_depth=depth,
+                )
+            except Exception as e:
+                log_degrade(
+                    subsystem="wes",
+                    operation=f"runtime_cascade.build_specs (depth {depth})",
+                    failure_reason=f"{type(e).__name__}: {e}",
+                    fallback_taken="cascade halted; orphans not generated",
+                    severity="warning",
+                    context={"plan_id": primary_plan.plan_id, "depth": depth},
+                )
                 return
 
+            if batch.is_empty():
+                return
+
+            spec_count = batch.total_specs()
             log_degrade(
                 subsystem="wes",
                 operation=f"runtime_cascade.dispatch (depth {depth})",
                 failure_reason=(
-                    f"runtime cascade dispatching {len(ext_plan.steps)} "
-                    f"synthetic step(s) for unresolved refs"
+                    f"request layer dispatching {spec_count} synthetic "
+                    f"executor_tool spec(s) for unresolved refs across "
+                    f"{len(batch.tool_specs)} tool(s)"
                 ),
                 fallback_taken="orphans being auto-generated",
                 severity="info",
                 context={"plan_id": primary_plan.plan_id,
-                         "ext_plan_id": ext_plan.plan_id,
                          "depth": depth,
-                         "step_count": len(ext_plan.steps)},
+                         "spec_count": spec_count,
+                         "tools": sorted(batch.tool_specs)},
             )
             try:
                 from world_system.wes.metrics import WESMetrics
-                WESMetrics.get_instance().record_runtime_cascade(
-                    len(ext_plan.steps)
-                )
+                WESMetrics.get_instance().record_runtime_cascade(spec_count)
             except Exception:
                 pass
 
             try:
-                ext_result = dispatcher.run(ext_plan, bundle)
+                ext_result = dispatcher.run_request_specs(
+                    batch.tool_specs,
+                    plan_id=primary_plan.plan_id,
+                    source_bundle_id=primary_plan.source_bundle_id,
+                    cascade_depth=depth,
+                )
             except Exception as e:
                 log_degrade(
                     subsystem="wes",
@@ -752,7 +795,7 @@ class WESOrchestrator:
                 )
                 return
 
-            # Merge extension dispatch results into the parent's result.
+            # Merge request-layer dispatch results into the parent's.
             for tier_result in ext_result.tier_results:
                 dispatch_result.tier_results.append(tier_result)
             for tool_name, ids in ext_result.staged_content_ids.items():

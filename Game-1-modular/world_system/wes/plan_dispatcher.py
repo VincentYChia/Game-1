@@ -199,6 +199,217 @@ class PlanDispatcher:
             self._run_step(step, plan, bundle, result)
         return result
 
+    # ── Request Layer: tool-only fan-out (no hub call) ─────────────────
+
+    def run_request_specs(
+        self,
+        tool_specs: Dict[str, List[ExecutorSpec]],
+        *,
+        plan_id: str,
+        source_bundle_id: str,
+        cascade_depth: int = 1,
+    ) -> DispatchResult:
+        """Dispatch synthetic request-layer specs straight to executor_tools.
+
+        Used by the orchestrator's runtime cascade (see
+        :class:`world_system.wes.request_layer.RequestLayer`). For each
+        target tool with one or more specs, the dispatcher:
+
+        1. Resolves the tool's :class:`ExecutorTool` via :attr:`tools`.
+        2. Fan-outs every spec in parallel via :class:`AsyncLLMRunner`.
+        3. Reuses the same per-spec glue as ``run()``: orphan scan,
+           balance check, ContentRegistry stage, tier-result emit.
+
+        No hub is called and no synthetic plan is constructed — the
+        request layer's whole point is that we know exactly what we
+        want generated, so the planner / hub roles are unnecessary.
+
+        Returns a :class:`DispatchResult` shaped exactly like
+        :meth:`run`'s output (sans hub tier records). Errors are
+        recorded against a synthetic step id ``request_layer_<tool>``
+        so the orchestrator can route them through its existing
+        ``step_errors`` aggregation without special-casing.
+        """
+        result = DispatchResult()
+        for tool_name, specs in tool_specs.items():
+            if not specs:
+                continue
+            self._run_request_specs_for_tool(
+                tool_name=tool_name,
+                specs=specs,
+                plan_id=plan_id,
+                source_bundle_id=source_bundle_id,
+                cascade_depth=cascade_depth,
+                result=result,
+            )
+        return result
+
+    def _run_request_specs_for_tool(
+        self,
+        *,
+        tool_name: str,
+        specs: List[ExecutorSpec],
+        plan_id: str,
+        source_bundle_id: str,
+        cascade_depth: int,
+        result: DispatchResult,
+    ) -> None:
+        """Inner half of :meth:`run_request_specs` — one tool's batch."""
+        tool = self.tools.get(tool_name)
+        if tool is None:
+            # Synthetic step id surfaces in step_errors for visibility.
+            virtual_step_id = f"request_layer_d{cascade_depth}_{tool_name}"
+            result.step_errors.setdefault(virtual_step_id, []).append(
+                f"no executor_tool registered for tool {tool_name!r}"
+            )
+            return
+
+        tasks = [self._make_tool_task(tool, spec) for spec in specs]
+        t0 = _now_ms()
+        parallel_out = self.runner.run_parallel(tasks)
+        latency_each = (_now_ms() - t0) / max(1, len(specs))
+
+        tool_fixture_code = getattr(
+            tool, "fixture_code", f"wes_tool_{tool_name}"
+        )
+
+        for spec, spec_output in zip(specs, parallel_out):
+            self._handle_request_spec_result(
+                tool_name=tool_name,
+                spec=spec,
+                spec_output=spec_output,
+                plan_id=plan_id,
+                source_bundle_id=source_bundle_id,
+                latency_each=latency_each,
+                tool_fixture_code=tool_fixture_code,
+                cascade_depth=cascade_depth,
+                result=result,
+            )
+
+    def _handle_request_spec_result(
+        self,
+        *,
+        tool_name: str,
+        spec: ExecutorSpec,
+        spec_output: Any,
+        plan_id: str,
+        source_bundle_id: str,
+        latency_each: float,
+        tool_fixture_code: str,
+        cascade_depth: int,
+        result: DispatchResult,
+    ) -> None:
+        """Per-spec glue, factored from ``_run_step`` so the request-layer
+        path doesn't duplicate orphan-scan / balance-check / stage code.
+
+        Differences from ``_run_step``'s body:
+        - There's no real :class:`WESPlanStep` to attach the tool tier
+          result to, so we emit with a synthetic ``step.step_id`` shaped
+          like ``request_layer_d<depth>_<tool>``.
+        - Errors land in ``result.step_errors[virtual_step_id]`` so the
+          orchestrator's existing aggregation surfaces them.
+        """
+        virtual_step_id = f"request_layer_d{cascade_depth}_{tool_name}"
+        spec_errors: List[str] = []
+
+        if isinstance(spec_output, BaseException):
+            spec_errors.append(
+                f"executor_tool failed: "
+                f"{type(spec_output).__name__}: {spec_output}"
+            )
+            tool_tier = fixture_tier_result(
+                tier="executor_tool",
+                fixture_code=tool_fixture_code,
+                parsed=None,
+                latency_ms=latency_each,
+            )
+            tool_tier.errors = spec_errors
+            self._record_request_spec_tier(
+                tool_tier, virtual_step_id, spec_errors, result,
+            )
+            return
+
+        if not isinstance(spec_output, dict):
+            spec_errors.append(
+                f"executor_tool returned non-dict "
+                f"{type(spec_output).__name__}"
+            )
+            tool_tier = fixture_tier_result(
+                tier="executor_tool",
+                fixture_code=tool_fixture_code,
+                parsed=spec_output,
+                latency_ms=latency_each,
+            )
+            tool_tier.errors = spec_errors
+            self._record_request_spec_tier(
+                tool_tier, virtual_step_id, spec_errors, result,
+            )
+            return
+
+        content_json: Dict[str, Any] = spec_output
+
+        # Same Pass-1 orphan + balance checks as the plan path. New
+        # orphans found here will be picked up by the *next* cascade
+        # iteration — request layer is one-shot per recommendation,
+        # but the cascade loop in the orchestrator handles depth.
+        orphans = self._orphan_scan(content_json, plan_id, tool_name)
+        if orphans:
+            spec_errors.append(
+                f"orphan refs in output: {sorted(set(orphans))}"
+            )
+
+        balance_issue = self._balance_check(
+            content_json, spec.hard_constraints
+        )
+        if balance_issue:
+            spec_errors.append(balance_issue)
+
+        staged_id: Optional[str] = None
+        if not spec_errors and self.registry is not None:
+            try:
+                staged_id = self.registry.stage_content(
+                    tool_name=tool_name,
+                    content_json=content_json,
+                    plan_id=plan_id,
+                    source_bundle_id=source_bundle_id,
+                )
+            except Exception as e:
+                spec_errors.append(
+                    f"stage_content failed: "
+                    f"{type(e).__name__}: {e}"
+                )
+
+        if staged_id is not None:
+            result.staged_content_ids.setdefault(tool_name, []).append(
+                staged_id
+            )
+
+        tool_tier = fixture_tier_result(
+            tier="executor_tool",
+            fixture_code=tool_fixture_code,
+            parsed=content_json,
+            latency_ms=latency_each,
+        )
+        tool_tier.errors = list(spec_errors)
+        self._record_request_spec_tier(
+            tool_tier, virtual_step_id, spec_errors, result,
+        )
+
+    def _record_request_spec_tier(
+        self,
+        tier_result: TierRunResult,
+        virtual_step_id: str,
+        spec_errors: List[str],
+        result: DispatchResult,
+    ) -> None:
+        result.tier_results.append(tier_result)
+        if self.tap is not None:
+            self.tap.record(tier_result)
+        if spec_errors:
+            result.step_errors.setdefault(virtual_step_id, []).extend(
+                spec_errors
+            )
+
     # ── per-step execution ────────────────────────────────────────────
 
     def _run_step(
