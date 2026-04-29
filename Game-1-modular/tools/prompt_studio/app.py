@@ -1,4 +1,4 @@
-"""Prompt Studio main application — Tkinter UI with six panels.
+"""Prompt Studio main application — themed Tkinter UI with six panels.
 
 Demo-grade tool for designing and validating every LLM prompt the game
 uses. Each LLMSystem entry in :mod:`registry` becomes selectable in the
@@ -12,18 +12,20 @@ left tree; the right notebook then exposes:
   Coverage  — health checks: unresolved placeholders, missing fixtures,
               orphaned cross-refs, fragment-file structure.
   About     — quick reference for navigation + WES_VERBOSE / F12 hooks.
+
+Look-and-feel lives in :mod:`tools.prompt_studio.theme`.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import re
 import sys
-import threading
 import tkinter as tk
 from pathlib import Path
-from tkinter import messagebox, scrolledtext, ttk
-from typing import Any, Dict, Optional
+from tkinter import messagebox, ttk
+from typing import Any, Dict, List, Optional
 
 # Project root on path so we can import live game modules.
 _PROJECT_DIR = Path(__file__).parent.parent.parent
@@ -38,23 +40,34 @@ from tools.prompt_studio.registry import (  # noqa: E402
     SystemTier,
 )
 from tools.prompt_studio.sample_inputs import SampleInput, build_sample  # noqa: E402
-
-
-# ── Color theme ──────────────────────────────────────────────────────────
-
-TIER_COLORS = {
-    SystemTier.WMS: "#7CB9D9",
-    SystemTier.WNS: "#9B70D9",
-    SystemTier.WES: "#E89D5C",
-    SystemTier.NPC: "#4DBFA0",
-}
+from tools.prompt_studio import theme  # noqa: E402
+from tools.prompt_studio.theme import (  # noqa: E402
+    ACCENT_ERROR,
+    ACCENT_PRIMARY,
+    ACCENT_SUCCESS,
+    ACCENT_WARNING,
+    BG_DEEP,
+    BG_ELEVATED,
+    BG_INPUT,
+    BG_SURFACE,
+    BORDER_SOFT,
+    CODE_COMMENT,
+    CODE_HEADING,
+    CODE_KEYWORD,
+    CODE_STRING,
+    CODE_WARN,
+    TEXT_MUTED,
+    TEXT_PRIMARY,
+    TEXT_SECONDARY,
+    apply_theme,
+    make_text_widget,
+    tier_color,
+)
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────
 
 def _read_fragment_file(path: Path) -> Dict[str, Any]:
-    """Best-effort load. Missing/malformed → empty dict so the UI keeps
-    rendering rather than crashing on a typo."""
     if not path.exists():
         return {}
     try:
@@ -65,20 +78,18 @@ def _read_fragment_file(path: Path) -> Dict[str, Any]:
 
 
 def _estimate_tokens(text: str) -> int:
-    """Cheap token estimator (chars/4). Matches the existing
-    prompt_editor.py convention so token counts stay comparable."""
+    """Cheap token estimator (chars/4)."""
     if not text:
         return 0
     return max(1, len(text) // 4)
 
 
+_PLACEHOLDER_RE = re.compile(r"\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
+
+
 def _safe_substitute(template: str, variables: Dict[str, Any]) -> str:
-    """Resolve ``${var}`` tokens, leaving unresolved ones visible
-    (highlighted later in the assembly preview as warnings)."""
     if not template:
         return ""
-    import re
-    pattern = re.compile(r"\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
 
     def repl(m: "re.Match[str]") -> str:
         key = m.group(1)
@@ -87,24 +98,21 @@ def _safe_substitute(template: str, variables: Dict[str, Any]) -> str:
             if isinstance(val, (dict, list)):
                 return json.dumps(val, ensure_ascii=False)
             return str(val)
-        return m.group(0)  # leave unresolved
+        return m.group(0)
 
-    return pattern.sub(repl, template)
+    return _PLACEHOLDER_RE.sub(repl, template)
 
 
-def _find_unresolved_placeholders(template: str, variables: Dict[str, Any]) -> list:
-    import re
-    found = re.findall(r"\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}", template or "")
+def _find_unresolved_placeholders(template: str, variables: Dict[str, Any]) -> List[str]:
+    found = _PLACEHOLDER_RE.findall(template or "")
     return sorted({name for name in found if name not in variables})
 
 
 def _try_get_fixture(task_id: str) -> Optional[str]:
-    """Look up the canonical fixture response for a task. None on miss."""
     try:
         from world_system.living_world.infra.llm_fixtures.registry import (
             LLMFixtureRegistry,
         )
-        # Trigger registration of all builtin fixtures.
         from world_system.living_world.infra import llm_fixtures  # noqa: F401
         from world_system.living_world.infra.llm_fixtures import builtin  # noqa: F401
         registry = LLMFixtureRegistry.get_instance()
@@ -117,33 +125,119 @@ def _try_get_fixture(task_id: str) -> Optional[str]:
 
 
 # ════════════════════════════════════════════════════════════════════════
-# Panel: Browser (left side)
+# Header banner — runs across the top of the window
+# ════════════════════════════════════════════════════════════════════════
+
+class HeaderBanner:
+    """Top-of-window banner: title, system count, tier legend."""
+
+    def __init__(self, parent: tk.Widget):
+        outer = tk.Frame(parent, bg=BG_DEEP, padx=18, pady=12)
+        outer.pack(fill=tk.X, side=tk.TOP)
+
+        # Left column — title stack.
+        left = tk.Frame(outer, bg=BG_DEEP)
+        left.pack(side=tk.LEFT)
+
+        ttk.Label(
+            left, text="Prompt Studio", style="Display.TLabel",
+            background=BG_DEEP,
+        ).pack(anchor=tk.W)
+        ttk.Label(
+            left,
+            text="Design & validate every LLM prompt in Game-1",
+            style="Caption.TLabel",
+            background=BG_DEEP,
+        ).pack(anchor=tk.W)
+
+        # Right column — tier legend chips + counts.
+        right = tk.Frame(outer, bg=BG_DEEP)
+        right.pack(side=tk.RIGHT)
+
+        all_systems = SystemRegistry.all()
+        ttk.Label(
+            right, text=f"{len(all_systems)} LLM tasks",
+            style="Heading.TLabel", background=BG_DEEP,
+        ).pack(anchor=tk.E)
+
+        chips = tk.Frame(right, bg=BG_DEEP)
+        chips.pack(anchor=tk.E, pady=(4, 0))
+
+        grouped = SystemRegistry.grouped_by_tier()
+        for tier in (SystemTier.WMS, SystemTier.WNS,
+                     SystemTier.WES, SystemTier.NPC):
+            count = len(grouped.get(tier, []))
+            chip = tk.Label(
+                chips,
+                text=f"  {tier.name} · {count}  ",
+                bg=BG_ELEVATED,
+                fg=tier_color(tier.name),
+                font=theme.FONTS.body_b,
+                bd=0,
+                padx=6,
+                pady=3,
+            )
+            chip.pack(side=tk.LEFT, padx=4)
+
+
+# ════════════════════════════════════════════════════════════════════════
+# Browser panel (left)
 # ════════════════════════════════════════════════════════════════════════
 
 class BrowserPanel:
-    """Tree of LLM systems grouped by SystemTier."""
-
     def __init__(self, parent: tk.Widget, on_select):
         self._on_select = on_select
         self._iid_to_id: Dict[str, str] = {}
 
-        frame = ttk.LabelFrame(parent, text="LLM Systems", padding=4)
-        frame.pack(fill=tk.BOTH, expand=True)
+        wrapper = tk.Frame(parent, bg=BG_SURFACE, padx=10, pady=10)
+        wrapper.pack(fill=tk.BOTH, expand=True)
 
-        sf = ttk.Frame(frame)
-        sf.pack(fill=tk.X)
-        ttk.Label(sf, text="Filter:").pack(side=tk.LEFT)
+        # Section heading.
+        ttk.Label(
+            wrapper, text="LLM Systems", style="Heading.TLabel",
+        ).pack(anchor=tk.W)
+        ttk.Label(
+            wrapper,
+            text="Filter by id, label, or tier name",
+            style="Caption.TLabel",
+        ).pack(anchor=tk.W, pady=(0, 8))
+
+        # Filter row.
+        filter_row = tk.Frame(wrapper, bg=BG_SURFACE)
+        filter_row.pack(fill=tk.X, pady=(0, 8))
+        ttk.Label(filter_row, text="🔎", style="Body.TLabel").pack(
+            side=tk.LEFT, padx=(0, 6)
+        )
         self._filter_var = tk.StringVar()
         self._filter_var.trace_add("write", lambda *_: self._populate())
-        ttk.Entry(sf, textvariable=self._filter_var).pack(
-            side=tk.LEFT, fill=tk.X, expand=True, padx=(4, 0)
-        )
+        entry = ttk.Entry(filter_row, textvariable=self._filter_var)
+        entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        self.tree = ttk.Treeview(frame, selectmode="browse", show="tree")
-        self.tree.pack(fill=tk.BOTH, expand=True, pady=(4, 0))
+        # Tree.
+        tree_frame = tk.Frame(wrapper, bg=BG_INPUT, highlightthickness=0)
+        tree_frame.pack(fill=tk.BOTH, expand=True)
+
+        self.tree = ttk.Treeview(
+            tree_frame, selectmode="browse", show="tree",
+        )
+        sb = ttk.Scrollbar(
+            tree_frame, orient="vertical", command=self.tree.yview,
+        )
+        self.tree.configure(yscrollcommand=sb.set)
+        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        sb.pack(side=tk.RIGHT, fill=tk.Y)
         self.tree.bind("<<TreeviewSelect>>", self._on_tree_select)
 
-        self.frame = frame
+        # Configure tier color tags (foreground).
+        for tier in SystemTier:
+            self.tree.tag_configure(
+                tier.name, foreground=tier_color(tier.name)
+            )
+        self.tree.tag_configure(
+            "tier_header", foreground=TEXT_SECONDARY,
+            font=theme.FONTS.subhead,
+        )
+
         self._populate()
 
     def _populate(self) -> None:
@@ -152,24 +246,24 @@ class BrowserPanel:
         flt = self._filter_var.get().lower().strip()
 
         for tier, systems in SystemRegistry.grouped_by_tier().items():
-            color = TIER_COLORS.get(tier, "#888")
             visible = [
                 s for s in systems
-                if not flt or flt in s.id.lower() or flt in s.label.lower()
+                if not flt or flt in s.id.lower()
+                or flt in s.label.lower()
+                or flt in tier.name.lower()
             ]
             if not visible:
                 continue
             tier_iid = self.tree.insert(
                 "", "end",
-                text=f"  {tier.value} ({len(visible)})",
+                text=f"  {tier.value}  ·  {len(visible)}",
                 open=True,
-                tags=(tier.name,),
+                tags=("tier_header",),
             )
-            self.tree.tag_configure(tier.name, foreground=color)
             for sys_obj in visible:
                 iid = self.tree.insert(
                     tier_iid, "end",
-                    text=f"  {sys_obj.label}",
+                    text=f"     {sys_obj.label}",
                     tags=(tier.name,),
                 )
                 self._iid_to_id[iid] = sys_obj.id
@@ -184,67 +278,122 @@ class BrowserPanel:
 
 
 # ════════════════════════════════════════════════════════════════════════
-# Panel: Editor
+# Panel header — common header inside every right-side tab
+# ════════════════════════════════════════════════════════════════════════
+
+class PanelHeader:
+    """A consistent header at the top of each right-side panel.
+
+    Shows the selected system's tier-colored badge, label, id, and a
+    one-line description. Other panels embed their own action buttons
+    on the same row to keep the visual rhythm tight.
+    """
+
+    def __init__(self, parent: tk.Widget):
+        self._tier_badge = tk.Label(
+            parent, text="  ?  ", bg=BG_ELEVATED,
+            fg=TEXT_MUTED, font=theme.FONTS.body_b,
+            padx=6, pady=2,
+        )
+        self._title_var = tk.StringVar(value="Select a system from the left")
+        self._desc_var = tk.StringVar(value="")
+        self._id_var = tk.StringVar(value="")
+
+        outer = tk.Frame(parent, bg=BG_SURFACE)
+        outer.pack(fill=tk.X, padx=12, pady=(12, 8))
+
+        # Badge column.
+        self._tier_badge = tk.Label(
+            outer, text="  —  ", bg=BG_ELEVATED, fg=TEXT_MUTED,
+            font=theme.FONTS.body_b, padx=8, pady=4,
+        )
+        self._tier_badge.pack(side=tk.LEFT, padx=(0, 12))
+
+        # Title + meta column.
+        info = tk.Frame(outer, bg=BG_SURFACE)
+        info.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Label(info, textvariable=self._title_var,
+                  style="Heading.TLabel").pack(anchor=tk.W)
+        meta_row = tk.Frame(info, bg=BG_SURFACE)
+        meta_row.pack(anchor=tk.W, fill=tk.X, pady=(2, 0))
+        ttk.Label(meta_row, textvariable=self._id_var,
+                  style="Caption.TLabel").pack(side=tk.LEFT)
+        ttk.Label(meta_row, textvariable=self._desc_var,
+                  style="Caption.TLabel").pack(side=tk.LEFT, padx=(12, 0))
+
+        # Action area (children of the panel grab .action_frame).
+        self.action_frame = tk.Frame(outer, bg=BG_SURFACE)
+        self.action_frame.pack(side=tk.RIGHT)
+
+    def show_system(self, system: LLMSystem) -> None:
+        self._tier_badge.config(
+            text=f"  {system.tier.name}  ",
+            fg=tier_color(system.tier.name),
+        )
+        self._title_var.set(system.label)
+        self._id_var.set(f"id: {system.id}")
+        self._desc_var.set(f" · {system.description}")
+
+
+# ════════════════════════════════════════════════════════════════════════
+# Editor panel
 # ════════════════════════════════════════════════════════════════════════
 
 class EditorPanel:
-    """Raw JSON editor for the selected system's fragment file."""
-
     def __init__(self, parent: tk.Widget, status_callback):
         self._status = status_callback
         self._current_path: Optional[Path] = None
         self._current_system: Optional[LLMSystem] = None
-        self._dirty: bool = False
 
-        outer = ttk.Frame(parent, padding=4)
+        outer = tk.Frame(parent, bg=BG_SURFACE)
         outer.pack(fill=tk.BOTH, expand=True)
 
-        # Header — system + fragment path.
-        header = ttk.Frame(outer)
-        header.pack(fill=tk.X)
-        self._header_var = tk.StringVar(value="(select a system)")
-        ttk.Label(
-            header, textvariable=self._header_var,
-            font=("TkDefaultFont", 10, "bold")
-        ).pack(side=tk.LEFT)
-        self._dirty_var = tk.StringVar(value="")
-        ttk.Label(
-            header, textvariable=self._dirty_var, foreground="orange"
-        ).pack(side=tk.LEFT, padx=10)
+        # Header row.
+        self.header = PanelHeader(outer)
+        ttk.Button(
+            self.header.action_frame, text="↻  Reload",
+            style="Ghost.TButton",
+            command=self.reload_from_disk,
+        ).pack(side=tk.RIGHT, padx=(8, 0))
+        ttk.Button(
+            self.header.action_frame, text="💾  Save  (Ctrl-S)",
+            style="Primary.TButton",
+            command=self.save_to_disk,
+        ).pack(side=tk.RIGHT)
 
         # Path label.
         self._path_var = tk.StringVar(value="")
         ttk.Label(
-            outer, textvariable=self._path_var, foreground="gray"
-        ).pack(fill=tk.X)
+            outer, textvariable=self._path_var, style="Muted.TLabel",
+        ).pack(anchor=tk.W, padx=12, pady=(0, 8))
 
         # Editor.
-        self.editor = scrolledtext.ScrolledText(
-            outer, wrap=tk.NONE, font=("Consolas", 10),
-            padx=6, pady=6,
+        text_container, self.editor = make_text_widget(
+            outer, code=True, wrap="none", height=20,
         )
-        self.editor.pack(fill=tk.BOTH, expand=True, pady=4)
+        text_container.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 8))
         self.editor.bind("<<Modified>>", self._on_modified)
 
-        # Footer.
-        footer = ttk.Frame(outer)
-        footer.pack(fill=tk.X)
-        self._tok_var = tk.StringVar(value="")
-        ttk.Label(footer, textvariable=self._tok_var).pack(side=tk.LEFT)
-        ttk.Button(
-            footer, text="Reload from disk",
-            command=self.reload_from_disk,
-        ).pack(side=tk.RIGHT)
-        ttk.Button(
-            footer, text="Save (Ctrl-S)",
-            command=self.save_to_disk,
-        ).pack(side=tk.RIGHT, padx=4)
+        # Footer pill row.
+        footer = tk.Frame(outer, bg=BG_SURFACE)
+        footer.pack(fill=tk.X, padx=12, pady=(0, 12))
+
+        self._tok_var = tk.StringVar(value="0 tokens")
+        ttk.Label(
+            footer, textvariable=self._tok_var, style="AccentPill.TLabel",
+        ).pack(side=tk.LEFT)
+
+        self._dirty_var = tk.StringVar(value="")
+        self._dirty_label = ttk.Label(
+            footer, textvariable=self._dirty_var, style="WarnPill.TLabel",
+        )
+        # Don't pack until dirty.
 
     def show_system(self, system: LLMSystem) -> None:
         self._current_system = system
         self._current_path = system.fragment_path
-        self._header_var.set(f"{system.label}  [{system.id}]")
-        self._path_var.set(system.fragment_relpath)
+        self.header.show_system(system)
+        self._path_var.set(f"📄  {system.fragment_relpath}")
         self.reload_from_disk()
 
     def reload_from_disk(self) -> None:
@@ -261,17 +410,14 @@ class EditorPanel:
 
         self.editor.delete("1.0", tk.END)
         self.editor.insert("1.0", text)
-        self._dirty = False
-        self._dirty_var.set("")
         self._tok_var.set(f"~{_estimate_tokens(text)} tokens")
         self.editor.edit_modified(False)
+        self._set_dirty(False)
 
     def save_to_disk(self) -> None:
         if self._current_path is None:
             return
         text = self.editor.get("1.0", tk.END).rstrip("\n") + "\n"
-        # Validate JSON before writing — refuse to clobber the file
-        # with a malformed payload.
         try:
             json.loads(text)
         except json.JSONDecodeError as e:
@@ -287,9 +433,8 @@ class EditorPanel:
         except Exception as e:
             messagebox.showerror("Save failed", str(e))
             return
-        self._dirty = False
-        self._dirty_var.set("✓ saved")
-        self._status(f"Saved {self._current_path.name}")
+        self._set_dirty(False)
+        self._status(f"✓ Saved {self._current_path.name}")
 
     def _on_modified(self, event=None) -> None:
         if not self.editor.edit_modified():
@@ -297,85 +442,107 @@ class EditorPanel:
         self.editor.edit_modified(False)
         text = self.editor.get("1.0", tk.END)
         self._tok_var.set(f"~{_estimate_tokens(text)} tokens")
-        self._dirty = True
-        self._dirty_var.set("● unsaved")
+        self._set_dirty(True)
+
+    def _set_dirty(self, dirty: bool) -> None:
+        if dirty:
+            self._dirty_var.set("●  unsaved changes")
+            if not self._dirty_label.winfo_ismapped():
+                self._dirty_label.pack(side=tk.LEFT, padx=8)
+        else:
+            self._dirty_var.set("")
+            if self._dirty_label.winfo_ismapped():
+                self._dirty_label.pack_forget()
 
 
 # ════════════════════════════════════════════════════════════════════════
-# Panel: Assembly
+# Assembly panel
 # ════════════════════════════════════════════════════════════════════════
 
 class AssemblyPanel:
-    """Show input variables → assembled system+user prompt with
-    placeholder-leakage detection."""
-
     def __init__(self, parent: tk.Widget, status_callback):
         self._status = status_callback
         self._current_system: Optional[LLMSystem] = None
         self._current_sample: Optional[SampleInput] = None
 
-        outer = ttk.Frame(parent, padding=4)
+        outer = tk.Frame(parent, bg=BG_SURFACE)
         outer.pack(fill=tk.BOTH, expand=True)
 
-        # Header.
-        header = ttk.Frame(outer)
-        header.pack(fill=tk.X)
-        self._sys_label = tk.StringVar(value="(select a system)")
-        ttk.Label(
-            header, textvariable=self._sys_label,
-            font=("TkDefaultFont", 10, "bold"),
-        ).pack(side=tk.LEFT)
+        self.header = PanelHeader(outer)
         ttk.Button(
-            header, text="↻ Resample",
+            self.header.action_frame, text="↻  Resample",
+            style="Ghost.TButton",
             command=self.regenerate_sample,
-        ).pack(side=tk.RIGHT, padx=4)
+        ).pack(side=tk.RIGHT, padx=(8, 0))
         ttk.Button(
-            header, text="⟳ Reassemble",
+            self.header.action_frame, text="⟳  Reassemble",
+            style="Primary.TButton",
             command=self.reassemble,
         ).pack(side=tk.RIGHT)
 
+        # Sample label.
         self._sample_label_var = tk.StringVar(value="")
         ttk.Label(
-            outer, textvariable=self._sample_label_var, foreground="gray",
-        ).pack(fill=tk.X)
+            outer, textvariable=self._sample_label_var, style="Muted.TLabel",
+        ).pack(anchor=tk.W, padx=12, pady=(0, 8))
 
-        # Two-pane: vars on left, prompt preview on right.
+        # Two-pane: vars (left), prompt preview (right).
         pane = ttk.PanedWindow(outer, orient=tk.HORIZONTAL)
-        pane.pack(fill=tk.BOTH, expand=True, pady=4)
+        pane.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 8))
 
-        vars_frame = ttk.LabelFrame(pane, text="Input variables", padding=4)
+        # Vars frame.
+        vars_frame = tk.Frame(pane, bg=BG_SURFACE)
         pane.add(vars_frame, weight=1)
-        self._vars_text = scrolledtext.ScrolledText(
-            vars_frame, wrap=tk.WORD, font=("Consolas", 10),
-            padx=4, pady=4,
+        ttk.Label(
+            vars_frame, text="Input variables", style="Subhead.TLabel",
+        ).pack(anchor=tk.W, padx=2, pady=(0, 4))
+        vars_container, self._vars_text = make_text_widget(
+            vars_frame, code=True, wrap="word", height=20,
         )
-        self._vars_text.pack(fill=tk.BOTH, expand=True)
+        vars_container.pack(fill=tk.BOTH, expand=True)
+        # Color tags inside the vars view.
+        self._vars_text.tag_configure("k", foreground=ACCENT_PRIMARY)
+        self._vars_text.tag_configure("c", foreground=CODE_COMMENT)
+        self._vars_text.tag_configure("v", foreground=CODE_STRING)
 
-        preview_frame = ttk.LabelFrame(pane, text="Assembled prompt", padding=4)
+        # Preview frame.
+        preview_frame = tk.Frame(pane, bg=BG_SURFACE)
         pane.add(preview_frame, weight=2)
-        self._preview = scrolledtext.ScrolledText(
-            preview_frame, wrap=tk.WORD, font=("Consolas", 10),
-            state=tk.DISABLED, padx=6, pady=6,
+        ttk.Label(
+            preview_frame, text="Assembled prompt", style="Subhead.TLabel",
+        ).pack(anchor=tk.W, padx=2, pady=(0, 4))
+        preview_container, self._preview = make_text_widget(
+            preview_frame, code=True, wrap="word", height=20,
+            state=tk.DISABLED,
         )
-        self._preview.pack(fill=tk.BOTH, expand=True)
-        self._preview.tag_configure("h", foreground="#4A90D9", font=("Consolas", 10, "bold"))
-        self._preview.tag_configure("warn", foreground="#E74C3C", font=("Consolas", 10, "bold"))
-        self._preview.tag_configure("dim", foreground="#888")
+        preview_container.pack(fill=tk.BOTH, expand=True)
+        self._preview.tag_configure(
+            "h", foreground=CODE_HEADING, font=theme.FONTS.code_b,
+        )
+        self._preview.tag_configure(
+            "warn", foreground=CODE_WARN, font=theme.FONTS.code_b,
+        )
+        self._preview.tag_configure("dim", foreground=TEXT_MUTED)
+        self._preview.tag_configure("placeholder", foreground=CODE_KEYWORD)
 
         # Footer.
-        footer = ttk.Frame(outer)
-        footer.pack(fill=tk.X)
-        self._tok_var = tk.StringVar(value="")
-        self._unresolved_var = tk.StringVar(value="")
-        ttk.Label(footer, textvariable=self._tok_var).pack(side=tk.LEFT)
+        footer = tk.Frame(outer, bg=BG_SURFACE)
+        footer.pack(fill=tk.X, padx=12, pady=(0, 12))
+
+        self._tok_var = tk.StringVar(value="0 tokens")
         ttk.Label(
-            footer, textvariable=self._unresolved_var,
-            foreground="#E74C3C",
-        ).pack(side=tk.RIGHT)
+            footer, textvariable=self._tok_var, style="AccentPill.TLabel",
+        ).pack(side=tk.LEFT)
+
+        self._unresolved_var = tk.StringVar(value="")
+        self._unresolved_label = ttk.Label(
+            footer, textvariable=self._unresolved_var, style="OkPill.TLabel",
+        )
+        self._unresolved_label.pack(side=tk.RIGHT)
 
     def show_system(self, system: LLMSystem) -> None:
         self._current_system = system
-        self._sys_label.set(f"{system.label}  [{system.id}]")
+        self.header.show_system(system)
         self.regenerate_sample()
 
     def regenerate_sample(self) -> None:
@@ -383,27 +550,32 @@ class AssemblyPanel:
             return
         self._current_sample = build_sample(self._current_system.sample_input_key)
         self._sample_label_var.set(
-            f"sample: {self._current_sample.label} "
-            f"(key: {self._current_system.sample_input_key or 'none'})"
+            f"📦  sample: {self._current_sample.label}    "
+            f"(builder: {self._current_system.sample_input_key or '—'})"
         )
         self._render_vars()
         self.reassemble()
 
     def _render_vars(self) -> None:
+        self._vars_text.config(state=tk.NORMAL)
         self._vars_text.delete("1.0", tk.END)
         if self._current_sample is None:
+            self._vars_text.config(state=tk.DISABLED)
             return
         if self._current_sample.variables:
-            self._vars_text.insert(tk.END, "// ${var} substitutions:\n")
+            self._vars_text.insert(tk.END, "// ${var} substitutions\n", "c")
             for k, v in self._current_sample.variables.items():
-                self._vars_text.insert(tk.END, f"{k}: {v!r}\n")
+                self._vars_text.insert(tk.END, f"{k}", "k")
+                self._vars_text.insert(tk.END, ": ")
+                self._vars_text.insert(tk.END, f"{v!r}\n", "v")
         if self._current_sample.tags:
-            self._vars_text.insert(tk.END, "\n// WMS-style tags:\n")
+            self._vars_text.insert(tk.END, "\n// WMS-style tags\n", "c")
             for t in self._current_sample.tags:
-                self._vars_text.insert(tk.END, f"  - {t}\n")
+                self._vars_text.insert(tk.END, f"  • {t}\n")
         if self._current_sample.data_block:
-            self._vars_text.insert(tk.END, "\n// data block:\n")
+            self._vars_text.insert(tk.END, "\n// data block\n", "c")
             self._vars_text.insert(tk.END, self._current_sample.data_block)
+        self._vars_text.config(state=tk.DISABLED)
 
     def reassemble(self) -> None:
         if self._current_system is None:
@@ -414,15 +586,13 @@ class AssemblyPanel:
         fragments = _read_fragment_file(system.fragment_path)
         core = fragments.get("_core", {}) if isinstance(fragments, dict) else {}
         out_block = fragments.get("_output", {}) if isinstance(fragments, dict) else {}
-        # Some legacy fragment files use a flat string for _core or _output.
-        # Coerce both to dicts so .get() calls below stay safe.
         if not isinstance(core, dict):
             core = {}
         if not isinstance(out_block, dict):
             out_block = {}
 
-        sys_template = core.get("system", "") if isinstance(core, dict) else ""
-        usr_template = core.get("user_template", "") if isinstance(core, dict) else ""
+        sys_template = core.get("system", "")
+        usr_template = core.get("user_template", "")
 
         if system.assembler_style == AssemblerStyle.WES:
             sys_resolved = _safe_substitute(sys_template, sample.variables)
@@ -431,13 +601,10 @@ class AssemblyPanel:
                 sys_template + "\n" + usr_template, sample.variables,
             )
         else:
-            # WMS: assembler picks fragments by tag. We render a "preview"
-            # by listing the tags + the data block; assembly via the real
-            # PromptAssembler is shown when the fragment-file shape matches.
             sys_resolved = sys_template or "(no _core.system in this WMS file)"
             usr_resolved = (
-                "// WMS-style: tag-indexed assembly. Selected tags would "
-                "drive fragment picks at runtime.\n\n"
+                "// WMS-style: tag-indexed assembly. Selected tags drive\n"
+                "// fragment picks at runtime — see Assembler\n\n"
                 + (sample.data_block or "(no data block)")
             )
             unresolved = []
@@ -445,12 +612,15 @@ class AssemblyPanel:
         # Render.
         self._preview.config(state=tk.NORMAL)
         self._preview.delete("1.0", tk.END)
-        self._preview.insert(tk.END, "═══ SYSTEM ═══\n", "h")
-        self._preview.insert(tk.END, sys_resolved + "\n\n")
-        self._preview.insert(tk.END, "═══ USER ═══\n", "h")
-        self._preview.insert(tk.END, usr_resolved + "\n")
+        self._preview.insert(tk.END, "═══ SYSTEM\n", "h")
+        self._insert_with_placeholder_highlights(sys_resolved)
+        self._preview.insert(tk.END, "\n\n")
+        self._preview.insert(tk.END, "═══ USER\n", "h")
+        self._insert_with_placeholder_highlights(usr_resolved)
+        self._preview.insert(tk.END, "\n")
+
         if out_block:
-            self._preview.insert(tk.END, "\n═══ OUTPUT GUIDE ═══\n", "h")
+            self._preview.insert(tk.END, "\n═══ OUTPUT GUIDE\n", "h")
             schema_desc = out_block.get("schema_description", "")
             example = out_block.get("example", "")
             if schema_desc:
@@ -460,76 +630,98 @@ class AssemblyPanel:
                 self._preview.insert(tk.END, "example: ", "dim")
                 self._preview.insert(tk.END, str(example) + "\n")
         if unresolved:
-            self._preview.insert(tk.END, "\n⚠ UNRESOLVED PLACEHOLDERS\n", "warn")
+            self._preview.insert(tk.END, "\n⚠  UNRESOLVED PLACEHOLDERS\n", "warn")
             for name in unresolved:
                 self._preview.insert(tk.END, f"  ${{{name}}}\n", "warn")
         self._preview.config(state=tk.DISABLED)
 
         total_chars = len(sys_resolved) + len(usr_resolved)
-        self._tok_var.set(f"~{_estimate_tokens(sys_resolved + usr_resolved)} tokens "
-                          f"({total_chars} chars)")
-        self._unresolved_var.set(
-            f"{len(unresolved)} unresolved" if unresolved else "✓ all vars resolved"
+        self._tok_var.set(
+            f"~{_estimate_tokens(sys_resolved + usr_resolved)} tokens  "
+            f"·  {total_chars:,} chars"
         )
+
+        if unresolved:
+            self._unresolved_var.set(f"⚠  {len(unresolved)} unresolved")
+            self._unresolved_label.configure(style="ErrorPill.TLabel")
+        else:
+            self._unresolved_var.set("✓  all vars resolved")
+            self._unresolved_label.configure(style="OkPill.TLabel")
+
+    def _insert_with_placeholder_highlights(self, text: str) -> None:
+        """Insert text into the preview widget; tint any unresolved
+        ``${var}`` tokens so they're easy to spot."""
+        if not text:
+            return
+        last = 0
+        for m in _PLACEHOLDER_RE.finditer(text):
+            if m.start() > last:
+                self._preview.insert(tk.END, text[last : m.start()])
+            self._preview.insert(tk.END, m.group(0), "placeholder")
+            last = m.end()
+        if last < len(text):
+            self._preview.insert(tk.END, text[last:])
 
 
 # ════════════════════════════════════════════════════════════════════════
-# Panel: Simulator
+# Simulator panel
 # ════════════════════════════════════════════════════════════════════════
 
 class SimulatorPanel:
-    """Run the assembled prompt against fixture / mock / real LLM."""
-
     def __init__(self, parent: tk.Widget, status_callback):
         self._status = status_callback
         self._current_system: Optional[LLMSystem] = None
         self._last_response: str = ""
 
-        outer = ttk.Frame(parent, padding=4)
+        outer = tk.Frame(parent, bg=BG_SURFACE)
         outer.pack(fill=tk.BOTH, expand=True)
 
-        header = ttk.Frame(outer)
-        header.pack(fill=tk.X)
-        self._sys_label = tk.StringVar(value="(select a system)")
+        self.header = PanelHeader(outer)
+        ttk.Button(
+            self.header.action_frame, text="📋  Copy",
+            style="Ghost.TButton",
+            command=self.copy_response,
+        ).pack(side=tk.RIGHT)
+
+        # Run-mode buttons row.
+        bar = tk.Frame(outer, bg=BG_SURFACE)
+        bar.pack(fill=tk.X, padx=12, pady=(0, 8))
+        ttk.Button(
+            bar, text="▶  FIXTURE",
+            style="Success.TButton",
+            command=self.run_fixture,
+        ).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Button(
+            bar, text="▶  MOCK BACKEND",
+            style="Primary.TButton",
+            command=self.run_mock,
+        ).pack(side=tk.LEFT, padx=6)
+        ttk.Button(
+            bar, text="▶  REAL LLM",
+            style="Warning.TButton",
+            command=self.run_real,
+        ).pack(side=tk.LEFT, padx=6)
         ttk.Label(
-            header, textvariable=self._sys_label,
-            font=("TkDefaultFont", 10, "bold"),
-        ).pack(side=tk.LEFT)
+            bar, text="(real LLM gated on WES_DISABLE_FIXTURES=1 env)",
+            style="Caption.TLabel",
+        ).pack(side=tk.LEFT, padx=(12, 0))
 
-        # Run-mode buttons.
-        bar = ttk.Frame(outer)
-        bar.pack(fill=tk.X, pady=4)
-        ttk.Button(bar, text="▶ Run with FIXTURE",
-                   command=self.run_fixture).pack(side=tk.LEFT)
-        ttk.Button(bar, text="▶ Run with MOCK backend",
-                   command=self.run_mock).pack(side=tk.LEFT, padx=4)
-        ttk.Button(bar, text="▶ Run with REAL LLM",
-                   command=self.run_real).pack(side=tk.LEFT, padx=4)
-        ttk.Button(bar, text="Copy response",
-                   command=self.copy_response).pack(side=tk.RIGHT)
-
-        # Status label (e.g. "fixture found", "no fixture", schema parse OK).
+        # Status pill.
         self._sim_status_var = tk.StringVar(value="")
-        ttk.Label(outer, textvariable=self._sim_status_var,
-                  foreground="gray").pack(fill=tk.X)
+        self._sim_status_label = ttk.Label(
+            outer, textvariable=self._sim_status_var, style="Muted.TLabel",
+        )
+        self._sim_status_label.pack(anchor=tk.W, padx=12, pady=(0, 8))
 
         # Response panel.
-        self._resp = scrolledtext.ScrolledText(
-            outer, wrap=tk.WORD, font=("Consolas", 10),
-            state=tk.DISABLED, padx=6, pady=6,
+        resp_container, self._resp = make_text_widget(
+            outer, code=True, wrap="word", height=20, state=tk.DISABLED,
         )
-        self._resp.pack(fill=tk.BOTH, expand=True, pady=4)
-        self._resp.tag_configure(
-            "ok", foreground="#27AE60", font=("Consolas", 10, "bold")
-        )
-        self._resp.tag_configure(
-            "warn", foreground="#E74C3C", font=("Consolas", 10, "bold")
-        )
-        self._resp.tag_configure("dim", foreground="#888")
+        resp_container.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 12))
 
     def show_system(self, system: LLMSystem) -> None:
         self._current_system = system
-        self._sys_label.set(f"{system.label}  [{system.id}]")
+        self.header.show_system(system)
         self._sim_status_var.set("")
         self._set_response("")
 
@@ -543,20 +735,18 @@ class SimulatorPanel:
             self._sim_status_var.set(status)
 
     def _validate_response(self, text: str) -> str:
-        """Quick shape check — JSON parse for JSON tasks; XML <specs>
-        presence for XML tasks. Returns a short status string."""
         if not text or not self._current_system:
             return ""
         if self._current_system.output_format == OutputFormat.JSON:
             try:
                 json.loads(text)
-                return "✓ valid JSON"
+                return "✓  valid JSON"
             except json.JSONDecodeError as e:
-                return f"⚠ JSON parse error: {e}"
+                return f"⚠  JSON parse error: {e}"
         elif self._current_system.output_format == OutputFormat.XML:
             if "<specs>" in text and "</specs>" in text:
-                return "✓ XML <specs> present"
-            return "⚠ no <specs> wrapper found"
+                return "✓  XML <specs> wrapper found"
+            return "⚠  no <specs> wrapper found"
         return ""
 
     def run_fixture(self) -> None:
@@ -568,27 +758,25 @@ class SimulatorPanel:
                 "(no fixture registered for this task — register one in "
                 "world_system/living_world/infra/llm_fixtures/builtin.py "
                 "to see a canonical response here)",
-                status="no fixture available",
+                status="⚠  no fixture available",
             )
             return
         check = self._validate_response(response)
-        self._set_response(response, status=f"fixture loaded — {check}")
+        self._set_response(response, status=f"📦  fixture loaded  ·  {check}")
 
     def run_mock(self) -> None:
-        """Invoke MockBackend.generate(task) — falls through to fixture."""
         if self._current_system is None:
             return
         try:
             from world_system.living_world.backends.backend_manager import (
                 BackendManager,
             )
-            # Trigger fixture registration if not already.
             from world_system.living_world.infra.llm_fixtures import builtin  # noqa: F401
             mgr = BackendManager.get_instance()
         except Exception as e:
             self._set_response(
                 f"(failed to import BackendManager: {e})",
-                status="mock unavailable",
+                status="⚠  mock unavailable",
             )
             return
 
@@ -601,26 +789,25 @@ class SimulatorPanel:
             check = self._validate_response(response or "")
             self._set_response(
                 response or "(empty response)",
-                status=f"mock backend responded — {check}",
+                status=f"🤖  mock backend  ·  {check}",
             )
         except Exception as e:
             self._set_response(
                 f"(mock backend failed: {type(e).__name__}: {e})",
-                status="mock backend error",
+                status="⚠  mock backend error",
             )
 
     def run_real(self) -> None:
-        """Real LLM call — gated on env + confirmation since it costs money."""
         if self._current_system is None:
             return
         if not os.environ.get("WES_DISABLE_FIXTURES"):
             ans = messagebox.askyesno(
                 "Confirm real LLM call",
-                "WES_DISABLE_FIXTURES is not set. The BackendManager "
+                "WES_DISABLE_FIXTURES is not set — the BackendManager "
                 "will return the canonical fixture instead of calling "
                 "the real LLM.\n\n"
-                "Set WES_DISABLE_FIXTURES=1 in the environment first if "
-                "you want to issue an actual API call.\n\n"
+                "Set WES_DISABLE_FIXTURES=1 in the environment first to "
+                "issue an actual API call.\n\n"
                 "Run anyway (will use fixture)?",
             )
             if not ans:
@@ -632,10 +819,6 @@ class SimulatorPanel:
         )
         if not ans:
             return
-        # Real call goes through the same path as mock, but with the env
-        # toggle WES_DISABLE_FIXTURES already set by the user, the
-        # MockBackend's fixture lookup is bypassed and Ollama / Claude
-        # backend handles it. We just call run_mock.
         self.run_mock()
 
     def copy_response(self) -> None:
@@ -644,66 +827,69 @@ class SimulatorPanel:
         try:
             self._resp.clipboard_clear()
             self._resp.clipboard_append(self._last_response)
-            self._status("Response copied to clipboard")
+            self._status("✓  Response copied to clipboard")
         except Exception:
             pass
 
 
 # ════════════════════════════════════════════════════════════════════════
-# Panel: Schema
+# Schema panel
 # ════════════════════════════════════════════════════════════════════════
 
 class SchemaPanel:
-    """Show the task's _output schema description + canonical example,
-    side-by-side with the latest fixture response if one exists."""
-
     def __init__(self, parent: tk.Widget):
         self._current_system: Optional[LLMSystem] = None
 
-        outer = ttk.Frame(parent, padding=4)
+        outer = tk.Frame(parent, bg=BG_SURFACE)
         outer.pack(fill=tk.BOTH, expand=True)
 
-        self._sys_label = tk.StringVar(value="(select a system)")
-        ttk.Label(
-            outer, textvariable=self._sys_label,
-            font=("TkDefaultFont", 10, "bold"),
-        ).pack(fill=tk.X)
+        self.header = PanelHeader(outer)
 
-        pane = ttk.PanedWindow(outer, orient=tk.HORIZONTAL)
-        pane.pack(fill=tk.BOTH, expand=True, pady=4)
-
-        left = ttk.LabelFrame(pane, text="Schema description", padding=4)
-        pane.add(left, weight=1)
-        self._schema_text = scrolledtext.ScrolledText(
-            left, wrap=tk.WORD, font=("Consolas", 10),
-            state=tk.DISABLED, padx=4, pady=4,
-        )
-        self._schema_text.pack(fill=tk.BOTH, expand=True)
-
-        right = ttk.LabelFrame(pane, text="Canonical example", padding=4)
-        pane.add(right, weight=1)
-        self._example_text = scrolledtext.ScrolledText(
-            right, wrap=tk.WORD, font=("Consolas", 10),
-            state=tk.DISABLED, padx=4, pady=4,
-        )
-        self._example_text.pack(fill=tk.BOTH, expand=True)
-
-        # Output format + parse-status row.
-        bar = ttk.Frame(outer)
-        bar.pack(fill=tk.X)
+        # Output format pill row.
+        bar = tk.Frame(outer, bg=BG_SURFACE)
+        bar.pack(fill=tk.X, padx=12, pady=(0, 8))
         self._format_var = tk.StringVar(value="")
+        ttk.Label(
+            bar, textvariable=self._format_var, style="AccentPill.TLabel",
+        ).pack(side=tk.LEFT)
         self._parse_var = tk.StringVar(value="")
-        ttk.Label(bar, textvariable=self._format_var,
-                  foreground="gray").pack(side=tk.LEFT)
-        ttk.Label(bar, textvariable=self._parse_var,
-                  foreground="#27AE60").pack(side=tk.RIGHT)
+        self._parse_label = ttk.Label(
+            bar, textvariable=self._parse_var, style="OkPill.TLabel",
+        )
+        self._parse_label.pack(side=tk.RIGHT)
+
+        # Schema vs example pane.
+        pane = ttk.PanedWindow(outer, orient=tk.HORIZONTAL)
+        pane.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 12))
+
+        schema_frame = tk.Frame(pane, bg=BG_SURFACE)
+        pane.add(schema_frame, weight=1)
+        ttk.Label(
+            schema_frame, text="Schema description", style="Subhead.TLabel",
+        ).pack(anchor=tk.W, padx=2, pady=(0, 4))
+        sc, self._schema_text = make_text_widget(
+            schema_frame, code=True, wrap="word", height=20,
+            state=tk.DISABLED,
+        )
+        sc.pack(fill=tk.BOTH, expand=True)
+
+        example_frame = tk.Frame(pane, bg=BG_SURFACE)
+        pane.add(example_frame, weight=1)
+        ttk.Label(
+            example_frame, text="Canonical example", style="Subhead.TLabel",
+        ).pack(anchor=tk.W, padx=2, pady=(0, 4))
+        ec, self._example_text = make_text_widget(
+            example_frame, code=True, wrap="word", height=20,
+            state=tk.DISABLED,
+        )
+        ec.pack(fill=tk.BOTH, expand=True)
 
     def show_system(self, system: LLMSystem) -> None:
         self._current_system = system
-        self._sys_label.set(f"{system.label}  [{system.id}]")
+        self.header.show_system(system)
         self._format_var.set(
-            f"output_format = {system.output_format.value}  "
-            f"|  fragment = {system.fragment_relpath}"
+            f"output: {system.output_format.value.upper()}  ·  "
+            f"{system.fragment_relpath}"
         )
 
         fragments = _read_fragment_file(system.fragment_path)
@@ -721,21 +907,25 @@ class SchemaPanel:
         )
         self._schema_text.config(state=tk.DISABLED)
 
-        # Pretty-print example if it's JSON.
         rendered_example = example
+        parse_status = ""
+        parse_style = "OkPill.TLabel"
         if system.output_format == OutputFormat.JSON and example:
             try:
                 rendered_example = json.dumps(json.loads(example), indent=2)
-                self._parse_var.set("✓ example parses as valid JSON")
+                parse_status = "✓  example parses as valid JSON"
             except json.JSONDecodeError as e:
-                self._parse_var.set(f"⚠ example JSON parse error: {e}")
+                parse_status = f"⚠  JSON parse error: {e}"
+                parse_style = "ErrorPill.TLabel"
         elif system.output_format == OutputFormat.XML:
             if example and "<specs>" in str(example):
-                self._parse_var.set("✓ example has <specs> wrapper")
-            else:
-                self._parse_var.set("⚠ example missing <specs> wrapper")
-        else:
-            self._parse_var.set("")
+                parse_status = "✓  <specs> wrapper present"
+            elif example:
+                parse_status = "⚠  no <specs> wrapper"
+                parse_style = "WarnPill.TLabel"
+
+        self._parse_var.set(parse_status)
+        self._parse_label.configure(style=parse_style)
 
         self._example_text.config(state=tk.NORMAL)
         self._example_text.delete("1.0", tk.END)
@@ -746,47 +936,73 @@ class SchemaPanel:
 
 
 # ════════════════════════════════════════════════════════════════════════
-# Panel: Coverage
+# Coverage panel
 # ════════════════════════════════════════════════════════════════════════
 
 class CoveragePanel:
-    """Cross-task health checks: fragment-file presence, fixture coverage,
-    placeholder leakage, schema example presence."""
-
     def __init__(self, parent: tk.Widget):
-        outer = ttk.Frame(parent, padding=4)
+        outer = tk.Frame(parent, bg=BG_SURFACE)
         outer.pack(fill=tk.BOTH, expand=True)
 
+        # Header row.
+        head_row = tk.Frame(outer, bg=BG_SURFACE)
+        head_row.pack(fill=tk.X, padx=12, pady=(12, 8))
         ttk.Label(
-            outer, text="Coverage Report",
-            font=("TkDefaultFont", 11, "bold"),
-        ).pack(fill=tk.X, pady=(0, 4))
-
+            head_row, text="Coverage Report", style="Heading.TLabel",
+        ).pack(side=tk.LEFT)
         ttk.Button(
-            outer, text="↻ Recompute report",
+            head_row, text="↻  Recompute",
+            style="Primary.TButton",
             command=self.recompute,
-        ).pack(anchor=tk.W)
+        ).pack(side=tk.RIGHT)
 
-        self._report_text = scrolledtext.ScrolledText(
-            outer, wrap=tk.WORD, font=("Consolas", 10),
-            state=tk.DISABLED, padx=6, pady=6,
+        ttk.Label(
+            outer,
+            text=("Cross-task health: missing fragments, fixture coverage, "
+                  "placeholder leakage, _core/_output structure."),
+            style="Caption.TLabel",
+        ).pack(anchor=tk.W, padx=12, pady=(0, 8))
+
+        # Stat tiles row.
+        self._stats_row = tk.Frame(outer, bg=BG_SURFACE)
+        self._stats_row.pack(fill=tk.X, padx=12, pady=(0, 12))
+
+        # Detail report.
+        rc, self._report_text = make_text_widget(
+            outer, code=True, wrap="word", height=18, state=tk.DISABLED,
         )
-        self._report_text.pack(fill=tk.BOTH, expand=True, pady=4)
+        rc.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 12))
         self._report_text.tag_configure(
-            "h", foreground="#4A90D9", font=("Consolas", 10, "bold")
+            "h", foreground=CODE_HEADING, font=theme.FONTS.code_b,
         )
-        self._report_text.tag_configure("ok", foreground="#27AE60")
-        self._report_text.tag_configure("warn", foreground="#E67E22")
-        self._report_text.tag_configure("err", foreground="#E74C3C")
+        self._report_text.tag_configure("ok", foreground=ACCENT_SUCCESS)
+        self._report_text.tag_configure("warn", foreground=ACCENT_WARNING)
+        self._report_text.tag_configure("err", foreground=ACCENT_ERROR)
 
         self.recompute()
 
+    def _make_stat_tile(
+        self, parent: tk.Widget, label: str, value: str, color: str,
+    ) -> tk.Frame:
+        tile = tk.Frame(
+            parent, bg=BG_ELEVATED, highlightbackground=BORDER_SOFT,
+            highlightthickness=1, padx=14, pady=10,
+        )
+        tk.Label(
+            tile, text=value, bg=BG_ELEVATED, fg=color,
+            font=theme.FONTS.display,
+        ).pack(anchor=tk.W)
+        tk.Label(
+            tile, text=label, bg=BG_ELEVATED, fg=TEXT_SECONDARY,
+            font=theme.FONTS.small,
+        ).pack(anchor=tk.W)
+        return tile
+
     def recompute(self) -> None:
-        lines = []
-        # Fragment file presence + structure check.
-        missing = []
-        no_core = []
-        no_output = []
+        # Compute health stats.
+        missing: List[LLMSystem] = []
+        no_core: List[LLMSystem] = []
+        no_output: List[LLMSystem] = []
         unresolved_total = 0
         for system in SystemRegistry.all():
             if not system.fragment_path.exists():
@@ -802,107 +1018,142 @@ class CoveragePanel:
                 and system.assembler_style == AssemblerStyle.WES
             ):
                 no_output.append(system)
-            # Placeholder leakage with the canonical sample.
             sample = build_sample(system.sample_input_key)
             if isinstance(core_field, dict):
                 tmpl = (core_field.get("system") or "") + "\n" + (core_field.get("user_template") or "")
                 unresolved_total += len(_find_unresolved_placeholders(tmpl, sample.variables))
 
-        # Fixture presence.
-        fixtures_missing = []
+        fixtures_missing: List[LLMSystem] = []
         for system in SystemRegistry.all():
             if _try_get_fixture(system.id) is None:
                 fixtures_missing.append(system)
 
+        total = len(SystemRegistry.all())
+
+        # Refresh stat tiles.
+        for child in self._stats_row.winfo_children():
+            child.destroy()
+        self._make_stat_tile(
+            self._stats_row, "TOTAL TASKS", str(total), TEXT_PRIMARY,
+        ).pack(side=tk.LEFT, padx=(0, 10))
+        self._make_stat_tile(
+            self._stats_row,
+            "MISSING FRAGMENTS",
+            str(len(missing)),
+            ACCENT_ERROR if missing else ACCENT_SUCCESS,
+        ).pack(side=tk.LEFT, padx=10)
+        self._make_stat_tile(
+            self._stats_row,
+            "MISSING FIXTURES",
+            str(len(fixtures_missing)),
+            ACCENT_WARNING if fixtures_missing else ACCENT_SUCCESS,
+        ).pack(side=tk.LEFT, padx=10)
+        self._make_stat_tile(
+            self._stats_row,
+            "UNRESOLVED PLACEHOLDERS",
+            str(unresolved_total),
+            ACCENT_WARNING if unresolved_total else ACCENT_SUCCESS,
+        ).pack(side=tk.LEFT, padx=10)
+
+        # Refresh detail report.
         self._report_text.config(state=tk.NORMAL)
         self._report_text.delete("1.0", tk.END)
 
-        total = len(SystemRegistry.all())
-        self._report_text.insert(tk.END, f"Total LLM systems: {total}\n\n", "h")
-
-        # Fragment file checks.
         self._report_text.insert(tk.END, "── Fragment files ──\n", "h")
         if missing:
             self._report_text.insert(
-                tk.END, f"  ⚠ {len(missing)} systems with missing fragment file\n", "err",
+                tk.END,
+                f"  ⚠  {len(missing)} systems with missing fragment file\n", "err",
             )
             for s in missing:
-                self._report_text.insert(tk.END, f"    - {s.id}: {s.fragment_relpath}\n", "err")
+                self._report_text.insert(
+                    tk.END, f"    • {s.id}: {s.fragment_relpath}\n", "err",
+                )
         else:
-            self._report_text.insert(tk.END, "  ✓ all fragment files present\n", "ok")
+            self._report_text.insert(
+                tk.END, "  ✓  all fragment files present\n", "ok",
+            )
 
         if no_core:
             self._report_text.insert(
-                tk.END, f"  ⚠ {len(no_core)} fragment files without _core block\n", "warn",
+                tk.END,
+                f"  ⚠  {len(no_core)} fragment files without _core block\n",
+                "warn",
             )
             for s in no_core:
-                self._report_text.insert(tk.END, f"    - {s.id}\n", "warn")
+                self._report_text.insert(tk.END, f"    • {s.id}\n", "warn")
         if no_output:
             self._report_text.insert(
-                tk.END, f"  ⚠ {len(no_output)} WES-style files without _output block\n", "warn",
+                tk.END,
+                f"  ⚠  {len(no_output)} WES-style files without _output block\n",
+                "warn",
             )
             for s in no_output:
-                self._report_text.insert(tk.END, f"    - {s.id}\n", "warn")
-        self._report_text.insert(
-            tk.END, f"  unresolved placeholders (across all sample inputs): {unresolved_total}\n",
-            "warn" if unresolved_total else "ok",
-        )
+                self._report_text.insert(tk.END, f"    • {s.id}\n", "warn")
 
-        # Fixture presence.
         self._report_text.insert(tk.END, "\n── Fixture coverage ──\n", "h")
         if fixtures_missing:
             self._report_text.insert(
-                tk.END, f"  ⚠ {len(fixtures_missing)} systems without registered fixture\n", "warn",
+                tk.END,
+                f"  ⚠  {len(fixtures_missing)} systems without registered fixture\n",
+                "warn",
             )
             for s in fixtures_missing:
-                self._report_text.insert(tk.END, f"    - {s.id}\n", "warn")
+                self._report_text.insert(tk.END, f"    • {s.id}\n", "warn")
         else:
-            self._report_text.insert(tk.END, "  ✓ every system has a fixture\n", "ok")
+            self._report_text.insert(
+                tk.END, "  ✓  every system has a fixture\n", "ok",
+            )
 
-        # Per-tier breakdown.
         self._report_text.insert(tk.END, "\n── Per-tier breakdown ──\n", "h")
         for tier, systems in SystemRegistry.grouped_by_tier().items():
-            self._report_text.insert(tk.END, f"  {tier.value}: {len(systems)} systems\n")
+            self._report_text.insert(
+                tk.END, f"  {tier.value}: {len(systems)} systems\n",
+            )
 
         self._report_text.config(state=tk.DISABLED)
 
 
 # ════════════════════════════════════════════════════════════════════════
-# About Panel
+# About panel
 # ════════════════════════════════════════════════════════════════════════
 
 class AboutPanel:
     def __init__(self, parent: tk.Widget):
-        outer = ttk.Frame(parent, padding=12)
+        outer = tk.Frame(parent, bg=BG_SURFACE)
         outer.pack(fill=tk.BOTH, expand=True)
 
+        head = tk.Frame(outer, bg=BG_SURFACE)
+        head.pack(fill=tk.X, padx=18, pady=(18, 8))
         ttk.Label(
-            outer, text="Prompt Studio — quick reference",
-            font=("TkDefaultFont", 12, "bold"),
-        ).pack(anchor=tk.W, pady=(0, 8))
+            head, text="Prompt Studio  ·  quick reference",
+            style="Heading.TLabel",
+        ).pack(anchor=tk.W)
+        ttk.Label(
+            head,
+            text="Centralized tool for designing every LLM prompt the game uses.",
+            style="Caption.TLabel",
+        ).pack(anchor=tk.W)
 
-        text = (
-            "PURPOSE\n"
-            "  Centralized tool for designing and validating every LLM\n"
-            "  prompt the game uses. WMS, WNS, WES tools/hubs/planner/\n"
-            "  supervisor/quest-rewards, NPC dialogue — 32 tasks in all.\n"
-            "\n"
+        body = (
             "PANELS\n"
-            "  Editor    — raw JSON fragment-file editor (Ctrl-S saves).\n"
-            "  Assembly  — input-vars form + live assembled prompt; flags\n"
-            "              unresolved ${vars}.\n"
-            "  Simulator — fixture / mock / real-LLM run with response\n"
-            "              shape validation. Set WES_DISABLE_FIXTURES=1\n"
-            "              to bypass canonical fixture and hit a real model.\n"
-            "  Schema    — _output.schema_description + canonical example.\n"
-            "  Coverage  — cross-task health: missing fragments, fixtures,\n"
-            "              placeholder leakage.\n"
+            "  Editor      Raw JSON fragment file. Ctrl-S saves; refuses\n"
+            "              malformed JSON.\n"
+            "  Assembly    Live ${var}-substituted system+user prompt with\n"
+            "              unresolved-placeholder warnings.\n"
+            "  Simulator   Run with FIXTURE / MOCK / REAL LLM. Real-LLM is\n"
+            "              gated on WES_DISABLE_FIXTURES=1 + confirm.\n"
+            "              Auto JSON / <specs> XML shape validation.\n"
+            "  Schema      _output.schema_description + canonical example,\n"
+            "              JSON pretty-printed and parse-checked.\n"
+            "  Coverage    Cross-task health: missing fragments, fixtures,\n"
+            "              placeholder leakage, structure issues.\n"
             "\n"
-            "RELATED RUNTIME OBSERVABILITY\n"
-            "  WES_VERBOSE=1   in the environment when running the game\n"
-            "                  prints a tagged tail of pipeline events.\n"
-            "  F12 in-game     toggles the live observability overlay\n"
-            "                  showing last-15 events + counter summary.\n"
+            "RUNTIME OBSERVABILITY (related)\n"
+            "  WES_VERBOSE=1   in env when running the game prints a tagged\n"
+            "                  tail of every WMS→WNS→WES→Registry→Reload event.\n"
+            "  F12 in-game     toggles a translucent overlay showing the last\n"
+            "                  15 events + counter summary.\n"
             "\n"
             "ADDING A NEW LLM TASK\n"
             "  1. Add the task code to BackendManager's routing table.\n"
@@ -911,13 +1162,12 @@ class AboutPanel:
             "  4. Add a row to tools/prompt_studio/registry.py.\n"
             "  5. (Optional) Add a sample-input builder in sample_inputs.py.\n"
         )
-        body = scrolledtext.ScrolledText(
-            outer, wrap=tk.WORD, font=("Consolas", 10),
-            state=tk.NORMAL, padx=6, pady=6,
+        bc, body_widget = make_text_widget(
+            outer, code=True, wrap="word", height=20,
         )
-        body.insert("1.0", text)
-        body.config(state=tk.DISABLED)
-        body.pack(fill=tk.BOTH, expand=True)
+        bc.pack(fill=tk.BOTH, expand=True, padx=18, pady=(0, 18))
+        body_widget.insert("1.0", body)
+        body_widget.config(state=tk.DISABLED)
 
 
 # ════════════════════════════════════════════════════════════════════════
@@ -927,56 +1177,69 @@ class AboutPanel:
 class PromptStudioApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("Prompt Studio — Game-1 LLM design & simulator")
-        self.root.geometry("1500x900")
-        self.root.minsize(1200, 700)
+        self.root.title("Prompt Studio  —  Game-1 LLM design & simulator")
+        self.root.geometry("1640x980")
+        self.root.minsize(1280, 760)
+
+        # Apply theme before any widgets are constructed.
+        apply_theme(root)
+
+        # Header banner.
+        HeaderBanner(self.root)
+
+        # Subtle separator under banner.
+        ttk.Separator(self.root, orient="horizontal").pack(fill=tk.X)
 
         # Status bar (bottom).
         self._status_var = tk.StringVar(value="Ready")
+        status_bar = tk.Frame(self.root, bg=BG_DEEP)
+        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
         ttk.Label(
-            self.root, textvariable=self._status_var,
-            relief=tk.SUNKEN, anchor=tk.W,
-        ).pack(side=tk.BOTTOM, fill=tk.X)
+            status_bar, textvariable=self._status_var,
+            style="Status.TLabel",
+        ).pack(side=tk.LEFT, padx=12, pady=4)
 
         # Main pane.
-        pane = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
-        pane.pack(fill=tk.BOTH, expand=True, padx=6, pady=6)
+        body = tk.Frame(self.root, bg=BG_DEEP)
+        body.pack(fill=tk.BOTH, expand=True, padx=12, pady=(8, 4))
+        pane = ttk.PanedWindow(body, orient=tk.HORIZONTAL)
+        pane.pack(fill=tk.BOTH, expand=True)
 
         # Left: browser.
-        left_frame = ttk.Frame(pane)
+        left_frame = tk.Frame(pane, bg=BG_SURFACE)
         pane.add(left_frame, weight=1)
         self._browser = BrowserPanel(left_frame, on_select=self._on_select_system)
 
         # Right: tabbed notebook.
-        right_frame = ttk.Frame(pane)
+        right_frame = tk.Frame(pane, bg=BG_DEEP)
         pane.add(right_frame, weight=4)
         self._notebook = ttk.Notebook(right_frame)
         self._notebook.pack(fill=tk.BOTH, expand=True)
 
         # Tabs.
-        editor_frame = ttk.Frame(self._notebook)
+        editor_frame = tk.Frame(self._notebook, bg=BG_SURFACE)
         self._editor = EditorPanel(editor_frame, self.set_status)
-        self._notebook.add(editor_frame, text="Editor")
+        self._notebook.add(editor_frame, text="  Editor  ")
 
-        assembly_frame = ttk.Frame(self._notebook)
+        assembly_frame = tk.Frame(self._notebook, bg=BG_SURFACE)
         self._assembly = AssemblyPanel(assembly_frame, self.set_status)
-        self._notebook.add(assembly_frame, text="Assembly")
+        self._notebook.add(assembly_frame, text="  Assembly  ")
 
-        sim_frame = ttk.Frame(self._notebook)
+        sim_frame = tk.Frame(self._notebook, bg=BG_SURFACE)
         self._simulator = SimulatorPanel(sim_frame, self.set_status)
-        self._notebook.add(sim_frame, text="Simulator")
+        self._notebook.add(sim_frame, text="  Simulator  ")
 
-        schema_frame = ttk.Frame(self._notebook)
+        schema_frame = tk.Frame(self._notebook, bg=BG_SURFACE)
         self._schema = SchemaPanel(schema_frame)
-        self._notebook.add(schema_frame, text="Schema")
+        self._notebook.add(schema_frame, text="  Schema  ")
 
-        coverage_frame = ttk.Frame(self._notebook)
+        coverage_frame = tk.Frame(self._notebook, bg=BG_SURFACE)
         self._coverage = CoveragePanel(coverage_frame)
-        self._notebook.add(coverage_frame, text="Coverage")
+        self._notebook.add(coverage_frame, text="  Coverage  ")
 
-        about_frame = ttk.Frame(self._notebook)
+        about_frame = tk.Frame(self._notebook, bg=BG_SURFACE)
         self._about = AboutPanel(about_frame)
-        self._notebook.add(about_frame, text="About")
+        self._notebook.add(about_frame, text="  About  ")
 
         self.root.bind("<Control-s>", lambda e: self._editor.save_to_disk())
 
@@ -984,12 +1247,11 @@ class PromptStudioApp:
         system = SystemRegistry.by_id(system_id)
         if system is None:
             return
-        self.set_status(f"Selected: {system.label} ({system.id})")
+        self.set_status(f"Selected: {system.label}  ·  {system.id}")
         self._editor.show_system(system)
         self._assembly.show_system(system)
         self._simulator.show_system(system)
         self._schema.show_system(system)
-        # Coverage refresh is on-demand via its button.
 
     def set_status(self, msg: str) -> None:
         self._status_var.set(msg)
