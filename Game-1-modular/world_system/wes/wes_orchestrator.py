@@ -90,7 +90,14 @@ class WESOrchestrator:
     _instance: Optional["WESOrchestrator"] = None
     _lock = threading.Lock()
 
-    # Default rerun budget per §9.Q12 (1-2 per plan).
+    # Default rerun budget per plan (PLACEHOLDER_FURNISHING_WORKSHEET §8).
+    # Each rerun is consumed by EITHER:
+    #   - Plan-time bounce-back (unresolved cross-refs, planner replans
+    #     with adjusted_instructions warning), OR
+    #   - Supervisor rerun (post-dispatch, common-sense fail).
+    # Setting to 2 lets the planner have one bounce + one supervisor
+    # rerun before we fall through to runtime cascade / verification.
+    # Increase only if observed false-rerun rate stays <30% in playtest.
     DEFAULT_RERUN_BUDGET = 2
 
     def __init__(self) -> None:
@@ -221,31 +228,119 @@ class WESOrchestrator:
     # ── event handler ─────────────────────────────────────────────────
 
     def _on_bus_event(self, event: Any) -> None:
-        """Handle a WNS_CALL_WES_REQUESTED event (P5 minimal form).
+        """Handle a WNS_CALL_WES_REQUESTED event.
 
-        Real bundle assembly is WNS's job (later phase). For P5, we
-        construct a fixture-driven stub bundle so the full pipeline
-        exercises end-to-end when a WNS trigger fires. This is a
-        scaffolding convenience — P6 replaces it with real bundle
-        extraction from event data.
+        If the event payload carries a serialized ``wes_bundle`` (built
+        by WNS via :func:`world_system.wns.wns_to_wes_bridge.build_wes_bundle`),
+        we deserialize and dispatch against it directly — WES inherits
+        the WNS state at the call site (cascading narrative, active
+        threads, geographic descriptor, purpose).
+
+        If the bundle is missing (legacy publishers or serialization
+        failed), we fall back to a minimal fixture bundle so the
+        pipeline still exercises end-to-end.
         """
+        # Best-effort runtime observability — never raises.
         try:
-            bundle = self._build_fixture_bundle()
+            from world_system.wes.observability_runtime import (
+                EVT_WES_DISPATCHED, obs_record,
+            )
+            obs_record(
+                EVT_WES_DISPATCHED,
+                "WES received WNS_CALL_WES_REQUESTED",
+            )
+        except Exception:
+            pass
+
+        try:
+            bundle = self._extract_bundle_from_event(event)
+            if bundle is None:
+                bundle = self._build_fixture_bundle()
             # Fire-and-forget on the async runner so the game thread
             # isn't blocked.
             if self._runner is not None:
                 self._runner.run_single(
-                    lambda: self.run_plan(bundle),
+                    lambda: self._run_plan_with_observability(bundle),
                     timeout_s=None,
                 )
             else:
-                self.run_plan(bundle)
+                self._run_plan_with_observability(bundle)
         except Exception as e:
             surface_visible_wes_failure(
                 operation="_on_bus_event",
                 failure_reason=f"{type(e).__name__}: {e}",
                 fallback_taken="plan run aborted",
             )
+
+    def _run_plan_with_observability(self, bundle) -> Dict[str, Any]:
+        """Wrap :meth:`run_plan` with start/complete observability events.
+
+        Keeps run_plan itself untouched (which has many early-return paths)
+        while still surfacing per-plan lifecycle events to the runtime
+        observability ring buffer.
+        """
+        try:
+            from world_system.wes.observability_runtime import (
+                EVT_WES_PLAN_COMPLETED,
+                EVT_WES_PLAN_STARTED,
+                obs_record,
+            )
+        except Exception:
+            return self.run_plan(bundle)
+
+        bundle_id = getattr(bundle, "bundle_id", None) or "?"
+        obs_record(
+            EVT_WES_PLAN_STARTED,
+            "WES plan starting",
+            bundle_id=bundle_id,
+        )
+        try:
+            result = self.run_plan(bundle)
+            status = (result or {}).get("status", "?")
+            obs_record(
+                EVT_WES_PLAN_COMPLETED,
+                f"WES plan {status}",
+                bundle_id=bundle_id,
+                status=status,
+                plan_id=(result or {}).get("plan_id", "?"),
+            )
+            return result
+        except Exception as e:
+            obs_record(
+                EVT_WES_PLAN_COMPLETED,
+                "WES plan errored",
+                bundle_id=bundle_id,
+                status="error",
+                err=type(e).__name__,
+            )
+            raise
+
+    @staticmethod
+    def _extract_bundle_from_event(event: Any) -> Any:
+        """Pull a serialized WESContextBundle out of a bus event payload.
+
+        Returns the deserialized bundle, or None if the payload doesn't
+        carry one or deserialization fails.
+        """
+        from world_system.living_world.infra.context_bundle import (
+            WESContextBundle,
+        )
+
+        # Event objects may expose data via .data attribute or be a
+        # plain dict. Defensive lookup.
+        data = getattr(event, "data", None)
+        if data is None and isinstance(event, dict):
+            data = event
+        if not isinstance(data, dict):
+            return None
+
+        bundle_dict = data.get("wes_bundle")
+        if not isinstance(bundle_dict, dict):
+            return None
+        try:
+            return WESContextBundle.from_dict(bundle_dict)
+        except (KeyError, ValueError, TypeError):
+            return None
 
     @staticmethod
     def _build_fixture_bundle() -> Any:
@@ -370,6 +465,39 @@ class WESOrchestrator:
                     "tier_results": [r.to_dict() for r in tap.results],
                 }
 
+            # ── Plan-time dependency check (bounce-back) ─────────────
+            # If the plan has unresolved cross-refs and the planner
+            # didn't explicitly acknowledge, bounce back with an XML
+            # warning via the existing rerun mechanism. Runtime cascade
+            # (post-dispatch) handles refs the planner couldn't foresee.
+            from world_system.wes.plan_resolution import (
+                evaluate_plan_for_bounce,
+            )
+            bounce = evaluate_plan_for_bounce(plan, self._registry)
+            if bounce.bounce and reruns_remaining > 0:
+                log_degrade(
+                    subsystem="wes",
+                    operation="run_plan.bounce_back",
+                    failure_reason=(
+                        f"unresolved refs: "
+                        f"{len(bounce.analysis.unresolved_refs) if bounce.analysis else 0}"
+                    ),
+                    fallback_taken="bouncing plan back to planner with warning",
+                    severity="info",
+                    context={"plan_id": plan.plan_id,
+                             "reruns_remaining": reruns_remaining},
+                )
+                try:
+                    from world_system.wes.metrics import WESMetrics
+                    WESMetrics.get_instance().record_plan_bounce()
+                except Exception:
+                    pass
+                return self.run_plan(
+                    bundle,
+                    reruns_remaining=reruns_remaining - 1,
+                    adjusted_instructions=bounce.warning,
+                )
+
             # ── Dispatch ──────────────────────────────────────────────
             dispatcher = PlanDispatcher(
                 hubs=self._hubs,
@@ -381,6 +509,21 @@ class WESOrchestrator:
                 hub_log_writer=observability.write_hub,
             )
             dispatch_result: DispatchResult = dispatcher.run(plan, bundle)
+
+            # ── Runtime cascade ──────────────────────────────────────
+            # After the primary plan dispatches, scan staged content for
+            # cross-refs to NEW ids that nothing produced (LLM tools may
+            # name things in drops/spawns/teaches that the planner didn't
+            # foresee). For each such gap, generate a synthetic extension
+            # plan and dispatch it. Capped at MAX_RUNTIME_CASCADE_DEPTH
+            # to prevent runaway.
+            self._run_runtime_cascade(
+                primary_plan=plan,
+                bundle=bundle,
+                dispatcher=dispatcher,
+                dispatch_result=dispatch_result,
+                tap=tap,
+            )
 
             # ── Supervisor review ────────────────────────────────────
             supervisor_verdict = self._run_supervisor(
@@ -517,6 +660,150 @@ class WESOrchestrator:
                 ),
                 "adjusted_instructions": None,
             }
+
+    def _run_runtime_cascade(
+        self,
+        primary_plan: WESPlan,
+        bundle: Any,
+        dispatcher: "PlanDispatcher",
+        dispatch_result: "DispatchResult",
+        tap: "SupervisorTap",
+    ) -> None:
+        """Repeatedly walk staged content for unresolved cross-refs and
+        dispatch request-layer specs until either no orphans remain or
+        :data:`MAX_RUNTIME_CASCADE_DEPTH` is reached.
+
+        Architecture (2026-04-29 refactor):
+
+        Each pass calls
+        :func:`world_system.wes.plan_resolution.find_runtime_orphans`
+        for deterministic orphan detection, then hands the
+        recommendations to
+        :class:`world_system.wes.request_layer.RequestLayer`. The
+        request layer builds synthetic :class:`ExecutorSpec` objects
+        directly — no synthetic plan, no hub call, no re-planner round-
+        trip. The dispatcher's tool-only fan-out path
+        (:meth:`PlanDispatcher.run_request_specs`) processes them via
+        the same orphan-scan / balance / stage glue used by ``run()``.
+
+        Per user direction: WES has authority to create whatever content
+        it needs. When a chunk's enemySpawns names a new hostile, the
+        hostile is auto-generated; when that hostile drops a new
+        material, the material is auto-generated; etc. The cascade
+        loop is what propagates that chain.
+
+        Cap controls runaway. Each pass is bounded by
+        :data:`MAX_CASCADE_STEPS_PER_PASS` recommendations (deduped
+        upstream) so a single malformed tool output can't queue dozens
+        of follow-ups.
+        """
+        from world_system.wes.plan_resolution import (
+            MAX_CASCADE_STEPS_PER_PASS,
+            MAX_RUNTIME_CASCADE_DEPTH,
+            find_runtime_orphans,
+        )
+        from world_system.wes.request_layer import RequestLayer
+
+        if self._registry is None:
+            return
+
+        request_layer = RequestLayer()
+
+        for depth in range(1, MAX_RUNTIME_CASCADE_DEPTH + 1):
+            try:
+                recs = find_runtime_orphans(
+                    self._registry, primary_plan.plan_id,
+                )
+            except Exception as e:
+                log_degrade(
+                    subsystem="wes",
+                    operation=f"runtime_cascade.find_orphans (depth {depth})",
+                    failure_reason=f"{type(e).__name__}: {e}",
+                    fallback_taken="cascade halted; orphans may remain",
+                    severity="warning",
+                    context={"plan_id": primary_plan.plan_id, "depth": depth},
+                )
+                return
+
+            if not recs:
+                return
+
+            # Cap before building specs — find_runtime_orphans already
+            # de-dupes, but a malformed payload could still queue many
+            # bogus refs. Trim here so we never exceed the per-pass cap.
+            capped = recs[:MAX_CASCADE_STEPS_PER_PASS]
+
+            try:
+                batch = request_layer.build_specs(
+                    capped,
+                    registry=self._registry,
+                    bundle=bundle,
+                    plan_id=primary_plan.plan_id,
+                    cascade_depth=depth,
+                )
+            except Exception as e:
+                log_degrade(
+                    subsystem="wes",
+                    operation=f"runtime_cascade.build_specs (depth {depth})",
+                    failure_reason=f"{type(e).__name__}: {e}",
+                    fallback_taken="cascade halted; orphans not generated",
+                    severity="warning",
+                    context={"plan_id": primary_plan.plan_id, "depth": depth},
+                )
+                return
+
+            if batch.is_empty():
+                return
+
+            spec_count = batch.total_specs()
+            log_degrade(
+                subsystem="wes",
+                operation=f"runtime_cascade.dispatch (depth {depth})",
+                failure_reason=(
+                    f"request layer dispatching {spec_count} synthetic "
+                    f"executor_tool spec(s) for unresolved refs across "
+                    f"{len(batch.tool_specs)} tool(s)"
+                ),
+                fallback_taken="orphans being auto-generated",
+                severity="info",
+                context={"plan_id": primary_plan.plan_id,
+                         "depth": depth,
+                         "spec_count": spec_count,
+                         "tools": sorted(batch.tool_specs)},
+            )
+            try:
+                from world_system.wes.metrics import WESMetrics
+                WESMetrics.get_instance().record_runtime_cascade(spec_count)
+            except Exception:
+                pass
+
+            try:
+                ext_result = dispatcher.run_request_specs(
+                    batch.tool_specs,
+                    plan_id=primary_plan.plan_id,
+                    source_bundle_id=primary_plan.source_bundle_id,
+                    cascade_depth=depth,
+                )
+            except Exception as e:
+                log_degrade(
+                    subsystem="wes",
+                    operation=f"runtime_cascade.dispatch_failed (depth {depth})",
+                    failure_reason=f"{type(e).__name__}: {e}",
+                    fallback_taken="cascade halted; remaining orphans not generated",
+                    severity="warning",
+                    context={"plan_id": primary_plan.plan_id, "depth": depth},
+                )
+                return
+
+            # Merge request-layer dispatch results into the parent's.
+            for tier_result in ext_result.tier_results:
+                dispatch_result.tier_results.append(tier_result)
+            for tool_name, ids in ext_result.staged_content_ids.items():
+                dispatch_result.staged_content_ids.setdefault(
+                    tool_name, []
+                ).extend(ids)
+            for sid, errs in ext_result.step_errors.items():
+                dispatch_result.step_errors.setdefault(sid, []).extend(errs)
 
     def _commit_or_report(
         self,

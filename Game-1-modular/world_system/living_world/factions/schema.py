@@ -18,12 +18,16 @@ import sqlite3
 import time
 from typing import List
 
-FACTION_SCHEMA_VERSION = 3
+FACTION_SCHEMA_VERSION = 4
 
 # Reserved tag used inside the `npc_affinity` table to record an NPC's personal
 # opinion of the player. The leading underscore prevents collision with real
 # faction tags (which use the "<namespace>:<name>" form, e.g. "guild:smiths").
 NPC_AFFINITY_PLAYER_TAG = "_player"
+
+# Dialogue log cap — when an NPC's log exceeds this row count, oldest rows
+# are pruned. Tunable per-NPC at write time but this is the default.
+DEFAULT_DIALOGUE_LOG_MAX_ROWS = 200
 
 
 class FactionDatabaseSchema:
@@ -107,6 +111,44 @@ class FactionDatabaseSchema:
     ON location_affinity_defaults(address_tier, tag);
     """
 
+    # NPC DYNAMIC STATE: Runtime mutables that NPCMemory tracks (v3+).
+    # One row per NPC. Sibling of npc_profiles (which holds immutable narrative).
+    # relationship_score is NOT stored here — read it from npc_affinity using
+    # the reserved tag NPC_AFFINITY_PLAYER_TAG so there is one source of truth.
+    CREATE_NPC_DYNAMIC_STATE = """
+    CREATE TABLE IF NOT EXISTS npc_dynamic_state (
+        npc_id TEXT PRIMARY KEY,
+        current_emotion TEXT NOT NULL DEFAULT 'neutral',
+        last_interaction_time REAL NOT NULL DEFAULT 0.0,
+        interaction_count INTEGER NOT NULL DEFAULT 0,
+        conversation_summary TEXT NOT NULL DEFAULT '',
+        knowledge_json TEXT NOT NULL DEFAULT '[]',
+        reputation_tags_json TEXT NOT NULL DEFAULT '[]',
+        quest_state_json TEXT NOT NULL DEFAULT '{}',
+        last_updated REAL NOT NULL,
+        FOREIGN KEY (npc_id) REFERENCES npc_profiles(npc_id) ON DELETE CASCADE
+    );
+    """
+
+    # NPC DIALOGUE LOG: Append-only per-NPC dialogue history. Capped per NPC
+    # by DEFAULT_DIALOGUE_LOG_MAX_ROWS (oldest rows pruned).
+    CREATE_NPC_DIALOGUE_LOG = """
+    CREATE TABLE IF NOT EXISTS npc_dialogue_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        npc_id TEXT NOT NULL,
+        timestamp REAL NOT NULL,
+        speaker TEXT NOT NULL CHECK(speaker IN ('player', 'npc')),
+        utterance TEXT NOT NULL,
+        emotion_at_time TEXT,
+        FOREIGN KEY (npc_id) REFERENCES npc_profiles(npc_id) ON DELETE CASCADE
+    );
+    """
+
+    CREATE_NPC_DIALOGUE_LOG_INDEX = """
+    CREATE INDEX IF NOT EXISTS idx_npc_dialogue_log_npc_time
+    ON npc_dialogue_log(npc_id, timestamp);
+    """
+
     # SCHEMA VERSION
     CREATE_SCHEMA_VERSION = """
     CREATE TABLE IF NOT EXISTS faction_schema_version (
@@ -128,6 +170,9 @@ class FactionDatabaseSchema:
             FactionDatabaseSchema.CREATE_PLAYER_AFFINITY_INDEX,
             FactionDatabaseSchema.CREATE_LOCATION_AFFINITY_DEFAULTS,
             FactionDatabaseSchema.CREATE_LOCATION_AFFINITY_DEFAULTS_INDEX,
+            FactionDatabaseSchema.CREATE_NPC_DYNAMIC_STATE,
+            FactionDatabaseSchema.CREATE_NPC_DIALOGUE_LOG,
+            FactionDatabaseSchema.CREATE_NPC_DIALOGUE_LOG_INDEX,
             FactionDatabaseSchema.CREATE_SCHEMA_VERSION,
         ]
 

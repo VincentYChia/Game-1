@@ -45,9 +45,15 @@ TOOL_MATERIALS = "materials"
 TOOL_NODES = "nodes"
 TOOL_SKILLS = "skills"
 TOOL_TITLES = "titles"
+TOOL_CHUNKS = "chunks"
+TOOL_NPCS = "npcs"
+TOOL_QUESTS = "quests"
 
 VALID_TOOLS = frozenset(
-    {TOOL_HOSTILES, TOOL_MATERIALS, TOOL_NODES, TOOL_SKILLS, TOOL_TITLES}
+    {
+        TOOL_HOSTILES, TOOL_MATERIALS, TOOL_NODES, TOOL_SKILLS, TOOL_TITLES,
+        TOOL_CHUNKS, TOOL_NPCS, TOOL_QUESTS,
+    }
 )
 
 # Relationship strings — placeholder vocabulary (§10 / §17 in ledger).
@@ -56,6 +62,17 @@ REL_USES_SKILL = "uses_skill"
 REL_YIELDS = "yields"
 REL_UNLOCKS = "unlocks"
 REL_BONUS_TAG = "bonus_tag"
+REL_SPAWNS = "spawns"          # chunk -> resource node / hostile (template)
+REL_HOMES_AT = "homes_at"      # npc -> chunk (cultural anchor)
+REL_TEACHES = "teaches"        # npc -> skill
+REL_REACTS_TO = "reacts_to"    # npc -> material/hostile/skill (event triggers)
+REL_OFFERED_BY = "offered_by"  # quest -> npc (given_by)
+REL_RETURNED_TO = "returned_to"  # quest -> npc (return_to)
+REL_TARGETS = "targets"        # quest objective -> material/hostile/chunk/npc
+REL_REQUIRES = "requires"      # quest -> title/quest (prerequisites)
+REL_HINTS_REWARD = "hints_reward"  # quest -> title/skill (rewards_prose hints)
+REL_CHAINS_TO = "chains_to"    # quest -> quest (progression.nextQuest)
+REL_FAILS_ON = "fails_on"      # quest -> npc/chunk (expiration triggers)
 
 
 def _get_content_id(content_json: Dict[str, Any], tool_name: str) -> str:
@@ -90,6 +107,12 @@ def _get_content_id(content_json: Dict[str, Any], tool_name: str) -> str:
         candidates.extend(["skillId", "skill_id"])
     elif tool_name == TOOL_TITLES:
         candidates.extend(["titleId", "title_id"])
+    elif tool_name == TOOL_CHUNKS:
+        candidates.extend(["chunkType", "chunk_type", "chunkTypeId"])
+    elif tool_name == TOOL_NPCS:
+        candidates.extend(["npc_id", "npcId"])
+    elif tool_name == TOOL_QUESTS:
+        candidates.extend(["quest_id", "questId"])
 
     for key in candidates:
         value = content_json.get(key)
@@ -269,6 +292,198 @@ def _extract_title_xrefs(
     return out
 
 
+def _extract_chunk_xrefs(
+    src_id: str, content_json: Dict[str, Any]
+) -> List[XrefTuple]:
+    """Chunks reference resource-node templates and hostile templates that
+    spawn within them. resourceDensity keys are nodeIds (resource node
+    templates), enemySpawns keys are enemyIds.
+    """
+    out: List[XrefTuple] = []
+
+    res_density = content_json.get("resourceDensity") or content_json.get("resource_density") or {}
+    if isinstance(res_density, dict):
+        for node_id in res_density.keys():
+            if isinstance(node_id, str) and node_id:
+                out.append(
+                    (TOOL_CHUNKS, src_id, TOOL_NODES, node_id, REL_SPAWNS)
+                )
+
+    enemy_spawns = content_json.get("enemySpawns") or content_json.get("enemy_spawns") or {}
+    if isinstance(enemy_spawns, dict):
+        for enemy_id in enemy_spawns.keys():
+            if isinstance(enemy_id, str) and enemy_id:
+                out.append(
+                    (TOOL_CHUNKS, src_id, TOOL_HOSTILES, enemy_id, REL_SPAWNS)
+                )
+
+    return out
+
+
+def _extract_npc_xrefs(
+    src_id: str, content_json: Dict[str, Any]
+) -> List[XrefTuple]:
+    """NPCs reference: home_chunk (locality), teachableSkills (services),
+    and event-trigger matches (personality.reaction_modifiers.*).
+
+    Faction tags are NOT registry rows (emergent vocabulary, not validated).
+    Quest references are skipped until TOOL_QUESTS is wired.
+    Wildcard resource_match entries (e.g. 'herb_*') are skipped — they don't
+    resolve to a single id.
+    """
+    out: List[XrefTuple] = []
+
+    locality = content_json.get("locality") or {}
+    home_chunk = locality.get("home_chunk") if isinstance(locality, dict) else None
+    if isinstance(home_chunk, str) and home_chunk:
+        out.append(
+            (TOOL_NPCS, src_id, TOOL_CHUNKS, home_chunk, REL_HOMES_AT)
+        )
+
+    services = content_json.get("services") or {}
+    if isinstance(services, dict):
+        for skill_id in services.get("teachableSkills") or []:
+            if isinstance(skill_id, str) and skill_id:
+                out.append(
+                    (TOOL_NPCS, src_id, TOOL_SKILLS, skill_id, REL_TEACHES)
+                )
+
+    personality = content_json.get("personality") or {}
+    reaction_modifiers = personality.get("reaction_modifiers") or {} if isinstance(personality, dict) else {}
+    if isinstance(reaction_modifiers, dict):
+        for _event_type, modifier in reaction_modifiers.items():
+            if not isinstance(modifier, dict):
+                continue
+            for mat_id in modifier.get("resource_match") or []:
+                if isinstance(mat_id, str) and mat_id and "*" not in mat_id:
+                    out.append(
+                        (TOOL_NPCS, src_id, TOOL_MATERIALS, mat_id, REL_REACTS_TO)
+                    )
+            for enemy_id in modifier.get("enemy_match") or []:
+                if isinstance(enemy_id, str) and enemy_id and "*" not in enemy_id:
+                    out.append(
+                        (TOOL_NPCS, src_id, TOOL_HOSTILES, enemy_id, REL_REACTS_TO)
+                    )
+            for skill_id in modifier.get("skill_match") or []:
+                if isinstance(skill_id, str) and skill_id and "*" not in skill_id:
+                    out.append(
+                        (TOOL_NPCS, src_id, TOOL_SKILLS, skill_id, REL_REACTS_TO)
+                    )
+
+    return out
+
+
+_OBJECTIVE_TARGET_TOOL = {
+    # objective_type -> (items[].field_name, ref_tool)
+    "gather":      ("item_id",   TOOL_MATERIALS),
+    "kill_target": ("target_id", TOOL_HOSTILES),
+    "deliver":     ("item_id",   TOOL_MATERIALS),
+    "explore":     ("chunk_id",  TOOL_CHUNKS),
+    "talk":        ("npc_id",    TOOL_NPCS),
+    # 'craft' references recipe_id, but recipes are NOT a tool yet — skipped
+    # 'combat' references no specific id (any-kill counter)
+}
+
+
+def _extract_quest_xrefs(
+    src_id: str, content_json: Dict[str, Any]
+) -> List[XrefTuple]:
+    """Quests reference: NPCs (given_by, return_to, recipient, expiration),
+    objective targets (varies by type), title/skill/quest prerequisites, and
+    title/skill reward hints, plus chained next quests and expiration chunks.
+
+    Faction-affinity gates are NOT registry rows (faction tags are emergent).
+    Recipe references in 'craft' objectives are skipped (no recipes tool yet).
+    """
+    out: List[XrefTuple] = []
+
+    given_by = content_json.get("given_by") or content_json.get("npc_id")
+    if isinstance(given_by, str) and given_by:
+        out.append((TOOL_QUESTS, src_id, TOOL_NPCS, given_by, REL_OFFERED_BY))
+
+    return_to = content_json.get("return_to")
+    if isinstance(return_to, str) and return_to and return_to != given_by:
+        out.append((TOOL_QUESTS, src_id, TOOL_NPCS, return_to, REL_RETURNED_TO))
+
+    objectives = content_json.get("objectives") or {}
+    if isinstance(objectives, dict):
+        obj_type = objectives.get("objective_type", objectives.get("type", ""))
+        target_spec = _OBJECTIVE_TARGET_TOOL.get(obj_type)
+        if target_spec:
+            field_name, ref_tool = target_spec
+            for item in objectives.get("items") or []:
+                if not isinstance(item, dict):
+                    continue
+                target_id = item.get(field_name)
+                if isinstance(target_id, str) and target_id:
+                    out.append(
+                        (TOOL_QUESTS, src_id, ref_tool, target_id, REL_TARGETS)
+                    )
+                # 'deliver' also references recipient_npc_id
+                if obj_type == "deliver":
+                    recipient = item.get("recipient_npc_id")
+                    if isinstance(recipient, str) and recipient:
+                        out.append(
+                            (TOOL_QUESTS, src_id, TOOL_NPCS, recipient, REL_TARGETS)
+                        )
+
+    # Requirements: titles + previously-completed quests.
+    requirements = content_json.get("requirements") or {}
+    if isinstance(requirements, dict):
+        for title_id in requirements.get("titles") or []:
+            if isinstance(title_id, str) and title_id:
+                out.append(
+                    (TOOL_QUESTS, src_id, TOOL_TITLES, title_id, REL_REQUIRES)
+                )
+        for quest_id in requirements.get("completedQuests") or []:
+            if isinstance(quest_id, str) and quest_id:
+                out.append(
+                    (TOOL_QUESTS, src_id, TOOL_QUESTS, quest_id, REL_REQUIRES)
+                )
+
+    # Reward hints (prose-side title/skill mentions).
+    rewards_prose = content_json.get("rewards_prose") or {}
+    if isinstance(rewards_prose, dict):
+        title_hint = rewards_prose.get("title_hint")
+        if isinstance(title_hint, str) and title_hint:
+            out.append(
+                (TOOL_QUESTS, src_id, TOOL_TITLES, title_hint, REL_HINTS_REWARD)
+            )
+        skill_hint = rewards_prose.get("skill_hint")
+        if isinstance(skill_hint, str) and skill_hint:
+            out.append(
+                (TOOL_QUESTS, src_id, TOOL_SKILLS, skill_hint, REL_HINTS_REWARD)
+            )
+
+    # Chain link.
+    progression = content_json.get("progression") or {}
+    if isinstance(progression, dict):
+        next_quest = progression.get("nextQuest")
+        if isinstance(next_quest, str) and next_quest:
+            out.append(
+                (TOOL_QUESTS, src_id, TOOL_QUESTS, next_quest, REL_CHAINS_TO)
+            )
+
+    # Expiration triggers.
+    expiration = content_json.get("expiration") or {}
+    if isinstance(expiration, dict):
+        exp_type = expiration.get("type")
+        if exp_type == "npc_death":
+            npc_id = expiration.get("npc_id")
+            if isinstance(npc_id, str) and npc_id:
+                out.append(
+                    (TOOL_QUESTS, src_id, TOOL_NPCS, npc_id, REL_FAILS_ON)
+                )
+        elif exp_type == "chunk_destroyed":
+            chunk_id = expiration.get("chunk_id")
+            if isinstance(chunk_id, str) and chunk_id:
+                out.append(
+                    (TOOL_QUESTS, src_id, TOOL_CHUNKS, chunk_id, REL_FAILS_ON)
+                )
+
+    return out
+
+
 # Lookup table. Each extractor takes (src_id, content_json) and returns
 # a list of xref tuples (src_type included).
 _EXTRACTORS = {
@@ -277,6 +492,9 @@ _EXTRACTORS = {
     TOOL_NODES: _extract_node_xrefs,
     TOOL_SKILLS: _extract_skill_xrefs,
     TOOL_TITLES: _extract_title_xrefs,
+    TOOL_CHUNKS: _extract_chunk_xrefs,
+    TOOL_NPCS: _extract_npc_xrefs,
+    TOOL_QUESTS: _extract_quest_xrefs,
 }
 
 
@@ -324,6 +542,15 @@ SACRED_TOP_LEVEL_KEY = {
                                     # "skills".
     TOOL_TITLES: "titles",         # progression/titles-1.JSON uses
                                     # "titles".
+    TOOL_CHUNKS: "templates",      # Definitions.JSON/Chunk-templates-2.JSON
+                                    # uses "templates" as the wrapper key.
+                                    # ChunkTemplateDatabase tolerates the
+                                    # legacy "chunkTemplates" key for any
+                                    # historical generated files.
+    TOOL_NPCS: "npcs",             # progression/npcs-3.JSON uses
+                                    # "npcs".
+    TOOL_QUESTS: "quests",         # progression/quests-3.JSON uses
+                                    # "quests".
 }
 
 
@@ -336,6 +563,9 @@ SACRED_OUTPUT_SUBDIR = {
     TOOL_NODES: "Definitions.JSON",
     TOOL_SKILLS: "Skills",
     TOOL_TITLES: "progression",
+    TOOL_CHUNKS: "Definitions.JSON",  # matches sacred Chunk-templates-*.JSON
+    TOOL_NPCS: "progression",
+    TOOL_QUESTS: "progression",
 }
 
 
@@ -347,4 +577,7 @@ SACRED_OUTPUT_PREFIX = {
     TOOL_NODES: "Resource-node",
     TOOL_SKILLS: "skills",
     TOOL_TITLES: "titles",
+    TOOL_CHUNKS: "Chunk-templates",  # capitalization matches sacred file
+    TOOL_NPCS: "npcs",
+    TOOL_QUESTS: "quests",
 }

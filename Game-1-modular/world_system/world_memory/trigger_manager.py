@@ -35,9 +35,12 @@ EVENT_CATEGORY_MAP: Dict[str, str] = {
     "player_death": "combat",
     "dodge_performed": "combat",
     "status_applied": "combat",
+    "turret_placed": "combat",
+    "barrier_placed": "combat",
     # Gathering
     "resource_gathered": "gathering",
     "node_depleted": "gathering",
+    "fish_caught": "gathering",
     # Crafting
     "craft_attempted": "crafting",
     "item_invented": "crafting",
@@ -57,6 +60,7 @@ EVENT_CATEGORY_MAP: Dict[str, str] = {
     # Exploration
     "chunk_entered": "exploration",
     "area_discovered": "exploration",
+    "chest_opened": "exploration",
     # Social
     "npc_interaction": "social",
     "quest_accepted": "social",

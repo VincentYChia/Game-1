@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "purpose": "Bridges biome-string outputs from the geographic system (systems/geography/biome_generator.py) onto canonical chunkType keys defined in Definitions.JSON/Chunk-templates-*.JSON. Loaded by ChunkTemplateDatabase at startup; consulted by systems/chunk.py:_determine_chunk_type when GeographicData is present on a chunk.",
+    "design_note": "This file used to live as a code-locked dict in systems/chunk.py:_GEO_TO_CHUNK_TYPE. Externalizing it here lets the designer adjust mappings without code edits and lets generated chunk templates introduce new geo_type entries via their geoTypes array (sacred entries below win on collision).",
+    "extension_via_generated_templates": "WES-generated chunk templates may declare a top-level geoTypes:[\"...\"] array. Each entry in that array is auto-registered as geo_type → template.chunkType ONLY when this file does not already map that geo_type. Designer keeps full control of the canonical mapping."
+  },
+  "geo_to_chunk_type": {
+    "forest":           "peaceful_forest",
+    "dense_thicket":    "dense_forest",
+    "cave":             "peaceful_cave",
+    "deep_cave":        "deep_cave",
+    "quarry":           "peaceful_quarry",
+    "rocky_highlands":  "rocky_quarry",
+    "wetland":          "wetland",
+    "lake":             "water_lake",
+    "river":            "water_river",
+    "flooded_cave":     "flooded_cave",
+    "rocky_forest":     "rocky_forest",
+    "crystal_cavern":   "crystal_cave",
+    "overgrown_ruins":  "ruins_quarry",
+    "barren_waste":     "barren_quarry",
+    "cursed_marsh":     "water_cursed_swamp"
+  }
+}

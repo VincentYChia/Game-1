@@ -123,7 +123,7 @@ class TestStaging(ContentRegistryTestCase):
     def test_stage_unknown_tool_raises(self) -> None:
         with self.assertRaises(ValueError):
             self.registry.stage_content(
-                "quests", {"questId": "q1"}, "p1", "b1"
+                "fake_unknown_tool", {"questId": "q1"}, "p1", "b1"
             )
 
     def test_stage_missing_id_raises(self) -> None:

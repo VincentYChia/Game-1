@@ -302,6 +302,34 @@ class ContentRegistry:
             )
             reload_results = {}
 
+        # Best-effort live observability. Surfaces "content X committed,
+        # databases reloaded" to the in-game overlay and prompt studio
+        # without the caller having to subscribe to an event bus.
+        try:
+            from world_system.wes.observability_runtime import (
+                EVT_DB_RELOADED,
+                EVT_DB_RELOAD_FAILED,
+                EVT_REGISTRY_COMMITTED,
+                obs_record,
+            )
+            row_summary = {t: len(rs) for t, rs in rows_by_tool.items() if rs}
+            obs_record(
+                EVT_REGISTRY_COMMITTED,
+                "ContentRegistry committed",
+                plan_id=plan_id,
+                tools=",".join(sorted(row_summary)),
+                rows=sum(row_summary.values()),
+            )
+            for cls_name, ok in (reload_results or {}).items():
+                obs_record(
+                    EVT_DB_RELOADED if ok else EVT_DB_RELOAD_FAILED,
+                    f"{cls_name} reload {'ok' if ok else 'FAILED'}",
+                    db=cls_name,
+                    ok=bool(ok),
+                )
+        except Exception:
+            pass  # observability failures must not break commit path
+
         return {
             "plan_id": plan_id,
             "files": files,

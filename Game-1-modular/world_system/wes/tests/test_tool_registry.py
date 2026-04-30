@@ -37,10 +37,13 @@ class TestWESToolRegistry(unittest.TestCase):
         self.assertIs(a, b)
         self.assertIs(a, get_tool_registry())
 
-    def test_five_tool_names_exported(self) -> None:
+    def test_all_tool_names_exported(self) -> None:
         self.assertEqual(
             sorted(TOOL_NAMES),
-            sorted(("hostiles", "materials", "nodes", "skills", "titles")),
+            sorted((
+                "hostiles", "materials", "nodes", "skills", "titles",
+                "chunks", "npcs", "quests",
+            )),
         )
 
     def test_initialize_builds_every_role(self) -> None:
@@ -69,9 +72,9 @@ class TestWESToolRegistry(unittest.TestCase):
         reg = WESToolRegistry(use_stubs=True)
         reg.initialize()
         with self.assertRaises(KeyError):
-            reg.get_hub("quests")     # deferred per §6.3.6
+            reg.get_hub("ecosystem")   # dropped per v4
         with self.assertRaises(KeyError):
-            reg.get_tool("ecosystem")  # dropped per v4
+            reg.get_tool("dialogue")   # never a WES tool
 
     def test_lazy_initialization_through_get_planner(self) -> None:
         reg = WESToolRegistry(use_stubs=True)

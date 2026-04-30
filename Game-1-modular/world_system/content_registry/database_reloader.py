@@ -76,6 +76,38 @@ _RELOAD_TARGETS: Dict[str, List[Tuple[str, str, Tuple[str, ...]]]] = {
             ("reload", "_reload", "reload_all"),
         ),
     ],
+    "npcs": [
+        # NPCDatabase loads BOTH npcs and quests (single SQL-less
+        # database holding two cache dicts), so reloading either tool
+        # name routes to the same target. NPCDatabase.reload() picks
+        # up `progression/npcs-generated-*.JSON` siblings.
+        (
+            "data.databases.npc_db",
+            "NPCDatabase",
+            ("reload", "_reload"),
+        ),
+    ],
+    "quests": [
+        (
+            "data.databases.npc_db",
+            "NPCDatabase",
+            ("reload", "_reload"),
+        ),
+    ],
+    "chunks": [
+        # ChunkTemplateDatabase reads the sacred
+        # ``Definitions.JSON/Chunk-templates-*.JSON`` file plus any
+        # ``Chunk-templates-generated-*.JSON`` siblings written by the
+        # Content Registry. Reloading after a WES commit picks the new
+        # templates up immediately so chunk dispatch + spawn pools see
+        # them on the next chunk load. Singleton pattern — same as the
+        # other reload targets above.
+        (
+            "data.databases.chunk_template_db",
+            "ChunkTemplateDatabase",
+            ("reload", "_reload"),
+        ),
+    ],
 }
 
 

@@ -1208,6 +1208,19 @@ class GameEngine:
                     self.add_notification(f"Switched to {mode} mode", (100, 200, 255))
                     print(f"🖥️  Switched to {mode}: {Config.SCREEN_WIDTH}x{Config.SCREEN_HEIGHT}")
 
+                elif event.key == pygame.K_F12:
+                    # Toggle the WES observability overlay (live ring buffer
+                    # of WMS→WNS→WES→Registry→Reload pipeline events). Useful
+                    # for debugging Living World generation in real time.
+                    self.wes_overlay_open = not getattr(
+                        self, "wes_overlay_open", False
+                    )
+                    state = "ON" if self.wes_overlay_open else "OFF"
+                    self.add_notification(
+                        f"WES observability overlay {state}",
+                        (100, 200, 255),
+                    )
+
             elif event.type == pygame.KEYUP:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
@@ -1449,8 +1462,15 @@ class GameEngine:
                             self.add_notification(f"Quest accepted: {quest_def.title}", (100, 255, 100))
                             # Update dialogue state
                             self.npc_available_quests.remove(quest_id)
-                            # Refresh NPC dialogue to show updated quest list
-                            self.npc_dialogue_lines = [self.active_npc.get_next_dialogue()]
+                            # Prefer the NPC's per-NPC quest_offer line
+                            # from the speechbank (NL1 deterministic).
+                            # Falls through to generic cycling when the
+                            # speechbank lacks a quest_offer string.
+                            offer_line = self.active_npc.get_quest_offer_line()
+                            if offer_line is not None:
+                                self.npc_dialogue_lines = [offer_line]
+                            else:
+                                self.npc_dialogue_lines = [self.active_npc.get_next_dialogue()]
                             self.npc_available_quests = self.active_npc.get_available_quests(self.character.quests)
                             self.npc_quest_to_turn_in = self.active_npc.has_quest_to_turn_in(self.character.quests, self.character)
                         else:
@@ -1465,10 +1485,27 @@ class GameEngine:
                             print(f"   {msg}")
                             self.add_notification(msg, (100, 255, 100))
 
-                        # Show completion dialogue
+                        # Show completion dialogue. Priority:
+                        #   1. quest_def.completion_dialogue — per-quest
+                        #      lines (most specific; LLM may have
+                        #      generated these for adaptive rewards).
+                        #   2. NPC speechbank.quest_complete — per-NPC
+                        #      voice fallback (NL1 deterministic).
+                        #   3. NPC.get_next_dialogue() — last-ditch
+                        #      cycling so dialogue panel never goes
+                        #      blank.
+                        completion_lines: list = []
                         if quest_id in npc_db.quests:
                             quest_def = npc_db.quests[quest_id]
-                            self.npc_dialogue_lines = quest_def.completion_dialogue
+                            if quest_def.completion_dialogue:
+                                completion_lines = list(quest_def.completion_dialogue)
+                        if not completion_lines:
+                            npc_complete = self.active_npc.get_quest_complete_line()
+                            if npc_complete is not None:
+                                completion_lines = [npc_complete]
+                        if not completion_lines:
+                            completion_lines = [self.active_npc.get_next_dialogue()]
+                        self.npc_dialogue_lines = completion_lines
 
                         # Update quest state
                         self.npc_quest_to_turn_in = None
@@ -1501,6 +1538,13 @@ class GameEngine:
             # Open dialogue with this NPC
             self.npc_dialogue_open = True
             self.active_npc = nearby_npc
+
+            # Each new conversation starts with a fresh greeting, even
+            # if the player has spoken to this NPC before. The cycle
+            # indices keep climbing across conversations so the player
+            # rotates through the greeting / idle bank rather than
+            # hearing the same first line every time.
+            nearby_npc.reset_dialogue_state()
 
             # Get opening dialogue. Prefer the LLM-powered NPCAgentSystem when
             # available; fall back to the hardcoded cycling lines otherwise.
@@ -4584,12 +4628,46 @@ class GameEngine:
             self.world_narrative.initialize(
                 save_dir=_wns_save_dir,
                 geo_map_path=_wns_geo_path,
+                # Hand WMS to WNS so the bridge can subscribe to
+                # WMS_INTERPRETATION_CREATED on the bus and drive the
+                # cascade trigger from real game events.
+                wms_facade=self.world_memory,
             )
         except Exception as e:
             print(f"[WorldNarrative] Init failed (non-fatal): {e}")
             self.world_narrative = None
             _report("world_narrative_system", "initialize", e,
                     "WNS disabled; narrative weaving will not run",
+                    "warning")
+
+        # Initialize the WES orchestrator. Subscribes to
+        # WNS_CALL_WES_REQUESTED on GameEventBus, so any inline <WES>
+        # directive a weaver emits is picked up and dispatched through
+        # planner → hub → executor_tool → ContentRegistry. Failure
+        # stays non-fatal — WNS still runs, just no content gets
+        # generated until the orchestrator can be brought up.
+        self.wes_orchestrator = None
+        try:
+            from world_system.content_registry.content_registry import (
+                ContentRegistry,
+            )
+            from world_system.wes.wes_orchestrator import WESOrchestrator
+
+            # ContentRegistry must be initialized before WES so the
+            # orchestrator's commit path has somewhere to stage to.
+            content_registry = ContentRegistry.get_instance()
+            content_registry.initialize(save_dir=_wns_save_dir)
+
+            self.wes_orchestrator = WESOrchestrator.get_instance()
+            self.wes_orchestrator.initialize(
+                registry=content_registry,
+                subscribe_to_bus=True,
+            )
+        except Exception as e:
+            print(f"[WES] Orchestrator init failed (non-fatal): {e}")
+            self.wes_orchestrator = None
+            _report("wes_orchestrator", "initialize", e,
+                    "WES disabled; <WES> directives from weavers will be dropped",
                     "warning")
 
         # Initialize Living World consumers (BackendManager + NPCAgentSystem).
@@ -4610,6 +4688,31 @@ class GameEngine:
                 world_query=world_query,
                 backend_manager=backend_manager,
             )
+
+            # Wire NPCMemoryManager to FactionSystem so per-NPC dynamic
+            # state (relationship, emotion, knowledge, conversation
+            # summary, reputation tags) actually persists into the
+            # SQLite tables already provisioned in faction_system.
+            # Without this call, NPCMemory operates in-memory-only and
+            # NPC continuity dies on session reset.
+            try:
+                from world_system.living_world.npc.npc_memory import (
+                    NPCMemoryManager,
+                )
+                from world_system.living_world.factions.faction_system import (
+                    FactionSystem,
+                )
+                fs = FactionSystem.get_instance()
+                if getattr(fs, "_initialized", False):
+                    NPCMemoryManager.get_instance().wire_faction_system(fs)
+                    print("[NPCAgent] NPCMemoryManager wired to FactionSystem (SQLite persistence active)")
+                else:
+                    print("[NPCAgent] FactionSystem not initialized; NPCMemory stays in-memory")
+            except Exception as wire_err:
+                print(f"[NPCAgent] NPCMemory→FactionSystem wiring skipped: {wire_err}")
+                _report("npc_memory_manager", "wire_faction_system", wire_err,
+                        "NPC dynamic state will not persist across sessions",
+                        "info")
         except Exception as e:
             print(f"[NPCAgent] Init failed (non-fatal, hardcoded dialogue will be used): {e}")
             self.npc_agent_system = None
@@ -8081,6 +8184,18 @@ class GameEngine:
 
         self.renderer.render_notifications(self.notifications)
         self.renderer.render_debug_messages()
+
+        # Optional WES observability overlay (F12 toggle). Lives outside
+        # Renderer because it owns its own font and depends on the
+        # singleton observability ring buffer rather than any game state.
+        if getattr(self, "wes_overlay_open", False):
+            try:
+                from world_system.wes.observability_overlay import render_overlay
+                if not hasattr(self, "_wes_overlay_font"):
+                    self._wes_overlay_font = pygame.font.Font(None, 16)
+                render_overlay(self.screen, self._wes_overlay_font)
+            except Exception:
+                pass  # never let the overlay crash the game render
 
         # Render dungeon chest UI if open
         if self.dungeon_chest_open and self.dungeon_manager.in_dungeon:

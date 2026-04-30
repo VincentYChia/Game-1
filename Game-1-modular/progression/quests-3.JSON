@@ -1,0 +1,222 @@
+{
+  "metadata": {
+    "version": "3.0",
+    "description": "Quest v3 schema. Hand-authored tutorial quests carry concrete rewards. LLM-generated quests (via wes_tool_quests) emit rewards_prose only; a future reward materializer resolves prose to concrete numbers at quest accept time. Archive at turn-in lives in WMS / a future archive table.",
+    "schema_ref": "data/models/quests.py QuestDefinition"
+  },
+
+  "quests": [
+    {
+      "quest_id": "tutorial_quest",
+      "name": "First Steps",
+      "title": "First Steps",
+      "quest_type": "tutorial",
+      "tier": 1,
+
+      "description_full": {
+        "short": "Gather 5 oak logs for the Elder Sage",
+        "long": "The Elder Sage wants you to gather 5 oak logs to prove your resourcefulness. Approach oak trees and use your axe to gather wood.",
+        "narrative": "Every journey begins with a single step. Show me you can gather what nature provides."
+      },
+
+      "given_by": "tutorial_guide",
+      "npc_id": "tutorial_guide",
+      "return_to": "tutorial_guide",
+
+      "objectives": {
+        "objective_type": "gather",
+        "items": [
+          {"item_id": "oak_log", "quantity": 5, "description": "Gather Oak Logs", "optional": false}
+        ]
+      },
+
+      "rewards": {
+        "experience": 100,
+        "gold": 0,
+        "health_restore": 50,
+        "mana_restore": 0,
+        "skills": ["sprint"],
+        "items": [{"item_id": "minor_health_potion", "quantity": 2}],
+        "title": "novice_forester",
+        "stat_points": 0
+      },
+
+      "rewards_prose": {},
+
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": [],
+        "completedQuests": []
+      },
+
+      "expiration": {"type": "none"},
+
+      "progression": {
+        "isRepeatable": false,
+        "cooldown": null,
+        "nextQuest": null,
+        "questChain": "tutorial_chain"
+      },
+
+      "wns_thread_id": "",
+
+      "completion_dialogue": [
+        "Excellent work! You've proven yourself capable.",
+        "Take these rewards as a token of my gratitude.",
+        "May your journey be prosperous!"
+      ],
+
+      "metadata": {
+        "narrative": "The first quest given to all travelers. A simple test of gathering skills.",
+        "tags": ["tutorial", "gathering", "starter"],
+        "difficulty": "easy",
+        "estimatedTime": "5 minutes"
+      }
+    },
+
+    {
+      "quest_id": "gathering_quest",
+      "name": "Material Research",
+      "title": "Material Research",
+      "quest_type": "side",
+      "tier": 1,
+
+      "description_full": {
+        "short": "Collect 3 copper ore and 3 iron ore",
+        "long": "The Wandering Trader needs 3 copper ore and 3 iron ore for his studies. Mine rocks to find these ores.",
+        "narrative": "I study the properties of metals. Help me gather samples and I'll reward you handsomely."
+      },
+
+      "given_by": "mysterious_trader",
+      "npc_id": "mysterious_trader",
+      "return_to": "mysterious_trader",
+
+      "objectives": {
+        "objective_type": "gather",
+        "items": [
+          {"item_id": "copper_ore", "quantity": 3, "description": "Mine Copper Ore", "optional": false},
+          {"item_id": "iron_ore", "quantity": 3, "description": "Mine Iron Ore", "optional": false}
+        ]
+      },
+
+      "rewards": {
+        "experience": 200,
+        "gold": 50,
+        "health_restore": 0,
+        "mana_restore": 50,
+        "skills": ["miners_endurance"],
+        "items": [
+          {"item_id": "minor_mana_potion", "quantity": 2},
+          {"item_id": "iron_ingot", "quantity": 1}
+        ],
+        "title": "",
+        "stat_points": 0
+      },
+
+      "rewards_prose": {},
+
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": [],
+        "completedQuests": []
+      },
+
+      "expiration": {"type": "none"},
+
+      "progression": {
+        "isRepeatable": true,
+        "cooldown": 3600,
+        "nextQuest": null,
+        "questChain": "mining_chain"
+      },
+
+      "wns_thread_id": "",
+
+      "completion_dialogue": [
+        "Marvelous! These ores will be perfect for my research.",
+        "You have my deepest thanks, adventurer.",
+        "Here, take these as payment."
+      ],
+
+      "metadata": {
+        "narrative": "The Wandering Trader's research requires various metals. This quest can be repeated daily.",
+        "tags": ["gathering", "mining", "repeatable"],
+        "difficulty": "easy",
+        "estimatedTime": "10 minutes"
+      }
+    },
+
+    {
+      "quest_id": "combat_quest",
+      "name": "Prove Your Worth",
+      "title": "Prove Your Worth",
+      "quest_type": "side",
+      "tier": 1,
+
+      "description_full": {
+        "short": "Defeat 3 enemies",
+        "long": "The Battle Master challenges you to defeat 3 enemies to prove your combat prowess. Venture into the wilderness and return victorious.",
+        "narrative": "A warrior is defined by their deeds. Show me you can stand against the dangers of this world."
+      },
+
+      "given_by": "combat_trainer",
+      "npc_id": "combat_trainer",
+      "return_to": "combat_trainer",
+
+      "objectives": {
+        "objective_type": "combat",
+        "enemies_killed": 3,
+        "items": []
+      },
+
+      "rewards": {
+        "experience": 300,
+        "gold": 100,
+        "health_restore": 100,
+        "mana_restore": 0,
+        "skills": ["combat_strike", "fortify"],
+        "items": [
+          {"item_id": "minor_health_potion", "quantity": 3},
+          {"item_id": "minor_strength_potion", "quantity": 1}
+        ],
+        "title": "apprentice_warrior",
+        "stat_points": 1
+      },
+
+      "rewards_prose": {},
+
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": [],
+        "completedQuests": []
+      },
+
+      "expiration": {"type": "none"},
+
+      "progression": {
+        "isRepeatable": false,
+        "cooldown": null,
+        "nextQuest": null,
+        "questChain": "combat_chain"
+      },
+
+      "wns_thread_id": "",
+
+      "completion_dialogue": [
+        "Impressive! You fight with the skill of a seasoned warrior.",
+        "I'm honored to grant you these rewards.",
+        "Continue honing your skills, and you'll become legendary!"
+      ],
+
+      "metadata": {
+        "narrative": "The first true test of a warrior. Defeat enemies and prove your combat abilities.",
+        "tags": ["combat", "tutorial", "warrior"],
+        "difficulty": "medium",
+        "estimatedTime": "15 minutes"
+      }
+    }
+  ]
+}

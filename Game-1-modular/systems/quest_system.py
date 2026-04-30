@@ -1,13 +1,30 @@
 """Quest management system"""
 
+import time
 from typing import Dict, List, Tuple, Optional
 
 from data.models import QuestDefinition
+from data.models.quests import QuestRewards
 from data.databases import TitleDatabase, MaterialDatabase, SkillDatabase
 
 
 class Quest:
-    """Active quest instance for a character"""
+    """Active quest instance for a character.
+
+    Adaptive reward lifecycle (v3, 2026-04-26):
+    - Canonical quests (``quest_def.source_origin == "canonical"``)
+      use their hand-authored ``quest_def.rewards`` directly. No LLM
+      calls. Preserves tutorial / hand-tuned reward economy.
+    - Generated quests (``source_origin == "generated"``) pass through
+      a pre-generation step at receive time (materializes prose →
+      concrete numbers) and an adaptation step at turn-in (LLM may
+      adjust based on actual play context — urgency, time taken,
+      narrative weight). Failure of either step falls back through:
+      adapted_rewards ?? pre_generated_rewards ?? quest_def.rewards.
+    - ``effective_rewards`` is what :meth:`grant_rewards` actually
+      applies. The resolver writes here; if no LLM step ran, it
+      points at ``quest_def.rewards``.
+    """
     def __init__(self, quest_def: QuestDefinition, character=None):
         self.quest_def = quest_def
         self.status = "in_progress"  # in_progress, completed, turned_in
@@ -16,6 +33,21 @@ class Quest:
         # Track baselines to only count progress AFTER quest acceptance
         self.baseline_combat_kills = 0
         self.baseline_inventory = {}
+
+        # Adaptive reward lifecycle state (only populated for
+        # generated quests; canonical quests leave these at None).
+        self.received_at_game_time: float = time.time()
+        self.objectives_met_at: Optional[float] = None
+        self.turned_in_at: Optional[float] = None
+        self.pre_generated_rewards: Optional[QuestRewards] = None
+        self.pre_generated_completion_dialogue: List[str] = []
+        self.adapted_rewards: Optional[QuestRewards] = None
+        self.actual_rewards_granted: Optional[QuestRewards] = None
+        # ``effective_rewards`` is the resolved-at-grant-time reward
+        # bundle. Defaults to the design-time concrete rewards on the
+        # quest_def (so canonical/tutorial quests behave identically
+        # to pre-v3). Adaptive flow may overwrite before grant_rewards.
+        self.effective_rewards: QuestRewards = quest_def.rewards
 
         # Initialize baselines if character provided
         if character:
@@ -87,9 +119,22 @@ class Quest:
         return True
 
     def grant_rewards(self, character) -> List[str]:
-        """Grant quest rewards to character. Returns list of reward messages."""
+        """Grant quest rewards to character. Returns list of reward messages.
+
+        Uses ``self.effective_rewards`` — the resolved bundle. For
+        canonical quests this is identical to ``quest_def.rewards``;
+        for generated quests with a successful adapt step it is the
+        adapted bundle; otherwise it falls back to the pre-generated
+        bundle, then to the design rewards (typically empty for LLM
+        quests). The fallback chain ensures that a failed LLM call
+        never produces a quest with zero reward when pre-generation
+        succeeded.
+        """
         messages = []
-        rewards = self.quest_def.rewards
+        rewards = self.effective_rewards
+        # Snapshot what's actually being granted so save/load and the
+        # WNS archive can reference the receipt.
+        self.actual_rewards_granted = rewards
 
         # Experience
         if rewards.experience > 0:
@@ -211,11 +256,31 @@ class QuestManager:
         self.completed_quests: List[str] = []  # quest_ids that have been turned in
 
     def start_quest(self, quest_def: QuestDefinition, character) -> bool:
-        """Start a new quest (with character to track baselines)"""
+        """Start a new quest (with character to track baselines).
+
+        For ``source_origin == "generated"`` quests, also pre-generates
+        the concrete reward bundle and completion dialogue via the
+        :class:`QuestRewardAdapter`. Best-effort — pre-gen failure
+        leaves the quest with the design rewards (typically zeros for
+        LLM quests) and the resolver chain handles fallback at
+        turn-in.
+
+        Canonical quests skip pre-generation entirely; their
+        hand-tuned ``quest_def.rewards`` flows straight to
+        ``Quest.effective_rewards`` and grant_rewards uses them
+        verbatim.
+        """
         if quest_def.quest_id in self.active_quests or quest_def.quest_id in self.completed_quests:
             return False  # Already have this quest
 
-        self.active_quests[quest_def.quest_id] = Quest(quest_def, character)
+        quest = Quest(quest_def, character)
+        self.active_quests[quest_def.quest_id] = quest
+
+        # Generated quests trigger pre-generation. The adapter
+        # handles canonical quests as a no-op so this branch is safe
+        # to call unconditionally — explicit guard kept for clarity.
+        if quest_def.source_origin == "generated":
+            self._pregenerate_rewards(quest, character)
 
         # Stat tracking and event bus publish
         if character and hasattr(character, 'stat_tracker'):
@@ -234,6 +299,40 @@ class QuestManager:
             pass
 
         return True
+
+    @staticmethod
+    def _pregenerate_rewards(quest: Quest, character) -> None:
+        """Best-effort pre-generation. Mutates the quest in place.
+
+        Stores the LLM-derived QuestRewards on
+        ``quest.pre_generated_rewards`` and the dialogue lines on
+        ``quest.pre_generated_completion_dialogue``. Also updates
+        ``quest.effective_rewards`` to the pre-generated bundle so
+        grant_rewards has a meaningful reward even if turn-in
+        adaptation fails.
+
+        Failure of any kind is swallowed — generated quests with
+        failed pre-gen retain their (typically empty) design
+        rewards. Logged via ``log_degrade``.
+        """
+        try:
+            from world_system.wes.quest_reward_adapter import (
+                get_reward_adapter,
+            )
+        except Exception as e:
+            print(f"[QUEST] reward adapter import failed: {e}")
+            return
+        try:
+            result = get_reward_adapter().pregenerate(quest.quest_def, character)
+        except Exception as e:
+            print(f"[QUEST] reward pregen raised: {e}")
+            return
+        if result is None:
+            return
+        rewards, dialogue = result
+        quest.pre_generated_rewards = rewards
+        quest.pre_generated_completion_dialogue = dialogue
+        quest.effective_rewards = rewards
 
     def complete_quest(self, quest_id: str, character) -> Tuple[bool, List[str]]:
         """Complete a quest and grant rewards. Returns (success, reward_messages)"""
@@ -260,6 +359,17 @@ class QuestManager:
             return False, ["Failed to consume quest items"]
         print(f"[QUEST DEBUG] Quest items consumed successfully!")
 
+        # Adapt rewards at turn-in for generated quests. Adapter
+        # bypasses canonical quests as a no-op. Failure leaves
+        # effective_rewards at the pre-generated baseline (or design
+        # rewards if pre-gen also failed). The resolution chain is:
+        #   adapted ?? pre_generated ?? quest_def.rewards
+        if quest.quest_def.source_origin == "generated":
+            self._adapt_rewards(quest, character)
+
+        # Snapshot turn-in time for archive/observability.
+        quest.turned_in_at = time.time()
+
         # Grant rewards
         print(f"[QUEST DEBUG] Granting quest rewards...")
         messages = quest.grant_rewards(character)
@@ -272,13 +382,16 @@ class QuestManager:
         print(f"[QUEST DEBUG] Quest marked as complete and moved to completed list")
         print(f"[QUEST DEBUG] ========== QUEST COMPLETION FINISHED ==========")
 
-        # Stat tracking and event bus publish
+        # Stat tracking and event bus publish — use effective_rewards
+        # so generated quests report the pre-gen / adapted numbers,
+        # not the (typically zero) design rewards.
+        eff = quest.effective_rewards
         if hasattr(character, 'stat_tracker'):
             character.stat_tracker.record_quest_completed(
                 quest_id=quest_id,
                 quest_type=quest.quest_def.objectives.objective_type,
-                exp_reward=float(quest.quest_def.rewards.experience),
-                gold_reward=float(quest.quest_def.rewards.gold)
+                exp_reward=float(eff.experience),
+                gold_reward=float(eff.gold)
             )
         try:
             from events.event_bus import get_event_bus
@@ -292,14 +405,46 @@ class QuestManager:
                 "quest_type": quest.quest_def.objectives.objective_type,
                 "npc_id": quest.quest_def.npc_id,
                 "rewards": {
-                    "experience": quest.quest_def.rewards.experience,
-                    "gold": quest.quest_def.rewards.gold,
+                    "experience": eff.experience,
+                    "gold": eff.gold,
                 },
             })
         except Exception:
             pass
 
         return True, messages
+
+    @staticmethod
+    def _adapt_rewards(quest: Quest, character) -> None:
+        """Best-effort turn-in adaptation. Mutates quest in place.
+
+        On success: ``quest.adapted_rewards`` is the LLM-adjusted
+        bundle and ``quest.effective_rewards`` is updated to point at
+        it (so grant_rewards uses the adapted numbers).
+
+        On any failure: state is unchanged. ``quest.effective_rewards``
+        stays at the pre-generated baseline (or the design rewards if
+        pre-gen also failed) and the player still receives the
+        promised floor — no penalty for the LLM hiccup.
+        """
+        try:
+            from world_system.wes.quest_reward_adapter import (
+                get_reward_adapter,
+            )
+        except Exception as e:
+            print(f"[QUEST] reward adapter import failed at turn-in: {e}")
+            return
+        try:
+            result = get_reward_adapter().adapt(
+                quest=quest, character=character, game_time_now=time.time(),
+            )
+        except Exception as e:
+            print(f"[QUEST] reward adapt raised: {e}")
+            return
+        if result is None:
+            return
+        quest.adapted_rewards = result
+        quest.effective_rewards = result
 
     def abandon_quest(self, quest_id: str, character=None) -> bool:
         """Abandon an active quest."""
