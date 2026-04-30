@@ -46,6 +46,23 @@ def _fixtures_disabled() -> bool:
     return val in _TRUTHY_ENV_VALUES
 
 
+def _require_real_llm() -> bool:
+    """True iff WES_REQUIRE_REAL_LLM env var is set to a truthy value.
+
+    When this is enabled, :class:`BackendManager` removes ``mock`` from
+    the resolution chain entirely. The intent: if a developer / playtest
+    operator explicitly disables fixtures and asks for "real LLM only",
+    the runtime must NOT silently degrade back to MockBackend's keyword-
+    template fallback. Any unreachable real backend surfaces as a clean
+    "All backends failed" error rather than masquerading as a real
+    response.
+
+    Read at every ``generate()`` call so the toggle works mid-session.
+    """
+    val = os.environ.get("WES_REQUIRE_REAL_LLM", "").strip().lower()
+    return val in _TRUTHY_ENV_VALUES
+
+
 # ── Abstract Backend Interface ────────────────────────────────────────
 
 class ModelBackend(ABC):
@@ -539,6 +556,19 @@ class BackendManager:
                 if name not in chain:
                     chain.append(name)
 
+        # WES_REQUIRE_REAL_LLM=1 strips MockBackend from the chain so a
+        # silent fallback to canned templates can't masquerade as a real
+        # response when the operator explicitly demanded "real LLM only".
+        # When the chain becomes empty after the strip, the loop below
+        # falls through to the "All backends failed" error path —
+        # exactly what we want.
+        # Exception: when ``backend_override`` was used, the operator
+        # explicitly named the backend; respect that opt-in even if it
+        # names ``"mock"``. The gate only blocks IMPLICIT fallback.
+        require_real = _require_real_llm()
+        if require_real and not backend_override:
+            chain = [name for name in chain if name != "mock"]
+
         errors = []
         for name in chain:
             backend = self._backends.get(name)
@@ -572,6 +602,30 @@ class BackendManager:
                 MockBackend.set_current_task(None)
                 if limiter:
                     limiter.release()
+
+        # All backends failed. When WES_REQUIRE_REAL_LLM is on, surface
+        # the failure visibly so the operator sees it instead of getting
+        # a silently-empty result. (We still return the error tuple so
+        # callers that prefer to handle it themselves can do so.)
+        if require_real:
+            try:
+                from world_system.living_world.infra.graceful_degrade import (
+                    surface_visible_wes_failure,
+                )
+                surface_visible_wes_failure(
+                    operation=f"BackendManager.generate(task={task!r})",
+                    failure_reason=(
+                        "WES_REQUIRE_REAL_LLM=1 set; no real backend "
+                        "reachable. Tried: "
+                        f"{', '.join(chain) if chain else '(empty chain)'}"
+                    ),
+                    fallback_taken=(
+                        "no fallback — operator explicitly disabled "
+                        "MockBackend templates via WES_REQUIRE_REAL_LLM"
+                    ),
+                )
+            except Exception:
+                pass  # surfacing must never break the return path
 
         return "", f"All backends failed: {'; '.join(errors)}"
 
