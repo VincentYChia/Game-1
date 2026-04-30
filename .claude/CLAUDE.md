@@ -24,7 +24,12 @@
 **Project Duration**: October 19, 2025 - Present (Python/Pygame — active development)
 **Development Plan**: `Development-Plan/OVERVIEW.md` (active roadmap — Living World + Combat Overhaul)
 **World Memory System**: `world_system/docs/HANDOFF_STATUS.md` (current implementation state) + `world_system/docs/WORLD_MEMORY_SYSTEM.md` (unified canonical design)
-**Living World (WNS/WES) Plan**: `Development-Plan/WORLD_SYSTEM_WORKING_DOC.md` (v4, 2026-04-22) + `Development-Plan/PLACEHOLDER_LEDGER.md` (furnishing list). P0-P9 shipped as pseudo-mock pipeline; placeholders awaiting designer furnishing.
+**Living World (WNS/WES) Plan**: `Development-Plan/WORLD_SYSTEM_WORKING_DOC.md` (v4, 2026-04-22) + `Development-Plan/PLACEHOLDER_LEDGER.md` (furnishing list). P0-P9 + post-P9 integration shipped (chunks runtime, observability, Prompt Studio, Request Layer, NPC speechbank runtime, bundle round-trip coverage, real-LLM safety gate). Placeholders await designer furnishing.
+
+**Designer-mode tools** (the architecture that prompt/balance/N-value tuning runs against):
+- `python tools/prompt_studio_main.py` — themed multi-panel editor for all 33 LLM tasks (WMS L2-L7, WNS NL2-NL7, WES planner+8hubs+8tools+supervisor+2quest_reward, NPC dialogue). Browser, Editor, Assembly preview with `${var}` resolution, Simulator (fixture/mock/real-LLM), Schema validator, Coverage health.
+- F12 in-game — toggle live observability overlay (last-15 pipeline events + counters). `WES_VERBOSE=1` env streams the same events to stdout.
+- `python tools/wes_real_llm_smoketest.py` — pre-playtest CLI harness. Probes Ollama/Claude availability, reports the resolved chain, runs one round-trip generate(). Set `WES_DISABLE_FIXTURES=1 WES_REQUIRE_REAL_LLM=1` for safe production playtest (silent fallback to MockBackend templates blocked).
 **Migration Plan**: `archive/2026-04-24-doc-consolidation/paused-migration/Migration-Plan/COMPLETION_STATUS.md` (paused indefinitely — retained for reference)
 
 ---
@@ -829,6 +834,14 @@ Paused indefinitely. Kept under archive as backup; not used during active develo
 
 ## Version History
 
+- **v8.1** (April 30, 2026): Post-P9 integration pass. Architecture is now in designer-grindable state — prompt furnishing, balance tuning, fixture enrichment, and N-value playtest runs are the natural next mode.
+  - **Chunks runtime integration** (`a293208`): JSON-driven `ChunkTemplateDatabase` singleton replaces the code-locked `_GEO_TO_CHUNK_TYPE` dict. WES-generated chunk templates flow through ContentRegistry commit → reload → live spawning.
+  - **WES live observability** (`541d485`): `RuntimeObservability` ring buffer + `WES_VERBOSE` env stream + F12 in-game overlay covering WMS→WNS→WES→Registry→Reload pipeline events.
+  - **Prompt Studio** (`3915f66`, polish in `48b82cf`): Themed Tk multi-panel UI at `tools/prompt_studio_main.py` covering all 33 LLM tasks. Browser, Editor, Assembly with `${var}` resolution + unresolved-placeholder warnings, Simulator (fixture/mock/real-LLM), Schema, Coverage.
+  - **Request Layer** (`3819a8d`): Code-driven, single-step orphan resolution. Replaces extension-plan rebuild with deterministic `CoemitRecommendation` → `ExecutorSpec` → tool-only dispatch (skips planner + hub round-trip). `_run_runtime_cascade` now uses `RequestLayer.build_specs` + `PlanDispatcher.run_request_specs`.
+  - **NPC speechbank runtime hookup** (`4453059`): `NPC.get_next_dialogue()` greets first then cycles `idle_barks`. Quest accept reads `speechbank.quest_offer`; quest turn-in priority is `quest_def.completion_dialogue` → `speechbank.quest_complete` → cycling fallback. Each new conversation starts with a fresh greeting.
+  - **Bundle round-trip coverage + real-LLM safety gate** (`0967119`): 8 tests close the silent-fallthrough hole between WNS publish and WES consume. New `WES_REQUIRE_REAL_LLM` env strips MockBackend from the chain so canned templates can't masquerade as real responses; `tools/wes_real_llm_smoketest.py` is the operator's pre-playtest CLI harness.
+  - **Test totals**: 495 tests + 23 subtests across world_system / Prompt Studio / chunk database / NPC speechbank, all green. No regressions on the existing 11 pre-existing failures.
 - **v8.0** (April 24, 2026): v4 World System (WNS+WES) P0-P9 pipeline shipped as pseudo-mock end-to-end (486 tests pass). Doc consolidation pass: ~74K lines of superseded/duplicate/archived docs moved to `archive/2026-04-24-doc-consolidation/` (organized by reason-for-move). Active-tree docs now ~21K lines. Updated: Migration-Plan reference paths, removed stale `docs/ARCHITECTURE.md` pointer, merged `UPDATE_N_AUTOMATION_WORKFLOW.md` + `UPDATE_SYSTEM_DOCUMENTATION.md` → `UPDATE_N_SYSTEM.md`, added WNS/WES doc index section.
 - **v7.0** (March 29, 2026): Major accuracy update. Fixed all file/LOC counts against actual codebase (239 files, ~96,400 LOC). Added World Memory System (14,269 LOC, 71 files). Fixed directory layout (Migration-Plan moved to archive/, Python/ is not a symlink). Corrected ai/ → world_system/living_world/, combat/ → Combat/. Removed stale "BackendManager doesn't exist" warning. Added StatTracker, GameEventBus, fishing discipline. Updated all individual file line counts.
 - **v6.0** (March 8, 2026): Added Visual Overhaul Design Standards section. Clarified sacred boundaries (no content JSON, no icon PNGs, no formula changes). Corrected BalanceValidator status (designed, not implemented). Fixed JSON file count (60 game-definition files, not 398).
@@ -840,6 +853,6 @@ Paused indefinitely. Kept under archive as backup; not used during active develo
 
 ---
 
-**Last Updated**: 2026-04-24
+**Last Updated**: 2026-04-30
 **For**: AI assistants and developers working on Game-1 (Python/Pygame active development)
 **Maintained By**: Project developers
