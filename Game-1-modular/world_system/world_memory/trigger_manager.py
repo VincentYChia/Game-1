@@ -116,7 +116,19 @@ class TriggerManager:
     # ── Core API ────────────────────────────────────────────────────
 
     def on_event(self, event: WorldMemoryEvent) -> List[TriggerAction]:
-        """Process an event through both tracks.  Returns trigger actions."""
+        """Process an event through both tracks.  Returns trigger actions.
+
+        Per Phase 0 G03 (2026-06-03), publishes ``WMS_TRIGGER_FIRED`` to
+        the :class:`GameEventBus` for each threshold-crossing
+        ``TriggerAction``. This is the boundary that lets the WNS-side
+        ``BehaviorInterpreter`` (Phase 2) react to player milestones
+        without polling — TriggerActions already feed the WMS
+        interpreter for L2 narrative-row creation; the bus publish
+        forks the same stream to WNS subscribers. Publish failures are
+        swallowed (bus may be unavailable in headless/test contexts);
+        the actions are still returned so the WMS interpreter pipeline
+        is unaffected.
+        """
         actions: List[TriggerAction] = []
         locality = event.locality_id or "unknown"
 
@@ -145,7 +157,51 @@ class TriggerManager:
                     "interpret_region", region_key, region_count, event,
                 ))
 
+        if actions:
+            self._publish_trigger_fired(actions)
+
         return actions
+
+    def _publish_trigger_fired(self, actions: List[TriggerAction]) -> None:
+        """Publish ``WMS_TRIGGER_FIRED`` for each threshold crossing.
+
+        Per-action payload shape:
+            {
+                "action_type": "interpret_stream" | "interpret_region",
+                "key": list[str],          # tuple flattened for JSON
+                "count": int,              # threshold value reached
+                "locality_id": str,
+                "event_type": str,         # originating event type
+                "event_subtype": str,      # originating event subtype
+                "actor_id": str,
+            }
+
+        Bus unavailability is non-fatal — the actions are still returned
+        for the WMS interpreter pipeline.
+        """
+        try:
+            from events.event_bus import get_event_bus
+            bus = get_event_bus()
+        except Exception:
+            return
+        for action in actions:
+            try:
+                bus.publish(
+                    "WMS_TRIGGER_FIRED",
+                    {
+                        "action_type": action.action_type,
+                        "key": list(action.key),
+                        "count": int(action.count),
+                        "locality_id": action.event.locality_id or "unknown",
+                        "event_type": action.event.event_type,
+                        "event_subtype": action.event.event_subtype,
+                        "actor_id": action.event.actor_id,
+                    },
+                    source="world_memory.trigger_manager",
+                )
+            except Exception:
+                # One bad publish must not block subsequent actions.
+                continue
 
     def get_stream_count(self, actor_id: str, event_type: str,
                          event_subtype: str, locality: str) -> int:

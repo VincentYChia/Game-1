@@ -28,13 +28,20 @@ if TYPE_CHECKING:
 # Tier -> screen shake intensity on kill
 _KILL_SHAKE = {1: 2, 2: 3, 3: 5, 4: 8}
 
-# Tier -> death effect color
-_TIER_COLORS = {
-    1: (200, 100, 100),
-    2: (255, 150, 0),
-    3: (200, 100, 255),
-    4: (255, 50, 50),
-}
+
+def _tier_color(tier: int):
+    """§15 trap 14: read tier color from the single source of truth in
+    ``visual-config.JSON > enemyVisuals.tierColors`` (via
+    ``rendering.visual_colors``). Falls back to the legacy local dict if
+    the module is unavailable during a partial import.
+    """
+    try:
+        from rendering.visual_colors import tier_color
+        return tier_color(int(tier))
+    except Exception:
+        return {1: (200, 100, 100), 2: (255, 150, 0),
+                3: (200, 100, 255), 4: (255, 50, 50)}.get(
+                    int(tier), (200, 100, 100))
 
 
 class VisualEffectBridge:
@@ -108,9 +115,8 @@ class VisualEffectBridge:
             intensity = min(amount / 50.0, 3.0)
             self._particles.emit_hit_sparks(x, y, damage_type, intensity)
 
-        # Crit hit pause
-        if is_crit and self._screen_fx and hasattr(self._screen_fx, 'hit_pause'):
-            self._screen_fx.hit_pause(40)
+        # §15 trap 16: hit-pause was removed by design (screen_effects.hit_pause
+        # is a no-op since 2026). Call site dropped to make the dead code obvious.
 
     def _on_enemy_killed(self, event: GameEvent) -> None:
         """Death effect + screen shake on enemy kill."""
@@ -119,7 +125,7 @@ class VisualEffectBridge:
         y = d.get("position_y", 0.0)
         tier = d.get("tier", 1)
         visual_size = d.get("visual_size", 1.0)
-        color = _TIER_COLORS.get(tier, (200, 100, 100))
+        color = _tier_color(tier)
 
         # Spawn death effect
         if self._death_mgr:
@@ -130,9 +136,7 @@ class VisualEffectBridge:
         if self._screen_fx and hasattr(self._screen_fx, 'screen_shake'):
             self._screen_fx.screen_shake(shake_intensity, 150)
 
-        # Hit pause for dramatic effect
-        if self._screen_fx and hasattr(self._screen_fx, 'hit_pause'):
-            self._screen_fx.hit_pause(60)
+        # §15 trap 16: hit-pause no-op — call site removed.
 
         # Death burst particles
         if self._particles and hasattr(self._particles, 'emit_death_burst'):

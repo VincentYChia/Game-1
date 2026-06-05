@@ -1,0 +1,192 @@
+{
+  "_meta": {
+    "version": "0.1-draft",
+    "purpose": "Phase 3 designer prose drafts (2026-06-03). Starting points for the user (the designer) to refine. Per consolidation §8.3 user correction: author 14 modular blocks (6 layer-voice + 8 purpose-shape) composed at weaver runtime via tag-indexed assembly — same pattern as WMS/WNS prompt fragments. The 48-cell matrix originally proposed was flat enumeration; modularity is the right architectural move.",
+    "status": "drafts only — designer must review and refine before going live",
+    "ledger_refs": [
+      "Development-Plan/feature-traces/00-consolidation.md §5 D2/D5/D6",
+      "Development-Plan/feature-traces/00-consolidation.md §2.6 prose ambiguity",
+      "Development-Plan/feature-traces/00-consolidation.md §2.7 NPC manifestation"
+    ]
+  },
+  "_authoring_notes": {
+    "to_designer": [
+      "Each block below is a DRAFT — replace freely. The schema (block name + content) is what matters; the prose is yours.",
+      "Layer-voice blocks describe WHAT the layer sounds like AT ITS SCOPE. Don't reference other layers; let the bound-style scope rules in the existing fragments handle that.",
+      "Purpose-shape blocks describe WHAT THIS DIRECTIVE PURPOSE LOOKS LIKE WHEN FIRED. Don't reference specific layers — the assembly composes the two at runtime.",
+      "The prose_ambiguity_directive applies to EVERY tool prompt. Include it via _core reference in each tool's system prompt.",
+      "NPC manifestation framing applies to the new-npc purpose block AND to the NPC tool prompt's introduction."
+    ],
+    "assembly_pattern": "At weaver firing time the assembler composes: [layer-voice block for NL<N>] + [purpose-shape block for the directive purpose] + [shared scope rules already in narrative_fragments_nl<N>.json]. Tag-indexed; no cell-by-cell authoring."
+  },
+
+  "prose_ambiguity_directive": {
+    "_for": "every WES tool prompt (shared inclusion)",
+    "text": "PROSE AMBIGUITY DIRECTIVE: every prose field (description, narrative, lore_description, evolution.requirement, narrative.past, completion_dialogue, headline, metadata.narrative, voice lines, signature_deeds) MUST be evocative-but-vague. The PLAYER should not be able to derive a checklist from them.\n\nACCEPTABLE patterns:\n- 'Master its usage in the native environment.'\n- 'The hand knows before the mind names the wound.'\n- 'Carries copper from old veins.'\n- 'The moors have learned your tread.'\n- 'She has seen wanderers come and go; she will see you go too.'\n\nUNACCEPTABLE patterns:\n- 'Use 100 times.'\n- 'Kill 50 of [species] in [chunk_id].'\n- 'Defeat the boss [boss_name] to unlock.'\n- 'Trigger when player.[stat] > [value].'\n- 'Achievable by completing quests [quest_id_1, quest_id_2, quest_id_3].'\n\nThe line between specific and checklist: SPECIFICITY ANCHORS THE FEEL; ENUMERATION REVEALS THE MECHANIC. Anchor in feel; never reveal the mechanic.\n\nWhen trigger_archetype is 'behavior', this directive applies WITH EXTRA FORCE. A behavior-causal artifact whose prose explicitly references the milestone ('You earned this by using 1000 potions') destroys the illusion that the world is responding organically. The world has noticed; the world does not enumerate."
+  },
+
+  "npc_manifestation_framing": {
+    "_for": "the new-npc purpose block + the wes_tool_npcs system prompt introduction",
+    "text": "NPC MANIFESTATION FRAMING (Phase 4 §2.7 correction): when this directive fires for a new NPC, you are NOT inventing a person who exists now. You are MANIFESTING a person who has already existed in this world's narrative — the player's behavior or the world's events have brought them into proximity, that is all. The king has always been king; the master fletcher of the moors has always been there. Your job is to author the person who would plausibly exist in this world that the player has now had reason to encounter. Their past is already real; you are only writing it down. Voice this throughout: their narrative.past references events the world remembers, not events the world is now inventing; their personality fits the locality's culture; their relationships pre-date the player.\n\nWhen trigger_archetype is 'behavior': this NPC has BEEN WATCHING. They emerge because the player's pattern of action brought them within reach. Examples: a 100-kills-in-the-moors milestone manifests the moors-master who has been watching; an avoidance pattern manifests the kin NPC who comes looking. The manifestation framing is the load-bearing prompt-design discipline — get this wrong and behavior-causal NPCs read as 'invented now' rather than 'finally met'."
+  },
+
+  "layer_voice": {
+    "_for": "composed with the purpose-shape block at runtime per the user's §8.3 14-block authoring approach",
+
+    "nl2_locality_voice": {
+      "anchor": "village gossip — the smallest scale of chronicle. The voice at NL2 has heard the morning's bread shop conversation and seen the same families on the same paths for years. It does not pronounce; it observes.",
+      "characteristics": [
+        "sensory grounding (the salt smell, the chimney smoke, the dog barking)",
+        "named neighbors and named places at sub-locality granularity",
+        "small-stakes consequences (a missed harvest, a broken cart, a new shutter)",
+        "rumor texture without rumor weight — what passed from one mouth to another, not what's confirmed",
+        "duration shorter than a season"
+      ],
+      "avoid": [
+        "world-scale stakes or political abstractions",
+        "named factions above guild scope",
+        "naming people who exist outside the locality",
+        "metaphysical framing"
+      ],
+      "draft_example": "Old Karra at the bread shop said the cliffs above the south road have been singing again, but Old Karra always says that. The riding boys are running short on copper rivets. Two new dogs have settled by the harbor. It has not rained since last week."
+    },
+
+    "nl3_district_voice": {
+      "anchor": "pattern-watcher — observes habits forming across multiple localities. The voice at NL3 connects three village gossips into a single noticing.",
+      "characteristics": [
+        "movement and trade flow across localities",
+        "named figures with district reach (a captain, a guild master, a chronicler)",
+        "ascending stakes (the same kind of trouble happening in three places)",
+        "thread vocabulary (the second time we've heard this, the way these patterns line up)",
+        "duration of a season or two"
+      ],
+      "avoid": [
+        "single-village myopia",
+        "kingdom-scale abstractions",
+        "naming individuals outside the district",
+        "moral pronouncement"
+      ],
+      "draft_example": "The copperlash riders have been seen at Tarmouth, at the south harbor, and at the old quarry road. Captain Vell rode out for the second time this month. The bread-cost is rising in three towns at once."
+    },
+
+    "nl4_region_voice": {
+      "anchor": "regional chronicler — keeps the record for a tier-4 region with chronicler-scale authority. The voice at NL4 names captains, names chunk territories, names the broad shape of forces.",
+      "characteristics": [
+        "regional captain and chronicler figures",
+        "named biomes and chunk territories",
+        "vendettas and alliances at multi-district scale",
+        "fuller arc-shape (rising, complication, resolution)",
+        "duration of one to three seasons"
+      ],
+      "avoid": [
+        "naming royalty above regional",
+        "metaphysical claims",
+        "village-scale incident reporting (those belong at NL2-3)"
+      ],
+      "draft_example": "The Ashfall Moors have restructured around the copper trade. The Copperlash Riders, once raiders, now levy their own toll. Captain Vell rides his own line down. The smelters at Tarmouth ask new questions of every shipment."
+    },
+
+    "nl5_province_voice": {
+      "anchor": "provincial historian — political-scale chronicle. The voice at NL5 trades in faction realignments, dynastic strain, provincial-spanning arcs.",
+      "characteristics": [
+        "factions with provincial reach",
+        "dynastic and political framings",
+        "succession, treaty, crisis vocabulary",
+        "arcs of several years",
+        "provincial NPCs as figureheads, not scene-level actors"
+      ],
+      "avoid": [
+        "sub-provincial content (those belong at NL4)",
+        "nation- or world-scale claims",
+        "scene-level dialogue (NL2-3's domain)"
+      ],
+      "draft_example": "Valdren strains under dual crises. The crown's hold on the moors-line is slipping with the copper trade's restructuring; the silent eastern church has gone quiet, and that quiet is itself a movement."
+    },
+
+    "nl6_nation_voice": {
+      "anchor": "court historian — dynastic-scale chronicle. The voice at NL6 sees nations as actors with intent.",
+      "characteristics": [
+        "nation-state actors",
+        "royal / dynastic figures",
+        "treaty, war, succession at nation scale",
+        "arcs of decades",
+        "ideologies and ages, not seasons"
+      ],
+      "avoid": [
+        "regional incident reporting",
+        "world-shift claims (those belong at NL7)",
+        "scene-level intimacy"
+      ],
+      "draft_example": "Valdren and Karavel have not spoken across the eastern passes in three winters. The Karavel succession will not survive another season. What follows is a question of which house breaks first."
+    },
+
+    "nl7_world_voice": {
+      "anchor": "chronicler of ages — civilizational scale. The voice at NL7 names ages, metaphysics, world-shifts. Speaks rarely.",
+      "characteristics": [
+        "ages and their endings",
+        "metaphysical claims (the songstone falls quiet, the age of breath ends)",
+        "world-spanning orders, cosmologies",
+        "centuries as the time unit",
+        "rarity — NL7 fires sparingly"
+      ],
+      "avoid": [
+        "regional or national incident reporting",
+        "intimate scene-level voice",
+        "naming sub-civilizational actors"
+      ],
+      "draft_example": "The songstones have fallen quiet across the eastern reach. An age has not ended in living memory, and this is not the way ages end — yet they are ending."
+    }
+  },
+
+  "purpose_shape": {
+    "_for": "composed with the layer-voice block at runtime per the user's §8.3 14-block authoring approach",
+
+    "new_material": {
+      "directive_shape": "a single raw-material variant unique to the firing address. Lore-rooted in the locality. Tier and rarity from the slot.",
+      "must_carry": ["materialId snake_case", "tier 1-4", "category from allow-list", "rarity from allow-list", "2-3 sentence narrative", "2-5 tags from allow-list"],
+      "anchor_in_feel": "the material has been here as long as the cliffs; the smiths who work it know its temper before they know its name."
+    },
+
+    "new_node": {
+      "directive_shape": "a resource-node TEMPLATE that yields the material at a tier-appropriate density. The node is a place in the world where the material is found.",
+      "must_carry": ["resourceId snake_case", "tier matching the material", "drops[] with materialId references", "respawn_time qualitative", "narrative tied to the locality"],
+      "anchor_in_feel": "the seam runs deeper than the eye can read; the cliff face has the same gouges every spring from the same picks."
+    },
+
+    "new_hostile": {
+      "directive_shape": "an enemy variant native to the firing address, tier-appropriate to the firing. Combat shape matches the biome and the regional voice.",
+      "must_carry": ["enemyId snake_case", "tier 1-4", "category humanoid/beast/etc", "behavior pattern", "drops[] with materialId references", "tier-band stats"],
+      "anchor_in_feel": "the raiders know the paths between the cliffs; they wear the salt the way the locals wear it. They will be here long after this season's hunters give up."
+    },
+
+    "new_skill": {
+      "directive_shape": "a skill matching the firing's intent (combat or utility per category). Tier-appropriate. When trigger_archetype is 'behavior', the skill RESPONDS to the milestone artifact.",
+      "must_carry": ["skillId snake_case", "tier 1-4", "categories", "effect shape", "cost", "evolution (intentionally vague per prose ambiguity)", "narrative tying to teacher OR (behavior-emergence) to the player's habit"],
+      "anchor_in_feel": "the skill arose because the work required it; whoever first did it could not have said how. It feels like remembering."
+    },
+
+    "new_title": {
+      "directive_shape": "an achievement title rewarding the firing's pattern. Prose evocative-but-vague (the world has recognized; the world does not enumerate).",
+      "must_carry": ["titleId snake_case", "name title-case", "tier from allow-list", "category", "bonuses dict", "prerequisites.conditions for runtime evaluation", "narrative line that the world recognizes, not the player earned"],
+      "anchor_in_feel": "you have done this enough that the world remembers. The bestowing is not a ceremony."
+    },
+
+    "new_chunk": {
+      "directive_shape": "a biome-template recipe (NOT a chunk instance). The template defines what spawns where and at what density. May include narrowed geoTypes per G19 collision-avoidance rule.",
+      "must_carry": ["chunkType snake_case", "category from allow-list", "theme", "resourceDensity dict", "enemySpawns dict", "generationRules", "metadata.narrative", "metadata.tags", "geoTypes (optional, narrowed per G19)"],
+      "anchor_in_feel": "the biome has been here the whole time; the player has only now found a path that crosses it. The air carries the same tang the locals know."
+    },
+
+    "new_npc": {
+      "directive_shape": "MANIFEST an already-existing person (Phase 4 §2.7 framing). The player has reason to meet them now; their past is real, you are only writing it.",
+      "must_carry": ["npc_id snake_case", "name", "title (their epithet)", "narrative.past — immutable", "personality.voice anchor", "primary_faction", "home_chunk (locality)", "voice lines", "speechbank phrase_bank"],
+      "anchor_in_feel": "they have been at this work for years. They have an opinion about the player already; they have an opinion about every wanderer. They do not need the player to exist."
+    },
+
+    "new_quest": {
+      "directive_shape": "a quest issued by a giver NPC the firing names (or co-emits). The quest's prose rewards are placeholder for later materialization; the structural fields are concrete.",
+      "must_carry": ["quest_id snake_case", "given_by npc_id", "quest_type", "objectives[] machine-checked", "description_full.narrative (giver's voice)", "rewards_prose (placeholder)", "expiration shape", "wns_thread_id"],
+      "anchor_in_feel": "the giver has been waiting for someone with this look about them; the player is that someone today. The work itself is older than the giver."
+    }
+  }
+}

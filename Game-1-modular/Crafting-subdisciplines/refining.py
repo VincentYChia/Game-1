@@ -510,8 +510,8 @@ class RefiningCrafter:
         # Calculate total input quantity from recipe
         total_input_qty = sum(inp['quantity'] for inp in inputs)
 
-        # Map rarity tiers
-        rarity_tiers = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+        # §15 trap 2: rarity ladder from single source of truth.
+        from rarity_utils import RARITY_TIERS as rarity_tiers  # noqa: E402,F811
         current_tier_idx = rarity_tiers.index(input_rarity) if input_rarity in rarity_tiers else 0
 
         # Determine rarity upgrade based on input quantity (4:1 ratio per tier)
@@ -665,7 +665,7 @@ class RefiningCrafter:
         # 16 inputs = +2 rarity tiers (common -> rare, skipping uncommon)
         # 64 inputs = +3 rarity tiers (common -> epic)
         # 256 inputs = +4 rarity tiers (common -> legendary)
-        rarity_tiers = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+        from rarity_utils import RARITY_TIERS as rarity_tiers  # §15 trap 2
         current_tier_idx = rarity_tiers.index(input_rarity) if input_rarity in rarity_tiers else 0
 
         # Calculate total input quantity

@@ -166,7 +166,12 @@ class GameEngine:
             self.enchanting_crafter = None
 
         print("\nInitializing systems...")
-        self.world = WorldSystem()
+        # 2026-06-05 boot-flow rework: WorldSystem is created with
+        # ``defer_init=True`` so the start menu can paint instantly. The
+        # expensive geographic-map + initial-chunk pass runs later behind
+        # the loading screen, after the player picks an option (or
+        # immediately if booted with --temp).
+        self.world = WorldSystem(defer_init=True)
         self.save_manager = SaveManager()
         self.map_system = MapWaypointSystem(chunk_size=Config.CHUNK_SIZE)
         print("✓ Map and waypoint system initialized")
@@ -184,11 +189,17 @@ class GameEngine:
         self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
         self.renderer = Renderer(self.screen)
 
-        # If temporary world flag is set, create character immediately
+        # If --temp CLI flag, set up temp world immediately (skip the
+        # menu entirely). Generate the world with TEMP_WORLD_SEED behind
+        # the loading screen so the geographic-map cache always hits
+        # after the first boot.
         if self.temporary_world:
             print("🌍 Starting in temporary world mode (no saves)")
             self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             self.start_menu_open = False
+            self._initialize_world_with_loading_screen(
+                seed=Config.TEMP_WORLD_SEED, label="Temporary world",
+            )
 
             # Open class selection for new character
             if not self.character.class_system.current_class:
@@ -241,26 +252,10 @@ class GameEngine:
                 self.npcs.append(npc)
             print(f"✓ Spawned {len(self.npcs)} base NPCs in the world")
 
-        # Add village NPCs from geographic system
-        if hasattr(self.world, 'get_village_npc_definitions'):
-            village_npc_defs = self.world.get_village_npc_definitions()
-            for vnd in village_npc_defs:
-                try:
-                    from data.models.npcs import NPCDefinition
-                    npc_def = NPCDefinition(
-                        npc_id=vnd["npc_id"],
-                        name=vnd["name"],
-                        position=Position(vnd["position"]["x"], vnd["position"]["y"], 0),
-                        sprite_color=tuple(vnd["sprite_color"]),
-                        interaction_radius=vnd.get("interaction_radius", 2.5),
-                        dialogue_lines=vnd.get("dialogue_lines", ["Hello!"]),
-                        quests=vnd.get("quests", []),
-                    )
-                    self.npcs.append(NPC(npc_def))
-                except Exception:
-                    pass
-            if village_npc_defs:
-                print(f"✓ Spawned {len(village_npc_defs)} village NPCs across {len(self.world._villages)} villages")
+        # Village NPCs depend on the geographic map. In the --temp boot
+        # path the world is already initialized by this point; in the
+        # menu-driven path it is not. The helper handles both.
+        self._spawn_village_npcs()
 
         # NPC interaction state
         self.npc_dialogue_open = False
@@ -1398,7 +1393,7 @@ class GameEngine:
             # Calculate start_y to match renderer: tools_y(+55) + tool_slot(50) + padding(20) = +125
             tools_y = Config.INVENTORY_PANEL_Y + 55
             start_x, start_y = 20, tools_y + 50 + 20  # = INVENTORY_PANEL_Y + 125
-            slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 10  # Must match renderer spacing
+            slot_size, spacing = Config.INVENTORY_SLOT_SIZE, Config.INVENTORY_SLOT_SPACING  # §15 trap 17
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
             if rel_x >= 0 and rel_y >= 0:
@@ -1630,6 +1625,106 @@ class GameEngine:
                 pass
         return npc.get_next_dialogue()
 
+    def _spawn_village_npcs(self) -> None:
+        """Append village NPCs from the geographic system to ``self.npcs``.
+
+        Idempotent over the npc_id set — re-running it after a fresh
+        world generation appends only NPCs not already present, so the
+        boot-time call (before menu) doesn't double-add when the menu
+        handler re-calls it post-init.
+        """
+        if not hasattr(self, "npcs"):
+            self.npcs = []
+        if not hasattr(self.world, "get_village_npc_definitions"):
+            return
+        try:
+            village_npc_defs = self.world.get_village_npc_definitions()
+        except Exception:
+            return
+        if not village_npc_defs:
+            return
+
+        existing_ids = {n.npc_def.npc_id for n in self.npcs
+                        if hasattr(n, "npc_def")}
+        added = 0
+        for vnd in village_npc_defs:
+            if vnd.get("npc_id") in existing_ids:
+                continue
+            try:
+                from data.models.npcs import NPCDefinition
+                npc_def = NPCDefinition(
+                    npc_id=vnd["npc_id"],
+                    name=vnd["name"],
+                    position=Position(vnd["position"]["x"], vnd["position"]["y"], 0),
+                    sprite_color=tuple(vnd["sprite_color"]),
+                    interaction_radius=vnd.get("interaction_radius", 2.5),
+                    dialogue_lines=vnd.get("dialogue_lines", ["Hello!"]),
+                    quests=vnd.get("quests", []),
+                )
+                self.npcs.append(NPC(npc_def))
+                added += 1
+            except Exception:
+                pass
+        if added:
+            print(f"✓ Spawned {added} village NPCs across "
+                  f"{len(self.world._villages)} villages")
+
+    def _initialize_world_with_loading_screen(
+        self, *, seed=None, label: str = "World",
+    ) -> None:
+        """Run ``WorldSystem.initialize_world()`` with the loading screen.
+
+        2026-06-05 boot-flow rework. Called from the temp-world boot path
+        and from each start-menu selection handler. Recreates ``self.world``
+        with the supplied seed (so menu picks always replace whatever the
+        constructor left behind), then runs the deferred-init pass while
+        the renderer paints stage updates.
+
+        Args:
+            seed: World seed. ``None`` rolls a random one (New World).
+            label: Short label included in the print log so each session
+                shows where the loading screen fired from.
+        """
+        # Recreate world with the right seed and defer_init=True so
+        # initialize_world() does the work.
+        self.world = WorldSystem(seed=seed, defer_init=True)
+        # Re-link the systems that hold ``self.world`` references. These
+        # mirrors the wiring done in __init__ + the save-handler paths.
+        if hasattr(self, "dungeon_manager"):
+            self.world.dungeon_manager = self.dungeon_manager
+        if hasattr(self, "map_system"):
+            self.world.map_system = self.map_system
+        if hasattr(self, "combat_manager"):
+            self.combat_manager.world = self.world
+            try:
+                self.world.register_chunk_unload_callback(
+                    self.combat_manager.on_chunk_unloaded,
+                )
+            except Exception:
+                pass
+
+        print(f"🌍 {label} — generating (seed={self.world.seed})...")
+
+        def _on_progress(stage: str, fraction: float, flavor: str) -> None:
+            try:
+                # Pump the event queue minimally so the OS doesn't mark
+                # the window unresponsive while a long stage runs.
+                pygame.event.pump()
+                self.renderer.render_loading_screen(stage, fraction, flavor)
+            except Exception:
+                pass
+
+        # Paint the screen once before any work so the user sees feedback
+        # immediately, then let initialize_world drive the rest.
+        _on_progress("Preparing", 0.0,
+                     "The world remembers itself.")
+        self.world.initialize_world(progress_callback=_on_progress)
+
+        # Post-init: populate village NPCs from the freshly-initialized
+        # geographic system. Idempotent against the boot-time call.
+        if hasattr(self, "npcs"):
+            self._spawn_village_npcs()
+
     def handle_start_menu_selection(self, option_index: int):
         """Handle start menu option selection (0=New World, 1=Load World, 2=Load Default Save, 3=Temporary World)"""
         if option_index == 0:
@@ -1637,6 +1732,12 @@ class GameEngine:
             print("🌍 Starting new world...")
             self.start_menu_open = False
             self.temporary_world = False
+            # 2026-06-05: generate the world with a random seed behind the
+            # loading screen. Seed gets saved in world_state on next save,
+            # so subsequent boots cache-hit the geographic map.
+            self._initialize_world_with_loading_screen(
+                seed=None, label="New world",
+            )
             self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             # Update combat manager with new character
             self.combat_manager.character = self.character
@@ -1670,14 +1771,17 @@ class GameEngine:
                 # Recreate WorldSystem with saved seed (for deterministic generation)
                 if saved_seed is not None:
                     print(f"🎲 Loading world with seed: {saved_seed}")
-                    self.world = WorldSystem(seed=saved_seed)
+                    self._initialize_world_with_loading_screen(
+                        seed=saved_seed, label="Saved world",
+                    )
                     self.world.set_chunk_save_directory("autosave.json")
-                    self.world.dungeon_manager = self.dungeon_manager
-                    self.world.register_chunk_unload_callback(self.combat_manager.on_chunk_unloaded)
-                    # Update combat manager's world reference
-                    self.combat_manager.world = self.world
                 else:
-                    # Legacy save - restore water chunks for backwards compatibility
+                    # Legacy save (pre-seed). Generate a fresh world with
+                    # a random seed under the loading screen so the
+                    # behaviour is at least consistent.
+                    self._initialize_world_with_loading_screen(
+                        seed=None, label="Legacy save (no seed)",
+                    )
                     water_chunks = world_state.get("water_chunks", [])
                     if water_chunks:
                         from systems.chunk import Chunk
@@ -1758,14 +1862,14 @@ class GameEngine:
                 # Recreate WorldSystem with saved seed (for deterministic generation)
                 if saved_seed is not None:
                     print(f"🎲 Loading world with seed: {saved_seed}")
-                    self.world = WorldSystem(seed=saved_seed)
+                    self._initialize_world_with_loading_screen(
+                        seed=saved_seed, label="Default save",
+                    )
                     self.world.set_chunk_save_directory("default_save.json")
-                    self.world.dungeon_manager = self.dungeon_manager
-                    self.world.register_chunk_unload_callback(self.combat_manager.on_chunk_unloaded)
-                    # Update combat manager's world reference
-                    self.combat_manager.world = self.world
                 else:
-                    # Legacy save - restore water chunks for backwards compatibility
+                    self._initialize_world_with_loading_screen(
+                        seed=None, label="Default save (legacy, no seed)",
+                    )
                     water_chunks = world_state.get("water_chunks", [])
                     if water_chunks:
                         from systems.chunk import Chunk
@@ -1834,6 +1938,12 @@ class GameEngine:
             print("🌍 Starting temporary world (no saves)...")
             self.start_menu_open = False
             self.temporary_world = True
+            # 2026-06-05: temp world uses TEMP_WORLD_SEED so the same
+            # map appears every boot; the geographic cache hits instantly
+            # after first boot.
+            self._initialize_world_with_loading_screen(
+                seed=Config.TEMP_WORLD_SEED, label="Temporary world",
+            )
             self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             # Update combat manager with new character
             self.combat_manager.character = self.character
@@ -2200,7 +2310,7 @@ class GameEngine:
             tool_slot_size = 50
             start_x = 20
             start_y = tools_y + tool_slot_size + 20  # = INVENTORY_PANEL_Y + 125
-            slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 10  # Must match renderer spacing
+            slot_size, spacing = Config.INVENTORY_SLOT_SIZE, Config.INVENTORY_SLOT_SPACING  # §15 trap 17
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
             if rel_x >= 0 and rel_y >= 0:
@@ -3306,8 +3416,7 @@ class GameEngine:
                     enemy.position[0], enemy.position[1],
                     damage_type, min(damage / 50.0, 3.0))
 
-                if is_crit:
-                    se.hit_pause(40)
+                # §15 trap 16: hit_pause is a no-op since 2026; call removed.
 
                 # Publish DAMAGE_DEALT event for other systems
                 try:
@@ -3321,7 +3430,7 @@ class GameEngine:
                     pass
 
             if not enemy.is_alive:
-                se.hit_pause(60)
+                # §15 trap 16: hit_pause is a no-op since 2026; call removed.
                 # Screen shake on all enemy kills — scales with tier
                 _kill_shake = {1: 2, 2: 3, 3: 5, 4: 8}.get(enemy.definition.tier, 2)
                 se.screen_shake(_kill_shake, 150)
@@ -4669,6 +4778,47 @@ class GameEngine:
             _report("wes_orchestrator", "initialize", e,
                     "WES disabled; <WES> directives from weavers will be dropped",
                     "warning")
+
+        # Phase 2 (2026-06-03): attach the WNS BehaviorInterpreter to
+        # GameEventBus. Subscribes to WMS_TRIGGER_FIRED (published by
+        # TriggerManager when a player counter crosses a THRESHOLD_SET
+        # value). When dispatch-worthy, the interpreter composes a
+        # behavior-causal <WES> directive and publishes
+        # WNS_CALL_WES_REQUESTED — the same channel the orchestrator
+        # already subscribes to above. Without this attach, behavior-
+        # causal triggers are computed (G03 publishes) but no one
+        # subscribes — the entire Phase 2 path is dead at runtime.
+        # Failure is non-fatal: behavior-causal content just won't
+        # generate; narrative-causal still works.
+        self.behavior_interpreter = None
+        try:
+            from events.event_bus import get_event_bus
+            from world_system.wns.behavior_interpreter import (
+                BehaviorInterpreter,
+            )
+
+            stat_store = None
+            if self.world_memory is not None:
+                stat_store = getattr(
+                    self.world_memory, "stat_store", None,
+                )
+            self.behavior_interpreter = BehaviorInterpreter.get_instance()
+            self.behavior_interpreter.attach(
+                bus=get_event_bus(),
+                stat_store=stat_store,
+            )
+        except Exception as e:
+            print(
+                f"[WES] BehaviorInterpreter attach failed "
+                f"(non-fatal): {e}"
+            )
+            self.behavior_interpreter = None
+            _report(
+                "behavior_interpreter", "attach", e,
+                "behavior-causal content generation disabled; "
+                "narrative-causal still works",
+                "warning",
+            )
 
         # Initialize Living World consumers (BackendManager + NPCAgentSystem).
         # These depend on WorldMemorySystem.world_query for context and on
@@ -6859,7 +7009,7 @@ class GameEngine:
                 # Calculate start_y to match renderer: tools_y(+55) + tool_slot(50) + padding(20) = +125
                 tools_y = Config.INVENTORY_PANEL_Y + 55
                 start_x, start_y = 20, tools_y + 50 + 20  # = INVENTORY_PANEL_Y + 125
-                slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 10  # Must match renderer spacing
+                slot_size, spacing = Config.INVENTORY_SLOT_SIZE, Config.INVENTORY_SLOT_SPACING  # §15 trap 17
                 rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
                 if rel_x >= 0 and rel_y >= 0:

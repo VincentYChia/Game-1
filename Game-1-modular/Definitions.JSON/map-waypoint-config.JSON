@@ -196,16 +196,16 @@
   },
 
   "keybindings": {
-    "_comment": "Default keys for map/waypoint actions (can be remapped in settings)",
+    "_comment": "§15 trap 18 (2026-06-05): these values are DOCUMENTATION ONLY. Runtime bindings are hardcoded in core/game_engine.py:807-1249. Until a settings/remap system is wired, edit game_engine.py to change keys. Values below match the actual runtime keys to avoid the previous 'W vs P' contradiction.",
     "open_map": "M",
-    "_open_map_note": "Key to toggle map UI",
-    "place_waypoint": "W",
-    "_place_waypoint_note": "Key to place waypoint at current location (when map closed)",
+    "_open_map_note": "Toggle map UI (game_engine.py K_m)",
+    "place_waypoint": "P",
+    "_place_waypoint_note": "Place waypoint at current location (game_engine.py K_p) — was incorrectly 'W' before reconciliation",
     "center_on_player": "C",
-    "_center_on_player_note": "Key to re-center map on player (when map open)",
-    "zoom_in": "PLUS",
-    "_zoom_in_note": "Alternative to scroll wheel",
-    "zoom_out": "MINUS",
-    "_zoom_out_note": "Alternative to scroll wheel"
+    "_center_on_player_note": "Re-center map on player",
+    "zoom_in": "MOUSEWHEEL_UP",
+    "_zoom_in_note": "Runtime uses mousewheel (game_engine.py:1249); no keyboard zoom",
+    "zoom_out": "MOUSEWHEEL_DOWN",
+    "_zoom_out_note": "Runtime uses mousewheel; no keyboard zoom"
   }
 }

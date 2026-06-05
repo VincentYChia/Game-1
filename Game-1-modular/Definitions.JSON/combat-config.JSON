@@ -109,5 +109,13 @@
     "maxDamageReduction": 0.75,
     "minDamageReduction": 0.0,
     "note": "Shield damage reduction is capped at 75% (0.75) regardless of shield quality or bonuses"
+  },
+
+  "dodgeMechanics": {
+    "_note": "§15 trap 19 (2026-06-05): dodge tuning was Python-only despite a 'can be tuned via JSON' comment in Combat/player_actions.py. Wired now. Consumed by PlayerActions.__init__.",
+    "dodgeDurationMs": 250.0,
+    "dodgeSpeedMult": 3.0,
+    "dodgeCooldownMs": 800.0,
+    "iframeDurationMs": 200.0
   }
 }

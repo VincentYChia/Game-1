@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from typing import Dict, Optional, Tuple
 
+from world_system.world_memory.config_loader import get_evaluator_config
 from world_system.world_memory.event_schema import InterpretedEvent, WorldMemoryEvent
 from world_system.world_memory.event_store import EventStore
 from world_system.world_memory.geographic_registry import GeographicRegistry
@@ -26,11 +27,13 @@ from world_system.world_memory.entity_registry import EntityRegistry
 from world_system.world_memory.interpreter import PatternEvaluator
 
 
+# §15 trap 9: module-level constants kept for backwards compatibility,
+# but the canonical values now come from
+# ``memory-config.json > evaluators.ecosystem_resource_depletion``.
 MIN_NODES_TO_TRACK = 5
 ECO_CHUNK_SIZE = 3  # 3x3 chunks per ecosystem
 
-# Thresholds in order — can only progress downward through this list
-THRESHOLDS = [
+_DEFAULT_THRESHOLDS = [
     (0.50, "depleted_50", "moderate",
      "About half the {resource} around {region} has been harvested."),
     (0.75, "scarce", "significant",
@@ -41,6 +44,37 @@ THRESHOLDS = [
      "Every {resource} source around {region} has been exhausted."),
 ]
 
+THRESHOLDS = list(_DEFAULT_THRESHOLDS)  # public alias kept for tests/imports
+
+
+def _load_config_thresholds():
+    """Build the threshold list from
+    ``memory-config.json > ecosystem_resource_depletion``. Falls back
+    to the module-level defaults if the JSON is incomplete."""
+    cfg = get_evaluator_config("ecosystem_resource_depletion", default={})
+    t = cfg.get("thresholds", {}) or {}
+    nt = cfg.get("narrative_templates", {}) or {}
+
+    def build(name: str, ratio_key: str, default_ratio: float,
+              severity: str, default_text: str):
+        return (
+            float(t.get(ratio_key, default_ratio)),
+            name,
+            severity,
+            nt.get(name, default_text),
+        )
+
+    return [
+        build("depleted_50", "depleted_50_pct", 0.50, "moderate",
+              "About half the {resource} around {region} has been harvested."),
+        build("scarce", "scarce_pct", 0.75, "significant",
+              "Only scattered {resource} remains near {region}. Sources are becoming scarce."),
+        build("exhausted", "exhausted_pct", 0.90, "major",
+              "{region} has been nearly stripped of {resource}. Very little remains."),
+        build("completely_harvested", "completely_harvested_pct", 1.00, "major",
+              "Every {resource} source around {region} has been exhausted."),
+    ]
+
 
 class EcosystemResourceDepletionEvaluator(PatternEvaluator):
     """Produces resource_harvesting events at ecosystem depletion milestones."""
@@ -48,6 +82,13 @@ class EcosystemResourceDepletionEvaluator(PatternEvaluator):
     RELEVANT_TYPES = {"resource_gathered", "node_depleted"}
 
     def __init__(self):
+        cfg = get_evaluator_config("ecosystem_resource_depletion", default={})
+        self.min_nodes_to_track = int(cfg.get("min_nodes_to_track", MIN_NODES_TO_TRACK))
+        self.eco_chunk_size = int(cfg.get("ecosystem_chunk_size", ECO_CHUNK_SIZE))
+        self._thresholds = _load_config_thresholds()
+        self._reset_below = float(
+            cfg.get("thresholds", {}).get("reset_when_replenished_below_pct", 0.10)
+        )
         # Per-ecosystem state: {eco_key: {"initial": int, "depleted": int, "threshold_idx": int}}
         # threshold_idx tracks how far down the threshold list we've fired
         # -1 = no thresholds fired yet
@@ -56,7 +97,7 @@ class EcosystemResourceDepletionEvaluator(PatternEvaluator):
     def _eco_key(self, x: float, y: float) -> Tuple[int, int]:
         chunk_x = int(x) // 16
         chunk_y = int(y) // 16
-        return (chunk_x // ECO_CHUNK_SIZE, chunk_y // ECO_CHUNK_SIZE)
+        return (chunk_x // self.eco_chunk_size, chunk_y // self.eco_chunk_size)
 
     def is_relevant(self, event: WorldMemoryEvent) -> bool:
         return event.event_type in self.RELEVANT_TYPES
@@ -89,23 +130,23 @@ class EcosystemResourceDepletionEvaluator(PatternEvaluator):
             state["initial"] = max(state["initial"], state["depleted"] + 1)
 
         # Gate: not enough nodes
-        if state["initial"] < MIN_NODES_TO_TRACK:
+        if state["initial"] < self.min_nodes_to_track:
             return None
 
         ratio = state["depleted"] / state["initial"]
 
-        # Check for replenishment reset (depletion < 10% = 90% replenished)
-        if state["threshold_idx"] >= 0 and ratio < 0.10:
+        # Check for replenishment reset (configurable)
+        if state["threshold_idx"] >= 0 and ratio < self._reset_below:
             state["threshold_idx"] = -1
             # No event produced on reset — just silently unlocks
             return None
 
         # Find the next threshold to fire (can only go DOWN the list)
         next_idx = state["threshold_idx"] + 1
-        if next_idx >= len(THRESHOLDS):
+        if next_idx >= len(self._thresholds):
             return None  # All thresholds already fired
 
-        threshold_ratio, tag_value, severity, template = THRESHOLDS[next_idx]
+        threshold_ratio, tag_value, severity, template = self._thresholds[next_idx]
 
         if ratio < threshold_ratio:
             return None  # Haven't reached next threshold yet

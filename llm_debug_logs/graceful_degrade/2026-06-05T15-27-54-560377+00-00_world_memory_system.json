@@ -1,0 +1,10 @@
+{
+  "context": {},
+  "failure_reason": "RuntimeError: WMS database at C:\\Users\\vipVi\\PycharmProjects\\Game-1\\Game-1-modular\\saves\\world_memory.db appears to be from schema version 1 (no schema_meta table). Schema v2 introduces the 6-tier geography hierarchy (adds region_id/nation_id/world_id columns, drops the dormant realm_state table). Old databases are not loadable. Delete the file and let the game regenerate it. See docs/ARCHITECTURAL_DECISIONS.md \u00a76.",
+  "fallback_taken": "WMS disabled; downstream consumers will no-op",
+  "game_time": null,
+  "operation": "initialize",
+  "severity": "error",
+  "subsystem": "world_memory_system",
+  "timestamp_iso": "2026-06-05T15:27:54.560377+00:00"
+}

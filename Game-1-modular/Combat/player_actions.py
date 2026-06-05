@@ -6,8 +6,9 @@ hitbox collisions are ignored. The input buffer queues actions pressed
 during animations so they execute when the current action completes.
 """
 
+import json
 import math
-from typing import Tuple, Optional
+from typing import Any, Dict, Optional, Tuple
 
 # Facing string to angle conversion (matches existing Character.facing values)
 FACING_TO_ANGLE = {
@@ -16,6 +17,38 @@ FACING_TO_ANGLE = {
     'left': 180.0,
     'up': 270.0,
 }
+
+
+# ── §15 trap 19 — dodge config loader ────────────────────────────────
+
+_DODGE_CONFIG_CACHE: Optional[Dict[str, Any]] = None
+
+
+def _load_dodge_config() -> Dict[str, Any]:
+    """Read ``combat-config.JSON > dodgeMechanics``. Cached after first
+    call. Falls back to {} on any error so PlayerActionSystem.__init__
+    can still rely on its kwarg defaults."""
+    global _DODGE_CONFIG_CACHE
+    if _DODGE_CONFIG_CACHE is not None:
+        return _DODGE_CONFIG_CACHE
+    try:
+        from core.paths import get_resource_path
+        path = get_resource_path("Definitions.JSON/combat-config.JSON")
+        if not path.exists():
+            _DODGE_CONFIG_CACHE = {}
+            return _DODGE_CONFIG_CACHE
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        _DODGE_CONFIG_CACHE = data.get("dodgeMechanics", {}) or {}
+    except Exception:
+        _DODGE_CONFIG_CACHE = {}
+    return _DODGE_CONFIG_CACHE
+
+
+def reload_dodge_config() -> None:
+    """Drop the cache so the next PlayerActionSystem reads fresh values."""
+    global _DODGE_CONFIG_CACHE
+    _DODGE_CONFIG_CACHE = None
 
 
 class InputBuffer:
@@ -70,11 +103,13 @@ class PlayerActionSystem:
         self.iframe_timer: float = 0.0
         self.dodge_direction: Tuple[float, float] = (0.0, 0.0)
 
-        # Configurable parameters (can be tuned via config/JSON)
-        self.dodge_duration_ms: float = 250.0
-        self.dodge_speed_mult: float = 3.0
-        self.dodge_cooldown_ms: float = 800.0
-        self.iframe_duration_ms: float = 200.0
+        # §15 trap 19 (2026-06-05): tuning now flows through
+        # ``Definitions.JSON/combat-config.JSON > dodgeMechanics``.
+        cfg = _load_dodge_config()
+        self.dodge_duration_ms: float = float(cfg.get("dodgeDurationMs", 250.0))
+        self.dodge_speed_mult: float = float(cfg.get("dodgeSpeedMult", 3.0))
+        self.dodge_cooldown_ms: float = float(cfg.get("dodgeCooldownMs", 800.0))
+        self.iframe_duration_ms: float = float(cfg.get("iframeDurationMs", 200.0))
 
         # Input buffer
         self.input_buffer = InputBuffer()

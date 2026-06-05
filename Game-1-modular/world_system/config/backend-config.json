@@ -1,23 +1,25 @@
 {
-  "description": "Model backend configuration for AI-powered systems. Controls which LLM backend is used for each task type, with fallback chains for resilience.",
-  "_model_choices_v1_rationale": {
+  "description": "Model backend configuration. Posture: Claude-only playtest (2026-06-05). Ollama is disabled; Mock is INSTANTIATED for test contexts but gated out of the live chain at runtime by WES_REQUIRE_REAL_LLM=1.",
+  "_2026-06-05_posture_change": "User direction: Anthropic-only for playtest + tuning. Production playtest MUST set WES_REQUIRE_REAL_LLM=1 (which strips mock from the chain at generate-time). Tests run without that flag and use the Fixture Registry / MockBackend templates. Every BackendManager.generate() call is logged via world_system/living_world/backends/llm_dev_log.py to llm_debug_logs/wes_<session>.jsonl.",
+  "_playtest_checklist": [
+    "1. Set ANTHROPIC_API_KEY (or place in .env)",
+    "2. Set WES_REQUIRE_REAL_LLM=1 — strips mock from the chain so a canned template can't masquerade as real output",
+    "3. Set WES_DISABLE_FIXTURES=1 if you want to bypass the LLM Fixture Registry (otherwise pre-canned fixtures still resolve before the backend is called)",
+    "4. Optional: WES_VERBOSE=1 streams pipeline events to stdout in addition to the dev log",
+    "5. Run python tools/wes_real_llm_smoketest.py before playtest to verify the chain"
+  ],
+  "_model_choices_rationale": {
     "_note": "Per-role model assignment rationale. Adjust task_routing entries below to override.",
-    "wns_low_layers": "NL2 / NL3 / NL4 — ollama 8b. Locality / district / region scale, fast turnover, strong local context already provided by cascading inputs.",
-    "wns_high_layers": "NL5 / NL6 / NL7 — claude. Province / nation / world scale; broader synthesis benefits from cloud-class model.",
-    "wes_planner": "claude. Plan quality is load-bearing; cloud worth the cost.",
-    "wes_hubs": "ollama 8b. Hubs decompose plan steps mechanically; minimal creative load.",
-    "wes_tools_simple": "wes_tool_materials/nodes/skills/titles/hostiles/chunks — ollama 8b. Schema-bound generation; structured output suffices.",
-    "wes_tools_narrative": "wes_tool_npcs / wes_tool_quests — claude. v3 schemas demand voice fidelity (NPC speechbank + phrase_bank, quest rewards_prose + completion_dialogue) that smaller models flatten.",
-    "wes_supervisor": "ollama 8b. Common-sense check; doesn't generate, just judges."
+    "all_tasks": "claude (Sonnet 4). Single-model posture eliminates per-task model variance. Cost-aware tuning happens via temperature/top_p, not by routing to a cheaper local model."
   },
 
   "backends": {
     "ollama": {
-      "enabled": true,
+      "enabled": false,
       "base_url": "http://localhost:11434",
       "default_model": "llama3.1:8b",
       "timeout_seconds": 30.0,
-      "description": "Local Ollama server for offline LLM inference"
+      "description": "DISABLED 2026-06-05 — Claude-only posture. Re-enable here if a future playtest needs local fallback."
     },
     "claude": {
       "enabled": true,
@@ -26,11 +28,11 @@
       "temperature": 0.4,
       "top_p": 0.95,
       "timeout_seconds": 30.0,
-      "description": "Anthropic Claude API for high-quality inference"
+      "description": "Anthropic Claude API — the sole live backend during playtest."
     },
     "mock": {
       "enabled": true,
-      "description": "Deterministic template-based responses for testing and fallback"
+      "description": "Enabled for tests + fixture resolution. WES_REQUIRE_REAL_LLM=1 strips mock from the live chain at generate-time so a canned template never masquerades as real output during playtest."
     }
   },
 
@@ -215,7 +217,8 @@
     }
   },
 
-  "fallback_chain": ["ollama", "claude", "mock"],
+  "fallback_chain": ["claude", "mock"],
+  "_fallback_chain_note": "§15 backend hardening 2026-06-05: claude first, mock as test-only fallback. WES_REQUIRE_REAL_LLM=1 strips 'mock' from the chain at generate-time so production playtest never silently degrades. Ollama is omitted because it's disabled.",
 
   "rate_limits": {
     "ollama": {

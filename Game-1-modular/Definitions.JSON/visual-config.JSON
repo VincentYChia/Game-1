@@ -68,6 +68,13 @@
       "4": 0.6
     },
     "bossGlowColor": [255, 215, 0],
+    "tierColors": {
+      "_note": "§15 trap 14: per-tier enemy aura/death color. Consumed via rendering/visual_colors.py:tier_color(). Designer-tunable since 2026-06-05.",
+      "1": [200, 100, 100],
+      "2": [255, 150, 0],
+      "3": [200, 100, 255],
+      "4": [255, 50, 50]
+    },
     "deathFadeDurationMs": 600,
     "deathShrinkFactor": 0.3,
     "deathRotationDegrees": 15,
@@ -118,13 +125,12 @@
   },
 
   "screenEffects": {
+    "_note": "§15 trap 16 (2026-06-05): hitPauseEnabled and slowMotionEnabled were inert flags. Removed. Combat/screen_effects.hit_pause is a no-op by design.",
     "shakeDecayRate": 0.88,
     "shakeMaxOffset": 12,
     "flashDefaultDurationMs": 80,
     "afterimageFadeRate": 8.0,
-    "afterimageMaxCount": 10,
-    "hitPauseEnabled": false,
-    "slowMotionEnabled": false
+    "afterimageMaxCount": 10
   },
 
   "debug": {

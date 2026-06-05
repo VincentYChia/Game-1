@@ -52,8 +52,18 @@ class ExecutionPlanner(Protocol):
     - Honor the firing-tier scope rules from §5.8 via prompt discipline.
     """
 
-    def plan(self, bundle: "WESContextBundle") -> "WESPlan":
-        """Produce a plan (possibly abandoned) from ``bundle``."""
+    def plan(
+        self,
+        bundle: "WESContextBundle",
+        adjusted_instructions: Optional[str] = None,
+    ) -> "WESPlan":
+        """Produce a plan (possibly abandoned) from ``bundle``.
+
+        ``adjusted_instructions`` carries supervisor rerun feedback (or
+        bounce-back warnings) from a prior pass. Implementations SHOULD
+        surface this in their prompt so the LLM addresses the named
+        issue. None on the initial pass.
+        """
         ...
 
 

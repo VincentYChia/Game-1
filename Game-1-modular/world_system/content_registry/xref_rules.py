@@ -231,11 +231,17 @@ def _extract_node_xrefs(
 ) -> List[XrefTuple]:
     out: List[XrefTuple] = []
 
-    # Nodes → materials they yield. Shapes:
-    #   "material_id": "iron_ore"
-    #   "materialId": "iron_ore"
-    #   "yields": [{"material_id": "..."}]
-    #   "yields": ["iron_ore"]
+    # Nodes → materials they yield. Shapes encountered in the wild:
+    #   "material_id": "iron_ore"                       (legacy top-level)
+    #   "materialId": "iron_ore"                        (legacy top-level)
+    #   "yields": [{"material_id": "..."}]              (legacy nested)
+    #   "yields": ["iron_ore"]                          (legacy nested)
+    #   "drops": [{"materialId": "iron_ore",
+    #              "quantity": "many", "chance": "guaranteed"}]
+    #                                                   (CANONICAL sacred
+    #                                                   shape per
+    #                                                   resource-node-1.JSON
+    #                                                   — Phase 0 G18.1, 2026-06-03)
     primary = content_json.get("material_id") or content_json.get("materialId")
     if isinstance(primary, str) and primary:
         out.append((TOOL_NODES, src_id, TOOL_MATERIALS, primary, REL_YIELDS))
@@ -249,6 +255,20 @@ def _extract_node_xrefs(
                 )
         elif isinstance(y, str) and y:
             out.append((TOOL_NODES, src_id, TOOL_MATERIALS, y, REL_YIELDS))
+
+    # Canonical sacred shape — drops[].materialId / drops[].material_id.
+    # Without this iteration, every generated node's drops fields are
+    # silently dropped on the floor at orphan-detection time (the most
+    # expensive form of failure because the pipeline LOOKS like it
+    # works). Per Agent 5 Trace 05 §1.3.b.
+    for drop in content_json.get("drops", []) or []:
+        if not isinstance(drop, dict):
+            continue
+        mid = drop.get("materialId") or drop.get("material_id")
+        if isinstance(mid, str) and mid:
+            out.append(
+                (TOOL_NODES, src_id, TOOL_MATERIALS, mid, REL_YIELDS)
+            )
 
     return out
 
@@ -535,9 +555,14 @@ SACRED_TOP_LEVEL_KEY = {
                                     # "enemies".
     TOOL_MATERIALS: "materials",   # items-materials-1.JSON uses
                                     # "materials".
-    TOOL_NODES: "resourceNodes",   # resource-node-1.JSON uses
-                                    # "resourceNodes" (placeholder — see
-                                    # PLACEHOLDER_LEDGER §17).
+    TOOL_NODES: "nodes",           # resource-node-1.JSON uses "nodes"
+                                    # (verified via
+                                    # ResourceNodeDatabase.load_from_file
+                                    # which reads data.get('nodes', [])).
+                                    # Phase 0 G18.2 fix (2026-06-03):
+                                    # was "resourceNodes" which silently
+                                    # caused every generated node file to
+                                    # load as empty.
     TOOL_SKILLS: "skills",         # Skills/skills-skills-1.JSON uses
                                     # "skills".
     TOOL_TITLES: "titles",         # progression/titles-1.JSON uses

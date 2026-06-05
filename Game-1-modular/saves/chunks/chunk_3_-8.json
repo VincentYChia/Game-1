@@ -1,7 +1,7 @@
 {
   "chunk_x": 3,
   "chunk_y": -8,
-  "chunk_type": "dangerous_cave",
+  "chunk_type": "water_river",
   "dungeon_entrance": {
     "position": {
       "x": 59,
@@ -10,5 +10,5 @@
     },
     "rarity": "rare"
   },
-  "unload_timestamp": 168.07999999998583
+  "unload_timestamp": 25.858999999999455
 }

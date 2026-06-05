@@ -223,8 +223,16 @@ def reload_for_tools(tool_names: Iterable[str]) -> Dict[str, bool]:
 
     Returns a dict ``{class_name: reloaded_successfully}`` for
     observability. Unknown tool names are ignored (logged).
+
+    On each successful reload, publishes ``EVT_DATABASE_RELOADED`` to
+    the :class:`GameEventBus` (Phase 0 G07f, 2026-06-03) so
+    downstream systems (combat manager refresh, F12 overlay, prompt
+    studio coverage display) can react. Bus publication failures are
+    swallowed — reload completeness is the load-bearing concern, not
+    notification.
     """
     results: Dict[str, bool] = {}
+    reloaded_tools: list[str] = []
     for tool_name in tool_names:
         targets = _RELOAD_TARGETS.get(tool_name)
         if not targets:
@@ -238,14 +246,44 @@ def reload_for_tools(tool_names: Iterable[str]) -> Dict[str, bool]:
                 context={"tool_name": tool_name},
             )
             continue
+        any_success = False
         for (module_path, class_name, method_candidates) in targets:
             instance = _resolve_instance(module_path, class_name)
             if instance is None:
                 results[class_name] = False
                 continue
-            results[class_name] = _call_reload(
-                instance, class_name, method_candidates
+            ok = _call_reload(instance, class_name, method_candidates)
+            results[class_name] = ok
+            if ok:
+                any_success = True
+        if any_success:
+            reloaded_tools.append(tool_name)
+
+    # Per-tool bus publish AFTER all reloads complete, so subscribers
+    # see a consistent post-reload state. Each tool gets its own
+    # EVT_DATABASE_RELOADED event; subscribers can filter by tool_name
+    # in the payload.
+    if reloaded_tools:
+        try:
+            from events.event_bus import get_event_bus
+            bus = get_event_bus()
+            for tool_name in reloaded_tools:
+                bus.publish(
+                    "EVT_DATABASE_RELOADED",
+                    {"tool_name": tool_name},
+                    source="content_registry.database_reloader",
+                )
+        except Exception as e:
+            # Bus may be unavailable in test/headless contexts. Swallow.
+            log_degrade(
+                subsystem="content_registry",
+                operation="database_reloader.bus_publish",
+                failure_reason=f"{type(e).__name__}: {e}",
+                fallback_taken="reload succeeded; bus notification skipped",
+                severity="info",
+                context={"reloaded_tools": list(reloaded_tools)},
             )
+
     return results
 
 

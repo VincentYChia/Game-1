@@ -1,7 +1,7 @@
 # Claude.md - Game-1 Developer Guide
 
 **Quick Reference for AI Assistants & Developers**
-**Last Updated**: April 24, 2026 (v8.0 — v4 World System + doc consolidation)
+**Last Updated**: June 5, 2026 (v8.2 — §15 reconciliation closed, Claude-only backend, Phase 7 substrates wired, WORLD TONE starter)
 
 ## Project Summary
 
@@ -834,6 +834,7 @@ Paused indefinitely. Kept under archive as backup; not used during active develo
 
 ## Version History
 
+- **v8.2** (June 5, 2026): Pre-playtest hardening pass. §15 reconciliation closed (11 traps fixed, 1 deferred as not-actually-a-dupe, 1 superseded by posture change); Claude-only backend with comprehensive LLM dev log (`llm_debug_logs/wes_<session>.jsonl`); Phase 7 substrates wired to runtime (`QuestArchive.archive()` on quest turn-in, `MixedTriggerArbiter` in `BehaviorInterpreter`, `PresenceDriftDetector` at daily-ledger boundary); WORLD TONE starter draft authored in `prompt_fragments.json._game_context` (coastal frontier, copper economy, late autumn political coherence — designer replaces freely). 656/656 phase + WMS + WES + WNS tests green. Posture for playtest: set `ANTHROPIC_API_KEY` + `WES_REQUIRE_REAL_LLM=1`, tail `llm_debug_logs/wes_*.jsonl` for live audit. **Game feature work (combat / crafting / living world) now precedes proper config + tuning.** See `Development-Plan/CONTROLS_MAP.md` §15-§17 for per-trap [DONE] markers and backend/Phase 7 details.
 - **v8.1** (April 30, 2026): Post-P9 integration pass. Architecture is now in designer-grindable state — prompt furnishing, balance tuning, fixture enrichment, and N-value playtest runs are the natural next mode.
   - **Chunks runtime integration** (`a293208`): JSON-driven `ChunkTemplateDatabase` singleton replaces the code-locked `_GEO_TO_CHUNK_TYPE` dict. WES-generated chunk templates flow through ContentRegistry commit → reload → live spawning.
   - **WES live observability** (`541d485`): `RuntimeObservability` ring buffer + `WES_VERBOSE` env stream + F12 in-game overlay covering WMS→WNS→WES→Registry→Reload pipeline events.
@@ -853,6 +854,6 @@ Paused indefinitely. Kept under archive as backup; not used during active develo
 
 ---
 
-**Last Updated**: 2026-04-30
+**Last Updated**: 2026-06-05
 **For**: AI assistants and developers working on Game-1 (Python/Pygame active development)
 **Maintained By**: Project developers

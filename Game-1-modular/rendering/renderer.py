@@ -1343,14 +1343,17 @@ class Renderer:
         import time as _etime
         image_cache = ImageCache.get_instance()
 
-        # Shared tag→color map for enemy visuals
-        _ETAG_COLORS = {
-            'fire': (255, 120, 30), 'ice': (100, 200, 255),
-            'frost': (100, 200, 255), 'lightning': (255, 255, 80),
-            'poison': (100, 255, 80), 'arcane': (180, 80, 255),
-            'shadow': (130, 80, 180), 'holy': (255, 255, 180),
-            'chaos': (200, 50, 50), 'physical': (220, 220, 240),
-        }
+        # §15 traps 13 + 15: element and state colors now read from
+        # ``visual-config.JSON`` via ``rendering.visual_colors`` so
+        # designer tuning propagates to enemy visuals too.
+        from rendering.visual_colors import (
+            element_palette as _vc_element_palette,
+            state_palette as _vc_state_palette,
+        )
+        _ETAG_COLORS = _vc_element_palette()
+        # Add render-only aliases (visual-config has no "frost"/"chaos" keys).
+        _ETAG_COLORS.setdefault('frost', _ETAG_COLORS.get('ice', (100, 200, 255)))
+        _ETAG_COLORS.setdefault('chaos', _ETAG_COLORS.get('shadow', (200, 50, 50)))
 
         def _enemy_tag_color(tags, fallback=(220, 220, 240)):
             for t in tags:
@@ -1359,12 +1362,7 @@ class Renderer:
             return fallback
 
         # AI state colors
-        _STATE_COLORS = {
-            'idle': (100, 200, 100), 'wander': (100, 200, 100),
-            'patrol': (100, 200, 100), 'guard': (180, 180, 100),
-            'chase': (255, 200, 50), 'attack': (255, 80, 60),
-            'flee': (100, 150, 255), 'dead': (100, 100, 100),
-        }
+        _STATE_COLORS = _vc_state_palette()
 
         if combat_manager:
             for enemy in combat_manager.get_all_active_enemies():
@@ -1374,10 +1372,12 @@ class Renderer:
                     vis_size = getattr(enemy.definition, 'visual_size', 1.0)
                     base_size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE * 0.5)
                     size = max(6, int(base_size * vis_size))
-                    tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
-                    enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
+                    # §15 traps 14 + 20: tier color + boss glow from
+                    # visual-config.JSON via rendering.visual_colors.
+                    from rendering.visual_colors import tier_color as _tc, boss_glow_color as _bgc
+                    enemy_color = _tc(enemy.definition.tier)
                     if enemy.is_boss:
-                        enemy_color = (255, 215, 0)
+                        enemy_color = _bgc()
 
                     # --- Enemy attack animation (rendered after body) ---
                     # (Handled below after enemy body rendering)
@@ -1807,17 +1807,10 @@ class Renderer:
         player_sm = ac.get('player_sm')
         player_actions = ac.get('player_actions')
 
-        # Tag -> color mapping for elemental visuals
-        _ELEMENT_COLORS = {
-            "physical": (220, 220, 240),
-            "fire": (255, 120, 30),
-            "ice": (100, 200, 255), "frost": (100, 200, 255),
-            "lightning": (255, 255, 80),
-            "poison": (100, 255, 80),
-            "arcane": (180, 80, 255),
-            "shadow": (130, 80, 180),
-            "holy": (255, 255, 180),
-        }
+        # §15 trap 13: elemental colors from the central source.
+        from rendering.visual_colors import element_palette as _vc_element_palette
+        _ELEMENT_COLORS = _vc_element_palette()
+        _ELEMENT_COLORS.setdefault('frost', _ELEMENT_COLORS.get('ice', (100, 200, 255)))
 
         def _color_from_tags(tags, fallback=(220, 220, 240)):
             """Get element color from a list of tags."""
@@ -5060,7 +5053,7 @@ class Renderer:
 
         start_x, start_y = 20, tools_y + slot_size + 20
         slot_size = Config.INVENTORY_SLOT_SIZE
-        spacing = 10  # Increased from 5 to 10 for better icon visibility
+        spacing = Config.INVENTORY_SLOT_SPACING  # §15 trap 17: single source
         slots_per_row = Config.INVENTORY_SLOTS_PER_ROW
         hovered_slot = None
 
@@ -7299,6 +7292,79 @@ class Renderer:
 
         self.screen.blit(surf, (wx, wy))
         return button_rects
+
+    def render_loading_screen(self, stage_name: str, progress: float,
+                              flavor_line: str = "") -> None:
+        """Paint the loading screen while WorldSystem.initialize_world() runs.
+
+        2026-06-05. Phase 1 of the boot-flow rework: when the player picks
+        a menu option, this overlay appears while the geographic map +
+        initial chunks generate (or load from cache). Empty until
+        ``WorldSystem.initialize_world(progress_callback=...)`` calls
+        back with stage updates.
+
+        Args:
+            stage_name: Technical stage label ("Building geography",
+                "Loading initial chunks", ...). Rendered in the title slot.
+            progress: 0.0-1.0 progress fraction.
+            flavor_line: Optional in-world line ("Roads find their
+                travelers."). Rendered below the bar. Empty string skips it.
+        """
+        s = Config.scale
+        sw = Config.SCREEN_WIDTH
+        sh = Config.SCREEN_HEIGHT
+
+        # Fullscreen dark backdrop
+        backdrop = pygame.Surface((sw, sh), pygame.SRCALPHA)
+        backdrop.fill((10, 12, 18, 255))
+        self.screen.blit(backdrop, (0, 0))
+
+        # Centered card
+        cw, ch = s(640), s(260)
+        cx = (sw - cw) // 2
+        cy = (sh - ch) // 2
+        card = pygame.Surface((cw, ch), pygame.SRCALPHA)
+        card.fill((20, 22, 32, 255))
+        pygame.draw.rect(card, (100, 100, 120), card.get_rect(), s(2))
+
+        # Title
+        title = self.font.render("LOADING WORLD", True, (220, 200, 120))
+        card.blit(title, title.get_rect(centerx=cw // 2, y=s(28)))
+
+        # Stage name
+        stage = self.small_font.render(stage_name or "Preparing", True,
+                                       (220, 220, 240))
+        card.blit(stage, stage.get_rect(centerx=cw // 2, y=s(78)))
+
+        # Progress bar
+        bar_x = s(40)
+        bar_y = s(120)
+        bar_w = cw - s(80)
+        bar_h = s(22)
+        pygame.draw.rect(card, (38, 42, 54),
+                         pygame.Rect(bar_x, bar_y, bar_w, bar_h))
+        pygame.draw.rect(card, (90, 95, 115),
+                         pygame.Rect(bar_x, bar_y, bar_w, bar_h), s(1))
+        clamped = max(0.0, min(1.0, float(progress)))
+        fill_w = int(bar_w * clamped)
+        if fill_w > 0:
+            pygame.draw.rect(card, (140, 180, 110),
+                             pygame.Rect(bar_x, bar_y, fill_w, bar_h))
+
+        # Percent label
+        pct = self.tiny_font.render(f"{int(clamped * 100)}%", True,
+                                    (200, 200, 220))
+        card.blit(pct, pct.get_rect(centerx=cw // 2,
+                                    y=bar_y + bar_h + s(6)))
+
+        # Flavor line (in-world voice — the WORLD TONE one-liner)
+        if flavor_line:
+            flavor = self.small_font.render(flavor_line, True, (160, 170, 190))
+            card.blit(flavor, flavor.get_rect(centerx=cw // 2,
+                                              y=ch - s(50)))
+
+        self.screen.blit(card, (cx, cy))
+        pygame.display.flip()
 
     def render_class_selection_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.class_selection_open:

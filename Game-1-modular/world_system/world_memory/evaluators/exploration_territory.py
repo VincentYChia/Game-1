@@ -21,9 +21,10 @@ class ExplorationTerritoryEvaluator(PatternEvaluator):
         self.expiration_offset = cfg.get("expiration_offset", 300.0)
         self.lookback_time = cfg.get("lookback_time", 50.0)
         t = cfg.get("thresholds", {})
+        # §15 trap 8: defaults aligned to memory-config.json.
         self.min_trigger = t.get("minimum_trigger", 1)
-        self.moderate_min = t.get("moderate_min", 20)
-        self.significant_min = t.get("significant_min", 50)
+        self.moderate_min = t.get("moderate_min", 10)
+        self.significant_min = t.get("significant_min", 30)
         self.major_min = t.get("major_min", 100)
         templates = cfg.get("narrative_templates", {})
         self.tpl_chunks = templates.get("chunk_entered",

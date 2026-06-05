@@ -420,9 +420,14 @@ class NPCAgentSystem:
 
     def _calculate_gossip_delay(self, npc_id: str,
                                 gossip: GossipEvent) -> Optional[float]:
-        """Calculate how long before an NPC hears gossip based on distance."""
-        # For now, use a flat delay based on configuration
-        # In a full implementation, we'd look up NPC positions from EntityRegistry
+        """Calculate how long before an NPC hears gossip based on distance.
+
+        §15 trap 12 reconciliation (2026-06-05): previously this returned
+        ``short_delay`` for every NPC regardless of distance, making the
+        ``medium_delay_game_seconds`` and ``global_delay_game_seconds``
+        config keys inert. Now we look up the NPC's ``home_chunk`` and
+        compute chunk distance to the gossip source chunk.
+        """
         immediate_r = self._gossip_config.get("immediate_radius_chunks", 0)
         short_r = self._gossip_config.get("short_delay_radius_chunks", 1)
         medium_r = self._gossip_config.get("medium_delay_radius_chunks", 4)
@@ -431,8 +436,40 @@ class NPCAgentSystem:
         medium_delay = self._gossip_config.get("medium_delay_game_seconds", 180.0)
         global_delay = self._gossip_config.get("global_delay_game_seconds", 420.0)
 
-        # Default to medium delay (NPC positions would refine this)
-        return short_delay
+        # Try to resolve the NPC's home chunk via NPCDatabase. If the
+        # lookup fails, fall back to the short-delay path so behaviour
+        # matches the pre-reconciliation baseline.
+        npc_chunk = None
+        try:
+            from data.databases.npc_db import NPCDatabase
+            voice = NPCDatabase.get_instance().get_voice_excerpt(npc_id)
+            if voice and isinstance(voice, dict):
+                hc = voice.get("home_chunk")
+                if hc and isinstance(hc, (list, tuple)) and len(hc) >= 2:
+                    npc_chunk = (int(hc[0]), int(hc[1]))
+        except Exception:
+            npc_chunk = None
+
+        if npc_chunk is None:
+            return short_delay
+
+        src_chunk = getattr(gossip, "source_chunk", None)
+        if not src_chunk:
+            return short_delay
+        try:
+            dx = abs(int(npc_chunk[0]) - int(src_chunk[0]))
+            dy = abs(int(npc_chunk[1]) - int(src_chunk[1]))
+            chunk_dist = max(dx, dy)  # Chebyshev distance
+        except Exception:
+            return short_delay
+
+        if chunk_dist <= immediate_r:
+            return 0.0
+        if chunk_dist <= short_r:
+            return short_delay
+        if chunk_dist <= medium_r:
+            return medium_delay
+        return global_delay
 
     def update(self, game_time: float) -> int:
         """Process pending gossip. Called from game loop.

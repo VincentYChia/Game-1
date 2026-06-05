@@ -16,6 +16,28 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 
 
+# ── §15 trap 2 — single source of truth for rarity ladder ────────────
+#
+# Previously hardcoded in 4 places (refining.py:514+668,
+# crafting_tag_processor.py:485, rarity_utils.py:248, tools/generate_stat_schema.py).
+# Authoritative now: this module. Any caller that needs the ordered
+# rarity ladder should import RARITY_TIERS from here. The values match
+# the legacy lists exactly so behaviour is preserved.
+
+RARITY_TIERS: List[str] = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+
+
+def rarity_index(rarity: str) -> int:
+    """Return ladder index for ``rarity``, defaulting to 0 (common)."""
+    rarity = (rarity or "common").lower()
+    return RARITY_TIERS.index(rarity) if rarity in RARITY_TIERS else 0
+
+
+def rarity_at(idx: int) -> str:
+    """Return rarity at clamped ladder index."""
+    return RARITY_TIERS[max(0, min(idx, len(RARITY_TIERS) - 1))]
+
+
 class RaritySystem:
     """Manages rarity checking and modifier application for crafting"""
 

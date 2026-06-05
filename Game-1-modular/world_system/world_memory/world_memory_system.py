@@ -476,6 +476,16 @@ class WorldMemorySystem:
                 except Exception as e:
                     print(f"[WorldMemory] Daily ledger error: {e}")
 
+                # Phase 7 wiring (2026-06-05): scan for presence drift
+                # at each day boundary. Best-effort — never break the
+                # ledger tick.
+                try:
+                    self._run_presence_drift_scan(
+                        current_game_day=ended_day + 1,
+                    )
+                except Exception as e:
+                    print(f"[WorldMemory] Drift scan error: {e}")
+
         # Layer 3 consolidation check
         if self.layer3_manager and self.layer3_manager.should_run():
             try:
@@ -521,6 +531,56 @@ class WorldMemorySystem:
         # Periodic stat store flush (batch writes)
         if self.stat_store:
             self.stat_store.flush()
+
+    def _run_presence_drift_scan(self, *, current_game_day: int) -> None:
+        """Phase 7 wiring (2026-06-05): run PresenceDriftDetector at
+        each day boundary and publish a behavior-causal directive per
+        drift candidate. Best-effort; logs but never re-raises.
+        """
+        if self.stat_store is None:
+            return
+        try:
+            from world_system.wns.presence_drift_detector import (
+                PlayerPresenceDriftDetector,
+            )
+        except Exception:
+            return
+
+        try:
+            from events.event_bus import get_event_bus
+            bus = get_event_bus()
+        except Exception:
+            bus = None
+
+        try:
+            detector = PlayerPresenceDriftDetector(stat_store=self.stat_store)
+            # known_localities: skip — detector enumerates internally.
+            candidates = detector.scan(current_game_day=int(current_game_day))
+        except Exception as e:
+            print(f"[WorldMemory] Drift detector scan raised: {e}")
+            return
+
+        if not candidates or bus is None:
+            return
+
+        # Re-use the same channel BehaviorInterpreter publishes on so
+        # downstream subscribers handle drift the same way they handle
+        # threshold-crossings.
+        for cand in candidates:
+            try:
+                bus.publish(
+                    "WMS_TRIGGER_FIRED",
+                    {
+                        "event_type": "presence_drift",
+                        "event_subtype": "absent_locality",
+                        "locality_id": cand.locality_id,
+                        "count": int(cand.days_since),
+                        "action_type": "interpret_region",
+                    },
+                    source="wms.presence_drift_detector",
+                )
+            except Exception:
+                continue
 
     # ── Save/Load ────────────────────────────────────────────────────
 

@@ -178,13 +178,28 @@ class CraftingSystemTester:
             self.log_test("State initialization", False, str(e))
 
     def test_ui_rendering(self):
-        """Test UI rendering for each discipline"""
-        # This is a lightweight test - just verify methods exist
-        disciplines = ['smithing', 'refining', 'alchemy', 'engineering', 'enchanting']
+        """Test UI rendering for each discipline.
 
-        for discipline in disciplines:
+        2026-06-05: the assertions were checking for names like
+        ``_render_smithing_placement`` that never existed in the
+        modular renderer. The actual methods carry discipline-specific
+        suffixes that match the minigame shapes (grid / hub / sequence
+        / slots / pattern). Fixed.
+        """
+        # Discipline -> the actual renderer method that paints its
+        # placement UI. "enchanting" routes through render_adornment_*
+        # because the in-code naming uses "adornment" for the
+        # vertex/shape grid family.
+        discipline_to_method = {
+            'smithing': 'render_smithing_grid',
+            'refining': 'render_refining_hub',
+            'alchemy': 'render_alchemy_sequence',
+            'engineering': 'render_engineering_slots',
+            'enchanting': 'render_adornment_pattern',
+        }
+
+        for discipline, method_name in discipline_to_method.items():
             try:
-                method_name = f"_render_{discipline}_placement"
                 if hasattr(self.game.renderer, method_name):
                     self.log_test(f"UI render method: {discipline}", True,
                                 f"Method {method_name} exists")

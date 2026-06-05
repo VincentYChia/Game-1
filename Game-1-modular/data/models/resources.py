@@ -44,19 +44,34 @@ class ResourceNodeDefinition:
     required_tool: str  # "axe", "pickaxe"
     base_health: int
     drops: List[ResourceDrop] = field(default_factory=list)
-    respawn_time: Optional[str] = None  # "normal", "slow", "very_slow", or None (no respawn)
+    respawn_time: Optional[str] = None  # "quick"/"fast"/"normal"/"slow"/"very_slow", or None (no respawn)
     tags: List[str] = field(default_factory=list)
     narrative: str = ""
 
+    # Phase 4 reverse cross-ref field (2026-06-03). Optional; set by
+    # WES generation when the node was minted in a chunk's mixed-trigger
+    # DAG cascade (Phase 5 behavior_inheritance flavor).
+    inherited_from_chunk_id: Optional[str] = None
+
     def get_respawn_seconds(self) -> Optional[float]:
-        """Convert qualitative respawn time to seconds"""
+        """Convert qualitative respawn time to seconds.
+
+        Phase 0 G18.4 fix (2026-06-03): added ``"quick"`` synonym for
+        ``"fast"`` because the sacred ``resource-node-1.JSON`` uses
+        ``"quick"`` 9 times. Without this entry, those 9 sacred nodes
+        silently fell through to the default 60 s ("normal") respawn —
+        e.g., basic oak trees respawning at twice their intended rate.
+        Sacred files remain untouched per CLAUDE.md sacred-boundary
+        policy; the synonym lives in code.
+        """
         if self.respawn_time is None:
             return None
         respawn_map = {
+            "quick": 30.0,
             "fast": 30.0,
             "normal": 60.0,
             "slow": 120.0,
-            "very_slow": 300.0
+            "very_slow": 300.0,
         }
         return respawn_map.get(self.respawn_time, 60.0)
 

@@ -412,7 +412,96 @@ class QuestManager:
         except Exception:
             pass
 
+        # Phase 7 wiring (2026-06-05): persist a record to
+        # QuestArchiveDatabase so WNS chroniclers and WES tools see the
+        # quest in their context windows. Best-effort — never fail the
+        # quest completion path.
+        try:
+            self._archive_quest_record(
+                quest=quest, character=character, result="succeeded",
+            )
+        except Exception as e:
+            print(f"[QUEST] archive failed: {e}")
+
         return True, messages
+
+    @staticmethod
+    def _archive_quest_record(
+        *,
+        quest,
+        character,
+        result: str,
+    ) -> None:
+        """Build + persist an ArchivedQuestRecord for the quest just
+        completed (or failed/abandoned). Pulls participating NPCs from
+        the quest definition, narrative tags from the design data, and
+        the actual rewards from ``quest.effective_rewards``.
+        """
+        try:
+            from data.databases.quest_archive_db import (
+                ArchivedQuestRecord,
+                QuestArchiveDatabase,
+            )
+        except Exception:
+            return
+
+        qd = quest.quest_def
+        started = float(getattr(quest, "accepted_at", 0.0) or 0.0)
+        completed = float(getattr(quest, "turned_in_at", time.time()))
+        eff = quest.effective_rewards
+
+        # Participating NPCs: giver + any explicit references.
+        participating = []
+        if getattr(qd, "npc_id", None):
+            participating.append(str(qd.npc_id))
+        for extra_npc in getattr(qd, "involved_npcs", []) or []:
+            if extra_npc and extra_npc not in participating:
+                participating.append(str(extra_npc))
+
+        # Participating entities: pull from the objective payload.
+        participating_entities: list = []
+        obj = getattr(qd, "objectives", None)
+        if obj is not None:
+            for fld in ("items", "target", "targets", "materials"):
+                vals = getattr(obj, fld, None)
+                if vals is None:
+                    continue
+                if isinstance(vals, (list, tuple)):
+                    participating_entities.extend(str(v) for v in vals if v)
+                elif isinstance(vals, dict):
+                    participating_entities.extend(str(k) for k in vals.keys() if k)
+                else:
+                    participating_entities.append(str(vals))
+
+        tags = list(getattr(qd, "tags", []) or [])
+
+        # Snapshot the quest definition for archive durability.
+        try:
+            import dataclasses
+            snapshot = dataclasses.asdict(qd)
+        except Exception:
+            snapshot = {"quest_id": getattr(qd, "quest_id", "")}
+
+        record = ArchivedQuestRecord(
+            quest_id=str(qd.quest_id),
+            original_quest_def_json=snapshot,
+            time_started=started,
+            time_completed=completed,
+            duration=max(0.0, completed - started),
+            actual_result=result,
+            actual_rewards_granted={
+                "experience": float(eff.experience),
+                "gold": float(eff.gold),
+                "health": float(getattr(eff, "health", 0.0) or 0.0),
+                "mana": float(getattr(eff, "mana", 0.0) or 0.0),
+            },
+            participating_npcs=participating,
+            participating_entities=participating_entities,
+            archived_narrative_tags=tags,
+            wns_thread_id=getattr(quest, "wns_thread_id", None),
+            archived_at_game_day=int(completed // 86400),
+        )
+        QuestArchiveDatabase.get_instance().archive(record)
 
     @staticmethod
     def _adapt_rewards(quest: Quest, character) -> None:

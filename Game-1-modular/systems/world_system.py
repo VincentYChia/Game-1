@@ -38,11 +38,16 @@ class WorldSystem:
         loaded_chunks: Dictionary of currently loaded chunks
     """
 
-    def __init__(self, seed: Optional[int] = None):
+    def __init__(self, seed: Optional[int] = None, *, defer_init: bool = False):
         """Initialize the world system.
 
         Args:
             seed: World seed for deterministic generation. If None, generates random seed.
+            defer_init: If True, skip the expensive geographic-map generation
+                and initial chunk load until :meth:`initialize_world` is
+                called explicitly. Used by the boot flow so the start
+                menu can paint immediately while the loading screen
+                drives world generation. 2026-06-05.
         """
         # Generate or use provided seed
         self.seed = seed if seed is not None else random.randint(0, 2**32 - 1)
@@ -57,7 +62,6 @@ class WorldSystem:
         self._villages = []  # Village definitions from geographic system
         self._village_chunks = set()  # Set of (cx,cy) that are part of villages
         self._village_npcs = []  # NPC instances spawned in villages
-        self._init_geographic_system()
         self.loaded_chunks: Dict[Tuple[int, int], Chunk] = {}
         self._chunk_save_dir: Optional[Path] = None  # Set when save path known
 
@@ -90,10 +94,46 @@ class WorldSystem:
         # Callbacks fired when a chunk is unloaded, signature: (chunk_key: Tuple[int,int]) -> None
         self._on_chunk_unload_callbacks: List[Callable[[Tuple[int, int]], None]] = []
 
-        # Load initial chunks and spawn fixed content
+        # Whether initialize_world() has been run. defer_init=True boot
+        # paths flip this to True after the loading-screen pass.
+        self._world_initialized = False
+
+        if not defer_init:
+            self.initialize_world()
+
+    def initialize_world(self, progress_callback: Optional[Callable[[str, float, str], None]] = None) -> None:
+        """Run the expensive geographic-map + initial-chunk pass.
+
+        Args:
+            progress_callback: Optional ``(stage_name, fraction, flavor_line)``
+                callable invoked at each stage boundary so a loading screen
+                can paint. ``fraction`` is 0.0-1.0. Safe to omit; the world
+                will still generate, just silently.
+        """
+        if self._world_initialized:
+            return
+
+        def _tick(stage: str, fraction: float, flavor: str = "") -> None:
+            if progress_callback is not None:
+                try:
+                    progress_callback(stage, fraction, flavor)
+                except Exception:
+                    pass
+
+        _tick("Building geography", 0.05,
+              "The world remembers its coasts and rivers.")
+        self._init_geographic_system()
+
+        _tick("Loading initial chunks", 0.70,
+              "Roads find their travelers.")
         self._load_initial_chunks()
+
+        _tick("Spawning fixed entities", 0.88,
+              "Markets begin to stir; forges wake.")
         self.spawn_starting_stations()
         self.spawn_spawn_storage_chest()
+
+        _tick("Finalizing world", 0.98, "")
 
         if self.geographic_map:
             nm = len(self.geographic_map.nations)
@@ -107,6 +147,9 @@ class WorldSystem:
         else:
             print(f"🌍 World initialized with seed: {self.seed} (legacy mode)")
             print(f"   Loaded {len(self.loaded_chunks)} initial chunks")
+
+        self._world_initialized = True
+        _tick("Ready", 1.0, "")
 
     def _print_world_debug(self):
         """Print debug statistics about the generated world."""
@@ -803,8 +846,32 @@ class WorldSystem:
             with open(file_path, 'r') as f:
                 save_data = json.load(f)
 
-            # Generate the base chunk
-            chunk = Chunk(chunk_x, chunk_y, biome_generator=self.biome_generator)
+            # 2026-06-05 — chunk template lock support.
+            # Existing saves without a ``template_locked`` field default
+            # to True (treat as locked). This prevents silently
+            # re-rolling chunks the player has already explored when
+            # ChunkTemplateDatabase changes (e.g. new chunk types added
+            # since the save was created). Unlocked chunks DO get a
+            # fresh roll via Chunk.__init__'s _determine_chunk_type.
+            template_locked = bool(save_data.get("template_locked", True))
+            saved_chunk_type = save_data.get("chunk_type")
+            locked_chunk_type = (
+                saved_chunk_type if (template_locked and saved_chunk_type)
+                else None
+            )
+
+            # Generate the base chunk. ``locked_chunk_type`` overrides
+            # _determine_chunk_type so the saved template wins when locked.
+            geographic_data = None
+            if self.geographic_map:
+                geographic_data = self.geographic_map.chunk_data.get(
+                    (chunk_x, chunk_y))
+            chunk = Chunk(
+                chunk_x, chunk_y,
+                biome_generator=self.biome_generator,
+                geographic_data=geographic_data,
+                locked_chunk_type=locked_chunk_type,
+            )
 
             # Calculate elapsed time since unload
             unload_time = save_data.get("unload_timestamp", 0.0)
@@ -940,6 +1007,21 @@ class WorldSystem:
                 tile = self.get_tile(Position(x, y, 0))
                 if tile:
                     visible.append(tile)
+
+        # 2026-06-05 — lock-on-first-render. Any loaded chunk whose tiles
+        # the renderer just asked for is now visible to the player. Mark
+        # it as rendered so its chunk_type is preserved across reloads
+        # even if ChunkTemplateDatabase changes later.
+        cs = Config.CHUNK_SIZE
+        cx_min = (sx) // cs
+        cx_max = (sx + tw - 1) // cs
+        cy_min = (sy) // cs
+        cy_max = (sy + th - 1) // cs
+        for cx in range(cx_min, cx_max + 1):
+            for cy in range(cy_min, cy_max + 1):
+                ch = self.loaded_chunks.get((cx, cy))
+                if ch is not None and not ch._rendered_once:
+                    ch.mark_rendered()
 
         return visible
 

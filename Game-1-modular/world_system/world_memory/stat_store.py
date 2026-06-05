@@ -486,6 +486,78 @@ class StatStore:
             for r in rows
         ]
 
+    # ── WNS interpreter helpers ────────────────────────────────────
+    # Convenience accessors for the WNS BehaviorInterpreter (Phase 2) and
+    # the WMS creative-extraction rung 8 (stat/ledger lookup). These do
+    # NOT add new data — they shape existing tag-indexed counters into
+    # views the interpreter wants.
+
+    # Canonical category list — matches EVENT_CATEGORY_MAP in
+    # trigger_manager.py. Stats with these `domain:` tags get bucketed
+    # by activity_profile().
+    _ACTIVITY_PROFILE_CATEGORIES: ClassVar[tuple] = (
+        "combat", "gathering", "crafting",
+        "economy", "progression", "exploration", "social",
+    )
+
+    def activity_profile(
+        self,
+        locality_id: str,
+        *,
+        normalize: bool = True,
+    ) -> Dict[str, float]:
+        """Per-locality discipline-mix dict — what is the player doing
+        here, summed by event category.
+
+        Phase 0 G14 (2026-06-03). Reads stats tagged
+        ``locality:{locality_id}`` and groups by ``domain:`` tag into
+        the 7 canonical categories
+        (combat/gathering/crafting/economy/progression/exploration/social).
+        The 9-rung creative-extraction discipline (consolidation §3 rung 8)
+        promises this signal is reachable; this method delivers it.
+
+        Args:
+            locality_id: the WMS locality identifier (e.g. "tarmouth").
+            normalize: when True (default), values sum to 1.0; when
+                False, raw counts are returned.
+
+        Returns:
+            Dict mapping category → float. Categories with zero
+            activity ARE present (value 0.0) so callers can read all
+            seven without missing-key handling. Empty dict if the
+            locality has no recorded activity.
+        """
+        if not locality_id:
+            return {}
+
+        # Pull stats tagged with this locality and a domain category.
+        # query_by_tags(match_all=True) requires BOTH the locality tag
+        # AND any one of the domain tags — but the API only supports
+        # one tag set, so we iterate per domain and merge.
+        result: Dict[str, float] = {
+            cat: 0.0 for cat in self._ACTIVITY_PROFILE_CATEGORIES
+        }
+
+        for category in self._ACTIVITY_PROFILE_CATEGORIES:
+            rows = self.query_by_tags(
+                [f"locality:{locality_id}", f"domain:{category}"],
+                match_all=True,
+                limit=10000,
+            )
+            result[category] = sum(float(r["value"]) for r in rows)
+
+        if not normalize:
+            # Drop the all-zero shape if nothing was tagged at this
+            # locality — caller can tell "no data" from "balanced data".
+            if all(v == 0.0 for v in result.values()):
+                return {}
+            return result
+
+        total = sum(result.values())
+        if total <= 0.0:
+            return {}
+        return {cat: result[cat] / total for cat in result}
+
     # ── Backward-compatible read methods ───────────────────────────
     # These maintain the old API so existing code doesn't break during
     # migration.  They all read from the single 'value' column.

@@ -427,7 +427,9 @@ class WESOrchestrator:
         try:
             # ── Tier 1 — planner ─────────────────────────────────────
             t0 = time.monotonic() * 1000.0
-            plan: WESPlan = self._planner.plan(bundle)
+            plan: WESPlan = self._planner.plan(
+                bundle, adjusted_instructions=adjusted_instructions
+            )
             latency_planner = time.monotonic() * 1000.0 - t0
 
             planner_fixture_code = getattr(

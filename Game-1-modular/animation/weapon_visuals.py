@@ -15,18 +15,30 @@ from typing import Dict, List, Tuple, Optional, Any
 
 
 # Element tag -> base color (vibrant, saturated for readability)
-ELEMENT_COLORS = {
-    "physical": (220, 225, 245),
-    "fire":     (255, 120, 25),
-    "ice":      (90, 200, 255),
-    "frost":    (90, 200, 255),
-    "lightning": (255, 255, 70),
-    "poison":   (90, 255, 70),
-    "arcane":   (190, 70, 255),
-    "shadow":   (140, 70, 200),
-    "holy":     (255, 255, 170),
-    "chaos":    (220, 50, 50),
-}
+# §15 trap 13: the canonical element palette lives in
+# ``visual-config.JSON > damageNumbers.typeColors`` and is exposed by
+# ``rendering.visual_colors``. We seed this dict from that source so a
+# designer change there propagates to weapon trail / sweep colors too.
+# Local aliases ("frost", "chaos") are preserved because they're
+# weapon-visual-specific synonyms that the central palette doesn't carry.
+try:
+    from rendering.visual_colors import element_palette as _vc_element_palette
+    ELEMENT_COLORS = _vc_element_palette()
+    ELEMENT_COLORS.setdefault("frost", ELEMENT_COLORS.get("ice", (90, 200, 255)))
+    ELEMENT_COLORS.setdefault("chaos", (220, 50, 50))
+except Exception:
+    ELEMENT_COLORS = {
+        "physical": (220, 225, 245),
+        "fire":     (255, 120, 25),
+        "ice":      (90, 200, 255),
+        "frost":    (90, 200, 255),
+        "lightning": (255, 255, 70),
+        "poison":   (90, 255, 70),
+        "arcane":   (190, 70, 255),
+        "shadow":   (140, 70, 200),
+        "holy":     (255, 255, 170),
+        "chaos":    (220, 50, 50),
+    }
 
 # Weapon type -> base visual profile
 # arc: sweep width in degrees

@@ -9,7 +9,7 @@ Schema versions:
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from data.models.npcs import NPCDefinition
 from data.models.quests import QuestDefinition, QuestObjective, QuestRewards
 from data.models.world import Position
@@ -308,6 +308,75 @@ class NPCDatabase:
             import traceback
             traceback.print_exc()
             self.loaded = False
+
+    def get_voice_excerpt(self, npc_id: str) -> Optional[Dict[str, Any]]:
+        """Return the NPC's narrative-relevant payload for downstream
+        cross-feature consumers (Phase 4 hub feature, 2026-06-03).
+
+        Per consolidation §2.5 (corrected): NPCs are the largest
+        narrative-injection surface — six other content tools need
+        NPC voice when authoring cross-referenced content (Quests'
+        giver narrative, Skills' teacher voice, Titles' granter voice,
+        Hostiles' related-NPC lore, Quest reward adaptation, dialogue
+        speechbank). This API is the canonical surface.
+
+        Returns None if the npc_id isn't in the registry. Otherwise
+        returns a shallow dict with the immutable, design-time fields
+        the LLM tools should read. Mutable runtime state (affinity,
+        dialogue log) is NOT in this excerpt — that belongs in the
+        dynamic context registry (see memory `npc_schema_overhaul_v3.md`).
+
+        Returned shape:
+            {
+                "npc_id": str,
+                "name": str,
+                "title": str,
+                "narrative": str,         # immutable past prose
+                "voice_anchor": str,      # personality.voice key if any
+                "personality_summary": Dict[str, Any],
+                "primary_faction": str,   # faction.tag or similar
+                "home_chunk": str,        # locality.home_chunk
+                "locality_summary": Dict[str, Any],
+                "tags": List[str],
+            }
+        """
+        npc = self.npcs.get(npc_id)
+        if npc is None:
+            return None
+
+        # Extract voice + faction + home_chunk with defensive fallbacks.
+        personality = npc.personality or {}
+        voice_anchor = (
+            personality.get("voice")
+            or personality.get("voice_anchor")
+            or ""
+        )
+        locality = npc.locality or {}
+        home_chunk = (
+            locality.get("home_chunk")
+            or locality.get("chunk")
+            or ""
+        )
+        faction = npc.faction or {}
+        primary_faction = (
+            faction.get("tag")
+            or faction.get("primary_faction")
+            or faction.get("id")
+            or ""
+        )
+
+        return {
+            "npc_id": npc.npc_id,
+            "name": npc.name,
+            "title": npc.title,
+            "narrative": npc.narrative,
+            "voice_anchor": voice_anchor,
+            "personality_summary": dict(personality),
+            "primary_faction": primary_faction,
+            "home_chunk": home_chunk,
+            "locality_summary": dict(locality),
+            "tags": list(npc.tags),
+        }
 
     def reload(self) -> None:
         """Re-read NPC + Quest JSON files from disk.

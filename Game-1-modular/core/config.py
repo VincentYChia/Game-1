@@ -36,6 +36,13 @@ class Config:
     WORLD_SIZE = 176  # Deprecated - world is now infinite
     NUM_CHUNKS = 11   # Deprecated - chunks generated on demand
 
+    # Temporary World (2026-06-05): canonical fixed seed so the
+    # --temp / "Temporary World" menu option always generates the
+    # SAME small test map. Picking a fixed value also means the
+    # world_map_seed_<TEMP>.gz cache hits instantly after first boot,
+    # so temp-world starts are near-instant.
+    TEMP_WORLD_SEED = 13579
+
     # Player spawn and safe zone
     PLAYER_SPAWN_X = 0.0
     PLAYER_SPAWN_Y = 0.0
@@ -102,10 +109,15 @@ class Config:
         cls.INVENTORY_PANEL_HEIGHT = height - cls.INVENTORY_PANEL_Y
         cls.INVENTORY_SLOT_SIZE = cls.scale(50)
 
+        # §15 trap 17 reconciliation (2026-06-05): single source of truth
+        # for inventory slot spacing. Previously the literal ``10`` was
+        # duplicated across 4 sites with "Must match renderer spacing"
+        # comments. Now all sites read Config.INVENTORY_SLOT_SPACING.
+        cls.INVENTORY_SLOT_SPACING = cls.scale(10)
+
         # Calculate slots per row
-        slot_spacing = 5
         available_width = cls.INVENTORY_PANEL_WIDTH - 40
-        cls.INVENTORY_SLOTS_PER_ROW = max(8, available_width // (cls.INVENTORY_SLOT_SIZE + slot_spacing))
+        cls.INVENTORY_SLOTS_PER_ROW = max(8, available_width // (cls.INVENTORY_SLOT_SIZE + cls.INVENTORY_SLOT_SPACING))
 
         # Pre-calculate common UI scaled values for menus
         cls.MENU_SMALL_W = cls.scale(600)

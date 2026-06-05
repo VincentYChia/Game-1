@@ -25,3 +25,10 @@ class TitleDefinition:
     activity_type: str = "general"
     acquisition_threshold: int = 0
     prerequisites: List[str] = field(default_factory=list)
+
+    # Phase 4 reverse cross-ref fields (2026-06-03). Optional; when set
+    # by WES generation, signal that this title is bound to a specific
+    # quest / NPC that birthed it. Tools use these for narrative
+    # coherence (the title's prose can rhyme with the granting source).
+    granted_by_quest_id: Optional[str] = None
+    granted_by_npc_id: Optional[str] = None

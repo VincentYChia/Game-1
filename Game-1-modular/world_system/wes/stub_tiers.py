@@ -68,7 +68,11 @@ class StubExecutionPlanner:
     name: str = "stub_execution_planner"
     fixture_code: str = "wes_execution_planner"
 
-    def plan(self, bundle) -> WESPlan:
+    def plan(self, bundle, adjusted_instructions=None) -> WESPlan:
+        # adjusted_instructions accepted for Protocol conformance; the
+        # fixture-driven stub returns its canned response regardless of
+        # rerun feedback.
+        del adjusted_instructions
         fixture = get_fixture_registry().require(self.fixture_code)
         raw = _strip_json_fences(fixture.canonical_response)
         try:

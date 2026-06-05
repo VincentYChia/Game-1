@@ -369,9 +369,10 @@ class SpinningWheelMinigame:
         # 0 currency = 0.0 performance, 100 = 0.5, 200+ = 1.0
         performance = min(1.0, max(0.0, self.current_currency / 200.0))
 
-        # Apply first-try bonus
+        # §15 trap 3: read first-try bonus from reward_calculator.
         if self.attempt == 1:
-            performance = min(1.0, performance + 0.10)
+            from core.reward_calculator import first_try_bonus
+            performance = min(1.0, performance + first_try_bonus("enchanting"))
 
         # Calculate rewards using centralized calculator
         try:
