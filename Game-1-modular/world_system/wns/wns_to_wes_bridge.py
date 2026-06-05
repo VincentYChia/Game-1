@@ -31,8 +31,10 @@ from typing import Any, Dict, List, Optional, Sequence
 from world_system.living_world.infra.context_bundle import (
     NarrativeContextSlice,
     NarrativeDelta,
+    NL1Row,
     ThreadFragment,
     WESContextBundle,
+    WMSLayerRow,
     WNSDirective,
 )
 from world_system.wns.cascading_context import WeaverContext
@@ -134,21 +136,52 @@ def _build_narrative_delta(
     weaver_ctx: WeaverContext,
     just_written_narrative: str,
     game_time: float,
+    *,
+    npc_dialogue: Optional[Sequence["NL1Row"]] = None,
+    wms_events: Optional[Sequence["WMSLayerRow"]] = None,
+    previous_firing_time: Optional[float] = None,
 ) -> NarrativeDelta:
     """Synthesize a NarrativeDelta from the weaver's just-completed run.
 
-    The delta is shaped around (nl1_rows, wms_rows) per the working
-    doc; we leave those empty (the rich provenance is captured by
-    source_narrative_layer_ids on the bundle and by the cascading
-    narrative_context). The required address/layer/time fields are
-    populated from the weaver's firing context so downstream tooling
-    can locate this delta in the WNS timeline.
+    The delta carries (npc_dialogue, wms_events) between the previous
+    WNS firing at this layer/address and now. Per Phase 0 G02
+    (2026-06-03), this function accepts the per-firing rows as
+    optional inputs so callers (the nl_weaver) can wire actual data
+    when available; otherwise the lists stay empty without losing the
+    address/layer/time framing.
+
+    Phase 1 wires the data sources at the nl_weaver call site
+    (`world_system/wns/nl_weaver.py`). For Phase 0 this just exposes
+    the parameters so the contract is in place.
+
+    Args:
+        weaver_ctx: the WeaverContext the weaver consumed (carries
+            address + layer).
+        just_written_narrative: the narrative just written; unused at
+            the delta level but retained for symmetry with the
+            other builder signatures.
+        game_time: this-firing timestamp.
+        npc_dialogue: optional dialogue rows from NL1 between the
+            previous firing and now.
+        wms_events: optional WMS L2 interpretation rows in the same
+            window.
+        previous_firing_time: optional timestamp of the previous WNS
+            firing at this address/layer; defaults to ``game_time``
+            (zero-width window) when not provided.
     """
+    del just_written_narrative  # retained for caller symmetry
+    start = (
+        float(previous_firing_time)
+        if previous_firing_time is not None
+        else float(game_time)
+    )
     return NarrativeDelta(
         address=weaver_ctx.address,
         layer=int(weaver_ctx.layer),
-        start_time=float(game_time),
+        start_time=start,
         end_time=float(game_time),
+        npc_dialogue_since_last=list(npc_dialogue) if npc_dialogue else [],
+        wms_events_since_last=list(wms_events) if wms_events else [],
     )
 
 
@@ -162,6 +195,9 @@ def build_wes_bundle(
     just_written_narrative: str,
     source_row_id: str,
     game_time: Optional[float] = None,
+    npc_dialogue_since_last: Optional[Sequence["NL1Row"]] = None,
+    wms_events_since_last: Optional[Sequence["WMSLayerRow"]] = None,
+    previous_firing_time: Optional[float] = None,
 ) -> WESContextBundle:
     """Assemble a WESContextBundle inheriting WNS state.
 
@@ -175,6 +211,19 @@ def build_wes_bundle(
             (post-WES-tag-cleaning).
         source_row_id: the NarrativeRow id this bundle traces back to.
         game_time: timestamp; defaults to wall clock.
+        npc_dialogue_since_last: optional NL1 dialogue rows from the
+            previous firing window. When provided, populates
+            ``delta.npc_dialogue_since_last`` so WES tools can read
+            recent NPC voice. Phase 0 G02 (2026-06-03) added this
+            channel; Phase 1 wires the actual data source at the
+            nl_weaver call site.
+        wms_events_since_last: optional WMS L2 interpretation rows
+            from the same window. When provided, populates
+            ``delta.wms_events_since_last`` so WES tools can read the
+            factual delta.
+        previous_firing_time: optional timestamp of the previous WNS
+            firing at this address/layer; used as the delta's
+            ``start_time`` when populated.
 
     Returns:
         A WESContextBundle ready to feed to ``WESOrchestrator.run_plan``.
@@ -182,12 +231,21 @@ def build_wes_bundle(
     if game_time is None:
         game_time = time.time()
 
-    threads = _trim_threads(weaver_ctx.self_active_threads, max_count=5)
+    # Phase 1 contract (2026-06-03): include BOTH focal-address threads
+    # AND parent-address threads in open_threads, so the slice can
+    # separate them by address downstream. Without parent threads in
+    # the bundle, locality-tier content has no cascading arc context.
+    focal_threads = _trim_threads(weaver_ctx.self_active_threads, max_count=5)
+    parent_threads = _trim_threads(
+        getattr(weaver_ctx, "above_primary_threads", []) or [],
+        max_count=3,
+    )
+    all_threads = list(focal_threads) + list(parent_threads)
 
     narrative_context = NarrativeContextSlice(
         firing_layer_summary=just_written_narrative,
         parent_summaries=_build_parent_summaries(weaver_ctx),
-        open_threads=threads,
+        open_threads=all_threads,
     )
 
     directive = WNSDirective(
@@ -197,7 +255,14 @@ def build_wes_bundle(
         | {"purpose": wes_call.purpose},
     )
 
-    delta = _build_narrative_delta(weaver_ctx, just_written_narrative, game_time)
+    delta = _build_narrative_delta(
+        weaver_ctx,
+        just_written_narrative,
+        game_time,
+        npc_dialogue=npc_dialogue_since_last,
+        wms_events=wms_events_since_last,
+        previous_firing_time=previous_firing_time,
+    )
 
     return WESContextBundle(
         bundle_id=f"wns_to_wes_{uuid.uuid4().hex[:12]}",

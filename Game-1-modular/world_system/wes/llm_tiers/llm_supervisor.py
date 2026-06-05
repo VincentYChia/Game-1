@@ -127,6 +127,21 @@ class LLMSupervisor:
         bundle: "WESContextBundle",
     ) -> Dict[str, Any]:
         """Review a plan pass, return verdict + rerun decision."""
+        # Phase 2 behavior-causal summary — empty string for
+        # narrative-causal firings so the template renders cleanly.
+        trigger_archetype = bundle.directive.scope_hint.get(
+            "trigger_archetype", "narrative",
+        )
+        behavior_signal_summary = ""
+        if bundle.behavior_signal is not None:
+            sig = bundle.behavior_signal
+            behavior_signal_summary = (
+                f"counter={sig.counter_path} "
+                f"threshold={sig.threshold_crossed} "
+                f"at locality={sig.locality_id} "
+                f"— intent: {sig.inferred_behavior_intent}"
+            )
+
         variables = {
             "plan_id": plan.plan_id,
             "plan_rationale": plan.rationale,
@@ -135,11 +150,15 @@ class LLMSupervisor:
             "bundle_id": bundle.bundle_id,
             "bundle_directive": bundle.directive.directive_text,
             "bundle_firing_tier": bundle.directive.firing_tier,
+            "firing_address": bundle.directive.scope_hint.get("firing_address", ""),
             "tier_log_blob": _summarize_tier_results(tier_results),
             "staged_counts": {
                 "steps": len(plan.steps),
                 "tier_results": len(tier_results),
             },
+            # ── Phase 2 behavior-causal context ──────────────────────
+            "trigger_archetype": trigger_archetype,
+            "behavior_signal_summary": behavior_signal_summary,
         }
 
         prompts = self._assembler.build(

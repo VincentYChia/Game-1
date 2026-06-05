@@ -101,13 +101,22 @@ class LLMExecutionPlanner:
 
     # ── Protocol method ──────────────────────────────────────────────
 
-    def plan(self, bundle: "WESContextBundle") -> WESPlan:
+    def plan(
+        self,
+        bundle: "WESContextBundle",
+        adjusted_instructions: Optional[str] = None,
+    ) -> WESPlan:
         """Decompose ``bundle`` into an ordered :class:`WESPlan`.
 
         Abandonment is represented by ``abandoned=True`` with a non-empty
         ``abandonment_reason``.
+
+        ``adjusted_instructions`` is supervisor rerun feedback from a
+        prior pass (or a bounce-back warning); when present, it is
+        rendered into the prompt as ``${prior_rerun_feedback}`` so the
+        model knows which specific issue to address on this attempt.
         """
-        variables = self._bundle_to_vars(bundle)
+        variables = self._bundle_to_vars(bundle, adjusted_instructions)
         prompts = self._assembler.build(
             variables,
             firing_tier=bundle.directive.firing_tier,
@@ -159,12 +168,68 @@ class LLMExecutionPlanner:
 
     # ── internals ────────────────────────────────────────────────────
 
-    def _bundle_to_vars(self, bundle: "WESContextBundle") -> Dict[str, Any]:
+    def _bundle_to_vars(
+        self,
+        bundle: "WESContextBundle",
+        adjusted_instructions: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Extract the shallow variables the planner prompt template needs.
 
-        Keeps the rendered user prompt compact — hub/tool context lives in
-        bundle_slice, not here (§5.2).
+        Phase 1 contract (2026-06-03): planner now sees parent_summaries
+        (cascading-down narrative), geographic_chain (locality→world
+        tier briefs), and trigger_archetype so scope decisions can
+        respect both narrative authority AND behavior thresholds.
         """
+        prior_rerun_feedback = ""
+        if adjusted_instructions:
+            prior_rerun_feedback = (
+                "\n\nPRIOR SUPERVISOR FEEDBACK (rerun pass — you MUST "
+                f"address this): {adjusted_instructions}"
+            )
+
+        # Format parent summaries for the planner — one line each.
+        parent_block = ""
+        if bundle.narrative_context.parent_summaries:
+            parent_block = "\n".join(
+                f"[{k}] {v}"
+                for k, v in bundle.narrative_context.parent_summaries.items()
+            )
+
+        # Geographic chain — pull from scope_hint (set by bridge).
+        geo_chain = bundle.directive.scope_hint.get(
+            "geographic_chain", []
+        ) or []
+
+        # Trigger archetype defaults to "narrative" if scope_hint
+        # doesn't carry one. Phase 2 BehaviorInterpreter sets behavior/mixed.
+        trigger_archetype = bundle.directive.scope_hint.get(
+            "trigger_archetype", "narrative",
+        )
+
+        # Phase 2 behavior signal — render a short summary for the
+        # planner prompt. Empty string on narrative-causal firings.
+        behavior_signal_summary = ""
+        if bundle.behavior_signal is not None:
+            sig = bundle.behavior_signal
+            top_activity = ""
+            if sig.activity_profile:
+                top = max(
+                    sig.activity_profile.items(),
+                    key=lambda kv: kv[1],
+                    default=("", 0.0),
+                )
+                if top[0]:
+                    top_activity = (
+                        f"; dominant activity: {top[0]} "
+                        f"({top[1]:.0%})"
+                    )
+            behavior_signal_summary = (
+                f"counter={sig.counter_path} "
+                f"threshold={sig.threshold_crossed} "
+                f"at locality={sig.locality_id}{top_activity} "
+                f"— intent: {sig.inferred_behavior_intent}"
+            )
+
         return {
             "bundle_id": bundle.bundle_id,
             "firing_tier": bundle.directive.firing_tier,
@@ -178,6 +243,13 @@ class LLMExecutionPlanner:
             ),
             "registry_counts": "n/a",  # filled in by WNS in later phases
             "firing_address": bundle.delta.address,
+            "prior_rerun_feedback": prior_rerun_feedback,
+            # ── Phase 1 narrative propagation ────────────────────────
+            "bundle_parent_summaries": parent_block,
+            "geographic_chain": geo_chain,
+            "trigger_archetype": trigger_archetype,
+            # ── Phase 2 behavior signal ──────────────────────────────
+            "behavior_signal_summary": behavior_signal_summary,
         }
 
     def _attempt(

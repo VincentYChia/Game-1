@@ -588,10 +588,34 @@ class BackendManager:
                 # v4: expose task to backends (MockBackend uses it for
                 # Fixture Registry lookup; real backends ignore it).
                 MockBackend.set_current_task(task)
+                t_start = time.time()
                 text, err = backend.generate(
                     system_prompt, user_prompt,
                     temperature=temp, max_tokens=tokens,
                 )
+                elapsed = time.time() - t_start
+                # §15 backend hardening: log every call to the dev log
+                # so designers can audit Claude round-trips without
+                # needing terminal-scroll. Failures go in too — that's
+                # the whole point.
+                try:
+                    from world_system.living_world.backends.llm_dev_log import (
+                        record_call,
+                    )
+                    info = backend.get_info() if hasattr(backend, "get_info") else {}
+                    record_call(
+                        task=task,
+                        backend=name,
+                        model=str(info.get("model", "")),
+                        system_prompt=system_prompt,
+                        user_prompt=user_prompt,
+                        response=text,
+                        error=err,
+                        elapsed_s=elapsed,
+                        extra={"temperature": temp, "max_tokens": tokens},
+                    )
+                except Exception:
+                    pass
                 if err:
                     errors.append(f"{name}: {err}")
                     continue

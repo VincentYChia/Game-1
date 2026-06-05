@@ -130,6 +130,11 @@ class NLWeaver:
         self._prompt_fragments_path = prompt_fragments_path or self._default_prompt_path()
         self._prompt_fragments: Dict[str, Any] = {}
         self._load_prompt_fragments()
+        # WMS-shared tag fragments. WNS reuses WMS tag entries (tier:*,
+        # domain:*, species:*, etc.) by reading the WMS file once. Per
+        # designer decision 2026-05-14: centralized, no duplication.
+        # See feedback_wns_prompts_must_be_tag_indexed.md.
+        self._wms_fragments: Dict[str, str] = self._load_wms_fragments()
         # Optional GeographicRegistry-like object. When supplied, the
         # weaver injects a ``${geo_context}`` block into the user prompt
         # describing where this firing sits in the world hierarchy.
@@ -178,13 +183,160 @@ class NLWeaver:
                          "path": self._prompt_fragments_path},
             )
 
+    def _load_wms_fragments(self) -> Dict[str, str]:
+        """Load the shared WMS prompt_fragments.json once at init.
+
+        Returns a flat dict ``{tag_key: fragment_text}``. WNS reuses
+        this so shared tag fragments (``tier:*``, ``domain:*``,
+        ``species:*``, etc.) don't need to be duplicated in the WNS
+        layer files.
+
+        Degrades to empty dict on any I/O error — log and continue.
+        """
+        here = os.path.dirname(os.path.abspath(__file__))
+        wms_path = os.path.normpath(
+            os.path.join(here, os.pardir, "config", "prompt_fragments.json")
+        )
+        if not os.path.exists(wms_path):
+            log_degrade(
+                subsystem="wns",
+                operation=f"nl_weaver.load_wms_fragments (layer {self._layer})",
+                failure_reason=f"FileNotFoundError: {wms_path}",
+                fallback_taken="WMS-shared tag fragments unavailable; WNS-only context used",
+                severity="info",
+                context={"layer": self._layer, "path": wms_path},
+            )
+            return {}
+        try:
+            with open(wms_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            log_degrade(
+                subsystem="wns",
+                operation=f"nl_weaver.load_wms_fragments (layer {self._layer})",
+                failure_reason=f"{type(e).__name__}: {e}",
+                fallback_taken="WMS-shared tag fragments unavailable",
+                severity="warning",
+                context={"layer": self._layer, "path": wms_path},
+            )
+            return {}
+        if not isinstance(data, dict):
+            return {}
+        return {k: v for k, v in data.items() if isinstance(v, str)}
+
     # ── Prompt assembly ──────────────────────────────────────────────
 
-    def _build_system_prompt(self) -> str:
-        core = self._prompt_fragments.get("_core", {}) if isinstance(
-            self._prompt_fragments, dict) else {}
-        system = core.get("system", "")
-        return str(system)
+    def _collect_firing_tags(self, weaver_ctx: WeaverContext) -> List[str]:
+        """Collect tags driving this firing for tag-indexed assembly.
+
+        Sources (in order, deduplicated):
+          - ``layer:nl<N>`` always
+          - content_tags from ``self_active_threads``
+          - content_tags from ``lower_primary_threads`` (NL3+)
+
+        WMS-context row tags are NOT included here — they arrive as
+        rendered prose in ``${wms_context}``. If structured WMS tags
+        become available on WeaverContext later, add them here.
+        """
+        tags: List[str] = [f"layer:nl{self._layer}"]
+        seen = set(tags)
+
+        for thread in weaver_ctx.self_active_threads or []:
+            for tag in getattr(thread, "content_tags", None) or []:
+                if isinstance(tag, str) and tag not in seen:
+                    tags.append(tag)
+                    seen.add(tag)
+
+        for thread in weaver_ctx.lower_primary_threads or []:
+            for tag in getattr(thread, "content_tags", None) or []:
+                if isinstance(tag, str) and tag not in seen:
+                    tags.append(tag)
+                    seen.add(tag)
+
+        return tags
+
+    def _build_system_prompt(
+        self, firing_tags: Optional[List[str]] = None
+    ) -> str:
+        """Assemble the system prompt by tag-indexed concatenation.
+
+        Order (v3.1, 2026-05-26):
+          1. ``_core.system``         — universal weaver role + hard rules
+          2. ``_game_context`` from WMS file — game-wide grounding (tiers,
+             factions, magic, player role, world tone)
+          3. ``_layer_scope``         — this layer's scope, bounded by
+             smaller / larger neighbors via YES/NO examples
+          4. Per firing tag: WMS factual fragment + WNS narrative-lens
+             fragment. Either may be missing; if both exist they are
+             emitted adjacent.
+          5. ``_wes_tool``            — what WES is, when to call, how to
+             call (positioned near the end so model has full context
+             before deciding to fire a directive)
+          6. ``_affinity_shift_tool`` — same 3-part structure, NL3+ only
+          7. ``_output``              — output schema + minimal example
+
+        Backward compatibility: when ``firing_tags`` is None or empty,
+        per-tag step is skipped; universal + layer + tool + output blocks
+        still assemble. Tests that pre-date tag collection still pass.
+        """
+        if not isinstance(self._prompt_fragments, dict):
+            return ""
+
+        parts: List[str] = []
+
+        # 1. Universal weaver context.
+        core = self._prompt_fragments.get("_core", {})
+        if isinstance(core, dict):
+            sys_text = core.get("system", "")
+            if isinstance(sys_text, str) and sys_text:
+                parts.append(sys_text)
+
+        # 2. Game-wide context from the WMS shared fragments file.
+        # Designer-owned grounding: tier system, factions, magic, player
+        # role, world tone. Centralized so WMS and WNS use the same
+        # game-context block.
+        game_context = self._wms_fragments.get("_game_context")
+        if isinstance(game_context, str) and game_context:
+            parts.append(game_context)
+
+        # 3. Layer-specific scope (bound by smaller + larger neighbors).
+        layer_scope = self._prompt_fragments.get("_layer_scope")
+        if isinstance(layer_scope, str) and layer_scope:
+            parts.append(layer_scope)
+
+        # 4. Tag-indexed concat — WMS factual + WNS narrative lens.
+        if firing_tags:
+            seen: set = set()
+            for tag in firing_tags:
+                if tag in seen:
+                    continue
+                seen.add(tag)
+                wms_frag = self._wms_fragments.get(tag)
+                if isinstance(wms_frag, str) and wms_frag:
+                    parts.append(f"[{tag}] {wms_frag}")
+                wns_frag = self._prompt_fragments.get(tag)
+                if isinstance(wns_frag, str) and wns_frag:
+                    parts.append(f"[{tag} - narrative lens] {wns_frag}")
+
+        # 5. WES tool — what / when / how. Placed near the end so the
+        # model has read the game context and tag context before
+        # deciding whether to emit a directive.
+        wes_tool = self._prompt_fragments.get("_wes_tool")
+        if isinstance(wes_tool, str) and wes_tool:
+            parts.append(wes_tool)
+
+        # 6. Affinity-shift tool — only NL3+ (locality scope skips it).
+        if self._layer >= 3:
+            affinity_tool = self._prompt_fragments.get("_affinity_shift_tool")
+            if isinstance(affinity_tool, str) and affinity_tool:
+                parts.append(affinity_tool)
+
+        # 7. Output schema.
+        output = self._prompt_fragments.get("_output")
+        if isinstance(output, str) and output:
+            parts.append(output)
+
+        return "\n\n".join(p for p in parts if p)
 
     @staticmethod
     def _render_threads(threads: List[ThreadFragment]) -> str:
@@ -393,7 +545,8 @@ class NLWeaver:
             )
 
         task = f"wns_layer{self._layer}"
-        system_prompt = self._build_system_prompt()
+        firing_tags = self._collect_firing_tags(weaver_ctx)
+        system_prompt = self._build_system_prompt(firing_tags)
         user_prompt = self._build_user_prompt(
             address=address,
             weaver_ctx=weaver_ctx,

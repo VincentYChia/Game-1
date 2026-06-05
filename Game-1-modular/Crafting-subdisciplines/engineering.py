@@ -964,9 +964,10 @@ class EngineeringMinigame:
         hint_penalty = self.hints_used * 0.05  # 5% penalty per hint
         performance = max(0.0, min(1.0, base_performance - hint_penalty))
 
-        # Apply first-try bonus
+        # §15 trap 3: read first-try bonus from reward_calculator.
         if self.attempt == 1:
-            performance = min(1.0, performance + 0.05)
+            from core.reward_calculator import first_try_bonus
+            performance = min(1.0, performance + first_try_bonus("engineering"))
 
         # Calculate rewards using centralized calculator
         try:

@@ -24,3 +24,12 @@ class MaterialDefinition:
     effect_params: dict = field(default_factory=dict)  # Effect parameters (baseDamage, cone_angle, etc.)
     narrative: str = ""  # Flavor text from metadata.narrative
     tags: List[str] = field(default_factory=list)  # Descriptive tags from metadata.tags (drives UI/search/CNN input)
+
+    # Phase 4 reverse cross-ref fields (2026-06-03). Optional; set by
+    # WES generation. gather_quest_id binds the material to the quest
+    # that motivated its creation (so the quest's narrative and the
+    # material's narrative rhyme). inherited_from_chunk_id signals
+    # the material was minted in a chunk's mixed-trigger DAG cascade
+    # (Phase 5 behavior_inheritance flavor).
+    gather_quest_id: Optional[str] = None
+    inherited_from_chunk_id: Optional[str] = None

@@ -380,6 +380,42 @@
         "no_region": "Player has opened {count} chests."
       },
       "description": "Narrates chest opening counts in a locality. Dungeon/boss chests guarantee at least moderate severity."
+    },
+
+    "_comment_§15_trap_9_added_2026-06-05": "These two evaluators existed in code but lacked JSON entries — designers could not tune them without editing Python. Added now so memory-config.json is the authoritative surface for every L2 evaluator.",
+
+    "faction_reputation": {
+      "enabled": true,
+      "lookback_time": 300.0,
+      "min_delta_threshold": 5.0,
+      "delta_templates": {
+        "gain": "Player has gained standing with the {faction}.",
+        "loss": "Player has lost standing with the {faction}."
+      },
+      "consolidated_templates": {
+        "default": "Player reputation with {faction} has shifted by {delta_total}."
+      },
+      "description": "Consolidates FACTION_AFFINITY_CHANGED events into reputation narratives."
+    },
+
+    "ecosystem_resource_depletion": {
+      "enabled": true,
+      "min_nodes_to_track": 5,
+      "ecosystem_chunk_size": 3,
+      "thresholds": {
+        "depleted_50_pct": 0.50,
+        "scarce_pct": 0.75,
+        "exhausted_pct": 0.90,
+        "completely_harvested_pct": 1.00,
+        "reset_when_replenished_below_pct": 0.10
+      },
+      "narrative_templates": {
+        "depleted_50": "About half the {resource} around {region} has been harvested.",
+        "scarce": "Only scattered {resource} remains near {region}. Sources are becoming scarce.",
+        "exhausted": "{region} has been nearly stripped of {resource}. Very little remains.",
+        "completely_harvested": "{region} has been completely harvested of {resource}."
+      },
+      "description": "Ecosystem-level depletion milestones (3x3 chunk window). Thresholds progress downward only; resets at <10% depletion."
     }
   }
 }

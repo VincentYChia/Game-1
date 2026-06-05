@@ -121,6 +121,12 @@ class EnemyDefinition:
     tags: List[str] = field(default_factory=list)
     icon_path: Optional[str] = None  # Optional path to enemy icon image (PNG/JPG)
 
+    # Phase 4 reverse cross-ref field (2026-06-03). Optional; set by
+    # WES generation when the hostile was spawned to be the target of
+    # a specific quest. The hostile's narrative can then reference the
+    # hunter ("the raiders are hunted by Captain Vell's vendetta").
+    hunted_by_quest_id: Optional[str] = None
+
     # --- Computed visual size system ---
     # Category defines a base size, tier multiplies it. Always >= 1.0, max 8.0.
     # This replaces the old JSON-driven visual_size field.
@@ -168,6 +174,15 @@ class EnemyDefinition:
 class EnemyDatabase:
     _instance = None
 
+    # Sacred + generated conventions (Phase 0 G07c, 2026-06-03).
+    # Sacred is ``Definitions.JSON/hostiles-1.JSON`` per
+    # game_engine.py:207 (loaded indirectly through CombatManager.load_config).
+    # Generated files use the ``hostiles-generated-<ts>.JSON`` convention
+    # from world_system/content_registry/generated_file_writer.py:11.
+    SACRED_DIR = "Definitions.JSON"
+    SACRED_GLOB = "hostiles-*.JSON"
+    GENERATED_GLOB = "hostiles-generated-*.JSON"
+
     def __init__(self):
         self.enemies: Dict[str, EnemyDefinition] = {}
         self.enemies_by_tier: Dict[int, List[EnemyDefinition]] = {1: [], 2: [], 3: [], 4: []}
@@ -188,6 +203,69 @@ class EnemyDatabase:
         if cls._instance is None:
             cls._instance = EnemyDatabase()
         return cls._instance
+
+    @classmethod
+    def reset(cls) -> None:
+        """Test helper — drop the singleton so the next get_instance reloads."""
+        cls._instance = None
+
+    def load_from_files(self) -> None:
+        """Read all sacred + generated hostile files from
+        ``Definitions.JSON/``.
+
+        Idempotent. Clears the in-memory dict AND the per-tier index
+        before reloading so a ``reload()`` cycle reflects on-disk
+        state precisely. ``load_from_file`` populates both
+        ``enemies`` and ``enemies_by_tier``, so a clean reload must
+        reset both.
+
+        Generated files overlay sacred (loaded second).
+
+        Never raises — failures degrade to whatever was already loaded.
+        """
+        try:
+            from core.paths import get_resource_path
+        except Exception:
+            return
+        try:
+            self.enemies = {}
+            self.enemies_by_tier = {1: [], 2: [], 3: [], 4: []}
+            try:
+                sacred_dir = get_resource_path(self.SACRED_DIR)
+            except Exception:
+                sacred_dir = None
+            if sacred_dir is not None and sacred_dir.exists():
+                for path in sorted(sacred_dir.glob(self.SACRED_GLOB)):
+                    if "generated" in path.name.lower():
+                        continue
+                    self.load_from_file(str(path))
+                for path in sorted(sacred_dir.glob(self.GENERATED_GLOB)):
+                    self.load_from_file(str(path))
+            self.loaded = bool(self.enemies)
+        except Exception as e:
+            print(f"[EnemyDatabase] load_from_files outer error: {e}")
+            self.loaded = False
+
+    def reload(self) -> None:
+        """Re-read all hostile files from disk after a WES content commit.
+
+        Called by :func:`world_system.content_registry.database_reloader`
+        once the Content Registry writes
+        ``Definitions.JSON/hostiles-generated-*.JSON`` siblings. Drops
+        the in-memory cache and reloads. Never raises; on any failure
+        the previous in-memory state is preserved (prefer stale-but-
+        intact over crashing combat encounters).
+        """
+        old_enemies = dict(self.enemies)
+        old_by_tier = {k: list(v) for k, v in self.enemies_by_tier.items()}
+        old_loaded = self.loaded
+        try:
+            self.load_from_files()
+        except Exception as e:
+            print(f"[EnemyDatabase] reload failed, keeping previous: {e}")
+            self.enemies = old_enemies
+            self.enemies_by_tier = old_by_tier
+            self.loaded = old_loaded
 
     def load_from_file(self, filepath: str) -> bool:
         """Load enemy definitions from hostiles JSON"""

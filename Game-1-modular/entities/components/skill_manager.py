@@ -649,7 +649,12 @@ class SkillManager:
 
         # Restore skills - calculate restoration amount
         elif effect.effect_type == "restore":
-            restore_amounts = {'minor': 50, 'moderate': 100, 'major': 200, 'extreme': 400}
+            # §15 trap 4: read from self.magnitude_values (loaded from
+            # skills-base-effects-1.JSON) instead of hardcoding.
+            restore_amounts = self.magnitude_values.get(
+                "restore",
+                {'minor': 50, 'moderate': 100, 'major': 200, 'extreme': 400},
+            )
             base_value = restore_amounts.get(effect.magnitude, 100)
             # Apply level scaling
             level_bonus = player_skill.get_level_scaling_bonus()
@@ -659,14 +664,15 @@ class SkillManager:
         # Buff skills - use magnitude as relative value
         elif effect.effect_type in ["empower", "quicken", "fortify", "pierce",
                                      "enrich", "elevate", "regenerate", "devastate", "transcend"]:
-            # Map magnitude to numeric value (proxy for buff strength)
-            magnitude_values = {
-                'minor': 1.0,
-                'moderate': 2.0,
-                'major': 3.0,
-                'extreme': 4.0
-            }
-            value = magnitude_values.get(effect.magnitude, 1.0)
+            # §15 trap 4: pick effect-specific table from self.magnitude_values
+            # (JSON-driven) so each buff type uses its tuned magnitude
+            # band, not a generic 1/2/3/4 substitute.
+            mag_table = self.magnitude_values.get(effect.effect_type)
+            if mag_table:
+                value = float(mag_table.get(effect.magnitude, 1.0))
+            else:
+                value = {'minor': 1.0, 'moderate': 2.0, 'major': 3.0,
+                         'extreme': 4.0}.get(effect.magnitude, 1.0)
             targets = 1  # Buffs typically affect self
 
         return value, targets

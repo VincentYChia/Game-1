@@ -19,7 +19,8 @@ class CombatKillsRegionalLowTierEvaluator(PatternEvaluator):
 
     def __init__(self):
         cfg = get_evaluator_config("combat_kills_regional_low_tier")
-        self.lookback_time = cfg.get("lookback_time", 100.0)
+        # §15 trap 8: lookback_time aligned to memory-config.json (50.0).
+        self.lookback_time = cfg.get("lookback_time", 50.0)
         self.expiration_offset = cfg.get("expiration_offset", 120.0)
         t = cfg.get("thresholds", {})
         self.min_trigger = t.get("minimum_trigger", 3)

@@ -1398,7 +1398,7 @@ class GameEngine:
             # Calculate start_y to match renderer: tools_y(+55) + tool_slot(50) + padding(20) = +125
             tools_y = Config.INVENTORY_PANEL_Y + 55
             start_x, start_y = 20, tools_y + 50 + 20  # = INVENTORY_PANEL_Y + 125
-            slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 10  # Must match renderer spacing
+            slot_size, spacing = Config.INVENTORY_SLOT_SIZE, Config.INVENTORY_SLOT_SPACING  # §15 trap 17
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
             if rel_x >= 0 and rel_y >= 0:
@@ -2200,7 +2200,7 @@ class GameEngine:
             tool_slot_size = 50
             start_x = 20
             start_y = tools_y + tool_slot_size + 20  # = INVENTORY_PANEL_Y + 125
-            slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 10  # Must match renderer spacing
+            slot_size, spacing = Config.INVENTORY_SLOT_SIZE, Config.INVENTORY_SLOT_SPACING  # §15 trap 17
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
             if rel_x >= 0 and rel_y >= 0:
@@ -3306,8 +3306,7 @@ class GameEngine:
                     enemy.position[0], enemy.position[1],
                     damage_type, min(damage / 50.0, 3.0))
 
-                if is_crit:
-                    se.hit_pause(40)
+                # §15 trap 16: hit_pause is a no-op since 2026; call removed.
 
                 # Publish DAMAGE_DEALT event for other systems
                 try:
@@ -3321,7 +3320,7 @@ class GameEngine:
                     pass
 
             if not enemy.is_alive:
-                se.hit_pause(60)
+                # §15 trap 16: hit_pause is a no-op since 2026; call removed.
                 # Screen shake on all enemy kills — scales with tier
                 _kill_shake = {1: 2, 2: 3, 3: 5, 4: 8}.get(enemy.definition.tier, 2)
                 se.screen_shake(_kill_shake, 150)
@@ -4669,6 +4668,47 @@ class GameEngine:
             _report("wes_orchestrator", "initialize", e,
                     "WES disabled; <WES> directives from weavers will be dropped",
                     "warning")
+
+        # Phase 2 (2026-06-03): attach the WNS BehaviorInterpreter to
+        # GameEventBus. Subscribes to WMS_TRIGGER_FIRED (published by
+        # TriggerManager when a player counter crosses a THRESHOLD_SET
+        # value). When dispatch-worthy, the interpreter composes a
+        # behavior-causal <WES> directive and publishes
+        # WNS_CALL_WES_REQUESTED — the same channel the orchestrator
+        # already subscribes to above. Without this attach, behavior-
+        # causal triggers are computed (G03 publishes) but no one
+        # subscribes — the entire Phase 2 path is dead at runtime.
+        # Failure is non-fatal: behavior-causal content just won't
+        # generate; narrative-causal still works.
+        self.behavior_interpreter = None
+        try:
+            from events.event_bus import get_event_bus
+            from world_system.wns.behavior_interpreter import (
+                BehaviorInterpreter,
+            )
+
+            stat_store = None
+            if self.world_memory is not None:
+                stat_store = getattr(
+                    self.world_memory, "stat_store", None,
+                )
+            self.behavior_interpreter = BehaviorInterpreter.get_instance()
+            self.behavior_interpreter.attach(
+                bus=get_event_bus(),
+                stat_store=stat_store,
+            )
+        except Exception as e:
+            print(
+                f"[WES] BehaviorInterpreter attach failed "
+                f"(non-fatal): {e}"
+            )
+            self.behavior_interpreter = None
+            _report(
+                "behavior_interpreter", "attach", e,
+                "behavior-causal content generation disabled; "
+                "narrative-causal still works",
+                "warning",
+            )
 
         # Initialize Living World consumers (BackendManager + NPCAgentSystem).
         # These depend on WorldMemorySystem.world_query for context and on
@@ -6859,7 +6899,7 @@ class GameEngine:
                 # Calculate start_y to match renderer: tools_y(+55) + tool_slot(50) + padding(20) = +125
                 tools_y = Config.INVENTORY_PANEL_Y + 55
                 start_x, start_y = 20, tools_y + 50 + 20  # = INVENTORY_PANEL_Y + 125
-                slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 10  # Must match renderer spacing
+                slot_size, spacing = Config.INVENTORY_SLOT_SIZE, Config.INVENTORY_SLOT_SPACING  # §15 trap 17
                 rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
                 if rel_x >= 0 and rel_y >= 0:

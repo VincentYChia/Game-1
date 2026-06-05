@@ -4,7 +4,22 @@
     "description": "Starting class definitions for character creation",
     "note": "All classes are selectable at character creation. Class can be switched later for a cost.",
     "switchingCost": 1000,
-    "switchingCurrency": "gold"
+    "switchingCurrency": "gold",
+    "tagToolBonuses": {
+      "_note": "Per-tool bonuses applied when current class carries the listed tag. Read by systems/class_system.py:get_tool_efficiency_bonus and get_tool_damage_bonus. Designer-tunable since §15 trap 7 reconciliation (2026-06-05).",
+      "axe": {
+        "nature": 0.10,
+        "gathering": 0.05
+      },
+      "pickaxe": {
+        "gathering": 0.10,
+        "explorer": 0.05
+      },
+      "toolDamage": {
+        "physical": 0.05,
+        "melee": 0.05
+      }
+    }
   },
 
   "classes": [

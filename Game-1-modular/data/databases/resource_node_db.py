@@ -10,6 +10,16 @@ class ResourceNodeDatabase:
     """Singleton database for resource node definitions loaded from JSON"""
     _instance = None
 
+    # Sacred + generated conventions (Phase 0 G07d, 2026-06-03).
+    # Sacred is ``Definitions.JSON/resource-node-1.JSON`` per
+    # game_engine.py:106-107. Generated files use the
+    # ``Resource-node-generated-<ts>.JSON`` convention from the file
+    # writer (note the capital R — Windows is case-insensitive but
+    # POSIX systems care; the glob below tolerates both).
+    SACRED_DIR = "Definitions.JSON"
+    SACRED_GLOB = "[rR]esource-node-*.JSON"
+    GENERATED_GLOB = "[rR]esource-node-generated-*.JSON"
+
     # Icon name mapping: JSON resource_id -> actual PNG filename (without extension)
     # This preserves compatibility with existing PNG files
     ICON_NAME_MAP = {
@@ -61,6 +71,80 @@ class ResourceNodeDatabase:
         if cls._instance is None:
             cls._instance = ResourceNodeDatabase()
         return cls._instance
+
+    @classmethod
+    def reset(cls) -> None:
+        """Test helper — drop the singleton so the next get_instance reloads."""
+        cls._instance = None
+
+    def load_from_files(self) -> None:
+        """Read all sacred + generated resource-node files from
+        ``Definitions.JSON/``.
+
+        Idempotent. Clears the in-memory dict AND the category caches
+        (``_trees`` / ``_ores`` / ``_stones`` / ``_tier_map``) before
+        reloading so a ``reload()`` cycle reflects on-disk state
+        precisely. ``load_from_file`` appends to the category caches,
+        so failing to clear them would multiply node counts on each
+        call.
+
+        Generated files overlay sacred (loaded second), matching the
+        ChunkTemplateDatabase precedence pattern.
+
+        Never raises — failures degrade to whatever was already loaded.
+        """
+        from core.paths import get_resource_path
+        try:
+            self.nodes = {}
+            self._trees = []
+            self._ores = []
+            self._stones = []
+            self._tier_map = {}
+            try:
+                sacred_dir = get_resource_path(self.SACRED_DIR)
+            except Exception:
+                sacred_dir = None
+            if sacred_dir is not None and sacred_dir.exists():
+                for path in sorted(sacred_dir.glob(self.SACRED_GLOB)):
+                    if "generated" in path.name.lower():
+                        continue
+                    self.load_from_file(str(path))
+                for path in sorted(sacred_dir.glob(self.GENERATED_GLOB)):
+                    self.load_from_file(str(path))
+            self.loaded = bool(self.nodes)
+        except Exception as e:
+            print(f"[ResourceNodeDB] load_from_files outer error: {e}")
+            self.loaded = False
+
+    def reload(self) -> None:
+        """Re-read all resource-node files from disk after a WES content
+        commit.
+
+        Called by :func:`world_system.content_registry.database_reloader`
+        once the Content Registry writes
+        ``Definitions.JSON/Resource-node-generated-*.JSON`` siblings.
+        Drops the in-memory caches and reloads. Never raises; on any
+        failure the previous in-memory state is preserved (prefer
+        stale-but-intact over crashing chunk spawn pools).
+        """
+        old_nodes = dict(self.nodes)
+        old_trees = list(self._trees)
+        old_ores = list(self._ores)
+        old_stones = list(self._stones)
+        old_tier_map = dict(self._tier_map)
+        old_loaded = self.loaded
+        try:
+            self.load_from_files()
+        except Exception as e:
+            print(
+                f"[ResourceNodeDB] reload failed, keeping previous: {e}"
+            )
+            self.nodes = old_nodes
+            self._trees = old_trees
+            self._ores = old_ores
+            self._stones = old_stones
+            self._tier_map = old_tier_map
+            self.loaded = old_loaded
 
     def load_from_file(self, filepath: str) -> bool:
         """Load resource node definitions from JSON file"""

@@ -63,7 +63,13 @@ _DEFAULT_TIER: int = 1
 _ID_KEY_CANDIDATES: Dict[str, Tuple[str, ...]] = {
     "materials": ("materialId", "material_id", "id"),
     "hostiles":  ("enemyId", "enemy_id", "hostileId", "hostile_id"),
-    "nodes":     ("nodeId", "node_id", "resourceNodeId", "resource_node_id"),
+    # Phase 0 G18.3 fix (2026-06-03): added "resourceId" — that is the
+    # canonical sacred schema field (per resource-node-1.JSON +
+    # ResourceNodeDatabase loader). Without it, the request layer's
+    # staged-payload lookup falls through to a thin spec with no
+    # flavor context, producing narrative-blind cascade output.
+    "nodes":     ("resourceId", "resource_id", "nodeId", "node_id",
+                  "resourceNodeId", "resource_node_id"),
     "skills":    ("skillId", "skill_id"),
     "titles":    ("titleId", "title_id"),
     "chunks":    ("chunkType", "chunk_type", "chunkTypeId"),
@@ -205,6 +211,55 @@ def _humanize_id(content_id: str) -> str:
     if not isinstance(content_id, str):
         return ""
     return " ".join(part.capitalize() for part in content_id.split("_"))
+
+
+def _extract_behavior_flavor(
+    requesting_payload: Optional[Dict[str, Any]],
+    bundle: Any,
+) -> str:
+    """Mine the parent's behavior_inheritance flavor for cascade propagation.
+
+    Phase 5 DAG inheritance (2026-06-03). The flavor is set on a
+    mixed-trigger chunk step's flavor_hints by the planner. When the
+    chunk references nodes/hostiles/materials that don't exist, the
+    Request Layer fires cascade specs for them — and the
+    behavior_flavor MUST ride along so the cascade content shares the
+    flavor.
+
+    Lookup order:
+        1. requesting_payload.flavor_hints.behavior_inheritance
+        2. requesting_payload.behavior_inheritance (legacy direct field)
+        3. bundle.behavior_signal.activity_profile's dominant category
+           (mixed-trigger fallback when the parent didn't tag itself)
+
+    Returns the flavor string (e.g. "alchemy") or empty string.
+    """
+    if isinstance(requesting_payload, dict):
+        flavor_hints = requesting_payload.get("flavor_hints") or {}
+        if isinstance(flavor_hints, dict):
+            v = flavor_hints.get("behavior_inheritance")
+            if isinstance(v, str) and v.strip():
+                return v.strip()
+        # Some content types stamp inheritance directly on the payload.
+        v = requesting_payload.get("behavior_inheritance")
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+        v = requesting_payload.get("inherited_from_chunk_id")
+        # We don't return the chunk_id itself — only an inheritance
+        # FLAVOR. Skip if all we have is the chunk_id.
+    # Fall through: derive from bundle.behavior_signal's dominant
+    # activity-profile category (mixed-trigger bundles only).
+    sig = getattr(bundle, "behavior_signal", None)
+    if sig is not None:
+        profile = getattr(sig, "activity_profile", None) or {}
+        if profile:
+            try:
+                top = max(profile.items(), key=lambda kv: float(kv[1]))
+                if float(top[1]) > 0.4:  # dominant only
+                    return str(top[0])
+            except Exception:
+                pass
+    return ""
 
 
 # ── Spec builder ─────────────────────────────────────────────────────
@@ -373,6 +428,20 @@ class RequestLayer:
         addr = _extract_address_from_bundle(bundle)
         if addr:
             hints["geographic_address"] = addr
+
+        # Phase 5 behavior_inheritance propagation (2026-06-03). When
+        # the requesting (parent) payload carries a behavior-flavor
+        # tag — typically set on a mixed-trigger chunk's plan step —
+        # cascade specs INHERIT the flavor. This is the unification
+        # thesis made concrete: one mixed-trigger chunk firing produces
+        # nodes / hostiles / materials that all share alchemy-flavor
+        # (or whatever the player's activity profile favored).
+        behavior_flavor = _extract_behavior_flavor(
+            requesting_payload, bundle,
+        )
+        if behavior_flavor:
+            hints["behavior_inheritance"] = behavior_flavor
+
         return hints
 
     def _build_cross_ref_hints(

@@ -1343,14 +1343,17 @@ class Renderer:
         import time as _etime
         image_cache = ImageCache.get_instance()
 
-        # Shared tag→color map for enemy visuals
-        _ETAG_COLORS = {
-            'fire': (255, 120, 30), 'ice': (100, 200, 255),
-            'frost': (100, 200, 255), 'lightning': (255, 255, 80),
-            'poison': (100, 255, 80), 'arcane': (180, 80, 255),
-            'shadow': (130, 80, 180), 'holy': (255, 255, 180),
-            'chaos': (200, 50, 50), 'physical': (220, 220, 240),
-        }
+        # §15 traps 13 + 15: element and state colors now read from
+        # ``visual-config.JSON`` via ``rendering.visual_colors`` so
+        # designer tuning propagates to enemy visuals too.
+        from rendering.visual_colors import (
+            element_palette as _vc_element_palette,
+            state_palette as _vc_state_palette,
+        )
+        _ETAG_COLORS = _vc_element_palette()
+        # Add render-only aliases (visual-config has no "frost"/"chaos" keys).
+        _ETAG_COLORS.setdefault('frost', _ETAG_COLORS.get('ice', (100, 200, 255)))
+        _ETAG_COLORS.setdefault('chaos', _ETAG_COLORS.get('shadow', (200, 50, 50)))
 
         def _enemy_tag_color(tags, fallback=(220, 220, 240)):
             for t in tags:
@@ -1359,12 +1362,7 @@ class Renderer:
             return fallback
 
         # AI state colors
-        _STATE_COLORS = {
-            'idle': (100, 200, 100), 'wander': (100, 200, 100),
-            'patrol': (100, 200, 100), 'guard': (180, 180, 100),
-            'chase': (255, 200, 50), 'attack': (255, 80, 60),
-            'flee': (100, 150, 255), 'dead': (100, 100, 100),
-        }
+        _STATE_COLORS = _vc_state_palette()
 
         if combat_manager:
             for enemy in combat_manager.get_all_active_enemies():
@@ -1374,10 +1372,12 @@ class Renderer:
                     vis_size = getattr(enemy.definition, 'visual_size', 1.0)
                     base_size = int(Config.TILE_SIZE * Config.ENTITY_VISUAL_SCALE * 0.5)
                     size = max(6, int(base_size * vis_size))
-                    tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
-                    enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
+                    # §15 traps 14 + 20: tier color + boss glow from
+                    # visual-config.JSON via rendering.visual_colors.
+                    from rendering.visual_colors import tier_color as _tc, boss_glow_color as _bgc
+                    enemy_color = _tc(enemy.definition.tier)
                     if enemy.is_boss:
-                        enemy_color = (255, 215, 0)
+                        enemy_color = _bgc()
 
                     # --- Enemy attack animation (rendered after body) ---
                     # (Handled below after enemy body rendering)
@@ -1807,17 +1807,10 @@ class Renderer:
         player_sm = ac.get('player_sm')
         player_actions = ac.get('player_actions')
 
-        # Tag -> color mapping for elemental visuals
-        _ELEMENT_COLORS = {
-            "physical": (220, 220, 240),
-            "fire": (255, 120, 30),
-            "ice": (100, 200, 255), "frost": (100, 200, 255),
-            "lightning": (255, 255, 80),
-            "poison": (100, 255, 80),
-            "arcane": (180, 80, 255),
-            "shadow": (130, 80, 180),
-            "holy": (255, 255, 180),
-        }
+        # §15 trap 13: elemental colors from the central source.
+        from rendering.visual_colors import element_palette as _vc_element_palette
+        _ELEMENT_COLORS = _vc_element_palette()
+        _ELEMENT_COLORS.setdefault('frost', _ELEMENT_COLORS.get('ice', (100, 200, 255)))
 
         def _color_from_tags(tags, fallback=(220, 220, 240)):
             """Get element color from a list of tags."""
@@ -5060,7 +5053,7 @@ class Renderer:
 
         start_x, start_y = 20, tools_y + slot_size + 20
         slot_size = Config.INVENTORY_SLOT_SIZE
-        spacing = 10  # Increased from 5 to 10 for better icon visibility
+        spacing = Config.INVENTORY_SLOT_SPACING  # §15 trap 17: single source
         slots_per_row = Config.INVENTORY_SLOTS_PER_ROW
         hovered_slot = None
 

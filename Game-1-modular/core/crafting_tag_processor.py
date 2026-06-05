@@ -482,18 +482,26 @@ class RefiningTagProcessor:
         Returns:
             Upgraded rarity string
         """
-        RARITY_TIERS = ["common", "uncommon", "rare", "epic", "legendary"]
-
-        # Find current tier
+        # §15 trap 2: single source of truth for rarity ladder.
         try:
-            current_tier = RARITY_TIERS.index(base_rarity.lower())
+            import sys, os
+            crafting_dir = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                "Crafting-subdisciplines",
+            )
+            if crafting_dir not in sys.path:
+                sys.path.insert(0, crafting_dir)
+            from rarity_utils import RARITY_TIERS as _RT, rarity_at as _rarity_at
+        except Exception:
+            _RT = ["common", "uncommon", "rare", "epic", "legendary"]
+            _rarity_at = lambda i: _RT[max(0, min(i, len(_RT) - 1))]
+
+        try:
+            current_tier = _RT.index((base_rarity or "common").lower())
         except ValueError:
-            current_tier = 0  # Default to common if not found
+            current_tier = 0
 
-        # Upgrade by tiers
-        new_tier = min(current_tier + tiers, len(RARITY_TIERS) - 1)
-
-        return RARITY_TIERS[new_tier]
+        return _rarity_at(current_tier + tiers)
 
     @staticmethod
     def get_bonus_info(recipe_tags: List[str]) -> Dict[str, Any]:

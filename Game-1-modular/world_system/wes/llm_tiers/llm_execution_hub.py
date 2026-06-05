@@ -179,6 +179,15 @@ class LLMExecutionHub:
         thread_headlines = [
             t.headline for t in slice.threads_in_focal_address
         ]
+        parent_thread_headlines = [
+            t.headline for t in slice.threads_in_parent_addresses
+        ]
+        # Phase 1 contract (2026-06-03): hubs now expose the full
+        # narrative-context propagation fields so prompts can refer
+        # to them. The legacy thread_headlines var is retained for
+        # backward-compatible prompts; new prompts should prefer
+        # thread_fragments (full payloads with content_tags +
+        # relationship) for richer downstream context.
         return {
             "tool_name": self.name,
             "plan_step_id": step.step_id,
@@ -189,7 +198,76 @@ class LLMExecutionHub:
             "firing_tier": slice.firing_tier,
             "thread_headlines": thread_headlines,
             "recent_registry_entries": slice.recent_registry_entries,
+            # ── Phase 1 narrative propagation ──────────────────────
+            "firing_narrative": slice.firing_layer_summary,
+            "parent_narratives": _render_parent_summaries(
+                slice.parent_summaries
+            ),
+            "geographic_chain": slice.geographic_chain,
+            "thread_fragments": [
+                t.to_dict() for t in slice.threads_in_focal_address
+            ],
+            "parent_thread_fragments": [
+                t.to_dict() for t in slice.threads_in_parent_addresses
+            ],
+            "parent_thread_headlines": parent_thread_headlines,
+            "wms_events_summary": _render_wms_brief(
+                slice.wms_events_since_last
+            ),
+            "npc_dialogue_summary": _render_dialogue_brief(
+                slice.npc_dialogue_since_last
+            ),
+            "trigger_archetype": slice.trigger_archetype,
         }
+
+
+def _render_parent_summaries(parent: Dict[str, str]) -> str:
+    """Format ``parent_summaries`` dict as a short readable block.
+
+    Empty dict renders as empty string (the prompt template handles
+    the conditional). Each entry on its own line keyed
+    ``[layer:address] summary``.
+    """
+    if not parent:
+        return ""
+    lines = [f"[{key}] {summary}" for key, summary in parent.items()]
+    return "\n".join(lines)
+
+
+def _render_wms_brief(rows: List[Any]) -> str:
+    """Format a small block of recent WMS L2 events for the hub prompt.
+
+    Empty rows → empty string so the template renders cleanly when no
+    delta data is available (Phase 0 G02 caller; Phase 1 bridge wires
+    actual data).
+    """
+    if not rows:
+        return ""
+    lines: List[str] = []
+    for r in rows[:6]:  # cap at 6 to keep prompt budget bounded
+        narrative = getattr(r, "narrative", "") or ""
+        if not narrative:
+            continue
+        lines.append(f"- {narrative}")
+    return "\n".join(lines)
+
+
+def _render_dialogue_brief(rows: List[Any]) -> str:
+    """Format a small block of recent NPC dialogue for the hub prompt.
+
+    Empty rows → empty string. Each row renders as
+    ``- <npc_id>: <text>``.
+    """
+    if not rows:
+        return ""
+    lines: List[str] = []
+    for r in rows[:6]:  # cap at 6
+        npc_id = getattr(r, "npc_id", "?") or "?"
+        text = getattr(r, "dialogue_text", "") or ""
+        if not text:
+            continue
+        lines.append(f"- {npc_id}: {text}")
+    return "\n".join(lines)
 
 
 __all__ = ["LLMExecutionHub"]

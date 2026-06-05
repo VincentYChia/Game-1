@@ -62,6 +62,14 @@ class SkillDefinition:
     combat_tags: Optional[List[str]] = None
     combat_params: Optional[Dict] = None
 
+    # Phase 4 reverse cross-ref fields (2026-06-03). Optional; when set
+    # by WES generation, signal that this skill was taught by a
+    # specific NPC or rewarded by a specific quest. Tools use these
+    # for narrative coherence — the skill's narrative can reference
+    # the teacher's voice or the quest's theme.
+    taught_by_npc_id: Optional[str] = None
+    rewarded_by_quest_id: Optional[str] = None
+
     def __post_init__(self):
         if self.combat_tags is None:
             self.combat_tags = []

@@ -18,12 +18,11 @@ from typing import Dict, Tuple, Optional
 # CONSTANTS
 # =============================================================================
 
-# Difficulty scaling ranges (for max reward calculation)
-# Aligned with linear tier system: T1=1, T2=2, T3=3, T4=4
-DIFFICULTY_RANGES = {
-    'min_points': 1.0,    # Single T1 material
-    'max_points': 80.0,   # Adjusted for linear scaling (e.g., 20x T4 materials)
-}
+# §15 trap 1 reconciliation (2026-06-05): single source of truth for
+# difficulty point range. Was duplicated in difficulty_calculator.py:56-59
+# and reward_calculator.py:22-26 — designer tuning of one didn't follow
+# in the other. Now both names resolve to the same dict.
+from core.difficulty_calculator import DIFFICULTY_RANGES  # noqa: E402
 
 # Reward multiplier range
 REWARD_MULTIPLIER = {
@@ -47,10 +46,32 @@ FAILURE_PENALTY = {
 }
 
 # First-try bonus
+# §15 trap 3 reconciliation (2026-06-05): per-discipline bonuses now
+# live here as overrides on the default. ``performance_boost`` is the
+# fallback if the discipline isn't listed.
 FIRST_TRY_BONUS = {
-    'performance_boost': 0.10,  # +10% performance on first try
+    'performance_boost': 0.10,   # default — smithing, enchanting
     'eligible_threshold': 0.50,  # Must achieve 50%+ to qualify for special attributes
+    'per_discipline': {
+        'smithing': 0.10,
+        'enchanting': 0.10,
+        'engineering': 0.05,     # puzzle-based discipline gets a smaller boost
+        'alchemy': 0.10,
+        'refining': 0.10,
+    },
 }
+
+
+def first_try_bonus(discipline: str = "") -> float:
+    """Return the first-try performance boost for a discipline.
+
+    Designer-facing single read point. Callers in
+    ``Crafting-subdisciplines/<discipline>.py`` should prefer this
+    over hardcoded literals so tuning happens in one file.
+    """
+    per = FIRST_TRY_BONUS.get('per_discipline', {})
+    return float(per.get(discipline.lower(), FIRST_TRY_BONUS.get(
+        'performance_boost', 0.10)))
 
 
 # =============================================================================

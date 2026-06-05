@@ -1,0 +1,46 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "purpose": "Designer-tunable rules for the WNS BehaviorInterpreter (Phase 2, 2026-06-03). Decides which WMS threshold crossings warrant a WES dispatch and which are journal-only or suppressed.",
+    "audit_refs": [
+      "Development-Plan/feature-traces/11-trigger-taxonomy.md §5.4",
+      "Development-Plan/feature-traces/00-consolidation.md §2.7"
+    ]
+  },
+  "global": {
+    "stream_min_threshold": 100,
+    "regional_min_threshold": 250,
+    "cooldown_seconds": 1800.0,
+    "suppressed_categories": ["other"]
+  },
+  "categories": {
+    "combat": {
+      "default_purpose": "new-skill",
+      "min_threshold": 100
+    },
+    "gathering": {
+      "default_purpose": "new-material",
+      "min_threshold": 100
+    },
+    "crafting": {
+      "default_purpose": "new-skill",
+      "min_threshold": 100
+    },
+    "exploration": {
+      "default_purpose": "new-chunk",
+      "min_threshold": 1000
+    },
+    "progression": {
+      "default_purpose": "new-title",
+      "min_threshold": 100
+    },
+    "social": {
+      "default_purpose": "new-npc",
+      "min_threshold": 100
+    },
+    "economy": {
+      "default_purpose": "new-quest",
+      "min_threshold": 100
+    }
+  }
+}

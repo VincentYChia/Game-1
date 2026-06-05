@@ -1,8 +1,53 @@
 """Class system for managing character class selection and bonuses"""
 
+import json
 from typing import Optional, Dict, Callable, List
 
 from data.models import ClassDefinition
+
+
+# ── §15 trap 7 — JSON-driven tag→tool bonus table ────────────────────
+#
+# Loaded lazily on first use. Falls back to the historical Python
+# constants if classes-1.JSON is missing or doesn't carry a
+# ``metadata.tagToolBonuses`` block.
+
+_FALLBACK_TAG_TOOL_BONUSES: Dict[str, Dict[str, float]] = {
+    'axe': {'nature': 0.10, 'gathering': 0.05},
+    'pickaxe': {'gathering': 0.10, 'explorer': 0.05},
+    'toolDamage': {'physical': 0.05, 'melee': 0.05},
+}
+
+_TAG_TOOL_BONUSES_CACHE: Optional[Dict[str, Dict[str, float]]] = None
+
+
+def _load_tag_tool_bonuses() -> Dict[str, Dict[str, float]]:
+    global _TAG_TOOL_BONUSES_CACHE
+    if _TAG_TOOL_BONUSES_CACHE is not None:
+        return _TAG_TOOL_BONUSES_CACHE
+    try:
+        from core.paths import get_resource_path
+        path = get_resource_path("progression/classes-1.JSON")
+        if not path.exists():
+            _TAG_TOOL_BONUSES_CACHE = _FALLBACK_TAG_TOOL_BONUSES
+            return _TAG_TOOL_BONUSES_CACHE
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        metadata = data.get("metadata", {}) or {}
+        table = metadata.get("tagToolBonuses") or {}
+        # Drop the editor-only _note key if present
+        cleaned = {k: {tk: float(tv) for tk, tv in v.items() if not tk.startswith("_")}
+                   for k, v in table.items() if not k.startswith("_")}
+        _TAG_TOOL_BONUSES_CACHE = cleaned if cleaned else _FALLBACK_TAG_TOOL_BONUSES
+    except Exception:
+        _TAG_TOOL_BONUSES_CACHE = _FALLBACK_TAG_TOOL_BONUSES
+    return _TAG_TOOL_BONUSES_CACHE
+
+
+def reload_tag_tool_bonuses() -> None:
+    """Clear the cache so the next call re-reads the JSON."""
+    global _TAG_TOOL_BONUSES_CACHE
+    _TAG_TOOL_BONUSES_CACHE = None
 
 
 class ClassSystem:
@@ -37,42 +82,19 @@ class ClassSystem:
     def get_tool_efficiency_bonus(self, tool_type: str) -> float:
         """Get tool efficiency bonus based on class tags.
 
-        Tag-driven bonuses:
-        - 'nature' or 'gathering' tags: +10% axe efficiency
-        - 'gathering' or 'explorer' tags: +10% pickaxe efficiency
-        - 'crafting' or 'smithing' tags: +5% all tool durability (handled elsewhere)
-        - 'physical' or 'melee' tags: +5% tool damage
+        §15 trap 7: bonuses come from
+        ``progression/classes-1.JSON > metadata.tagToolBonuses``.
         """
         if not self.current_class or not self.current_class.tags:
             return 0.0
-
         tags = set(t.lower() for t in self.current_class.tags)
-        bonus = 0.0
-
-        if tool_type == 'axe':
-            if 'nature' in tags:
-                bonus += 0.10  # Rangers excel at forestry
-            if 'gathering' in tags:
-                bonus += 0.05
-        elif tool_type == 'pickaxe':
-            if 'gathering' in tags:
-                bonus += 0.10  # Scavengers excel at mining
-            if 'explorer' in tags:
-                bonus += 0.05
-
-        return bonus
+        per_tool = _load_tag_tool_bonuses().get(tool_type, {})
+        return sum(v for k, v in per_tool.items() if k in tags)
 
     def get_tool_damage_bonus(self) -> float:
         """Get tool damage bonus for combat use based on class tags."""
         if not self.current_class or not self.current_class.tags:
             return 0.0
-
         tags = set(t.lower() for t in self.current_class.tags)
-        bonus = 0.0
-
-        if 'physical' in tags:
-            bonus += 0.05
-        if 'melee' in tags:
-            bonus += 0.05
-
-        return bonus
+        per_tool = _load_tag_tool_bonuses().get("toolDamage", {})
+        return sum(v for k, v in per_tool.items() if k in tags)

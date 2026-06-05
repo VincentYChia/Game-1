@@ -95,6 +95,52 @@ class TestLLMExecutionPlanner(_BackendInit):
             self.assertTrue(step.tool)
             self.assertTrue(step.step_id)
 
+    def test_plan_threads_adjusted_instructions_into_prompt(self) -> None:
+        # Regression for the one-way rerun loop: supervisor's
+        # adjusted_instructions reached the orchestrator but the planner
+        # never saw them. A plan rerun was statistically the same plan
+        # because the prompt was unchanged. After the fix, the feedback
+        # rides into ${prior_rerun_feedback} in the planner's user prompt.
+        from unittest.mock import patch
+        from world_system.wes.llm_tiers.llm_execution_planner import (
+            LLMExecutionPlanner,
+        )
+
+        planner = LLMExecutionPlanner()
+        bundle = _sample_bundle()
+
+        captured: dict = {}
+
+        def _capture(task, system_prompt, user_prompt, **kw):
+            captured.setdefault("prompts", []).append(user_prompt)
+            return (
+                '{"plan_id":"p","source_bundle_id":"b","steps":[],'
+                '"rationale":"r","abandoned":true,'
+                '"abandonment_reason":"probe"}',
+                None,
+            )
+
+        with patch.object(
+            BackendManager.get_instance(), "generate", side_effect=_capture
+        ):
+            # First pass — no rerun feedback yet
+            planner.plan(bundle)
+            # Rerun pass — supervisor asked for a specific adjustment
+            planner.plan(
+                bundle,
+                adjusted_instructions=(
+                    "moors NPC must reference copper trade, not frost"
+                ),
+            )
+
+        first_prompt = captured["prompts"][0]
+        rerun_prompt = captured["prompts"][1]
+
+        self.assertNotIn("PRIOR SUPERVISOR FEEDBACK", first_prompt)
+        self.assertIn("PRIOR SUPERVISOR FEEDBACK", rerun_prompt)
+        self.assertIn("copper trade, not frost", rerun_prompt)
+        self.assertNotIn("${prior_rerun_feedback}", rerun_prompt)
+
 
 class TestLLMExecutionHub(_BackendInit):
     def test_build_specs_returns_list_of_ExecutorSpec(self) -> None:
@@ -186,6 +232,63 @@ class TestLLMSupervisor(_BackendInit):
         self.assertIn("verdict", verdict)
         self.assertIn("rerun", verdict)
         self.assertIn(verdict["verdict"], ("pass", "fail"))
+
+    def test_review_populates_firing_address_from_scope_hint(self) -> None:
+        # Regression for the silent bug where the supervisor user_template
+        # references ${firing_address} but the variables dict did not
+        # populate it. PromptAssembler.substitute leaves unknown placeholders
+        # verbatim, so this bug surfaced as the literal string
+        # "Firing address: ${firing_address}" reaching the model.
+        from unittest.mock import patch
+        from world_system.wes.llm_tiers.llm_supervisor import LLMSupervisor
+
+        sup = LLMSupervisor()
+
+        directive = WNSDirective(
+            directive_text="probe",
+            firing_tier=4,
+            scope_hint={"firing_address": "region:firing_addr_under_test"},
+        )
+        bundle = WESContextBundle(
+            bundle_id="bundle_probe",
+            created_at=0.0,
+            delta=NarrativeDelta(
+                address="region:firing_addr_under_test",
+                layer=4,
+                start_time=0.0,
+                end_time=1.0,
+            ),
+            narrative_context=NarrativeContextSlice(
+                firing_layer_summary="",
+                parent_summaries={},
+                open_threads=[],
+            ),
+            directive=directive,
+            source_narrative_layer_ids=[],
+        )
+        plan = WESPlan(
+            plan_id="plan_probe",
+            source_bundle_id=bundle.bundle_id,
+            steps=[],
+            rationale="",
+        )
+
+        captured: dict = {}
+
+        def _capture(task, system_prompt, user_prompt, **kw):
+            captured["user_prompt"] = user_prompt
+            return (
+                '{"verdict":"pass","rerun":false,"notes":"","adjusted_instructions":null}',
+                None,
+            )
+
+        with patch.object(
+            BackendManager.get_instance(), "generate", side_effect=_capture
+        ):
+            sup.review(plan, [], bundle)
+
+        self.assertIn("region:firing_addr_under_test", captured["user_prompt"])
+        self.assertNotIn("${firing_address}", captured["user_prompt"])
 
 
 class TestPromptAssembler(unittest.TestCase):

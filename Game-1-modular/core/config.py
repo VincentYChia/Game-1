@@ -102,10 +102,15 @@ class Config:
         cls.INVENTORY_PANEL_HEIGHT = height - cls.INVENTORY_PANEL_Y
         cls.INVENTORY_SLOT_SIZE = cls.scale(50)
 
+        # §15 trap 17 reconciliation (2026-06-05): single source of truth
+        # for inventory slot spacing. Previously the literal ``10`` was
+        # duplicated across 4 sites with "Must match renderer spacing"
+        # comments. Now all sites read Config.INVENTORY_SLOT_SPACING.
+        cls.INVENTORY_SLOT_SPACING = cls.scale(10)
+
         # Calculate slots per row
-        slot_spacing = 5
         available_width = cls.INVENTORY_PANEL_WIDTH - 40
-        cls.INVENTORY_SLOTS_PER_ROW = max(8, available_width // (cls.INVENTORY_SLOT_SIZE + slot_spacing))
+        cls.INVENTORY_SLOTS_PER_ROW = max(8, available_width // (cls.INVENTORY_SLOT_SIZE + cls.INVENTORY_SLOT_SPACING))
 
         # Pre-calculate common UI scaled values for menus
         cls.MENU_SMALL_W = cls.scale(600)

@@ -257,6 +257,70 @@ class WNSDirective:
 # ── Top-level bundle ─────────────────────────────────────────────────
 
 @dataclass
+class BehaviorSignal:
+    """Phase 2 (2026-06-03) — the behavior-causal trigger payload.
+
+    Populated by the WNS BehaviorInterpreter when a WMS milestone
+    crosses a threshold that the dispatch-rules table says warrants
+    a WES dispatch. Carries enough context for the planner to author
+    a tier-appropriate plan and for the supervisor to verify the
+    behavior-artifact fidelity (check 7).
+
+    Field semantics:
+        counter_path: the StatStore counter that fired (e.g.
+            "combat.kills.locality.tarmouth"). Drives the
+            BEHAVIOR FIDELITY supervisor check — staged content must
+            reference this artifact (kills → hostile/skill).
+        threshold_crossed: the THRESHOLD_SET value reached
+            (e.g. 1000).
+        stream_count: the current StatStore count (post-threshold).
+        locality_id: the WMS locality where this fired
+            (e.g. "tarmouth").
+        activity_profile: per-locality discipline-mix dict from
+            ``StatStore.activity_profile()`` (7 canonical categories).
+        inferred_behavior_intent: 1-2 sentence interpretation of what
+            the player has been DOING (the "Looking at the ledger
+            the WNS thinks that the player is using them in combat"
+            step from the user's pseudo-trace).
+        matching_pool_entries: existing content IDs the
+            BehaviorInterpreter already considered as candidates.
+            Empty = pool gap; non-empty = pool overlap (supervisor
+            check 8 — pool-gap rationality).
+    """
+
+    counter_path: str
+    threshold_crossed: int
+    stream_count: int
+    locality_id: str
+    activity_profile: Dict[str, float] = field(default_factory=dict)
+    inferred_behavior_intent: str = ""
+    matching_pool_entries: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "counter_path": self.counter_path,
+            "threshold_crossed": int(self.threshold_crossed),
+            "stream_count": int(self.stream_count),
+            "locality_id": self.locality_id,
+            "activity_profile": dict(self.activity_profile),
+            "inferred_behavior_intent": self.inferred_behavior_intent,
+            "matching_pool_entries": list(self.matching_pool_entries),
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "BehaviorSignal":
+        return cls(
+            counter_path=d["counter_path"],
+            threshold_crossed=int(d["threshold_crossed"]),
+            stream_count=int(d["stream_count"]),
+            locality_id=d["locality_id"],
+            activity_profile=dict(d.get("activity_profile", {})),
+            inferred_behavior_intent=d.get("inferred_behavior_intent", ""),
+            matching_pool_entries=list(d.get("matching_pool_entries", [])),
+        )
+
+
+@dataclass
 class WESContextBundle:
     """Top-level bundle handed from WNS to WES. The single artifact WES reads.
 
@@ -270,9 +334,14 @@ class WESContextBundle:
     narrative_context: NarrativeContextSlice
     directive: WNSDirective
     source_narrative_layer_ids: List[str] = field(default_factory=list)
+    # Phase 2 (2026-06-03): behavior-causal payload. None on
+    # narrative-causal firings (the only path that existed before
+    # Phase 2). Populated by the WNS BehaviorInterpreter when a
+    # WMS milestone trips. Mirrors trigger_archetype in scope_hint.
+    behavior_signal: Optional[BehaviorSignal] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        out = {
             "bundle_id": self.bundle_id,
             "created_at": self.created_at,
             "delta": self.delta.to_dict(),
@@ -280,9 +349,13 @@ class WESContextBundle:
             "directive": self.directive.to_dict(),
             "source_narrative_layer_ids": list(self.source_narrative_layer_ids),
         }
+        if self.behavior_signal is not None:
+            out["behavior_signal"] = self.behavior_signal.to_dict()
+        return out
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "WESContextBundle":
+        sig_dict = d.get("behavior_signal")
         return cls(
             bundle_id=d["bundle_id"],
             created_at=float(d["created_at"]),
@@ -290,6 +363,10 @@ class WESContextBundle:
             narrative_context=NarrativeContextSlice.from_dict(d["narrative_context"]),
             directive=WNSDirective.from_dict(d["directive"]),
             source_narrative_layer_ids=list(d.get("source_narrative_layer_ids", [])),
+            behavior_signal=(
+                BehaviorSignal.from_dict(sig_dict)
+                if sig_dict else None
+            ),
         )
 
 
@@ -302,6 +379,15 @@ class BundleToolSlice:
     of the full bundle so their context stays focused (§8.5).
 
     Populated from :class:`WESContextBundle` via :func:`slice_bundle_for_tool`.
+
+    **Phase 1 extension (2026-06-03)**: post-trace-pass consolidation §2.2
+    extends the slice with narrative-context fields that the prior shape
+    stripped at the bundle→hub boundary. Every content tool now reads
+    `firing_layer_summary`, `parent_summaries`, `geographic_chain`,
+    `threads_in_parent_addresses`, `wms_events_since_last`,
+    `npc_dialogue_since_last`, and `trigger_archetype`. This is THE
+    fix that closes the "disconnected-from-narrative" failure mode
+    across all 8 content tools — one slice extension, eight wins.
     """
 
     tool_name: str
@@ -311,9 +397,23 @@ class BundleToolSlice:
     address_hint: str
     threads_in_focal_address: List[ThreadFragment] = field(default_factory=list)
     recent_registry_entries: List[Dict[str, Any]] = field(default_factory=list)
+    # ── Phase 1 narrative-propagation fields ─────────────────────────
+    firing_layer_summary: str = ""
+    parent_summaries: Dict[str, str] = field(default_factory=dict)
+    geographic_chain: List[Dict[str, Any]] = field(default_factory=list)
+    threads_in_parent_addresses: List[ThreadFragment] = field(default_factory=list)
+    wms_events_since_last: List["WMSLayerRow"] = field(default_factory=list)
+    npc_dialogue_since_last: List["NL1Row"] = field(default_factory=list)
+    # ── Phase 2 archetype + behavior signal ──────────────────────────
+    # ``trigger_archetype`` defaults to "narrative" — the only path the
+    # pipeline supports today. Phase 2 BehaviorInterpreter sets
+    # "behavior" or "mixed". Tools/hubs can branch on this without a
+    # schema migration.
+    trigger_archetype: str = "narrative"
+    behavior_signal: Optional[BehaviorSignal] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        out = {
             "tool_name": self.tool_name,
             "bundle_id": self.bundle_id,
             "firing_tier": int(self.firing_tier),
@@ -321,7 +421,23 @@ class BundleToolSlice:
             "address_hint": self.address_hint,
             "threads_in_focal_address": [t.to_dict() for t in self.threads_in_focal_address],
             "recent_registry_entries": list(self.recent_registry_entries),
+            "firing_layer_summary": self.firing_layer_summary,
+            "parent_summaries": dict(self.parent_summaries),
+            "geographic_chain": list(self.geographic_chain),
+            "threads_in_parent_addresses": [
+                t.to_dict() for t in self.threads_in_parent_addresses
+            ],
+            "wms_events_since_last": [
+                r.to_dict() for r in self.wms_events_since_last
+            ],
+            "npc_dialogue_since_last": [
+                r.to_dict() for r in self.npc_dialogue_since_last
+            ],
+            "trigger_archetype": self.trigger_archetype,
         }
+        if self.behavior_signal is not None:
+            out["behavior_signal"] = self.behavior_signal.to_dict()
+        return out
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "BundleToolSlice":
@@ -336,6 +452,26 @@ class BundleToolSlice:
                 for t in d.get("threads_in_focal_address", [])
             ],
             recent_registry_entries=list(d.get("recent_registry_entries", [])),
+            firing_layer_summary=d.get("firing_layer_summary", ""),
+            parent_summaries=dict(d.get("parent_summaries", {})),
+            geographic_chain=list(d.get("geographic_chain", [])),
+            threads_in_parent_addresses=[
+                ThreadFragment.from_dict(t)
+                for t in d.get("threads_in_parent_addresses", [])
+            ],
+            wms_events_since_last=[
+                WMSLayerRow.from_dict(r)
+                for r in d.get("wms_events_since_last", [])
+            ],
+            npc_dialogue_since_last=[
+                NL1Row.from_dict(r)
+                for r in d.get("npc_dialogue_since_last", [])
+            ],
+            trigger_archetype=d.get("trigger_archetype", "narrative"),
+            behavior_signal=(
+                BehaviorSignal.from_dict(d["behavior_signal"])
+                if d.get("behavior_signal") else None
+            ),
         )
 
 
@@ -346,25 +482,50 @@ def slice_bundle_for_tool(
 ) -> BundleToolSlice:
     """Deterministic extraction of a hub's view of the bundle.
 
+    Phase 1 contract (2026-06-03): the slice now carries the full
+    narrative-context fields (firing_layer_summary, parent_summaries,
+    geographic_chain, parent-address threads, WMS events delta, NPC
+    dialogue delta, trigger_archetype). The previous "thin shape-filler"
+    contract caused every content tool to write narrative-blind
+    content. One slice extension, eight tools win.
+
     The hub gets:
     - the directive text (authoritative framing)
     - the firing address (so it weights same-address narrative)
-    - the open threads in the focal address (flavor)
-    - a caller-supplied slice of recent same-type registry entries (diversity)
-
-    Hub does NOT get the full delta (irrelevant to a shape-filler) or
-    parent-address summaries (only the planner needs the wide view).
+    - the open threads in the focal address (flavor) — full payloads
+    - the open threads at parent addresses (cascading arc context)
+    - the firing-layer summary (what the weaver just said)
+    - the parent summaries (cascading-down narrative)
+    - the geographic chain (locality→world tier briefs)
+    - the WMS events + NPC dialogue delta since previous firing
+    - the trigger archetype (narrative / behavior / mixed)
+    - a caller-supplied slice of recent same-type registry entries
     """
-
+    focal = bundle.delta.address
     return BundleToolSlice(
         tool_name=tool_name,
         bundle_id=bundle.bundle_id,
         firing_tier=bundle.directive.firing_tier,
         directive_text=bundle.directive.directive_text,
-        address_hint=bundle.delta.address,
+        address_hint=focal,
         threads_in_focal_address=[
             t for t in bundle.narrative_context.open_threads
-            if t.address == bundle.delta.address
+            if t.address == focal
         ],
         recent_registry_entries=list(recent_registry_entries or []),
+        firing_layer_summary=bundle.narrative_context.firing_layer_summary,
+        parent_summaries=dict(bundle.narrative_context.parent_summaries),
+        geographic_chain=list(
+            bundle.directive.scope_hint.get("geographic_chain", []) or []
+        ),
+        threads_in_parent_addresses=[
+            t for t in bundle.narrative_context.open_threads
+            if t.address != focal
+        ],
+        wms_events_since_last=list(bundle.delta.wms_events_since_last),
+        npc_dialogue_since_last=list(bundle.delta.npc_dialogue_since_last),
+        trigger_archetype=bundle.directive.scope_hint.get(
+            "trigger_archetype", "narrative",
+        ),
+        behavior_signal=bundle.behavior_signal,
     )

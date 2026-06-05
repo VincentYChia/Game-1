@@ -21,10 +21,11 @@ class ProgressionSkillsEvaluator(PatternEvaluator):
         self.expiration_offset = cfg.get("expiration_offset", 300.0)
         self.lookback_time = cfg.get("lookback_time", 50.0)
         t = cfg.get("thresholds", {})
+        # §15 trap 8: defaults aligned to memory-config.json (authoritative).
         self.min_trigger = t.get("minimum_trigger", 1)
-        self.moderate_min = t.get("moderate_min", 20)
+        self.moderate_min = t.get("moderate_min", 10)
         self.significant_min = t.get("significant_min", 50)
-        self.major_min = t.get("major_min", 100)
+        self.major_min = t.get("major_min", 200)
         templates = cfg.get("narrative_templates", {})
         self.tpl_learned = templates.get("skill_learned",
             "Player has learned the skill {skill_name}.")

@@ -9,6 +9,14 @@ from data.models.unlock_conditions import ConditionFactory
 class TitleDatabase:
     _instance = None
 
+    # Sacred + generated file conventions (Phase 0 G07, 2026-06-03).
+    # Sacred files live under progression/ and follow the titles-*.JSON
+    # pattern. WES-generated content writes titles-generated-*.JSON
+    # siblings; reload() picks them up.
+    SACRED_DIR = "progression"
+    SACRED_GLOB = "titles-*.JSON"
+    GENERATED_GLOB = "titles-generated-*.JSON"
+
     def __init__(self):
         self.titles: Dict[str, TitleDefinition] = {}
         self.loaded = False
@@ -18,6 +26,68 @@ class TitleDatabase:
         if cls._instance is None:
             cls._instance = TitleDatabase()
         return cls._instance
+
+    @classmethod
+    def reset(cls) -> None:
+        """Test helper — drop the singleton so the next get_instance reloads.
+
+        Matches the ChunkTemplateDatabase / NPCDatabase reset() pattern
+        used in E2E tests that need a fresh database state.
+        """
+        cls._instance = None
+
+    def load_from_files(self) -> None:
+        """Read all sacred + generated title files from ``progression/``.
+
+        Idempotent. Clears the in-memory dict before reloading so a
+        ``reload()`` cycle reflects the on-disk state precisely.
+        Generated files overlay sacred (loaded second), so a WES-emitted
+        title sharing an id with a sacred title wins — same precedence
+        as ``ChunkTemplateDatabase``.
+
+        Never raises — failures degrade to whatever was already loaded
+        (or empty state on first call).
+        """
+        from core.paths import get_resource_path
+        from pathlib import Path
+        try:
+            self.titles = {}
+            try:
+                sacred_dir: Path = get_resource_path(self.SACRED_DIR)
+            except Exception:
+                sacred_dir = None  # type: ignore[assignment]
+            if sacred_dir and sacred_dir.exists():
+                for path in sorted(sacred_dir.glob(self.SACRED_GLOB)):
+                    # Skip generated — they are loaded second so they win.
+                    if "generated" in path.name.lower():
+                        continue
+                    self.load_from_file(str(path))
+                for path in sorted(sacred_dir.glob(self.GENERATED_GLOB)):
+                    self.load_from_file(str(path))
+            self.loaded = True
+        except Exception as e:
+            print(f"[TitleDatabase] load_from_files outer error: {e}")
+            self.loaded = False
+
+    def reload(self) -> None:
+        """Re-read all title files from disk after a WES content commit.
+
+        Called by :func:`world_system.content_registry.database_reloader`
+        once the Content Registry writes ``titles-generated-*.JSON``
+        siblings. Drops the in-memory cache and reloads. Never raises;
+        on any failure the previous in-memory state is preserved (prefer
+        stale-but-intact over crashing title evaluation).
+        """
+        old_titles = dict(self.titles)
+        old_loaded = self.loaded
+        try:
+            self.load_from_files()
+        except Exception as e:
+            print(
+                f"[TitleDatabase] reload failed, keeping previous: {e}"
+            )
+            self.titles = old_titles
+            self.loaded = old_loaded
 
     def load_from_file(self, filepath: str):
         try:
