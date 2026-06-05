@@ -799,7 +799,15 @@ class AlchemyCrafter:
 
     def load_recipes(self):
         """Load alchemy recipes from JSON files"""
-        possible_paths = [
+        try:
+            from core.paths import get_resource_path
+            _resolved = [
+                str(get_resource_path("recipes.JSON/recipes-alchemy-1.json")),
+                str(get_resource_path("recipes.JSON/recipes-tag-tests.JSON")),
+            ]
+        except Exception:
+            _resolved = []
+        possible_paths = _resolved + [
             "../recipes.JSON/recipes-alchemy-1.json",
             "../recipes.JSON/recipes-tag-tests.JSON",  # TEST RECIPES
             "recipes.JSON/recipes-alchemy-1.json",
@@ -831,7 +839,12 @@ class AlchemyCrafter:
     
     def load_placements(self):
         """Load placement data from JSON files"""
-        possible_paths = [
+        try:
+            from core.paths import get_resource_path
+            _resolved = [str(get_resource_path("placements.JSON/placements-alchemy-1.JSON"))]
+        except Exception:
+            _resolved = []
+        possible_paths = _resolved + [
             "../placements.JSON/placements-alchemy-1.JSON",
             "placements.JSON/placements-alchemy-1.JSON",
         ]

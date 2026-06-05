@@ -7293,6 +7293,108 @@ class Renderer:
         self.screen.blit(surf, (wx, wy))
         return button_rects
 
+    def render_pause_menu(self, selected_option: int,
+                          mouse_pos: Tuple[int, int],
+                          *, temporary_world: bool = False):
+        """Render the in-game pause menu.
+
+        2026-06-05. Opened by ESC during gameplay so accidental ESC
+        presses no longer quit the game. Three options: Return,
+        Save & Exit (disabled in temp world), Exit without saving.
+        Returns a list of pygame.Rect for click hit-testing, matching
+        :meth:`render_start_menu` so the click handler can stay uniform.
+        """
+        s = Config.scale
+        sw = Config.SCREEN_WIDTH
+        sh = Config.SCREEN_HEIGHT
+
+        # Dim the world behind the menu so it's clear gameplay is paused.
+        dim = pygame.Surface((sw, sh), pygame.SRCALPHA)
+        dim.fill((0, 0, 0, 160))
+        self.screen.blit(dim, (0, 0))
+
+        ww = Config.MENU_SMALL_W
+        wh = s(420)
+        wx = max(0, (sw - ww) // 2)
+        wy = max(0, (sh - wh) // 2)
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+        pygame.draw.rect(surf, (100, 100, 120), surf.get_rect(), s(3))
+
+        # Title
+        title = self.font.render("PAUSED", True, (255, 215, 0))
+        surf.blit(title, title.get_rect(centerx=ww // 2, y=s(28)))
+
+        # Subtitle
+        sub = self.small_font.render("ESC to return; ↑/↓ to navigate; "
+                                     "ENTER to select",
+                                     True, (160, 160, 180))
+        surf.blit(sub, sub.get_rect(centerx=ww // 2, y=s(68)))
+
+        options = [
+            ("Return to game", "Resume play"),
+            ("Save & Exit",
+             "Temporary world — no save" if temporary_world
+             else "Autosave to autosave.json, then quit"),
+            ("Exit without saving", "Quit immediately; lose unsaved progress"),
+        ]
+
+        button_rects = []
+        y_offset = s(110)
+        button_height = s(80)
+        button_spacing = s(12)
+
+        for idx, (option_name, option_desc) in enumerate(options):
+            disabled = (idx == 1 and temporary_world)
+            button_rect = pygame.Rect(s(40), y_offset + idx * (button_height + button_spacing),
+                                       ww - s(80), button_height)
+
+            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+            is_hovered = (not disabled) and button_rect.collidepoint(rx, ry)
+            is_selected = (idx == selected_option) and not disabled
+
+            if disabled:
+                bg_color = (30, 30, 40)
+                border_color = (60, 60, 75)
+                name_color = (110, 110, 130)
+                desc_color = (90, 90, 110)
+            elif is_hovered:
+                bg_color = (80, 100, 140)
+                border_color = (150, 180, 220)
+                name_color = (240, 240, 250)
+                desc_color = (200, 200, 220)
+            elif is_selected:
+                bg_color = (60, 80, 120)
+                border_color = (120, 140, 180)
+                name_color = (230, 230, 245)
+                desc_color = (180, 180, 200)
+            else:
+                bg_color = (40, 50, 70)
+                border_color = (80, 90, 110)
+                name_color = (220, 220, 240)
+                desc_color = (160, 160, 180)
+
+            pygame.draw.rect(surf, bg_color, button_rect)
+            pygame.draw.rect(surf, border_color, button_rect, s(2))
+
+            name_text = self.font.render(option_name, True, name_color)
+            surf.blit(name_text,
+                      name_text.get_rect(centerx=button_rect.centerx,
+                                         y=button_rect.y + s(15)))
+            desc_text = self.small_font.render(option_desc, True, desc_color)
+            surf.blit(desc_text,
+                      desc_text.get_rect(centerx=button_rect.centerx,
+                                         y=button_rect.y + s(48)))
+
+            button_rects.append(pygame.Rect(wx + button_rect.x,
+                                             wy + button_rect.y,
+                                             button_rect.width,
+                                             button_rect.height))
+
+        self.screen.blit(surf, (wx, wy))
+        return button_rects
+
     def render_loading_screen(self, stage_name: str, progress: float,
                               flavor_line: str = "") -> None:
         """Paint the loading screen while WorldSystem.initialize_world() runs.

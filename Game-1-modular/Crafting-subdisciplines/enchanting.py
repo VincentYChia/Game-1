@@ -1082,7 +1082,15 @@ class EnchantingCrafter:
     def load_recipes(self):
         """Load enchanting recipes from JSON files"""
         # Note: May be called "adornments" or "enchanting" in file names
-        possible_paths = [
+        try:
+            from core.paths import get_resource_path
+            _resolved = [
+                str(get_resource_path("recipes.JSON/recipes-enchanting-1.json")),
+                str(get_resource_path("recipes.JSON/recipes-adornments-1.json")),
+            ]
+        except Exception:
+            _resolved = []
+        possible_paths = _resolved + [
             "../recipes.JSON/recipes-enchanting-1.json",
             "../recipes.JSON/recipes-adornments-1.json",
             "recipes.JSON/recipes-enchanting-1.json",
@@ -1106,7 +1114,12 @@ class EnchantingCrafter:
 
     def load_placements(self):
         """Load pattern placements from JSON files"""
-        possible_paths = [
+        try:
+            from core.paths import get_resource_path
+            _resolved = [str(get_resource_path("placements.JSON/placements-adornments-1.JSON"))]
+        except Exception:
+            _resolved = []
+        possible_paths = _resolved + [
             "../placements.JSON/placements-adornments-1.JSON",
             "placements.JSON/placements-adornments-1.JSON",
         ]

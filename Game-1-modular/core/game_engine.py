@@ -184,6 +184,13 @@ class GameEngine:
         self.start_menu_open = not self.temporary_world  # Show menu unless using --temp flag
         self.start_menu_selected_option = 0  # 0=New World, 1=Load World, 2=Load Default Save, 3=Temporary World
 
+        # Pause menu state (2026-06-05). ESC during gameplay opens this
+        # instead of immediately quitting, so accidental ESC presses are
+        # recoverable. Options: 0=Return, 1=Save & Exit, 2=Exit without saving.
+        self.pause_menu_open = False
+        self.pause_menu_selected_option = 0
+        self.pause_menu_buttons: List[pygame.Rect] = []
+
         # Initialize character to None (will be created after menu selection)
         self.character = None
         self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
@@ -589,6 +596,20 @@ class GameEngine:
                 self.keys_pressed.add(event.key)
                 self._last_input_time = pygame.time.get_ticks() / 1000.0
 
+                # Pause menu event handling (highest priority, before
+                # everything else gameplay-related).
+                if self.pause_menu_open:
+                    if event.key == pygame.K_UP:
+                        self.pause_menu_selected_option = (self.pause_menu_selected_option - 1) % 3
+                    elif event.key == pygame.K_DOWN:
+                        self.pause_menu_selected_option = (self.pause_menu_selected_option + 1) % 3
+                    elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                        self.handle_pause_menu_selection(self.pause_menu_selected_option)
+                    elif event.key == pygame.K_ESCAPE:
+                        # ESC inside the pause menu = "Return to game"
+                        self.pause_menu_open = False
+                    continue  # Skip other event handling
+
                 # Start menu event handling (highest priority)
                 if self.start_menu_open:
                     if event.key == pygame.K_UP:
@@ -743,22 +764,12 @@ class GameEngine:
                         self.npc_dialogue_lines = []
                         self.npc_available_quests = []
                     else:
-                        # Autosave on quit (unless temporary world)
-                        if not self.temporary_world:
-                            if self.save_manager.save_game(
-                                self.character,
-                                self.world,
-                                self.character.quests,
-                                self.npcs,
-                                "autosave.json",
-                                self.dungeon_manager,
-                                self.game_time,
-                                self.map_system
-                            ):
-                                print("💾 Autosaved on ESC quit")
-                                if hasattr(self.character, 'stat_tracker'):
-                                    self.character.stat_tracker.record_save("autosave")
-                        self.running = False
+                        # 2026-06-05: ESC with no UI open now opens the
+                        # pause menu instead of immediately quitting.
+                        # Accidental ESC is recoverable; intentional exit
+                        # takes two clicks (ESC + select option).
+                        self.pause_menu_open = True
+                        self.pause_menu_selected_option = 0
                 elif event.key == pygame.K_TAB:
                     tool_name = self.character.switch_tool()
                     if tool_name:
@@ -1361,7 +1372,8 @@ class GameEngine:
     def handle_right_click(self, mouse_pos: Tuple[int, int], shift_held: bool = False):
         """Handle right-click events (SHIFT+right for consumables, right-click for offhand attacks, right-click to remove materials in interactive crafting)"""
         # Check if clicking on UI elements first (high priority)
-        if self.start_menu_open or self.active_minigame or self.enchantment_selection_active:
+        if (self.start_menu_open or self.pause_menu_open
+                or self.active_minigame or self.enchantment_selection_active):
             return  # Don't handle right-click on UI
 
         # Skip if no character exists yet
@@ -1725,6 +1737,46 @@ class GameEngine:
         if hasattr(self, "npcs"):
             self._spawn_village_npcs()
 
+    def handle_pause_menu_selection(self, option_index: int) -> None:
+        """Handle pause menu selection (0=Return, 1=Save & Exit, 2=Exit without saving)."""
+        if option_index == 0:
+            # Return to game
+            self.pause_menu_open = False
+            return
+
+        if option_index == 1:
+            # Save & Exit. Skip the save for temp worlds (no persistence).
+            if not self.temporary_world and self.character is not None:
+                try:
+                    saved = self.save_manager.save_game(
+                        self.character,
+                        self.world,
+                        self.character.quests,
+                        self.npcs,
+                        "autosave.json",
+                        self.dungeon_manager,
+                        self.game_time,
+                        self.map_system,
+                    )
+                    if saved:
+                        print("💾 Autosaved on Save & Exit")
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_save("autosave")
+                    else:
+                        print("⚠ Save returned falsy; exiting anyway")
+                except Exception as e:
+                    print(f"⚠ Save failed on Save & Exit: {e}; exiting anyway")
+            else:
+                print("💾 Skipping save (temporary world or no character)")
+            self.running = False
+            return
+
+        if option_index == 2:
+            # Exit without saving
+            print("🚪 Exiting without saving")
+            self.running = False
+            return
+
     def handle_start_menu_selection(self, option_index: int):
         """Handle start menu option selection (0=New World, 1=Load World, 2=Load Default Save, 3=Temporary World)"""
         if option_index == 0:
@@ -1963,7 +2015,16 @@ class GameEngine:
                 print("✓ Opening class selection...")
 
     def handle_mouse_click(self, mouse_pos: Tuple[int, int]):
-        # Start menu clicks (highest priority)
+        # Pause menu clicks (highest priority — even higher than start menu)
+        if self.pause_menu_open:
+            if hasattr(self, 'pause_menu_buttons') and self.pause_menu_buttons:
+                for idx, button_rect in enumerate(self.pause_menu_buttons):
+                    if button_rect.collidepoint(mouse_pos):
+                        self.handle_pause_menu_selection(idx)
+                        return
+            return  # Swallow other clicks while paused
+
+        # Start menu clicks
         if self.start_menu_open:
             if hasattr(self, 'start_menu_buttons') and self.start_menu_buttons:
                 for idx, button_rect in enumerate(self.start_menu_buttons):
@@ -3826,11 +3887,36 @@ class GameEngine:
         return crafter_map.get(station_type)
 
     def _start_minigame(self, recipe: Recipe):
-        """Start the appropriate minigame for this recipe"""
+        """Start the appropriate minigame for this recipe.
+
+        2026-06-05: wrapped in a try/except that surfaces tracebacks to
+        the terminal. The user reported the minigame launch path going
+        silent after "Starting minigame..." with no error visible. Any
+        exception now hits stderr so we can diagnose.
+        """
+        try:
+            self._start_minigame_impl(recipe)
+        except Exception as e:
+            import traceback
+            print(f"\n❌❌❌ MINIGAME START FAILED: {type(e).__name__}: {e}")
+            traceback.print_exc()
+            self.add_notification(
+                f"Minigame error: {type(e).__name__}", (255, 100, 100),
+            )
+            # Clean up partial state so the player can re-open the
+            # crafting UI without a stuck active_minigame reference.
+            self.active_minigame = None
+            self.minigame_type = None
+            self.minigame_recipe = None
+
+    def _start_minigame_impl(self, recipe: Recipe):
+        """Start the appropriate minigame for this recipe (inner)."""
         crafter = self.get_crafter_for_station(recipe.station_type)
         if not crafter:
+            print(f"❌ No crafter for station_type={recipe.station_type!r}")
             self.add_notification("Invalid crafting station!", (255, 100, 100))
             return
+        print(f"  crafter ok: {type(crafter).__name__}")
 
         # Initialize all bonus variables (prevents UnboundLocalError)
         buff_time_bonus = 0.0
@@ -3884,6 +3970,8 @@ class GameEngine:
         total_quality_bonus = buff_quality_bonus + title_quality_bonus
 
         # Create minigame based on station type
+        print(f"  creating {recipe.station_type} minigame for {recipe.recipe_id} "
+              f"(time_bonus={total_time_bonus:.2f}, qual_bonus={total_quality_bonus:.2f})")
         if recipe.station_type == 'adornments':
             # Enchanting requires target_item parameter
             target_item = None
@@ -3892,14 +3980,19 @@ class GameEngine:
 
             minigame = crafter.create_minigame(recipe.recipe_id, target_item, total_time_bonus, total_quality_bonus)
             if not minigame:
+                print(f"❌ EnchantingCrafter.create_minigame returned None "
+                      f"(recipe_id={recipe.recipe_id!r}, target_item={target_item!r})")
                 self.add_notification("Minigame not available!", (255, 100, 100))
                 return
         else:
             # Other crafting disciplines: recipe_id, time_bonus, quality_bonus
             minigame = crafter.create_minigame(recipe.recipe_id, total_time_bonus, total_quality_bonus)
             if not minigame:
+                print(f"❌ {type(crafter).__name__}.create_minigame returned None "
+                      f"(recipe_id={recipe.recipe_id!r})")
                 self.add_notification("Minigame not available!", (255, 100, 100))
                 return
+        print(f"  minigame created: {type(minigame).__name__}")
 
         if total_time_bonus > 0 or total_quality_bonus > 0:
             print(f"⚡ Active bonuses:")
@@ -4005,7 +4098,9 @@ class GameEngine:
                     print(f"   Time limit: {minigame.time_limit}s (×{multiplier:.2f}, max {max_mult})")
 
         # Start minigame
+        print(f"  calling minigame.start()")
         minigame.start()
+        print(f"  minigame.start() returned")
 
         # Store minigame state
         self.active_minigame = minigame
@@ -8049,8 +8144,10 @@ class GameEngine:
         self.add_notification("Exited dungeon!", (100, 255, 100))
 
     def update(self):
-        # Skip updates if in start menu or no character
-        if self.start_menu_open or self.character is None:
+        # Skip updates if in start menu, paused, or no character. The
+        # pause-menu guard means enemies don't keep attacking the player
+        # while they decide whether to quit.
+        if self.start_menu_open or self.pause_menu_open or self.character is None:
             return
 
         # Check for completed background LLM generation
@@ -8494,6 +8591,17 @@ class GameEngine:
 
         # Render deferred tooltips LAST (on top of all UI including modals)
         self.renderer.render_pending_tooltip()
+
+        # Pause menu overlay (2026-06-05). Drawn LAST so it covers
+        # everything — gameplay UI stays visible underneath through a
+        # dim backdrop, but no input gets through except pause menu nav.
+        if self.pause_menu_open:
+            result = self.renderer.render_pause_menu(
+                self.pause_menu_selected_option, self.mouse_pos,
+                temporary_world=self.temporary_world,
+            )
+            if result is not None:
+                self.pause_menu_buttons = result
 
         pygame.display.flip()
 
