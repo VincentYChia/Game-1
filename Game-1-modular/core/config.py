@@ -36,6 +36,13 @@ class Config:
     WORLD_SIZE = 176  # Deprecated - world is now infinite
     NUM_CHUNKS = 11   # Deprecated - chunks generated on demand
 
+    # Temporary World (2026-06-05): canonical fixed seed so the
+    # --temp / "Temporary World" menu option always generates the
+    # SAME small test map. Picking a fixed value also means the
+    # world_map_seed_<TEMP>.gz cache hits instantly after first boot,
+    # so temp-world starts are near-instant.
+    TEMP_WORLD_SEED = 13579
+
     # Player spawn and safe zone
     PLAYER_SPAWN_X = 0.0
     PLAYER_SPAWN_Y = 0.0

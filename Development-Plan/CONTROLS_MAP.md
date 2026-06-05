@@ -937,6 +937,30 @@ User-direction Claude-only posture for playtest:
 - **Reader API** — `world_system.living_world.backends.llm_dev_log.tail_recent(n=15)` for the F12 overlay + Prompt Studio Simulator.
 - **Playtest checklist** (in `backend-config.json._playtest_checklist`): set `ANTHROPIC_API_KEY`, `WES_REQUIRE_REAL_LLM=1`, `WES_DISABLE_FIXTURES=1` (if you want to bypass canned fixtures), optional `WES_VERBOSE=1`, then run `tools/wes_real_llm_smoketest.py`.
 
+## §18 — Boot flow + map persistence (NEW 2026-06-05)
+
+User-facing pain: every game start regenerated the full geographic map (~15s) because `WorldSystem()` was created at constructor time with a random seed, before the player picked a save. Cache never hit.
+
+**Fix**:
+- `WorldSystem(defer_init=True)` creates an empty world; `WorldSystem.initialize_world(progress_callback)` runs the expensive pass behind the loading screen. Stage updates: `Building geography (5%) → Loading initial chunks (70%) → Spawning fixed entities (88%) → Finalizing (98%) → Ready (100%)`.
+- New `Renderer.render_loading_screen(stage, progress, flavor)` — dark backdrop, centered card, progress bar, technical stage name + one in-world flavor line.
+- New `Config.TEMP_WORLD_SEED = 13579` — temporary world always uses the same seed so the geographic cache hits instantly after first boot (12.9s → 1.1s confirmed).
+- `GameEngine._initialize_world_with_loading_screen(seed, label)` is the single helper. All four menu options + `--temp` boot path route through it.
+- `GameEngine._spawn_village_npcs()` extracts village NPC spawning so it can fire post-init (npcs depend on geographic_map being present).
+
+**Chunk template lock (the user's spec: "first time the chunk is rendered locks it")**:
+- `Chunk._rendered_once: bool` + `Chunk._template_locked: bool`
+- `Chunk.mark_rendered()` called from `WorldSystem.get_visible_tiles()` for every loaded chunk whose tiles the renderer just queried — this is the single source for "this chunk has been seen".
+- `chunk_type` and a new `template_locked` boolean are written to chunk save files.
+- `WorldSystem._load_chunk_from_file()` reads `template_locked` (default `True` for backwards compat with pre-2026-06-05 saves), passes `locked_chunk_type=saved_chunk_type` to `Chunk.__init__` when locked.
+- Unlocked chunks (loaded but never rendered, then unloaded) re-roll from current `ChunkTemplateDatabase` on next visit — so newly-added chunk types appear in unexplored territory without disturbing seen chunks.
+
+**Verified**:
+- Fresh `defer_init=True` world creation is instant.
+- First geographic gen: 12.9s; second with cache: 1.1s.
+- Unrendered chunk → no save file → next visit fresh roll.
+- Rendered chunk → save with `template_locked=true` → next load honors saved `chunk_type`.
+
 ## §17 — Phase 7 wiring (NEW 2026-06-05)
 
 All three Phase 7 substrates are now connected to runtime call sites:

@@ -7293,6 +7293,79 @@ class Renderer:
         self.screen.blit(surf, (wx, wy))
         return button_rects
 
+    def render_loading_screen(self, stage_name: str, progress: float,
+                              flavor_line: str = "") -> None:
+        """Paint the loading screen while WorldSystem.initialize_world() runs.
+
+        2026-06-05. Phase 1 of the boot-flow rework: when the player picks
+        a menu option, this overlay appears while the geographic map +
+        initial chunks generate (or load from cache). Empty until
+        ``WorldSystem.initialize_world(progress_callback=...)`` calls
+        back with stage updates.
+
+        Args:
+            stage_name: Technical stage label ("Building geography",
+                "Loading initial chunks", ...). Rendered in the title slot.
+            progress: 0.0-1.0 progress fraction.
+            flavor_line: Optional in-world line ("Roads find their
+                travelers."). Rendered below the bar. Empty string skips it.
+        """
+        s = Config.scale
+        sw = Config.SCREEN_WIDTH
+        sh = Config.SCREEN_HEIGHT
+
+        # Fullscreen dark backdrop
+        backdrop = pygame.Surface((sw, sh), pygame.SRCALPHA)
+        backdrop.fill((10, 12, 18, 255))
+        self.screen.blit(backdrop, (0, 0))
+
+        # Centered card
+        cw, ch = s(640), s(260)
+        cx = (sw - cw) // 2
+        cy = (sh - ch) // 2
+        card = pygame.Surface((cw, ch), pygame.SRCALPHA)
+        card.fill((20, 22, 32, 255))
+        pygame.draw.rect(card, (100, 100, 120), card.get_rect(), s(2))
+
+        # Title
+        title = self.font.render("LOADING WORLD", True, (220, 200, 120))
+        card.blit(title, title.get_rect(centerx=cw // 2, y=s(28)))
+
+        # Stage name
+        stage = self.small_font.render(stage_name or "Preparing", True,
+                                       (220, 220, 240))
+        card.blit(stage, stage.get_rect(centerx=cw // 2, y=s(78)))
+
+        # Progress bar
+        bar_x = s(40)
+        bar_y = s(120)
+        bar_w = cw - s(80)
+        bar_h = s(22)
+        pygame.draw.rect(card, (38, 42, 54),
+                         pygame.Rect(bar_x, bar_y, bar_w, bar_h))
+        pygame.draw.rect(card, (90, 95, 115),
+                         pygame.Rect(bar_x, bar_y, bar_w, bar_h), s(1))
+        clamped = max(0.0, min(1.0, float(progress)))
+        fill_w = int(bar_w * clamped)
+        if fill_w > 0:
+            pygame.draw.rect(card, (140, 180, 110),
+                             pygame.Rect(bar_x, bar_y, fill_w, bar_h))
+
+        # Percent label
+        pct = self.tiny_font.render(f"{int(clamped * 100)}%", True,
+                                    (200, 200, 220))
+        card.blit(pct, pct.get_rect(centerx=cw // 2,
+                                    y=bar_y + bar_h + s(6)))
+
+        # Flavor line (in-world voice — the WORLD TONE one-liner)
+        if flavor_line:
+            flavor = self.small_font.render(flavor_line, True, (160, 170, 190))
+            card.blit(flavor, flavor.get_rect(centerx=cw // 2,
+                                              y=ch - s(50)))
+
+        self.screen.blit(card, (cx, cy))
+        pygame.display.flip()
+
     def render_class_selection_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.class_selection_open:
             return None

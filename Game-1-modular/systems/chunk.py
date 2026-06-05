@@ -68,7 +68,8 @@ class Chunk:
     def __init__(self, chunk_x: int, chunk_y: int,
                  seed: Optional[int] = None,
                  biome_generator: Optional['BiomeGenerator'] = None,
-                 geographic_data=None):
+                 geographic_data=None,
+                 locked_chunk_type: Optional[str] = None):
         """Initialize a chunk at the given coordinates.
 
         Args:
@@ -77,6 +78,12 @@ class Chunk:
             seed: Deterministic seed for this chunk (optional, for legacy support)
             biome_generator: BiomeGenerator instance for chunk type determination
             geographic_data: GeographicData from the geographic system (new)
+            locked_chunk_type: 2026-06-05 — if this chunk was previously
+                rendered and unloaded, its chunk_type was locked. Passing
+                the locked value here overrides
+                :meth:`_determine_chunk_type` so a new ChunkTemplateDatabase
+                entry doesn't silently re-roll a chunk the player has
+                already seen.
         """
         self.chunk_x = chunk_x
         self.chunk_y = chunk_y
@@ -108,8 +115,19 @@ class Chunk:
         self._modified = False
         self._resource_modifications: Dict[str, dict] = {}
 
+        # 2026-06-05 chunk template lock state. Tracks whether this
+        # chunk has been rendered yet this session. Locked chunks
+        # restore from save; unlocked chunks may re-roll their
+        # template_type if ChunkTemplateDatabase has changed.
+        self._rendered_once: bool = bool(locked_chunk_type is not None)
+        self._template_locked: bool = bool(locked_chunk_type is not None)
+
         # Determine chunk type and generate content
-        self.chunk_type = self._determine_chunk_type()
+        if locked_chunk_type:
+            # Honor the locked type from the save file.
+            self.chunk_type = locked_chunk_type
+        else:
+            self.chunk_type = self._determine_chunk_type()
         self.generate_tiles()
         self.spawn_resources()
 
@@ -591,9 +609,24 @@ class Chunk:
         }
         self._modified = True
 
+    def mark_rendered(self) -> None:
+        """Flag this chunk as rendered, locking its chunk_type.
+
+        Called by the renderer the first time the chunk is painted. Once
+        locked, the chunk's template_type is restored verbatim on the
+        next load even if ``ChunkTemplateDatabase`` has gained new entries
+        — the player has already seen the chunk as it was.
+        """
+        if not self._rendered_once:
+            self._rendered_once = True
+            self._template_locked = True
+            self._modified = True  # ensure get_save_data() returns the lock
+
     def has_modifications(self) -> bool:
         """Check if this chunk has any modifications to save."""
-        return self._modified or self.dungeon_entrance is not None
+        return (self._modified
+                or self.dungeon_entrance is not None
+                or self._template_locked)
 
     def get_save_data(self) -> Optional[dict]:
         """Get save data for this chunk.
@@ -608,6 +641,11 @@ class Chunk:
             "chunk_x": self.chunk_x,
             "chunk_y": self.chunk_y,
             "chunk_type": self.chunk_type,
+            # 2026-06-05 — explicit lock flag. Existing chunk save files
+            # without this field are treated as locked on load (default
+            # True) for backwards compatibility — don't surprise players
+            # by re-rolling their existing world's chunks.
+            "template_locked": bool(self._template_locked),
         }
 
         if self._resource_modifications:
