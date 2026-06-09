@@ -42,6 +42,7 @@ from typing import Any, ClassVar, Dict, List, Optional, Set
 from world_system.world_memory.config_loader import get_section
 from world_system.world_memory.event_schema import ConsolidatedEvent, SEVERITY_ORDER
 from world_system.world_memory.consolidator_base import ConsolidatorBase
+from world_system.world_memory.layer_publish import _publish_layer_summary_created
 from world_system.world_memory.tag_assignment import assign_higher_layer_tags
 
 
@@ -149,6 +150,41 @@ class Layer3Manager:
         self._layer4_callback = callback
 
     # ── Trigger API ─────────────────────────────────────────────────
+
+    def on_dialogue_captured(self, dialogue_payload: Dict[str, Any]) -> None:
+        """Treat one NL1 dialogue capture as a point-equivalent L2 event.
+
+        User direction 2026-06-05: dialogue and events count point-wise
+        equal in the WMS weighted-bucket trigger system. Subscribed to
+        ``WMS_DIALOGUE_CAPTURED`` (published by
+        :meth:`WorldNarrativeSystem.ingest_dialogue`); the payload
+        carries ``address`` (locality), ``tags`` (NL1 tags + resolved
+        ``district:`` ancestor when available), and ``narrative``.
+
+        Internally this just routes through :meth:`on_layer2_created`
+        with a synthesized L2-event-shaped dict so the existing counter
+        + district-tracking logic stays the single source of truth.
+        See ``Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md`` §5.6.
+        """
+        if not self._initialized:
+            return
+        if not isinstance(dialogue_payload, dict):
+            return
+        # GameEventBus may hand us a GameEvent with a ``.data`` dict.
+        if "tags" not in dialogue_payload:
+            inner = dialogue_payload.get("data")
+            if isinstance(inner, dict):
+                dialogue_payload = inner
+        synthesized = {
+            "id": dialogue_payload.get("npc_id", "") or "dialogue",
+            "narrative": dialogue_payload.get("narrative", ""),
+            "tags": list(dialogue_payload.get("tags", []) or []),
+            "game_time": dialogue_payload.get("game_time", 0.0),
+            # Mark provenance — downstream/debug tools can distinguish
+            # dialogue-fed events from real L2 interpretations.
+            "_source": "dialogue",
+        }
+        self.on_layer2_created(synthesized)
 
     def on_layer2_created(self, l2_event_dict: Dict[str, Any]) -> None:
         """Called each time a Layer 2 interpretation is stored.
@@ -408,6 +444,23 @@ class Layer3Manager:
             origin_ref=origin_ref,
             event_id=result.consolidation_id,
         )
+
+        # 2026-06-05: publish a bus event so the WMS→WNS bridge can
+        # subscribe to L3 summaries and fire NL3 directly (Model C peak
+        # path). See Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md §5.3.
+        # Best-effort — failure here must NEVER corrupt L3 storage or
+        # block the L4 callback.
+        try:
+            _publish_layer_summary_created(
+                layer=3,
+                event_id=result.consolidation_id,
+                tags=list(result.affects_tags),
+                category=result.category,
+                severity=result.severity,
+                game_time=game_time,
+            )
+        except Exception as e:
+            print(f"[Layer3] Bus publish error (non-fatal): {e}")
 
         # Notify Layer 4 of the new L3 event
         if self._layer4_callback:

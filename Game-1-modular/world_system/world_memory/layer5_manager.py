@@ -548,6 +548,21 @@ class Layer5Manager:
             event_id=summary.summary_id,
         )
 
+        # 2026-06-05: publish WMS_LAYER_5_SUMMARY_CREATED for bridge.
+        # See Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md §5.3.
+        try:
+            from world_system.world_memory.layer_publish import _publish_layer_summary_created
+            _publish_layer_summary_created(
+                layer=5,
+                event_id=summary.summary_id,
+                tags=list(summary.tags),
+                category="region_summary",
+                severity=summary.severity,
+                game_time=game_time,
+            )
+        except Exception as e:
+            print(f"[Layer5] Bus publish error (non-fatal): {e}")
+
         # Notify Layer 6 of the new L5 event (mirror L4's L5 callback).
         # Any exception in the callback is logged and suppressed so
         # that an L6 failure cannot corrupt L5 storage.

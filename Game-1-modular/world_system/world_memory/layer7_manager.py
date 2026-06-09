@@ -523,6 +523,22 @@ class Layer7Manager:
             event_id=summary.summary_id,
         )
 
+        # 2026-06-05: publish WMS_LAYER_7_SUMMARY_CREATED for bridge.
+        # Layer 7 is the singleton apex — no further callback chain.
+        # See Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md §5.3.
+        try:
+            from world_system.world_memory.layer_publish import _publish_layer_summary_created
+            _publish_layer_summary_created(
+                layer=7,
+                event_id=summary.summary_id,
+                tags=list(summary.tags),
+                category="world_summary",
+                severity=summary.severity,
+                game_time=game_time,
+            )
+        except Exception as e:
+            print(f"[Layer7] Bus publish error (non-fatal): {e}")
+
     def _find_supersedable(self, world_id: str) -> Optional[str]:
         """Find an existing L7 summary for this world to supersede."""
         if not self._layer_store:

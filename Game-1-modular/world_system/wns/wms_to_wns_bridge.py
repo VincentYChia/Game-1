@@ -41,6 +41,7 @@ from world_system.living_world.infra.graceful_degrade import log_degrade
 from world_system.wes.observability_runtime import (
     EVT_CASCADE_FIRED,
     EVT_WMS_EVENT_RECEIVED,
+    EVT_WMS_LAYER_FIRED_WNS,
     obs_record,
 )
 from world_system.wns.cascade_trigger import (
@@ -75,10 +76,17 @@ class WMSToWNSBridge:
         threshold: int = DEFAULT_THRESHOLD,
         wms_char_budget: int = DEFAULT_CHAR_BUDGET,
         seen_ring_size: int = DEFAULT_SEEN_RING,
+        layer_store: Optional[Any] = None,
     ) -> None:
         self._wns = wns
         self._event_store = event_store
         self._geo = geographic_registry
+        # 2026-06-05: layer_store enables Model C peak path — bridge
+        # subscribes to WMS_LAYER_N_SUMMARY_CREATED and reads the
+        # summary back from this store for the NL_N firing's WMS brief.
+        # See Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md §5.4.
+        # ``None`` keeps the cascade-only baseline (backward compat).
+        self._layer_store = layer_store
         self._char_budget = int(wms_char_budget)
         self._connected: bool = False
         self._lock = threading.RLock()
@@ -101,11 +109,31 @@ class WMSToWNSBridge:
         self._events_skipped_no_locality: int = 0
         self._weaver_run_failures: int = 0
         self._address_resolution_failures: int = 0
+        # 2026-06-05: peak-path counters (WMS L_N → NL_N direct fires)
+        self._layer_fires_received: int = 0
+        self._layer_fires_dispatched: int = 0
 
     # ── Lifecycle ────────────────────────────────────────────────────
 
+    # Topics this bridge listens to. The cascade baseline only needs
+    # WMS_INTERPRETATION_TOPIC; Model C peak path adds the L3-L7
+    # summary topics so a WMS layer firing directly triggers NL_N.
+    _LAYER_TOPICS: tuple[tuple[int, str], ...] = (
+        (3, "WMS_LAYER_3_SUMMARY_CREATED"),
+        (4, "WMS_LAYER_4_SUMMARY_CREATED"),
+        (5, "WMS_LAYER_5_SUMMARY_CREATED"),
+        (6, "WMS_LAYER_6_SUMMARY_CREATED"),
+        (7, "WMS_LAYER_7_SUMMARY_CREATED"),
+    )
+
     def connect(self) -> None:
-        """Subscribe to ``WMS_INTERPRETATION_CREATED`` on GameEventBus.
+        """Subscribe to WMS bus topics on GameEventBus.
+
+        - ``WMS_INTERPRETATION_CREATED`` drives the cascade baseline.
+        - ``WMS_LAYER_{3..7}_SUMMARY_CREATED`` drive Model C's peak
+          path: a layer firing at an address directly triggers NL_N
+          at that address with the freshly-written summary as primary
+          context.
 
         Idempotent. Failure to import / subscribe degrades to a no-op
         (bridge stays off); the WMS interpretation flow continues to
@@ -118,6 +146,14 @@ class WMSToWNSBridge:
                 from events.event_bus import get_event_bus
                 bus = get_event_bus()
                 bus.subscribe(WMS_INTERPRETATION_TOPIC, self._on_event)
+                # Subscribe to L3-L7 summary topics for the peak path.
+                # Each handler is a closure that knows its own layer
+                # so we don't need the event payload to carry it.
+                for layer, topic in self._LAYER_TOPICS:
+                    bus.subscribe(
+                        topic,
+                        self._make_layer_handler(layer),
+                    )
                 self._connected = True
             except Exception as e:
                 log_degrade(
@@ -151,6 +187,11 @@ class WMSToWNSBridge:
                         unsub(WMS_INTERPRETATION_TOPIC, self._on_event)
                     except Exception:
                         pass
+                # Best-effort unsubscribe for the layer topics. The
+                # peak handlers were registered as fresh closures so we
+                # can't remove them by reference without keeping a map;
+                # the ``_connected`` flag short-circuits inside the
+                # handler so leftover subscriptions are inert.
             except Exception:
                 pass
             self._connected = False
@@ -224,6 +265,55 @@ class WMSToWNSBridge:
         the cascade still advances (per CascadeTriggerManager contract)
         but a failed weaver invocation is logged and counted.
         """
+        self._fire_weaver(layer=layer, address=address, trigger_source="cascade")
+
+    # ── Layer-summary peak handlers (Model C peak path) ──────────────
+
+    def _make_layer_handler(self, layer: int):
+        """Closure factory: returns a bus subscriber bound to ``layer``."""
+        def _handler(event_or_data: Any) -> None:
+            self._on_layer_summary(layer=layer, event_or_data=event_or_data)
+        return _handler
+
+    def _on_layer_summary(self, *, layer: int, event_or_data: Any) -> None:
+        """Handle one ``WMS_LAYER_{N}_SUMMARY_CREATED`` delivery.
+
+        Reads ``address`` from the payload and directly fires NL_N
+        there. The cascade is NOT advanced — this is a peak event,
+        distinct from the cascade baseline.
+        """
+        event_data = event_or_data
+        if not isinstance(event_or_data, dict):
+            inner = getattr(event_or_data, "data", None)
+            if isinstance(inner, dict):
+                event_data = inner
+        if not isinstance(event_data, dict):
+            return
+        with self._lock:
+            if not self._connected:
+                return
+            self._layer_fires_received += 1
+        address = event_data.get("address") or ""
+        if not address:
+            return
+        # Fire directly. Layer == N; trigger_source identifies the peak.
+        self._fire_weaver(
+            layer=int(layer),
+            address=address,
+            trigger_source="wms_layer_summary",
+        )
+        with self._lock:
+            self._layer_fires_dispatched += 1
+
+    # ── Shared weaver fire path ──────────────────────────────────────
+
+    def _fire_weaver(
+        self, *, layer: int, address: str, trigger_source: str,
+    ) -> None:
+        """Run weaver at ``layer`` / ``address``. Used by both cascade
+        baseline (``trigger_source="cascade"``) and Model C peak
+        (``trigger_source="wms_layer_summary"``).
+        """
         if layer not in WEAVER_LAYERS:
             return
         wms_brief = ""
@@ -233,6 +323,11 @@ class WMSToWNSBridge:
                 event_store=self._event_store,
                 geographic_registry=self._geo,
                 char_budget=self._char_budget,
+                # 2026-06-05: cascade-down read. When firing at L_N
+                # the builder prefers the same-tier summary at
+                # ``address`` before falling back through L_(N-1)…L_2.
+                firing_layer=layer,
+                layer_store=self._layer_store,
             )
         except Exception as e:
             log_degrade(
@@ -241,22 +336,33 @@ class WMSToWNSBridge:
                 failure_reason=f"{type(e).__name__}: {e}",
                 fallback_taken="weaver runs without WMS slice",
                 severity="warning",
-                context={"layer": layer, "address": address},
+                context={"layer": layer, "address": address,
+                         "trigger_source": trigger_source},
             )
 
         try:
-            # Resolve ancestors once for above_* cascading context.
             parent_address = self._safe_parent_address(address)
             grandparent_address = (
                 self._safe_parent_address(parent_address) if parent_address else None
             )
-            obs_record(
-                EVT_CASCADE_FIRED,
-                f"NL{layer} weaver firing",
-                layer=layer,
-                address=address,
-                wms_brief_chars=len(wms_brief or ""),
-            )
+            # Observability: distinguish cascade vs peak in the
+            # F12 overlay / logs so it's clear which path drove this.
+            if trigger_source == "wms_layer_summary":
+                obs_record(
+                    EVT_WMS_LAYER_FIRED_WNS,
+                    f"NL{layer} weaver firing (WMS L{layer} peak)",
+                    layer=layer,
+                    address=address,
+                    wms_brief_chars=len(wms_brief or ""),
+                )
+            else:
+                obs_record(
+                    EVT_CASCADE_FIRED,
+                    f"NL{layer} weaver firing",
+                    layer=layer,
+                    address=address,
+                    wms_brief_chars=len(wms_brief or ""),
+                )
             self._wns.run_weaver(
                 layer=layer,
                 address=address,
@@ -270,9 +376,10 @@ class WMSToWNSBridge:
                 subsystem="wns_bridge",
                 operation=f"wns.run_weaver(layer={layer})",
                 failure_reason=f"{type(e).__name__}: {e}",
-                fallback_taken="cascade still advances; no narrative produced this fire",
+                fallback_taken="trigger still advances; no narrative produced this fire",
                 severity="warning",
-                context={"layer": layer, "address": address},
+                context={"layer": layer, "address": address,
+                         "trigger_source": trigger_source},
             )
 
     # ── Helpers ──────────────────────────────────────────────────────

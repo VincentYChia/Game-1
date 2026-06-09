@@ -51,9 +51,32 @@ def build_wms_brief(
     char_budget: int = DEFAULT_CHAR_BUDGET,
     interpretation_limit: int = DEFAULT_INTERPRETATION_LIMIT,
     per_line_cap: int = DEFAULT_PER_LINE_CAP,
+    # 2026-06-05: cascade-down support for Model C. Pass ``firing_layer``
+    # (2..7) and ``layer_store`` to enable preferring the same-tier WMS
+    # summary at ``firing_address`` before falling back to raw L2
+    # interpretations. Both default to None — callers that don't supply
+    # them get the legacy L2-only behaviour, preserving backward compat
+    # with existing tests and any caller that hasn't been migrated.
+    firing_layer: Optional[int] = None,
+    layer_store: Optional[Any] = None,
 ) -> str:
-    """Render a char-capped brief of recent WMS interpretations
-    relevant to ``firing_address``.
+    """Render a char-capped brief of recent WMS context relevant to
+    ``firing_address``, preferring same-layer aggregated summaries
+    when available.
+
+    Cascade-down behaviour (when ``firing_layer`` and ``layer_store``
+    are supplied):
+
+    1. Try ``L_{firing_layer}`` summary at ``firing_address``. If a
+       row exists, render its narrative (single most-recent row).
+    2. If empty and ``firing_layer > 2``, try
+       ``L_{firing_layer - 1}`` at ``firing_address`` (same address;
+       no descendant walking at this step — that's expensive and the
+       common case is the layer-N summary being present).
+    3. Continue cascading down to L3.
+    4. If no aggregated summary exists at any layer, fall back to the
+       legacy L2 walk: enumerate descendant localities and pull
+       interpretations whose ``affected_locality_ids`` intersect.
 
     Returns ``""`` (empty) on any unavailable input — the weaver's
     template should treat empty as ``EMPTY_RENDER`` if it wants a
@@ -62,17 +85,39 @@ def build_wms_brief(
 
     Args:
         firing_address: ``"locality:X"``, ``"district:Y"``, etc.
-        event_store: WMS EventStore instance. ``None`` -> ``""``.
+        event_store: WMS EventStore instance. ``None`` -> falls back
+            to layer-store-only path if a layer summary is found.
         geographic_registry: Used to enumerate descendant localities
-            for high-tier addresses. ``None`` -> only locality:* tier
-            queries return content; higher tiers return ``""``.
+            for high-tier addresses during the L2 fallback. ``None``
+            -> only locality:* tier queries return content; higher
+            tiers return ``""``.
         char_budget: Hard cap on rendered output (default 600).
         interpretation_limit: Max interpretations to consider before
             char-truncation (default 30).
         per_line_cap: Truncation cap per interpretation narrative line
             (default 200 chars).
+        firing_layer: NL firing layer (2..7). When supplied, enables
+            cascade-down read from same-layer summary.
+        layer_store: WMS LayerStore instance. Required for cascade-down
+            reads; otherwise the function silently skips that path.
     """
-    if not firing_address or event_store is None:
+    if not firing_address:
+        return ""
+
+    # 2026-06-05: cascade-down — prefer same-tier summary.
+    if firing_layer is not None and layer_store is not None and firing_layer >= 3:
+        cascade_text = _try_layer_cascade(
+            firing_address=firing_address,
+            firing_layer=int(firing_layer),
+            layer_store=layer_store,
+            char_budget=char_budget,
+        )
+        if cascade_text:
+            return cascade_text
+
+    # Legacy L2 fallback — preserved for backward compat + as the
+    # bottom rung of the cascade.
+    if event_store is None:
         return ""
 
     locality_set = _resolve_descendant_localities(
@@ -95,6 +140,37 @@ def build_wms_brief(
         char_budget=char_budget,
         per_line_cap=per_line_cap,
     )
+
+
+def _try_layer_cascade(
+    *,
+    firing_address: str,
+    firing_layer: int,
+    layer_store: Any,
+    char_budget: int,
+) -> str:
+    """Walk down from ``firing_layer`` to L3, returning the first
+    non-empty layer's most-recent summary at ``firing_address``.
+
+    Returns ``""`` if no L3-L7 summary exists at ``firing_address`` —
+    the caller then falls back to the legacy L2 walk.
+    """
+    for layer in range(firing_layer, 2, -1):
+        try:
+            row = layer_store.get_recent_layer_event(layer, firing_address)
+        except Exception:
+            row = None
+        if not row:
+            continue
+        narrative = (row.get("narrative") or "").strip()
+        if not narrative:
+            continue
+        # Cap to char_budget with the standard truncation marker.
+        if len(narrative) > char_budget:
+            cut = char_budget - len(TRUNCATION_MARKER)
+            narrative = narrative[:max(0, cut)].rstrip() + TRUNCATION_MARKER
+        return narrative
+    return ""
 
 
 # ── Internals ──────────────────────────────────────────────────────────

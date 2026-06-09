@@ -199,6 +199,18 @@ class WorldMemorySystem:
             )
             # Wire L3 callback to interpreter so it gets notified of L2 events
             self.interpreter.set_layer3_callback(self.layer3_manager.on_layer2_created)
+            # 2026-06-05: subscribe Layer3Manager to dialogue captures so
+            # NL1 mentions feed the WMS trigger system point-equivalent
+            # to L2 events. See WMS_WNS_LAYER_CORRESPONDENCE.md §5.4.
+            try:
+                from events.event_bus import get_event_bus
+                bus = get_event_bus()
+                bus.subscribe(
+                    "WMS_DIALOGUE_CAPTURED",
+                    self.layer3_manager.on_dialogue_captured,
+                )
+            except Exception as e:
+                print(f"[WorldMemory] Dialogue→L3 subscribe failed (non-fatal): {e}")
             print(f"[WorldMemory] Layer3Manager initialized — {self.layer3_manager.stats}")
         except Exception as e:
             print(f"[WorldMemory] Layer3Manager init failed (non-fatal): {e}")

@@ -44,6 +44,22 @@ from typing import Any, ClassVar, Dict, List, Optional
 
 EVT_WMS_EVENT_RECEIVED   = "WMS_EVENT_RECEIVED"      # noqa: E221
 EVT_WMS_INTERPRETATION   = "WMS_INTERPRETATION_CREATED"  # noqa: E221
+# 2026-06-05: WMS layer-summary events (Layers 3-7) — published when
+# a layer's summarizer commits a new summary. See
+# Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md §5.3.
+EVT_WMS_LAYER_3_SUMMARY  = "WMS_LAYER_3_SUMMARY_CREATED"  # noqa: E221
+EVT_WMS_LAYER_4_SUMMARY  = "WMS_LAYER_4_SUMMARY_CREATED"  # noqa: E221
+EVT_WMS_LAYER_5_SUMMARY  = "WMS_LAYER_5_SUMMARY_CREATED"  # noqa: E221
+EVT_WMS_LAYER_6_SUMMARY  = "WMS_LAYER_6_SUMMARY_CREATED"  # noqa: E221
+EVT_WMS_LAYER_7_SUMMARY  = "WMS_LAYER_7_SUMMARY_CREATED"  # noqa: E221
+# Bridge-side: NL_N fired in response to a WMS L_N summary (peak path,
+# distinct from the cascade-driven baseline).
+EVT_WMS_LAYER_FIRED_WNS  = "WMS_LAYER_FIRED_WNS"     # noqa: E221
+# 2026-06-05: NL1 dialogue captured — published by NL1Ingestor; the
+# WMS Layer3Manager subscribes to feed dialogue into the same weighted
+# trigger buckets as L2 events (user direction: count dialogue + events
+# equal point-wise for now).
+EVT_WMS_DIALOGUE_CAPTURED = "WMS_DIALOGUE_CAPTURED"  # noqa: E221
 EVT_CASCADE_FIRED        = "CASCADE_FIRED"           # noqa: E221
 EVT_WNS_FIRED            = "WNS_FIRED"               # noqa: E221
 EVT_WNS_CALL_WES         = "WNS_CALL_WES_REQUESTED"  # noqa: E221
@@ -221,6 +237,13 @@ def obs_verbose_enabled() -> bool:
 __all__ = [
     "EVT_WMS_EVENT_RECEIVED",
     "EVT_WMS_INTERPRETATION",
+    "EVT_WMS_LAYER_3_SUMMARY",
+    "EVT_WMS_LAYER_4_SUMMARY",
+    "EVT_WMS_LAYER_5_SUMMARY",
+    "EVT_WMS_LAYER_6_SUMMARY",
+    "EVT_WMS_LAYER_7_SUMMARY",
+    "EVT_WMS_LAYER_FIRED_WNS",
+    "EVT_WMS_DIALOGUE_CAPTURED",
     "EVT_CASCADE_FIRED",
     "EVT_WNS_FIRED",
     "EVT_WNS_CALL_WES",

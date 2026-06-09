@@ -879,13 +879,21 @@ class RegionState:
     last_updated: float
 ```
 
-## 7.4 Layer 6: Nation Events  *(future)*
+## 7.4 Layer 6: Nation Events
+
+> **2026-06-05 status update:** the *(future)* qualifier on this section
+> was stale and has been removed. Layer 6 is implemented:
+> `world_system/world_memory/layer6_manager.py` (612 lines) +
+> `layer6_summarizer.py` (515 lines), initialized at
+> `WorldMemorySystem` boot at `world_memory_system.py:246-264`. Same
+> structural pattern as Layer 5, one tier up. See
+> `HANDOFF_STATUS.md` "Layer 5: Region Summarization (COMPLETE)" — the
+> same applies to Layer 6 and Layer 7.
 
 Nation-scoped consolidation: cross-region patterns, trade routes, and
 diplomatic state. Trivial copy of L5's pattern, one tier up — aggregates
 child regions into a single nation-level row per game Nation. Drops the
-`region:` address tag on output and retains `nation:/world:`. Not
-implemented yet.
+`region:` address tag on output and retains `nation:/world:`.
 
 ```python
 @dataclass

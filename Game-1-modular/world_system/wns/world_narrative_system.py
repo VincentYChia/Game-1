@@ -50,6 +50,9 @@ class WorldNarrativeSystem:
         # supplied to initialize(). Exposed as an attribute so tests
         # and the dev dashboard can read its stats / cascade trigger.
         self.wms_bridge = None  # type: ignore[assignment]
+        # 2026-06-05: stash for ingest_dialogue → WMS dialogue publish.
+        # Set in initialize() once geographic_registry is resolved.
+        self._geographic_registry: Optional[Any] = None
         self._initialized: bool = False
         self._session_id: str = str(uuid.uuid4())[:8]
         self._db_path: Optional[str] = None
@@ -186,6 +189,9 @@ class WorldNarrativeSystem:
         # gracefully when either is absent.
         resolved_geo = self._resolve_geographic_registry(geographic_registry)
         resolved_factions = self._resolve_faction_system(faction_system)
+        # 2026-06-05: stash for ingest_dialogue → WMS dialogue publish
+        # so the publisher can walk locality → district.
+        self._geographic_registry = resolved_geo
 
         # Weavers — one per layer 2..7
         self._weavers.clear()
@@ -414,6 +420,12 @@ class WorldNarrativeSystem:
         NL2 trigger bucket for ``address`` is advanced once per mention
         (so lots of mentions at a locality fire NL2 faster) — this is the
         canonical way NL1 drives the weaving pipeline.
+
+        2026-06-05: each mention ALSO publishes ``WMS_DIALOGUE_CAPTURED``
+        so the WMS Layer3Manager can advance its trigger counter at the
+        same intake granularity as L2 interpretations (user direction:
+        dialogue and events count point-wise equal). See
+        ``Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md`` §5.4.
         """
         if not self._initialized or not self.ingestor or not self.trigger_manager:
             return []
@@ -423,10 +435,62 @@ class WorldNarrativeSystem:
             address=address,
             game_time=game_time,
         )
-        for _ in rows:
+        for row in rows:
             # Each mention advances NL2's bucket at this locality.
             self.trigger_manager.note_event(layer=2, address=address)
+            # 2026-06-05: also publish for WMS L3 intake. Address tags
+            # are the locality the NPC is currently in; Layer3Manager
+            # ingests this just like an L2 event dict.
+            try:
+                self._publish_dialogue_for_wms(
+                    npc_id=npc_id,
+                    row=row,
+                    locality_address=address,
+                    game_time=row.created_at,
+                )
+            except Exception:
+                pass
         return rows
+
+    def _publish_dialogue_for_wms(
+        self,
+        *,
+        npc_id: str,
+        row: NarrativeRow,
+        locality_address: str,
+        game_time: float,
+    ) -> None:
+        """Publish ``WMS_DIALOGUE_CAPTURED`` for one NL1 row so
+        :class:`Layer3Manager` can advance its trigger counter.
+
+        Tags include the NL1 row's own tags plus the resolved
+        ``district:`` ancestor (when available via
+        :attr:`_geographic_registry`). The district tag matches the
+        scope Layer3Manager keys consolidation by.
+        """
+        from world_system.world_memory.layer_publish import (
+            _publish_dialogue_captured,
+        )
+        tags = list(row.tags) if row.tags else []
+        # Resolve district ancestor so L3 tracks the right scope.
+        if self._geographic_registry is not None:
+            try:
+                parent = self._geographic_registry.get_parent_address(
+                    locality_address)
+                while parent and not parent.startswith("district:"):
+                    parent = self._geographic_registry.get_parent_address(
+                        parent)
+                if parent and parent not in tags:
+                    tags.append(parent)
+            except Exception:
+                pass
+        _publish_dialogue_captured(
+            npc_id=npc_id,
+            address=locality_address,
+            tags=tags,
+            narrative=row.narrative or "",
+            game_time=game_time,
+        )
 
     def maybe_weave(
         self,
