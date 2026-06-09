@@ -44,26 +44,37 @@ A system is marked ◯ when the code is good but **no caller in gameplay ever in
 
 ## Critical findings (read first)
 
-These are the items most likely to be the user's "missing key component" hunches — gaps where a system *exists* in code but is not actually exercised during gameplay, or has a known silent fallback.
+**Revised 2026-06-05 after owner pushback corrected 5 false negatives.** These are the items where a system *exists* in code but is not actually exercised during gameplay, ranked by owner-stated priority.
 
-| Finding | Severity | Where |
-|---|---|---|
-| **Update-2 fishing skills/titles ship JSON but the fishing minigame is not wired into `craft_item` dispatch** | High | §3, §14 |
-| **NPC Agent System (LLM dialogue) is implemented but never called** — game uses static speechbank instead | High | §5, §9 |
-| **Faction system records affinity perfectly but `game_engine` never queries it during NPC dialogue** | High | §5 |
-| **Content Registry is wired into WES → reload pipeline but never instantiated at game boot** for the gameplay path (only for tests + smoketest) | High | §9 |
-| **Ecosystem tool returns hardcoded stub values** — not connected to actual `WorldSystem` resource counts | Medium | §9 |
-| **Quest turn-in requires manual NPC visit + click**; no waypoint, no quest-log reminder, no abandon mechanic | Medium | §5 |
-| **Dungeon entrance is visible but clicking it does not auto-enter** — there's no UI prompt | Medium | §4 |
-| **No save-game support for mid-dungeon state** — load a save while in a dungeon and the instance is lost | Medium | §4, §11 |
-| **LightGBM extractor `*.pkl` files MISSING** for alchemy/refining/engineering. Workaround: inline `LightGBMFeatureExtractor` bypasses pickle path; classifiers work | Low (no impact) | §3, §10 |
-| **`Update-1` content (5 weapons, 6 skills, 3 boss enemies) requires manual JSON copy + icon generation** — no auto-loader | Medium | §14 |
-| **Audio is not implemented** (no `pygame.mixer` anywhere). Sound effects + music TBD | Confirmed gap | §15 |
-| **BalanceValidator exists only as spec** in `Development-Plan/SHARED_INFRASTRUCTURE.md` — zero Python code | Confirmed gap | §2 |
-| **Block / Parry combat mechanics: TODO comments only** | Confirmed gap | §2 |
-| **Summon mechanics: TODO at `effect_executor.py:233`** | Confirmed gap | §2 |
-| **`Self-Repair`, `Weightless`, `Silk Touch` enchantments** documented but not coded | Confirmed gap | §2 |
-| **WMS Layers 5-7 schemas exist but no code writes to them** — by design pending narrative pipeline | Confirmed gap | §6 |
+### Active gaps to address (in priority order)
+
+| # | Finding | Owner priority | Where |
+|---|---|---|---|
+| 1 | **WMS Layers 5-7 — managers initialize at boot but need verification that writers actually fire end-to-end** in real gameplay (not just smoketest). Owner: "entire World System should be done at this point." | **Highest** | §6 |
+| 2 | **NPC Agent System (LLM dialogue) implemented but never called** — game uses static speechbank instead. Owner: "one of the biggest things." | High | §5, §9 |
+| 3 | **Faction system records affinity but never queried in NPC dialogue.** Should tie into the NPC Agent System hookup as the same feature. | High | §5 |
+| 4 | **Content Registry needs proper construction at game-boot path.** Wired into WES → reload but presence at runtime needs verification. | High | §9 |
+
+### Known limitations (not actively prioritized)
+
+| Finding | Disposition |
+|---|---|
+| LightGBM extractor `.pkl` files missing in `crafting_classifier_models/`. Training infra (`LightGBM_trainer.py`, `data_augment_GBM.py`, `*_train.jsonl`) all present — regeneratable. Workaround: inline `LightGBMFeatureExtractor` is used at runtime so classifiers work despite missing pickles. | Not blocking. |
+| Mid-dungeon save not persisted — dungeon-only, minor. | Accepted limitation. |
+| Ecosystem tool returns hardcoded stub values. | Owner: leave as-is (unused). |
+| Audio not implemented (no `pygame.mixer`). | Owner: not needed at this time. |
+| BalanceValidator exists only as spec. | Owner: back burner behind UI work. |
+| Block / Parry combat mechanics | Owner: just ideas at this point. |
+| Summon mechanics (TODO at `effect_executor.py:233`) | Owner: just ideas at this point. |
+| `Self-Repair`, `Weightless`, `Silk Touch` enchantments — recipes exist in `recipes-adornments-1.json` (silk_touch at line 805, weightless at line 943) but combat runtime has no effect-type handler for them. JSON is source of truth; doc claim that they were "deferred" was a hallucination. | Not blocking; add handlers if/when prioritized. |
+
+### Catalog corrections (these earlier "gaps" turned out to be FINE)
+
+- **Fishing IS wired** — `get_fishing_manager()` called from `game_engine.py:11354` (start) + `11587` (process). Activated by clicking a fishing-spot resource at `game_engine.py:2760`, not through `craft_item`. Catalog fixed below. Fishing skills work; titles untested.
+- **Update-N AUTO-LOADS at boot** — `game_engine.py:149` calls `load_all_updates(get_resource_path(""))`. Update-1 (5 weapons + 6 skills + 3 bosses) and Update-2 (fishing skills/titles/stations) both load automatically.
+- **Quests complete automatically** — passive completion when requirements/goals are fulfilled. No manual turn-in needed. "No waypoint, no log reminder" was a misframing — it's by design.
+- **Dungeon entry via interaction is fine** — interact-to-enter is the intended UX.
+- **WMS Layers 5-7 ARE implemented** — `layer5_manager.py`, `layer5_summarizer.py` (+ 6, +7) all present and initialized at WorldMemorySystem boot. Catalog row updated. Owner asserts they should be functional end-to-end — needs runtime verification (Action item #1 above).
 
 ---
 
@@ -107,10 +118,10 @@ The core gameplay base: engine, entities, data, events, progression.
 | 2.6 | **Player Actions / Dodge / I-Frames** | ✓ | [Combat/player_actions.py](Game-1-modular/Combat/player_actions.py) | JSON-tunable via `combat-config.JSON > dodgeMechanics` (post v8.2 trap 19). |
 | 2.7 | **Enemy AI** | ✓ | [Combat/enemy.py](Game-1-modular/Combat/enemy.py) (1.3K LOC) | AggroSystem + AIPattern + status manager. |
 | 2.8 | **Status Effects** (17 types) | ✓ | [entities/status_effect.py](Game-1-modular/entities/status_effect.py) (826 LOC) | DoT/CC/buffs/debuffs/specials. Duck-types `hasattr(target, 'take_damage')`. |
-| 2.9 | **Enchantments (14 working)** | ◐ | [Combat/combat_manager.py](Game-1-modular/Combat/combat_manager.py) | Sharpness, Protection, Unbreaking, Fire Aspect, Poison, Thorns, Knockback, Lifesteal, Health Regen, Frost Touch, Chain Damage all verified firing. Efficiency, Fortune, Swiftness need re-verify. **Self-Repair, Weightless, Silk Touch** ⊘ not coded. |
-| 2.10 | **Block / Parry** | ⊘ | TODO comments only | Documented in `GAME_MECHANICS_V6.md`; zero implementation. |
-| 2.11 | **Summon mechanics** | ⊘ | [core/effect_executor.py:233](Game-1-modular/core/effect_executor.py#L233) | TODO. |
-| 2.12 | **BalanceValidator** | ⊘ | Spec only in `Development-Plan/SHARED_INFRASTRUCTURE.md` | Zero Python code. |
+| 2.9 | **Enchantments (~11 firing, several JSON-only)** | ◐ | [Combat/combat_manager.py](Game-1-modular/Combat/combat_manager.py) | Verified-firing effect types: `lifesteal`, `chain_damage`, `durability_multiplier` (Unbreaking), `damage_over_time` (Fire Aspect, Poison), `knockback`, `slow` (Frost Touch), `devastate`. Sharpness, Protection, Thorns, Health Regen also firing via separate paths. **`silk_touch`, `weightless`, `self_repair` recipes exist in `recipes-adornments-1.json` but have NO combat-runtime handler** — they craft but don't have runtime effects. JSON is source of truth; doc claim that these were "deferred by design" was hallucinated. |
+| 2.10 | **Block / Parry** | (future idea) | TODO comments only | Owner: just an idea at this point. |
+| 2.11 | **Summon mechanics** | (future idea) | [core/effect_executor.py:233](Game-1-modular/core/effect_executor.py#L233) | Owner: just an idea at this point. |
+| 2.12 | **BalanceValidator** | (deferred) | Spec only in `Development-Plan/SHARED_INFRASTRUCTURE.md` | Owner: back burner behind UI work. |
 | 2.13 | **Animation Framework** | ✓ | [animation/](Game-1-modular/animation/) (7 files, 1K LOC) | Manager + procedural + weapon visuals + combat particles + sprite animation. Single-shot only, no looping. |
 | 2.14 | **Renderer** (master) | ✓ | [rendering/renderer.py](Game-1-modular/rendering/renderer.py) (~8K LOC, 98 methods) | Single file does world, UI, crafting grids, combat effects, NPCs, dungeons, tooltips. **No subsystem abstraction** — high complexity. |
 | 2.15 | **Visual Effect Bridge** | ✓ | [rendering/visual_effect_bridge.py](Game-1-modular/rendering/visual_effect_bridge.py) | Adapts combat events to particle/color/animation calls. |
@@ -136,7 +147,7 @@ The core gameplay base: engine, entities, data, events, progression.
 | 3.6 | **Alchemy minigame** | ✓ | [Crafting-subdisciplines/alchemy.py](Game-1-modular/Crafting-subdisciplines/alchemy.py) | Reaction-chain 5-stage. |
 | 3.7 | **Engineering minigame** | ✓ | [Crafting-subdisciplines/engineering.py](Game-1-modular/Crafting-subdisciplines/engineering.py) | Slot-puzzle. |
 | 3.8 | **Enchanting / Adornments minigame** | ✓ | [Crafting-subdisciplines/enchanting.py](Game-1-modular/Crafting-subdisciplines/enchanting.py) | Vertex pattern + CNN-validated. |
-| 3.9 | **Fishing** | ◐ | [Crafting-subdisciplines/fishing.py](Game-1-modular/Crafting-subdisciplines/fishing.py) | Module exists with `FishingMinigame`/`FishingManager`. **Update-2 ships fishing skills/titles JSON but the rod-use → minigame dispatch in `craft_item` isn't wired.** Per agent audit; needs re-verification post recent fixes. |
+| 3.9 | **Fishing** | ✓ | [Crafting-subdisciplines/fishing.py](Game-1-modular/Crafting-subdisciplines/fishing.py) | `FishingMinigame` + `FishingManager`. Wired via **resource interaction**, not `craft_item`: clicking a fishing-spot resource at [game_engine.py:2760](Game-1-modular/core/game_engine.py#L2760) calls `fishing_manager.start_fishing()` at [game_engine.py:11354](Game-1-modular/core/game_engine.py#L11354); result handled at [game_engine.py:11587](Game-1-modular/core/game_engine.py#L11587). Fishing skills work; fishing titles untested (2026-06-05). |
 | 3.10 | **Difficulty Calculator** | ✓ | [core/difficulty_calculator.py](Game-1-modular/core/difficulty_calculator.py) | Material tier points + discipline modifiers. Reconciled w/ reward_calculator post v8.2 trap 1. |
 | 3.11 | **Reward Calculator** | ✓ | [core/reward_calculator.py](Game-1-modular/core/reward_calculator.py) | Performance → quality tier + first-try bonus per discipline. Centralized post v8.2 traps 1, 3. |
 | 3.12 | **Rarity System** | ✓ | [Crafting-subdisciplines/rarity_utils.py](Game-1-modular/Crafting-subdisciplines/rarity_utils.py) | Single source post v8.2 trap 2. |
@@ -162,7 +173,7 @@ The core gameplay base: engine, entities, data, events, progression.
 | 4.7 | **Material Database** | ✓ | [data/databases/material_db.py](Game-1-modular/data/databases/material_db.py) | 77 materials + 77 rarity entries. SACRED_LOAD_SEQUENCE for 7-call boot consolidation. |
 | 4.8 | **Equipment Database** | ✓ | [data/databases/equipment_db.py](Game-1-modular/data/databases/equipment_db.py) | Weapons/armor/tools. Note: uses `load_from_file` (singular), not `load_from_files`. |
 | 4.9 | **Translation Database** | ✓ | [data/databases/translation_db.py](Game-1-modular/data/databases/translation_db.py) | Skill mana/cooldown/duration tables. SkillDatabase @properties delegate here post v8.2 trap 5. |
-| 4.10 | **Dungeon System** | ◐ | [systems/dungeon.py](Game-1-modular/systems/dungeon.py) (~800 LOC) | Entrance spawning, wave generation, loot chest all work. **Click-to-enter UI prompt missing**; **mid-dungeon save state not persisted**. |
+| 4.10 | **Dungeon System** | ✓ | [systems/dungeon.py](Game-1-modular/systems/dungeon.py) (~800 LOC) | Entrance spawning, wave generation, loot chest all work. Entry is interaction-based (intended UX). Minor accepted limitation: mid-dungeon save state not persisted (load while in dungeon → instance lost). |
 | 4.11 | **Collision System** | ✓ | [systems/collision_system.py](Game-1-modular/systems/collision_system.py) | LOS, A* pathfinding, walkability. |
 | 4.12 | **Map & Waypoint System** | ✓ | [systems/map_waypoint_system.py](Game-1-modular/systems/map_waypoint_system.py) | Chunk exploration + player-placed fast travel. Keybinding `P` (post v8.2 trap 18 reconciliation). |
 | 4.13 | **Turret System** | ✓ | [systems/turret_system.py](Game-1-modular/systems/turret_system.py) | Placed-entity AI. No friendly-fire check. |
@@ -180,7 +191,7 @@ This category contains the **densest concentration of "designed but not wired" g
 | 5.1 | **NPC Database** | ✓ | [data/databases/npc_db.py](Game-1-modular/data/databases/npc_db.py) | Load + `get_voice_excerpt(npc_id)` for WNS context. |
 | 5.2 | **NPC System (static)** | ✓ | [systems/npc_system.py](Game-1-modular/systems/npc_system.py) | Spawn + proximity-based interaction. `get_next_dialogue` uses speechbank (greeting → idle_barks → fallback). |
 | 5.3 | **NPC Agent System (LLM)** | ◯ | [world_system/living_world/npc/npc_agent.py](Game-1-modular/world_system/living_world/npc/npc_agent.py), [npc_memory.py](Game-1-modular/world_system/living_world/npc/npc_memory.py) | ~665 LOC. `generate_dialogue` exists. **`game_engine.handle_npc_interaction` calls `npc.get_next_dialogue` (static), not `npc_agent_system.generate_dialogue` (dynamic).** Silent gap. |
-| 5.4 | **Quest System** | ◐ | [systems/quest_system.py](Game-1-modular/systems/quest_system.py) | Accept + track + complete + grant rewards all work. **Turn-in path requires player to manually find NPC and click**; no quest log waypoint, no abandon mechanic, no LLM-adapted rewards on completion (uses `effective_rewards` fallback). |
+| 5.4 | **Quest System** | ✓ | [systems/quest_system.py](Game-1-modular/systems/quest_system.py) | Accept + track + automatic completion + grant rewards all work. Passive completion when objectives are fulfilled (no manual turn-in by design). LLM-adapted rewards path falls back to `effective_rewards` if no adapter call. |
 | 5.5 | **Quest Archive** | ✓ | [data/databases/quest_archive_db.py](Game-1-modular/data/databases/quest_archive_db.py) | Phase 7 substrate. Wired into `QuestManager.complete_quest` 2026-06-05. WNS can read completed quests via tags/NPC/entity/result queries. |
 | 5.6 | **Faction System** | ◐ | [world_system/living_world/factions/](Game-1-modular/world_system/living_world/factions/) (1.3K LOC, 50 tests) | SQLite-backed, 19-method API, schema fully wired. **`game_engine` never queries it during NPC dialogue.** Faction affinity recorded perfectly, but NPCs don't react to reputation changes in dialogue. |
 | 5.7 | **Faction Dialogue Helper** | ◯ | [world_system/living_world/factions/dialogue_helper.py](Game-1-modular/world_system/living_world/factions/dialogue_helper.py) | Returns affinity-modulated dialogue. Not called by `game_engine`. |
@@ -206,7 +217,7 @@ The events-and-evaluators substrate. Cleanest of the three Living World layers �
 | 6.8 | **Tag Library** | ✓ | [world_system/world_memory/tag_library.py](Game-1-modular/world_system/world_memory/tag_library.py) | 65-category taxonomy. |
 | 6.9 | **Tag Assignment Engine** | ✓ | [world_system/world_memory/tag_assignment.py](Game-1-modular/world_system/world_memory/tag_assignment.py) | Layer 1→7 tag flow. |
 | 6.10 | **Daily Ledger** | ✓ | [world_system/world_memory/daily_ledger.py](Game-1-modular/world_system/world_memory/daily_ledger.py) | Day-boundary aggregation. PresenceDriftDetector hooks here. |
-| 6.11 | **WMS Layers 5-7** | ◐ | schemas in [layer5_manager.py](Game-1-modular/world_system/world_memory/layer5_manager.py), [layer6_manager.py](Game-1-modular/world_system/world_memory/layer6_manager.py), [layer7_manager.py](Game-1-modular/world_system/world_memory/layer7_manager.py) | Schemas + manager classes exist. Active writers pending narrative-pipeline maturity. By design. |
+| 6.11 | **WMS Layers 5-7** | ✓ (init) / ⚠ (end-to-end unverified) | [layer5_manager.py](Game-1-modular/world_system/world_memory/layer5_manager.py), [layer5_summarizer.py](Game-1-modular/world_system/world_memory/layer5_summarizer.py), [layer6_manager.py](Game-1-modular/world_system/world_memory/layer6_manager.py), [layer6_summarizer.py](Game-1-modular/world_system/world_memory/layer6_summarizer.py), [layer7_manager.py](Game-1-modular/world_system/world_memory/layer7_manager.py), [layer7_summarizer.py](Game-1-modular/world_system/world_memory/layer7_summarizer.py) | All three manager classes + summarizers exist and are initialized at [world_memory_system.py:226-266](Game-1-modular/world_system/world_memory/world_memory_system.py). Layer 5 = region summarization, Layer 6 = nation summarization, Layer 7 = world summarization (singleton). **Owner-stated highest-priority verification target: confirm summarizers actually fire end-to-end at the right triggers in real gameplay, not just at boot init.** |
 | 6.12 | **Geographic Registry** | ✓ | [world_system/world_memory/geographic_registry.py](Game-1-modular/world_system/world_memory/geographic_registry.py) | Locality registry for WMS scope. |
 | 6.13 | **Tag Browser** | ✓ | [world_system/world_memory/tag_browser.py](Game-1-modular/world_system/world_memory/tag_browser.py) | Diagnostic / debug. |
 | 6.14 | **Query API** | ✓ | [world_system/world_memory/query.py](Game-1-modular/world_system/world_memory/query.py) | Used by WNS context builder. |
@@ -372,9 +383,9 @@ Designer / developer surface — not part of gameplay, but critical for tuning.
 
 | # | Update | Status | Files | Notes |
 |---|---|---|---|---|
-| 14.1 | **Update-N system / loader** | ◐ | [tools/update_manager.py](Game-1-modular/tools/update_manager.py) | Loader exists. Per agent audit, automatic loading at game boot is partial. |
-| 14.2 | **Update-1** (Tag system test content) | ◐ | `Update-1/items-testing-integration.JSON`, `skills-testing-integration.JSON`, `hostiles-testing-integration.JSON` | 5 weapons + 6 skills + 3 boss enemies. Auto-loading status per agent: not fully wired — may require manual JSON copy + icon gen. **Needs runtime verification.** |
-| 14.3 | **Update-2** (Fishing) | ◐ | `Update-2/skills-fishing.JSON`, `titles-fishing.JSON`, `crafting-stations-update2.JSON`, `skill-unlocks-fishing.JSON` | Skills + titles + stations JSON ship. **Fishing minigame code (`fishing.py`) exists but `craft_item` dispatch may not route fishing recipes through it.** Needs runtime verification. |
+| 14.1 | **Update-N system / loader** | ✓ | [data/databases/update_loader.py](Game-1-modular/data/databases/update_loader.py), [tools/update_manager.py](Game-1-modular/tools/update_manager.py) | `load_all_updates(get_resource_path(""))` called at [game_engine.py:149-150](Game-1-modular/core/game_engine.py#L149) on boot. Scans installed updates from `updates_manifest.json` and auto-extends all databases (equipment, skills, materials, titles, skill-unlocks) without modifying core loader code. |
+| 14.2 | **Update-1** (Tag system test content) | ✓ | `Update-1/items-testing-integration.JSON`, `skills-testing-integration.JSON`, `hostiles-testing-integration.JSON` | 5 weapons + 6 skills + 3 boss enemies. Auto-loaded via Update-N loader at boot. |
+| 14.3 | **Update-2** (Fishing) | ✓ | `Update-2/skills-fishing.JSON`, `titles-fishing.JSON`, `crafting-stations-update2.JSON`, `skill-unlocks-fishing.JSON` | Skills + titles + stations + skill-unlocks all auto-loaded at boot. Fishing minigame wired separately via resource interaction (§3.9). Fishing titles untested. |
 
 ---
 
@@ -412,20 +423,36 @@ These are risks that span multiple systems and won't be caught by per-system tes
 
 ---
 
-## Suggested playtest order
+## Work order (owner-confirmed 2026-06-05)
 
-Based on the gap analysis, playtest priorities ranked by where silent breakage is most likely:
+After owner pushback, the actual priorities are:
 
-1. **Verify Update-2 fishing dispatch**: Equip a fishing rod, attempt to fish. Does the fishing minigame launch? If not, that's a wire-up gap.
-2. **Verify quest end-to-end**: Accept a quest from an NPC. Complete the objective. Return to NPC. Click turn-in. Verify reward granted. Watch for missing UX (no waypoint, no log).
-3. **Verify dungeon entry**: Walk to a dungeon entrance. Confirm a UI prompt or direct entry. If neither, that's a gap.
-4. **Verify WMS event flow during gameplay**: F12 overlay should show events accumulating as you act. Confirm trigger thresholds are reachable within a normal play session (likely a tuning issue).
-5. **Verify WES → ContentRegistry → reload**: Force a trigger; watch F12 for WES → commit → reload sequence. If ContentRegistry isn't instantiated at game boot, this won't fire.
-6. **Verify NPC Agent System activation**: Currently never called. Decide: leave for now (static dialogue is fine) or hook it up.
-7. **Verify faction reactions in dialogue**: Currently always static. After a quest changes affinity, do NPCs respond differently? (Spoiler: no, until dialogue helper is wired.)
-8. **Verify Update-1 content auto-loading**: Check if the 5 test weapons + 6 skills + 3 bosses appear in the game without manual JSON copy.
-9. **Verify mid-dungeon save behavior**: Save while in a dungeon. Reload. Observe state loss.
-10. **Verify save round-trip**: Save game, reboot, load. Confirm full state restored (inventory, equipment, position, quests, factions, invented recipes, waypoints, WMS events).
+### 1. WMS Layers 5-7 end-to-end verification (HIGHEST)
+
+Managers exist and are initialized at boot ([world_memory_system.py:226-266](Game-1-modular/world_system/world_memory/world_memory_system.py)). What needs verification:
+
+- Do summarizers actually fire on the right triggers in a real gameplay session, or do they only initialize and then stay silent?
+- Are summary outputs being written to their respective stores and readable downstream by WNS context builder?
+- Is the Layer 4 → 5 → 6 → 7 cascade actually flowing data, or are there hidden gaps where one layer never feeds the next?
+- Are the trigger conditions reachable in the kind of play session the owner will actually run (or are thresholds tuned for much longer playtests)?
+
+Approach: read each layer manager's summarize/write entry points, trace what should call them, check whether those callers actually exist in the runtime path. Report a layer-by-layer verdict.
+
+### 2. NPC Agent System hookup
+
+[world_system/living_world/npc/npc_agent.py](Game-1-modular/world_system/living_world/npc/npc_agent.py) + [npc_memory.py](Game-1-modular/world_system/living_world/npc/npc_memory.py) — ~665 LOC, ready, never called. Current dialogue path uses `NPC.get_next_dialogue()` (static speechbank). Hookup: replace the dialogue call site in `game_engine.handle_npc_interaction` with a call to `npc_agent_system.generate_dialogue(npc, context)` that pulls context from WMS + faction system. Falls back to static speechbank if backend unavailable.
+
+### 3. Faction system hookup (bundled with #2)
+
+The hookup is **the same feature** as the NPC Agent System wiring. The agent's dialogue-generation prompt needs faction context: NPC's primary faction, player's affinity toward that faction, the locality's baseline attitude. [world_system/living_world/factions/dialogue_helper.py](Game-1-modular/world_system/living_world/factions/dialogue_helper.py) already returns affinity-modulated context — wire it into the NPC agent's context builder.
+
+### 4. Content Registry proper construction
+
+[world_system/content_registry/content_registry.py](Game-1-modular/world_system/content_registry/content_registry.py) — exists, used by smoketest + tests. Needs to be instantiated at `game_engine.__init__` and wired so the WES → commit → reload pipeline actually flows live content into the game. Without this, anything WES generates during play vanishes.
+
+---
+
+The catalog now reflects this work order. Next session work starts with item #1 unless redirected.
 
 ---
 
