@@ -7,7 +7,7 @@ import os
 import math
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Core systems
 from .config import Config
@@ -101,6 +101,35 @@ class GameEngine:
         print("=" * 60)
         print("Loading databases...")
         print("=" * 60)
+
+        # 2026-06-09: install the graceful_degrade → observability bridge
+        # BEFORE any other system can silently fall back. From this point
+        # forward, every log_degrade call also lands in the F12 ring buffer
+        # as an EVT_GRACEFUL_DEGRADE event.
+        try:
+            from world_system.wes.observability_runtime import (
+                install_graceful_degrade_bridge,
+            )
+            install_graceful_degrade_bridge()
+        except Exception as e:
+            print(f"[Observability] graceful_degrade bridge install failed (non-fatal): {e}")
+
+        # 2026-06-09: validate designer-edit-prone JSON configs against
+        # their schemas. Issues are reported via log_degrade, which means
+        # they ALSO surface in the F12 overlay (warning-severity, yellow).
+        # Never blocks boot — designer iteration stays friction-free.
+        try:
+            from world_system.config.schema_validator import (
+                validate_known_configs,
+            )
+            report = validate_known_configs()
+            total_issues = sum(len(v) for v in report.values())
+            if total_issues:
+                print(f"[ConfigValidator] {total_issues} schema issue(s) found across {len(report)} configs — see F12 overlay")
+            else:
+                print("[ConfigValidator] all known configs match schema")
+        except Exception as e:
+            print(f"[ConfigValidator] schema validation pass failed (non-fatal): {e}")
 
         # Load resource nodes from JSON FIRST (needed for world generation)
         ResourceNodeDatabase.get_instance().load_from_file(
@@ -275,6 +304,13 @@ class GameEngine:
         self.npc_available_quests: List[str] = []
         self.npc_quest_to_turn_in: Optional[str] = None
         self.npc_dialogue_window_rect = None
+
+        # 2026-06-09: in-game quest log (Risk #9). Toggle with J.
+        # Click handling pulls quest_id → abandon_rect from the overlay
+        # return value so abandon clicks flow through QuestManager.
+        self.quest_log_open: bool = False
+        self.quest_log_window_rect = None
+        self.quest_log_abandon_rects: Dict[str, Any] = {}
 
         # World Memory System (AI foundation — records events, detects patterns)
         self.world_memory = None
@@ -1231,6 +1267,28 @@ class GameEngine:
                         (100, 200, 255),
                     )
 
+                elif event.key == pygame.K_j:
+                    # 2026-06-09: toggle the in-game quest log (Risk #9).
+                    # Lists active quests + objectives + progress + Abandon.
+                    self.quest_log_open = not getattr(
+                        self, "quest_log_open", False
+                    )
+                    if self.quest_log_open:
+                        try:
+                            count = len(self.character.quests.active_quests)
+                            self.add_notification(
+                                f"Quest log open ({count} active)",
+                                (220, 220, 130),
+                            )
+                        except Exception:
+                            self.add_notification(
+                                "Quest log open", (220, 220, 130),
+                            )
+                    else:
+                        self.add_notification(
+                            "Quest log closed", (200, 200, 200),
+                        )
+
             elif event.type == pygame.KEYUP:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
@@ -2119,6 +2177,36 @@ class GameEngine:
                         self.handle_start_menu_selection(idx)
                         return
             return  # Ignore all other clicks when start menu is open
+
+        # 2026-06-09: Quest log clicks — Abandon buttons. Process before
+        # gameplay clicks so an Abandon click never falls through to e.g.
+        # moving the character or activating a resource node.
+        if getattr(self, "quest_log_open", False):
+            abandon_rects = getattr(self, "quest_log_abandon_rects", None) or {}
+            for quest_id, rect in abandon_rects.items():
+                if rect and rect.collidepoint(mouse_pos):
+                    try:
+                        ok = self.character.quests.abandon_quest(
+                            quest_id, self.character,
+                        )
+                        if ok:
+                            self.add_notification(
+                                f"Abandoned quest: {quest_id}",
+                                (220, 120, 120),
+                            )
+                        else:
+                            self.add_notification(
+                                f"Could not abandon quest: {quest_id}",
+                                (200, 200, 200),
+                            )
+                    except Exception as e:
+                        print(f"[QuestLog] abandon failed for {quest_id}: {e}")
+                    return
+            # If clicked inside the quest log window but not on an Abandon
+            # button, just consume the click — don't fall through.
+            window_rect = getattr(self, "quest_log_window_rect", None)
+            if window_rect and window_rect.collidepoint(mouse_pos):
+                return
 
         shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
 
@@ -8536,6 +8624,29 @@ class GameEngine:
                 render_overlay(self.screen, self._wes_overlay_font)
             except Exception:
                 pass  # never let the overlay crash the game render
+
+        # 2026-06-09: Quest log overlay (J toggle). Returns abandon button
+        # rects keyed by quest_id; mouse-handler reads them via
+        # self.quest_log_abandon_rects to dispatch Abandon clicks.
+        if getattr(self, "quest_log_open", False):
+            try:
+                from systems.quest_log_overlay import render_quest_log_overlay
+                if not hasattr(self, "_quest_log_font"):
+                    self._quest_log_font = pygame.font.Font(None, 22)
+                    self._quest_log_small_font = pygame.font.Font(None, 16)
+                result = render_quest_log_overlay(
+                    self.screen,
+                    self._quest_log_font,
+                    self._quest_log_small_font,
+                    self.character,
+                    self.mouse_pos,
+                )
+                self.quest_log_window_rect = result.get("window_rect")
+                self.quest_log_abandon_rects = result.get("abandon_buttons", {})
+            except Exception:
+                # Never let the overlay crash the game render.
+                self.quest_log_window_rect = None
+                self.quest_log_abandon_rects = {}
 
         # Render dungeon chest UI if open
         if self.dungeon_chest_open and self.dungeon_manager.in_dungeon:

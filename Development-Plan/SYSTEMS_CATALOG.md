@@ -401,7 +401,7 @@ This is a confirmed scope gap. Not blocking gameplay but worth tracking explicit
 
 These are risks that span multiple systems and won't be caught by per-system testing.
 
-1. **Silent-fallback patterns**: `try/except: pass` is widespread in NPC dialogue, save/load, faction-state save, LLM backend, classifier validation. Any silently-caught exception leaves the system in degraded state with no user-visible signal. Recommend a global "silent error counter" in F12 overlay.
+1. ~~**Silent-fallback patterns**~~: **RESOLVED 2026-06-09**. Every `log_degrade` call now mirrors as an `EVT_GRACEFUL_DEGRADE` pipeline event via `install_graceful_degrade_bridge()` installed at the top of `GameEngine.__init__`. The F12 overlay surfaces them in yellow with a per-severity counter in the summary header. 6 tests in [test_graceful_degrade_observability_bridge.py](Game-1-modular/tests/test_graceful_degrade_observability_bridge.py). Note: existing `try/except: pass` blocks that don't call `log_degrade` still go silently — converting those is per-site work tracked under individual subsystem rows.
 
 2. **The renderer god-class**: 8K lines, 98 methods, tightly coupled to `game_engine`. Any UI change risks cross-feature regression.
 
@@ -409,17 +409,17 @@ These are risks that span multiple systems and won't be caught by per-system tes
 
 4. **Two parallel damage pipelines**: tag-based + traditional. Risk of divergent behavior.
 
-5. **JSON-driven config without validation**: missing keys silently fall back to hardcoded defaults across MANY systems. There's no schema validation at boot.
+5. ~~**JSON-driven config without validation**~~: **PARTIALLY RESOLVED 2026-06-09**. Lightweight schema validator shipped at [world_system/config/schema_validator.py](Game-1-modular/world_system/config/schema_validator.py). Registers schemas for the 4 designer-edit-prone configs (backend, memory, NPC personalities, faction). Boot-time pass runs from `GameEngine.__init__`; every issue surfaces as a `WARNING`-severity graceful_degrade event (yellow in F12). 11 tests in [test_schema_validator.py](Game-1-modular/tests/test_schema_validator.py). **Still TODO**: schemas for prompt fragment / narrative fragment / WES dispatch configs — those expanded per first reported drift to avoid freezing them to today's shape.
 
 6. **Database loader naming inconsistency**: most use `load_from_files()`; EquipmentDatabase uses `load_from_file()` (singular). Minor but flags potential silent gaps.
 
-7. **NPC dialogue + faction**: faction system perfectly records affinity but dialogue never queries it. Player will see no in-game evidence of reputation despite SQL rows updating.
+7. ~~**NPC dialogue + faction**~~: **RESOLVED 2026-06-09** in commit `df3da68`. `_build_faction_context` now calls `assemble_dialogue_context` and threads affiliations + personal opinion + player standing + local sentiment into the prompt.
 
-8. **NPC Agent System**: code is built, tested, ready — but not invoked. Activating it is a one-call hook.
+8. ~~**NPC Agent System**~~: **RESOLVED 2026-06-09** in commit `df3da68`. `_register_npcs_with_agent_system` walks `self.npcs` post-init and registers v3 inline personality + locality. `_generate_npc_opening` routes through `agent.generate_dialogue` at runtime.
 
-9. **Quest UX gap**: in-game quest tracking has no waypoint, no abandon, no log reminder. Players can lose track of quests with no recovery.
+9. ~~**Quest UX gap**~~: **PARTIALLY RESOLVED 2026-06-09**. In-game quest log overlay shipped at [systems/quest_log_overlay.py](Game-1-modular/systems/quest_log_overlay.py); toggle with **J**. Lists every active quest with objective text + live progress (gather: items collected since accept; combat: kills since accept). Per-quest Abandon button wired into the existing `QuestManager.abandon_quest` path. 7 tests in [test_quest_log_overlay.py](Game-1-modular/tests/test_quest_log_overlay.py). **Still TODO**: quest-giver waypoint markers on the world map (gather/combat objectives ship no positional data; the NPC location is the only natural marker).
 
-10. **Update-N runtime loading**: agent audit suggests partial. Means a designer adding content via Update-N may not see it appear without manual JSON copy. Needs verification.
+10. ~~**Update-N runtime loading**~~: **RESOLVED 2026-06-09**. Stale internal contradiction — the catalog corrections section already noted this auto-loads at boot. Verified end-to-end: [game_engine.py:149-150](Game-1-modular/core/game_engine.py) calls `load_all_updates(get_resource_path(""))`; the loader reads `updates_manifest.json` (currently lists Update-1, Update-2) and dispatches to 7 type-specific loaders via [update_loader.py:294-324](Game-1-modular/data/databases/update_loader.py). Doc match in [docs/UPDATE_N_SYSTEM.md:99-100](Game-1-modular/docs/UPDATE_N_SYSTEM.md).
 
 ---
 

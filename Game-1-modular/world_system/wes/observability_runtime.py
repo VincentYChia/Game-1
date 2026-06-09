@@ -72,6 +72,11 @@ EVT_REGISTRY_COMMITTED   = "REGISTRY_COMMITTED"      # noqa: E221
 EVT_REGISTRY_ROLLED_BACK = "REGISTRY_ROLLED_BACK"    # noqa: E221
 EVT_DB_RELOADED          = "DB_RELOADED"             # noqa: E221
 EVT_DB_RELOAD_FAILED     = "DB_RELOAD_FAILED"        # noqa: E221
+# 2026-06-09: every GracefulDegradeLogger entry is mirrored here via the
+# bridge installed at game-engine boot. The F12 overlay treats this as a
+# first-class event type so silent fallbacks (NPC dialogue, save/load,
+# backend, classifier) are visible live, not buried in disk logs.
+EVT_GRACEFUL_DEGRADE     = "GRACEFUL_DEGRADE"        # noqa: E221
 
 
 # ── Ring buffer entry ─────────────────────────────────────────────────────
@@ -234,6 +239,46 @@ def obs_verbose_enabled() -> bool:
     return _verbose_enabled()
 
 
+def install_graceful_degrade_bridge() -> None:
+    """Wire the GracefulDegradeLogger to the observability ring buffer.
+
+    Called once at game-engine boot. Registers an all-severity sink on the
+    degrade logger that mirrors each entry as an ``EVT_GRACEFUL_DEGRADE``
+    pipeline event. Result: every silent fallback shows up in the F12
+    overlay alongside WMS/WNS/WES events.
+
+    Idempotent — calling it twice is a no-op because the bridge function
+    is a single closure registered to the logger's sink list. Importing
+    the logger lazily so this module stays import-cheap.
+    """
+    try:
+        from world_system.living_world.infra.graceful_degrade import (
+            get_graceful_degrade_logger,
+        )
+    except Exception:
+        return
+
+    logger = get_graceful_degrade_logger()
+    if getattr(logger, "_observability_bridge_installed", False):
+        return
+
+    def _bridge(entry: Any) -> None:
+        # Mirror into the runtime ring buffer. Never raises; the sink
+        # contract guarantees swallowing.
+        try:
+            obs_record(
+                EVT_GRACEFUL_DEGRADE,
+                f"{entry.subsystem}.{entry.operation} → {entry.fallback_taken}",
+                severity=entry.severity,
+                reason=str(entry.failure_reason)[:60],
+            )
+        except Exception:
+            pass
+
+    logger.register_all_severity_sink(_bridge)
+    logger._observability_bridge_installed = True  # idempotency marker
+
+
 __all__ = [
     "EVT_WMS_EVENT_RECEIVED",
     "EVT_WMS_INTERPRETATION",
@@ -256,6 +301,7 @@ __all__ = [
     "EVT_REGISTRY_ROLLED_BACK",
     "EVT_DB_RELOADED",
     "EVT_DB_RELOAD_FAILED",
+    "EVT_GRACEFUL_DEGRADE",
     "PipelineEvent",
     "RuntimeObservability",
     "obs_record",
@@ -263,4 +309,5 @@ __all__ = [
     "obs_stats",
     "obs_clear",
     "obs_verbose_enabled",
+    "install_graceful_degrade_bridge",
 ]

@@ -96,7 +96,11 @@ class GracefulDegradeLogger:
     def __init__(self, log_dir: Optional[str] = None) -> None:
         self._log_dir = log_dir or self.DEFAULT_LOG_DIR
         self._buffer: List[DegradeEntry] = []
-        self._surface_sinks: List = []   # callables receiving DegradeEntry
+        self._surface_sinks: List = []   # callables receiving DegradeEntry (error-only)
+        # 2026-06-09: sinks that receive every entry regardless of severity.
+        # Used by the F12 observability bridge so info/warning fallbacks are
+        # surfaced live, not buried in disk logs.
+        self._all_severity_sinks: List = []
         self._write_lock = threading.Lock()
 
     @classmethod
@@ -129,6 +133,15 @@ class GracefulDegradeLogger:
         via stderr (logger never raises back into the caller)."""
         self._surface_sinks.append(sink)
 
+    def register_all_severity_sink(self, sink) -> None:
+        """Register a sink invoked for every entry regardless of severity.
+
+        Use case: pipe all silent fallbacks into the F12 observability
+        overlay so info/warning degrades are visible live, not buried in
+        disk logs. Same no-raise contract as ``register_surface_sink``.
+        """
+        self._all_severity_sinks.append(sink)
+
     # ── emission ─────────────────────────────────────────────────────
 
     def log(self, entry: DegradeEntry) -> None:
@@ -153,6 +166,15 @@ class GracefulDegradeLogger:
                 f"[graceful_degrade] disk write failed: {e}; "
                 f"entry={entry.to_dict()}\n"
             )
+
+        # Fan out to all-severity sinks first (F12 observability bridge etc.)
+        for sink in list(self._all_severity_sinks):
+            try:
+                sink(entry)
+            except Exception as e:
+                sys.stderr.write(
+                    f"[graceful_degrade] all-severity sink error: {e}\n"
+                )
 
         # Fan out to surface sinks for error-severity events
         if entry.severity == SEVERITY_ERROR:
