@@ -72,6 +72,13 @@ class NPCAgentSystem:
         self._backend_manager = None  # BackendManager instance
         self._pending_gossip: List[Tuple[str, GossipEvent, float]] = []  # (npc_id, event, deliver_at)
         self._npc_personalities: Dict[str, str] = {}  # npc_id → template_name
+        # 2026-06-09: per-NPC inline personality (v3 schema). When present,
+        # get_personality returns this directly instead of a shared template.
+        # Rationale: data/models/npcs.py:11 — every NPC has a unique voice.
+        self._npc_inline_personalities: Dict[str, Dict[str, Any]] = {}
+        # 2026-06-09: per-NPC location hierarchy for dialogue_helper.
+        # Format: [("locality", "westhollow"), ("district", "iron_hills"), ...]
+        self._npc_locations: Dict[str, List[Tuple[str, Optional[str]]]] = {}
         self._initialized: bool = False
 
     @classmethod
@@ -128,11 +135,41 @@ class NPCAgentSystem:
         print(f"[NPCAgentSystem] Initialized with {len(self._personality_templates)} personality templates")
 
     def assign_personality(self, npc_id: str, template_name: str) -> None:
-        """Assign a personality template to an NPC."""
+        """Assign a shared personality template to an NPC by name."""
         self._npc_personalities[npc_id] = template_name
 
+    def register_npc(self, npc_id: str, personality: Optional[Dict[str, Any]] = None,
+                     location_hierarchy: Optional[List[Tuple[str, Optional[str]]]] = None,
+                     template_name: Optional[str] = None) -> None:
+        """Register an NPC with the agent system.
+
+        v3 NPCs ship inline personality (data/models/npcs.py:11). Pass it in
+        ``personality`` and the agent uses it verbatim. Generated or template-
+        based NPCs can pass ``template_name`` to use a shared archetype.
+
+        ``location_hierarchy`` is the geographic address (locality → world)
+        the dialogue_helper needs to compute inherited affinity defaults.
+        Empty list / None is tolerated — the helper just returns no inherited
+        location context.
+        """
+        if personality:
+            self._npc_inline_personalities[npc_id] = dict(personality)
+            self._npc_personalities[npc_id] = f"inline:{npc_id}"
+        elif template_name:
+            self._npc_personalities[npc_id] = template_name
+        else:
+            self._npc_personalities[npc_id] = "default"
+        if location_hierarchy is not None:
+            self._npc_locations[npc_id] = list(location_hierarchy)
+
     def get_personality(self, npc_id: str) -> Dict[str, Any]:
-        """Get the personality template for an NPC."""
+        """Get the personality data for an NPC.
+
+        Resolution order: inline (v3 per-NPC) → shared template name → default.
+        """
+        inline = self._npc_inline_personalities.get(npc_id)
+        if inline:
+            return inline
         template_name = self._npc_personalities.get(npc_id, "default")
         return self._personality_templates.get(
             template_name,
@@ -225,8 +262,14 @@ class NPCAgentSystem:
             f"disposition_change should be between -0.1 and 0.1 based on the interaction."
         )
 
-    def _build_faction_context(self, npc_id: str) -> str:
+    def _build_faction_context(self, npc_id: str, player_id: str = "_player") -> str:
         """Build faction affinity context for dialogue.
+
+        Pulls three signals through the dialogue_helper:
+        - NPC's top affiliations (significance-ranked)
+        - NPC's personal opinion of the player (npc_opinion)
+        - Inherited location affinity defaults along the NPC's geographic
+          address (player's standing in this place)
 
         Returns formatted faction information or empty string if unavailable.
         """
@@ -236,16 +279,70 @@ class NPCAgentSystem:
             if not npc_profile or not npc_profile.belonging_tags:
                 return ""
 
-            # Summarize NPC's top 5 faction tags by significance
+            location_hierarchy = self._npc_locations.get(npc_id, [])
+            context = assemble_dialogue_context(
+                npc_id=npc_id,
+                player_id=player_id,
+                location_hierarchy=location_hierarchy,
+            )
+
+            # NPC affiliations — top 5 by significance.
             sorted_tags = sorted(
                 npc_profile.belonging_tags.values(),
                 key=lambda t: t.significance,
                 reverse=True,
             )[:5]
-            tags = [f"{t.tag} ({t.significance:.1%})" for t in sorted_tags]
-            return f"NPC affiliations: {', '.join(tags)}\n\n"
+            tag_lines = [f"{t.tag} ({t.significance:.1%})" for t in sorted_tags]
+
+            parts: List[str] = [f"NPC affiliations: {', '.join(tag_lines)}"]
+
+            # Personal opinion toward the player (-100..100 → adjective).
+            opinion = context.get("npc_opinion")
+            if isinstance(opinion, (int, float)):
+                parts.append(
+                    f"Personal opinion of player: {self._affinity_label(opinion)} ({opinion:+.0f})"
+                )
+
+            # Player's standing with this NPC's tags — surface the top 3 hits
+            # against NPC's affiliations so the prompt sees alignment vs gap.
+            player_aff = (context.get("player") or {}).get("affinity_with_tags") or {}
+            relevant = [
+                (t.tag, player_aff.get(t.tag, 0.0))
+                for t in sorted_tags
+                if t.tag in player_aff
+            ]
+            if relevant:
+                relevant.sort(key=lambda kv: abs(kv[1]), reverse=True)
+                rel_lines = [
+                    f"{tag}={value:+.0f}" for tag, value in relevant[:3]
+                ]
+                parts.append(f"Player standing with NPC's tags: {', '.join(rel_lines)}")
+
+            # Inherited location affinity for the player (regional/national bias).
+            location_aff = context.get("location") or {}
+            if location_aff:
+                top_loc = sorted(
+                    location_aff.items(), key=lambda kv: abs(kv[1]), reverse=True
+                )[:3]
+                loc_lines = [f"{tag}={value:+.0f}" for tag, value in top_loc]
+                parts.append(f"Local sentiment toward {tag_lines and 'these tags' or 'player'}: {', '.join(loc_lines)}")
+
+            return "\n".join(parts) + "\n\n"
         except Exception:
             return ""
+
+    @staticmethod
+    def _affinity_label(value: float) -> str:
+        """Map an affinity score in [-100, 100] to a one-word adjective."""
+        if value <= -75:
+            return "hateful"
+        if value <= -25:
+            return "hostile"
+        if value < 25:
+            return "neutral"
+        if value < 75:
+            return "friendly"
+        return "devoted"
 
     def _build_user_prompt(self, player_input: str, character,
                            memory: NPCMemory) -> str:

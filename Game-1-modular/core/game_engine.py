@@ -264,6 +264,10 @@ class GameEngine:
         # menu-driven path it is not. The helper handles both.
         self._spawn_village_npcs()
 
+        # NPCAgentSystem is initialized later in this constructor (after
+        # WorldMemory/WES). Personality registration happens through
+        # _register_npcs_with_agent_system, called after that init.
+
         # NPC interaction state
         self.npc_dialogue_open = False
         self.active_npc: Optional[NPC] = None
@@ -1680,6 +1684,89 @@ class GameEngine:
         if added:
             print(f"✓ Spawned {added} village NPCs across "
                   f"{len(self.world._villages)} villages")
+
+    def _register_npcs_with_agent_system(self) -> None:
+        """Register each spawned NPC's personality + location with the
+        NPCAgentSystem.
+
+        Resolution order per NPC:
+        - If NPCDefinition.personality is non-empty (v3 inline), pass it
+          verbatim — the agent uses it as the NPC's unique voice.
+        - Else if NPCDefinition.tags hints at an archetype (blacksmith /
+          guard / merchant / herbalist / scholar), assign that shared
+          template.
+        - Else "default".
+
+        Location hierarchy: NPCDefinition.locality holds at minimum
+        ``home_chunk``. v3 NPCs may add ``locality_id``, ``district_id``,
+        ``region_id``, ``nation_id``. We assemble whatever is present.
+
+        Idempotent — re-running it just overwrites the same map entries.
+        """
+        agent = getattr(self, "npc_agent_system", None)
+        if agent is None:
+            return
+        if not hasattr(self, "npcs"):
+            return
+
+        # Tag → shared template fallback. Order matters: earlier matches win.
+        tag_template_map = [
+            ("blacksmith", "blacksmith"),
+            ("smith", "blacksmith"),
+            ("herbalist", "herbalist"),
+            ("alchemist", "herbalist"),
+            ("merchant", "merchant"),
+            ("trader", "merchant"),
+            ("guard", "guard"),
+            ("trainer", "guard"),
+            ("scholar", "scholar"),
+            ("mentor", "scholar"),
+            ("enchanter", "scholar"),
+        ]
+
+        registered = 0
+        for npc in self.npcs:
+            try:
+                npc_def = npc.npc_def
+            except AttributeError:
+                continue
+            npc_id = getattr(npc_def, "npc_id", None)
+            if not npc_id:
+                continue
+
+            personality = getattr(npc_def, "personality", None) or {}
+            locality = getattr(npc_def, "locality", None) or {}
+            tags = getattr(npc_def, "tags", None) or []
+
+            # Build the location hierarchy in canonical tier order. The
+            # dialogue_helper accepts whatever subset we can provide.
+            hierarchy: List[Tuple[str, Optional[str]]] = []
+            for tier in ("nation", "region", "district", "locality"):
+                key = f"{tier}_id"
+                value = locality.get(key) if isinstance(locality, dict) else None
+                if value:
+                    hierarchy.append((tier, str(value)))
+            # World tier always last with None — gives helper a chance to
+            # apply game-wide affinity defaults.
+            hierarchy.append(("world", None))
+
+            template_name = None
+            if not personality:
+                for tag_hint, template in tag_template_map:
+                    if any(tag_hint in str(t).lower() for t in tags):
+                        template_name = template
+                        break
+
+            agent.register_npc(
+                npc_id=npc_id,
+                personality=personality if personality else None,
+                location_hierarchy=hierarchy,
+                template_name=template_name,
+            )
+            registered += 1
+
+        if registered:
+            print(f"[NPCAgent] Registered {registered} NPCs with personality + locality data")
 
     def _initialize_world_with_loading_screen(
         self, *, seed=None, label: str = "World",
@@ -4933,6 +5020,12 @@ class GameEngine:
                 world_query=world_query,
                 backend_manager=backend_manager,
             )
+
+            # Register every spawned NPC's inline personality (v3 schema)
+            # and location hierarchy. Without this call, every NPC falls
+            # through to the "default" template and on_world_event() iterates
+            # an empty dict.
+            self._register_npcs_with_agent_system()
 
             # Wire NPCMemoryManager to FactionSystem so per-NPC dynamic
             # state (relationship, emotion, knowledge, conversation
