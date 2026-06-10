@@ -265,3 +265,40 @@ last_tick).
 ### Suite state after session 2
 1092 passed + 19 integration = 1111 passed / 10 pre-existing failures
 (geometry x8, status_effects x1, tag_system x1) / 0 regressions.
+
+---
+
+## Session 3 (2026-06-10): UI/chunk polish Track A
+
+Owner directive: "polished professional feel" — chunk loading, map loading,
+map UI, other UIs. Recon by 2 agents, all findings verified firsthand
+(1 MORE agent claim rejected — see below).
+
+### Fixed
+| # | Finding | Evidence | Fix |
+|---|---------|----------|-----|
+| S3-1 | Six overlay panels (stats/equipment/skills/encyclopedia/map/quest log) were independent booleans — C+E+K+M could stack into unreadable overlap | game_engine.py:824-872, 1277 (open sites) | `_close_other_overlay_panels(keep)` called at every open site; closes via each panel's own toggle/close so scroll-reset + menu-time stats stay correct |
+| S3-2 | **LIVE BUG**: `_get_hovered_inventory_slot` (feeds Q-drop) had drifted from the renderer: `+35` vs `+55` (20px vertical offset) AND unscaled spacing 10 vs scaled `INVENTORY_SLOT_SPACING` — hovering near a slot top edge made Q drop the item from the slot ABOVE | game_engine.py:8153-8157 (pre-fix) vs renderer.py:4967/5054 | Inventory geometry single-sourced into Config (`INVENTORY_TOOLS_X`, `TOOL_SLOT_SIZE/SPACING`, `inventory_tools_y()`, `inventory_grid_origin()`); all 5 duplicated sites (4 engine + renderer) now read it |
+| S3-3 | Chunk-boundary frame hitch: crossing a boundary generated up to 9 chunks synchronously in one frame (256-tile loops + resource spawns, ~1-5ms each); no load/unload hysteresis → boundary wobble thrashed regenerate cycles | world_system.py:757-768 (pre-fix) | Player 3x3 always loads same-frame (never deferred); outer prefetch ring streams nearest-first at a budget (default 2/frame, config-overridable via `prefetch_loads_per_frame`); unload keeps a 1-chunk hysteresis ring beyond load_radius |
+| S3-4 | CNN warmup self-poisoning: success print `✓` INSIDE the try raised UnicodeEncodeError on cp1252 streams → successful warmups reported as "warmup prediction failed" | game_engine.py:4469-4473 (pre-fix) | success print moved outside the try, ASCII-only |
+
+### Agent claims REJECTED (6th across sessions)
+- "Engine inventory click math (+55) mismatches renderer (+35)" at the MAIN
+  click site — WRONG: renderer does +35 then +=20 → both compute +55. The
+  real drift was in `_get_hovered_inventory_slot` (S3-2), which the agent
+  did not flag. Duplication itself was the disease; one copy had already
+  drifted, just not the one the agent named.
+
+### Pinned by new integration scenarios
+- `test_05_ui_polish.py` — menu exclusivity through real C/E/K/M/J key
+  events; toggle-to-close still works; hover hit-test resolves the drawn
+  slot center and rejects gutter clicks (locks engine==renderer geometry).
+- `test_06_chunk_streaming.py` — teleport: 3x3 immediate, full radius NOT
+  in one frame (budget), streaming completes <120 frames, hysteresis ring
+  survives a 1-chunk step.
+
+### Observed, catalogued NOT fixed
+- Adornments CNN reports "failed to load" at warmup in the test env (model
+  file exists; load error is genuine — TF/model compat suspect). Lazy load
+  retries at first use. Needs a dedicated look before invented-items
+  playtest relies on adornments validation.

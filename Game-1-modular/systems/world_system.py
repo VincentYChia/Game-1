@@ -753,15 +753,44 @@ class WorldSystem:
                 if self.in_world_bounds(pos[0], pos[1]):
                     should_be_loaded.add(pos)
 
-        # Load missing chunks
-        for key in should_be_loaded:
-            if key not in self.loaded_chunks:
-                self.get_chunk(*key)
+        # Load missing chunks — budgeted to kill the boundary frame-hitch.
+        # Crossing a chunk boundary at load_radius 4 used to generate up to
+        # 9 chunks synchronously in ONE frame (256-tile loops + resource
+        # spawning each, ~1-5ms apiece). Now: anything in the player's 3x3
+        # still loads immediately (the ground being walked onto is never
+        # deferred), while the outer prefetch ring streams in nearest-first
+        # at a few chunks per frame. A deferred chunk touched early via
+        # get_tile/collision still generates on demand through get_chunk,
+        # so the budget can never strand the player.
+        loads_per_frame = getattr(world_config.chunk_loading,
+                                  'prefetch_loads_per_frame', 2)
+        missing = [key for key in should_be_loaded
+                   if key not in self.loaded_chunks]
+        if missing:
+            def _dist(key):
+                return max(abs(key[0] - player_chunk_x),
+                           abs(key[1] - player_chunk_y))
+            missing.sort(key=_dist)
+            budget = loads_per_frame
+            for key in missing:
+                if _dist(key) <= 1:
+                    self.get_chunk(*key)  # gameplay-critical, never deferred
+                elif budget > 0:
+                    self.get_chunk(*key)
+                    budget -= 1
+                else:
+                    break  # nearest-first order: everything further also waits
 
-        # Unload distant chunks
+        # Unload with hysteresis: keep a 1-chunk ring beyond load_radius so
+        # walking back and forth along a boundary doesn't thrash
+        # load -> unload -> regenerate cycles.
+        unload_radius = load_radius + 1
         chunks_to_unload = []
         for key in self.loaded_chunks:
-            if key not in should_be_loaded:
+            if key in should_be_loaded:
+                continue
+            if (max(abs(key[0] - player_chunk_x),
+                    abs(key[1] - player_chunk_y)) > unload_radius):
                 chunks_to_unload.append(key)
 
         for key in chunks_to_unload:

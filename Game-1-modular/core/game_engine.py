@@ -825,6 +825,7 @@ class GameEngine:
                     was_open = self.character.stats_ui_open
                     self.character.toggle_stats_ui()
                     if not was_open and self.character.stats_ui_open:
+                        self._close_other_overlay_panels('stats')
                         if hasattr(self.character, 'stat_tracker'):
                             self.character.stat_tracker.record_menu_opened("stats")
                         self._menu_open_times["stats"] = pygame.time.get_ticks() / 1000.0
@@ -834,6 +835,7 @@ class GameEngine:
                     was_open = self.character.equipment_ui_open
                     self.character.toggle_equipment_ui()
                     if not was_open and self.character.equipment_ui_open:
+                        self._close_other_overlay_panels('equipment')
                         if hasattr(self.character, 'stat_tracker'):
                             self.character.stat_tracker.record_menu_opened("equipment")
                         self._menu_open_times["equipment"] = pygame.time.get_ticks() / 1000.0
@@ -843,6 +845,7 @@ class GameEngine:
                     was_open = self.character.skills_ui_open
                     self.character.toggle_skills_ui()
                     if not was_open and self.character.skills_ui_open:
+                        self._close_other_overlay_panels('skills')
                         if hasattr(self.character, 'stat_tracker'):
                             self.character.stat_tracker.record_menu_opened("skills")
                         self._menu_open_times["skills"] = pygame.time.get_ticks() / 1000.0
@@ -852,6 +855,7 @@ class GameEngine:
                     was_open = self.character.encyclopedia.is_open
                     self.character.encyclopedia.toggle()
                     if not was_open and self.character.encyclopedia.is_open:
+                        self._close_other_overlay_panels('encyclopedia')
                         if hasattr(self.character, 'stat_tracker'):
                             self.character.stat_tracker.record_menu_opened("encyclopedia")
                         self._menu_open_times["encyclopedia"] = pygame.time.get_ticks() / 1000.0
@@ -865,6 +869,7 @@ class GameEngine:
                         # Center on player when opening
                         self.map_system.center_on_position(self.character.position)
                     if not was_open and self.map_system.map_open:
+                        self._close_other_overlay_panels('map')
                         if hasattr(self.character, 'stat_tracker'):
                             self.character.stat_tracker.record_menu_opened("map")
                         self._menu_open_times["map"] = pygame.time.get_ticks() / 1000.0
@@ -1281,6 +1286,7 @@ class GameEngine:
                         self, "quest_log_open", False
                     )
                     if self.quest_log_open:
+                        self._close_other_overlay_panels('quest_log')
                         try:
                             count = len(self.character.quests.active_quests)
                             self.add_notification(
@@ -1471,9 +1477,7 @@ class GameEngine:
 
         # Handle inventory SHIFT+right-clicks for consumables
         if shift_held and mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-            # Calculate start_y to match renderer: tools_y(+55) + tool_slot(50) + padding(20) = +125
-            tools_y = Config.INVENTORY_PANEL_Y + 55
-            start_x, start_y = 20, tools_y + 50 + 20  # = INVENTORY_PANEL_Y + 125
+            start_x, start_y = Config.inventory_grid_origin()  # single source
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, Config.INVENTORY_SLOT_SPACING  # §15 trap 17
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -2592,13 +2596,7 @@ class GameEngine:
 
         # Inventory - check for equipment equipping
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-            # CRITICAL: These values MUST match the renderer exactly!
-            # Renderer: tools_y = INVENTORY_PANEL_Y + 35 + 20 = +55
-            # Renderer: start_y = tools_y + 50 (tool slot) + 20 = INVENTORY_PANEL_Y + 125
-            tools_y = Config.INVENTORY_PANEL_Y + 55
-            tool_slot_size = 50
-            start_x = 20
-            start_y = tools_y + tool_slot_size + 20  # = INVENTORY_PANEL_Y + 125
+            start_x, start_y = Config.inventory_grid_origin()  # single source
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, Config.INVENTORY_SLOT_SPACING  # §15 trap 17
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -4467,12 +4465,19 @@ class GameEngine:
                     else:
                         dummy_input = np.zeros((36, 36, 3), dtype=np.float32)
 
-                    # Run warmup prediction (compiles TensorFlow graph)
+                    # Run warmup prediction (compiles TensorFlow graph).
+                    # NOTE: the success print stays OUTSIDE the try and
+                    # ASCII-only — on a cp1252 stream a '✓' print raised
+                    # UnicodeEncodeError INSIDE the try, making a
+                    # successful warmup report itself as failed.
+                    warmup_ok = False
                     try:
                         _ = backend.predict(dummy_input)
-                        print(f"  ✓ {discipline} CNN warmup complete")
+                        warmup_ok = True
                     except Exception as e:
                         print(f"  Warning: {discipline} CNN warmup prediction failed: {e}")
+                    if warmup_ok:
+                        print(f"  {discipline} CNN warmup complete")
 
                     # Also initialize the image renderer (loads color encoder)
                     try:
@@ -7189,9 +7194,7 @@ class GameEngine:
         if self.character.inventory.dragging_stack:
             # Check if dropping onto inventory panel
             if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-                # Calculate start_y to match renderer: tools_y(+55) + tool_slot(50) + padding(20) = +125
-                tools_y = Config.INVENTORY_PANEL_Y + 55
-                start_x, start_y = 20, tools_y + 50 + 20  # = INVENTORY_PANEL_Y + 125
+                start_x, start_y = Config.inventory_grid_origin()  # single source
                 slot_size, spacing = Config.INVENTORY_SLOT_SIZE, Config.INVENTORY_SLOT_SPACING  # §15 trap 17
                 rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -7405,6 +7408,34 @@ class GameEngine:
             duration = (pygame.time.get_ticks() / 1000.0) - self._menu_open_times.pop(menu_type)
             if duration > 0 and hasattr(self.character, 'stat_tracker'):
                 self.character.stat_tracker.record_menu_time(menu_type, duration)
+
+    def _close_other_overlay_panels(self, keep: str):
+        """Enforce one full-screen overlay panel at a time.
+
+        Called right after a panel OPENS. The six overlay panels (stats,
+        equipment, skills, encyclopedia, map, quest log) were independent
+        booleans, so C+E+K+M could stack into unreadable overlap. Closing
+        goes through each panel's own toggle/close method so close-side
+        behavior (scroll reset, etc.) and menu-time stats stay correct.
+        """
+        char = self.character
+        if keep != 'stats' and char.stats_ui_open:
+            char.toggle_stats_ui()
+            self._record_menu_close_time("stats")
+        if keep != 'equipment' and char.equipment_ui_open:
+            char.toggle_equipment_ui()
+            self._record_menu_close_time("equipment")
+        if keep != 'skills' and char.skills_ui_open:
+            char.toggle_skills_ui()
+            self._record_menu_close_time("skills")
+        if keep != 'encyclopedia' and char.encyclopedia.is_open:
+            char.encyclopedia.toggle()
+            self._record_menu_close_time("encyclopedia")
+        if keep != 'map' and self.map_system.map_open:
+            self.map_system.close_map()
+            self._record_menu_close_time("map")
+        if keep != 'quest_log' and getattr(self, 'quest_log_open', False):
+            self.quest_log_open = False
 
     def _update_activity_time(self, dt: float):
         """Track activity time and flush periodically to stat_tracker."""
@@ -8114,13 +8145,12 @@ class GameEngine:
         if not hasattr(self.character, 'inventory'):
             return -1
 
-        # Calculate slot positions (must match renderer.py render_inventory_panel)
-        # Tool section ends at: Config.INVENTORY_PANEL_Y + 35 + 20 + 50 = Y + 105
-        tools_y = Config.INVENTORY_PANEL_Y + 35
-        tool_slot_size = 50
-        start_x, start_y = 20, tools_y + tool_slot_size + 20  # Match renderer
+        # Single-source geometry (2026-06-10): this site had drifted from
+        # the renderer (+35 vs +55 → 20px offset, and unscaled spacing) —
+        # Q-drop could resolve the slot ABOVE the one the player hovered.
+        start_x, start_y = Config.inventory_grid_origin()
         slot_size = Config.INVENTORY_SLOT_SIZE
-        spacing = 10
+        spacing = Config.INVENTORY_SLOT_SPACING
         slots_per_row = Config.INVENTORY_SLOTS_PER_ROW
 
         mouse_x, mouse_y = self.mouse_pos

@@ -4963,16 +4963,19 @@ class Renderer:
         weight_surf = self.tiny_font.render(weight_text, True, (255, 255, 255))
         self.screen.blit(weight_surf, (weight_bar_x + weight_bar_width + 5, weight_bar_y))
 
-        # Render equipped tools section
-        tools_y = Config.INVENTORY_PANEL_Y + 35
-        self.render_text("Equipped Tools:", 20, tools_y, small=True)
-        tools_y += 20
+        # Render equipped tools section. Geometry comes from the single
+        # source in Config (inventory_tools_y / inventory_grid_origin) —
+        # the engine's click/hover hit-testing reads the same values, so
+        # the two can no longer drift apart.
+        tools_y = Config.inventory_tools_y()
+        self.render_text("Equipped Tools:", Config.INVENTORY_TOOLS_X,
+                         tools_y - 20, small=True)
 
-        slot_size = 50
-        spacing = 10
+        slot_size = Config.TOOL_SLOT_SIZE
+        spacing = Config.TOOL_SLOT_SPACING
 
         # Render axe slot
-        axe_x = 20
+        axe_x = Config.INVENTORY_TOOLS_X
         axe_rect = pygame.Rect(axe_x, tools_y, slot_size, slot_size)
         equipped_axe = character.equipment.slots.get('axe')
         axe_hovered = axe_rect.collidepoint(mouse_pos)
@@ -5051,7 +5054,7 @@ class Renderer:
             label_surf = self.tiny_font.render("Pick", True, (100, 100, 100))
             self.screen.blit(label_surf, (pick_x + 8, tools_y + 18))
 
-        start_x, start_y = 20, tools_y + slot_size + 20
+        start_x, start_y = Config.inventory_grid_origin()  # single source
         slot_size = Config.INVENTORY_SLOT_SIZE
         spacing = Config.INVENTORY_SLOT_SPACING  # §15 trap 17: single source
         slots_per_row = Config.INVENTORY_SLOTS_PER_ROW
