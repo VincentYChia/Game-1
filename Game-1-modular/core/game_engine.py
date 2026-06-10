@@ -307,6 +307,10 @@ class GameEngine:
         self.npc_available_quests: List[str] = []
         self.npc_quest_to_turn_in: Optional[str] = None
         self.npc_dialogue_window_rect = None
+        # Async LLM dialogue: one in-flight request; the token lets a newer
+        # conversation supersede a stale result (see _poll_async_npc_dialogue)
+        self._npc_dialogue_pending: Optional[dict] = None
+        self._npc_dialogue_token: int = 0
 
         # 2026-06-09: in-game quest log (Risk #9). Toggle with J.
         # Click handling pulls quest_id → abandon_rect from the overlay
@@ -1532,8 +1536,11 @@ class GameEngine:
                         if self.character.quests.start_quest(quest_def, self.character):
                             print(f"📜 Quest accepted: {quest_def.title}")
                             self.add_notification(f"Quest accepted: {quest_def.title}", (100, 255, 100))
-                            # Update dialogue state
-                            self.npc_available_quests.remove(quest_id)
+                            # Update dialogue state (guarded — a stale button
+                            # rect after the list was rebuilt would otherwise
+                            # raise ValueError and crash the click handler)
+                            if quest_id in self.npc_available_quests:
+                                self.npc_available_quests.remove(quest_id)
                             # Prefer the NPC's per-NPC quest_offer line
                             # from the speechbank (NL1 deterministic).
                             # Falls through to generic cycling when the
@@ -1618,12 +1625,12 @@ class GameEngine:
             # hearing the same first line every time.
             nearby_npc.reset_dialogue_state()
 
-            # Get opening dialogue. Prefer the LLM-powered NPCAgentSystem when
-            # available; fall back to the hardcoded cycling lines otherwise.
-            # NOTE: the generate_dialogue() call is synchronous — the UI will
-            # block for the LLM round-trip. Making this async is tracked in
-            # Development-Plan/WORLD_SYSTEM_WORKING_DOC.md.
-            self.npc_dialogue_lines = [self._generate_npc_opening(nearby_npc)]
+            # Show the deterministic speechbank line IMMEDIATELY, then let
+            # the LLM-personalized opening swap in when it arrives. The LLM
+            # call used to be synchronous here, freezing the whole UI for the
+            # backend round-trip (up to the 30s timeout on a dead backend).
+            self.npc_dialogue_lines = [nearby_npc.get_next_dialogue()]
+            self._start_async_npc_opening(nearby_npc)
 
             # Check for available quests
             self.npc_available_quests = nearby_npc.get_available_quests(self.character.quests)
@@ -1653,17 +1660,20 @@ class GameEngine:
         else:
             self.add_notification("No one nearby to talk to", (200, 200, 200))
 
-    def _generate_npc_opening(self, npc) -> str:
-        """Generate the opening dialogue line for an NPC interaction.
+    def _start_async_npc_opening(self, npc) -> None:
+        """Kick off LLM dialogue generation for an NPC opening, off-thread.
 
         Routes through NPCAgentSystem when available, which pulls NPC
         memory, personality, faction context, and current world
-        conditions. Falls back to the NPC's hardcoded cycling lines
-        if the agent system is absent or errors out.
+        conditions. The caller has already shown the deterministic
+        speechbank line; when the LLM result lands (polled each frame by
+        _poll_async_npc_dialogue), it replaces that line if this
+        conversation is still the active one.
         """
         agent = getattr(self, "npc_agent_system", None)
         if agent is None:
             # Graceful degrade: agent not initialized (e.g. boot failed).
+            # The speechbank line already shown IS the dialogue.
             try:
                 from world_system.living_world.infra.graceful_degrade import log_degrade
                 log_degrade(
@@ -1676,31 +1686,71 @@ class GameEngine:
                 )
             except Exception:
                 pass
-            return npc.get_next_dialogue()
-        try:
-            result = agent.generate_dialogue(
-                npc_id=npc.npc_def.npc_id,
-                player_input="*approaches and greets you*",
-                character=self.character,
-                npc_name=npc.npc_def.name,
-            )
-            if result and result.text:
-                return result.text
-        except Exception as e:
-            print(f"[NPCAgent] generate_dialogue failed for {npc.npc_def.npc_id}: {e}")
+            return
+
+        import threading
+
+        self._npc_dialogue_token += 1
+        request = {
+            "token": self._npc_dialogue_token,
+            "npc_id": npc.npc_def.npc_id,
+            "result": None,
+            "done": False,
+        }
+        self._npc_dialogue_pending = request
+
+        def _worker():
             try:
-                from world_system.living_world.infra.graceful_degrade import log_degrade
-                log_degrade(
-                    subsystem="npc_agent",
-                    operation="generate_dialogue",
-                    failure_reason=f"{type(e).__name__}: {e}",
-                    fallback_taken="hardcoded cycling dialogue",
-                    severity="warning",
-                    context={"npc_id": npc.npc_def.npc_id, "npc_name": npc.npc_def.name},
+                request["result"] = agent.generate_dialogue(
+                    npc_id=npc.npc_def.npc_id,
+                    player_input="*approaches and greets you*",
+                    character=self.character,
+                    npc_name=npc.npc_def.name,
                 )
-            except Exception:
-                pass
-        return npc.get_next_dialogue()
+            except Exception as e:
+                print(f"[NPCAgent] generate_dialogue failed for {npc.npc_def.npc_id}: {e}")
+                try:
+                    from world_system.living_world.infra.graceful_degrade import log_degrade
+                    log_degrade(
+                        subsystem="npc_agent",
+                        operation="generate_dialogue",
+                        failure_reason=f"{type(e).__name__}: {e}",
+                        fallback_taken="hardcoded cycling dialogue",
+                        severity="warning",
+                        context={"npc_id": npc.npc_def.npc_id, "npc_name": npc.npc_def.name},
+                    )
+                except Exception:
+                    pass
+            finally:
+                # Set last: the main thread only reads "result" after
+                # seeing done=True.
+                request["done"] = True
+
+        threading.Thread(target=_worker, daemon=True, name="npc-dialogue").start()
+
+    def _poll_async_npc_dialogue(self) -> None:
+        """Swap the LLM-generated opening into the dialogue panel when ready.
+
+        Called once per frame from update(). The result is discarded if the
+        player closed the panel, switched NPCs, or a newer request
+        superseded this one (token mismatch). When the agent itself fell
+        back to its generic template (from_fallback), the speechbank line
+        already on screen is the better, designer-authored voice — keep it.
+        """
+        request = self._npc_dialogue_pending
+        if request is None or not request["done"]:
+            return
+        self._npc_dialogue_pending = None
+        if request["token"] != self._npc_dialogue_token:
+            return
+        if not self.npc_dialogue_open or self.active_npc is None:
+            return
+        if self.active_npc.npc_def.npc_id != request["npc_id"]:
+            return
+        result = request["result"]
+        if (result is not None and result.text and result.success
+                and not result.from_fallback):
+            self.npc_dialogue_lines = [result.text]
 
     def _spawn_village_npcs(self) -> None:
         """Append village NPCs from the geographic system to ``self.npcs``.
@@ -7697,7 +7747,11 @@ class GameEngine:
 
         chest = self.world.spawn_storage_chest
 
-        # Get item from inventory slot
+        # Get item from inventory slot. Explicit range guard — a negative
+        # index would silently address from the END of the list and move
+        # the wrong item.
+        if not (0 <= inventory_slot < len(self.character.inventory.slots)):
+            return False
         slot = self.character.inventory.slots[inventory_slot]
         if not slot:
             return False
@@ -7721,7 +7775,7 @@ class GameEngine:
             return False
 
         chest = self.world.spawn_storage_chest
-        if chest_item_idx >= len(chest.contents):
+        if not (0 <= chest_item_idx < len(chest.contents)):
             return False
 
         item_id, quantity = chest.contents[chest_item_idx]
@@ -7777,6 +7831,11 @@ class GameEngine:
 
         chest = self.active_death_chest
 
+        # Range guard — a negative index would silently retrieve (and pop)
+        # the wrong item.
+        if chest_item_idx < 0:
+            return False
+
         # Use rich_contents if available (death chests with full item state)
         if chest.is_death_chest and chest.rich_contents and chest_item_idx < len(chest.rich_contents):
             item_data = chest.rich_contents[chest_item_idx]
@@ -7807,7 +7866,7 @@ class GameEngine:
                 return False
 
         # Fallback to simple contents for non-death chests
-        if chest_item_idx >= len(chest.contents):
+        if not (0 <= chest_item_idx < len(chest.contents)):
             return False
 
         item_id, quantity = chest.contents[chest_item_idx]
@@ -7974,7 +8033,10 @@ class GameEngine:
         if not chest:
             return False
 
-        # Get item from inventory slot
+        # Get item from inventory slot (range-guarded — negative indices
+        # would silently move the wrong item).
+        if not (0 <= inventory_slot < len(self.character.inventory.slots)):
+            return False
         slot = self.character.inventory.slots[inventory_slot]
         if not slot:
             return False
@@ -8005,7 +8067,7 @@ class GameEngine:
             return False
 
         chest = self.dungeon_manager.get_chest()
-        if not chest or chest_item_idx >= len(chest.contents):
+        if not chest or not (0 <= chest_item_idx < len(chest.contents)):
             return False
 
         item_id, quantity = chest.contents[chest_item_idx]
@@ -8190,6 +8252,9 @@ class GameEngine:
 
         # Check for completed background LLM generation
         self._check_background_generation()
+
+        # Check for a completed async NPC dialogue request
+        self._poll_async_npc_dialogue()
 
         # Block movement and game updates when LLM overlay is active
         if self._is_llm_overlay_blocking():
@@ -11788,11 +11853,64 @@ class GameEngine:
         print("\nTip: Crafting stations are right next to you!")
         print()
 
+        # Frame guard: an exception escaping a single frame previously killed
+        # the process outright — in the packaged build (console=False) the
+        # window just vanished, losing the session with zero feedback. A
+        # transient handler error now logs a crash report and the game keeps
+        # running; persistent failure (several consecutive bad frames, i.e.
+        # genuinely corrupted state) triggers an emergency save to a SEPARATE
+        # file (never overwriting a known-good autosave) and a clean exit.
+        consecutive_failures = 0
         while self.running:
-            self.handle_events()
-            self.update()
-            self.render()
+            try:
+                self.handle_events()
+                self.update()
+                self.render()
+                consecutive_failures = 0
+            except Exception as frame_error:
+                consecutive_failures += 1
+                if consecutive_failures == 1:
+                    from core.crash_handler import write_crash_report
+                    write_crash_report(context={
+                        "phase": "frame_loop",
+                        "character": getattr(getattr(self, 'character', None),
+                                             'name', None),
+                        "error": f"{type(frame_error).__name__}: {frame_error}",
+                    })
+                    try:
+                        self.add_notification(
+                            "An error occurred — crash report saved", (255, 100, 100))
+                    except Exception:
+                        pass
+                if consecutive_failures >= 5:
+                    print("[CRASH] Persistent frame failures — emergency save + exit")
+                    self._emergency_save()
+                    self.running = False
             self.clock.tick(Config.FPS)
 
         pygame.quit()
         sys.exit()
+
+    def _emergency_save(self):
+        """Best-effort save to crash_recovery.json after a fatal error.
+
+        Writes to a dedicated filename so a save built from possibly
+        corrupted state can never replace the player's last good autosave.
+        Mirrors the Save & Exit guard: skipped for temporary worlds.
+        """
+        if self.temporary_world or self.character is None:
+            return
+        try:
+            if self.save_manager.save_game(
+                self.character,
+                self.world,
+                self.character.quests,
+                self.npcs,
+                "crash_recovery.json",
+                self.dungeon_manager,
+                self.game_time,
+                self.map_system,
+            ):
+                print("[CRASH] Emergency save written to crash_recovery.json")
+        except Exception as e:
+            print(f"[CRASH] Emergency save failed: {e}")

@@ -54,8 +54,14 @@ class TagDebugger:
             kwargs_str = ", ".join(f"{k}={v}" for k, v in kwargs.items())
             formatted += f" | {kwargs_str}"
 
-        # Print to console
-        print(formatted)
+        # Print to console. A diagnostics print must never crash gameplay:
+        # emoji in these messages raise UnicodeEncodeError on cp1252
+        # consoles (default Windows cmd), which aborted the craft that
+        # triggered the log.
+        try:
+            print(formatted)
+        except UnicodeEncodeError:
+            print(formatted.encode('ascii', errors='replace').decode('ascii'))
 
         # Write to file if enabled
         if self.log_to_file:

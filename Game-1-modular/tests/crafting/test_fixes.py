@@ -1,84 +1,63 @@
 """
-Systematic test script to verify all fixes
+Content-integrity checks for crafting JSON (materials, placements, recipes).
+
+Rewritten 2026-06-10: the original was a top-level print script that ran at
+import time, called os.chdir() (mutating the CWD for the whole pytest
+session), and opened recipes-smithing-1.JSON — a file that no longer exists —
+which aborted collection of the entire tests/ tree. Now proper pytest
+functions with no side effects.
 """
 import json
 import os
 import sys
 
-# Add Game-1-modular to path and set working directory
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, project_root)
-os.chdir(project_root)  # Change to project root for relative JSON paths
+import pytest
 
-print("=" * 80)
-print("TESTING MATERIAL INVENTORY")
-print("=" * 80)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
-# Load actual materials from JSON
-with open('items.JSON/items-materials-1.JSON', 'r') as f:
-    data = json.load(f)
-    materials_list = data.get('materials', [])
 
-print(f"\nFound {len(materials_list)} materials in items-materials-1.JSON")
-print("\nFirst 10 materials:")
-for i, mat in enumerate(materials_list[:10]):
-    print(f"  {i+1}. {mat['materialId']} - {mat['name']}")
+def _load_json(relpath: str) -> dict:
+    path = os.path.join(PROJECT_ROOT, relpath)
+    with open(path, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
-print("\n" + "=" * 80)
-print("TESTING SMITHING PLACEMENT COORDINATES")
-print("=" * 80)
 
-with open('placements.JSON/placements-smithing-1.JSON', 'r') as f:
-    data = json.load(f)
+def test_materials_json_loads_with_required_fields():
+    data = _load_json(os.path.join('items.JSON', 'items-materials-1.JSON'))
+    materials = data.get('materials', [])
+    assert len(materials) >= 57, f"Expected >=57 base materials, got {len(materials)}"
+    for mat in materials:
+        assert 'materialId' in mat, f"Material missing materialId: {mat}"
+        assert 'name' in mat, f"Material missing name: {mat['materialId']}"
+
+
+def test_smithing_placement_coordinates_parse():
+    data = _load_json(os.path.join('placements.JSON', 'placements-smithing-1.json'))
     placements = data.get('placements', [])
+    assert placements, "No smithing placements found"
+    placement = placements[0]
+    assert 'recipeId' in placement
+    assert 'gridSize' in placement.get('metadata', {})
+    for coord, material in placement['placementMap'].items():
+        col, row = map(int, coord.split(','))
+        assert col >= 0 and row >= 0, f"Negative placement coord {coord}"
+        assert material, f"Empty material at {coord}"
 
-# Test first placement
-test_placement = placements[0]
-print(f"\nTest recipe: {test_placement['recipeId']}")
-print(f"Grid size: {test_placement['metadata']['gridSize']}")
-print(f"\nPlacement map:")
-for coord, material in test_placement['placementMap'].items():
-    col, row = map(int, coord.split(','))
-    print(f"  Position ({col},{row}) = {material}")
 
-print("\n" + "=" * 80)
-print("TESTING SMITHING RECIPE GRID SIZE")
-print("=" * 80)
-
-with open('recipes.JSON/recipes-smithing-1.JSON', 'r') as f:
-    data = json.load(f)
+def test_smithing_recipes_have_grid_size():
+    # recipes-smithing-3.json is the current smithing recipe file
+    # (.claude/CLAUDE.md "File Organization"); the original test referenced
+    # the long-gone recipes-smithing-1.JSON.
+    data = _load_json(os.path.join('recipes.JSON', 'recipes-smithing-3.json'))
     recipes = data.get('recipes', [])
+    assert recipes, "No smithing recipes found"
+    missing_grid = [r['recipeId'] for r in recipes if 'gridSize' not in r]
+    assert not missing_grid, f"Smithing recipes missing gridSize: {missing_grid[:10]}"
 
-# Check several recipes for gridSize field
-print("\nChecking recipes for gridSize field:")
-for recipe in recipes[:10]:
-    recipe_id = recipe['recipeId']
-    grid_size = recipe.get('gridSize', 'NOT FOUND')
-    tier = recipe.get('stationTier', 'NOT FOUND')
-    print(f"  {recipe_id}")
-    print(f"    tier: {tier}, gridSize: {grid_size}")
 
-print("\n" + "=" * 80)
-print("TESTING ALCHEMY TIER 3+ DIFFICULTY")
-print("=" * 80)
-
-# Check if alchemy.py has tier 3/4 ingredient_types
-with open('Crafting-subdisciplines/alchemy.py', 'r') as f:
-    content = f.read()
-
-if 'elif self.tier == 3:' in content:
-    # Find the section
-    lines = content.split('\n')
-    for i, line in enumerate(lines):
-        if 'elif self.tier == 3:' in line:
-            print(f"\nFound tier 3 setup at line {i+1}")
-            for j in range(10):
-                if i+j < len(lines):
-                    print(f"  {lines[i+j]}")
-            break
-else:
-    print("\nWARNING: No tier 3 setup found in alchemy.py!")
-
-print("\n" + "=" * 80)
-print("ALL TESTS COMPLETE")
-print("=" * 80)
+# NOTE: the original script also grepped alchemy.py source for an
+# 'elif self.tier == 3:' branch. That branch does not exist in current
+# alchemy.py (the script printed a warning nobody saw) — source-text
+# grepping is not a behavioral test, so it was dropped rather than ported.

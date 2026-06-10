@@ -17,9 +17,21 @@ Architecture:
 import sys
 import os
 
+# The codebase prints emoji status markers (⚒️ 📜 ✅) throughout gameplay.
+# On a default Windows console (cp1252) those prints raise UnicodeEncodeError
+# — e.g. every smithing craft crashed via tag_debug's INFO log. Reconfigure
+# stdio to UTF-8 with replacement so console encoding can never crash play.
+for _stream in (sys.stdout, sys.stderr):
+    if _stream is not None and hasattr(_stream, 'reconfigure'):
+        try:
+            _stream.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
+
+# Report key PRESENCE only — never echo the secret itself (it would land in
+# console logs, screenshares, and crash reports).
 print("=" * 50)
-print("DEBUG: Checking environment variable")
-print(f"ANTHROPIC_API_KEY: {os.environ.get('ANTHROPIC_API_KEY', '(NOT SET)')}")
+print(f"ANTHROPIC_API_KEY: {'set' if os.environ.get('ANTHROPIC_API_KEY') else '(NOT SET)'}")
 print("=" * 50)
 
 
@@ -31,7 +43,14 @@ from core.game_engine import GameEngine
 
 def main():
     """Main entry point - create and run the game engine"""
-    game = GameEngine()
+    try:
+        game = GameEngine()
+    except Exception:
+        # Boot failure in the windowed build is otherwise invisible
+        # (console=False) — leave a crash report behind, then re-raise.
+        from core.crash_handler import write_crash_report
+        write_crash_report(context={"phase": "boot"})
+        raise
     game.run()
 
 

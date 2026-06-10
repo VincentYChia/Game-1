@@ -496,10 +496,26 @@ class SaveManager:
                 map_system
             )
 
-            filepath = get_save_path(filename)
+            filepath = str(get_save_path(filename))
 
-            with open(filepath, 'w') as f:
-                json.dump(save_data, f, indent=2)
+            # Serialize fully in memory BEFORE touching the file, so a
+            # serialization error can never truncate an existing good save.
+            payload = json.dumps(save_data, indent=2)
+
+            # Atomic write: temp file in the same directory, fsync, then
+            # os.replace (atomic on Windows and POSIX). A crash or full disk
+            # mid-write leaves the previous save untouched.
+            tmp_path = filepath + '.tmp'
+            with open(tmp_path, 'w', encoding='utf-8') as f:
+                f.write(payload)
+                f.flush()
+                os.fsync(f.fileno())
+
+            # Keep the previous save as .bak so a corrupt/bad save is always
+            # recoverable one step back.
+            if os.path.exists(filepath):
+                os.replace(filepath, filepath + '.bak')
+            os.replace(tmp_path, filepath)
 
             print(f"Game saved successfully to {filepath}")
             return True
@@ -522,14 +538,28 @@ class SaveManager:
             Dictionary containing save data, or None if load failed
         """
         try:
-            filepath = get_save_path(filename)
+            filepath = str(get_save_path(filename))
 
             if not os.path.exists(filepath):
                 print(f"Save file not found: {filepath}")
                 return None
 
-            with open(filepath, 'r') as f:
-                save_data = json.load(f)
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    save_data = json.load(f)
+            except (json.JSONDecodeError, UnicodeDecodeError) as corrupt_err:
+                # Primary save is corrupt (crash mid-write predating atomic
+                # saves, disk fault, manual edit). Fall back to the .bak
+                # written by save_game() rather than losing the session.
+                backup_path = filepath + '.bak'
+                print(f"Save file is corrupt ({corrupt_err}); "
+                      f"attempting backup {backup_path}")
+                if not os.path.exists(backup_path):
+                    print("No backup save available.")
+                    return None
+                with open(backup_path, 'r', encoding='utf-8') as f:
+                    save_data = json.load(f)
+                print("Recovered from backup save (one save older than latest).")
 
             # Validate save version
             version = save_data.get("version", "1.0")
