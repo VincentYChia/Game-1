@@ -6,7 +6,7 @@ This is the **modular refactored version** of Game-1, featuring a production-rea
 
 ## Key Features
 
-- 🎮 **239 Python files** (~96,400 lines of code)
+- 🎮 **434 Python files (incl. tests/tools — see Development-Plan/REPOSITORY_MAP.md)** (~96,400 lines of code)
 - 🌍 **World Memory System** - 7-layer event tracking with 33 evaluators (SQLite)
 - 🤖 **LLM Integration** - Claude API for procedural item generation
 - 🧠 **ML Classifiers** - CNN + LightGBM for recipe validation
@@ -69,7 +69,7 @@ Game-1-modular/
 │   ├── title_system.py, class_system.py, quest_system.py
 │   └── npc_system.py, dungeon.py, turret_system.py, etc.
 │
-├── world_system/                    # World Memory System (71 files, ~14,269 LOC)
+├── world_system/                    # World Memory System (87+ files, ~20,600 LOC)
 │   ├── world_memory/                # Core WMS (stat_store, event_store, evaluators, tags)
 │   ├── living_world/                # Consumer systems (backends, NPC, factions, ecosystem)
 │   ├── config/                      # 7 JSON configs
@@ -158,7 +158,7 @@ Game-1-modular/
 - Quest, NPC, turret, encyclopedia systems
 - Title and class systems
 
-### World Memory System (`world_system/`) - 71 files, ~14,269 LOC
+### World Memory System (`world_system/`) - 87+ files, ~20,600 LOC
 **Purpose**: 7-layer event tracking and Living World AI infrastructure
 
 - **world_memory/**: Core WMS engine (StatStore, EventStore, evaluators, tags, triggers)
@@ -253,7 +253,7 @@ All LLM API calls are logged to `llm_debug_logs/TIMESTAMP_discipline.json`
 ## Statistics
 
 ### Code Organization
-- **Total Files**: 239 Python files
+- **Total Files**: 434 Python files (incl. tests/tools — see Development-Plan/REPOSITORY_MAP.md)
 - **Total Lines**: ~96,400 lines of code
 - **Original**: 1 file (10,327 lines) - monolithic main.py
 - **Modular**: 239 files with clean separation of concerns
@@ -284,7 +284,7 @@ All LLM API calls are logged to `llm_debug_logs/TIMESTAMP_discipline.json`
 
 ## Validation
 
-All 239 Python files compile successfully:
+All 434 Python files (incl. tests/tools — see Development-Plan/REPOSITORY_MAP.md) compile successfully:
 
 ```bash
 cd Game-1-modular
@@ -303,7 +303,7 @@ Game-1-singular/
 ### Game-1-modular (Current - March 2026)
 ```
 Game-1-modular/
-    239 Python files (~96,400 lines)
+    434 Python files (incl. tests/tools — see Development-Plan/REPOSITORY_MAP.md) (~96,400 lines)
     Clean separation of concerns
     No circular dependencies
     World Memory System (7-layer event architecture)
@@ -388,7 +388,7 @@ python3 main.py
 | Document | Purpose |
 |----------|---------|
 | **docs/GAME_MECHANICS_V6.md** | Master reference - all mechanics (5,154 lines) |
-| **docs/REPOSITORY_STATUS_REPORT_2026-01-27.md** | Current system state |
+| **../Development-Plan/SYSTEMS_CATALOG.md** | Current system state (status report archived 2026-06-10) |
 | **.claude/CLAUDE.md** | Developer guide for AI assistants |
 | **MASTER_ISSUE_TRACKER.md** | Known bugs and improvements |
 | **docs/tag-system/TAG-GUIDE.md** | Comprehensive tag system guide |

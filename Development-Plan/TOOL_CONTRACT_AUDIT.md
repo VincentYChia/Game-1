@@ -1,3 +1,5 @@
+> **STALENESS NOTICE (2026-06-10 repo audit)**: 2026-04-24 snapshot of tool contracts — the tools have since been implemented and evolved. Verify against world_system/wes/ code before relying on specifics.
+
 # Tool Contract Audit
 
 **Date**: 2026-04-24

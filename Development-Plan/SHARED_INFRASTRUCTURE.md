@@ -1,3 +1,5 @@
+> **STATUS (2026-06-10)**: BalanceValidator below is SPEC-ONLY — no Python implementation exists (stub at `world_system/content_registry/balance_validator_stub.py` does deterministic range checks only). Do not build against it as if it works.
+
 # Shared Infrastructure
 
 **Cross-cutting systems used by multiple parts of the plan.**

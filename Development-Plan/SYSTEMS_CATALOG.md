@@ -68,6 +68,29 @@ A system is marked ◯ when the code is good but **no caller in gameplay ever in
 | Summon mechanics (TODO at `effect_executor.py:233`) | Owner: just ideas at this point. |
 | `Self-Repair`, `Weightless`, `Silk Touch` enchantments — recipes exist in `recipes-adornments-1.json` (silk_touch at line 805, weightless at line 943) but combat runtime has no effect-type handler for them. JSON is source of truth; doc claim that they were "deferred" was a hallucination. | Not blocking; add handlers if/when prioritized. |
 
+### 2026-06-10 full-repository audit addendum
+
+Six-area parallel sweep + firsthand verification (evidence: [repo-audit-2026-06-10/FINDINGS_LEDGER.md](repo-audit-2026-06-10/FINDINGS_LEDGER.md); directory truth: [REPOSITORY_MAP.md](REPOSITORY_MAP.md)). Fixed in commit `1ea3f2bb`:
+
+| Finding | Status |
+|---|---|
+| `CombatManager.active_enemies` referenced but never assigned → AttributeError on DEVASTATE AoE or Chain Damage proc | **FIXED** — both sites use `get_all_active_enemies()` |
+| `_complete_minigame` defined twice in game_engine; the shadowed copy exclusively held the alloyQuality title bonus, firstTryBonus, debug-infinite materials, and the **only ITEM_CRAFTED bus publish in the codebase** (WMS crafting evaluators were fully starved) | **FIXED** — features restored into live method, dead twin deleted |
+| Skill/Title boot loads bypassed `load_from_files()` → WES-generated skills/titles invisible until in-session reload | **FIXED** — boot uses sacred+generated overlay |
+| Smithing placement loader requested `.JSON`, file is tracked `.json` → zero smithing placements on Linux CI | **FIXED** |
+| 24 data-loader `open()` calls without `encoding='utf-8'` → loading breaks on cp1252 Windows the moment content gains non-ASCII | **FIXED** |
+| 5 terminal LLM parse failures in WES tiers silent (no log_degrade), incl. supervisor degrading to auto-pass | **FIXED** — shared `log_parse_failure()` |
+| EventStore missing composite index for the evaluators' hot query | **FIXED** — `idx_events_type_locality_time` |
+
+New known limitations from the audit (not fixed, catalogued):
+
+| Finding | Disposition |
+|---|---|
+| Skill/Title `reload()` (WES-commit path) does not re-merge Update-N files — a mid-session WES skill/title commit drops fishing skills/titles until restart | Latent; reload path only |
+| Orphan content JSONs nothing loads: `items-testing-integration` (items.JSON copy), `recipes-tag-tests`, `skills-testing-integration`, `placements-smithing-1-pre-fish`, `value-translation-table-1`, `templates-crafting-1`, `Update-1/npcs-village-dummy` | Content JSON is sacred — designer review |
+| `ecosystem_agent.py` (398 LOC) confirmed imported nowhere | Owner: leave as-is |
+| Count corrections: 35 skills (not "100+"), 167 recipes, 10+4 titles (not "40+"), 36 evaluators (not 33), 64 tag categories (not 65), 434 py files (not 239) | Docs corrected 2026-06-10 |
+
 ### Catalog corrections (these earlier "gaps" turned out to be FINE)
 
 - **Fishing IS wired** — `get_fishing_manager()` called from `game_engine.py:11354` (start) + `11587` (process). Activated by clicking a fishing-spot resource at `game_engine.py:2760`, not through `craft_item`. Catalog fixed below. Fishing skills work; titles untested.

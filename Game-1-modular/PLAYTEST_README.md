@@ -31,12 +31,13 @@ This is a comprehensive RPG with the following systems:
 - **Enemies**: Multiple tiers (T1-T4) with scaling difficulty
 - **Safe Zone**: Center area (50,50) with no enemies
 
-### Crafting System (5 Disciplines)
+### Crafting System (6 Disciplines)
 - **Smithing**: Weapons and armor (temperature + timing minigame)
 - **Alchemy**: Potions and consumables (mixing minigame)
 - **Refining**: Convert raw materials to refined (stages minigame)
 - **Engineering**: Devices and utilities (assembly minigame)
 - **Enchanting**: Adornments and enhancements (pattern minigame)
+- **Fishing**: Click a fishing spot by the water (cast + reel minigame)
 
 ### Progression
 - **Leveling**: Gain XP from combat and crafting

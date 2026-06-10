@@ -10,17 +10,18 @@
 - 6 crafting disciplines (Smithing, Alchemy, Refining, Engineering, Enchanting, Fishing) with unique minigames
 - **LLM-powered "Invented Items" system** for procedural content generation
 - **ML classifiers** (CNN + LightGBM) for recipe validation
-- **World Memory System** — 7-layer event tracking, 33 evaluators, tag-based retrieval (SQLite)
+- **World Memory System** — 7-layer event tracking, 36 evaluators, tag-based retrieval (SQLite)
 - Full combat system with enemies, damage pipeline, enchantments, and status effects
-- 100+ skills with mana, cooldowns, and level-based scaling
+- 35 skills (30 base + 5 fishing via Update-2) with mana, cooldowns, and level-based scaling
 - Character progression (30 levels, 6 stats, titles, classes)
 - Tag-driven effect system for combat and skills
 - Complete save/load system preserving all game state
 - Equipment system with durability, weight, and repairs
 
-**Architecture**: Modular (239 Python files, ~96,400 LOC, ~90 JSON game-definition files, 3,749 asset images)
+**Architecture**: Modular (434 Python files / ~159,800 LOC incl. tests+tools; ~113 game-definition JSONs; 3,749 asset images — verified 2026-06-10, see `Development-Plan/REPOSITORY_MAP.md`)
 **Master Reference**: `docs/GAME_MECHANICS_V6.md` (5,154 lines)
-**Status Report**: `docs/REPOSITORY_STATUS_REPORT_2026-01-27.md`
+**Repository Map**: `Development-Plan/REPOSITORY_MAP.md` (where is X — verified 2026-06-10)
+**Systems Catalog**: `Development-Plan/SYSTEMS_CATALOG.md` (does X work)
 **Project Duration**: October 19, 2025 - Present (Python/Pygame — active development)
 **Development Plan**: `Development-Plan/OVERVIEW.md` (active roadmap — Living World + Combat Overhaul)
 **World Memory System**: `world_system/docs/HANDOFF_STATUS.md` (current implementation state) + `world_system/docs/WORLD_MEMORY_SYSTEM.md` (unified canonical design)
@@ -80,7 +81,7 @@ The Unity migration plan is retained in `archive/2026-04-24-doc-consolidation/pa
 | `BaseCraftingMinigame` base class | Eliminates ~1,240 lines of duplication |
 | `ItemFactory` centralized | 6 scattered creation sites → 1 entry point |
 | Event system (`GameEvents`) | Decouples components, replaces direct references |
-| Effect dispatch table | Replaces 250-line if/elif chain |
+| Effect dispatch table | Aspirational — actual code is an if/elif chain in effect_executor (works; see REPOSITORY_MAP) |
 
 ### Migration Document Map
 | Document | Lines | Purpose |
@@ -135,14 +136,14 @@ Game-1/
 - Class system (6 classes with tag-driven bonuses)
 - Title system (all tiers: Novice through Master)
 - **Full combat system** (damage pipeline, enchantments, dual wielding)
-- **100+ skills** with mana, cooldowns, effects
+- **35 skills** (30 base + 5 fishing) with mana, cooldowns, effects
 - **Status effects** (DoT, CC, buffs, debuffs - 826 lines)
 - **14 Enchantments fully integrated** (see Combat section)
 - **Full save/load system** (complete state preservation)
 - **Durability, weight, and repair systems**
 - **Tag-driven effect system** (combat, skills, items)
 - **Difficulty/Reward calculators** (material-based scaling)
-- **World Memory System** — Layers 1-4 complete, 33 evaluators + 4 consolidators + province summarizer, 93 passing tests (~20,600 LOC)
+- **World Memory System** — Layers 1-4 complete, 36 evaluators + 4 consolidators + province summarizer, 93 passing tests (~20,600 LOC)
 - **GameEventBus** pub/sub system (events/event_bus.py)
 - **StatTracker** — 65 SQL-backed recording methods for comprehensive player analytics
 - **Faction System** — Phase 2+ complete (SQLite NPC/player affinity tracking, 19-method API, 21 tests, events published to WMS)
@@ -222,7 +223,7 @@ Game-1-modular/
 ├── main.py                      # Entry point (39 lines)
 ├── core/                        # Core game systems (23 files, 18,764 LOC)
 │   ├── config.py                # Game configuration constants
-│   ├── game_engine.py           # Main game engine (10,809 lines)
+│   ├── game_engine.py           # Main game engine (~11,700 lines)
 │   ├── interactive_crafting.py  # 6 discipline crafting UIs (1,179 lines)
 │   ├── effect_executor.py       # Tag-based combat effects (623 lines)
 │   ├── difficulty_calculator.py # Material-based difficulty (808 lines)
@@ -304,7 +305,7 @@ Game-1-modular/
 ├── animation/                   # Animation system (7 files, 1,008 LOC)
 │   └── (animation_manager, procedural, weapon_visuals, combat_particles, etc.)
 ├── rendering/                   # All rendering code (5 files, 8,841 LOC)
-│   └── renderer.py              # Renderer class (7,931 lines)
+│   └── renderer.py              # Renderer class (~8,200 lines)
 ├── Combat/                      # Combat system (11 files, 5,562 LOC)
 │   ├── combat_manager.py        # CombatManager (2,317 lines)
 │   ├── enemy.py                 # Enemy, EnemyDatabase (1,348 lines)
@@ -323,16 +324,16 @@ Game-1-modular/
 ├── save_system/                 # Save system docs + create_default_save.py
 └── docs/                        # Technical documentation
     ├── GAME_MECHANICS_V6.md     # MASTER REFERENCE (5,154 lines)
-    ├── REPOSITORY_STATUS_REPORT_2026-01-27.md # Current status
+    ├── (status report archived 2026-06-10 → see Development-Plan/SYSTEMS_CATALOG.md)
     └── tag-system/              # Tag system documentation
 ```
 
 ### Key Classes
 
 **Database Singletons** (load on startup):
-- `MaterialDatabase` - 57+ materials from JSON
+- `MaterialDatabase` - 57 base materials (77 entries loaded incl. refining/consumables/devices)
 - `EquipmentDatabase` - Weapons, armor, tools
-- `RecipeDatabase` - 100+ recipes across 5 disciplines + invented recipes
+- `RecipeDatabase` - 167 recipes across 5 disciplines + invented recipes
 - `TitleDatabase` - 40+ achievement titles
 - `ClassDatabase` - 6 starting classes with tags
 - `SkillDatabase` - 100+ skill definitions
@@ -343,8 +344,8 @@ Game-1-modular/
 - `CombatManager` - Full damage pipeline, enchantments, status effects (2,317 lines)
 - `SkillManager` - Skill activation, mana, cooldowns, affinity bonuses (1,124 lines)
 - `WorldSystem` - 100x100 tiles, chunk-based generation
-- `Renderer` - All drawing logic (7,931 lines)
-- `GameEngine` - Main loop, event handling, UI (10,809 lines)
+- `Renderer` - All drawing logic (~8,200 lines)
+- `GameEngine` - Main loop, event handling, UI (~11,700 lines)
 - `LLMItemGenerator` - Claude API integration for invented items
 - `CraftingClassifierManager` - CNN/LightGBM validation
 - `WorldMemorySystem` - 7-layer event tracking facade (world_system/)
@@ -507,10 +508,10 @@ Game-1-modular/
 ├── placements.JSON/             # Grid layouts for minigames
 ├── progression/                 # Character progression
 │   ├── classes-1.JSON           # 6 classes with tags
-│   ├── titles-1.JSON            # 40+ titles
+│   ├── titles-1.JSON            # 10 base titles (+4 fishing via Update-2)
 │   └── npcs-1.JSON              # NPC definitions
 ├── Skills/                      # Skill definitions
-│   └── skills-skills-1.JSON     # 100+ skills
+│   └── skills-skills-1.JSON     # 30 base skills (+5 fishing via Update-2)
 └── Definitions.JSON/            # System definitions
     ├── tag-definitions.JSON     # All tag definitions
     ├── hostiles-1.JSON          # Enemy definitions
@@ -558,7 +559,7 @@ Tier multipliers: T1=1.0x, T2=2.0x, T3=4.0x, T4=8.0x
 ## Known Issues & Current Work
 
 **See**: `MASTER_ISSUE_TRACKER.md` for comprehensive bug list
-**See**: `docs/REPOSITORY_STATUS_REPORT_2026-01-27.md` for full status
+**See**: `Development-Plan/SYSTEMS_CATALOG.md` for full status
 
 ### Recently Resolved (January 2026)
 - ✅ Inventory click misalignment - spacing synchronized
@@ -758,7 +759,7 @@ The ~90 JSON game-definition files are spread across `items.JSON/`, `recipes.JSO
 
 ### For Python Development (bug fixes, features):
 - Check `GAME_MECHANICS_V6.md` for implementation status before assuming features exist
-- Check `REPOSITORY_STATUS_REPORT_2026-01-27.md` for current system state
+- Check `Development-Plan/SYSTEMS_CATALOG.md` for current system state
 - Reference `NAMING_CONVENTIONS.md` for method names
 - Use singleton pattern for databases
 - Follow tag system conventions for new combat effects
@@ -798,7 +799,7 @@ Paused indefinitely. Kept under archive as backup; not used during active develo
 | Document | Purpose |
 |----------|---------|
 | **GAME_MECHANICS_V6.md** | Master reference - all mechanics (5,154 lines) |
-| **REPOSITORY_STATUS_REPORT_2026-01-27.md** | Pre-consolidation status snapshot |
+| *(archived)* REPOSITORY_STATUS_REPORT_2026-01-27.md | Superseded by SYSTEMS_CATALOG.md — in `archive/2026-06-10-repo-audit/` |
 | **MASTER_ISSUE_TRACKER.md** | Known bugs and improvements (most resolved; see strikethrough) |
 | **docs/tag-system/TAG-GUIDE.md** | Comprehensive tag system guide |
 | **docs/MODULE_REFERENCE.md** | Per-file module documentation |

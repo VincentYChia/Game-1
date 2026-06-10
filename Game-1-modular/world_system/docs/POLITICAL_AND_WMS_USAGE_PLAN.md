@@ -1,3 +1,5 @@
+> **STALENESS NOTICE (2026-06-10 repo audit)**: Plan-era doc — the faction system and NPC dialogue integration it plans are implemented (see SYSTEMS_CATALOG §5). Retained for design rationale.
+
 # Political Systems & WMS Usage — Implementation Handoff
 
 **Date**: 2026-04-16

@@ -650,7 +650,7 @@ Player position sampled every ~10 real seconds as `POSITION_SAMPLE` events. Incl
 4. **Templates first, LLM when needed** — Layer 2-3 evaluators use templates or tiny LLMs. Only higher layers justify larger models.
 5. **Every evaluator can return None** — "Not interesting enough" is a valid result.
 
-## 6.2 Layer 2 Evaluators (9 Designed → 33 Implemented)
+## 6.2 Layer 2 Evaluators (9 Designed → 36 Implemented (33 original + 3 added 2026-06-05: fishing_activity, turret_activity, chest_loot))
 
 > **Implementation status (2026-04-10):** The 9 conceptual evaluators expanded into 33 concrete evaluators covering finer-grained domains. See `world_system/world_memory/evaluators/` for all files. LLM narration via WmsAI is operational — the LLM assigns `significance` tags via structured JSON output. Debug warnings log when the LLM returns no tags.
 

@@ -1,3 +1,5 @@
+> **STALENESS NOTICE (2026-06-10 repo audit)**: Predates Layer 6-7 completion — references them as future (they shipped) and cites 61 tag categories (actual: 64). Canonical status: `Development-Plan/SYSTEMS_CATALOG.md`; current counts: `Development-Plan/REPOSITORY_MAP.md`.
+
 # World Memory System — Tools & Simulation Reference
 
 ## Available Tools
