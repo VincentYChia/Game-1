@@ -91,7 +91,7 @@ class TitleDatabase:
 
     def load_from_file(self, filepath: str):
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             for title_data in data.get('titles', []):
                 title = self._parse_title_definition(title_data)

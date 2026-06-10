@@ -70,6 +70,12 @@ CREATE INDEX IF NOT EXISTS idx_events_region ON events(region_id);
 CREATE INDEX IF NOT EXISTS idx_events_chunk ON events(chunk_x, chunk_y);
 CREATE INDEX IF NOT EXISTS idx_events_triggered ON events(triggered_interpretation)
     WHERE triggered_interpretation = 1;
+-- 2026-06-10: composite index matching the evaluators' hot query shape
+-- (count/filter by event_type + locality_id since a game_time). The 36
+-- Layer-2 evaluators each run this on every trigger; the single-column
+-- indexes above forced SQLite to intersect or scan as the table grows.
+CREATE INDEX IF NOT EXISTS idx_events_type_locality_time
+    ON events(event_type, locality_id, game_time DESC);
 
 -- Event tags (separate table for efficient tag queries)
 CREATE TABLE IF NOT EXISTS event_tags (

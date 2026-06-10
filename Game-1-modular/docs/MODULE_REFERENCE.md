@@ -1145,8 +1145,8 @@ class NaturalResource:
 ```python
 class CombatManager:
     character: Character
-    active_enemies: List[Enemy]
-    spawn_cooldown: float
+    enemies: Dict[Tuple[int, int], List[Enemy]]  # per-chunk; flatten via get_all_active_enemies()
+    spawn_timers: Dict[Tuple[int, int], float]
 
     def calculate_damage(base_damage: int, attacker, defender) -> int:
         """Full damage pipeline with multipliers, enchantments, defense."""

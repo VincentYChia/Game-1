@@ -107,7 +107,7 @@ class SkillDatabase:
     def load_from_file(self, filepath: str = ""):
         """Load skills from JSON file"""
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             for skill_data in data.get('skills', []):

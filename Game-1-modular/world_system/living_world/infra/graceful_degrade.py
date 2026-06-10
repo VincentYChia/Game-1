@@ -282,6 +282,34 @@ def surface_visible_wes_failure(
     )
 
 
+def log_parse_failure(
+    subsystem: str,
+    raw_text: str,
+    fallback_taken: str = "returned None — caller degrades to stub/empty",
+) -> None:
+    """Record a terminal LLM-output parse failure. Never raises.
+
+    Added 2026-06-10: the WES LLM tiers (planner / hub / tool /
+    supervisor) all had bare ``except: return None`` terminal paths in
+    their parse helpers, violating the CC3 rule above ("Silent
+    try/except is not acceptable"). This is the shared convenience they
+    call instead — one line at each terminal fallthrough.
+    """
+    try:
+        log_degrade(
+            subsystem=subsystem,
+            operation="parse_llm_output",
+            failure_reason=(
+                f"unparseable LLM output ({len(raw_text)} chars): "
+                f"{raw_text[:120]!r}"
+            ),
+            fallback_taken=fallback_taken,
+            severity=SEVERITY_WARNING,
+        )
+    except Exception:
+        pass  # logging must never break the parse-return path
+
+
 def get_graceful_degrade_logger() -> GracefulDegradeLogger:
     """Module-level accessor following project singleton pattern."""
     return GracefulDegradeLogger.get_instance()

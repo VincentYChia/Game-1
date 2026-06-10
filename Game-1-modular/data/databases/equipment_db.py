@@ -23,7 +23,7 @@ class EquipmentDatabase:
         count = 0
         print(f"\n🔧 EquipmentDatabase.load_from_file('{filepath}')")
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             print(f"   - JSON sections available: {list(data.keys())}")
 

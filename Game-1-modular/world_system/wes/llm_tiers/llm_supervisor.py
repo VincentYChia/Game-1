@@ -69,7 +69,15 @@ def _parse_verdict(text: str) -> Optional[Dict[str, Any]]:
                 if isinstance(data, dict):
                     return data
             except Exception:
-                return None
+                pass
+    # Terminal fallthrough — CC3: must not be silent (2026-06-10). The
+    # caller degrades to a no-op "pass" verdict, which means a garbled
+    # supervisor response silently waves work through.
+    from world_system.living_world.infra.graceful_degrade import log_parse_failure
+    log_parse_failure(
+        "wes_supervisor", text,
+        fallback_taken="returned None — caller degrades to default pass verdict",
+    )
     return None
 
 

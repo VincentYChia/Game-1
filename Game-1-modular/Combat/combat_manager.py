@@ -541,6 +541,10 @@ class CombatManager:
 
         # Update all enemies
         dead_enemies = []
+        # Lazily-built once-per-update snapshot of alive turrets. Previously
+        # this list was rebuilt from world.placed_entities inside the loop
+        # for every enemy that fired a special ability in the same frame.
+        turrets_snapshot = None
         for chunk_coords, enemy_list in self.enemies.items():
             for enemy in enemy_list:
                 if enemy.is_alive:
@@ -555,12 +559,14 @@ class CombatManager:
                     special_ability = enemy.can_use_special_ability(dist_to_target=dist, target_position=player_pos)
                     if special_ability:
                         # Execute special ability immediately with visual
+                        if turrets_snapshot is None:
+                            turrets_snapshot = []
+                            if hasattr(self.world, 'placed_entities'):
+                                from systems.world_system import PlacedEntityType
+                                turrets_snapshot = [e for e in self.world.placed_entities
+                                                    if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
                         available_targets = [self.character]
-                        if hasattr(self.world, 'placed_entities'):
-                            from systems.world_system import PlacedEntityType
-                            turrets = [e for e in self.world.placed_entities
-                                      if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
-                            available_targets.extend(turrets)
+                        available_targets.extend(turrets_snapshot)
                         enemy.use_special_ability(special_ability, self.character, available_targets)
                         enemy.attack_cooldown = 1.0 / enemy.definition.attack_speed
 
@@ -644,14 +650,17 @@ class CombatManager:
         from core.debug_display import debug_print
         import math
 
-        # Find all enemies in radius
+        # Find all enemies in radius. NOTE: self.active_enemies never
+        # existed as an attribute — this previously raised AttributeError
+        # whenever a DEVASTATE buff triggered an AoE attack. Squared
+        # distance avoids the per-enemy sqrt.
         targets = []
-        for e in self.active_enemies:
-            if e.is_alive():
+        radius_sq = radius * radius
+        for e in self.get_all_active_enemies():
+            if e.is_alive:
                 dx = e.position.x - self.character.position.x
                 dy = e.position.y - self.character.position.y
-                distance = math.sqrt(dx*dx + dy*dy)
-                if distance <= radius:
+                if dx * dx + dy * dy <= radius_sq:
                     targets.append(e)
 
         if not targets:
@@ -1045,10 +1054,13 @@ class CombatManager:
                     chain_count = int(effect.get('value', 2))  # Chain to 2 enemies default
                     chain_damage_percent = effect.get('damagePercent', 0.5)  # 50% damage default
 
-                    # Find chain targets (exclude primary target)
+                    # Find chain targets (exclude primary target).
+                    # self.active_enemies never existed — this previously
+                    # raised AttributeError whenever a Chain Damage
+                    # enchantment proc'd on hit.
                     from core.geometry.target_finder import TargetFinder
                     finder = TargetFinder()
-                    available_enemies = [e for e in self.active_enemies if e.is_alive and e != enemy]
+                    available_enemies = [e for e in self.get_all_active_enemies() if e.is_alive and e != enemy]
 
                     chain_targets = finder.find_chain_targets(
                         primary=enemy,

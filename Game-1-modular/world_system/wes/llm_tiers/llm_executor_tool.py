@@ -60,7 +60,6 @@ def _parse_json(text: str) -> Optional[Dict[str, Any]]:
         data = json.loads(_strip_markdown_fence(text))
         if isinstance(data, dict):
             return data
-        return None
     except Exception:
         s = _strip_markdown_fence(text)
         first = s.find("{")
@@ -71,8 +70,11 @@ def _parse_json(text: str) -> Optional[Dict[str, Any]]:
                 if isinstance(data, dict):
                     return data
             except Exception:
-                return None
-        return None
+                pass
+    # Terminal fallthrough — CC3: must not be silent (2026-06-10).
+    from world_system.living_world.infra.graceful_degrade import log_parse_failure
+    log_parse_failure("wes_executor_tool", text)
+    return None
 
 
 class LLMExecutorTool:

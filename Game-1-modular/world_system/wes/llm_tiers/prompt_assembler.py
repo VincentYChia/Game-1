@@ -75,14 +75,33 @@ class PromptAssembler:
             # Missing fragment file is recoverable — an empty dict still
             # lets assembly proceed with just awareness blocks + user data.
             # TODO: designer may prefer a hard failure here.
+            self._log_fragment_degrade("file not found", severity="info")
             self._fragments = {}
             return self._fragments
         try:
             with open(self.fragments_path, "r", encoding="utf-8") as f:
                 self._fragments = json.load(f)
-        except Exception:
+        except Exception as e:
+            # CC3: corrupt fragment file must not be silent (2026-06-10) —
+            # a JSON typo here previously meant every prompt assembled with
+            # an empty _core section and no signal anywhere.
+            self._log_fragment_degrade(f"{type(e).__name__}: {e}", severity="warning")
             self._fragments = {}
         return self._fragments
+
+    def _log_fragment_degrade(self, reason: str, severity: str) -> None:
+        """Report a fragment-load degrade. Never raises."""
+        try:
+            from world_system.living_world.infra.graceful_degrade import log_degrade
+            log_degrade(
+                subsystem="wes_prompt_assembler",
+                operation="load_fragments",
+                failure_reason=f"{self.fragments_path}: {reason}",
+                fallback_taken="empty fragments dict — prompts assemble without _core",
+                severity=severity,
+            )
+        except Exception:
+            pass
 
     def reload(self) -> None:
         """Discard the in-memory copy; next call to :meth:`build` reloads."""

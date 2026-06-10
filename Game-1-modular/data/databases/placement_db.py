@@ -25,8 +25,12 @@ class PlacementDatabase:
         """Load all placement JSON files"""
         total = 0
 
-        # Smithing placements
-        total += self._load_smithing(str(get_resource_path("placements.JSON/placements-smithing-1.JSON")))
+        # Smithing placements. NOTE: this file is git-tracked with a
+        # lowercase .json extension (unlike its siblings). Exact case
+        # matters on case-sensitive filesystems (Linux CI builds) — the
+        # old uppercase .JSON request silently loaded zero smithing
+        # placements there. (2026-06-10)
+        total += self._load_smithing(str(get_resource_path("placements.JSON/placements-smithing-1.json")))
 
         # Refining placements
         total += self._load_refining(str(get_resource_path("placements.JSON/placements-refining-1.JSON")))
@@ -51,7 +55,7 @@ class PlacementDatabase:
             return 0
 
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             count = 0
@@ -82,7 +86,7 @@ class PlacementDatabase:
             return 0
 
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             count = 0
@@ -115,7 +119,7 @@ class PlacementDatabase:
             return 0
 
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             count = 0
@@ -147,7 +151,7 @@ class PlacementDatabase:
             return 0
 
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             count = 0
@@ -179,7 +183,7 @@ class PlacementDatabase:
             return 0
 
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             count = 0

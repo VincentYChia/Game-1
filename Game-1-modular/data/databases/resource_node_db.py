@@ -149,7 +149,7 @@ class ResourceNodeDatabase:
     def load_from_file(self, filepath: str) -> bool:
         """Load resource node definitions from JSON file"""
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             for node_data in data.get('nodes', []):

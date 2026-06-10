@@ -154,7 +154,6 @@ class GameEngine:
         MaterialDatabase.get_instance().load_stackable_items(
             str(get_resource_path("Definitions.JSON/crafting-stations-1.JSON")), categories=['station'])
         TranslationDatabase.get_instance().load_from_files()
-        SkillDatabase.get_instance().load_from_file()
         RecipeDatabase.get_instance().load_from_files()
         PlacementDatabase.get_instance().load_from_files()
 
@@ -167,9 +166,13 @@ class GameEngine:
         # Load test weapons for tag system validation
         equip_db.load_from_file(str(get_resource_path("items.JSON/items-testing-tags.JSON")))
 
-        TitleDatabase.get_instance().load_from_file(str(get_resource_path("progression/titles-1.JSON")))
+        # 2026-06-10: use load_from_files() (sacred glob + generated overlay)
+        # instead of single-file loads. Previously WES-generated titles/skills
+        # (titles-generated-*.JSON, skills-generated-*.JSON) were invisible at
+        # boot and only appeared after an in-session Content Registry reload.
+        TitleDatabase.get_instance().load_from_files()
         ClassDatabase.get_instance().load_from_file(str(get_resource_path("progression/classes-1.JSON")))
-        SkillDatabase.get_instance().load_from_file(str(get_resource_path("Skills/skills-skills-1.JSON")))
+        SkillDatabase.get_instance().load_from_files()
         from data.databases import SkillUnlockDatabase
         SkillUnlockDatabase.get_instance().load_from_file(str(get_resource_path("progression/skill-unlocks.JSON")))
         NPCDatabase.get_instance().load_from_files()  # Load NPCs and Quests
@@ -6296,152 +6299,6 @@ class GameEngine:
         else:
             self.add_notification("Inventory full!", (255, 100, 100))
 
-    def _complete_minigame(self):
-        """Complete the active minigame and process results"""
-        if not self.active_minigame or not self.minigame_recipe:
-            return
-
-        print(f"\n{'='*80}")
-        print(f"🎮 MINIGAME COMPLETED")
-        print(f"Recipe: {self.minigame_recipe.recipe_id}")
-        print(f"Type: {self.minigame_type}")
-        print(f"Result: {self.active_minigame.result}")
-        print(f"{'='*80}\n")
-
-        recipe = self.minigame_recipe
-        result = self.active_minigame.result
-        crafter = self.get_crafter_for_station(self.minigame_type)
-
-        recipe_db = RecipeDatabase.get_instance()
-        equip_db = EquipmentDatabase.get_instance()
-        mat_db = MaterialDatabase.get_instance()
-
-        # Convert inventory to dict
-        inv_dict = self.inventory_to_dict()
-
-        # DEBUG MODE: Add infinite quantities of required materials (same as in craft_item)
-        if Config.DEBUG_INFINITE_RESOURCES:
-            print("🔧 DEBUG MODE: Adding infinite materials for minigame completion")
-            rarity_system.debug_mode = True
-            for inp in recipe.inputs:
-                mat_id = inp.get('materialId', '')
-                inv_dict[mat_id] = 999999
-        else:
-            rarity_system.debug_mode = False
-
-        # Get title bonuses for crafting
-        alloy_quality_bonus = 0.0
-        if recipe.station_type == 'refining' and hasattr(self.character, 'titles'):
-            alloy_quality_bonus = self.character.titles.get_total_bonus('alloyQuality')
-
-        # Use crafter to process minigame result
-        craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result, alloy_quality_bonus=alloy_quality_bonus)
-
-        if not craft_result.get('success'):
-            # Failure - materials may have been lost
-            message = craft_result.get('message', 'Crafting failed')
-            self.add_notification(message, (255, 100, 100))
-
-            # Sync inventory back (consume materials even on failure)
-            recipe_db.consume_materials(recipe, self.character.inventory)
-
-            # Clear enchantment selection if this was an enchantment
-            if self.enchantment_selected_item:
-                self.enchantment_selected_item = None
-        else:
-            # Success - consume materials and process output
-            recipe_db.consume_materials(recipe, self.character.inventory)
-
-            # Record activity and XP
-            activity_map = {
-                'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
-                'engineering': 'engineering', 'adornments': 'enchanting'
-            }
-            activity_type = activity_map.get(self.minigame_type, 'smithing')
-            self.character.activities.record_activity(activity_type, 1)
-
-            # Publish crafting event for World Memory System
-            try:
-                from events.event_bus import get_event_bus
-                quality = craft_result.get('quality', 'normal')
-                get_event_bus().publish("ITEM_CRAFTED", {
-                    "recipe_id": recipe.recipe_id,
-                    "output_id": recipe.output_id,
-                    "discipline": activity_type,
-                    "quality": quality,
-                    "station_tier": recipe.station_tier,
-                    "position_x": self.character.position.x,
-                    "position_y": self.character.position.y,
-                }, source="crafting")
-            except Exception:
-                pass
-
-            # Minigame gives XP (50% bonus over instant craft)
-            xp_reward = int(20 * recipe.station_tier * 1.5)
-            leveled_up = self.character.leveling.add_exp(xp_reward)
-            if leveled_up:
-                self.character.check_and_notify_new_skills()
-
-            new_title = self.character.titles.check_for_title(self.character)
-            if new_title:
-                self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
-
-            # Handle enchantment application (apply to selected item instead of adding to inventory)
-            if self.minigame_type == 'adornments' and self.enchantment_selected_item:
-                equipment = self.enchantment_selected_item['equipment']
-                enchantment_data = craft_result.get('enchantment', {})
-
-                # Apply enchantment to the equipment
-                success, message = equipment.apply_enchantment(
-                    recipe.output_id,
-                    recipe.enchantment_name,
-                    recipe.effect
-                )
-
-                if success:
-                    self.add_notification(f"Applied {recipe.enchantment_name} to {equipment.name}!", (100, 255, 255))
-                else:
-                    self.add_notification(f"❌ {message}", (255, 100, 100))
-
-                # Clear the stored item
-                self.enchantment_selected_item = None
-            else:
-                # Normal crafting - add output to inventory with rarity and stats
-                output_id = craft_result.get('outputId', recipe.output_id)
-                output_qty = craft_result.get('quantity', recipe.output_qty)
-                rarity = craft_result.get('rarity', 'common')
-                stats = craft_result.get('stats')
-
-                # Apply firstTryBonus if eligible
-                first_try_eligible = craft_result.get('first_try_eligible', False)
-                if first_try_eligible and hasattr(self.character, 'titles'):
-                    first_try_bonus = self.character.titles.get_total_bonus('firstTryBonus')
-                    if first_try_bonus > 0 and stats:
-                        # Apply bonus to all numeric stats
-                        for stat_name, stat_value in stats.items():
-                            if isinstance(stat_value, (int, float)):
-                                boosted_value = stat_value * (1.0 + first_try_bonus)
-                                stats[stat_name] = int(boosted_value) if isinstance(stat_value, int) else boosted_value
-                        print(f"   🌟 First-try bonus applied! +{first_try_bonus*100:.0f}% to all stats")
-
-                self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)
-
-            # Get proper name for notification
-            if equip_db.is_equipment(output_id):
-                equipment = equip_db.create_equipment_from_id(output_id)
-                out_name = equipment.name if equipment else output_id
-            else:
-                out_mat = mat_db.get_material(output_id)
-                out_name = out_mat.name if out_mat else output_id
-
-            message = craft_result.get('message', f"Crafted {out_name} x{output_qty}")
-            self.add_notification(message, (100, 255, 100))
-            print(f"✅ Minigame crafting complete: {out_name} x{output_qty}")
-
-        # Clear minigame state
-        self.active_minigame = None
-        self.minigame_type = None
-        self.minigame_recipe = None
 
     def add_crafted_item_to_inventory(self, item_id: str, quantity: int,
                                      rarity: str = 'common', stats: Dict = None):
@@ -8861,11 +8718,34 @@ class GameEngine:
                 inv_dict[mat_id] = 0
                 print(f"⚠ Warning: Recipe material '{mat_id}' not in inventory!")
 
+        # DEBUG MODE: add infinite quantities of required materials — parity
+        # with the instant-craft path (which toggles rarity_system.debug_mode
+        # the same way). Restored 2026-06-10: this block was lost when a
+        # second _complete_minigame definition shadowed the first.
+        if Config.DEBUG_INFINITE_RESOURCES:
+            print("🔧 DEBUG MODE: Adding infinite materials for minigame completion")
+            rarity_system.debug_mode = True
+            for inp in recipe.inputs:
+                mat_id = inp.get('materialId') or inp.get('itemId') or ''
+                inv_dict[mat_id] = 999999
+        else:
+            rarity_system.debug_mode = False
+
         # Use crafter to process minigame result
         # For adornments, pass target_item if available
         if self.minigame_type == 'adornments' and hasattr(self, 'enchantment_selected_item') and self.enchantment_selected_item:
             target_item = self.enchantment_selected_item.get('equipment')
             craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result, target_item=target_item)
+        elif self.minigame_type == 'refining' and hasattr(self.character, 'titles'):
+            # Refining: pass the alloyQuality title bonus (chance-based rarity
+            # upgrade — see RefiningCrafter.craft_with_minigame). Restored
+            # 2026-06-10: the only call site passing this bonus lived in the
+            # shadowed duplicate, so the bonus silently never applied. Only
+            # RefiningCrafter accepts the kwarg.
+            alloy_quality_bonus = self.character.titles.get_total_bonus('alloyQuality')
+            craft_result = crafter.craft_with_minigame(
+                recipe.recipe_id, inv_dict, result,
+                alloy_quality_bonus=alloy_quality_bonus)
         else:
             craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)
 
@@ -8916,6 +8796,24 @@ class GameEngine:
             }
             activity_type = activity_map.get(self.minigame_type, 'smithing')
             self.character.activities.record_activity(activity_type, 1)
+
+            # Publish crafting event for the World Memory System. Restored
+            # 2026-06-10: the only ITEM_CRAFTED publish in the codebase lived
+            # in the shadowed duplicate of this method, so the WMS crafting
+            # evaluators never received any crafting events.
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("ITEM_CRAFTED", {
+                    "recipe_id": recipe.recipe_id,
+                    "output_id": recipe.output_id,
+                    "discipline": activity_type,
+                    "quality": craft_result.get('quality') or craft_result.get('rarity', 'normal'),
+                    "station_tier": recipe.station_tier,
+                    "position_x": self.character.position.x,
+                    "position_y": self.character.position.y,
+                }, source="crafting")
+            except Exception:
+                pass
 
             # NEW: Comprehensive crafting stat tracking
             if hasattr(self.character, 'stat_tracker'):
@@ -8984,6 +8882,18 @@ class GameEngine:
                 rarity = craft_result.get('rarity') or 'common'  # Ensure not None
                 stats = craft_result.get('stats', {})
                 bonus_pct = craft_result.get('bonus', 0)
+
+                # Apply firstTryBonus title bonus if eligible. Restored
+                # 2026-06-10 (lost to the duplicate-method shadowing).
+                first_try_eligible = craft_result.get('first_try_eligible', False)
+                if first_try_eligible and hasattr(self.character, 'titles'):
+                    first_try_bonus = self.character.titles.get_total_bonus('firstTryBonus')
+                    if first_try_bonus > 0 and stats:
+                        for stat_name, stat_value in stats.items():
+                            if isinstance(stat_value, (int, float)):
+                                boosted_value = stat_value * (1.0 + first_try_bonus)
+                                stats[stat_name] = int(boosted_value) if isinstance(stat_value, int) else boosted_value
+                        print(f"   🌟 First-try bonus applied! +{first_try_bonus*100:.0f}% to all stats")
 
                 # Use add_crafted_item_to_inventory to apply enhanced stats
                 self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)

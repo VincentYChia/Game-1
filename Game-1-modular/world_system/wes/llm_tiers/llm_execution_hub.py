@@ -43,6 +43,14 @@ def _parse_specs(text: str, plan_step_id: str) -> List[ExecutorSpec]:
         try:
             specs = parse_xml_batch(text)
         except Exception:
+            # Terminal fallthrough — CC3: must not be silent (2026-06-10).
+            # An empty spec list makes the orchestrator think no work was
+            # requested, so the WES run quietly produces zero output.
+            from world_system.living_world.infra.graceful_degrade import log_parse_failure
+            log_parse_failure(
+                "wes_execution_hub", text,
+                fallback_taken=f"returned [] — plan_step {plan_step_id} yields no specs",
+            )
             return []
         # Rewrite plan_step_id so dispatcher owns the authoritative value;
         # mismatches between LLM output and dispatcher intent can't cross-wire.
