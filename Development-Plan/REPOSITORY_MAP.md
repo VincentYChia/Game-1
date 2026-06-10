@@ -4,7 +4,7 @@
 **Answers**: "WHERE is X, and is it load-bearing?" — for "DOES X work?" see [SYSTEMS_CATALOG.md](SYSTEMS_CATALOG.md).
 **Audit evidence**: [repo-audit-2026-06-10/FINDINGS_LEDGER.md](repo-audit-2026-06-10/FINDINGS_LEDGER.md)
 
-**Hard numbers (verified 2026-06-10)**: 434 Python files / ~159,800 LOC (including tests + tools; "game code only" is ~290 files), ~113 game-definition JSONs across content dirs, 1,085 passing tests (10 known failures: geometry_patterns ×8, status_effects ×1, tag_system ×1).
+**Hard numbers (verified 2026-06-10, post session-2)**: 434+ Python files / ~160,000 LOC (including tests + tools; "game code only" is ~290 files), ~113 game-definition JSONs across content dirs, 1,111 passing tests (10 known failures: geometry_patterns ×8, status_effects ×1, tag_system ×1). The earlier "1,085 passing" figure predates a collection fix: a broken print-script test aborted collection of part of the tree, hiding 7 tests; session 2 also added a 19-scenario headless playtest suite at `Game-1-modular/tests/integration/` (boots the REAL GameEngine under SDL dummy video and plays it — boot, movement, crafting, combat, save/load, chests, NPC dialogue).
 
 > Older docs cite "239 Python files / ~96,400 LOC" — that was a pre-tools/tests count from March 2026. Use the numbers above.
 

@@ -207,3 +207,61 @@ Honest gaps identified and closed where cheap:
    consumer (dungeon-config, fishing-config, village-config, combat-config,
    stats-calculations, world_generation).
 5. Packaged-build smoke test of the corrected spec.
+
+---
+
+## Session 2 (2026-06-10, same day): user-facing hardening + playtest harness
+
+Owner directive: professionalize user-touching code and user-touching AI;
+build integration tests that "truly simulate some type of play testing."
+Method unchanged: 3 agent recon sweeps, every claim verified firsthand
+before acting (1 more agent claim REJECTED, see below).
+
+### Verified bugs fixed (commit 87d79871)
+| # | Finding | Evidence | Fix |
+|---|---------|----------|-----|
+| S2-1 | main.py printed the raw ANTHROPIC_API_KEY to stdout at every boot | main.py:22 (pre-fix) | presence-only print |
+| S2-2 | Saves were non-atomic: open(filepath,'w') truncated the previous save before writing; crash mid-write = save destroyed | save_manager.py:501 (pre-fix) | in-memory serialize -> .tmp -> fsync -> os.replace, previous save kept as .bak; load recovers from .bak on corrupt JSON |
+| S2-3 | No guard around run() loop: any exception killed the windowed build (console=False) with zero feedback, no save | game_engine.py:11791 (pre-fix) | frame guard: crash report file (core/crash_handler.py), play continues on transient error, 5 consecutive bad frames -> emergency save to crash_recovery.json + clean exit |
+| S2-4 | 6 chest-transfer sites accepted negative indices -> python negative indexing silently moved/popped the WRONG item | game_engine.py:7701/7724/7785/7810/7978/8008 (pre-fix) | full range guards |
+| S2-5 | NPC dialogue LLM call was synchronous: F-talk froze the UI up to the 30s backend timeout (self-documented at game_engine.py:1623) | npc_agent.py:209 + game_engine.py:1681 (pre-fix) | async worker + per-frame poll; speechbank line shows instantly, LLM text swaps in on arrival; token discards stale results |
+| S2-6 | Every smithing craft crashed on default Windows consoles (cp1252): tag_debug INFO log prints emoji unconditionally | core/tag_debug.py:58 + repro UnicodeEncodeError | main.py reconfigures stdio to utf-8/replace; tag_debug print has ascii fallback |
+| S2-7 | tests/crafting/test_fixes.py was a print-script: os.chdir at IMPORT + opened long-gone recipes-smithing-1.JSON -> **aborted collection of the entire tests/ tree**. The "1085 passed" baseline never actually ran several files | pytest "Interrupted: 1 error during collection" repro | rewritten as real pytest; exposed +7 hidden tests incl. one stale-schema failure (test_no_crash expected pre-rework absolute 'durability'; schema is multiplier-based) |
+| S2-8 | quest-accept clicked with a stale button rect would ValueError on npc_available_quests.remove() | game_engine.py:1536 (pre-fix) | membership guard |
+| S2-9 | Classifier model files only failed at first invention (lazy load, debug-only log) | crafting_classifier.py lazy properties | boot pre-flight prints missing files per discipline |
+
+### Agent claim REJECTED (5th across both sessions)
+- "If BackendManager is initialized but all backends fail, NPC dialogue has no
+  fallback" — WRONG: npc_agent.py:218 `if text and not err` falls through to
+  `_generate_fallback()` at :224 on every failure path.
+
+### NEW: headless playtest harness (tests/integration/)
+The first true integration suite: boots the REAL GameEngine under
+SDL_VIDEODRIVER=dummy, enters a temp world via the same
+handle_start_menu_selection(3) path as the menu click, and drives play
+through the real event queue (KEYDOWN/KEYUP/mouse posted to pygame) and the
+real per-frame sequence (handle_events/update/render with controlled dt via
+last_tick).
+- conftest.py — session-scoped engine; saves redirected to pytest temp dir
+  via the PathManager singleton; screen pinned 1280x720 (dummy-driver
+  auto-detect can yield 0x0 -> UI_SCALE=0 -> ZeroDivisionError).
+- harness.py — PlaytestHarness: tick/move/give/count/craft/save primitives.
+- 19 scenarios, ~23s: boot + DB sanity, 120 rendered frames, WASD movement
+  through the input pipeline, full crafting pipeline (pins the ITEM_CRAFTED
+  publish + material consumption the duplicate-_complete_minigame bug had
+  killed), combat encounter (damage, kill, EXP, corpse cleanup), atomic
+  save/.bak/corruption recovery round-trips, chest transfer bounds
+  (negative-index no-ops), NPC dialogue open/close incl. async dispatch.
+
+### Latent issues observed, catalogued NOT fixed
+- world_system.py:217 imports get_chunk_tags from
+  systems/geography/setting_resolver — function does not exist (only
+  resolve_setting does). Confined to a try/except debug dump ("Setting
+  tags: failed" in world-gen log). Diagnostic noise only.
+- LLM item generation: no cancel button on the loading overlay; progress
+  bar is animation, not real progress (llm_item_generator.py:160-185).
+  UX papercuts, deferred.
+
+### Suite state after session 2
+1092 passed + 19 integration = 1111 passed / 10 pre-existing failures
+(geometry x8, status_effects x1, tag_system x1) / 0 regressions.

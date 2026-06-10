@@ -92,6 +92,21 @@ New known limitations from the audit (not fixed, catalogued):
 | `ecosystem_agent.py` (398 LOC) confirmed imported nowhere | Owner: leave as-is |
 | Count corrections: 35 skills (not "100+"), 167 recipes, 10+4 titles (not "40+"), 36 evaluators (not 33), 64 tag categories (not 65), 434 py files (not 239) | Docs corrected 2026-06-10 |
 
+### 2026-06-10 session 2: user-facing hardening + playtest harness (commits `87d79871` + harness)
+
+Owner directive: professionalize user-touching code/AI; build tests that simulate playtesting. Evidence: ledger §Session 2.
+
+| Finding | Status |
+|---|---|
+| Raw `ANTHROPIC_API_KEY` printed to console at every boot | **FIXED** — presence-only |
+| Saves non-atomic (`open(path,'w')` truncated the previous save before writing; crash mid-write destroyed it) | **FIXED** — tmp+fsync+os.replace, previous save kept as `.bak`, load auto-recovers from `.bak` on corrupt JSON |
+| No guard on the main loop — any exception killed the windowed build with zero feedback, no save | **FIXED** — frame guard: crash report file (`core/crash_handler.py`), transient errors survivable, persistent failure → emergency save to `crash_recovery.json` |
+| NPC dialogue LLM call synchronous — F-talk froze the UI up to 30s on a dead backend | **FIXED** — async worker + per-frame poll; speechbank line instant, LLM swaps in |
+| Smithing craft crashed on default Windows consoles (cp1252 vs emoji in tag_debug INFO log) | **FIXED** — stdio UTF-8 reconfigure in main.py + ascii fallback in tag_debug |
+| 6 chest-transfer sites accepted negative indices → silently moved/popped the WRONG item | **FIXED** — range guards |
+| `tests/crafting/test_fixes.py` aborted pytest collection of the whole tests/ tree (import-time print-script opening a long-gone file) — the old "1085 passed" baseline never ran several files | **FIXED** — rewritten as real pytest; suite is now 1,111 passed / 10 known failures |
+| **NEW: `tests/integration/` headless playtest suite** — boots the REAL GameEngine (SDL dummy), enters temp world via the real menu path, drives play through the real event queue. 19 scenarios in ~23s: boot, 120 rendered frames, movement, full crafting pipeline (pins ITEM_CRAFTED publish), combat kill+EXP, atomic save/.bak/corruption recovery, chest bounds, NPC dialogue | **SHIPPED** |
+
 ### Catalog corrections (these earlier "gaps" turned out to be FINE)
 
 - **Fishing IS wired** — `get_fishing_manager()` called from `game_engine.py:11354` (start) + `11587` (process). Activated by clicking a fishing-spot resource at `game_engine.py:2760`, not through `craft_item`. Catalog fixed below. Fishing skills work; titles untested.
