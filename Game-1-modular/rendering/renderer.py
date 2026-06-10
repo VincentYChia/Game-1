@@ -3135,7 +3135,7 @@ class Renderer:
             y += 22
 
     def render_health_bar(self, char, x, y):
-        w, h = 300, 25
+        w, h = Config.scale(300), Config.scale(25)
         pygame.draw.rect(self.screen, Config.COLOR_HEALTH_BG, (x, y, w, h))
         hp_w = int(w * (char.health / char.max_health))
         pygame.draw.rect(self.screen, Config.COLOR_HEALTH, (x, y, hp_w, h))
@@ -3149,7 +3149,7 @@ class Renderer:
             self.screen.blit(shield_text, (x + w + 10, y))
 
     def render_mana_bar(self, char, x, y):
-        w, h = 300, 20
+        w, h = Config.scale(300), Config.scale(20)
         pygame.draw.rect(self.screen, Config.COLOR_HEALTH_BG, (x, y, w, h))
         mana_w = int(w * (char.mana / char.max_mana))
         pygame.draw.rect(self.screen, (50, 150, 255), (x, y, mana_w, h))

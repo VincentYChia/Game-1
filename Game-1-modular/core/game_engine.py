@@ -511,6 +511,10 @@ class GameEngine:
 
     def add_notification(self, message: str, color: Tuple[int, int, int] = Config.COLOR_NOTIFICATION):
         self.notifications.append(Notification(message, 3.0, color))
+        # Bound the stack: a burst (mass-craft, AoE loot) used to stack
+        # unlimited toasts down the screen. Oldest are culled first.
+        if len(self.notifications) > 8:
+            del self.notifications[:len(self.notifications) - 8]
 
     def _get_weapon_effect_data(self, hand: str = 'mainHand') -> tuple:
         """
@@ -687,12 +691,23 @@ class GameEngine:
                 # Minigame input handling (highest priority)
                 if self.active_minigame:
                     if event.key == pygame.K_ESCAPE:
-                        # Cancel minigame (lose materials)
-                        print(f"🚫 Minigame cancelled by player")
-                        self.add_notification("Minigame cancelled!", (255, 100, 100))
-                        self.active_minigame = None
-                        self.minigame_type = None
-                        self.minigame_recipe = None
+                        # Abandoning a craft is destructive (materials are
+                        # lost) — require a quick double-ESC, same idiom as
+                        # the dungeon double-F exit, so one accidental
+                        # press can't discard the work.
+                        now = pygame.time.get_ticks()
+                        if now - getattr(self, '_last_minigame_escape_time', 0) < 1500:
+                            print(f"🚫 Minigame cancelled by player")
+                            self.add_notification("Minigame cancelled!", (255, 100, 100))
+                            self.active_minigame = None
+                            self.minigame_type = None
+                            self.minigame_recipe = None
+                            self._last_minigame_escape_time = 0
+                        else:
+                            self._last_minigame_escape_time = now
+                            self.add_notification(
+                                "Press ESC again to abandon craft (materials lost)",
+                                (255, 200, 100))
                     elif self.minigame_type == 'smithing' and event.key == pygame.K_SPACE:
                         self.active_minigame.handle_fan()
                     elif self.minigame_type == 'alchemy':
@@ -803,7 +818,10 @@ class GameEngine:
                         self._record_menu_close_time("map")
                         self.map_system.close_map()
                     elif self.character.class_selection_open:
-                        pass
+                        # Class selection is mandatory — ESC can't close
+                        # it, but silence felt broken. Tell the player why.
+                        self.add_notification(
+                            "Choose a class to continue", (255, 200, 100))
                     elif self.npc_dialogue_open:
                         # Close NPC dialogue
                         self.npc_dialogue_open = False

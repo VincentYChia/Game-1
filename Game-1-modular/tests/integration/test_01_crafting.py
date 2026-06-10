@@ -66,11 +66,12 @@ def test_smithing_craft_full_pipeline(play, crafted_events):
     ), "ITEM_CRAFTED was not published to the event bus"
 
 
-def test_minigame_keyboard_input_does_not_crash(play):
+def test_minigame_keyboard_input_and_double_esc_abandon(play):
     """Drive a real smithing minigame with real key events for a while.
 
     Not asserting minigame outcome (that's gameplay), asserting the input
-    handlers survive sustained interaction — ESC must close cleanly.
+    handlers survive sustained interaction — and that abandoning requires
+    a DOUBLE ESC (one accidental press must not discard the materials).
     """
     import pygame
     eng = play.engine
@@ -86,7 +87,14 @@ def test_minigame_keyboard_input_does_not_crash(play):
         play.key_tap(pygame.K_SPACE)  # handle_fan
         play.tick(3)
 
+    # First ESC warns, does NOT abandon.
+    eng._last_minigame_escape_time = 0
     play.key_tap(pygame.K_ESCAPE)
-    assert eng.active_minigame is None, "ESC did not close the minigame"
+    assert eng.active_minigame is not None, (
+        "A single ESC abandoned the craft — confirmation is gone"
+    )
+    # Second ESC within the confirm window abandons.
+    play.key_tap(pygame.K_ESCAPE)
+    assert eng.active_minigame is None, "Double-ESC did not close the minigame"
     eng.minigame_recipe = None
     eng.minigame_type = None

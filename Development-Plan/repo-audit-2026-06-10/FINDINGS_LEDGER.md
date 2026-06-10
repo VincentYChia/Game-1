@@ -302,3 +302,15 @@ map UI, other UIs. Recon by 2 agents, all findings verified firsthand
   file exists; load error is genuine — TF/model compat suspect). Lazy load
   retries at first use. Needs a dedicated look before invented-items
   playtest relies on adornments validation.
+
+### Session 3 Track B (papercut sweep)
+| # | Finding | Fix |
+|---|---------|-----|
+| S3-5 | ESC mid-minigame instantly discarded the craft (materials lost, no confirmation) | double-ESC within 1.5s required (same idiom as dungeon double-F); first press shows a warning toast. Pinned in test_01. |
+| S3-6 | Class selection silently ignored ESC (only menu that did) | shows "Choose a class to continue" — selection stays mandatory, silence removed |
+| S3-7 | HP/mana bars hardcoded 300x25 / 300x20 px (renderer.py:3138/3152) — misproportioned at non-1.0 UI scale | Config.scale() applied |
+| S3-8 | Notifications unbounded — a burst (mass-craft, AoE loot) stacked toasts down the whole screen | capped at 8, oldest culled |
+
+Deferred from Track B (catalogued): button hover states across menus (broad
+renderer sweep — schedule with a visual pass), per-frame hasattr lazy font
+inits (negligible: hasattr check only).
