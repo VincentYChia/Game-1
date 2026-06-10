@@ -81,6 +81,7 @@ Six-area parallel sweep + firsthand verification (evidence: [repo-audit-2026-06-
 | 24 data-loader `open()` calls without `encoding='utf-8'` → loading breaks on cp1252 Windows the moment content gains non-ASCII | **FIXED** |
 | 5 terminal LLM parse failures in WES tiers silent (no log_degrade), incl. supervisor degrading to auto-pass | **FIXED** — shared `log_parse_failure()` |
 | EventStore missing composite index for the evaluators' hot query | **FIXED** — `idx_events_type_locality_time` |
+| Game1.spec bundled ML *training* dirs instead of `crafting_classifier_models/`; missing Update-1/2 + manifest + `world_system/config` → packaged builds lost classifiers, fishing content, and all Living World configs | **FIXED** in spec — packaged-build smoke test still pending |
 
 New known limitations from the audit (not fixed, catalogued):
 

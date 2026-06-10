@@ -84,7 +84,7 @@
 | `docs/` (25 files + tag-system/ 8 + json-reference/) | GAME_MECHANICS_V6.md (master mechanics reference), MODULE_REFERENCE.md, DEVELOPMENT_GUIDE, DEVELOPER_GUIDE_JSON_INTEGRATION, UPDATE_N_SYSTEM, NAMING_CONVENTIONS, PACKAGING, KNOWN_LIMITATIONS, HARDCODED_SYSTEMS, INTERACTIVE_CRAFTING_*, tag-system/TAG-GUIDE et al. | REPOSITORY_STATUS_REPORT_2026-01-27 and INTERN_DOCUMENTATION_CLEANUP_PLAN archived 2026-06-10 (superseded). |
 | `save_system/` | Save docs + `create_default_save.py` (v2.0 schema) | Current. |
 | `saves/`, `llm_debug_logs/`, `__pycache__/` | Runtime output | Gitignored. |
-| Root files | `main.py` (entry), `verify_imports.py`, `Game1.spec` + `build.bat/sh` (PyInstaller), `requirements*.txt` (aligned with imports), README/HOW_TO_RUN/PLAYTEST_README, MASTER_ISSUE_TRACKER | CI: `.github/workflows/build-game.yml` (Win/Linux/macOS) — paths verified valid. |
+| Root files | `main.py` (entry), `verify_imports.py`, `Game1.spec` + `build.bat/sh` (PyInstaller), `requirements*.txt` (aligned with imports), README/HOW_TO_RUN/PLAYTEST_README, MASTER_ISSUE_TRACKER | CI: `.github/workflows/build-game.yml` (Win/Linux/macOS). Game1.spec datas corrected 2026-06-10 (was bundling ML *training* dirs instead of `crafting_classifier_models/`, and missing Update-N + world_system/config) — needs a packaged-build smoke test before next binary playtest. `assets/` also holds 5 dev one-off .py scripts (not runtime). |
 
 ---
 
@@ -113,5 +113,9 @@
 3. Test files split between central `tests/` and in-package `*/tests/` + 4 inline faction phase tests. The in-package ones document implementation narratives; pytest collects all.
 4. `core/testing.py` is a dev tool wired into game_engine; `core/testing_difficulty_distribution.py` is standalone.
 5. The two god-classes (game_engine 11.7K, renderer 8.2K) are the dominant regression risk — extend via new modules, never restructure casually (CLAUDE.md sacred rule).
+
+## Coverage honesty
+
+This map's depth varies: source trees were inventoried + verified; `Scaled JSON Development/` training scripts and `archive/` were inventoried at top level only; entry-level JSON cross-reference validation (recipe inputs → materials, etc.) has NOT been performed; the two god-classes were sampled, not read line-by-line. Full gap list: [repo-audit-2026-06-10/FINDINGS_LEDGER.md](repo-audit-2026-06-10/FINDINGS_LEDGER.md) §Gap-closure.
 
 **Maintenance**: update this map when adding a directory or moving docs; update SYSTEMS_CATALOG when a system's status changes. Counts here were verified 2026-06-10 — re-verify before quoting elsewhere.

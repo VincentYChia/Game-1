@@ -161,3 +161,49 @@ Status codes: [BUG] clear bug to fix · [OPT] behavior-preserving optimization �
 - DO NOT touch DESIGNER_LEDGER.md (active user walkthrough) or
   PLACEHOLDER_FURNISHING_WORKSHEET.md (furnishing not done).
 - tools/prompt_editor.py — superseded by prompt_studio; catalog only (code stays put).
+
+
+---
+
+## Gap-closure pass (owner asked "did you actually cover everything?")
+
+Honest gaps identified and closed where cheap:
+
+### [BUG-7] Game1.spec bundled the WRONG ML directory + missing runtime data — FIXED
+- **Code**: spec bundled `Convolution Neural Network (CNN)` + `Simple Classifiers
+  (LightGBM)` (training dirs — only a code COMMENT references them) while
+  `crafting_classifier.py:1010-1030` loads from `crafting_classifier_models/{discipline}/`
+  — absent from the bundle. Also missing: `Update-1/`, `Update-2/`,
+  `updates_manifest.json` (packaged builds lost fishing content), and
+  `world_system/config/` (Living World booted fully degraded in packaged builds).
+- **Doc**: docs/PACKAGING.md + PLAYTEST_README.md document packaged builds as a
+  supported distribution channel; CI builds them (build-game.yml).
+- **Fix**: spec datas corrected. NOT yet verified with an actual PyInstaller build —
+  flagged as a follow-up before the next binary playtest.
+
+### Verified clean (paths the audit had not traced)
+- CNN/LightGBM model files exist for all 5 disciplines at the exact paths the
+  classifier expects (`smithing_best.keras`, `adornment_best.keras`,
+  `{alchemy,refining,engineering}_model.txt`). `alchemy_extractor.pkl` confirmed
+  absent — the existing known-limitation (inline extractor workaround) stands.
+- Fewshot prompts present where `llm_item_generator.py:362-387` loads them
+  (system_*.txt + few_shot_examples.json).
+- `.claude/` contains INDEX.md + NAMING_CONVENTIONS.md (as CLAUDE.md claims) plus
+  an uncataloged `FACTION_SYSTEM_CORRECTIONS_AND_ROADMAP.md` (not reviewed).
+- `assets/*.py` = 5 dev one-off scripts (icon-selector, scan_generated_icons,
+  remove-1_from_PNG, Vheer-automation, broken_vheer_automation — the last is
+  self-flagged dead by its filename). No runtime imports.
+- `tools/prompt_editor.py` imports are stdlib+tkinter only — it RUNS; superseded
+  by Prompt Studio, not broken.
+
+### Acknowledged remaining gaps (not closed — would need dedicated passes)
+1. Entry-level JSON cross-reference validation (does every recipe input name an
+   existing material, every skill-unlock a real skill, etc.) — file-level orphan
+   check done; entry-level xref NOT done.
+2. `Scaled JSON Development/` training scripts (~15 .py: trainers, validators,
+   ollama/together adapters) — inventoried, not audited.
+3. The god-classes were sampled, not read line-by-line (20K LOC combined).
+4. Several `Definitions.JSON` configs marked CONDITIONAL without tracing each
+   consumer (dungeon-config, fishing-config, village-config, combat-config,
+   stats-calculations, world_generation).
+5. Packaged-build smoke test of the corrected spec.

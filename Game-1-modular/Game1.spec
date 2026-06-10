@@ -30,15 +30,28 @@ added_files = [
     ('Skills', 'Skills'),
 
     # ML Models and LLM Prompts (from parent directory)
-    # CNN models for Smithing and Adornments validation
-    ('../Scaled JSON Development/Convolution Neural Network (CNN)',
-     'Scaled JSON Development/Convolution Neural Network (CNN)'),
-    # LightGBM models for Alchemy, Refining, Engineering validation
-    ('../Scaled JSON Development/Simple Classifiers (LightGBM)',
-     'Scaled JSON Development/Simple Classifiers (LightGBM)'),
+    # 2026-06-10 audit fix: the classifier loads from
+    # crafting_classifier_models/{discipline}/ (crafting_classifier.py
+    # ~line 1010) — the previous entries bundled the CNN/LightGBM
+    # TRAINING directories instead, which nothing loads at runtime, while
+    # the actual model files were absent from packaged builds.
+    ('../Scaled JSON Development/crafting_classifier_models',
+     'Scaled JSON Development/crafting_classifier_models'),
     # LLM prompts for invented item generation
     ('../Scaled JSON Development/LLM Training Data/Fewshot_llm',
      'Scaled JSON Development/LLM Training Data/Fewshot_llm'),
+
+    # Update-N content packs + manifest (2026-06-10 audit fix: these were
+    # not bundled — packaged builds silently lost the fishing skills /
+    # titles / stations that Update-2 provides at boot).
+    ('Update-1', 'Update-1'),
+    ('Update-2', 'Update-2'),
+    ('updates_manifest.json', '.'),
+
+    # World System JSON configs (2026-06-10 audit fix: backend/memory/
+    # narrative/faction/prompt-fragment configs were not bundled — the
+    # Living World booted fully degraded in packaged builds).
+    ('world_system/config', 'world_system/config'),
 
     # Note: saves/ directory will be created in user's home directory
     # to ensure write permissions (handled in code)
