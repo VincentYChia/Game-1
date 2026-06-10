@@ -314,3 +314,13 @@ map UI, other UIs. Recon by 2 agents, all findings verified firsthand
 Deferred from Track B (catalogued): button hover states across menus (broad
 renderer sweep — schedule with a visual pass), per-frame hasattr lazy font
 inits (negligible: hasattr check only).
+
+### Session 3 Track C (performance headroom)
+| # | Finding | Fix |
+|---|---------|-----|
+| S3-9 | render_npcs swept ALL 12,301 village NPCs through world_to_screen every frame (~2-4ms of the 16ms budget) to find the ~10 on screen | chunk-keyed spatial index (`_get_npc_chunk_buckets`), rebuilt only when the list object/length changes (village spawn, WES commits; NPCs are static — no movement system). Only buckets overlapping the camera (+1 chunk margin) are walked. Measured: integration suite wall time dropped ~28s -> ~17s |
+
+### Agent claim REJECTED (7th)
+- "Tile rendering has no caching — get_tile_surface regenerates procedurally
+  per frame" — WRONG: terrain_renderer.py:170-216 has a bounded
+  per-(x,y,type) `_surface_cache`. Tile path left as-is.

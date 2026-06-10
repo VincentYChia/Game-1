@@ -100,3 +100,22 @@ def test_hover_geometry_matches_single_source(play):
     # A point in the spacing gutter between slots resolves to nothing.
     eng.mouse_pos = (start_x + slot + spacing // 2, start_y + slot // 2)
     assert eng._get_hovered_inventory_slot() == -1
+
+
+def test_npc_spatial_index_is_complete_and_renders(play):
+    """The chunk-bucket index over engine.npcs must account for every NPC
+    (12,301 village NPCs made render_npcs an O(N)-per-frame sweep), and
+    rendered frames must keep working through the bucketed path."""
+    eng = play.engine
+    renderer = eng.renderer
+
+    buckets = renderer._get_npc_chunk_buckets(eng.npcs)
+    assert sum(len(v) for v in buckets.values()) == len(eng.npcs), (
+        "Spatial index lost NPCs — bucketed rendering would hide them"
+    )
+
+    # Same list object + length -> the cached index is reused, not rebuilt.
+    assert renderer._get_npc_chunk_buckets(eng.npcs) is buckets
+
+    # Full render frames through the bucketed path.
+    play.tick(10, render_every=1)

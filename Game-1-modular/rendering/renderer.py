@@ -904,13 +904,49 @@ class Renderer:
 
         return slot_rects
 
+    def _get_npc_chunk_buckets(self, npcs):
+        """Chunk-keyed spatial index over the NPC list.
+
+        12,301 village NPCs made render_npcs an O(N) world_to_screen
+        sweep every frame (~2-4ms of the 16ms budget) to find the ~10 on
+        screen. NPCs are static (there is no NPC movement system), so
+        bucket them once by chunk and rebuild only when the list object
+        or its length changes (e.g. village spawning, WES NPC commits).
+        """
+        key = (id(npcs), len(npcs))
+        if getattr(self, '_npc_bucket_key', None) != key:
+            buckets = {}
+            chunk = Config.CHUNK_SIZE
+            for npc in npcs:
+                bucket = (int(npc.position.x) // chunk,
+                          int(npc.position.y) // chunk)
+                buckets.setdefault(bucket, []).append(npc)
+            self._npc_buckets = buckets
+            self._npc_bucket_key = key
+        return self._npc_buckets
+
     def render_npcs(self, camera: Camera, character: Character):
         """Render NPCs in the world with interaction indicators"""
         # Get NPCs from game engine (passed via temporary attribute)
         if not hasattr(self, '_temp_npcs'):
             return
 
-        npcs = self._temp_npcs
+        buckets = self._get_npc_chunk_buckets(self._temp_npcs)
+
+        # Only walk buckets overlapping the camera view (+1 chunk margin
+        # so sprites straddling an edge still draw).
+        chunk = Config.CHUNK_SIZE
+        half_w = camera.viewport_width / (2 * Config.TILE_SIZE)
+        half_h = camera.viewport_height / (2 * Config.TILE_SIZE)
+        cx0 = int(camera.position.x - half_w) // chunk - 1
+        cx1 = int(camera.position.x + half_w) // chunk + 1
+        cy0 = int(camera.position.y - half_h) // chunk - 1
+        cy1 = int(camera.position.y + half_h) // chunk + 1
+
+        npcs = []
+        for bx in range(cx0, cx1 + 1):
+            for by in range(cy0, cy1 + 1):
+                npcs.extend(buckets.get((bx, by), ()))
 
         for npc in npcs:
             nx, ny = camera.world_to_screen(npc.position)
