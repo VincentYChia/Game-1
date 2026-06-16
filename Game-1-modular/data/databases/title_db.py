@@ -82,12 +82,30 @@ class TitleDatabase:
         old_loaded = self.loaded
         try:
             self.load_from_files()
+            self._remerge_updates()
         except Exception as e:
             print(
                 f"[TitleDatabase] reload failed, keeping previous: {e}"
             )
             self.titles = old_titles
             self.loaded = old_loaded
+
+    def _remerge_updates(self) -> None:
+        """Re-layer Update-N titles on top after a load_from_files() rebuild.
+
+        Boot loads titles then layers Update-N on top via
+        load_all_updates(); load_from_files() clears the dict and reads
+        only the sacred+generated titles, so a bare reload() drops the
+        Update-N (e.g. Update-2 fishing) titles until restart. This
+        re-applies them so a mid-session WES title commit can't silently
+        delete fishing titles. Never raises — Update-N is optional.
+        """
+        try:
+            from core.paths import get_resource_path
+            from data.databases.update_loader import load_title_updates
+            load_title_updates(get_resource_path(""))
+        except Exception as e:
+            print(f"[TitleDatabase] Update-N re-merge skipped: {e}")
 
     def load_from_file(self, filepath: str):
         try:

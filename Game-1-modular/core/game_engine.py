@@ -638,9 +638,21 @@ class GameEngine:
                         self.character.stat_tracker.record_session_end()
                 self.running = False
 
-            # Block all input except quit when LLM overlay is active
+            # Block all input except quit when LLM overlay is active —
+            # except ESC, which cancels the generation and hands control
+            # back immediately (the worker finishes in the background and
+            # its result is discarded; materials are only consumed on
+            # success so cancelling costs nothing).
             elif llm_blocking:
-                # Consume all events but don't process them
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    try:
+                        from systems.llm_item_generator import abandon_background_generation
+                        abandon_background_generation()
+                        self._pending_generation_discipline = None
+                        self.add_notification("Generation cancelled", (255, 200, 100))
+                    except Exception as e:
+                        print(f"[LLM] cancel failed: {e}")
+                # Consume all other events without processing them
                 continue
 
             elif event.type == pygame.KEYDOWN:
@@ -5241,6 +5253,14 @@ class GameEngine:
 
             if not result_holder.completed:
                 return  # Not yet completed
+
+            # Player cancelled while the worker was in flight — drop the
+            # late result on the floor (no item added, no materials
+            # consumed; the overlay was already dismissed).
+            if getattr(result_holder, 'abandoned', False):
+                clear_background_result()
+                self._pending_generation_discipline = None
+                return
 
             # Get the result
             discipline = getattr(self, '_pending_generation_discipline', 'unknown')

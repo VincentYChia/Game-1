@@ -99,10 +99,28 @@ class SkillDatabase:
         old_loaded = self.loaded
         try:
             self.load_from_files()
+            self._remerge_updates()
         except Exception as e:
             print(f"[SkillDatabase] reload failed, keeping previous: {e}")
             self.skills = old_skills
             self.loaded = old_loaded
+
+    def _remerge_updates(self) -> None:
+        """Re-layer Update-N skills on top after a load_from_files() rebuild.
+
+        Boot loads Skills/ then layers Update-N on top via
+        load_all_updates(). But load_from_files() clears the dict and
+        reads only Skills/, so a bare reload() drops the Update-N (e.g.
+        Update-2 fishing) skills until restart. This re-applies them so a
+        mid-session WES skill commit can't silently delete fishing.
+        Never raises — Update-N is optional.
+        """
+        try:
+            from core.paths import get_resource_path
+            from data.databases.update_loader import load_skill_updates
+            load_skill_updates(get_resource_path(""))
+        except Exception as e:
+            print(f"[SkillDatabase] Update-N re-merge skipped: {e}")
 
     def load_from_file(self, filepath: str = ""):
         """Load skills from JSON file"""

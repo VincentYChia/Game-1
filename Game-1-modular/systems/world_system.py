@@ -212,26 +212,23 @@ class WorldSystem:
         for rt, count in sorted(resource_types.items(), key=lambda x: -x[1])[:10]:
             print(f"      {rt}: {count}")
 
-        # Setting tag distribution (sample 1000 chunks)
+        # Setting tag distribution (sample). Previously called a
+        # get_chunk_tags() that no longer exists (the tag API was split:
+        # setting is geographic and lives in setting_resolver, while
+        # population/resource status are Layer 2/3 concerns computed
+        # elsewhere — see setting_resolver's module docstring). The dump
+        # silently printed "Setting tags: failed" every world-gen. Now it
+        # uses the real resolver and reports only the setting it can
+        # actually derive here.
         try:
-            from systems.geography.setting_resolver import get_chunk_tags
+            from systems.geography.setting_resolver import resolve_setting
             setting_counts = {}
-            pop_counts = {}
-            res_counts = {}
             sample = list(cd.values())[:5000]
             for geo in sample:
-                tags = get_chunk_tags(geo, gm)
-                setting_counts[tags["setting"]] = setting_counts.get(tags["setting"], 0) + 1
-                pop_counts[tags["population_status"]] = pop_counts.get(tags["population_status"], 0) + 1
-                res_counts[tags["resource_status"]] = res_counts.get(tags["resource_status"], 0) + 1
+                setting = resolve_setting(geo, gm)
+                setting_counts[setting] = setting_counts.get(setting, 0) + 1
             print(f"   Setting tags (sample {len(sample)}):")
             for s, c in sorted(setting_counts.items(), key=lambda x: -x[1]):
-                print(f"      {s}: {c}")
-            print(f"   Population status:")
-            for s, c in sorted(pop_counts.items(), key=lambda x: -x[1]):
-                print(f"      {s}: {c}")
-            print(f"   Resource status:")
-            for s, c in sorted(res_counts.items(), key=lambda x: -x[1]):
                 print(f"      {s}: {c}")
         except Exception as e:
             print(f"   Setting tags: failed ({e})")

@@ -221,6 +221,21 @@ class LoadingState:
             if subtitle is not None:
                 self._subtitle = subtitle
 
+    def force_finish(self):
+        """Close immediately, skipping the completion animation.
+
+        Used by cancel: the player wants control back NOW, not after the
+        0.5s checkmark celebration.
+        """
+        with self._lock:
+            self._is_loading = False
+            self._message = ""
+            self._subtitle = ""
+            self._progress = 0.0
+            self._overlay_mode = False
+            self._complete_state = False
+            self._complete_time = 0.0
+
     def finish(self):
         """
         Transition to completion state (shows checkmark) before actually finishing.
@@ -264,6 +279,23 @@ class BackgroundGenerationResult:
         self._completed = False
         self._result = None
         self._error = None
+        self._abandoned = False
+
+    @property
+    def abandoned(self) -> bool:
+        with self._lock:
+            return self._abandoned
+
+    def abandon(self):
+        """Mark this result abandoned (player cancelled).
+
+        The daemon worker keeps running (a blocking network call can't be
+        force-killed), but its eventual result is discarded by the poller
+        instead of applied. Materials are only consumed on the success
+        path, so an abandoned generation costs the player nothing.
+        """
+        with self._lock:
+            self._abandoned = True
 
     @property
     def completed(self) -> bool:
@@ -313,6 +345,23 @@ def clear_background_result():
     global _background_result, _background_thread
     _background_result = None
     _background_thread = None
+
+
+def abandon_background_generation() -> bool:
+    """Player cancelled — abandon the in-flight generation and drop the overlay.
+
+    Marks the pending result abandoned (so the late worker result is
+    discarded, not applied) and force-closes the loading overlay so the
+    player regains control immediately. The worker thread keeps running
+    to completion in the background; its result is thrown away. Returns
+    True if there was something to abandon.
+    """
+    global _background_result
+    had_pending = _background_result is not None and not _background_result.completed
+    if _background_result is not None:
+        _background_result.abandon()
+    get_loading_state().force_finish()
+    return had_pending
 
 
 # ==============================================================================
@@ -1338,7 +1387,7 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
         loading_state.start(
             message="Generating Item...",
             overlay=True,
-            subtitle=f"Creating {discipline} invention"
+            subtitle=f"Creating {discipline} invention  —  ESC to cancel"
         )
 
         # Create result holder
@@ -1346,7 +1395,7 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
 
         def background_task():
             try:
-                loading_state.update(subtitle="Calling AI model...")
+                loading_state.update(subtitle="Calling AI model...  —  ESC to cancel")
                 # Pass _from_async=True so generate() doesn't overwrite our overlay settings
                 result = self.generate(discipline, interactive_ui, narrative, _from_async=True)
                 _background_result.set_result(result)

@@ -368,3 +368,29 @@ PyInstaller 6.20 build from the corrected Game1.spec (cd6d5758):
 - Exe booted under SDL dummy, survived 30s past imports + DB load into
   world gen, zero crash reports. The packaging regression the audit found
   (missing classifiers/fishing/Living-World configs) is verified fixed.
+
+---
+
+## Session 5 (2026-06-16): engineering board — quick latent fixes
+
+| # | Finding | Evidence | Fix |
+|---|---------|----------|-----|
+| S5-1 | world_system world-gen debug dump imported a `get_chunk_tags` that no longer exists (tag API was split: setting is geographic, population/resource are L2/L3) — printed "Setting tags: failed" every world-gen | world_system.py:217 (pre-fix) vs setting_resolver.py exports only resolve_setting | dump now calls the real resolve_setting and reports the setting distribution it can actually derive; dropped the pop/resource columns that have no source here |
+| S5-2 | SkillDatabase/TitleDatabase.reload() (WES-commit path) rebuilt the dict from Skills/ (or titles) ALONE — a mid-session WES skill/title commit silently DELETED the Update-2 fishing skills+titles until restart | skill_db.reload()→load_from_files() clears dict; Update-N layered separately at boot via load_all_updates() | added _remerge_updates() to both reload()s (re-applies load_skill_updates/load_title_updates after the rebuild). 2 tests (tests/test_updaten_reload_remerge.py) prove anglers_patience/novice_fisher survive reload; verified those ids live ONLY in Update-2 |
+| S5-3 | Invented-item generation locked the player behind the loading overlay until the LLM round-trip finished (or its 30s timeout) — no cancel | game_engine.py:642 swallowed ALL input except QUIT during overlay | ESC now abandons: marks result abandoned, force_finish()es the overlay instantly, poller discards the late worker result. Materials are only consumed on success (game_engine.py:5297) so cancel costs nothing. Overlay subtitle shows "ESC to cancel". 3 tests (tests/test_llm_generation_cancel.py) |
+
+### Audit gap #2 (training-scripts) — CLOSED, verdict: clean
+Audited the ~51 .py under `Scaled JSON Development/` (CNN/LightGBM trainers,
+validators, LLM data-gen + together/ollama adapters). **Verdict: zero
+runtime dependency on the game** — Game-1-modular imports none of them;
+crafting_classifier.py loads only the trained model FILES
+(crafting_classifier_models/*.keras|.txt|.pkl). All trainers are offline
+dev tools. Notes (not bugs): ollama_*.py carry machine-specific absolute
+paths (dev-only); they're correctly NOT bundled by Game1.spec.
+
+### Test state
+1125 passed / 10 stable pre-existing failures (geometry ×8, status ×1,
+tag ×1) + 1 KNOWN-FLAKY timing test under load (test_async_runner
+test_runs_in_parallel_and_preserves_order asserts 4×50ms parallel sleeps
+finish <180ms — wall-clock, slips under full-suite CPU contention; passes
+in isolation). 0 real regressions. +5 new tests this batch.
