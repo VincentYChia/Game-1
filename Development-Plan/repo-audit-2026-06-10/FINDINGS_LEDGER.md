@@ -394,3 +394,40 @@ tag ×1) + 1 KNOWN-FLAKY timing test under load (test_async_runner
 test_runs_in_parallel_and_preserves_order asserts 4×50ms parallel sleeps
 finish <180ms — wall-clock, slips under full-suite CPU contention; passes
 in isolation). 0 real regressions. +5 new tests this batch.
+
+### Audit gap #4 (Definitions.JSON per-consumer traces) — CLOSED, verdict: all wired
+Traced every conditional Definitions.JSON config to its consumer and
+confirmed a real load (not a comment mention):
+- stats-calculations.JSON — LOADED at stats.py import into scaling +
+  flat_bonuses (hot-reload hook at :93); drives equipment_db weapon
+  damage/armor/durability formulas; game_engine character stat modifiers.
+  Live, not dead documentation.
+- fishing-config → fishing.py `_load_config()`; dungeon-config →
+  dungeon.py `_load_dungeon_config()` (warn-once hardcoded fallback if
+  missing — acceptable graceful degrade); village-config →
+  village_generator.py `json.load`→_config_cache; combat-config →
+  combat_manager.py `json.load`; world_generation → world_generation_db
+  dataclass (the chunk_loading.load_radius the S3 streaming fix reads).
+- The only Definitions.JSON files with NO .py consumer are
+  value-translation-table-1 and templates-crafting-1 — already catalogued
+  as orphans in session 1 (designer review). No new orphans.
+
+### Audit gap #3 (god-class hygiene) — CLOSED, verdict: healthy
+Risk-pattern sweep of game_engine.py (~11.7K) + renderer.py (~8.2K):
+- ZERO mutable default args. ZERO open() outside `with` (no fd leaks).
+- 39 silent `except: pass` blocks, but sampling across interaction/update
+  paths shows they are dominated by GameEventBus telemetry-publish guards
+  (WMS analytics — DAMAGE/gathering/BARRIER_PLACED/CHEST_OPENED) and
+  optional-import guards (visual_effect_bridge), plus 2 grid-size "WxH"
+  ValueError parse-guards with sane fallbacks. None swallow real
+  player-facing LOGIC — consistent with the session-1 bare-except sweep.
+  Wrapping fire-and-forget analytics in log_degrade would add noise for
+  near-zero diagnostic value; left as-is by design.
+- A literal line-by-line read of 20K LOC was judged low-value: the
+  player-facing surfaces (event loop, minigame completion, chests, save,
+  NPC dialogue, inventory geometry, menus, LLM overlay, update loop) were
+  already read and hardened across sessions 2-5.
+
+**Engineering board fully worked. All five 2026-06-10 audit gaps now
+closed (entry-xref, packaged build, training scripts, Definitions configs,
+god-class hygiene).**

@@ -116,6 +116,6 @@
 
 ## Coverage honesty
 
-This map's depth varies: source trees were inventoried + verified; `Scaled JSON Development/` training scripts and `archive/` were inventoried at top level only; entry-level JSON cross-reference validation (recipe inputs → materials, etc.) has NOT been performed; the two god-classes were sampled, not read line-by-line. Full gap list: [repo-audit-2026-06-10/FINDINGS_LEDGER.md](repo-audit-2026-06-10/FINDINGS_LEDGER.md) §Gap-closure.
+This map's depth varies, but as of 2026-06-16 all five declared audit gaps are closed (see [repo-audit-2026-06-10/FINDINGS_LEDGER.md](repo-audit-2026-06-10/FINDINGS_LEDGER.md) sessions 4-5): entry-level JSON cross-reference is now validated + test-guarded ([CONTENT_XREF_REPORT.md](repo-audit-2026-06-10/CONTENT_XREF_REPORT.md), 43 known dangles); the packaged build is verified (real PyInstaller bundle boots); `Scaled JSON Development/` training scripts were audited (offline-only, zero runtime dependency); every `Definitions.JSON` config was traced to a live consumer; and the two god-classes got a risk-pattern hygiene sweep (no fd leaks / mutable defaults; silent excepts are telemetry guards). `archive/` remains inventoried at top level only (intentional).
 
 **Maintenance**: update this map when adding a directory or moving docs; update SYSTEMS_CATALOG when a system's status changes. Counts here were verified 2026-06-10 — re-verify before quoting elsewhere.
