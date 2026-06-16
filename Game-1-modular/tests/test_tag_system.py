@@ -112,7 +112,10 @@ def test_equipment_loading():
     print("-"*70 + "\n")
 
     for weapon_id in test_weapons:
-        equip = equip_db.get_equipment(weapon_id)
+        # get_equipment() was removed; create_equipment_from_id() is the
+        # current API that parses the stored dict into an EquipmentItem
+        # (with .effect_tags / .effect_params).
+        equip = equip_db.create_equipment_from_id(weapon_id)
         if not equip:
             print(f"⚠️  {weapon_id}: NOT FOUND in database")
             continue

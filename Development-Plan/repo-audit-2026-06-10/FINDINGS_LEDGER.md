@@ -431,3 +431,27 @@ Risk-pattern sweep of game_engine.py (~11.7K) + renderer.py (~8.2K):
 **Engineering board fully worked. All five 2026-06-10 audit gaps now
 closed (entry-xref, packaged build, training scripts, Definitions configs,
 god-class hygiene).**
+
+---
+
+## Session 6 (2026-06-16): pre-playtest sign-off — the 10 "known failures" diagnosed
+
+Triggered by a playtest-readiness check. The 10 test failures carried as
+"known/pre-existing" since session 1 were never root-caused. For a sign-off
+that combat works, that was the one untested assumption. Diagnosed all 10.
+
+**Verdict: ALL 10 were STALE TESTS against renamed/changed production APIs.
+ZERO were real bugs. Production combat/targeting/shields/equipment all
+work.** Each fix is test-only.
+
+| Test(s) | Root cause | Production reality (verified) |
+|---|---|---|
+| test_geometry_patterns ×8 | The test stub gave its **player source** a `definition = None` attribute. TargetFinder duck-types an Enemy SOURCE via `hasattr(source,'definition') and hasattr(source,'is_alive')` to flip relative targeting (enemy→ally) — and `hasattr` is True even for a None value. So the stub player was misdetected as an enemy, every enemy-context query flipped to 'ally', and returned []. | Real `Character` has NEITHER attribute (grep-confirmed), so the flip never fires for a real player — single/chain/cone/circle/beam skill targeting is correct. Fixed stub with `del source.definition; del source.is_alive` to match reality. |
+| test_status_effects::test_buff_effects | asserted `hasattr(entity,'shield_health')` | Production `ShieldEffect.on_apply` sets `shield_amount` (renamed); damage-absorption reads the same attr. Shields work. Test updated to `shield_amount`. |
+| test_tag_system::test_equipment_loading | called removed `EquipmentDatabase.get_equipment()` | Current API is `create_equipment_from_id()` (parses stored dict → EquipmentItem with .effect_tags/.effect_params). Test updated. |
+
+**Significance for playtest**: the suite now has a genuine zero-known-failure
+baseline. The "10 known failures" footnote that shadowed every prior
+"0 regressions" claim is gone — and the diagnosis confirmed the player-facing
+combat geometry (skill targeting), status shields, and weapon tag loading
+are all sound in production.

@@ -226,8 +226,10 @@ def test_buff_effects():
     )
     shield.on_apply(entity)
     print(f"   Shield: {shield.shield_amount} HP")
-    assert hasattr(entity, 'shield_health'), "Shield should create shield_health attribute"
-    print(f"   ✅ Shield: {entity.shield_health} temporary HP")
+    # Production ShieldEffect.on_apply sets `shield_amount` (renamed from the
+    # old `shield_health`); the damage-absorption path reads the same attr.
+    assert hasattr(entity, 'shield_amount'), "Shield should create shield_amount attribute"
+    print(f"   ✅ Shield: {entity.shield_amount} temporary HP")
 
     # Test Haste
     print("\n3. Testing HASTE effect...")
