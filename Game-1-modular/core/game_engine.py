@@ -4472,7 +4472,10 @@ class GameEngine:
                     # Get or create the backend (triggers model loading)
                     backend = classifier_mgr.get_backend(discipline)
                     if not backend or not backend.is_loaded():
-                        print(f"  Warning: {discipline} CNN failed to load")
+                        # Surface the buried _load_error — "failed to load"
+                        # with no reason cost a diagnosis pass (2026-06-10).
+                        reason = getattr(backend, '_load_error', None) or 'backend missing'
+                        print(f"  Warning: {discipline} CNN failed to load: {reason}")
                         continue
 
                     # Create dummy input for warmup prediction

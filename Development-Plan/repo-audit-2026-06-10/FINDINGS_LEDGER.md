@@ -324,3 +324,47 @@ inits (negligible: hasattr check only).
 - "Tile rendering has no caching — get_tile_surface regenerates procedurally
   per frame" — WRONG: terrain_renderer.py:170-216 has a bounded
   per-(x,y,type) `_surface_cache`. Tile path left as-is.
+
+---
+
+## Session 4 (2026-06-16): board closeout — CNN, content xref, packaged build
+
+### Adornments CNN load warning — DIAGNOSED, models healthy
+The "adornments CNN failed to load" warmup warning was investigated:
+loading both CNNs directly (and inside a joined background thread) returns
+`is_loaded() == True` with `_load_error == None` for BOTH smithing and
+adornments. The model files are intact (adornment_best.keras = 8.3MB).
+The warning is an intermittent boot-context artifact (warmup thread racing
+TF init against the rest of boot), not a broken model — lazy load retries
+on first real use. game_engine warmup now prints the buried `_load_error`
+so any genuine recurrence is self-explaining instead of silent.
+
+### Entry-level content cross-reference validation — CLOSED (audit gap #1)
+New `tools/content_xref_report.py` (boots real engine headless, lists every
+dangling reference) + `tests/integration/test_07_content_xref.py` (baseline
+-guarded: passes on the known 43, FAILS on any NEW dangle — also guards all
+future WES content). Full human listing in `CONTENT_XREF_REPORT.md`.
+
+**43 dangling refs found, all in sacred content JSON (designer-owned):**
+- 1 uncraftable recipe (`alchemy_transmute_iron_steel` needs `coal`, which
+  no material loads).
+- 2 craft-into-void recipes (`grappling_hook`/`jetpack` outputs: defined in
+  items-engineering-1.JSON but lack flags.stackable/placeable, so no DB
+  loads them).
+- 33 orphan placements (alchemy ×12, engineering ×9, refining ×12) — grids
+  authored ahead of their recipes; invisible in-game.
+- 2 skill unlocks → missing skills (`fortify`, `miners_endurance`).
+- 5 boss drops → nonexistent materials: ALL THREE Update-1 bosses
+  (void_archon, storm_titan, inferno_drake) drop loot that cannot
+  materialize.
+
+### Packaged-build smoke test — PASSED (audit gap #5)
+PyInstaller 6.20 build from the corrected Game1.spec (cd6d5758):
+- Build exit 0; Game1.exe = 85.6MB.
+- All corrected-spec data present in `_internal/`: Update-1, Update-2,
+  updates_manifest.json, world_system/config, classifier_models, Fewshot
+  prompts (85 files). Model files are real (adornment 8.3MB keras,
+  smithing 2.0MB keras, LightGBM .txt 343KB-1MB).
+- Exe booted under SDL dummy, survived 30s past imports + DB load into
+  world gen, zero crash reports. The packaging regression the audit found
+  (missing classifiers/fishing/Living-World configs) is verified fixed.
