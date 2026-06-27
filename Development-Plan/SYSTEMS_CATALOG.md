@@ -340,7 +340,7 @@ The deterministic + LLM content-generation layer. WNS publishes intent → WES g
 
 | # | System | Status | Key files | Notes |
 |---|---|---|---|---|
-| 10.1 | **Anthropic API integration** | ✓ | [systems/llm_item_generator.py](Game-1-modular/systems/llm_item_generator.py) (Invented Items), [world_system/living_world/backends/backend_manager.py](Game-1-modular/world_system/living_world/backends/backend_manager.py) (WES/WNS) | `claude-sonnet-4-20250514` default for invented items; backend config drives WES. |
+| 10.1 | **Anthropic API integration** | ✓ | [systems/llm_item_generator.py](Game-1-modular/systems/llm_item_generator.py) (Invented Items), [world_system/living_world/backends/backend_manager.py](Game-1-modular/world_system/living_world/backends/backend_manager.py) (WES/WNS) | `claude-haiku-4-5` default for invented items; backend config drives WES. |
 | 10.2 | **ANTHROPIC_API_KEY** | Env-set | shell env / `.env` | Confirmed set. **Treat as secret** — was visible in a prior terminal echo; rotation recommended. |
 | 10.3 | **CNN classifiers (TensorFlow/Keras)** | ✓ | `Scaled JSON Development/crafting_classifier_models/smithing/smithing_best.keras`, `adornment/adornment_best.keras` | 36×36×3 (smithing) and 56×56×3 (adornment) RGB. Warmup at startup. |
 | 10.4 | **LightGBM classifiers** | ◐ | `crafting_classifier_models/{alchemy,refining,engineering}/*_model.txt` | Models present. Extractor `.pkl` files MISSING but inline `LightGBMFeatureExtractor` is used instead — works. |

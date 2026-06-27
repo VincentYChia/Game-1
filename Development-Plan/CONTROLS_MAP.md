@@ -254,7 +254,7 @@ All 31 fishing tunables are JSON-driven. Key items:
 
 | Setting | Path | Current |
 |---|---|---|
-| Default model | `systems/llm_item_generator.py:84` | claude-sonnet-4-20250514 |
+| Default model | `systems/llm_item_generator.py:84` | claude-haiku-4-5 |
 | max_tokens | line 85 | 2000 |
 | temperature | line 86 | 0.4 |
 | top_p | line 87 | 0.95 |
@@ -587,7 +587,7 @@ All configurable via `memory-config.json > evaluators.<name>`. Key parameters pe
 
 `backend-config.json`:
 - Ollama: base_url, default_model (llama3.1:8b), timeout 30s
-- Claude: model (claude-sonnet-4-20250514), max_tokens 2000, temperature 0.4, top_p 0.95, timeout 30s
+- Claude: model (claude-haiku-4-5), max_tokens 2000, temperature 0.4, top_p 0.95, timeout 30s
 - Fallback chain: [ollama, claude, mock]
 - Rate limits: Ollama 2 concurrent / 100ms cooldown; Claude 1 / 1000ms; Mock 10 / 0
 

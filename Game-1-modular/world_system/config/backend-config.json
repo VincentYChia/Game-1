@@ -23,12 +23,12 @@
     },
     "claude": {
       "enabled": true,
-      "model": "claude-sonnet-4-20250514",
+      "model": "claude-haiku-4-5",
       "max_tokens": 2000,
       "temperature": 0.4,
       "top_p": 0.95,
       "timeout_seconds": 30.0,
-      "description": "Anthropic Claude API — the sole live backend during playtest."
+      "description": "Anthropic Claude API — the sole live backend during playtest. Model set to Haiku 4.5 (claude-sonnet-4-20250514 retired 2026-06-15) for inference speed + cost; this layer is designed to run on local LLMs eventually, so any cloud model suffices."
     },
     "mock": {
       "enabled": true,

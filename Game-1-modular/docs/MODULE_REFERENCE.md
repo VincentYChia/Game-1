@@ -1350,7 +1350,7 @@ class LLMItemGenerator:
 
     def __init__(self):
         self.api_key = os.getenv("ANTHROPIC_API_KEY")
-        self.model = "claude-sonnet-4-20250514"
+        self.model = "claude-haiku-4-5"
         self.temperature = 0.4
         self.max_tokens = 2000
         self.timeout = 30.0

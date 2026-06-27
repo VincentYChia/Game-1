@@ -170,7 +170,7 @@ class ClaudeBackend(ModelBackend):
     the abstract ModelBackend interface.
     """
 
-    def __init__(self, model: str = "claude-sonnet-4-20250514",
+    def __init__(self, model: str = "claude-haiku-4-5",
                  timeout: float = 30.0,
                  max_tokens: int = 2000,
                  top_p: float = 0.95):
@@ -480,7 +480,7 @@ class BackendManager:
         claude_cfg = backends_cfg.get("claude", {})
         if claude_cfg.get("enabled", True):
             self._backends["claude"] = ClaudeBackend(
-                model=claude_cfg.get("model", "claude-sonnet-4-20250514"),
+                model=claude_cfg.get("model", "claude-haiku-4-5"),
                 timeout=claude_cfg.get("timeout_seconds", 30.0),
                 max_tokens=claude_cfg.get("max_tokens", 2000),
                 top_p=claude_cfg.get("top_p", 0.95),

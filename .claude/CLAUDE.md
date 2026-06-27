@@ -198,7 +198,7 @@ Scaled JSON Development/
 ### LLM Configuration
 ```python
 # In systems/llm_item_generator.py
-model = "claude-sonnet-4-20250514"
+model = "claude-haiku-4-5"
 temperature = 0.4
 max_tokens = 2000
 timeout = 30.0

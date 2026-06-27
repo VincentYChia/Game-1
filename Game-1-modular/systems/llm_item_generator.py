@@ -81,7 +81,10 @@ def get_llm_debug_logger() -> LLMDebugLogger:
 class LLMConfig:
     """Configuration for LLM item generation"""
     api_key: str = os.getenv('ANTHROPIC_API_KEY')  # Set via environment or explicitly
-    model: str = "claude-sonnet-4-20250514"
+    # 2026-06: claude-sonnet-4-20250514 retired 2026-06-15. Haiku 4.5 chosen
+    # for speed + cost (this path is designed to run on local LLMs eventually;
+    # any cloud model suffices for now). Haiku accepts temperature/top_p.
+    model: str = "claude-haiku-4-5"
     max_tokens: int = 2000
     temperature: float = 0.4  # Slightly lower for more consistent output
     top_p: float = 0.95
