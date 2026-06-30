@@ -1964,6 +1964,18 @@ class GameEngine:
                      "The world remembers itself.")
         self.world.initialize_world(progress_callback=_on_progress)
 
+        # Test/temp world only: guarantee a village with NPCs near spawn so a
+        # tester can reach NPC dialogue / quests / factions in a few steps
+        # without exploring (real villages are 40+ chunks apart). The village
+        # location is fixed; its NPCs are drawn from the real generation
+        # templates — existence guaranteed, identities generation-driven.
+        # Must run BEFORE _spawn_village_npcs so its NPCs are instantiated.
+        if getattr(self, "temporary_world", False):
+            try:
+                self.world.inject_test_village()
+            except Exception as e:
+                print(f"⚠ Test village injection skipped (non-fatal): {e}")
+
         # Post-init: populate village NPCs from the freshly-initialized
         # geographic system. Idempotent against the boot-time call.
         if hasattr(self, "npcs"):

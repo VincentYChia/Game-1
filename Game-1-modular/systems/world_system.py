@@ -478,6 +478,96 @@ class WorldSystem:
                 })
         return npc_defs
 
+    def inject_test_village(self, center_chunk: Tuple[int, int] = (1, 0),
+                            name: str = "Proving Grounds") -> bool:
+        """Guarantee a village with NPCs near spawn — TEST/TEMP WORLD ONLY.
+
+        Real villages are scattered 40+ chunks apart, so the nearest one to
+        the (0,0) spawn is a long walk away. This drops a village at a FIXED,
+        near-spawn location (default chunk (1,0) → NPCs ~20 tiles east of
+        spawn, clear of the crafting stations to the north) so a tester can
+        reach NPCs in a few steps and exercise dialogue / quests / factions
+        without exploring.
+
+        The village's EXISTENCE is guaranteed and deterministic; WHO lives
+        there is drawn from the same generation templates real villages use
+        (village-config.JSON tiers + npc_templates, via _select_tier /
+        _select_npc_template), seeded off self.seed — so NPC identities are
+        generation-driven, not hardcoded. The produced dict mirrors the shape
+        from _rebuild_villages_from_localities exactly, so the normal
+        NPC-spawn and wall/building-application paths consume it unchanged.
+
+        Idempotent (sentinel locality_id). Returns True if a village was added.
+        """
+        TEST_LOCALITY_ID = 999_999  # sentinel — generated localities are small ints
+        if any(v.get("locality_id") == TEST_LOCALITY_ID for v in self._villages):
+            return False
+
+        rng = random.Random(self.seed + 424242)
+        try:
+            from systems.geography.village_generator import (
+                _load_config, _select_npc_template,
+            )
+            cfg = _load_config()
+        except Exception:
+            cfg = None
+
+        # Fixed SMALL tier so the test village is predictable and tight against
+        # spawn (a large generated tier would push NPCs ~40 tiles out). The
+        # village structure is the fixed test scaffold; only WHO lives there is
+        # generation-driven (via _select_npc_template below).
+        tier = {"size": 2, "npc_min": 3, "npc_max": 4, "wall_inset": 1,
+                "entrances": 4, "entrance_width": 3,
+                "buildings_min": 2, "buildings_max": 4,
+                "building_width_range": [4, 6], "building_height_range": [3, 4]}
+
+        size = tier.get("size", 2)
+        npc_count = rng.randint(tier.get("npc_min", 3), tier.get("npc_max", 4))
+        inset = tier.get("wall_inset", 1)
+        cx, cy = center_chunk
+        inner_x = cx * Config.CHUNK_SIZE + inset + 3
+        inner_y = cy * Config.CHUNK_SIZE + inset + 3
+        inner_w = size * Config.CHUNK_SIZE - (inset + 3) * 2
+        inner_h = size * Config.CHUNK_SIZE - (inset + 3) * 2
+
+        npc_positions, npc_templates = [], []
+        for _ in range(npc_count):
+            nx = inner_x + rng.randint(2, max(3, inner_w - 2))
+            ny = inner_y + rng.randint(2, max(3, inner_h - 2))
+            npc_positions.append((nx, ny))
+            if cfg:
+                npc_templates.append(_select_npc_template(rng))
+            else:
+                npc_templates.append({"npc_id_prefix": "villager", "name": "Villager",
+                                      "sprite_color": [180, 160, 140],
+                                      "dialogue_lines": ["Hello!"]})
+
+        chunks = [(cx + dx, cy + dy) for dx in range(size) for dy in range(size)]
+        self._villages.append({
+            "center_chunk": (cx, cy),
+            "chunks": chunks,
+            "size": size,
+            "tier_config": tier,
+            "npc_positions": npc_positions,
+            "npc_templates": npc_templates,
+            "locality_id": TEST_LOCALITY_ID,
+            "name": name,
+        })
+
+        # Register the new chunks so future get_chunk() calls apply walls/
+        # buildings, then paint structure onto any chunks already resident
+        # (the spawn load-ring) and force-load the rest.
+        self._init_village_data()
+        for ck in chunks:
+            if ck in self.loaded_chunks:
+                self._apply_village_to_chunk(self.loaded_chunks[ck])
+            else:
+                self.get_chunk(*ck)
+
+        print(f"🏘️  TEST village '{name}' guaranteed near spawn at chunk "
+              f"{center_chunk} — {npc_count} template-driven NPCs")
+        return True
+
     def _apply_village_to_chunk(self, chunk: Chunk):
         """Apply village structures (walls, buildings) to a chunk that's part of a village."""
         key = (chunk.chunk_x, chunk.chunk_y)
