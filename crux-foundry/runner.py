@@ -35,6 +35,7 @@ os.chdir(PROJECT_ROOT)
 
 GAUNTLET_SIZE = 3
 GAUNTLET_TIER = 1
+GAUNTLET_COMPOSE_SEED = 20260706  # fixed: identical challenge across all run seeds
 SWINGS_CAP = 30
 
 
@@ -68,14 +69,24 @@ def spawn_gauntlet(eng, n, tier):
     cm.corpses.clear()
     chunk = (0, 0)
     gauntlet = []
-    for i in range(n):
-        edef = cm.enemy_db.get_random_enemy(tier)
-        if edef is None:
-            continue
-        e = Enemy(edef, (2.0 + i * 2.0, 0.0), chunk)
-        cm.enemies.setdefault(chunk, []).append(e)
-        cm._register_enemy_action_combat(e)
-        gauntlet.append(e)
+    # Compose a FIXED challenge (same enemies every run) independent of the run
+    # seed, so seeds vary only combat RNG (crit / enemy-damage / loot), not the
+    # challenge itself. Save/restore the global RNG so the run-seed stream that
+    # the fight draws from is untouched.
+    import random
+    _state = random.getstate()
+    random.seed(GAUNTLET_COMPOSE_SEED)
+    try:
+        for i in range(n):
+            edef = cm.enemy_db.get_random_enemy(tier)
+            if edef is None:
+                continue
+            e = Enemy(edef, (2.0 + i * 2.0, 0.0), chunk)
+            cm.enemies.setdefault(chunk, []).append(e)
+            cm._register_enemy_action_combat(e)
+            gauntlet.append(e)
+    finally:
+        random.setstate(_state)
     return gauntlet
 
 
@@ -88,6 +99,7 @@ def drive_melee_persona(harness):
     harness.equip('iron_shortsword')
     c._selected_slot = 'mainHand'
     gauntlet = spawn_gauntlet(eng, GAUNTLET_SIZE, GAUNTLET_TIER)
+    gauntlet_ids = [getattr(e.definition, 'enemy_id', '?') for e in gauntlet]
     kills = 0
     for e in gauntlet:
         c.position.x, c.position.y = e.position[0] - 1.0, e.position[1]
@@ -98,7 +110,7 @@ def drive_melee_persona(harness):
         if not e.is_alive:
             kills += 1
         harness.tick(3)
-    return {'gauntlet': len(gauntlet), 'kills': kills}
+    return {'gauntlet': len(gauntlet), 'gauntlet_ids': gauntlet_ids, 'kills': kills}
 
 
 def capture(eng):
@@ -143,6 +155,7 @@ def run_once(seed, out_dir, persona='melee_basic'):
             'level': cap['level'],
             'exp': cap['exp'],
             'gauntlet': drive['gauntlet'],
+            'gauntlet_ids': drive['gauntlet_ids'],
             'kills': drive['kills'],
             'damage_dealt': combat.get('combat.damage_dealt', 0.0),
             'damage_taken': combat.get('combat.damage_taken', 0.0),
