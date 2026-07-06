@@ -1,0 +1,38 @@
+#!/bin/bash
+# crux-foundry — Crux (ALCF) PBS job-array for the relative-viability sweep.
+#
+# Each array element runs a disjoint slice of the (persona x seed) matrix as
+# independent runner subprocesses (process-per-run isolation). Resumable via
+# skip-if-exists, atomic result.json writes. After the array finishes, run the
+# reduce (viability_report.py) on the login node to aggregate.
+#
+# Submit:  qsub crux-foundry/crux_job.pbs        (plain qsub — NO -v/-V; Crux rejects env forwarding)
+# Tune:    edit N_SHARDS/N_SEEDS/OUT below (baked with ${VAR:-default}); keep -J range == N_SHARDS-1.
+# Reduce:  module load cray-python && python crux-foundry/viability_report.py ${N_SEEDS}
+#
+#PBS -N crux_foundry_viability
+#PBS -l select=1:ncpus=32
+#PBS -l walltime=06:00:00
+#PBS -q workq
+#PBS -A REPLACE_WITH_ALLOCATION
+#PBS -J 0-15
+
+# --- environment (PBS jobs start in $HOME; cd into the project) ---
+module load cray-python
+export GAME1_HERMETIC=1                      # no WES generation / no shared-tree writes
+cd "${PROJECT_DIR:-$PBS_O_WORKDIR}" || exit 1
+
+# --- parameters (baked here, since Crux rejects `qsub -v`) ---
+N_SHARDS="${N_SHARDS:-16}"                    # MUST equal (#PBS -J upper) + 1
+N_SEEDS="${N_SEEDS:-20}"
+OUT="${OUT:-crux-foundry/runs}"
+
+# --- run this shard's slice ---
+python crux-foundry/run_shard.py "${PBS_ARRAY_INDEX}" "${N_SHARDS}" "${N_SEEDS}" "${OUT}"
+
+# NOTES
+# - Replace `#PBS -A REPLACE_WITH_ALLOCATION` with a BARE allocation line (no inline
+#   comment — PBS parses the comment and errors). Set via whole-line replace.
+# - Boot (~15s, TF/CNN warmup) is paid per run; for very large sweeps add K-runs-per-
+#   process amortization (singleton reset) — a future optimization, not needed for
+#   correctness. Count outputs with `find "${OUT}" -name result.json | wc -l` (not ls).
