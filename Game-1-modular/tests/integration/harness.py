@@ -126,8 +126,24 @@ class PlaytestHarness:
         return None
 
     def attack(self, enemy):
-        """Player basic attack. Returns (damage, was_crit, drops)."""
+        """Low-level attack (grants exp/loot but SKIPS StatTracker combat rows).
+        Prefer melee_swing() for capture-complete combat."""
         return self.engine.combat_manager.player_attack_enemy(enemy)
+
+    def melee_swing(self, enemy, frames: int = 30):
+        """Real action-combat swing — the capture-complete path.
+
+        Calls the same entry the click handler uses (_initiate_attack_toward,
+        facing the enemy in world coords), then ticks so the attack state
+        machine runs windup->active, spawns the hitbox, overlaps the enemy's
+        hurtbox, and resolves through _ac_process_hit -> player_attack_enemy_
+        with_tags (record_damage_dealt + record_enemy_killed + exp + ENEMY_KILLED
+        bus publish -> WMS). The enemy must be within hitbox reach (~1.5 tiles in
+        front) — move/teleport the player adjacent first.
+        """
+        ex, ey = enemy.position[0], enemy.position[1]
+        self.engine._initiate_attack_toward(ex, ey, 'mainHand')
+        self.tick(frames)
 
     # ── crafting (real completion pipeline) ──────────────────────────
 

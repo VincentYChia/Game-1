@@ -57,20 +57,24 @@ def boot_engine(save_dir: Path):
     return eng
 
 
-def run_combat_burst(harness, max_targets=6, swings_cap=300):
-    """Fight the spawned enemies (excluding the training dummy) to generate
-    combat/progression events. Returns kills."""
+def run_combat_burst(harness, max_targets=6, swings_cap=30):
+    """Fight the spawned enemies through the REAL action-combat path so the
+    full capture pipeline fires. Teleports the player adjacent to each target
+    (the bot will path there for real later; here we validate capture)."""
+    c = harness.engine.character
     kills = 0
     for _ in range(max_targets):
         living = harness.living_enemies(exclude_dummy=True)
         if not living:
             break
         target = living[0]
+        # Put the player within melee reach, facing the enemy.
+        c.position.x = target.position[0] - 1.0
+        c.position.y = target.position[1]
         for _ in range(swings_cap):
             if not target.is_alive:
                 break
-            harness.attack(target)
-            harness.tick(1)
+            harness.melee_swing(target, frames=30)
         if not target.is_alive:
             kills += 1
         harness.tick(3)
@@ -85,21 +89,32 @@ def capture_summary(eng):
         'current_exp': getattr(c.leveling, 'current_exp', None),
         'hp': f"{getattr(c, 'health', None)}/{getattr(c, 'max_health', None)}",
     }
+    # StatTracker writes to a StatStore (get_all/get_prefix); to_dict() is only a
+    # curated summary, so read the store directly (flush buffered writes first).
     st = getattr(c, 'stat_tracker', None)
-    if st is not None and hasattr(st, 'to_dict'):
-        stats = st.to_dict()
-        out['stat_keys_recorded'] = len(stats)
-        out['combat_sample'] = {k: v for k, v in stats.items() if k.startswith('combat.')}
-        out['progression_sample'] = {k: v for k, v in stats.items() if k.startswith('progression.')}
+    store = getattr(st, '_store', None) if st is not None else None
+    if store is not None:
+        try:
+            if hasattr(store, 'flush'):
+                store.flush()
+            out['total_stat_keys'] = len(store.get_all())
+            out['combat_sample'] = store.get_prefix('combat')
+            out['progression_sample'] = store.get_prefix('progression')
+        except Exception as e:
+            out['store_error'] = repr(e)
     else:
-        out['stat_keys_recorded'] = 'StatTracker unavailable'
+        out['total_stat_keys'] = 'StatStore unavailable'
+    # WMS event timeline (dogfooding the history mechanism)
     wm = getattr(eng, 'world_memory', None)
     es = getattr(wm, 'event_store', None) if wm else None
-    if es is not None and hasattr(es, 'count'):
-        try:
-            out['wms_events_recorded'] = es.count()
-        except Exception as e:
-            out['wms_events_recorded'] = f'query-failed: {e}'
+    if es is not None:
+        for meth in ('count', 'count_events', 'total_count'):
+            if hasattr(es, meth):
+                try:
+                    out['wms_events_recorded'] = getattr(es, meth)()
+                except Exception as e:
+                    out['wms_events_recorded'] = f'query-failed: {e!r}'
+                break
     return out
 
 
