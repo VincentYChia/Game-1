@@ -500,8 +500,12 @@ class GameEngine:
         if self.character and not self.character.class_system.current_class:
             self.character.class_selection_open = True
 
-        # Proactively warm up CNN classifiers at startup (avoids delay on first INVENT)
-        self._startup_warmup_cnn_classifiers()
+        # Proactively warm up CNN classifiers at startup (avoids delay on first INVENT).
+        # crux-foundry hermetic mode skips this: it lazy-loads TensorFlow (~13s) for the
+        # crafting classifier, which headless playtests never use (INVENT is never fired).
+        # Flag off => today's behavior exactly. The invent path still lazy-loads on demand.
+        if os.environ.get('GAME1_HERMETIC') != '1':
+            self._startup_warmup_cnn_classifiers()
 
         print("\n" + "=" * 60)
         print("✓ Game ready!")
