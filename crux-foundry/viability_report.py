@@ -9,6 +9,7 @@ crit variance (FINDINGS F2). Resumable (skip runs whose result.json exists).
 
 CLI:  python crux-foundry/viability_report.py [n_seeds]
 """
+import os
 import sys
 import json
 import subprocess
@@ -20,12 +21,15 @@ HERE = Path(__file__).resolve().parent
 RUNNER = HERE / 'runner.py'
 RUNS = HERE / 'runs'
 PERSONAS = ['str_brawler', 'vit_tank', 'lck_crit', 'balanced']
+REDUCE_ONLY = os.environ.get('CRUX_REDUCE_ONLY') == '1'  # login-node reduce: never launch runs
 
 
 def run(persona, seed):
     out = RUNS / f'{persona}_s{seed}'
     res = out / 'result.json'
     if not res.exists():
+        if REDUCE_ONLY:
+            return None  # read-only reduce: skip missing/failed runs
         subprocess.run([sys.executable, str(RUNNER), str(seed), str(out), persona],
                        check=True, cwd=str(HERE.parent))
     return json.loads(res.read_text(encoding='utf-8'))
@@ -39,9 +43,15 @@ def main():
     data = defaultdict(list)
     for p in PERSONAS:
         for s in seeds:
-            data[p].append(run(p, s))
+            r = run(p, s)
+            if r is not None:
+                data[p].append(r)
 
-    cfg = data[PERSONAS[0]][0]['manifest']['config']
+    have = [p for p in PERSONAS if data[p]]
+    if not have:
+        print("no results to reduce (reduce-only with nothing produced yet?)")
+        return
+    cfg = data[have[0]][0]['manifest']['config']
     gsz, gtr = cfg['gauntlet_size'], cfg['gauntlet_tier']
 
     print(f"\n===== RELATIVE-VIABILITY REPORT (personas x {n} seeds) =====")
@@ -50,7 +60,7 @@ def main():
     print(f'{"persona":<14}{"kills":>9}{"deaths":>9}{"dmg_taken":>11}{"clear%":>8}{"viability":>11}')
 
     rows = []
-    for p in PERSONAS:
+    for p in have:
         rs = data[p]
         mk = statistics.mean(r['metrics']['kills'] for r in rs)
         md = statistics.mean(r['metrics']['deaths'] for r in rs)
