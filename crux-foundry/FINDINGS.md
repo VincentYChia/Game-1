@@ -29,13 +29,28 @@ graded viability signal even in a loss (the tank consistently dies fewest).
 
 ---
 
-## F2 — LCK (crit) underperforms STR/VIT at equal investment (PROVISIONAL, single-seed)
-**Status:** provisional — needs multi-seed confirmation · observed @ `ac8b2454`
+## F2 — pure-LCK build is non-competitive; STR/VIT/balanced are well-balanced (CONFIRMED, 5 seeds)
+**Status:** CONFIRMED (multi-seed) · observed @ `a0732bc5`
 
-At level 10 with all 9 points in one stat vs the tier-2/size-8 gauntlet (seed 1),
-`lck_crit` ranks last (6 kills / 4 deaths) behind `str_brawler` and `vit_tank`
-(7 kills / 2 deaths). Interpretation: +2%/pt crit (≈+18% *conditional* damage) is a
-weaker combat investment than STR's +5%/pt flat damage or VIT's +15 HP/pt survivability.
+Relative-viability report — level-10 builds, all 9 points in one stat, tier-2/size-8
+gauntlet, **mean over 5 seeds** (viability = mean(kills)/8 − 0.05·mean(deaths)):
+
+| build | kills | deaths | dmg_taken | clear% | viability |
+|---|---|---|---|---|---|
+| str_brawler | 7.20 | 2.00 | 170.4 | 20% | **0.800** |
+| vit_tank | 7.00 | 2.00 | 315.3 | 0% | 0.775 |
+| balanced | 7.20 | 2.80 | 274.1 | 60% | 0.760 |
+| lck_crit | 5.80 | 4.40 | 318.3 | 0% | **0.505** |
+
+**Verdict:** STR / VIT / balanced cluster within ~5% (well-balanced with each other);
+`lck_crit` is the sole outlier ~35% below. So the imbalance is specific: **pure-LCK is
+non-competitive** — +2%/pt crit (≈+18% *conditional* damage) is a weaker combat
+investment than STR's +5%/pt flat damage or VIT's +15 HP/pt survivability.
+**Recommendation:** raise LCK's crit value (or add a small base crit — see F3) so
+luck builds are viable. Single-seed provisionality is now resolved by the 5-seed mean.
+
+Interpretation note: +2%/pt crit (≈+18% *conditional* damage) is a weaker combat
+investment than STR's +5%/pt flat damage or VIT's +15 HP/pt survivability.
 
 **Corrected mid-investigation:** an earlier single-seed run made `lck_crit` look
 *identical* to a no-crit build (LCK "dead"). Code check refuted the "dead" reading —
