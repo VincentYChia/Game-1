@@ -33,10 +33,25 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 os.chdir(PROJECT_ROOT)
 
+SCHEMA_VERSION = 1
+WEAPON_ID = 'iron_shortsword'
 GAUNTLET_SIZE = 3
 GAUNTLET_TIER = 1
 GAUNTLET_COMPOSE_SEED = 20260706  # fixed: identical challenge across all run seeds
 SWINGS_CAP = 30
+
+
+def _git_sha():
+    try:
+        import subprocess
+        return subprocess.check_output(
+            ['git', 'rev-parse', '--short', 'HEAD'],
+            cwd=PROJECT_ROOT, stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        return 'unknown'
+
+
+_GIT_SHA = _git_sha()
 
 
 def boot_engine(save_dir: Path):
@@ -96,7 +111,7 @@ def drive_melee_persona(harness):
     c = eng.character
     # Arm the persona with a T1 sword (30 base dmg) so combat is realistic:
     # crit fires on the tag path and the persona can actually win fights.
-    harness.equip('iron_shortsword')
+    harness.equip(WEAPON_ID)
     c._selected_slot = 'mainHand'
     gauntlet = spawn_gauntlet(eng, GAUNTLET_SIZE, GAUNTLET_TIER)
     gauntlet_ids = [getattr(e.definition, 'enemy_id', '?') for e in gauntlet]
@@ -147,16 +162,42 @@ def run_once(seed, out_dir, persona='melee_basic'):
         cap = capture(eng)
 
     combat = cap['combat']
-    capture_ok = combat.get('combat.damage_dealt', 0.0) > 0.0
+    kills, gauntlet_n = drive['kills'], drive['gauntlet']
+    captured = combat.get('combat.damage_dealt', 0.0) > 0.0
+
+    # Explicit terminal state. capture_blind is a HARNESS failure (the driving
+    # path didn't feed the capture layer) — surfaced loudly, never silent.
+    if not captured:
+        outcome = 'capture_blind'
+    elif gauntlet_n > 0 and kills >= gauntlet_n:
+        outcome = 'cleared'
+    elif kills == 0:
+        outcome = 'wiped'
+    else:
+        outcome = 'partial'
+
     result = {
-        'manifest': {'run_id': f'{persona}-{seed}', 'seed': seed, 'persona': persona},
-        'outcome': 'ok' if capture_ok else 'CAPTURE_BLIND',
+        'schema': SCHEMA_VERSION,
+        'manifest': {
+            'run_id': f'{persona}-{seed}',
+            'seed': seed,
+            'persona': persona,
+            'config': {
+                'weapon': WEAPON_ID,
+                'gauntlet_size': GAUNTLET_SIZE,
+                'gauntlet_tier': GAUNTLET_TIER,
+                'compose_seed': GAUNTLET_COMPOSE_SEED,
+            },
+            'git_sha': _GIT_SHA,
+        },
+        'outcome': outcome,
         'metrics': {
             'level': cap['level'],
             'exp': cap['exp'],
-            'gauntlet': drive['gauntlet'],
+            'gauntlet': gauntlet_n,
             'gauntlet_ids': drive['gauntlet_ids'],
-            'kills': drive['kills'],
+            'kills': kills,
+            'deaths': combat.get('combat.deaths', 0.0),
             'damage_dealt': combat.get('combat.damage_dealt', 0.0),
             'damage_taken': combat.get('combat.damage_taken', 0.0),
             'combat_kills': combat.get('combat.kills', 0.0),
@@ -168,6 +209,11 @@ def run_once(seed, out_dir, persona='melee_basic'):
     tmp = out_dir / 'result.json.tmp'
     tmp.write_text(json.dumps(result, indent=2, default=str), encoding='utf-8')
     os.replace(tmp, out_dir / 'result.json')  # atomic
+
+    if outcome == 'capture_blind':
+        sys.stderr.write(
+            f"[runner] WARNING {result['manifest']['run_id']}: CAPTURE_BLIND — combat "
+            f"stats empty; the driving path is not feeding the capture layer\n")
     return result
 
 

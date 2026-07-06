@@ -45,6 +45,12 @@ def main():
     for x in index:
         print(json.dumps(x))
 
+    from collections import Counter
+    outcomes = Counter(x['outcome'] for x in index)
+    print(f"\noutcomes: {dict(outcomes)}")
+    if outcomes.get('capture_blind', 0):
+        print("!! WARNING: capture_blind run(s) — the driving path is not feeding the capture layer")
+
     # Post-hermetic the whole run is bit-deterministic, so the full signature
     # (incl. damage_taken) must be identical for a fixed seed and differ across seeds.
     def run_sig(x):
