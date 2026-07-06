@@ -35,8 +35,10 @@ os.chdir(PROJECT_ROOT)
 
 SCHEMA_VERSION = 1
 WEAPON_ID = 'iron_shortsword'
-GAUNTLET_SIZE = 3
-GAUNTLET_TIER = 1
+# Calibrated differentiating challenge (tier 2 / size 8): at this difficulty
+# mid-game builds rank distinctly instead of all trivially clearing. Env-overridable.
+GAUNTLET_SIZE = int(os.environ.get('CRUX_GAUNTLET_SIZE', '8'))
+GAUNTLET_TIER = int(os.environ.get('CRUX_GAUNTLET_TIER', '2'))
 GAUNTLET_COMPOSE_SEED = 20260706  # fixed: identical challenge across all run seeds
 SWINGS_CAP = 30
 
