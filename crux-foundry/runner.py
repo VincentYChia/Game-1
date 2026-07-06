@@ -105,14 +105,47 @@ def spawn_gauntlet(eng, n, tier):
     return gauntlet
 
 
-def drive_melee_persona(harness):
-    """Persona 'melee_basic': walk up to each gauntlet enemy and swing until dead."""
+# Personas as BUILD SPECS (stat allocation + weapon at a matched level). At level 1
+# with 0 stats every build is identical; builds only diverge once points are
+# allocated — so a persona levels to a matched investment and distributes points.
+# This is the "power-at-matched-investment" yardstick (METHODOLOGY §2.2 v1):
+# compare builds' combat viability against one fixed challenge.
+PERSONAS = {
+    'melee_basic': {'level': 1,  'stats': {},                'weapon': 'iron_shortsword'},
+    'str_brawler': {'level': 10, 'stats': {'strength': 9},   'weapon': 'iron_shortsword'},
+    'vit_tank':    {'level': 10, 'stats': {'vitality': 9},   'weapon': 'iron_shortsword'},
+    'lck_crit':    {'level': 10, 'stats': {'luck': 9},       'weapon': 'iron_shortsword'},
+    'balanced':    {'level': 10, 'stats': {'strength': 2, 'vitality': 2, 'defense': 2,
+                                           'luck': 1, 'agility': 1, 'intelligence': 1},
+                    'weapon': 'iron_shortsword'},
+}
+
+
+def apply_build(harness, spec):
+    """Configure the character to a persona's build via the REAL APIs: level up to
+    the target level (each level grants 1 stat point), allocate the points per the
+    build, equip the weapon. No RNG use -> determinism-safe."""
+    c = harness.engine.character
+    target = spec.get('level', 1)
+    guard = 0
+    while c.leveling.level < target and guard < 200:
+        need = c.leveling.get_exp_for_next_level() - c.leveling.current_exp
+        c.leveling.add_exp(max(1, need), source='setup', character=c)
+        guard += 1
+    for stat, n in spec.get('stats', {}).items():
+        for _ in range(int(n)):
+            c.allocate_stat_point(stat)
+    harness.equip(spec.get('weapon', WEAPON_ID))
+    c._selected_slot = 'mainHand'
+
+
+def drive_persona(harness, persona):
+    """Apply the persona's build, then fight the fixed gauntlet (swing each enemy
+    until dead or the swing cap)."""
     eng = harness.engine
     c = eng.character
-    # Arm the persona with a T1 sword (30 base dmg) so combat is realistic:
-    # crit fires on the tag path and the persona can actually win fights.
-    harness.equip(WEAPON_ID)
-    c._selected_slot = 'mainHand'
+    spec = PERSONAS.get(persona, PERSONAS['melee_basic'])
+    apply_build(harness, spec)
     gauntlet = spawn_gauntlet(eng, GAUNTLET_SIZE, GAUNTLET_TIER)
     gauntlet_ids = [getattr(e.definition, 'enemy_id', '?') for e in gauntlet]
     kills = 0
@@ -125,7 +158,8 @@ def drive_melee_persona(harness):
         if not e.is_alive:
             kills += 1
         harness.tick(3)
-    return {'gauntlet': len(gauntlet), 'gauntlet_ids': gauntlet_ids, 'kills': kills}
+    return {'gauntlet': len(gauntlet), 'gauntlet_ids': gauntlet_ids, 'kills': kills,
+            'build_level': c.leveling.level, 'build_stats': dict(spec.get('stats', {}))}
 
 
 def capture(eng):
@@ -190,7 +224,7 @@ def run_once(seed, out_dir, persona='melee_basic'):
         h = PlaytestHarness(eng)
         h.settle()
         h.seed_all(seed)
-        drive = drive_melee_persona(h)
+        drive = drive_persona(h, persona)
         cap = capture(eng)
 
     combat = cap['combat']
@@ -229,6 +263,7 @@ def run_once(seed, out_dir, persona='melee_basic'):
             'exp': cap['exp'],
             'gauntlet': gauntlet_n,
             'gauntlet_ids': drive['gauntlet_ids'],
+            'build_stats': drive['build_stats'],
             'kills': kills,
             'deaths': combat.get('combat.deaths', 0.0),
             'damage_dealt': combat.get('combat.damage_dealt', 0.0),
