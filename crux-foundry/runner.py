@@ -25,6 +25,7 @@ for _s in ('stdout', 'stderr'):
 os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '3')
+os.environ.setdefault('GAME1_HERMETIC', '1')  # no WES content generation / no shared-tree writes
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.join(os.path.dirname(HERE), 'Game-1-modular')

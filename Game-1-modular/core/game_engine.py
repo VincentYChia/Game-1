@@ -5137,13 +5137,24 @@ class GameEngine:
 
             # ContentRegistry must be initialized before WES so the
             # orchestrator's commit path has somewhere to stage to.
+            #
+            # crux-foundry hermetic mode (GAME1_HERMETIC=1, set by the headless
+            # playtest harness): keep WES content generation from touching the
+            # shared content tree so runs stay isolated (DC6). game_root -> the
+            # per-run save dir confines any residual writes there; subscribe_to_bus
+            # =False stops the orchestrator from generating on narrative/behavior
+            # events at all. Normal play is unchanged (flag off -> today's behavior).
+            _hermetic = os.environ.get('GAME1_HERMETIC') == '1'
             content_registry = ContentRegistry.get_instance()
-            content_registry.initialize(save_dir=_wns_save_dir)
+            content_registry.initialize(
+                save_dir=_wns_save_dir,
+                game_root=(_wns_save_dir if _hermetic else None),
+            )
 
             self.wes_orchestrator = WESOrchestrator.get_instance()
             self.wes_orchestrator.initialize(
                 registry=content_registry,
-                subscribe_to_bus=True,
+                subscribe_to_bus=(not _hermetic),
             )
         except Exception as e:
             print(f"[WES] Orchestrator init failed (non-fatal): {e}")

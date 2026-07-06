@@ -56,6 +56,20 @@ The isolated run unit (`run_once`) + subprocess batch runner prove the determini
   resumability of enemy-side stats becomes necessary. NOTE: `cm.config.spawn_rates = {}` is NOT a valid freeze — it
   perturbs enemy behavior and broke `damage_dealt` reproducibility; reverted.
 
+### D9 — Hermetic mode (`GAME1_HERMETIC=1`) — VERIFIED  ★ also resolved the D8 jitter
+- **What:** `core/game_engine.py` WES-init block — when `GAME1_HERMETIC=1`, `ContentRegistry.initialize(game_root=
+  per-run save dir)` and `WESOrchestrator.initialize(subscribe_to_bus=False)`. The harness (`runner.py`) sets the env.
+- **Why:** the WES orchestrator, reacting to WMS behavior-threshold bus events *during gameplay*, was committing
+  generated content (`*-generated-*.JSON`) into the SHARED content tree — breaking run isolation and polluting the
+  repo (48 files from 16 runs). Generation is DC6-disabled anyway; the WMS *recording* layer (capture, DC7) is
+  independent and stays on.
+- **★ Resolved D8:** disabling WES's **async dispatch threads** eliminated the ~0.5% `damage_taken` jitter entirely.
+  Post-change the whole run is **bit-reproducible** (seeds [1,2,1]: run0 == run2 including `damage_taken`, delta 0.000).
+  The residual was thread races, not floating-point.
+- **Default-preserves-behavior:** flag off → `game_root=None`, `subscribe_to_bus=True` = today's behavior exactly.
+- **Verification:** `batch.py` → **zero** generated-content pollution + full bit-reproducibility; normal-play suites
+  green (`tests/integration/` + `world_system/` = **905 passed**, WES tests included).
+
 ## Verification checklist applied to every IMPLEMENTED entry
 - [ ] Full suite green: `cd Game-1-modular && python -m pytest tests/ -q`
 - [ ] Integration suite green: `python -m pytest tests/integration/ -q`
