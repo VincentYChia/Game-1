@@ -725,9 +725,10 @@ class WorldSystem:
         if not rich_items:
             return None
 
-        # Generate unique chest ID based on position and timestamp
-        import time
-        chest_id = f"death_chest_{int(position.x)}_{int(position.y)}_{int(time.time())}"
+        # Generate unique chest ID based on position and a monotonic counter.
+        # crux-foundry D5: deterministic id (was int(time.time())).
+        self._death_chest_seq = getattr(self, '_death_chest_seq', 0) + 1
+        chest_id = f"death_chest_{int(position.x)}_{int(position.y)}_{self._death_chest_seq}"
 
         # Build simple contents list for backwards compatibility
         simple_contents = []

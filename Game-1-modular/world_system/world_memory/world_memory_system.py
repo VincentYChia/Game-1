@@ -458,7 +458,7 @@ class WorldMemorySystem:
             # Position sampling
             health_pct = character.health / max(character.max_health, 1)
             self.position_sampler.update(
-                time.time(),
+                game_time,  # crux-foundry D4: deterministic in-game time (was time.time())
                 character.position.x,
                 character.position.y,
                 health_pct=health_pct,

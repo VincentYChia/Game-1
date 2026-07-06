@@ -13,6 +13,7 @@ High-level actions (move, craft, save) compose those primitives plus the
 engine's real handler methods, never re-implementing game logic.
 """
 import pygame
+import random
 
 FRAME_MS = 16  # ~60 FPS simulation step
 
@@ -97,6 +98,36 @@ class PlaytestHarness:
             if slot and slot.item_id == item_id:
                 total += slot.quantity
         return total
+
+    # ── combat + determinism (crux-foundry P0) ───────────────────────
+
+    def seed_all(self, seed: int):
+        """Make a run reproducible (crux-foundry D7). Seeds the global RNG —
+        which covers enemy loot/damage, enemy-DB selection and crafting rolls —
+        and the CombatManager's injected RNG (crit/spawn). Call once per run,
+        after world entry."""
+        random.seed(seed)
+        cm = getattr(self.engine, 'combat_manager', None)
+        if cm is not None and hasattr(cm, 'seed_rng'):
+            cm.seed_rng(seed)
+
+    def living_enemies(self, exclude_dummy: bool = False):
+        cm = self.engine.combat_manager
+        result = [e for e in cm.get_all_active_enemies() if e.is_alive]
+        if exclude_dummy:
+            result = [e for e in result if getattr(
+                getattr(e, 'definition', None), 'enemy_id', '') != 'training_dummy']
+        return result
+
+    def training_dummy(self):
+        for e in self.engine.combat_manager.get_all_active_enemies():
+            if getattr(getattr(e, 'definition', None), 'enemy_id', '') == 'training_dummy':
+                return e
+        return None
+
+    def attack(self, enemy):
+        """Player basic attack. Returns (damage, was_crit, drops)."""
+        return self.engine.combat_manager.player_attack_enemy(enemy)
 
     # ── crafting (real completion pipeline) ──────────────────────────
 

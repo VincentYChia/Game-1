@@ -115,9 +115,13 @@ class CombatConfig:
 class CombatManager:
     """Manages all combat in the game"""
 
-    def __init__(self, world_system, character):
+    def __init__(self, world_system, character, rng=None):
         self.world = world_system
         self.character = character
+        # crux-foundry D1: deterministic RNG injection point. Defaults to the
+        # global `random` module so normal play is byte-identical; inject a
+        # seeded random.Random (arg) or call seed_rng() for reproducible sims.
+        self._rng = rng if rng is not None else random
         self.config = CombatConfig()
         self.enemy_db = EnemyDatabase.get_instance()
 
@@ -175,6 +179,11 @@ class CombatManager:
         self._hitbox_system = None      # combat.HitboxSystem
         self._combat_data = None        # combat.CombatDataLoader
         self._action_combat = False     # Whether action combat is active
+
+    def seed_rng(self, seed):
+        """crux-foundry D1: make combat RNG deterministic. No behavioral effect
+        unless called; used by the headless playtest harness for reproducible runs."""
+        self._rng = random.Random(seed)
 
     def on_chunk_unloaded(self, chunk_key: Tuple[int, int]):
         """Clean up enemies and corpses belonging to an unloaded chunk.
@@ -377,7 +386,7 @@ class CombatManager:
         weights = [weight for enemy_def, weight in spawn_pool]
 
         # Weighted random choice
-        return random.choices(enemies, weights=weights, k=1)[0]
+        return self._rng.choices(enemies, weights=weights, k=1)[0]
 
     def spawn_enemies_in_chunk(self, chunk, initial_spawn=False):
         """
@@ -412,7 +421,7 @@ class CombatManager:
         # Determine how many to spawn
         min_enemies = spawn_config.get('minEnemies', 1)
         max_enemies = spawn_config.get('maxEnemies', 3)
-        target_count = random.randint(min_enemies, max_enemies)
+        target_count = self._rng.randint(min_enemies, max_enemies)
         to_spawn = max(0, target_count - current_count)
 
         # Build weighted spawn pool (uses chunk template enemySpawns + general tier pool)
@@ -426,8 +435,8 @@ class CombatManager:
                 continue
 
             # Pick random position in chunk
-            spawn_x = chunk.chunk_x * 16 + random.uniform(2, 14)
-            spawn_y = chunk.chunk_y * 16 + random.uniform(2, 14)
+            spawn_x = chunk.chunk_x * 16 + self._rng.uniform(2, 14)
+            spawn_y = chunk.chunk_y * 16 + self._rng.uniform(2, 14)
 
             # Create enemy
             enemy = Enemy(enemy_def, (spawn_x, spawn_y), chunk_coords)
@@ -487,8 +496,8 @@ class CombatManager:
                             continue
 
                     # Random position in chunk
-                    spawn_x = chunk_x * 16 + random.uniform(4, 12)
-                    spawn_y = chunk_y * 16 + random.uniform(4, 12)
+                    spawn_x = chunk_x * 16 + self._rng.uniform(4, 12)
+                    spawn_y = chunk_y * 16 + self._rng.uniform(4, 12)
 
                     # Create enemy
                     enemy = Enemy(enemy_def, (spawn_x, spawn_y), chunk_coords)
@@ -519,7 +528,7 @@ class CombatManager:
         if not tiers:
             return 1
 
-        return random.choices(tiers, weights=weights)[0]
+        return self._rng.choices(tiers, weights=weights)[0]
 
     def update(self, dt: float, shield_blocking: bool = False, is_night: bool = False):
         """Update all enemies and combat logic
@@ -736,7 +745,7 @@ class CombatManager:
         # Crit check (10% base)
         is_crit = False
         crit_chance = 0.10
-        if random.random() < crit_chance:
+        if self._rng.random() < crit_chance:
             is_crit = True
             base_damage *= 2.0
 
@@ -967,7 +976,7 @@ class CombatManager:
         elif weapon_tag_crit_bonus > 0:
             print(f"   🎯 Precision: +{weapon_tag_crit_bonus*100:.0f}% crit chance (total: {crit_chance*100:.1f}%)")
 
-        if random.random() < crit_chance:
+        if self._rng.random() < crit_chance:
             is_crit = True
             base_damage *= 2.0
             print(f"   💥 CRITICAL HIT! x2 damage")
@@ -981,7 +990,7 @@ class CombatManager:
         # Block: Chance to negate incoming damage (requires shield)
         # Parry: Chance to deflect and counterattack
         # counter_chance = self.character.titles.get_total_bonus('counterChance')
-        # if random.random() < counter_chance:
+        # if self._rng.random() < counter_chance:
         #     # Apply counter damage, stun effect, etc.
         #     pass
 
@@ -2382,7 +2391,7 @@ class CombatManager:
                 continue
 
             # Select random enemy from tier
-            definition = random.choice(available)
+            definition = self._rng.choice(available)
 
             # Get spawn position in dungeon
             spawn_pos = dungeon.get_spawn_position()
