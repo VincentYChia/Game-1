@@ -5,8 +5,16 @@ Handles enemy spawning, combat calculations, and loot
 import json
 import random
 import math
+import os
 from typing import Dict, List, Tuple, Optional, TYPE_CHECKING
 from pathlib import Path
+
+# crux-foundry tunable balance knob for the auto-tuning optimizer: STR damage-per-
+# point (default 0.05 = current behavior). Applied on the ACTION-COMBAT damage path
+# (player_attack_enemy_with_tags) that real melee actually uses — unlike the
+# luck/crit knob which only exists on the unused legacy path (see FINDINGS F4).
+# Read once at import; the optimizer sets CRUX_STR_DMG_PER_POINT per subprocess.
+_STR_DMG_PER_POINT = float(os.environ.get('CRUX_STR_DMG_PER_POINT', '0.05'))
 
 if TYPE_CHECKING:
     from ..main import WorldSystem, Character, Inventory
@@ -918,7 +926,7 @@ class CombatManager:
         weapon_damage = int(weapon_damage * weapon_tag_damage_mult)
 
         # Calculate multipliers
-        str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
+        str_multiplier = 1.0 + (self.character.stats.strength * _STR_DMG_PER_POINT)  # tunable: CRUX_STR_DMG_PER_POINT
         print(f"   STR multiplier: {str_multiplier:.2f} (STR: {self.character.stats.strength})")
 
         # Title bonuses (meleeDamage from earned titles)
@@ -956,7 +964,7 @@ class CombatManager:
         is_crit = False
         # Use effective luck (includes title and skill bonuses)
         effective_luck = self.character.get_effective_luck()
-        base_crit_chance = 0.02 * effective_luck  # 2% per luck point
+        base_crit_chance = 0.02 * effective_luck  # 2%/pt — LEGACY path only; action combat never runs this (FINDINGS F4)
 
         # SKILL BUFF BONUSES: Check for pierce buffs (critical chance)
         pierce_bonus = 0.0
@@ -1352,7 +1360,7 @@ class CombatManager:
                 base_damage += weapon_damage
 
             # STR multiplier
-            str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
+            str_multiplier = 1.0 + (self.character.stats.strength * _STR_DMG_PER_POINT)  # tunable: CRUX_STR_DMG_PER_POINT
             base_damage *= str_multiplier
 
             # Title bonuses (meleeDamage from earned titles)
@@ -1580,7 +1588,7 @@ class CombatManager:
                 base_damage += weapon_damage
 
             # STR multiplier
-            str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
+            str_multiplier = 1.0 + (self.character.stats.strength * _STR_DMG_PER_POINT)  # tunable: CRUX_STR_DMG_PER_POINT
             base_damage *= str_multiplier
 
             # Title bonuses (meleeDamage from earned titles)

@@ -73,3 +73,29 @@ Note there is **no base crit** in the LCK path (luck 0 → 0% crit), whereas the
 path gives a flat 10%. Worth reconciling: a 0-LCK character crits 10% via one path and
 0% via the other depending on which attack code runs. Not blocking the playtester, but
 a real balance/consistency question for the game.
+
+---
+
+## F4 — LCK is a DEAD stat on the action-combat path (ROOT CAUSE of F2) — CONFIRMED
+**Status:** CONFIRMED (code + knob test + optimizer) · observed @ `f9158c4e`+
+
+Real melee runs `player_attack_enemy_with_tags` (reached via the hitbox resolver
+`_ac_process_hit`). Reading it (`combat_manager.py:1580-1607`): it applies the STR
+multiplier (`strength * 0.05`, :1590) and title/skill bonuses, then executes the tag
+effect system — but has **NO crit computation at all** (no luck, no ×2). The
+luck→crit wiring (`base_crit_chance = 0.02 * effective_luck`) exists ONLY in the
+legacy `player_attack_enemy` (:965), which action combat never calls.
+
+**Proof:** a tunable `CRUX_LCK_CRIT_PER_POINT` injected at the legacy site and swept
+0.02→0.10 produced **bit-identical** persona results — the personas never execute that
+code. And `optimizer.py` finds `lck_crit` is the viability FLOOR at every STR-knob value.
+
+**Impact:** a player investing in LCK for crit gets **zero** combat benefit in real
+(action) melee — this is the root cause of F2 (pure-LCK non-competitive).
+**Fix (dev CODE, not a tune):** apply luck-based crit in `player_attack_enemy_with_tags`
+(and/or the effect executor), reconciling F3's two crit paths. *Then* the optimizer
+could tune the crit value to make luck builds viable.
+
+**Optimizer corollary (the key lesson):** this is the archetypal problem the optimizer
+**cannot** fix — a value can't be auto-tuned if the code never reads it. The tester's
+job was to FIND it; the fix is a code change. Auto-tuning tunes PARAMETERS, not WIRING.
