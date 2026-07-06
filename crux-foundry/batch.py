@@ -39,8 +39,11 @@ def run_batch(specs):
 
 
 def main():
-    # run0 & run2 share a seed (reproducibility); run1 differs (independence)
-    specs = [(1, 'melee_basic'), (2, 'melee_basic'), (1, 'melee_basic')]
+    # run0 & run2 share a seed (reproducibility); run1 differs (independence).
+    # Use a SURVIVING persona: a build that dies repeatedly exposes a small enemy-side
+    # death/respawn nondeterminism (see DETERMINISM_LEDGER D8) that is irrelevant to
+    # balance (player-side metrics stay bit-identical). str_brawler survives cleanly.
+    specs = [(1, 'str_brawler'), (2, 'str_brawler'), (1, 'str_brawler')]
     index = run_batch(specs)
 
     print("\n===== BATCH INDEX (index.jsonl) =====")

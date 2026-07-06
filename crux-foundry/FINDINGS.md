@@ -99,3 +99,17 @@ could tune the crit value to make luck builds viable.
 **Optimizer corollary (the key lesson):** this is the archetypal problem the optimizer
 **cannot** fix — a value can't be auto-tuned if the code never reads it. The tester's
 job was to FIND it; the fix is a code change. Auto-tuning tunes PARAMETERS, not WIRING.
+
+### F4 — FIXED ✅ (the measure -> fix -> verify loop, closed)
+Wired luck-based crit into `player_attack_enemy_with_tags` (mirrors the legacy path;
+`crit_chance = _LCK_CRIT_PER_POINT * effective_luck + title bonus`, applied last on the
+fully-bonused damage; threaded to the return, StatStore `was_crit`, and DAMAGE_DEALT).
+This is an intentional GAME BEHAVIOR change (adds the missing crit), not a
+determinism-preserving injection — luck now matters in real combat.
+
+**Verified (single build, seed 1, default 0.02 crit/pt):** `lck_crit` went from
+`6 kills / 4 deaths / partial` (dead LCK) to **`8 kills / 2 deaths / cleared`** — just
+fixing the wiring (9 luck now = 18% crit instead of 0%) made it competitive. It also
+now *responds* to the knob (dmg 886 -> 1078 as crit/pt 0.02 -> 0.10). Guarded by
+`tests/integration/test_11_crux_foundry.py`. Game combat suites green (43 passed).
+Aggregate (viability report, post-fix): see below / commit message.

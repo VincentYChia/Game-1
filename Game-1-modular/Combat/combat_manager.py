@@ -15,6 +15,10 @@ from pathlib import Path
 # luck/crit knob which only exists on the unused legacy path (see FINDINGS F4).
 # Read once at import; the optimizer sets CRUX_STR_DMG_PER_POINT per subprocess.
 _STR_DMG_PER_POINT = float(os.environ.get('CRUX_STR_DMG_PER_POINT', '0.05'))
+# crux-foundry F4 FIX + optimizer knob: LCK crit-per-point on the ACTION-combat path.
+# Before this fix that path applied NO crit at all (LCK was a dead stat). Default 0.02
+# mirrors the legacy path's 2%/pt; tune via CRUX_LCK_CRIT_PER_POINT.
+_LCK_CRIT_PER_POINT = float(os.environ.get('CRUX_LCK_CRIT_PER_POINT', '0.02'))
 
 if TYPE_CHECKING:
     from ..main import WorldSystem, Character, Inventory
@@ -1577,6 +1581,7 @@ class CombatManager:
 
         # Setup effect parameters
         effect_params = params.copy() if params else {}
+        is_crit = False  # crux-foundry F4 FIX: this path previously applied NO crit
 
         # Apply character stat bonuses to base damage
         if "baseDamage" in effect_params:
@@ -1603,6 +1608,16 @@ class CombatManager:
                 if skill_bonus > 0:
                     base_damage *= (1.0 + skill_bonus)
                     print(f"   ⚡ Skill buff: +{skill_bonus*100:.0f}% damage")
+
+            # Critical hit (crux-foundry F4 FIX): the action-combat path applied NO
+            # crit, making LCK a dead stat. Roll luck-based crit here (mirrors the
+            # legacy path) so LCK matters. Applied LAST, on the fully-bonused damage.
+            crit_chance = _LCK_CRIT_PER_POINT * self.character.get_effective_luck()
+            crit_chance += self.character.titles.get_total_bonus('criticalChance')
+            if self._rng.random() < crit_chance:
+                is_crit = True
+                base_damage *= 2.0
+                print(f"   💥 CRITICAL HIT! x2 damage")
 
             effect_params["baseDamage"] = base_damage
             print(f"   Base damage (with bonuses): {base_damage:.1f}")
@@ -1659,7 +1674,7 @@ class CombatManager:
                     target_id=getattr(enemy, 'entity_id', enemy.definition.enemy_id),
                     attacker_id="player", amount=final_damage,
                     damage_type=_dmg_type,
-                    is_crit=getattr(context, 'any_crit', False) if hasattr(context, 'any_crit') else False,
+                    is_crit=is_crit,  # crux-foundry F4 FIX
                     position_x=enemy.position[0], position_y=enemy.position[1],
                     source="combat_manager_tags")
             except (ImportError, Exception):
@@ -1784,7 +1799,7 @@ class CombatManager:
                         amount=final_damage,
                         damage_type=damage_type,
                         attack_type=attack_type,
-                        was_crit=context.any_crit if hasattr(context, 'any_crit') else False,
+                        was_crit=is_crit,  # crux-foundry F4 FIX
                         weapon_element=weapon_element,
                         target_type=enemy_base_id,
                     )
@@ -1818,8 +1833,8 @@ class CombatManager:
                         except Exception:
                             pass
 
-            # Tag-based attacks don't use traditional crit system (handled by tags)
-            return (total_damage, False, loot)
+            # crux-foundry F4 FIX: crit is now applied above (this path had none before)
+            return (total_damage, is_crit, loot)
 
         except Exception as e:
             self.debugger.error(f"Tag-based attack failed: {e}")

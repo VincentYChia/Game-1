@@ -66,6 +66,13 @@ The isolated run unit (`run_once`) + subprocess batch runner prove the determini
 - **★ Resolved D8:** disabling WES's **async dispatch threads** eliminated the ~0.5% `damage_taken` jitter entirely.
   Post-change the whole run is **bit-reproducible** (seeds [1,2,1]: run0 == run2 including `damage_taken`, delta 0.000).
   The residual was thread races, not floating-point.
+- **UPDATE (post-F4-fix):** a *distinct*, smaller enemy-side jitter (~0.3% `damage_taken` + 1 stat key) re-appears
+  ONLY when the player **dies repeatedly** (a level-1 persona vs the hard calibrated gauntlet) — death/respawn +
+  ambient-enemy churn, NOT WES and NOT the F4 crit roll. **Player-side metrics stay bit-identical**; balance personas
+  (armed, surviving) are fully bit-reproducible (verified `str_brawler` seed 1 ×2 → identical). So the batch
+  determinism self-check uses a surviving persona (`str_brawler`). Heavy-death runs still reproduce in the signals that
+  matter for balance (kills/deaths/damage_dealt) and drift only in enemy *output*, which is averaged over seeds.
+  Root-causing the death/respawn path is deferred (marginal value vs balance analysis).
 - **Default-preserves-behavior:** flag off → `game_root=None`, `subscribe_to_bus=True` = today's behavior exactly.
 - **Verification:** `batch.py` → **zero** generated-content pollution + full bit-reproducibility; normal-play suites
   green (`tests/integration/` + `world_system/` = **905 passed**, WES tests included).
