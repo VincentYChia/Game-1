@@ -110,6 +110,11 @@ determinism-preserving injection — luck now matters in real combat.
 **Verified (single build, seed 1, default 0.02 crit/pt):** `lck_crit` went from
 `6 kills / 4 deaths / partial` (dead LCK) to **`8 kills / 2 deaths / cleared`** — just
 fixing the wiring (9 luck now = 18% crit instead of 0%) made it competitive. It also
-now *responds* to the knob (dmg 886 -> 1078 as crit/pt 0.02 -> 0.10). Guarded by
-`tests/integration/test_11_crux_foundry.py`. Game combat suites green (43 passed).
-Aggregate (viability report, post-fix): see below / commit message.
+now *responds* to the knob (dmg 886 -> 1078 as crit/pt 0.02 -> 0.10). Guarded by `tests/integration/test_11_crux_foundry.py`; full game suite green (1143 passed).
+
+**Aggregate (8-seed viability report):** the wiring fix lifted `lck_crit` from **0.505**
+(pre-fix, weakest) to **0.566** and cut the spread **0.295 → 0.209**. It stays weakest at
+the DEFAULT 0.02 crit (crit is *undertuned*), but `optimizer.py` shows tuning
+`CRUX_LCK_CRIT_PER_POINT` up to ~0.10–0.14 lifts lck_crit to ~0.900 and cuts the spread a
+further 32%. So the **FIX makes luck matter; the OPTIMIZER prescribes the value** the game
+devs would set — the full find → fix → tune → verify loop, run entirely locally.
