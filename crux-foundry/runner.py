@@ -132,13 +132,45 @@ def capture(eng):
     c = eng.character
     store = c.stat_tracker._store
     store.flush()
+    allstats = store.get_all()
     return {
         'level': c.leveling.level,
         'exp': c.leveling.current_exp,
         'combat': store.get_prefix('combat'),
         'progression': store.get_prefix('progression'),
-        'total_stat_keys': len(store.get_all()),
+        'total_stat_keys': len(allstats),
+        'all': allstats,
     }
+
+
+def compute_score(stats, level):
+    """SCORING.md progression score — the universal viability currency.
+
+    `stats` is the full StatStore dict (name -> value). Combat performance is NOT
+    scored here (kills are a *means* to progression; they live in metrics). The
+    score measures how far a persona progressed, so a combat-only gauntlet scores
+    low BY DESIGN — meaningful totals need a full-loop persona (level/craft/gather).
+    Weights are gaming-hardened per SCORING.md (no raw event-volume term).
+    """
+    def sv(k):
+        return float(stats.get(k, 0.0))
+
+    b = {}
+    b['levels'] = 100.0 * max(0, level - 1)                    # +100 / level gained (start=1)
+    b['skills'] = 20.0 * sv('progression.skills_learned')      # +20 / skill
+    b['titles'] = 40.0 * sv('progression.titles_earned')       # +40 / title  (verify key on full-loop)
+    b['discovery'] = 5.0 * sv('encyclopedia.discovered')       # +5 / first-time discovery
+    # gathering: +1 per 50 resources, scaled by tier
+    g = 0.0
+    for t in range(1, 5):
+        g += (sv(f'gathering.collected.tier.{t}') / 50.0) * t
+    b['gathering'] = g
+    # crafting: +15/+10/+5/0 diminishing per DISTINCT recipe first-crafted.
+    # (StatStore per-recipe key TBD on a crafting persona; 0 for the combat gauntlet.)
+    b['crafting'] = 0.0
+
+    b = {k: round(v, 2) for k, v in b.items()}
+    return {'total': round(sum(b.values()), 2), 'breakdown': b}
 
 
 def run_once(seed, out_dir, persona='melee_basic'):
@@ -191,6 +223,7 @@ def run_once(seed, out_dir, persona='melee_basic'):
             'git_sha': _GIT_SHA,
         },
         'outcome': outcome,
+        'score': compute_score(cap['all'], cap['level']),
         'metrics': {
             'level': cap['level'],
             'exp': cap['exp'],

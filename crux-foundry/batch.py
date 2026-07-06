@@ -30,7 +30,9 @@ def run_batch(specs):
             subprocess.run([sys.executable, str(RUNNER), str(seed), str(out), persona],
                            check=True, cwd=str(HERE.parent))
         r = json.loads(res_file.read_text(encoding='utf-8'))
-        index.append({**r['manifest'], **r['metrics'], 'outcome': r['outcome']})
+        index.append({**r['manifest'], **r['metrics'],
+                      'score': r['score']['total'], 'score_breakdown': r['score']['breakdown'],
+                      'outcome': r['outcome']})
     (RUNS_DIR / 'index.jsonl').write_text(
         '\n'.join(json.dumps(x) for x in index) + '\n', encoding='utf-8')
     return index
