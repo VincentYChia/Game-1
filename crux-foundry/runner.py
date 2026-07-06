@@ -83,6 +83,10 @@ def drive_melee_persona(harness):
     """Persona 'melee_basic': walk up to each gauntlet enemy and swing until dead."""
     eng = harness.engine
     c = eng.character
+    # Arm the persona with a T1 sword (30 base dmg) so combat is realistic:
+    # crit fires on the tag path and the persona can actually win fights.
+    harness.equip('iron_shortsword')
+    c._selected_slot = 'mainHand'
     gauntlet = spawn_gauntlet(eng, GAUNTLET_SIZE, GAUNTLET_TIER)
     kills = 0
     for e in gauntlet:

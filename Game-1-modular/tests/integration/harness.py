@@ -145,6 +145,14 @@ class PlaytestHarness:
         self.engine._initiate_attack_toward(ex, ey, 'mainHand')
         self.tick(frames)
 
+    def equip(self, item_id: str):
+        """Equip an item by id through the real EquipmentManager (validates
+        requirements). Returns (previously_equipped, status_message)."""
+        from data.databases.equipment_db import EquipmentDatabase
+        item = EquipmentDatabase.get_instance().create_equipment_from_id(item_id)
+        assert item is not None, f"unknown equipment id: {item_id}"
+        return self.engine.character.equipment.equip(item, self.engine.character)
+
     # ── crafting (real completion pipeline) ──────────────────────────
 
     def craft(self, discipline: str, recipe_id: str, minigame_result: dict):
