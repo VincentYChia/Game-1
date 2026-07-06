@@ -40,6 +40,22 @@ change, so interactive play is untouched). The per-row "Status" column below is 
 > Note: D6/D7 touch only `tests/`-level tooling, not shipped game logic, but are logged here for completeness
 > because the whole determinism story depends on them.
 
+## Run-harness reproducibility (P1) — `runner.py` / `batch.py`
+
+The isolated run unit (`run_once`) + subprocess batch runner prove the determinism story end to end:
+- **Isolation:** one process per run, each with a private per-run WMS/StatStore DB dir. Runs cannot bleed.
+- **Pre-boot seeding required:** `random.seed(seed)` is called *before* engine boot (so ambient enemy spawns +
+  spawn-timers created during world entry are deterministic) **and** `harness.seed_all(seed)` after boot (combat
+  crit stream + a clean global-stream restart). Seeding only after boot leaves boot-time state nondeterministic.
+- **Result (seeds [1,2,1]):** player-side performance is **bit-reproducible across processes** — `damage_dealt`,
+  `combat_kills`, `exp`, `level`, `total_stat_keys` identical for the two seed-1 runs; different for seed-2 (independence).
+- **Known residual (candidate D8):** `damage_taken` (enemy-side) has ~0.5% run-to-run jitter at a fixed seed. It is
+  **not** wall-clock (grep of `Combat/` for `get_ticks`/`time.time` = none) — a floating-point/ordering subtlety in
+  multi-enemy attack resolution (possibly death/respawn interaction). Negligible for statistical balance (which
+  averages over seeds and compares far larger relative differences). Only worth hardening if bit-exact Crux
+  resumability of enemy-side stats becomes necessary. NOTE: `cm.config.spawn_rates = {}` is NOT a valid freeze — it
+  perturbs enemy behavior and broke `damage_dealt` reproducibility; reverted.
+
 ## Verification checklist applied to every IMPLEMENTED entry
 - [ ] Full suite green: `cd Game-1-modular && python -m pytest tests/ -q`
 - [ ] Integration suite green: `python -m pytest tests/integration/ -q`
