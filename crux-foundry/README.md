@@ -38,6 +38,10 @@ python crux-foundry/runner.py <seed> <out_dir> <persona>
 # a FULL PLAYTHROUGH: craft -> equip -> fight -> level (exercises crafting + progression,
 # not just combat; makes the progression score meaningful)
 python crux-foundry/loop_runner.py <seed> <out_dir> [rounds]
+# an emergent LIFE: an agent lives many in-game days -> a narrated CHRONICLE from the
+# WMS (daily ledgers + milestones, all hermetic/no-LLM). A corpus of these at scale is
+# the deep-simulated-world payoff. (writes story.txt + result.json)
+python crux-foundry/life_runner.py <seed> <out_dir> [days]
 # determinism/isolation self-check (seeds 1,2,1)
 python crux-foundry/batch.py
 # relative-viability report (personas x N seeds)
