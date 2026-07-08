@@ -52,6 +52,14 @@ def test_total_is_sum_of_components():
     assert s['total'] == 400.0 + 20.0 + 10.0 + 2.0
 
 
+def test_crafting_diminishing_per_distinct_recipe():
+    # +15/+10/+5/0 diminishing per DISTINCT crafted recipe
+    stats = {f'crafting.success.recipe.r{i}': 4.0 for i in range(5)}  # 5 distinct
+    assert compute_score(stats, 1)['breakdown']['crafting'] == 30.0     # 15+10+5+0+0
+    one = {'crafting.success.recipe.r0': 9.0}                           # 1 distinct
+    assert compute_score(one, 1)['breakdown']['crafting'] == 15.0
+
+
 def test_no_raw_event_volume_term():
     # SCORING.md hardening: raw combat/event volume must NOT contribute to score.
     noisy = {'combat.damage_dealt': 1e9, 'combat.kills': 999.0, 'session.started': 1.0}

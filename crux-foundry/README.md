@@ -33,8 +33,11 @@ crux_job.pbs     the PBS array + conventions; reduce = viability_report on login
 
 ## Run locally
 ```bash
-# one run
+# one combat-build run
 python crux-foundry/runner.py <seed> <out_dir> <persona>
+# a FULL PLAYTHROUGH: craft -> equip -> fight -> level (exercises crafting + progression,
+# not just combat; makes the progression score meaningful)
+python crux-foundry/loop_runner.py <seed> <out_dir> [rounds]
 # determinism/isolation self-check (seeds 1,2,1)
 python crux-foundry/batch.py
 # relative-viability report (personas x N seeds)

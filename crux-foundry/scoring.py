@@ -24,9 +24,10 @@ def compute_score(stats, level):
     for t in range(1, 5):
         g += (sv(f'gathering.collected.tier.{t}') / 50.0) * t
     b['gathering'] = g
-    # crafting: +15/+10/+5/0 diminishing per DISTINCT recipe first-crafted.
-    # (StatStore per-recipe key TBD on a crafting persona; 0 for the combat gauntlet.)
-    b['crafting'] = 0.0
+    # crafting: +15/+10/+5/0 diminishing per DISTINCT recipe successfully crafted.
+    # StatStore key `crafting.success.recipe.<id>` confirmed by the full-loop persona.
+    n_recipes = sum(1 for k in stats if k.startswith('crafting.success.recipe.'))
+    b['crafting'] = float(sum((15, 10, 5)[i] if i < 3 else 0 for i in range(n_recipes)))
 
     b = {k: round(v, 2) for k, v in b.items()}
     return {'total': round(sum(b.values()), 2), 'breakdown': b}
