@@ -1644,6 +1644,17 @@ class CombatManager:
             # approximation, documented here).
             base_damage *= self.character.get_enemy_damage_multiplier(enemy)
 
+            # INT elemental damage (+5%/pt, documented) had NO combat
+            # consumer anywhere (2026-07 audit: dead documented stat).
+            # Applies when the attack carries an elemental damage tag.
+            _ELEMENTAL = ('fire', 'ice', 'lightning', 'poison', 'arcane',
+                          'shadow', 'holy')
+            if tags and any(t in _ELEMENTAL for t in tags):
+                int_mult = 1.0 + (self.character.stats.intelligence * 0.05)
+                if int_mult > 1.0:
+                    base_damage *= int_mult
+                    print(f"   🔮 INT elemental: x{int_mult:.2f}")
+
             # Crushing bonus vs armored primary target (+X% if defense > 10)
             if crushing_bonus > 0 and enemy.definition.defense > 10:
                 base_damage *= (1.0 + crushing_bonus)
@@ -2028,11 +2039,15 @@ class CombatManager:
         def_multiplier = 1.0 - (defense_stat * 0.02)
         print(f"   DEF multiplier: {def_multiplier:.2f} (DEF: {defense_stat:.1f})")
 
-        # Armor bonus from equipment
+        # Armor bonus from equipment. DEF's documented "+3% armor
+        # effectiveness per point" was loaded from stats-calculations.JSON
+        # but never applied anywhere (2026-07 audit: dead documented stat)
+        # — DEF now makes worn armor more effective, per the spec.
         armor_bonus = 0.0
         if hasattr(self.character, 'equipment'):
             armor_bonus = self.character.equipment.get_total_defense()
-        print(f"   Armor bonus: {armor_bonus}")
+            armor_bonus *= (1.0 + self.character.stats.defense * 0.03)
+        print(f"   Armor bonus: {armor_bonus:.1f} (incl. DEF effectiveness)")
 
         armor_multiplier = 1.0 - (armor_bonus * 0.01)
 

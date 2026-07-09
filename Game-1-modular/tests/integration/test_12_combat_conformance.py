@@ -137,6 +137,86 @@ def test_guaranteed_crit_doubles_damage_on_action_path(play):
         dummy.current_health = dummy.max_health
 
 
+# ── Batch 2: previously-dead documented stats ────────────────────────
+
+def test_vit_scales_health_regen(play):
+    """VIT +1% health regen per point (documented; was flat regardless)."""
+    char = play.engine.character
+    char.time_since_last_damage_taken = 999.0
+    char.time_since_last_damage_dealt = 999.0
+
+    char.stats.vitality = 0
+    char.health = 1.0
+    char.update_health_regen(1.0)
+    gain_v0 = char.health - 1.0
+
+    char.stats.vitality = 20
+    char.health = 1.0
+    char.time_since_last_damage_taken = 999.0
+    char.time_since_last_damage_dealt = 999.0
+    char.update_health_regen(1.0)
+    gain_v20 = char.health - 1.0
+
+    assert gain_v0 > 0
+    ratio = gain_v20 / gain_v0
+    assert 1.15 <= ratio <= 1.25, (
+        f"20 VIT should give ~1.2x regen (+1%/pt), got {ratio:.2f}x"
+    )
+    char.stats.vitality = 0
+    char.health = char.max_health
+
+
+def test_int_scales_elemental_damage_on_action_path(play):
+    """INT +5% elemental damage per point (documented; had no combat
+    consumer). Physical attacks are unaffected."""
+    eng = play.engine
+    dummy = _fresh_dummy(play)
+    eng.character.stats.strength = 0
+    orig_def = dummy.definition.defense
+    try:
+        dummy.definition.defense = 0
+
+        eng.character.stats.intelligence = 0
+        phys_i0 = _tags_damage(play, dummy)
+        dummy.current_health = dummy.max_health
+        eng.combat_manager.player_attack_enemy_with_tags(
+            dummy, ['fire', 'single_target'], {'baseDamage': 100.0},
+            skip_visual=True, skip_los=True)
+        fire_i0 = dummy.max_health - dummy.current_health
+
+        eng.character.stats.intelligence = 20  # -> 2.0x elemental
+        dummy.current_health = dummy.max_health
+        phys_i20 = _tags_damage(play, dummy)
+        dummy.current_health = dummy.max_health
+        eng.combat_manager.player_attack_enemy_with_tags(
+            dummy, ['fire', 'single_target'], {'baseDamage': 100.0},
+            skip_visual=True, skip_los=True)
+        fire_i20 = dummy.max_health - dummy.current_health
+
+        assert abs(phys_i20 - phys_i0) < 1e-6, "INT must not scale physical"
+        assert abs(fire_i0 - phys_i0) < 1e-6, "at INT 0 fire == physical"
+        ratio = fire_i20 / fire_i0
+        assert 1.9 <= ratio <= 2.1, (
+            f"20 INT should give ~2.0x elemental damage (+5%/pt), got {ratio:.2f}x"
+        )
+    finally:
+        eng.character.stats.intelligence = 0
+        dummy.definition.defense = orig_def
+        dummy.current_health = dummy.max_health
+
+
+def test_def_armor_effectiveness_is_wired(play):
+    """DEF +3% armor effectiveness per point (documented; armor_bonus
+    ignored DEF). Source-pinned: the behavioral path needs worn armor,
+    which the harness persona doesn't guarantee."""
+    import inspect
+    from Combat import combat_manager as cmod
+    src = inspect.getsource(cmod.CombatManager._enemy_attack_player)
+    assert "defense * 0.03" in src, (
+        "armor-effectiveness scaling (+3%/DEF pt) regressed to dead-stat"
+    )
+
+
 def test_aoe_subpath_uses_documented_str_scaling(play):
     """F8: the legacy AoE sub-path must scale STR at the documented 0.05/pt
     (it used 0.01). Verified via source constant to avoid the fragile buff

@@ -1423,11 +1423,15 @@ class Character:
         self.time_since_last_damage_taken += dt
         self.time_since_last_damage_dealt += dt
 
-        # Health regeneration - 5 HP/sec after 5 seconds of no combat
+        # Health regeneration - 5 HP/sec after 5 seconds of no combat.
+        # VIT scaling (+1%/pt, documented) was loaded from stats-
+        # calculations.JSON but never applied — the rate was flat
+        # regardless of vitality (2026-07 audit: dead documented stat).
         if (self.time_since_last_damage_taken >= self.health_regen_threshold and
             self.time_since_last_damage_dealt >= self.health_regen_threshold):
             if self.health < self.max_health:
-                regen_amount = self.health_regen_rate * dt
+                vit_regen_mult = 1.0 + (self.stats.vitality * 0.01)
+                regen_amount = self.health_regen_rate * vit_regen_mult * dt
                 self.health = min(self.max_health, self.health + regen_amount)
 
         # HEALTH REGENERATION ENCHANTMENT: Always active bonus regen from armor
