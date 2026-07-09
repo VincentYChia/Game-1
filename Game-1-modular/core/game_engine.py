@@ -8913,14 +8913,24 @@ class GameEngine:
             craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)
 
         if not craft_result.get('success'):
-            # Failure - materials may have been lost
+            # Failure — apply the crafter's TIER-SCALED material loss
+            # (30%-90% per reward_calculator.FAILURE_PENALTY). 2026-07 audit:
+            # the crafter deducted its designed partial loss from a throwaway
+            # dict copy while this block then consumed 100% from the real
+            # inventory — failures always cost everything, defeating the
+            # documented difficulty-scaled penalty.
             message = craft_result.get('message', 'Crafting failed')
             self.add_notification(message, (255, 100, 100))
 
-            # Sync inventory back
-            print(f"⚠ Consuming materials after FAILURE")
-            consumed = recipe_db.consume_materials(recipe, self.character.inventory)
-            print(f"   Consumed: {consumed}")
+            loss_fraction = craft_result.get('loss_fraction')
+            if loss_fraction is None:
+                lp = craft_result.get('loss_percentage')
+                loss_fraction = (lp / 100.0) if lp is not None else 1.0
+
+            print(f"⚠ Consuming {loss_fraction*100:.0f}% of materials after FAILURE")
+            materials_consumed = recipe_db.consume_materials_partial(
+                recipe, self.character.inventory, loss_fraction)
+            print(f"   Consumed: {materials_consumed}")
 
             # NEW: Track failed crafting attempts
             if hasattr(self.character, 'stat_tracker'):
@@ -8929,14 +8939,6 @@ class GameEngine:
                     'engineering': 'engineering', 'adornments': 'enchanting'
                 }
                 activity_type = activity_map.get(self.minigame_type, 'smithing')
-
-                # Collect materials consumed
-                materials_consumed = {}
-                for inp in recipe.inputs:
-                    mat_id = inp.get('materialId') or inp.get('itemId')
-                    qty = inp.get('quantity', 1)
-                    if mat_id:
-                        materials_consumed[mat_id] = qty
 
                 # Record failed craft
                 self.character.stat_tracker.record_crafting(
