@@ -521,7 +521,8 @@ class BackendManager:
     def generate(self, task: str, system_prompt: str, user_prompt: str,
                  temperature: Optional[float] = None,
                  max_tokens: Optional[int] = None,
-                 backend_override: Optional[str] = None) -> Tuple[str, Optional[str]]:
+                 backend_override: Optional[str] = None,
+                 log_extra: Optional[Dict[str, Any]] = None) -> Tuple[str, Optional[str]]:
         """Generate text using the appropriate backend for a task.
 
         Routes to the configured primary backend for this task type,
@@ -603,6 +604,12 @@ class BackendManager:
                         record_call,
                     )
                     info = backend.get_info() if hasattr(backend, "get_info") else {}
+                    extra = {"temperature": temp, "max_tokens": tokens}
+                    if log_extra:
+                        # Caller-supplied context telemetry (fragment
+                        # composition, data-block sizes, budget events) —
+                        # the observability the design charter requires.
+                        extra.update(log_extra)
                     record_call(
                         task=task,
                         backend=name,
@@ -612,7 +619,7 @@ class BackendManager:
                         response=text,
                         error=err,
                         elapsed_s=elapsed,
-                        extra={"temperature": temp, "max_tokens": tokens},
+                        extra=extra,
                     )
                 except Exception:
                     pass

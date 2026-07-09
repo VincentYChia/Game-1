@@ -91,6 +91,9 @@ class PromptAssembler:
         self._l6_fragments: Dict[str, Any] = {}
         self._l7_fragments: Dict[str, Any] = {}
         self._loaded = False
+        # Telemetry: tags that matched a fragment CATEGORY but had no
+        # authored fragment and no fallback (silently-thinner context).
+        self.missing_fragment_tags: Dict[str, int] = {}
 
     def load(self) -> int:
         """Load fragments from JSON files. Returns total fragment count.
@@ -230,6 +233,17 @@ class PromptAssembler:
                     if fallback and fallback[1] not in seen_texts:
                         selected.append(fallback)
                         seen_texts.add(fallback[1])
+                    elif fallback is None:
+                        # 2026-07 audit: tags with NO fragment and NO
+                        # fallback used to vanish silently — a designer
+                        # adding new content tags would never learn their
+                        # fragments are missing. Count + warn once per tag.
+                        n = self.missing_fragment_tags.get(tag, 0) + 1
+                        self.missing_fragment_tags[tag] = n
+                        if n == 1:
+                            print(f"[PromptAssembler] no fragment (and no "
+                                  f"fallback) for tag '{tag}' — context "
+                                  f"silently thinner until one is authored")
 
         # Output instruction (always)
         output = self.get_fragment("_output")

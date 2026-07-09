@@ -425,17 +425,19 @@ class NPCAgentSystem:
         memory.set_emotion(result.emotion)
         memory.adjust_relationship(result.relationship_delta)
 
-        # Append to conversation summary (keep bounded)
+        # Append to conversation summary (keep bounded). Trimming drops the
+        # OLDEST whole snippets — the previous tail-slice cut mid-snippet at
+        # a char boundary, feeding the next prompt a gibberish head
+        # ("...er: hello. NPC: We") that degraded dialogue coherence.
         snippet = f"Player: {player_input[:60]}. NPC: {result.text[:60]}"
         if memory.conversation_summary:
             memory.conversation_summary += f" | {snippet}"
         else:
             memory.conversation_summary = snippet
 
-        max_len = memory._max_summary_length
-        if len(memory.conversation_summary) > max_len:
-            # Keep the most recent portion
-            memory.conversation_summary = memory.conversation_summary[-max_len:]
+        from world_system.world_memory.text_budget import clamp_snippet_window
+        memory.conversation_summary = clamp_snippet_window(
+            memory.conversation_summary, memory._max_summary_length)
 
     def _generate_fallback(self, npc_id: str, npc_name: str,
                            personality: Dict, memory: NPCMemory) -> NPCDialogueResult:

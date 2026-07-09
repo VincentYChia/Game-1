@@ -165,10 +165,12 @@ def _try_layer_cascade(
         narrative = (row.get("narrative") or "").strip()
         if not narrative:
             continue
-        # Cap to char_budget with the standard truncation marker.
+        # Cap to char_budget at a sentence/word boundary — the previous
+        # char-slice could cut mid-word, handing the weaver gibberish.
         if len(narrative) > char_budget:
-            cut = char_budget - len(TRUNCATION_MARKER)
-            narrative = narrative[:max(0, cut)].rstrip() + TRUNCATION_MARKER
+            from world_system.world_memory.text_budget import truncate_at_boundary
+            narrative = truncate_at_boundary(
+                narrative, char_budget, TRUNCATION_MARKER)
         return narrative
     return ""
 
@@ -291,7 +293,8 @@ def _render_one(interp: Any, *, per_line_cap: int) -> str:
     if not narrative:
         return ""
     if len(narrative) > per_line_cap:
-        narrative = narrative[:per_line_cap - 1].rstrip() + "…"
+        from world_system.world_memory.text_budget import truncate_at_boundary
+        narrative = truncate_at_boundary(narrative, per_line_cap, "…")
     return f"[{severity}] {category}: {narrative}"
 
 

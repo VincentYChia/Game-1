@@ -46,42 +46,55 @@ class NarrationResult:
     generation_time_ms: float = 0.0
 
 
-# Layer-specific LLM configuration
+# Layer-specific LLM configuration.
+# data_budget (chars, ~4 chars/token) bounds the DATA BLOCK handed to the
+# prompt. 2026-07 audit: data blocks were unbounded — a burst district could
+# stuff arbitrarily many events into one consolidation prompt, violating the
+# design doctrine that budgets are enforced at assembly time (WORKING_DOC
+# §8.4). Values are generous (typical blocks sit well under them) so normal
+# behavior is unchanged; they exist to bound the tail. Whole-event
+# truncation via text_budget.clamp_xml_events_to_budget.
 LAYER_CONFIG = {
     2: {
         "task": "wms_layer2",
         "temperature": 0.3,
         "max_tokens": 150,
+        "data_budget": 2400,
         "description": "Layer 2: one-sentence factual narrations from evaluator triggers",
     },
     3: {
         "task": "wms_layer3",
         "temperature": 0.4,
         "max_tokens": 300,
+        "data_budget": 6000,
         "description": "Layer 3: cross-domain consolidation across districts",
     },
     4: {
         "task": "wms_layer4",
         "temperature": 0.4,
         "max_tokens": 400,
+        "data_budget": 8000,
         "description": "Layer 4: provincial summaries",
     },
     5: {
         "task": "wms_layer5",
         "temperature": 0.5,
         "max_tokens": 500,
+        "data_budget": 8000,
         "description": "Layer 5: region-level summaries",
     },
     6: {
         "task": "wms_layer6",
         "temperature": 0.5,
         "max_tokens": 500,
+        "data_budget": 8000,
         "description": "Layer 6: nation-level summaries",
     },
     7: {
         "task": "wms_layer7",
         "temperature": 0.6,
         "max_tokens": 600,
+        "data_budget": 9000,
         "description": "Layer 7: world narrative threads",
     },
 }
@@ -190,6 +203,19 @@ class WmsAI:
         if tags is None:
             tags = self._assembler.tags_from_event(event_type, event_subtype, tier)
 
+        # 1.5 Enforce the per-layer data-block budget BEFORE assembly (whole-
+        # event truncation; the <omitted/> marker tells the model the view
+        # was capped). This is the single choke point every L2-L7 call
+        # flows through, so all five XML builders are bounded transitively.
+        config = LAYER_CONFIG.get(layer, LAYER_CONFIG[2])
+        events_omitted = 0
+        data_budget = config.get("data_budget", 0)
+        if data_budget and data_block and len(data_block) > data_budget:
+            from world_system.world_memory.text_budget import clamp_xml_events_to_budget
+            data_block, events_omitted = clamp_xml_events_to_budget(data_block, data_budget)
+            print(f"[WmsAI] L{layer} data block over budget "
+                  f"({data_budget} chars): dropped {events_omitted} oldest events")
+
         # 2. Assemble prompt (layer-specific assembly for Layer 3+)
         if layer == 7:
             prompt = self._assembler.assemble_l7(data_block, event_tags=tags)
@@ -206,14 +232,24 @@ class WmsAI:
         else:
             prompt = self._assembler.assemble(tags, data_block)
 
-        # 3. Call LLM
-        config = LAYER_CONFIG.get(layer, LAYER_CONFIG[2])
+        # 3. Call LLM (config resolved above at the budget step). The
+        # log_extra rides into llm_debug_logs so designers can see WHICH
+        # fragments composed each prompt — the observability the design
+        # charter calls non-negotiable (WORKING_DOC §8.11).
         result = self._call_llm(
             system_prompt=prompt.system,
             user_prompt=prompt.user,
             task=config["task"],
             temperature=config["temperature"],
             max_tokens=config["max_tokens"],
+            log_extra={
+                "layer": layer,
+                "fragments": [k for k, _ in prompt.fragments_used],
+                "fragment_chars": sum(len(t) for _, t in prompt.fragments_used),
+                "data_block_chars": len(data_block),
+                "events_omitted": events_omitted,
+                "token_estimate": prompt.token_estimate,
+            },
         )
 
         elapsed_ms = (time.time() - start) * 1000
@@ -262,7 +298,8 @@ class WmsAI:
 
     def _call_llm(self, system_prompt: str, user_prompt: str,
                   task: str, temperature: float,
-                  max_tokens: int) -> NarrationResult:
+                  max_tokens: int,
+                  log_extra: Optional[Dict[str, Any]] = None) -> NarrationResult:
         """Route an LLM call through BackendManager."""
         if not self._backend:
             return NarrationResult(
@@ -277,6 +314,7 @@ class WmsAI:
                 user_prompt=user_prompt,
                 temperature=temperature,
                 max_tokens=max_tokens,
+                log_extra=log_extra,
             )
 
             if error:
