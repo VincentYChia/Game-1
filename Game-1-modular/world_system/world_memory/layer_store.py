@@ -168,6 +168,51 @@ class LayerStore:
         c.commit()
         return event_id
 
+    def update_event_narrative(self, layer: int, event_id: str,
+                               narrative: str,
+                               severity: Optional[str] = None,
+                               extra_tags: Optional[List[str]] = None) -> bool:
+        """Patch a stored layer event with an async LLM narrative upgrade.
+
+        Used by the interpreter's main-thread drain: the template
+        narrative is inserted immediately at trigger time, and the LLM
+        result lands here once the background call completes. Extra
+        tags are merged into tags_json AND the junction table so
+        tag-indexed retrieval sees them. Returns False if the row is
+        gone (pruned meanwhile).
+        """
+        if layer < 2 or layer > 7:
+            raise ValueError(f"Layer must be 2-7, got {layer}")
+
+        table = f"layer{layer}_events"
+        tag_table = f"layer{layer}_tags"
+        c = self.connection
+
+        row = c.execute(f"SELECT tags_json FROM {table} WHERE id = ?",
+                        (event_id,)).fetchone()
+        if row is None:
+            return False
+
+        try:
+            tags = json.loads(row["tags_json"] or "[]")
+        except (json.JSONDecodeError, TypeError):
+            tags = []
+        new_tags = [t for t in (extra_tags or []) if t not in tags]
+        tags.extend(new_tags)
+
+        c.execute(
+            f"UPDATE {table} SET narrative = ?, "
+            f"severity = COALESCE(?, severity), tags_json = ? WHERE id = ?",
+            (narrative, severity, json.dumps(tags), event_id),
+        )
+        for tag in new_tags:
+            if ":" in tag:
+                cat, val = tag.split(":", 1)
+                c.execute(f"INSERT INTO {tag_table} (event_id, tag_category, tag_value) "
+                          "VALUES (?, ?, ?)", (event_id, cat, val))
+        c.commit()
+        return True
+
     # ══════════════════════════════════════════════════════════════
     # TAG-BASED RETRIEVAL
     # ══════════════════════════════════════════════════════════════

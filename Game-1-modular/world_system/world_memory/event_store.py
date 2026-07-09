@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from world_system.world_memory.event_schema import InterpretedEvent, WorldMemoryEvent
 
@@ -900,6 +900,58 @@ class EventStore:
             (f"%{event_id}%",),
         ).fetchone()
         return row is not None
+
+    def get_all_referenced_event_ids(self) -> Set[str]:
+        """All raw-event ids referenced by any interpretation's cause chain.
+
+        Retention Rule 5 previously called is_referenced_by_interpretation()
+        once per candidate — an unindexed LIKE scan of the interpretations
+        table for each of up to 5,000 events per prune pass. One pass here
+        replaces them all (2026-07 audit).
+        """
+        referenced: Set[str] = set()
+        for (ids_json,) in self.connection.execute(
+                "SELECT cause_event_ids_json FROM interpretations"):
+            try:
+                referenced.update(json.loads(ids_json or "[]"))
+            except (json.JSONDecodeError, TypeError):
+                continue
+        return referenced
+
+    def apply_narrative_upgrade(self, interpretation_id: str, narrative: str,
+                                severity: Optional[str] = None,
+                                extra_tags: Optional[List[str]] = None) -> bool:
+        """Patch a recorded interpretation with an async LLM narrative upgrade.
+
+        The interpreter records the evaluator's template narrative
+        immediately (never blocking the game loop on the LLM), then the
+        completed upgrade lands here from the main-thread drain. Returns
+        False if the row no longer exists (e.g. archived and pruned).
+        """
+        row = self.connection.execute(
+            "SELECT affects_tags_json FROM interpretations "
+            "WHERE interpretation_id = ?",
+            (interpretation_id,),
+        ).fetchone()
+        if row is None:
+            return False
+
+        try:
+            tags = json.loads(row[0] or "[]")
+        except (json.JSONDecodeError, TypeError):
+            tags = []
+        for tag in extra_tags or []:
+            if tag not in tags:
+                tags.append(tag)
+
+        self.connection.execute(
+            "UPDATE interpretations SET narrative = ?, "
+            "severity = COALESCE(?, severity), affects_tags_json = ? "
+            "WHERE interpretation_id = ?",
+            (narrative, severity, json.dumps(tags), interpretation_id),
+        )
+        self.connection.commit()
+        return True
 
     def expire_old_interpretations(self, current_game_time: float) -> int:
         """Mark expired ongoing interpretations as no longer ongoing."""

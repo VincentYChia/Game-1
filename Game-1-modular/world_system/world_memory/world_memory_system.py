@@ -449,6 +449,14 @@ class WorldMemorySystem:
         self._game_time = game_time
         self.event_recorder.set_game_time(game_time)
 
+        # Apply any completed async L2 narrative upgrades (main-thread
+        # SQLite writes — workers only run the LLM call; 2026-07 audit).
+        if self.interpreter:
+            try:
+                self.interpreter.drain_narrative_upgrades()
+            except Exception as e:
+                print(f"[WorldMemory] Narrative upgrade drain error: {e}")
+
         # Update player position in entity registry
         if character and hasattr(character, "position"):
             self.entity_registry.update_player_position(
@@ -498,40 +506,30 @@ class WorldMemorySystem:
                 except Exception as e:
                     print(f"[WorldMemory] Drift scan error: {e}")
 
-        # Layer 3 consolidation check
-        if self.layer3_manager and self.layer3_manager.should_run():
-            try:
-                self.layer3_manager.run_consolidation(game_time)
-            except Exception as e:
-                print(f"[WorldMemory] Layer 3 consolidation error: {e}")
-
-        # Layer 4 province summarization check
-        if self.layer4_manager and self.layer4_manager.should_run():
-            try:
-                self.layer4_manager.run_summarization(game_time)
-            except Exception as e:
-                print(f"[WorldMemory] Layer 4 summarization error: {e}")
-
-        # Layer 5 region summarization check
-        if self.layer5_manager and self.layer5_manager.should_run():
-            try:
-                self.layer5_manager.run_summarization(game_time)
-            except Exception as e:
-                print(f"[WorldMemory] Layer 5 summarization error: {e}")
-
-        # Layer 6 nation summarization check
-        if self.layer6_manager and self.layer6_manager.should_run():
-            try:
-                self.layer6_manager.run_summarization(game_time)
-            except Exception as e:
-                print(f"[WorldMemory] Layer 6 summarization error: {e}")
-
-        # Layer 7 world summarization check
-        if self.layer7_manager and self.layer7_manager.should_run():
-            try:
-                self.layer7_manager.run_summarization(game_time)
-            except Exception as e:
-                print(f"[WorldMemory] Layer 7 summarization error: {e}")
+        # Layer 3-7 consolidation/summarization checks. These run their
+        # LLM calls SYNCHRONOUSLY on the game loop — rare (per-cadence
+        # should_run gates) but each can stall a frame for seconds with
+        # a real backend. Stalls >250ms are logged so playtest hitching
+        # is attributable (2026-07 audit; async offload needs a
+        # thread-safe LayerStore first — see FINDINGS).
+        layer_runs = (
+            ("Layer 3 consolidation", self.layer3_manager, "run_consolidation"),
+            ("Layer 4 summarization", self.layer4_manager, "run_summarization"),
+            ("Layer 5 summarization", self.layer5_manager, "run_summarization"),
+            ("Layer 6 summarization", self.layer6_manager, "run_summarization"),
+            ("Layer 7 summarization", self.layer7_manager, "run_summarization"),
+        )
+        for label, manager, method_name in layer_runs:
+            if manager and manager.should_run():
+                started = time.perf_counter()
+                try:
+                    getattr(manager, method_name)(game_time)
+                except Exception as e:
+                    print(f"[WorldMemory] {label} error: {e}")
+                elapsed = time.perf_counter() - started
+                if elapsed > 0.25:
+                    print(f"[WorldMemory] {label} blocked the game loop "
+                          f"for {elapsed:.2f}s (synchronous LLM path)")
 
         # Periodic retention pruning
         if self.retention_manager.should_prune(game_time):

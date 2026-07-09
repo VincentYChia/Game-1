@@ -26,6 +26,14 @@ import sys
 os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 
+# WES ContentRegistry commits during in-engine tests must not write
+# generated JSON siblings into the live content tree (Skills/, etc.) —
+# those files auto-load as real content on every subsequent boot.
+# 2026-07 audit: four skills-generated-*.JSON had leaked into Skills/.
+import tempfile
+os.environ.setdefault('GAME1_GENERATED_CONTENT_ROOT',
+                      tempfile.mkdtemp(prefix='game1_generated_'))
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
