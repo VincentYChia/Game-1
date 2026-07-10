@@ -106,6 +106,15 @@ def _coerce_leaf(text: str):
         try:
             return json.loads(t)
         except json.JSONDecodeError:
+            # Small-model artifact seen live (gemma3:4b, 2026-07-10):
+            # payloads double-braced as {{...}} — the example's {}
+            # merged with the shape doc's {key: ...}. Never valid
+            # JSON, so stripping one layer is unambiguous.
+            if t.startswith("{{") and t.endswith("}}"):
+                try:
+                    return json.loads(t[1:-1])
+                except json.JSONDecodeError:
+                    return t
             return t
     try:
         return int(t)

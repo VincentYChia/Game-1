@@ -220,6 +220,19 @@ class ElementChildrenDialectTests(unittest.TestCase):
         with self.assertRaises(XMLBatchParseError):
             parse_xml_batch(self.HAIKU_SHAPE)
 
+    def test_double_braced_payload_tolerated(self) -> None:
+        """gemma3:4b live artifact: {{...}} payloads (example's {} merged
+        with the shape doc's {key: ...}). Never valid JSON, so stripping
+        one layer is unambiguous."""
+        specs = parse_xml_batch(
+            '<specs plan_step_id="s1"><spec id="a"><intent>x</intent>'
+            '<cross_ref_hints>{{"derived_from": "moors_copper"}}'
+            '</cross_ref_hints></spec></specs>',
+            default_plan_step_id="s1",
+        )
+        self.assertEqual(specs[0].cross_ref_hints,
+                         {"derived_from": "moors_copper"})
+
     def test_attribute_dialect_still_canonical(self) -> None:
         specs = parse_xml_batch(
             '<specs plan_step_id="s1">'
