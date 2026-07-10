@@ -192,3 +192,78 @@ The 12 leaked artifact files (all stamped `"generated": true` with plan ids) del
 
 **Lesson:** the sacred-tree guarantee needs enforcement at the WRITER, not just at
 dispatch — any future caller that reaches commit gets the same protection.
+
+---
+
+## F13 — WMS response parser failed its own prompt contract — FIXED ✅
+**Status:** FIXED @ `0951c3f8` · probe-verified before/after · 14 tests in `test_wms_response_parsing.py`
+
+The L2–L7 narration parser (`wms_ai._call_llm`) had four failure modes against
+realistic model output, found by feeding it adversarial replies:
+
+| Input shape | Old behavior | New behavior |
+|---|---|---|
+| Compliant JSON with `significance:significant` tag (what the prompt ASKS for) | severity stayed `minor` — parser only matched `severity:` | severity extracted, tag consumed |
+| ` ```json {...}``` ` fenced reply (most common real-model shape) | whole fenced blob persisted as the narrative, tags lost, severity picked up "major" from INSIDE the JSON | JSON recovered cleanly |
+| Prose preamble + JSON ("Here is the narration: {...}") | garbage narrative | JSON recovered cleanly |
+| Narrative prose "a critical blow, a major turning point" | severity=**critical** via substring fallback (severity drives district/province propagation!) | severity stays minor (fallback removed) |
+| Invented tags `vibe:spooky` | entered the load-bearing tag index unchecked | dropped via `tag_library.validate_tag` allow-list, warned |
+| `severity:catastrophic` | accepted verbatim (not in SEVERITY_ORDER) | ignored with warning |
+| Empty reply | `success=True` with empty narrative | failure → template fallback |
+| Truncated JSON | broken fragment persisted as narrative | failure → template fallback |
+
+---
+
+## F14 — WES hub batches accepted duplicate spec ids — FIXED ✅
+**Status:** FIXED @ `0951c3f8` · everything else in `parse_xml_batch` verified fail-closed
+
+Adversarial probe: fences ✓ preamble ✓ truncation ✓ bad-JSON attrs ✓ missing
+plan_step_id ✓ unescaped `&` ✓ — all correctly rejected with typed errors (the
+dispatcher retries the hub). The one hole: two `<spec id="a">` elements parsed
+fine and would clobber/double-execute downstream work keyed by spec_id. Now
+fails closed like every other malformed shape. Supervisor fail-open degrade
+CONFIRMED-ACCEPTABLE by design (rerun-only authority, loudly logged; the real
+commit gates are verification/xref/schema).
+
+---
+
+## F15 — AffinityShift directives had no magnitude bound — FIXED ✅
+**Status:** FIXED @ `0951c3f8` · 3 tests in `test_affinity_shift.py`
+
+The resolver validated structure (unknown scope tiers, unknown target prefixes,
+prose effects all rejected + ledgered) but passed `delta` through raw.
+FactionSystem clamps the resulting VALUE to [-100,100], so one hallucinated
+`standing_delta: -9999` could legally slam a relationship from +100 to −100 in
+a single narrative beat. Per-shift clamp ±25 (`MAX_SHIFT_MAGNITUDE`), clamps
+recorded in the ledger apply-note with the original value. NL weaver JSON parse
+verified robust (prelude/suffix-tolerant, fail-closed, logged degrade) — no change.
+
+---
+
+## F16 — Invented items: the only validation was "has an itemId" — GATED ✅
+**Status:** STOPGAP SHIPPED @ `0951c3f8` · 6 tests · BalanceValidator remains the designed answer
+
+`llm_item_generator.generate()` checked nothing but itemId presence. Probe:
+`{"itemId": "iron_shortsword", "tier": 99, "damage": 999999}` flowed straight
+toward the inventory — shadowing a sacred item id, off-scale tier, absurd stats.
+New `_sanitize_item_data`: id-collision guard (`invented_` prefix so LLM output
+can never shadow sacred content), tier clamped 1–4, combat-stat ceilings scaled
+by the documented tier multipliers (60/120/240/480 for damage/defense/healing
+etc.), every adjustment logged. Ceilings are deliberately generous — the
+designer owns real balance policy. REMAINING (designer decision): item TAGS are
+unvalidated — a T1 dagger with `["execute", "chain"]` gets real combat behavior.
+
+---
+
+## F17 — ANTHROPIC_API_KEY in the environment is INVALID (401) — OPERATOR ACTION ⚠️
+**Status:** BLOCKING the real-LLM playtest posture · found live by the smoketest gate
+
+`tools/wes_real_llm_smoketest.py` with `WES_DISABLE_FIXTURES=1
+WES_REQUIRE_REAL_LLM=1` failed loudly: `401 authentication_error: invalid
+x-api-key`. The gate worked exactly as designed (no silent MockBackend
+masquerade). Two consequences: (1) rotate the key before the playtest;
+(2) `ClaudeBackend.is_available()` only checks key PRESENCE, so the F12 overlay
+and boot logs report "claude: available" with a dead key — 401s now return an
+unmissable operator-facing "ROTATE YOUR KEY" error (@ `0951c3f8`). Re-run the
+smoketest after rotation; recommend a few real L2 narration round-trips as
+final confirmation since live-output testing was blocked this session.
