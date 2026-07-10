@@ -25,9 +25,22 @@ class RunParallelTests(unittest.TestCase):
         self.runner = get_async_runner()
 
     def test_runs_in_parallel_and_preserves_order(self) -> None:
+        # Prove parallelism by OBSERVED CONCURRENCY, not wall-clock —
+        # the old `elapsed < 0.18s` assertion was flaky under full-suite
+        # load, where scheduling delays stretch the wall-clock even
+        # though the tasks genuinely overlap (2026-07-10).
+        import threading
+        state = {"current": 0, "peak": 0}
+        lock = threading.Lock()
+
         def make_task(value: int, sleep: float):
             def _task():
+                with lock:
+                    state["current"] += 1
+                    state["peak"] = max(state["peak"], state["current"])
                 time.sleep(sleep)
+                with lock:
+                    state["current"] -= 1
                 return value
             return _task
 
@@ -37,13 +50,12 @@ class RunParallelTests(unittest.TestCase):
             make_task(3, 0.05),
             make_task(4, 0.05),
         ]
-        t0 = time.monotonic()
         results = self.runner.run_parallel(tasks)
-        elapsed = time.monotonic() - t0
         self.assertEqual(results, [1, 2, 3, 4])
-        # Four 50ms sleeps sequentially would be 200ms; parallel must
-        # be materially less. Be generous for CI flakiness.
-        self.assertLess(elapsed, 0.18)
+        self.assertGreaterEqual(
+            state["peak"], 2,
+            "tasks never overlapped — run_parallel executed sequentially",
+        )
 
     def test_empty_list_returns_empty(self) -> None:
         self.assertEqual(self.runner.run_parallel([]), [])
