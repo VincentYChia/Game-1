@@ -255,6 +255,49 @@ unvalidated — a T1 dagger with `["execute", "chain"]` gets real combat behavio
 
 ---
 
+## F18 — WES hub deep-work: the fan-out heart certified at three fidelities — FIXED ✅
+**Status:** FIXED @ `cc6894b5` + `5d99a4e6` · roleplay 8/8, Haiku 8/8, gemma3:4b 8/8
+
+Full trace of the hub (one plan step → N executor specs; everything the tools
+generate is bounded by what the hub scopes) plus a three-round iteration:
+subagents roleplaying the hub model on exact assembled prompts, then real
+Haiku, then gemma3:4b, with an adversarial prompt review between rounds.
+
+Root causes found and fixed (each verified firsthand):
+1. **`_output` schema+example NEVER injected into any prompt** — models were
+   told "STRICT XML … <specs> root" and nothing more; the all-models dialect
+   failure was the only possible outcome. Now an [OUTPUT FORMAT] block.
+2. **Stale [GAME AWARENESS] on every WES prompt**: "quests is deferred; do
+   not plan quests" — the planner was forbidden from planning chunks/npcs/
+   quests since v3 shipped. Updated to all 8 tools.
+3. **No hub retry** (planner/tools have one) — added strict retry with example.
+4. **Dedup + co-emission context always empty** — dispatcher now injects live
+   same-tool rows (source=live: "do NOT recreate") and rows staged by the
+   current plan across all tools (source=co_emitted_this_plan: "MAY reference
+   by id") — closing the unenforceable "must exist OR be co-emitted" rule.
+5. **The quests hub example was malformed XML all along** (SQL-style ''
+   escaping inside an attribute).
+6. **[TASK AWARENESS] boilerplate contradicted the XML contract** ("strictly
+   valid JSON (or XML where specified)") — per-file override added, all 8
+   hubs carry XML-specific rules incl. slots.count-is-authoritative and
+   JSON-in-XML escaping.
+7. **Example-content leakage**: Haiku copied "Copperlash Rider" from the
+   example into live output — fixed by SHAPE-not-content instruction +
+   source labels. gemma still leaks in 3/8 hubs → designer recommendation:
+   domain-neutral example content.
+8. **{{...}} double-braced payloads from gemma** — parser strips one layer.
+
+Contract scoring (parse / count / tier+biome propagation / dedup vs seeded
+registry / distinctness): subagent roleplay 8/8 (with emergent cross-batch
+coherence — nodes referenced the materials batch's exact ids); Haiku 8/8;
+gemma3:4b 8/8. Designer-furnishing items from the adversarial review left
+open: ID-derivation contract, allow-lists referenced but not shown (titles
+bonus keys, skills type×category matrix, hostiles ability library),
+context-role lines, key-naming duplications (#10/#12), tier→difficultyTier
+mapping, chunks theme enum coverage.
+
+---
+
 ## F17 — ANTHROPIC_API_KEY in the environment is INVALID (401) — OPERATOR ACTION ⚠️
 **Status:** BLOCKING the real-LLM playtest posture · found live by the smoketest gate
 
