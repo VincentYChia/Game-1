@@ -41,7 +41,10 @@ def _parse_specs(text: str, plan_step_id: str) -> List[ExecutorSpec]:
     try:
         from world_system.wes.xml_batch_parser import parse_xml_batch  # type: ignore
         try:
-            specs = parse_xml_batch(text)
+            # default_plan_step_id enables the tolerant element-children
+            # dialect real models emit (2026-07-10 certification) — the
+            # dispatcher owns the authoritative step id regardless.
+            specs = parse_xml_batch(text, default_plan_step_id=plan_step_id)
         except Exception:
             # Terminal fallthrough — CC3: must not be silent (2026-06-10).
             # An empty spec list makes the orchestrator think no work was

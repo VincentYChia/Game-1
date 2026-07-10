@@ -102,10 +102,16 @@ class OllamaBackend(ModelBackend):
 
     def __init__(self, base_url: str = "http://localhost:11434",
                  model: str = "llama3.1:8b",
-                 timeout: float = 30.0):
+                 timeout: float = 30.0,
+                 num_ctx: int = 8192):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = timeout
+        # Ollama's DEFAULT context window (2048-4096, prompt included)
+        # silently truncates long structured outputs mid-JSON — found
+        # 2026-07-10: the NPC v3 schema cut off at ~1,200 output tokens
+        # regardless of num_predict. Always request an explicit window.
+        self.num_ctx = num_ctx
         self._available: Optional[bool] = None
 
     def generate(self, system_prompt: str, user_prompt: str,
@@ -123,6 +129,7 @@ class OllamaBackend(ModelBackend):
                 "options": {
                     "temperature": temperature,
                     "num_predict": max_tokens,
+                    "num_ctx": self.num_ctx,
                 },
             }).encode("utf-8")
 

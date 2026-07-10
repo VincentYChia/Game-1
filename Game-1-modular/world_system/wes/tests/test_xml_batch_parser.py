@@ -158,5 +158,79 @@ class ParseFailuresTests(unittest.TestCase):
             )
 
 
+class ElementChildrenDialectTests(unittest.TestCase):
+    """2026-07-10 real-LLM certification: EVERY real model tested (Haiku
+    4.5, qwen2.5:14b, gemma3:4b) ignores the attribute dialect and emits
+    payloads as child elements. Only hand-written fixtures used the
+    canonical shape, so the WES cascade silently produced ZERO content
+    on real backends. These fixtures are captured real model output."""
+
+    # Abridged from Haiku 4.5's actual response, 2026-07-10.
+    HAIKU_SHAPE = """```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<specs>
+  <spec>
+    <intent>Bog-mineral material anchoring salt moors copper economy</intent>
+    <hard_constraints>
+      <tier>2</tier>
+      <biome>salt_moors</biome>
+      <category>stone</category>
+    </hard_constraints>
+    <flavor_hints>
+      <name_hint>Verdigris Silt</name_hint>
+      <properties>["copper_affinity", "salt_binding"]</properties>
+    </flavor_hints>
+    <cross_ref_hints>{}</cross_ref_hints>
+    <metadata><address>region:ashfall_moors</address></metadata>
+  </spec>
+</specs>
+```"""
+
+    # Abridged from qwen2.5:14b's actual response, 2026-07-10.
+    QWEN_SHAPE = (
+        '<specs><spec>'
+        '<hard_constraints>{"tier": 2, "biome": "bog"}</hard_constraints>'
+        '<flavor_hints>{"name_hint": "Mossy Bog Pebble"}</flavor_hints>'
+        '</spec></specs>'
+    )
+
+    def test_haiku_element_children_shape_parses(self) -> None:
+        specs = parse_xml_batch(self.HAIKU_SHAPE, default_plan_step_id="s1")
+        self.assertEqual(len(specs), 1)
+        s = specs[0]
+        self.assertEqual(s.plan_step_id, "s1")
+        self.assertEqual(s.spec_id, "spec_001")
+        self.assertIn("Bog-mineral", s.item_intent)
+        self.assertEqual(s.hard_constraints["tier"], 2)
+        self.assertEqual(s.hard_constraints["biome"], "salt_moors")
+        self.assertEqual(s.flavor_hints["properties"],
+                         ["copper_affinity", "salt_binding"])
+        self.assertEqual(s.cross_ref_hints, {})
+
+    def test_qwen_json_in_elements_shape_parses(self) -> None:
+        specs = parse_xml_batch(self.QWEN_SHAPE, default_plan_step_id="s9")
+        self.assertEqual(len(specs), 1)
+        self.assertEqual(specs[0].hard_constraints,
+                         {"tier": 2, "biome": "bog"})
+        self.assertEqual(specs[0].flavor_hints,
+                         {"name_hint": "Mossy Bog Pebble"})
+
+    def test_strict_mode_unchanged_without_default(self) -> None:
+        """No default_plan_step_id -> the legacy strict contract holds."""
+        with self.assertRaises(XMLBatchParseError):
+            parse_xml_batch(self.HAIKU_SHAPE)
+
+    def test_attribute_dialect_still_canonical(self) -> None:
+        specs = parse_xml_batch(
+            '<specs plan_step_id="s1">'
+            '<spec id="a" intent="x" hard_constraints=\'{"tier": 3}\'/>'
+            '</specs>',
+            default_plan_step_id="ignored",
+        )
+        self.assertEqual(specs[0].spec_id, "a")
+        self.assertEqual(specs[0].plan_step_id, "s1")
+        self.assertEqual(specs[0].hard_constraints, {"tier": 3})
+
+
 if __name__ == "__main__":
     unittest.main()
