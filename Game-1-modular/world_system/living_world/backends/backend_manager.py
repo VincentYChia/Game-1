@@ -228,14 +228,23 @@ class ClaudeBackend(ModelBackend):
                  max_tokens: int = 2000) -> Tuple[str, Optional[str]]:
         try:
             client = self._get_client()
-            response = client.messages.create(
+            # Haiku 4.5 rejects temperature + top_p together (400
+            # invalid_request_error) — the older Sonnet accepted both.
+            # Found live 2026-07-10: this broke EVERY game-path Claude
+            # call since the 2026-06-15 model swap (fixtures/mock had
+            # masked it). Temperature is the per-task tuning axis, so
+            # send only it; top_p applies only when temperature is unset.
+            kwargs = dict(
                 model=self.model,
                 max_tokens=max_tokens or self.max_tokens_default,
-                temperature=temperature,
-                top_p=self.top_p,
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_prompt}],
             )
+            if temperature is not None:
+                kwargs["temperature"] = temperature
+            elif self.top_p is not None:
+                kwargs["top_p"] = self.top_p
+            response = client.messages.create(**kwargs)
             return response.content[0].text, None
         except Exception as e:
             msg = str(e)

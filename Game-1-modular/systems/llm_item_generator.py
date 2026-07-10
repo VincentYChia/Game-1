@@ -83,7 +83,9 @@ class LLMConfig:
     api_key: str = os.getenv('ANTHROPIC_API_KEY')  # Set via environment or explicitly
     # 2026-06: claude-sonnet-4-20250514 retired 2026-06-15. Haiku 4.5 chosen
     # for speed + cost (this path is designed to run on local LLMs eventually;
-    # any cloud model suffices for now). Haiku accepts temperature/top_p.
+    # any cloud model suffices for now). NOTE: Haiku 4.5 REJECTS requests
+    # that set temperature and top_p together (400) — verified live
+    # 2026-07-10; the client sends only temperature.
     model: str = "claude-haiku-4-5"
     max_tokens: int = 2000
     temperature: float = 0.4  # Slightly lower for more consistent output
@@ -503,16 +505,23 @@ class AnthropicBackend:
         try:
             client = self._get_client()
 
-            response = client.messages.create(
+            # Haiku 4.5 rejects temperature + top_p together (400) —
+            # found live 2026-07-10, same bug as backend_manager's
+            # ClaudeBackend. Send temperature only; top_p applies only
+            # when temperature is unset.
+            kwargs = dict(
                 model=config.model,
                 max_tokens=config.max_tokens,
-                temperature=config.temperature,
-                top_p=config.top_p,
                 system=system_prompt,
                 messages=[
                     {"role": "user", "content": user_prompt}
-                ]
+                ],
             )
+            if config.temperature is not None:
+                kwargs["temperature"] = config.temperature
+            elif config.top_p is not None:
+                kwargs["top_p"] = config.top_p
+            response = client.messages.create(**kwargs)
 
             return response.content[0].text, None
 
