@@ -238,6 +238,15 @@ class ClaudeBackend(ModelBackend):
             )
             return response.content[0].text, None
         except Exception as e:
+            msg = str(e)
+            if "authentication_error" in msg or "invalid x-api-key" in msg:
+                # A key that is PRESENT but rejected. is_available() only
+                # checks presence, so everything upstream reports claude
+                # as available until the first real call 401s — make the
+                # operator-facing error unmissable (2026-07 audit).
+                return "", ("Claude API error: API KEY REJECTED (401). "
+                            "ANTHROPIC_API_KEY is set but invalid — rotate "
+                            "the key before the playtest. Raw: " + msg)
             return "", f"Claude API error: {e}"
 
     def is_available(self) -> bool:

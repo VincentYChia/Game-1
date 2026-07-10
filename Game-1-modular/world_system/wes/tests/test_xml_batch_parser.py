@@ -146,6 +146,17 @@ class ParseFailuresTests(unittest.TestCase):
                 '</specs>'
             )
 
+    def test_duplicate_spec_ids_raise(self) -> None:
+        """Duplicate ids would clobber/double-execute downstream work
+        keyed by spec_id (2026-07 LLM-pipeline audit)."""
+        with self.assertRaises(XMLBatchParseError):
+            parse_xml_batch(
+                '<specs plan_step_id="s1">'
+                '<spec id="a" tool="materials"/>'
+                '<spec id="a" tool="materials"/>'
+                '</specs>'
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

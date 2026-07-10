@@ -708,6 +708,9 @@ class LLMItemGenerator:
             item_data = self._parse_response(response_text)
             print(f"  DEBUG: Parsed successfully, keys: {list(item_data.keys())}")
 
+            # Sanity gate: collision guard, tier clamp, stat ceilings.
+            item_data = self._sanitize_item_data(item_data)
+
             # Validate required fields
             item_id = item_data.get('itemId', item_data.get('materialId'))
             print(f"  DEBUG: item_id = {item_id}")
@@ -923,6 +926,81 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
                 raise ValueError(f"Invalid JSON: {e}")
 
         raise ValueError("No valid JSON found in response")
+
+    # Tier-scaled ceilings for combat-relevant numeric fields, matching
+    # the documented tier multipliers (T1=1x .. T4=8x). STOPGAP until
+    # BalanceValidator exists (spec: Development-Plan/
+    # SHARED_INFRASTRUCTURE.md) — before this, the ONLY validation on an
+    # invented item was "has an itemId": a single sloppy LLM output could
+    # inject damage 999999 or tier 99 straight into the inventory
+    # (2026-07 LLM-pipeline audit). Values are generous by design; the
+    # designer owns real balance policy.
+    _STAT_CEILING_BY_TIER = {1: 60, 2: 120, 3: 240, 4: 480}
+    _BOUNDED_STAT_KEYS = ("damage", "baseDamage", "defense", "armor",
+                          "healAmount", "healing", "attackSpeed")
+
+    def _sanitize_item_data(self, item_data: Dict) -> Dict:
+        """Sanity-gate a parsed invented item before it enters the game.
+
+        - itemId/materialId colliding with existing game content gets an
+          ``invented_`` prefix so an LLM output can never shadow a sacred
+          item definition.
+        - tier is clamped to 1-4.
+        - combat-relevant numeric fields are clamped to tier-scaled
+          ceilings.
+        Every adjustment is logged.
+        """
+        # Tier clamp first — the stat ceilings key off it.
+        raw_tier = item_data.get('tier')
+        if raw_tier is not None:
+            try:
+                tier = int(raw_tier)
+            except (TypeError, ValueError):
+                tier = 1
+            clamped_tier = max(1, min(4, tier))
+            if clamped_tier != raw_tier:
+                print(f"  [Sanitize] tier {raw_tier!r} -> {clamped_tier}")
+            item_data['tier'] = clamped_tier
+        tier = item_data.get('tier') or 1
+
+        # Id-collision guard against existing content.
+        for id_key in ('itemId', 'materialId'):
+            item_id = item_data.get(id_key)
+            if not item_id:
+                continue
+            if self._id_exists_in_game(item_id):
+                new_id = f"invented_{item_id}"
+                print(f"  [Sanitize] {id_key} {item_id!r} collides with "
+                      f"existing content -> {new_id!r}")
+                item_data[id_key] = new_id
+
+        # Combat-stat ceilings.
+        ceiling = self._STAT_CEILING_BY_TIER.get(tier, 480)
+        for key in self._BOUNDED_STAT_KEYS:
+            value = item_data.get(key)
+            if isinstance(value, (int, float)) and value > ceiling:
+                print(f"  [Sanitize] {key} {value} exceeds tier-{tier} "
+                      f"ceiling -> {ceiling}")
+                item_data[key] = ceiling
+
+        return item_data
+
+    def _id_exists_in_game(self, item_id: str) -> bool:
+        """True if the id belongs to already-loaded game content."""
+        try:
+            if self.materials_db and item_id in getattr(
+                    self.materials_db, 'materials', {}):
+                return True
+        except Exception:
+            pass
+        try:
+            from data.databases.equipment_db import EquipmentDatabase
+            eq = EquipmentDatabase.get_instance()
+            if item_id in getattr(eq, 'items', {}):
+                return True
+        except Exception:
+            pass
+        return False
 
     def _get_cache_key(self, discipline: str, recipe_context: Dict) -> str:
         """Generate cache key from recipe context"""

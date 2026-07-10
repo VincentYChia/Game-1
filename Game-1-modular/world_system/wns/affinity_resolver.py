@@ -34,6 +34,23 @@ KNOWN_SCOPE_TIERS = (
     "locality", "district", "region", "province", "nation", "world",
 )
 
+# Per-shift magnitude cap. FactionSystem clamps the resulting VALUE to
+# [-100, 100], but nothing bounded a single directive — one hallucinated
+# "standing_delta: -9999" could legally slam a relationship from +100 to
+# -100 in one narrative beat (2026-07 LLM-pipeline audit). A quarter of
+# the affinity range preserves the narrative's direction while keeping
+# any single weaver output from being a cliff.
+MAX_SHIFT_MAGNITUDE = 25.0
+
+
+def _clamp_shift(value: float) -> Tuple[float, bool]:
+    """Clamp a shift delta to ±MAX_SHIFT_MAGNITUDE. Returns (value, clamped)."""
+    if value > MAX_SHIFT_MAGNITUDE:
+        return MAX_SHIFT_MAGNITUDE, True
+    if value < -MAX_SHIFT_MAGNITUDE:
+        return -MAX_SHIFT_MAGNITUDE, True
+    return value, False
+
 
 @dataclass
 class AffinityShiftRecord:
@@ -256,6 +273,7 @@ class AffinityResolver:
             note = "effect_value missing/non-numeric"
         else:
             faction_tag = shift.target[len(TARGET_PREFIX_FACTION):]
+            delta, clamped = _clamp_shift(float(effect_value))
             try:
                 # Player-affinity is keyed by (player_id, tag). Use the
                 # SCOPE address as a synthetic player_id-like bucket so
@@ -264,12 +282,15 @@ class AffinityResolver:
                 self._faction_system.adjust_player_affinity(
                     player_id=player_bucket,
                     tag=faction_tag,
-                    delta=float(effect_value),
+                    delta=delta,
                     game_time=float(game_time),
                     source=f"wns:{narrative_event_id}",
                 )
                 applied = True
                 note = "applied via FactionSystem.adjust_player_affinity"
+                if clamped:
+                    note += (f" (delta clamped {effect_value} -> {delta}, "
+                             f"cap ±{MAX_SHIFT_MAGNITUDE})")
             except Exception as e:
                 note = f"FactionSystem error: {type(e).__name__}: {e}"
 
@@ -309,14 +330,18 @@ class AffinityResolver:
             note = "effect_value missing/non-numeric"
         else:
             npc_id = shift.target[len(TARGET_PREFIX_NPC):]
+            delta, clamped = _clamp_shift(float(effect_value))
             try:
                 self._faction_system.adjust_npc_affinity_toward_player(
                     npc_id=npc_id,
-                    delta=float(effect_value),
+                    delta=delta,
                     game_time=float(game_time),
                 )
                 applied = True
                 note = "applied via FactionSystem.adjust_npc_affinity_toward_player"
+                if clamped:
+                    note += (f" (delta clamped {effect_value} -> {delta}, "
+                             f"cap ±{MAX_SHIFT_MAGNITUDE})")
             except Exception as e:
                 note = f"FactionSystem error: {type(e).__name__}: {e}"
 

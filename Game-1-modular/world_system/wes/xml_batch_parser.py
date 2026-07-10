@@ -164,6 +164,17 @@ def parse_xml_batch(raw: str) -> List[ExecutorSpec]:
             )
         )
 
+    # Duplicate spec ids would clobber/double-execute downstream work
+    # keyed by spec_id — fail closed like every other malformed shape,
+    # so the dispatcher's retry path re-prompts the hub (2026-07 audit).
+    seen_ids = set()
+    for spec in specs:
+        if spec.spec_id in seen_ids:
+            raise XMLBatchParseError(
+                f"duplicate spec id {spec.spec_id!r} in hub batch"
+            )
+        seen_ids.add(spec.spec_id)
+
     return specs
 
 
