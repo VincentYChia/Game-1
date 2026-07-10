@@ -38,8 +38,13 @@ from typing import Any, Dict, Optional
 _GAME_AWARENESS_BLOCK = (
     "\n\n[GAME AWARENESS]\n"
     "Tier multipliers (immutable): T1=1.0x, T2=2.0x, T3=4.0x, T4=8.0x.\n"
-    "Known tools: hostiles, materials, nodes, skills, titles. "
-    "quests is deferred; do not plan quests.\n"
+    # 2026-07-10 hub audit: this said "hostiles, materials, nodes,
+    # skills, titles. quests is deferred; do not plan quests" — STALE
+    # since chunks/npcs/quests shipped (v3). The block rides EVERY WES
+    # tier prompt, so the planner was being told to never plan three
+    # whole content categories.
+    "Known tools: hostiles, materials, nodes, skills, titles, "
+    "chunks, npcs, quests.\n"
     "Address tag prefixes: world:, nation:, region:, province:, "
     "district:, locality:.\n"
     "Tag vocabulary is sacred — do not invent new tags.\n"
@@ -138,6 +143,7 @@ class PromptAssembler:
         *,
         include_game_awareness: bool = True,
         include_task_awareness: bool = True,
+        include_output_format: bool = False,
         firing_tier: Optional[int] = None,
         extra_system_suffix: str = "",
     ) -> Dict[str, str]:
@@ -145,6 +151,15 @@ class PromptAssembler:
 
         - ``variables`` are substituted into both ``_core.system`` and
           ``_core.user_template``.
+        - ``include_output_format`` appends an [OUTPUT FORMAT] block
+          built from ``_output.schema`` + ``_output.example`` to the
+          system prompt. 2026-07-10 hub audit: ``_output`` was returned
+          as metadata but NEVER injected into any prompt — the models
+          were told "STRICT XML" without ever being shown the format,
+          so every real backend (Haiku, qwen, gemma) emitted its own
+          dialect and the strict parser rejected all of it. Callers
+          whose output format is exotic (the hubs' XML batch) must set
+          this; plain-JSON tiers work without it.
         - ``firing_tier``, when provided and the fragments expose a
           ``scope_by_firing_tier`` map under ``_core``, injects that
           tier's scope rule into the system prompt.
@@ -171,7 +186,38 @@ class PromptAssembler:
         if include_game_awareness:
             system += _GAME_AWARENESS_BLOCK
         if include_task_awareness:
-            system += _TASK_AWARENESS_DEFAULT
+            # Per-file override: the generic default assumes JSON tasks
+            # and directly contradicted the hubs' XML contract (2026-07-10
+            # adversarial prompt review, finding #1) — "strictly valid
+            # JSON (or XML where specified)" forced the model to infer
+            # which applied.
+            custom_awareness = str(core.get("task_awareness", "")).strip()
+            if custom_awareness:
+                system += "\n\n[TASK AWARENESS]\n" + custom_awareness + "\n"
+            else:
+                system += _TASK_AWARENESS_DEFAULT
+        if include_output_format:
+            schema = str(out.get("schema", "")).strip()
+            example = str(out.get("example", "")).strip()
+            if schema or example:
+                block = "\n\n[OUTPUT FORMAT]\n"
+                if schema:
+                    block += f"Schema:\n{schema}\n"
+                if example:
+                    # "follow this shape exactly" with a 1-spec example
+                    # read as "emit one spec" (adversarial review #6).
+                    # Content-leakage guard: Haiku copied the example's
+                    # name_hint ("Copperlash Rider") into live batches —
+                    # the example teaches SHAPE, never content
+                    # (2026-07-10 hub iteration).
+                    block += (
+                        "Example (one <spec> shown — follow this SHAPE; "
+                        "emit one <spec> per item). The example's CONTENT "
+                        "(names, ids, prose) is illustrative only — NEVER "
+                        "copy or reuse it in your output:\n"
+                        f"{example}\n"
+                    )
+                system += block
         system += scope_block
         if extra_system_suffix:
             system += "\n\n" + extra_system_suffix

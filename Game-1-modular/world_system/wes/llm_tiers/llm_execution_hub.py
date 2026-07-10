@@ -131,13 +131,54 @@ class LLMExecutionHub:
         step: "WESPlanStep",
         slice: "BundleToolSlice",
     ) -> List[ExecutorSpec]:
-        """One LLM call; parse XML batch into ExecutorSpec list."""
+        """LLM call; parse XML batch into ExecutorSpec list.
+
+        2026-07-10 hub audit: the output schema+example are now
+        INJECTED into the system prompt (include_output_format — they
+        previously lived only in ``_output`` metadata that no prompt
+        ever carried), and a parse failure triggers ONE retry with a
+        stricter format suffix, matching the planner/tool tiers. The
+        hub is the fan-out heart of WES — an empty batch means zero
+        content for the whole step.
+        """
         variables = self._make_vars(step, slice)
         prompts = self._assembler.build(
             variables,
             firing_tier=slice.firing_tier,
+            include_output_format=True,
         )
 
+        specs = self._attempt(prompts, step)
+        if specs:
+            return specs
+
+        # One strict retry (parity with planner/tool tiers).
+        stricter = (
+            "STRICT RETRY — your previous response did not parse. Emit "
+            "ONLY the <specs> XML batch, no prose, no markdown fences. "
+            "Follow the [OUTPUT FORMAT] example shape exactly."
+        )
+        retry_prompts = self._assembler.build(
+            variables,
+            firing_tier=slice.firing_tier,
+            include_output_format=True,
+            extra_system_suffix=stricter,
+        )
+        specs = self._attempt(retry_prompts, step)
+        if not specs:
+            log_degrade(
+                subsystem="wes",
+                operation=f"execution_hub.{self.name}.build_specs",
+                failure_reason="xml_parse_failure_or_empty_batch_after_retry",
+                fallback_taken="return empty spec list",
+                severity="warning",
+                context={"plan_step_id": step.step_id, "tool": self.name},
+            )
+        return specs
+
+    def _attempt(self, prompts: Dict[str, str],
+                 step: "WESPlanStep") -> List[ExecutorSpec]:
+        """One generate + parse pass. Returns [] on any failure (logged)."""
         try:
             text, err = self._backend.generate(
                 task=self.task_name,
@@ -166,21 +207,7 @@ class LLMExecutionHub:
             )
             return []
 
-        specs = _parse_specs(text, step.step_id)
-        if not specs:
-            log_degrade(
-                subsystem="wes",
-                operation=f"execution_hub.{self.name}.build_specs",
-                failure_reason="xml_parse_failure_or_empty_batch",
-                fallback_taken="return empty spec list",
-                severity="warning",
-                context={
-                    "plan_step_id": step.step_id,
-                    "tool": self.name,
-                    "response_excerpt": text[:200],
-                },
-            )
-        return specs
+        return _parse_specs(text, step.step_id)
 
     # ── internals ────────────────────────────────────────────────────
 

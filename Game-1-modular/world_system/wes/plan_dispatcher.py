@@ -429,7 +429,7 @@ class PlanDispatcher:
             )
 
         # Build the tool-specific slice for the hub (§8.5).
-        slice_ = self._make_slice(bundle, step.tool)
+        slice_ = self._make_slice(bundle, step.tool, plan_id=plan.plan_id)
 
         # ── Tier 2: hub ───────────────────────────────────────────────
         t0 = _now_ms()
@@ -580,7 +580,8 @@ class PlanDispatcher:
 
     # ── helpers ───────────────────────────────────────────────────────
 
-    def _make_slice(self, bundle: Any, tool_name: str) -> Any:
+    def _make_slice(self, bundle: Any, tool_name: str,
+                    plan_id: Optional[str] = None) -> Any:
         """Build a BundleToolSlice (or caller-supplied slice)."""
         if self.bundle_slicer is not None:
             return self.bundle_slicer(bundle, tool_name)
@@ -589,9 +590,64 @@ class PlanDispatcher:
             from world_system.living_world.infra.context_bundle import (
                 slice_bundle_for_tool,
             )
-            return slice_bundle_for_tool(bundle, tool_name)
+            return slice_bundle_for_tool(
+                bundle, tool_name,
+                recent_registry_entries=self._recent_registry_summary(
+                    tool_name, plan_id=plan_id,
+                ),
+            )
         except Exception:
             return None
+
+    def _recent_registry_summary(
+        self, tool_name: str,
+        plan_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Compact recent-content summary for the hub's context.
+
+        Two sources (2026-07-10 hub audit):
+        - LIVE rows of the same tool type — dedup context. The slice's
+          ``recent_registry_entries`` was ALWAYS empty before (the hub
+          prompt says "avoid duplication" and the design describes "a
+          caller-supplied slice of recent same-type registry entries",
+          but no caller ever supplied one).
+        - Rows STAGED BY THIS PLAN across ALL tool types — co-emission
+          context. The pipeline's own dependency rule ("referenced ids
+          must exist OR be co-emitted") was unenforceable because hubs
+          were blind to sibling steps' outputs (adversarial prompt
+          review, finding #2). Steps run in topological order, so
+          upstream steps' staged content is visible to downstream hubs.
+          Entries carry a ``source`` field so prompts can distinguish.
+
+        Best-effort: registry errors yield [].
+        """
+        summary: List[Dict[str, Any]] = []
+        try:
+            rows = self.registry.list_live(tool_name) or []
+        except Exception:
+            rows = []
+        for row in rows[-8:]:  # newest last per insert order; cap for budget
+            summary.append({
+                "content_id": row.get("content_id"),
+                "display_name": row.get("display_name"),
+                "tier": row.get("tier"),
+                "biome": row.get("biome"),
+                "source": "live",
+            })
+        if plan_id:
+            try:
+                staged_by_tool = self.registry.list_staged_by_plan(plan_id) or {}
+            except Exception:
+                staged_by_tool = {}
+            for staged_tool, staged_rows in staged_by_tool.items():
+                for row in staged_rows[-6:]:
+                    summary.append({
+                        "content_id": row.get("content_id"),
+                        "display_name": row.get("display_name"),
+                        "tool": staged_tool,
+                        "source": "co_emitted_this_plan",
+                    })
+        return summary
 
     @staticmethod
     def _make_tool_task(
