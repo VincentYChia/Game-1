@@ -16,9 +16,12 @@ from pathlib import Path
 # Read once at import; the optimizer sets CRUX_STR_DMG_PER_POINT per subprocess.
 _STR_DMG_PER_POINT = float(os.environ.get('CRUX_STR_DMG_PER_POINT', '0.05'))
 # crux-foundry F4 FIX + optimizer knob: LCK crit-per-point on the ACTION-combat path.
-# Before this fix that path applied NO crit at all (LCK was a dead stat). Default 0.02
-# mirrors the legacy path's 2%/pt; tune via CRUX_LCK_CRIT_PER_POINT.
-_LCK_CRIT_PER_POINT = float(os.environ.get('CRUX_LCK_CRIT_PER_POINT', '0.02'))
+# Before this fix that path applied NO crit at all (LCK was a dead stat). The original
+# 0.02 default mirrored the legacy path's 2%/pt but left lck_crit the viability floor
+# (0.566, weakest of four personas). 2026-07-11: retuned to 0.12 per the optimizer's
+# 0.10-0.14 prescription (user-approved) — lifts lck_crit to ~0.900 and cuts the
+# persona spread ~32% in the 8-seed report. Tune via CRUX_LCK_CRIT_PER_POINT.
+_LCK_CRIT_PER_POINT = float(os.environ.get('CRUX_LCK_CRIT_PER_POINT', '0.12'))
 
 if TYPE_CHECKING:
     from ..main import WorldSystem, Character, Inventory
