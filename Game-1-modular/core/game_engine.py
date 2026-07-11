@@ -1624,6 +1624,25 @@ class GameEngine:
                             completion_lines = [self.active_npc.get_next_dialogue()]
                         self.npc_dialogue_lines = completion_lines
 
+                        # Faction/NPC affinity on turn-in (2026-07-11
+                        # affinity audit: quest completion previously
+                        # moved NO affinity anywhere — the designed
+                        # quest_tool had no caller). Best-effort.
+                        try:
+                            from world_system.living_world.factions.quest_tool import (
+                                QuestGenerator,
+                            )
+                            applied = QuestGenerator.apply_turn_in(
+                                player_id="player",
+                                giver_npc_id=getattr(self.active_npc, 'npc_id', '') or '',
+                                quest_id=quest_id,
+                                game_time=self.game_time,
+                            )
+                            if applied:
+                                print(f"   🤝 Affinity: {applied}")
+                        except Exception as aff_err:
+                            print(f"   (affinity skip: {aff_err})")
+
                         # Update quest state
                         self.npc_quest_to_turn_in = None
                         self.npc_available_quests = self.active_npc.get_available_quests(self.character.quests)

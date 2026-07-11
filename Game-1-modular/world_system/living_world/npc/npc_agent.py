@@ -76,6 +76,9 @@ class NPCAgentSystem:
         # get_personality returns this directly instead of a shared template.
         # Rationale: data/models/npcs.py:11 — every NPC has a unique voice.
         self._npc_inline_personalities: Dict[str, Dict[str, Any]] = {}
+        # 2026-07-11: NPCs hydrated from SQLite this session (see
+        # _get_memory_hydrated — the persistence pump).
+        self._hydrated_npcs: set = set()
         # 2026-06-09: per-NPC location hierarchy for dialogue_helper.
         # Format: [("locality", "westhollow"), ("district", "iron_hills"), ...]
         self._npc_locations: Dict[str, List[Tuple[str, Optional[str]]]] = {}
@@ -197,7 +200,7 @@ class NPCAgentSystem:
                 text="...", success=False, from_fallback=True
             )
 
-        memory = self._memory_manager.get_memory(npc_id)
+        memory = self._get_memory_hydrated(npc_id)
         personality = self.get_personality(npc_id)
 
         # Build context
@@ -218,10 +221,42 @@ class NPCAgentSystem:
             if text and not err:
                 result = self._parse_dialogue_response(text, memory)
                 self._update_memory_after_dialogue(memory, player_input, result)
+                self._flush_memory(npc_id)
                 return result
 
         # Fallback: use personality-flavored template
         return self._generate_fallback(npc_id, npc_name, personality, memory)
+
+    # ── Persistence pump (2026-07-11 affinity audit) ──────────────────
+    # The SQLite facade (hydrate_npc_from_db / flush_npc_to_db) existed
+    # since June but had ZERO callers: relationship_score, interaction
+    # counts, knowledge, and conversation summaries accumulated in-memory
+    # only and were lost on quit — never rehydrated at boot either.
+    # Invisible in a short test, glaring after hours of play.
+
+    def _get_memory_hydrated(self, npc_id: str):
+        """First touch per session pulls persisted state from SQLite."""
+        if (npc_id not in self._hydrated_npcs
+                and self._memory_manager is not None
+                and getattr(self._memory_manager, "_faction_system", None)
+                is not None):
+            try:
+                self._memory_manager.hydrate_npc_from_db(npc_id)
+            except Exception as e:
+                print(f"[NPCAgent] hydrate failed for {npc_id}: {e}")
+            self._hydrated_npcs.add(npc_id)
+        return self._memory_manager.get_memory(npc_id)
+
+    def _flush_memory(self, npc_id: str) -> None:
+        """Best-effort write-through after each dialogue exchange."""
+        if (self._memory_manager is None
+                or getattr(self._memory_manager, "_faction_system", None)
+                is None):
+            return
+        try:
+            self._memory_manager.flush_npc_to_db(npc_id)
+        except Exception as e:
+            print(f"[NPCAgent] flush failed for {npc_id}: {e}")
 
     def _build_system_prompt(self, npc_id: str, npc_name: str,
                              personality: Dict, memory: NPCMemory) -> str:
