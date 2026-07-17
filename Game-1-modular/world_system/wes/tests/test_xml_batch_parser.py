@@ -220,6 +220,54 @@ class ElementChildrenDialectTests(unittest.TestCase):
         with self.assertRaises(XMLBatchParseError):
             parse_xml_batch(self.HAIKU_SHAPE)
 
+    def test_dedup_guard_drops_live_registry_collisions(self) -> None:
+        """2026-07-17: small models occasionally re-emit a live registry
+        entry's name despite the do-NOT-recreate instruction. The hub's
+        post-parse guard makes dedup deterministic; co-emitted entries
+        stay referenceable."""
+        from world_system.wes.llm_tiers.llm_execution_hub import (
+            LLMExecutionHub,
+        )
+        from world_system.wes.dataclasses import WESPlanStep
+        from world_system.living_world.infra.context_bundle import (
+            BundleToolSlice,
+        )
+        hub = LLMExecutionHub(tool_name="hostiles")
+        step = WESPlanStep(step_id="s1", tool="hostiles", intent="x",
+                           depends_on=[], slots={})
+        slice_ = BundleToolSlice(
+            tool_name="hostiles", bundle_id="b", firing_tier=4,
+            directive_text="", address_hint="", threads_in_focal_address=[],
+            recent_registry_entries=[
+                {"content_id": "copperlash_rider",
+                 "display_name": "Copperlash Rider", "source": "live"},
+                {"content_id": "new_thing", "display_name": "New Thing",
+                 "source": "co_emitted_this_plan"},
+            ],
+            firing_layer_summary="", parent_summaries={},
+            geographic_chain=[], threads_in_parent_addresses=[],
+            wms_events_since_last=[], npc_dialogue_since_last=[],
+            trigger_archetype="narrative",
+        )
+        specs = parse_xml_batch(
+            '<specs plan_step_id="s1">'
+            '<spec id="a"><intent>x</intent>'
+            '<flavor_hints>{"name_hint": "Copperlash Rider"}</flavor_hints>'
+            '</spec>'
+            '<spec id="b"><intent>y</intent>'
+            '<flavor_hints>{"name_hint": "New Thing"}</flavor_hints>'
+            '</spec>'
+            '<spec id="c"><intent>z</intent>'
+            '<flavor_hints>{"name_hint": "Fresh Beast"}</flavor_hints>'
+            '</spec></specs>',
+            default_plan_step_id="s1",
+        )
+        kept = hub._filter_registry_collisions(specs, slice_, step)
+        names = [(s.flavor_hints or {}).get("name_hint") for s in kept]
+        self.assertNotIn("Copperlash Rider", names)   # live -> dropped
+        self.assertIn("New Thing", names)             # co-emitted -> kept
+        self.assertIn("Fresh Beast", names)
+
     def test_double_braced_payload_tolerated(self) -> None:
         """gemma3:4b live artifact: {{...}} payloads (example's {} merged
         with the shape doc's {key: ...}). Never valid JSON, so stripping

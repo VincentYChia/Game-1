@@ -17,7 +17,8 @@
  },
  "_output": {
   "schema": "<specs plan_step_id=\"<id>\" count=\"<n>\"><spec id=\"<spec_id>\"><intent>one-line item goal</intent><hard_constraints>{JSON object}</hard_constraints><flavor_hints>{JSON object}</flavor_hints><cross_ref_hints>{JSON object}</cross_ref_hints></spec></specs>",
-  "example": "<specs plan_step_id=\"s1\" count=\"1\">\n  <spec id=\"spec_001\">\n    <intent>moors-specific copper variant prized for its acid resistance — found in seams along the salt cliffs</intent>\n    <hard_constraints>{\"tier\": 2, \"category\": \"metal\", \"rarity\": \"uncommon\", \"biome\": \"moors\"}</hard_constraints>\n    <flavor_hints>{\"name_hint\": \"Moors Copper\", \"prose_fragment\": \"rust-veined and salt-pitted, holds an acid better than common copper\", \"thematic_anchors\": [\"salt\", \"copper\", \"moors\"]}</flavor_hints>\n    <cross_ref_hints>{}</cross_ref_hints>\n  </spec>\n</specs>",
-  "_note": "2026-07-10 hub audit: example converted to the element-children dialect every real model (Haiku/qwen/gemma) emits naturally; the old attribute dialect had 0% first-shot compliance across all three. Domain content unchanged (round-tripped through the parser). Designer: refine wording freely; keep this SHAPE."
+  "example": "<specs plan_step_id=\"s1\" count=\"1\">\n  <spec id=\"spec_001\">\n    <intent>glacial tin variant found in ice-scoured seams below the frostline</intent>\n    <hard_constraints>{\"tier\": 2, \"category\": \"metal\", \"rarity\": \"uncommon\", \"biome\": \"tundra\"}</hard_constraints>\n    <flavor_hints>{\"name_hint\": \"Glacier Tin\", \"prose_fragment\": \"pale metal veined with frozen air, rings like a bell when struck\", \"thematic_anchors\": [\"ice\", \"tin\", \"frostline\"]}</flavor_hints>\n    <cross_ref_hints>{}</cross_ref_hints>\n  </spec>\n</specs>",
+  "_note": "2026-07-10 hub audit: example converted to the element-children dialect every real model (Haiku/qwen/gemma) emits naturally; the old attribute dialect had 0% first-shot compliance across all three. Domain content unchanged (round-tripped through the parser). Designer: refine wording freely; keep this SHAPE.",
+  "_active_set": "frostpeak"
  }
 }

@@ -148,7 +148,8 @@ class LLMExecutionHub:
             include_output_format=True,
         )
 
-        specs = self._attempt(prompts, step)
+        specs = self._filter_registry_collisions(
+            self._attempt(prompts, step), slice, step)
         if specs:
             return specs
 
@@ -164,7 +165,8 @@ class LLMExecutionHub:
             include_output_format=True,
             extra_system_suffix=stricter,
         )
-        specs = self._attempt(retry_prompts, step)
+        specs = self._filter_registry_collisions(
+            self._attempt(retry_prompts, step), slice, step)
         if not specs:
             log_degrade(
                 subsystem="wes",
@@ -175,6 +177,51 @@ class LLMExecutionHub:
                 context={"plan_step_id": step.step_id, "tool": self.name},
             )
         return specs
+
+    def _filter_registry_collisions(
+        self, specs: List[ExecutorSpec], slice: "BundleToolSlice",
+        step: "WESPlanStep",
+    ) -> List[ExecutorSpec]:
+        """Drop specs that would recreate EXISTING (source=live) content.
+
+        2026-07-17 certification: small models occasionally re-emit a
+        live registry entry's name despite the explicit "do NOT
+        recreate" instruction (~1 in 2 gemma3:4b hostile batches).
+        Prompt compliance is probabilistic; this guard is
+        deterministic — dedup no longer depends on model obedience.
+        Only source=live entries block; co_emitted_this_plan entries
+        are legitimate reference targets.
+        """
+        if not specs:
+            return specs
+        live_names = set()
+        for entry in getattr(slice, "recent_registry_entries", []) or []:
+            if isinstance(entry, dict) and entry.get("source") == "live":
+                name = str(entry.get("display_name") or "").strip().lower()
+                if name:
+                    live_names.add(name)
+                cid = str(entry.get("content_id") or "").strip().lower()
+                if cid:
+                    live_names.add(cid.replace("_", " "))
+        if not live_names:
+            return specs
+        kept: List[ExecutorSpec] = []
+        for s in specs:
+            hint = str((s.flavor_hints or {}).get("name_hint", "")).strip().lower()
+            if hint and hint in live_names:
+                log_degrade(
+                    subsystem="wes",
+                    operation=f"execution_hub.{self.name}.dedup_guard",
+                    failure_reason=f"spec {s.spec_id!r} recreates live "
+                                   f"registry entry {hint!r}",
+                    fallback_taken="spec dropped from batch",
+                    severity="info",
+                    context={"plan_step_id": step.step_id,
+                             "tool": self.name},
+                )
+                continue
+            kept.append(s)
+        return kept
 
     def _attempt(self, prompts: Dict[str, str],
                  step: "WESPlanStep") -> List[ExecutorSpec]:
