@@ -1,5 +1,22 @@
 # Ship-Readiness Report — Full-Codebase Review, Resumed & Completed
 
+> **2026-07-17 addendum — playtest GO.** Everything below plus five further
+> passes (F13–F20): real-LLM certification of all Haiku tasks (found + fixed
+> the temperature+top_p 400 that broke every game-path Claude call since the
+> June model swap), the WES hub deep-work (format delivery, sibling
+> visibility, retry, dedup — certified 3 fidelities: subagent roleplay /
+> Haiku / gemma3:4b, all 8/8), the faction/NPC affinity audit (quest turn-in
+> now moves affinity, NPC memory persists across sessions, the WNS
+> AffinityShift bridge un-broken), prompt furnishing (allow-lists inlined,
+> snake_case ids, LCK retuned 0.02→0.12 per optimizer, 150/150-fragment
+> coverage slideshow tool), and leak-proofed hub example sets with a
+> deterministic registry-dedup guard (64-run matrix, 0 leaks). Suite at
+> close: **1,219 passed / 0 failed**. The ONE operator action before
+> playtest: replace the dead `ANTHROPIC_API_KEY` env var (it 401s and
+> shadows the working `.env` temp key). Posture: `WES_REQUIRE_REAL_LLM=1
+> WES_DISABLE_FIXTURES=1`, verify with `tools/wes_real_llm_smoketest.py`,
+> tail `llm_debug_logs/wes_*.jsonl` during play, F12 for the live overlay.
+
 **Date:** 2026-07-09 · **Branch:** `crux-foundry` · **Suite:** 1,201 passed / 0 failed
 **Scope:** the "final test before playtesters" review — resumed from the halted Fable-5 effort,
 expanded to combat conformance, progression, WMS internals, and a full adversarial audit of

@@ -298,6 +298,50 @@ mapping, chunks theme enum coverage.
 
 ---
 
+## F19 — Faction/NPC affinity: working stores, disconnected pipes — FIXED ✅
+**Status:** FIXED @ `5a1e63aa` · 9 time-compressed tests in `test_affinity_long_horizon.py`
+
+User-requested verification of the features only evident after hours of play.
+Every store, clamp, threshold, and inheritance mechanism worked; the
+*connections* didn't:
+1. **Quest turn-in moved zero affinity** — the live quest system had no faction
+   reference; the designed quest_tool had no caller. New
+   `QuestGenerator.apply_turn_in()` (explicit deltas → outcome map → derived
+   from the giver's belonging tags +4/+2, max 3; giver NPC +5; consolidated
+   standing published), wired into the engine turn-in block.
+2. **NPC dialogue relationships never persisted** — the SQLite facade shipped
+   in June with zero callers; hours of dialogue died on quit, never rehydrated
+   at boot. NPCAgentSystem now hydrates on first touch and write-through
+   flushes after every dialogue.
+3. **AffinityConsolidator never invoked** — now fires on quest turn-in.
+4. **Real bug:** AffinityResolver passed `source=` provenance that
+   `adjust_player_affinity` didn't accept — every live faction-targeted WNS
+   AffinityShift died with a TypeError. The earlier certification's fake
+   accepted `**kwargs` and masked the drift (lesson: interface drift hides
+   behind permissive mocks). Now accepted + forwarded into the event.
+Confirmed working unchanged: WNS resolver wiring, location-default
+inheritance, label thresholds, ±100 clamps.
+
+---
+
+## F20 — Hub example sets: leak-proofed at the content level + deterministic dedup guard — SHIPPED ✅
+**Status:** SHIPPED @ `aeb67ca5` · 64-run certification matrix, 0 leaked names
+
+The moors examples leaked verbatim into moors firings on small models (3/8
+hubs on gemma3:4b). Two replacement content sets — identical XML shape and
+constraint keys — certified across gemma3:4b (16 runs/set) and qwen3:4b
+(8 runs/set): **frostpeak** (off-theme glacial mini-saga; applied) and
+**schematic** (placeholder-flavored neutral); `moors_original` preserved for
+rollback. Zero example leakage on either set × either model. Tooling:
+`tools/hub_example_set_apply.py` (one-command switcher, parse-validates before
+writing) + `tools/hub_cert_harness.py` (permanent contract+leakage scorer).
+Residual gemma behavior — re-emitting a LIVE registry entry ~1 in 2 hostile
+batches — made dedup deterministic instead of prompt-dependent: the hub's
+post-parse guard drops specs whose name recreates a `source=live` entry
+(logged, unit-tested; co-emitted references stay legal).
+
+---
+
 ## F17 — ANTHROPIC_API_KEY in the environment is INVALID (401) — OPERATOR ACTION ⚠️
 **Status:** BLOCKING the real-LLM playtest posture · found live by the smoketest gate
 
