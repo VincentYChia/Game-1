@@ -43,7 +43,7 @@ class RecipeDatabase:
 
     def _load_file(self, filepath: str, station_type: str) -> int:
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             loaded_count = 0
             for recipe_data in data.get('recipes', []):
@@ -162,6 +162,51 @@ class RecipeDatabase:
             if inventory.get_item_count(inp.get('materialId', '')) < inp.get('quantity', 0):
                 return False
         return True
+
+    def consume_materials_partial(self, recipe: Recipe, inventory,
+                                  fraction: float) -> dict:
+        """Consume a FRACTION of each recipe input (minigame-failure loss).
+
+        The crafters compute a tier-scaled failure penalty (30%-90%, see
+        reward_calculator.FAILURE_PENALTY) but deducted it from a throwaway
+        dict copy while the engine then consumed 100% from the real
+        inventory — so failures always cost everything (2026-07 audit).
+        This applies the designed partial loss to the REAL inventory.
+
+        Best-effort: consumes what is present (the player provably had the
+        materials when the minigame started). Returns {material_id: consumed}.
+        """
+        try:
+            from core.config import Config
+            if Config.DEBUG_INFINITE_RESOURCES:
+                return {}
+        except ImportError:
+            pass
+
+        fraction = max(0.0, min(1.0, fraction))
+        consumed: dict = {}
+        if fraction <= 0.0:
+            return consumed
+        for inp in recipe.inputs:
+            mat_id = inp.get('materialId') or inp.get('itemId') or ''
+            qty = inp.get('quantity', 0)
+            loss = int(qty * fraction)
+            if not mat_id or loss <= 0:
+                continue
+            remaining = loss
+            for i in range(len(inventory.slots)):
+                slot = inventory.slots[i]
+                if slot and slot.item_id == mat_id:
+                    take = min(slot.quantity, remaining)
+                    slot.quantity -= take
+                    remaining -= take
+                    if slot.quantity == 0:
+                        inventory.slots[i] = None
+                    if remaining == 0:
+                        break
+            if loss - remaining > 0:
+                consumed[mat_id] = loss - remaining
+        return consumed
 
     def consume_materials(self, recipe: Recipe, inventory) -> bool:
         # Import Config here to avoid circular import

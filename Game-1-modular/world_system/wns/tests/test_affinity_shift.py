@@ -19,6 +19,39 @@ from world_system.wns.affinity_shift_parser import (
 )
 
 
+class TestMagnitudeClamp(unittest.TestCase):
+    """2026-07 LLM-pipeline audit: FactionSystem clamps the resulting
+    VALUE, but nothing bounded a single directive — one hallucinated
+    'standing_delta: -9999' could slam a relationship from +100 to
+    -100 in one narrative beat."""
+
+    def _resolve(self, effect: str):
+        fs = _StubFactionSystem()
+        resolver = AffinityResolver(faction_system=fs)
+        records = resolver.resolve_batch(
+            [AffinityShift(target="faction:raiders", scope="region:moors",
+                           effect=effect)],
+            weaver_layer=4, weaver_address="region:moors",
+            narrative_event_id="t", game_time=1.0,
+        )
+        return fs, records
+
+    def test_huge_negative_delta_clamped(self) -> None:
+        fs, records = self._resolve("standing_delta: -9999")
+        self.assertTrue(records[0].applied)
+        self.assertEqual(fs.player_calls[0]["delta"], -25.0)
+        self.assertIn("clamped", records[0].apply_note)
+
+    def test_huge_positive_delta_clamped(self) -> None:
+        fs, _ = self._resolve("standing_delta: 500")
+        self.assertEqual(fs.player_calls[0]["delta"], 25.0)
+
+    def test_normal_delta_untouched(self) -> None:
+        fs, records = self._resolve("standing_delta: -0.15")
+        self.assertEqual(fs.player_calls[0]["delta"], -0.15)
+        self.assertNotIn("clamped", records[0].apply_note)
+
+
 class _StubFactionSystem:
     """Minimal stub recording calls."""
 

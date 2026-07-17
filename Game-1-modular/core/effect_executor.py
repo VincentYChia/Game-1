@@ -150,6 +150,26 @@ class EffectExecutor:
                         self.debugger.info(f"{damage_tag} damage converted to healing for ally")
                         return
 
+            # Enemy defense (2026-07 conformance, FINDINGS F5): the documented
+            # damage pipeline ends with "- def (max 75%)", but the action-combat
+            # melee path historically never applied enemy defense (players did
+            # full damage to armored enemies). The melee caller opts in via
+            # _apply_enemy_defense so per-target defense is honored here — the
+            # only place that sees each target in multi-target geometry (chain/
+            # AoE hit enemies with different defense values). Armor penetration
+            # from weapon tags (armor_breaker) rides along. Skill/spell damage
+            # keeps its historical no-defense behavior until design specifies.
+            if config.params.get('_apply_enemy_defense'):
+                target_defense = getattr(getattr(target, 'definition', None), 'defense', 0) or 0
+                if target_defense > 0:
+                    armor_pen = config.params.get('_armor_penetration', 0.0) or 0.0
+                    effective_defense = target_defense * (1.0 - armor_pen)
+                    reduction = min(0.75, effective_defense * 0.01)
+                    damage *= (1.0 - reduction)
+                    self.debugger.debug(
+                        f"Enemy defense applied: {target_defense} (pen {armor_pen*100:.0f}%) "
+                        f"-> -{reduction*100:.1f}% damage")
+
             # Actually apply damage
             self._damage_target(target, damage, damage_tag)
 

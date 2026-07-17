@@ -722,7 +722,7 @@ The LLM-powered "Invented Items" system is **fully implemented**:
 | Engineering | LightGBM | 28 features |
 
 ### Configuration
-- Model: `claude-sonnet-4-20250514`
+- Model: `claude-haiku-4-5`
 - Temperature: 0.4
 - Max tokens: 2000
 - Timeout: 30.0 seconds

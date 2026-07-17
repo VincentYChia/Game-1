@@ -41,9 +41,17 @@ def create_test_grid():
     P = Player/Source (4, 2)
     E1-E6 = Enemies at various positions
     """
-    # Create player source (no category needed, geometry doesn't filter source)
+    # Create player source (no category needed, geometry doesn't filter source).
+    # The real Character has NEITHER a `definition` NOR an `is_alive`
+    # attribute — that pair is how TargetFinder duck-types an Enemy SOURCE to
+    # flip relative targeting (enemy->ally). The old stub set
+    # `source.definition = None`, but hasattr() is True even for a None value,
+    # so the player source was misdetected as an enemy and every single/chain/
+    # cone/etc. enemy query got its context flipped to 'ally' and returned [].
+    # Delete both so the stub matches a real player.
     source = TestEntity("Player", (4, 2), "player")
-    source.definition = None  # Player doesn't need definition
+    del source.definition
+    del source.is_alive
 
     enemies = [
         TestEntity("E1", (2, 0), "beast"),  # North, distance ~2.8
@@ -293,7 +301,8 @@ def test_beam_pierce():
 
     # Create entities in a line
     source = TestEntity("Player", (0, 2), "player")
-    source.definition = None
+    del source.definition  # match real Character (see create_test_grid note)
+    del source.is_alive
     enemies = [
         TestEntity("E1", (2, 2), "beast"),
         TestEntity("E2", (4, 2), "undead"),
@@ -338,7 +347,8 @@ def test_context_filtering():
     print("="*70 + "\n")
 
     source = TestEntity("Player", (4, 2), "player")
-    source.definition = None
+    del source.definition  # match real Character (see create_test_grid note)
+    del source.is_alive
 
     # Mix of enemy and ally entities
     # For allies, we need to make them recognizable as Character/PlacedEntity types

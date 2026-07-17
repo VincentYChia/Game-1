@@ -131,7 +131,7 @@ class MaterialDatabase:
 
     def load_from_file(self, filepath: str):
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             for mat_data in data.get('materials', []):
                 material_id = mat_data.get('materialId', '')
@@ -208,7 +208,7 @@ class MaterialDatabase:
     def load_refining_items(self, filepath: str):
         """Load additional material items from items-refining-1.JSON"""
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             count = 0
@@ -256,7 +256,7 @@ class MaterialDatabase:
                        If None, loads all items with stackable=True or placeable=True flag
         """
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             count = 0

@@ -18,7 +18,7 @@ Higher layers OVERRIDE and UPDATE tags from below. Two mechanisms:
 - **Significance is RECREATED** at each layer. Each layer makes its own judgment.
 - **Key tags are UPDATED** (scope, urgency, address). Higher layers have broader context.
 
-### 3. 65 Categories, 5-10 Tags Per Item
+### 3. 64 Categories (2026-06-10 audit: code defines 64; this doc previously said 65 — the L6 category shipped as `regional_effect`, not the `nation_effect` listed below. The code name is kept because tags are load-bearing; read `regional_effect` at Layer 6 as nation-scope.), 5-10 Tags Per Item
 - Layer 1: 30 categories (factual dimensions)
 - Layers 2-7: 5-9 new categories each (progressive unlock, including per-layer significance)
 - Each stat/event carries 5-10 tags from available categories

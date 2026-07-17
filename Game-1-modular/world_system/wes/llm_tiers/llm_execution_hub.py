@@ -41,8 +41,19 @@ def _parse_specs(text: str, plan_step_id: str) -> List[ExecutorSpec]:
     try:
         from world_system.wes.xml_batch_parser import parse_xml_batch  # type: ignore
         try:
-            specs = parse_xml_batch(text)
+            # default_plan_step_id enables the tolerant element-children
+            # dialect real models emit (2026-07-10 certification) — the
+            # dispatcher owns the authoritative step id regardless.
+            specs = parse_xml_batch(text, default_plan_step_id=plan_step_id)
         except Exception:
+            # Terminal fallthrough — CC3: must not be silent (2026-06-10).
+            # An empty spec list makes the orchestrator think no work was
+            # requested, so the WES run quietly produces zero output.
+            from world_system.living_world.infra.graceful_degrade import log_parse_failure
+            log_parse_failure(
+                "wes_execution_hub", text,
+                fallback_taken=f"returned [] — plan_step {plan_step_id} yields no specs",
+            )
             return []
         # Rewrite plan_step_id so dispatcher owns the authoritative value;
         # mismatches between LLM output and dispatcher intent can't cross-wire.
@@ -120,13 +131,101 @@ class LLMExecutionHub:
         step: "WESPlanStep",
         slice: "BundleToolSlice",
     ) -> List[ExecutorSpec]:
-        """One LLM call; parse XML batch into ExecutorSpec list."""
+        """LLM call; parse XML batch into ExecutorSpec list.
+
+        2026-07-10 hub audit: the output schema+example are now
+        INJECTED into the system prompt (include_output_format — they
+        previously lived only in ``_output`` metadata that no prompt
+        ever carried), and a parse failure triggers ONE retry with a
+        stricter format suffix, matching the planner/tool tiers. The
+        hub is the fan-out heart of WES — an empty batch means zero
+        content for the whole step.
+        """
         variables = self._make_vars(step, slice)
         prompts = self._assembler.build(
             variables,
             firing_tier=slice.firing_tier,
+            include_output_format=True,
         )
 
+        specs = self._filter_registry_collisions(
+            self._attempt(prompts, step), slice, step)
+        if specs:
+            return specs
+
+        # One strict retry (parity with planner/tool tiers).
+        stricter = (
+            "STRICT RETRY — your previous response did not parse. Emit "
+            "ONLY the <specs> XML batch, no prose, no markdown fences. "
+            "Follow the [OUTPUT FORMAT] example shape exactly."
+        )
+        retry_prompts = self._assembler.build(
+            variables,
+            firing_tier=slice.firing_tier,
+            include_output_format=True,
+            extra_system_suffix=stricter,
+        )
+        specs = self._filter_registry_collisions(
+            self._attempt(retry_prompts, step), slice, step)
+        if not specs:
+            log_degrade(
+                subsystem="wes",
+                operation=f"execution_hub.{self.name}.build_specs",
+                failure_reason="xml_parse_failure_or_empty_batch_after_retry",
+                fallback_taken="return empty spec list",
+                severity="warning",
+                context={"plan_step_id": step.step_id, "tool": self.name},
+            )
+        return specs
+
+    def _filter_registry_collisions(
+        self, specs: List[ExecutorSpec], slice: "BundleToolSlice",
+        step: "WESPlanStep",
+    ) -> List[ExecutorSpec]:
+        """Drop specs that would recreate EXISTING (source=live) content.
+
+        2026-07-17 certification: small models occasionally re-emit a
+        live registry entry's name despite the explicit "do NOT
+        recreate" instruction (~1 in 2 gemma3:4b hostile batches).
+        Prompt compliance is probabilistic; this guard is
+        deterministic — dedup no longer depends on model obedience.
+        Only source=live entries block; co_emitted_this_plan entries
+        are legitimate reference targets.
+        """
+        if not specs:
+            return specs
+        live_names = set()
+        for entry in getattr(slice, "recent_registry_entries", []) or []:
+            if isinstance(entry, dict) and entry.get("source") == "live":
+                name = str(entry.get("display_name") or "").strip().lower()
+                if name:
+                    live_names.add(name)
+                cid = str(entry.get("content_id") or "").strip().lower()
+                if cid:
+                    live_names.add(cid.replace("_", " "))
+        if not live_names:
+            return specs
+        kept: List[ExecutorSpec] = []
+        for s in specs:
+            hint = str((s.flavor_hints or {}).get("name_hint", "")).strip().lower()
+            if hint and hint in live_names:
+                log_degrade(
+                    subsystem="wes",
+                    operation=f"execution_hub.{self.name}.dedup_guard",
+                    failure_reason=f"spec {s.spec_id!r} recreates live "
+                                   f"registry entry {hint!r}",
+                    fallback_taken="spec dropped from batch",
+                    severity="info",
+                    context={"plan_step_id": step.step_id,
+                             "tool": self.name},
+                )
+                continue
+            kept.append(s)
+        return kept
+
+    def _attempt(self, prompts: Dict[str, str],
+                 step: "WESPlanStep") -> List[ExecutorSpec]:
+        """One generate + parse pass. Returns [] on any failure (logged)."""
         try:
             text, err = self._backend.generate(
                 task=self.task_name,
@@ -155,21 +254,7 @@ class LLMExecutionHub:
             )
             return []
 
-        specs = _parse_specs(text, step.step_id)
-        if not specs:
-            log_degrade(
-                subsystem="wes",
-                operation=f"execution_hub.{self.name}.build_specs",
-                failure_reason="xml_parse_failure_or_empty_batch",
-                fallback_taken="return empty spec list",
-                severity="warning",
-                context={
-                    "plan_step_id": step.step_id,
-                    "tool": self.name,
-                    "response_excerpt": text[:200],
-                },
-            )
-        return specs
+        return _parse_specs(text, step.step_id)
 
     # ── internals ────────────────────────────────────────────────────
 

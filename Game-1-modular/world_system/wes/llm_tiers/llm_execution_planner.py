@@ -78,7 +78,10 @@ def _parse_json_blob(text: str) -> Optional[Dict[str, Any]]:
             try:
                 return json.loads(s[first : last + 1])
             except Exception:
-                return None
+                pass
+        # Terminal fallthrough — CC3: must not be silent (2026-06-10).
+        from world_system.living_world.infra.graceful_degrade import log_parse_failure
+        log_parse_failure("wes_execution_planner", text)
         return None
 
 

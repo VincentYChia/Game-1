@@ -96,7 +96,11 @@ class GracefulDegradeLogger:
     def __init__(self, log_dir: Optional[str] = None) -> None:
         self._log_dir = log_dir or self.DEFAULT_LOG_DIR
         self._buffer: List[DegradeEntry] = []
-        self._surface_sinks: List = []   # callables receiving DegradeEntry
+        self._surface_sinks: List = []   # callables receiving DegradeEntry (error-only)
+        # 2026-06-09: sinks that receive every entry regardless of severity.
+        # Used by the F12 observability bridge so info/warning fallbacks are
+        # surfaced live, not buried in disk logs.
+        self._all_severity_sinks: List = []
         self._write_lock = threading.Lock()
 
     @classmethod
@@ -129,6 +133,15 @@ class GracefulDegradeLogger:
         via stderr (logger never raises back into the caller)."""
         self._surface_sinks.append(sink)
 
+    def register_all_severity_sink(self, sink) -> None:
+        """Register a sink invoked for every entry regardless of severity.
+
+        Use case: pipe all silent fallbacks into the F12 observability
+        overlay so info/warning degrades are visible live, not buried in
+        disk logs. Same no-raise contract as ``register_surface_sink``.
+        """
+        self._all_severity_sinks.append(sink)
+
     # ── emission ─────────────────────────────────────────────────────
 
     def log(self, entry: DegradeEntry) -> None:
@@ -153,6 +166,15 @@ class GracefulDegradeLogger:
                 f"[graceful_degrade] disk write failed: {e}; "
                 f"entry={entry.to_dict()}\n"
             )
+
+        # Fan out to all-severity sinks first (F12 observability bridge etc.)
+        for sink in list(self._all_severity_sinks):
+            try:
+                sink(entry)
+            except Exception as e:
+                sys.stderr.write(
+                    f"[graceful_degrade] all-severity sink error: {e}\n"
+                )
 
         # Fan out to surface sinks for error-severity events
         if entry.severity == SEVERITY_ERROR:
@@ -258,6 +280,34 @@ def surface_visible_wes_failure(
         context=context,
         game_time=game_time,
     )
+
+
+def log_parse_failure(
+    subsystem: str,
+    raw_text: str,
+    fallback_taken: str = "returned None — caller degrades to stub/empty",
+) -> None:
+    """Record a terminal LLM-output parse failure. Never raises.
+
+    Added 2026-06-10: the WES LLM tiers (planner / hub / tool /
+    supervisor) all had bare ``except: return None`` terminal paths in
+    their parse helpers, violating the CC3 rule above ("Silent
+    try/except is not acceptable"). This is the shared convenience they
+    call instead — one line at each terminal fallthrough.
+    """
+    try:
+        log_degrade(
+            subsystem=subsystem,
+            operation="parse_llm_output",
+            failure_reason=(
+                f"unparseable LLM output ({len(raw_text)} chars): "
+                f"{raw_text[:120]!r}"
+            ),
+            fallback_taken=fallback_taken,
+            severity=SEVERITY_WARNING,
+        )
+    except Exception:
+        pass  # logging must never break the parse-return path
 
 
 def get_graceful_degrade_logger() -> GracefulDegradeLogger:

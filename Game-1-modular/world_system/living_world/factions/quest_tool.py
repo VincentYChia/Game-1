@@ -120,3 +120,76 @@ class QuestGenerator:
         if deltas:
             QuestGenerator.apply_quest_deltas(player_id, deltas, game_time)
         return deltas
+
+    # Generic turn-in deltas (2026-07-11 affinity audit). The per-quest
+    # outcome map above only knows three hand-written example quests, so
+    # in practice NO live quest ever moved affinity — quest turn-in was
+    # affinity-silent, which is invisible in a short test and glaring
+    # after hours of play. These defaults are deliberately modest;
+    # designer owns real economy.
+    NPC_TURN_IN_DELTA = 5.0        # giver NPC toward player (-100..100)
+    FACTION_PRIMARY_DELTA = 4.0    # giver's most significant tag
+    FACTION_SECONDARY_DELTA = 2.0  # up to two further tags
+    MAX_FACTION_TAGS = 3
+
+    @staticmethod
+    def apply_turn_in(
+        player_id: str,
+        giver_npc_id: str,
+        quest_id: str = "",
+        game_time: float = 0.0,
+        explicit_deltas: Dict[str, float] = None,
+    ) -> Dict[str, float]:
+        """Apply affinity for ANY quest turn-in (the runtime entry point).
+
+        Resolution order for the player→faction deltas:
+        1. ``explicit_deltas`` (e.g. carried on a generated quest_def),
+        2. the hand-written per-quest outcome map (``complete`` outcome),
+        3. derived from the giver NPC's belonging tags (primary tag by
+           significance gets FACTION_PRIMARY_DELTA, next two get
+           FACTION_SECONDARY_DELTA).
+
+        Always: the giver NPC's affinity toward the player rises by
+        NPC_TURN_IN_DELTA, and the consolidated player standing is
+        recomputed + published (FACTION_AFFINITY_CONSOLIDATED — the
+        consolidator previously had no caller at all).
+
+        Best-effort: returns the applied delta map; failures return {}.
+        """
+        try:
+            fs = FactionSystem.get_instance()
+        except Exception:
+            return {}
+
+        deltas: Dict[str, float] = dict(explicit_deltas or {})
+        if not deltas and quest_id:
+            deltas = QuestGenerator.get_affinity_deltas(quest_id, "complete")
+        if not deltas and giver_npc_id:
+            try:
+                tags = fs.get_npc_belonging_tags(giver_npc_id)
+            except Exception:
+                tags = []
+            tags = sorted(tags, key=lambda t: -getattr(t, "significance", 0.0))
+            for i, tag in enumerate(tags[:QuestGenerator.MAX_FACTION_TAGS]):
+                deltas[tag.tag] = (QuestGenerator.FACTION_PRIMARY_DELTA
+                                   if i == 0 else
+                                   QuestGenerator.FACTION_SECONDARY_DELTA)
+
+        try:
+            if deltas:
+                QuestGenerator.apply_quest_deltas(player_id, deltas, game_time)
+            if giver_npc_id:
+                fs.adjust_npc_affinity_toward_player(
+                    npc_id=giver_npc_id,
+                    delta=QuestGenerator.NPC_TURN_IN_DELTA,
+                    game_time=game_time,
+                )
+        except Exception:
+            return deltas
+
+        try:
+            from .consolidator import AffinityConsolidator
+            AffinityConsolidator.consolidate_and_publish(player_id)
+        except Exception:
+            pass
+        return deltas

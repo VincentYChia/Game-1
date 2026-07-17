@@ -17,6 +17,8 @@ exploration, social, economy, items, fishing, engineering, and chest looting.
 
 from __future__ import annotations
 
+import queue
+import threading
 import uuid
 from abc import ABC, abstractmethod
 from typing import ClassVar, Dict, List, Optional
@@ -61,6 +63,16 @@ class WorldInterpreter:
         self._evaluators: List[PatternEvaluator] = []
         self._interpretations_created: int = 0
         self._layer3_callback = None  # Callback to notify Layer3Manager of L2 events
+        # Async narrative-upgrade plumbing. Worker threads only run the
+        # LLM call; all SQLite writes happen on the main thread via
+        # drain_narrative_upgrades() (LayerStore is not thread-safe).
+        self._pending_upgrades: "queue.Queue" = queue.Queue()
+        self._upgrade_lock = threading.Lock()
+        self._upgrades_in_flight: int = 0
+        self._upgrades_dispatched: int = 0
+        self._upgrades_applied: int = 0
+        self._upgrades_skipped_backpressure: int = 0
+        self.max_upgrades_in_flight: int = 4
 
     @classmethod
     def get_instance(cls) -> WorldInterpreter:
@@ -242,10 +254,6 @@ class WorldInterpreter:
                 # Enrich tags via tag assignment system (Layer 2)
                 self._enrich_tags(interpretation, trigger_event)
 
-                # Upgrade narrative via LLM if WmsAI available
-                if self.wms_ai:
-                    self._upgrade_narrative(interpretation, trigger_event)
-
                 # Check if this supersedes an existing interpretation
                 existing = self.event_store.find_supersedable(
                     category=interpretation.category,
@@ -306,6 +314,16 @@ class WorldInterpreter:
                 # Propagate to region states
                 self._propagate(interpretation)
 
+                # Upgrade the template narrative via LLM — asynchronously.
+                # This used to be a synchronous generate_narration() call
+                # placed BEFORE record_interpretation, which stalled the
+                # game loop for the full LLM round-trip (300-1500ms with
+                # a real backend) on every trigger. The template narrative
+                # is recorded immediately; the LLM result patches the
+                # stored rows when drain_narrative_upgrades() runs.
+                if self.wms_ai:
+                    self._dispatch_narrative_upgrade(interpretation, trigger_event)
+
     def _enrich_tags(self, interpretation: InterpretedEvent,
                      trigger_event: WorldMemoryEvent) -> None:
         """Enrich interpretation tags using the Layer 2 tag assignment system.
@@ -357,20 +375,27 @@ class WorldInterpreter:
             # If tag enrichment fails, keep original evaluator tags
             print(f"[Interpreter] Tag enrichment failed: {e}")
 
-    def _upgrade_narrative(self, interpretation: InterpretedEvent,
-                           trigger_event: WorldMemoryEvent) -> None:
-        """Replace the template narrative with an LLM-generated one.
+    def _dispatch_narrative_upgrade(self, interpretation: InterpretedEvent,
+                                    trigger_event: WorldMemoryEvent) -> None:
+        """Kick off an async LLM upgrade of the recorded template narrative.
 
-        Uses WmsAI to generate a richer narration from the evaluator's
-        data (category, severity, tags, spatial scope) plus StatStore
-        context. The evaluator's template narrative becomes the fallback
-        if the LLM call fails.
+        The interpretation is already persisted (EventStore + LayerStore
+        share ``interpretation_id`` as the row key). A worker thread runs
+        the LLM call; the result is queued and applied to both stores on
+        the main thread by :meth:`drain_narrative_upgrades` — LayerStore's
+        SQLite connection is not thread-safe, so workers never touch it.
 
-        Called synchronously for now. Can be switched to async by queuing
-        triggers and processing results in WorldMemorySystem.update().
+        Backpressure: at most ``max_upgrades_in_flight`` concurrent
+        upgrades. Beyond that the template narrative simply stands —
+        a graceful degrade, never a stall (2026-07 audit; previously a
+        synchronous call that froze a frame per trigger).
         """
-        if not self.wms_ai:
-            return
+        with self._upgrade_lock:
+            if self._upgrades_in_flight >= self.max_upgrades_in_flight:
+                self._upgrades_skipped_backpressure += 1
+                return
+            self._upgrades_in_flight += 1
+            self._upgrades_dispatched += 1
 
         # Build data block from the evaluator's output + trigger context
         region_name = ""
@@ -398,37 +423,73 @@ class WorldInterpreter:
         # Add the template narration as reference
         data_lines.append(f"Context: {interpretation.narrative}")
 
-        data_block = "\n".join(data_lines)
+        interp_id = interpretation.interpretation_id
+        event_key = (f"{trigger_event.event_type}"
+                     f"/{trigger_event.event_subtype or ''}")
+
+        def _on_result(result) -> None:
+            # Worker thread: no DB access here — queue for the main thread.
+            with self._upgrade_lock:
+                self._upgrades_in_flight -= 1
+            try:
+                if result is not None and result.success and result.text:
+                    self._pending_upgrades.put((interp_id, event_key, result))
+            except Exception as e:
+                print(f"[Interpreter] Upgrade result handling failed: {e}")
 
         try:
-            result = self.wms_ai.generate_narration(
+            self.wms_ai.generate_narration_async(
                 event_type=trigger_event.event_type,
                 event_subtype=trigger_event.event_subtype or "",
                 tier=trigger_event.tier,
-                tags=interpretation.affects_tags,
-                data_block=data_block,
+                tags=list(interpretation.affects_tags or []),
+                data_block="\n".join(data_lines),
                 layer=2,
+                callback=_on_result,
             )
-
-            if result.success and result.text:
-                interpretation.narrative = result.text
-                # Update severity if the LLM detected a different level
-                if result.severity != "minor":
-                    interpretation.severity = result.severity
-                # Apply LLM-assigned tags as extra tags
-                if result.tags:
-                    for tag in result.tags:
-                        if tag not in interpretation.affects_tags:
-                            interpretation.affects_tags.append(tag)
-                else:
-                    print(f"[Interpreter] WARNING: LLM returned no tags for "
-                          f"L2 event {trigger_event.event_type}"
-                          f"/{trigger_event.event_subtype} — "
-                          f"check prompt or LLM output format")
-
         except Exception as e:
-            # Keep the evaluator's template narrative on error
-            print(f"[Interpreter] LLM upgrade failed: {e}")
+            with self._upgrade_lock:
+                self._upgrades_in_flight -= 1
+            print(f"[Interpreter] LLM upgrade dispatch failed: {e}")
+
+    def drain_narrative_upgrades(self) -> int:
+        """Apply completed async narrative upgrades (main thread only).
+
+        Called from WorldMemorySystem.update() each frame. Patches the
+        stored interpretation in EventStore and its Layer 2 row in
+        LayerStore with the LLM narrative, upgraded severity, and any
+        extra LLM-assigned tags. Returns the number applied.
+        """
+        applied = 0
+        while True:
+            try:
+                interp_id, event_key, result = self._pending_upgrades.get_nowait()
+            except queue.Empty:
+                break
+
+            severity = result.severity if result.severity != "minor" else None
+            extra_tags = list(result.tags or [])
+            if not extra_tags:
+                print(f"[Interpreter] WARNING: LLM returned no tags for "
+                      f"L2 event {event_key} — check prompt or LLM "
+                      f"output format")
+
+            try:
+                if self.event_store:
+                    self.event_store.apply_narrative_upgrade(
+                        interp_id, result.text,
+                        severity=severity, extra_tags=extra_tags)
+                if self.layer_store:
+                    self.layer_store.update_event_narrative(
+                        2, interp_id, result.text,
+                        severity=severity, extra_tags=extra_tags)
+                applied += 1
+            except Exception as e:
+                print(f"[Interpreter] Applying narrative upgrade failed: {e}")
+
+        if applied:
+            self._upgrades_applied += applied
+        return applied
 
     def _propagate(self, interpretation: InterpretedEvent) -> None:
         """Route interpretation to affected region states."""
@@ -481,4 +542,7 @@ class WorldInterpreter:
         return {
             "evaluators": len(self._evaluators),
             "interpretations_created": self._interpretations_created,
+            "upgrades_dispatched": self._upgrades_dispatched,
+            "upgrades_applied": self._upgrades_applied,
+            "upgrades_skipped_backpressure": self._upgrades_skipped_backpressure,
         }

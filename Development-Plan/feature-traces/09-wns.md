@@ -1,5 +1,7 @@
 # Feature Trace 09 — WNS Narrative Pipeline
 
+> **2026-06-05 STALENESS NOTICE.** Sections that describe the WNS trigger model as "every-N-events-per-layer-per-address cadence only" predate the **Model C** amendment. WNS now also fires NL_N directly when WMS Layer N publishes `WMS_LAYER_{N}_SUMMARY_CREATED` (peak path); cascade trigger remains as the baseline. NL1 dialogue ALSO feeds the WMS weighted-bucket triggers via `WMS_DIALOGUE_CAPTURED` (point-equivalent to L2 events). Read `Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md` for the current architecture before using this trace as guidance.
+
 **Wave:** 2 (parallel with seven content-tool agents)
 **Owned endpoints:** `wns_layer2`, `wns_layer3`, `wns_layer4`, `wns_layer5`, `wns_layer6`, `wns_layer7` (six weavers)
 **Final output artifacts:** **(a)** the WNS narrative the player reads (journals, world-state panels, daily news) and **(b)** the WNS-to-WES context bundle every WES tool consumes downstream.

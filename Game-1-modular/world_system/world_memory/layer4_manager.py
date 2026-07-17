@@ -523,6 +523,21 @@ class Layer4Manager:
             event_id=summary.summary_id,
         )
 
+        # 2026-06-05: publish WMS_LAYER_4_SUMMARY_CREATED for bridge.
+        # See Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md §5.3.
+        try:
+            from world_system.world_memory.layer_publish import _publish_layer_summary_created
+            _publish_layer_summary_created(
+                layer=4,
+                event_id=summary.summary_id,
+                tags=list(summary.tags),
+                category="province_summary",
+                severity=summary.severity,
+                game_time=game_time,
+            )
+        except Exception as e:
+            print(f"[Layer4] Bus publish error (non-fatal): {e}")
+
         # Notify Layer 5 of the new L4 event
         if self._layer5_callback:
             try:

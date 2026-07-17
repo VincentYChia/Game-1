@@ -168,6 +168,51 @@ class LayerStore:
         c.commit()
         return event_id
 
+    def update_event_narrative(self, layer: int, event_id: str,
+                               narrative: str,
+                               severity: Optional[str] = None,
+                               extra_tags: Optional[List[str]] = None) -> bool:
+        """Patch a stored layer event with an async LLM narrative upgrade.
+
+        Used by the interpreter's main-thread drain: the template
+        narrative is inserted immediately at trigger time, and the LLM
+        result lands here once the background call completes. Extra
+        tags are merged into tags_json AND the junction table so
+        tag-indexed retrieval sees them. Returns False if the row is
+        gone (pruned meanwhile).
+        """
+        if layer < 2 or layer > 7:
+            raise ValueError(f"Layer must be 2-7, got {layer}")
+
+        table = f"layer{layer}_events"
+        tag_table = f"layer{layer}_tags"
+        c = self.connection
+
+        row = c.execute(f"SELECT tags_json FROM {table} WHERE id = ?",
+                        (event_id,)).fetchone()
+        if row is None:
+            return False
+
+        try:
+            tags = json.loads(row["tags_json"] or "[]")
+        except (json.JSONDecodeError, TypeError):
+            tags = []
+        new_tags = [t for t in (extra_tags or []) if t not in tags]
+        tags.extend(new_tags)
+
+        c.execute(
+            f"UPDATE {table} SET narrative = ?, "
+            f"severity = COALESCE(?, severity), tags_json = ? WHERE id = ?",
+            (narrative, severity, json.dumps(tags), event_id),
+        )
+        for tag in new_tags:
+            if ":" in tag:
+                cat, val = tag.split(":", 1)
+                c.execute(f"INSERT INTO {tag_table} (event_id, tag_category, tag_value) "
+                          "VALUES (?, ?, ?)", (event_id, cat, val))
+        c.commit()
+        return True
+
     # ══════════════════════════════════════════════════════════════
     # TAG-BASED RETRIEVAL
     # ══════════════════════════════════════════════════════════════
@@ -299,6 +344,53 @@ class LayerStore:
             query = f"SELECT COUNT(DISTINCT {id_col}) FROM {table} WHERE {tag_where}"
 
         return c.execute(query, params).fetchone()[0]
+
+    # ══════════════════════════════════════════════════════════════
+    # ADDRESS-KEYED READS (added 2026-06-05 for WMS→WNS layer
+    # correspondence; see Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md)
+    # ══════════════════════════════════════════════════════════════
+
+    def get_recent_layer_event(
+        self, layer: int, address: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Return the single most-recent layer-N event at ``address``.
+
+        ``address`` is a content tag of the form ``district:foo``,
+        ``region:bar`` etc. Match is by tag presence on the event.
+        Returns ``None`` if no such event exists.
+
+        Layers 3-7 store one summary row per address (supersession
+        replaces the previous), so this is effectively the *current*
+        summary for that address.
+        """
+        events = self.get_layer_events_for_address(layer, address, limit=1)
+        return events[0] if events else None
+
+    def get_layer_events_for_address(
+        self, layer: int, address: str, *, limit: int = 5,
+    ) -> List[Dict[str, Any]]:
+        """Return up to ``limit`` most-recent layer-N events at
+        ``address``, newest first.
+
+        Address is matched against the layer's tag junction table.
+        """
+        if layer < 2 or layer > 7 or not address or ":" not in address:
+            return []
+        category, value = address.split(":", 1)
+        table = f"layer{layer}_events"
+        tag_table = f"layer{layer}_tags"
+        c = self.connection
+        rows = c.execute(
+            f"""
+            SELECT e.* FROM {table} e
+            INNER JOIN {tag_table} t ON e.id = t.event_id
+            WHERE t.tag_category = ? AND t.tag_value = ?
+            ORDER BY e.game_time DESC
+            LIMIT ?
+            """,
+            (category, value, int(limit)),
+        ).fetchall()
+        return [self._row_to_dict(row) for row in rows]
 
     # ══════════════════════════════════════════════════════════════
     # UTILITIES

@@ -29,6 +29,25 @@ unparseable output the dispatcher retries or fails the step.
 - ``intent`` attribute is optional; defaults to ``""`` on absence.
 - Unrecognized attributes ignored (forward-compatible).
 - Markdown fences (```xml ... ```) stripped before parsing.
+
+**Element-children dialect** (2026-07-10 real-LLM certification): every
+real model tested — Haiku 4.5, qwen2.5:14b, gemma3:4b — ignores the
+attribute dialect above and emits payloads as CHILD ELEMENTS instead::
+
+    <specs>
+      <spec>
+        <intent>...</intent>
+        <hard_constraints><tier>2</tier><biome>moors</biome></hard_constraints>
+        <flavor_hints>{"name_hint": "..."}</flavor_hints>
+      </spec>
+    </specs>
+
+Only the hand-written fixtures used the canonical attribute shape, so
+the WES cascade silently produced ZERO content on real backends. The
+parser now accepts both dialects. Dispatcher-driven leniency (missing
+``plan_step_id``/``id`` — the hub overwrites plan_step_id
+authoritatively anyway) is opt-in via ``default_plan_step_id``;
+without it the strict contract is unchanged.
 """
 
 from __future__ import annotations
@@ -78,19 +97,80 @@ def _coerce_json_attr(value: str, attr_name: str, spec_id: str) -> dict:
     return parsed
 
 
-def parse_xml_batch(raw: str) -> List[ExecutorSpec]:
+def _coerce_leaf(text: str):
+    """Best-effort typing for element text: JSON, int, float, or string."""
+    t = (text or "").strip()
+    if not t:
+        return ""
+    if t.startswith("{") or t.startswith("["):
+        try:
+            return json.loads(t)
+        except json.JSONDecodeError:
+            # Small-model artifact seen live (gemma3:4b, 2026-07-10):
+            # payloads double-braced as {{...}} — the example's {}
+            # merged with the shape doc's {key: ...}. Never valid
+            # JSON, so stripping one layer is unambiguous.
+            if t.startswith("{{") and t.endswith("}}"):
+                try:
+                    return json.loads(t[1:-1])
+                except json.JSONDecodeError:
+                    return t
+            return t
+    try:
+        return int(t)
+    except ValueError:
+        pass
+    try:
+        return float(t)
+    except ValueError:
+        return t
+
+
+def _element_to_value(el: "ET.Element"):
+    """Convert an element to a dict (from children) or a typed leaf."""
+    children = list(el)
+    if not children:
+        return _coerce_leaf(el.text or "")
+    return {c.tag: _element_to_value(c) for c in children}
+
+
+def _payload_dict(child: "ET.Element", name: str, spec_id: str) -> dict:
+    """Read a JSON payload from an attribute (canonical, strict) or a
+    child element (what real models emit, tolerant)."""
+    if name in child.attrib:
+        return _coerce_json_attr(child.attrib.get(name), name, spec_id)
+    el = child.find(name)
+    if el is not None:
+        value = _element_to_value(el)
+        if isinstance(value, dict):
+            return value
+        if value in ("", None):
+            return {}
+        raise XMLBatchParseError(
+            f"spec {spec_id!r}: element <{name}> must contain a JSON "
+            f"object or child elements, got {type(value).__name__}"
+        )
+    return {}
+
+
+def parse_xml_batch(raw: str,
+                    default_plan_step_id: str = "") -> List[ExecutorSpec]:
     """Parse a hub XML batch into a list of ``ExecutorSpec``.
 
     Args:
         raw: The raw response text from the hub LLM.
+        default_plan_step_id: Dispatcher-supplied step id. When given,
+            the parser tolerates a missing ``plan_step_id`` attribute
+            (the hub overwrites it authoritatively anyway) and
+            auto-generates missing per-spec ids. Without it the strict
+            contract is unchanged.
 
     Returns:
         List of ``ExecutorSpec`` in document order.
 
     Raises:
-        XMLBatchParseError: if the XML is malformed, a ``<spec>`` is
-            missing required attributes, or an attribute holding JSON
-            is not valid JSON / not an object.
+        XMLBatchParseError: if the XML is malformed, required ids are
+            missing (strict mode), or a JSON payload is invalid.
     """
     if raw is None:
         raise XMLBatchParseError("hub response is None")
@@ -119,12 +199,14 @@ def parse_xml_batch(raw: str) -> List[ExecutorSpec]:
 
     plan_step_id = root.attrib.get("plan_step_id", "").strip()
     if not plan_step_id:
+        plan_step_id = (default_plan_step_id or "").strip()
+    if not plan_step_id:
         raise XMLBatchParseError(
             "<specs> element missing required 'plan_step_id' attribute"
         )
 
     specs: List[ExecutorSpec] = []
-    for child in root:
+    for index, child in enumerate(root):
         if child.tag != "spec":
             # Tolerate comments / whitespace; skip but don't error on
             # unknown elements so the hub can add metadata later.
@@ -132,26 +214,21 @@ def parse_xml_batch(raw: str) -> List[ExecutorSpec]:
 
         spec_id = child.attrib.get("id", "").strip()
         if not spec_id:
-            raise XMLBatchParseError(
-                "<spec> element missing required 'id' attribute"
-            )
+            if default_plan_step_id:
+                spec_id = f"spec_{len(specs) + 1:03d}"
+            else:
+                raise XMLBatchParseError(
+                    "<spec> element missing required 'id' attribute"
+                )
 
         intent = child.attrib.get("intent", "")
-        hard_constraints = _coerce_json_attr(
-            child.attrib.get("hard_constraints", ""),
-            "hard_constraints",
-            spec_id,
-        )
-        flavor_hints = _coerce_json_attr(
-            child.attrib.get("flavor_hints", ""),
-            "flavor_hints",
-            spec_id,
-        )
-        cross_ref_hints = _coerce_json_attr(
-            child.attrib.get("cross_ref_hints", ""),
-            "cross_ref_hints",
-            spec_id,
-        )
+        if not intent:
+            intent_el = child.find("intent")
+            if intent_el is not None and intent_el.text:
+                intent = intent_el.text.strip()
+        hard_constraints = _payload_dict(child, "hard_constraints", spec_id)
+        flavor_hints = _payload_dict(child, "flavor_hints", spec_id)
+        cross_ref_hints = _payload_dict(child, "cross_ref_hints", spec_id)
 
         specs.append(
             ExecutorSpec(
@@ -163,6 +240,17 @@ def parse_xml_batch(raw: str) -> List[ExecutorSpec]:
                 hard_constraints=hard_constraints,
             )
         )
+
+    # Duplicate spec ids would clobber/double-execute downstream work
+    # keyed by spec_id — fail closed like every other malformed shape,
+    # so the dispatcher's retry path re-prompts the hub (2026-07 audit).
+    seen_ids = set()
+    for spec in specs:
+        if spec.spec_id in seen_ids:
+            raise XMLBatchParseError(
+                f"duplicate spec id {spec.spec_id!r} in hub batch"
+            )
+        seen_ids.add(spec.spec_id)
 
     return specs
 

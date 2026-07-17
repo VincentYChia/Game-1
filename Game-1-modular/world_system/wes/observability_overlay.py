@@ -25,6 +25,7 @@ from world_system.wes.observability_runtime import (
     EVT_CASCADE_FIRED,
     EVT_DB_RELOAD_FAILED,
     EVT_DB_RELOADED,
+    EVT_GRACEFUL_DEGRADE,
     EVT_REGISTRY_COMMITTED,
     EVT_WES_DISPATCHED,
     EVT_WES_PLAN_COMPLETED,
@@ -49,6 +50,9 @@ _COLOR_MAP: Dict[str, Tuple[int, int, int]] = {
     EVT_REGISTRY_COMMITTED:    (240, 160, 60),
     EVT_DB_RELOADED:           (240, 160, 60),
     EVT_DB_RELOAD_FAILED:      (240, 90, 90),
+    # 2026-06-09: silent fallback colour. Yellow-ish so it visually pops
+    # against the normal pipeline events without being read as a hard fail.
+    EVT_GRACEFUL_DEGRADE:      (240, 200, 60),
 }
 
 _DEFAULT_COLOR: Tuple[int, int, int] = (180, 180, 180)
@@ -94,7 +98,7 @@ def render_overlay(
     # Compose summary line — 4 most-frequent event types + total.
     notable_types = [
         EVT_WNS_FIRED, EVT_WES_DISPATCHED, EVT_REGISTRY_COMMITTED,
-        EVT_DB_RELOADED,
+        EVT_DB_RELOADED, EVT_GRACEFUL_DEGRADE,
     ]
     parts = [f"total={stats.get('_total', 0)}"]
     for t in notable_types:

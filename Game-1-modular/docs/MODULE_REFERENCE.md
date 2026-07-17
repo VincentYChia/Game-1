@@ -1145,8 +1145,8 @@ class NaturalResource:
 ```python
 class CombatManager:
     character: Character
-    active_enemies: List[Enemy]
-    spawn_cooldown: float
+    enemies: Dict[Tuple[int, int], List[Enemy]]  # per-chunk; flatten via get_all_active_enemies()
+    spawn_timers: Dict[Tuple[int, int], float]
 
     def calculate_damage(base_damage: int, attacker, defender) -> int:
         """Full damage pipeline with multipliers, enchantments, defense."""
@@ -1350,7 +1350,7 @@ class LLMItemGenerator:
 
     def __init__(self):
         self.api_key = os.getenv("ANTHROPIC_API_KEY")
-        self.model = "claude-sonnet-4-20250514"
+        self.model = "claude-haiku-4-5"
         self.temperature = 0.4
         self.max_tokens = 2000
         self.timeout = 30.0

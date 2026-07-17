@@ -1,0 +1,2 @@
+# Per-run artifacts (isolated WMS/StatStore DBs + result.json). Regenerable.
+runs/

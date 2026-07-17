@@ -60,6 +60,11 @@ class EventRetentionManager:
         if not old_events:
             return 0
 
+        # Rule 5 support: one pass over interpretations' cause chains
+        # instead of a per-event LIKE scan (was N+1 — up to 5,000
+        # unindexed scans per prune; 2026-07 audit).
+        referenced_ids = event_store.get_all_referenced_event_ids()
+
         # Group by (actor_id, event_type, event_subtype)
         groups: Dict[tuple, list] = {}
         for event in old_events:
@@ -89,7 +94,7 @@ class EventRetentionManager:
                 elif event.triggered_interpretation:
                     keep = True
                 # Rule 5: Referenced by Layer 2 cause chains
-                elif event_store.is_referenced_by_interpretation(event.event_id):
+                elif event.event_id in referenced_ids:
                     keep = True
                 else:
                     # Rule 6: Timeline marker (one per window per group)

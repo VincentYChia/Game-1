@@ -7,7 +7,7 @@ import os
 import math
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Core systems
 from .config import Config
@@ -102,6 +102,35 @@ class GameEngine:
         print("Loading databases...")
         print("=" * 60)
 
+        # 2026-06-09: install the graceful_degrade → observability bridge
+        # BEFORE any other system can silently fall back. From this point
+        # forward, every log_degrade call also lands in the F12 ring buffer
+        # as an EVT_GRACEFUL_DEGRADE event.
+        try:
+            from world_system.wes.observability_runtime import (
+                install_graceful_degrade_bridge,
+            )
+            install_graceful_degrade_bridge()
+        except Exception as e:
+            print(f"[Observability] graceful_degrade bridge install failed (non-fatal): {e}")
+
+        # 2026-06-09: validate designer-edit-prone JSON configs against
+        # their schemas. Issues are reported via log_degrade, which means
+        # they ALSO surface in the F12 overlay (warning-severity, yellow).
+        # Never blocks boot — designer iteration stays friction-free.
+        try:
+            from world_system.config.schema_validator import (
+                validate_known_configs,
+            )
+            report = validate_known_configs()
+            total_issues = sum(len(v) for v in report.values())
+            if total_issues:
+                print(f"[ConfigValidator] {total_issues} schema issue(s) found across {len(report)} configs — see F12 overlay")
+            else:
+                print("[ConfigValidator] all known configs match schema")
+        except Exception as e:
+            print(f"[ConfigValidator] schema validation pass failed (non-fatal): {e}")
+
         # Load resource nodes from JSON FIRST (needed for world generation)
         ResourceNodeDatabase.get_instance().load_from_file(
             str(get_resource_path("Definitions.JSON/resource-node-1.JSON")))
@@ -125,7 +154,6 @@ class GameEngine:
         MaterialDatabase.get_instance().load_stackable_items(
             str(get_resource_path("Definitions.JSON/crafting-stations-1.JSON")), categories=['station'])
         TranslationDatabase.get_instance().load_from_files()
-        SkillDatabase.get_instance().load_from_file()
         RecipeDatabase.get_instance().load_from_files()
         PlacementDatabase.get_instance().load_from_files()
 
@@ -138,9 +166,13 @@ class GameEngine:
         # Load test weapons for tag system validation
         equip_db.load_from_file(str(get_resource_path("items.JSON/items-testing-tags.JSON")))
 
-        TitleDatabase.get_instance().load_from_file(str(get_resource_path("progression/titles-1.JSON")))
+        # 2026-06-10: use load_from_files() (sacred glob + generated overlay)
+        # instead of single-file loads. Previously WES-generated titles/skills
+        # (titles-generated-*.JSON, skills-generated-*.JSON) were invisible at
+        # boot and only appeared after an in-session Content Registry reload.
+        TitleDatabase.get_instance().load_from_files()
         ClassDatabase.get_instance().load_from_file(str(get_resource_path("progression/classes-1.JSON")))
-        SkillDatabase.get_instance().load_from_file(str(get_resource_path("Skills/skills-skills-1.JSON")))
+        SkillDatabase.get_instance().load_from_files()
         from data.databases import SkillUnlockDatabase
         SkillUnlockDatabase.get_instance().load_from_file(str(get_resource_path("progression/skill-unlocks.JSON")))
         NPCDatabase.get_instance().load_from_files()  # Load NPCs and Quests
@@ -183,6 +215,13 @@ class GameEngine:
         # Start menu state
         self.start_menu_open = not self.temporary_world  # Show menu unless using --temp flag
         self.start_menu_selected_option = 0  # 0=New World, 1=Load World, 2=Load Default Save, 3=Temporary World
+
+        # Pause menu state (2026-06-05). ESC during gameplay opens this
+        # instead of immediately quitting, so accidental ESC presses are
+        # recoverable. Options: 0=Return, 1=Save & Exit, 2=Exit without saving.
+        self.pause_menu_open = False
+        self.pause_menu_selected_option = 0
+        self.pause_menu_buttons: List[pygame.Rect] = []
 
         # Initialize character to None (will be created after menu selection)
         self.character = None
@@ -257,6 +296,10 @@ class GameEngine:
         # menu-driven path it is not. The helper handles both.
         self._spawn_village_npcs()
 
+        # NPCAgentSystem is initialized later in this constructor (after
+        # WorldMemory/WES). Personality registration happens through
+        # _register_npcs_with_agent_system, called after that init.
+
         # NPC interaction state
         self.npc_dialogue_open = False
         self.active_npc: Optional[NPC] = None
@@ -264,6 +307,17 @@ class GameEngine:
         self.npc_available_quests: List[str] = []
         self.npc_quest_to_turn_in: Optional[str] = None
         self.npc_dialogue_window_rect = None
+        # Async LLM dialogue: one in-flight request; the token lets a newer
+        # conversation supersede a stale result (see _poll_async_npc_dialogue)
+        self._npc_dialogue_pending: Optional[dict] = None
+        self._npc_dialogue_token: int = 0
+
+        # 2026-06-09: in-game quest log (Risk #9). Toggle with J.
+        # Click handling pulls quest_id → abandon_rect from the overlay
+        # return value so abandon clicks flow through QuestManager.
+        self.quest_log_open: bool = False
+        self.quest_log_window_rect = None
+        self.quest_log_abandon_rects: Dict[str, Any] = {}
 
         # World Memory System (AI foundation — records events, detects patterns)
         self.world_memory = None
@@ -446,8 +500,12 @@ class GameEngine:
         if self.character and not self.character.class_system.current_class:
             self.character.class_selection_open = True
 
-        # Proactively warm up CNN classifiers at startup (avoids delay on first INVENT)
-        self._startup_warmup_cnn_classifiers()
+        # Proactively warm up CNN classifiers at startup (avoids delay on first INVENT).
+        # crux-foundry hermetic mode skips this: it lazy-loads TensorFlow (~13s) for the
+        # crafting classifier, which headless playtests never use (INVENT is never fired).
+        # Flag off => today's behavior exactly. The invent path still lazy-loads on demand.
+        if os.environ.get('GAME1_HERMETIC') != '1':
+            self._startup_warmup_cnn_classifiers()
 
         print("\n" + "=" * 60)
         print("✓ Game ready!")
@@ -457,6 +515,10 @@ class GameEngine:
 
     def add_notification(self, message: str, color: Tuple[int, int, int] = Config.COLOR_NOTIFICATION):
         self.notifications.append(Notification(message, 3.0, color))
+        # Bound the stack: a burst (mass-craft, AoE loot) used to stack
+        # unlimited toasts down the screen. Oldest are culled first.
+        if len(self.notifications) > 8:
+            del self.notifications[:len(self.notifications) - 8]
 
     def _get_weapon_effect_data(self, hand: str = 'mainHand') -> tuple:
         """
@@ -580,14 +642,40 @@ class GameEngine:
                         self.character.stat_tracker.record_session_end()
                 self.running = False
 
-            # Block all input except quit when LLM overlay is active
+            # Block all input except quit when LLM overlay is active —
+            # except ESC, which cancels the generation and hands control
+            # back immediately (the worker finishes in the background and
+            # its result is discarded; materials are only consumed on
+            # success so cancelling costs nothing).
             elif llm_blocking:
-                # Consume all events but don't process them
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    try:
+                        from systems.llm_item_generator import abandon_background_generation
+                        abandon_background_generation()
+                        self._pending_generation_discipline = None
+                        self.add_notification("Generation cancelled", (255, 200, 100))
+                    except Exception as e:
+                        print(f"[LLM] cancel failed: {e}")
+                # Consume all other events without processing them
                 continue
 
             elif event.type == pygame.KEYDOWN:
                 self.keys_pressed.add(event.key)
                 self._last_input_time = pygame.time.get_ticks() / 1000.0
+
+                # Pause menu event handling (highest priority, before
+                # everything else gameplay-related).
+                if self.pause_menu_open:
+                    if event.key == pygame.K_UP:
+                        self.pause_menu_selected_option = (self.pause_menu_selected_option - 1) % 3
+                    elif event.key == pygame.K_DOWN:
+                        self.pause_menu_selected_option = (self.pause_menu_selected_option + 1) % 3
+                    elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                        self.handle_pause_menu_selection(self.pause_menu_selected_option)
+                    elif event.key == pygame.K_ESCAPE:
+                        # ESC inside the pause menu = "Return to game"
+                        self.pause_menu_open = False
+                    continue  # Skip other event handling
 
                 # Start menu event handling (highest priority)
                 if self.start_menu_open:
@@ -619,12 +707,23 @@ class GameEngine:
                 # Minigame input handling (highest priority)
                 if self.active_minigame:
                     if event.key == pygame.K_ESCAPE:
-                        # Cancel minigame (lose materials)
-                        print(f"🚫 Minigame cancelled by player")
-                        self.add_notification("Minigame cancelled!", (255, 100, 100))
-                        self.active_minigame = None
-                        self.minigame_type = None
-                        self.minigame_recipe = None
+                        # Abandoning a craft is destructive (materials are
+                        # lost) — require a quick double-ESC, same idiom as
+                        # the dungeon double-F exit, so one accidental
+                        # press can't discard the work.
+                        now = pygame.time.get_ticks()
+                        if now - getattr(self, '_last_minigame_escape_time', 0) < 1500:
+                            print(f"🚫 Minigame cancelled by player")
+                            self.add_notification("Minigame cancelled!", (255, 100, 100))
+                            self.active_minigame = None
+                            self.minigame_type = None
+                            self.minigame_recipe = None
+                            self._last_minigame_escape_time = 0
+                        else:
+                            self._last_minigame_escape_time = now
+                            self.add_notification(
+                                "Press ESC again to abandon craft (materials lost)",
+                                (255, 200, 100))
                     elif self.minigame_type == 'smithing' and event.key == pygame.K_SPACE:
                         self.active_minigame.handle_fan()
                     elif self.minigame_type == 'alchemy':
@@ -735,7 +834,10 @@ class GameEngine:
                         self._record_menu_close_time("map")
                         self.map_system.close_map()
                     elif self.character.class_selection_open:
-                        pass
+                        # Class selection is mandatory — ESC can't close
+                        # it, but silence felt broken. Tell the player why.
+                        self.add_notification(
+                            "Choose a class to continue", (255, 200, 100))
                     elif self.npc_dialogue_open:
                         # Close NPC dialogue
                         self.npc_dialogue_open = False
@@ -743,22 +845,12 @@ class GameEngine:
                         self.npc_dialogue_lines = []
                         self.npc_available_quests = []
                     else:
-                        # Autosave on quit (unless temporary world)
-                        if not self.temporary_world:
-                            if self.save_manager.save_game(
-                                self.character,
-                                self.world,
-                                self.character.quests,
-                                self.npcs,
-                                "autosave.json",
-                                self.dungeon_manager,
-                                self.game_time,
-                                self.map_system
-                            ):
-                                print("💾 Autosaved on ESC quit")
-                                if hasattr(self.character, 'stat_tracker'):
-                                    self.character.stat_tracker.record_save("autosave")
-                        self.running = False
+                        # 2026-06-05: ESC with no UI open now opens the
+                        # pause menu instead of immediately quitting.
+                        # Accidental ESC is recoverable; intentional exit
+                        # takes two clicks (ESC + select option).
+                        self.pause_menu_open = True
+                        self.pause_menu_selected_option = 0
                 elif event.key == pygame.K_TAB:
                     tool_name = self.character.switch_tool()
                     if tool_name:
@@ -767,6 +859,7 @@ class GameEngine:
                     was_open = self.character.stats_ui_open
                     self.character.toggle_stats_ui()
                     if not was_open and self.character.stats_ui_open:
+                        self._close_other_overlay_panels('stats')
                         if hasattr(self.character, 'stat_tracker'):
                             self.character.stat_tracker.record_menu_opened("stats")
                         self._menu_open_times["stats"] = pygame.time.get_ticks() / 1000.0
@@ -776,6 +869,7 @@ class GameEngine:
                     was_open = self.character.equipment_ui_open
                     self.character.toggle_equipment_ui()
                     if not was_open and self.character.equipment_ui_open:
+                        self._close_other_overlay_panels('equipment')
                         if hasattr(self.character, 'stat_tracker'):
                             self.character.stat_tracker.record_menu_opened("equipment")
                         self._menu_open_times["equipment"] = pygame.time.get_ticks() / 1000.0
@@ -785,6 +879,7 @@ class GameEngine:
                     was_open = self.character.skills_ui_open
                     self.character.toggle_skills_ui()
                     if not was_open and self.character.skills_ui_open:
+                        self._close_other_overlay_panels('skills')
                         if hasattr(self.character, 'stat_tracker'):
                             self.character.stat_tracker.record_menu_opened("skills")
                         self._menu_open_times["skills"] = pygame.time.get_ticks() / 1000.0
@@ -794,6 +889,7 @@ class GameEngine:
                     was_open = self.character.encyclopedia.is_open
                     self.character.encyclopedia.toggle()
                     if not was_open and self.character.encyclopedia.is_open:
+                        self._close_other_overlay_panels('encyclopedia')
                         if hasattr(self.character, 'stat_tracker'):
                             self.character.stat_tracker.record_menu_opened("encyclopedia")
                         self._menu_open_times["encyclopedia"] = pygame.time.get_ticks() / 1000.0
@@ -807,6 +903,7 @@ class GameEngine:
                         # Center on player when opening
                         self.map_system.center_on_position(self.character.position)
                     if not was_open and self.map_system.map_open:
+                        self._close_other_overlay_panels('map')
                         if hasattr(self.character, 'stat_tracker'):
                             self.character.stat_tracker.record_menu_opened("map")
                         self._menu_open_times["map"] = pygame.time.get_ticks() / 1000.0
@@ -1216,6 +1313,29 @@ class GameEngine:
                         (100, 200, 255),
                     )
 
+                elif event.key == pygame.K_j:
+                    # 2026-06-09: toggle the in-game quest log (Risk #9).
+                    # Lists active quests + objectives + progress + Abandon.
+                    self.quest_log_open = not getattr(
+                        self, "quest_log_open", False
+                    )
+                    if self.quest_log_open:
+                        self._close_other_overlay_panels('quest_log')
+                        try:
+                            count = len(self.character.quests.active_quests)
+                            self.add_notification(
+                                f"Quest log open ({count} active)",
+                                (220, 220, 130),
+                            )
+                        except Exception:
+                            self.add_notification(
+                                "Quest log open", (220, 220, 130),
+                            )
+                    else:
+                        self.add_notification(
+                            "Quest log closed", (200, 200, 200),
+                        )
+
             elif event.type == pygame.KEYUP:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
@@ -1361,7 +1481,8 @@ class GameEngine:
     def handle_right_click(self, mouse_pos: Tuple[int, int], shift_held: bool = False):
         """Handle right-click events (SHIFT+right for consumables, right-click for offhand attacks, right-click to remove materials in interactive crafting)"""
         # Check if clicking on UI elements first (high priority)
-        if self.start_menu_open or self.active_minigame or self.enchantment_selection_active:
+        if (self.start_menu_open or self.pause_menu_open
+                or self.active_minigame or self.enchantment_selection_active):
             return  # Don't handle right-click on UI
 
         # Skip if no character exists yet
@@ -1390,9 +1511,7 @@ class GameEngine:
 
         # Handle inventory SHIFT+right-clicks for consumables
         if shift_held and mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-            # Calculate start_y to match renderer: tools_y(+55) + tool_slot(50) + padding(20) = +125
-            tools_y = Config.INVENTORY_PANEL_Y + 55
-            start_x, start_y = 20, tools_y + 50 + 20  # = INVENTORY_PANEL_Y + 125
+            start_x, start_y = Config.inventory_grid_origin()  # single source
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, Config.INVENTORY_SLOT_SPACING  # §15 trap 17
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -1455,8 +1574,11 @@ class GameEngine:
                         if self.character.quests.start_quest(quest_def, self.character):
                             print(f"📜 Quest accepted: {quest_def.title}")
                             self.add_notification(f"Quest accepted: {quest_def.title}", (100, 255, 100))
-                            # Update dialogue state
-                            self.npc_available_quests.remove(quest_id)
+                            # Update dialogue state (guarded — a stale button
+                            # rect after the list was rebuilt would otherwise
+                            # raise ValueError and crash the click handler)
+                            if quest_id in self.npc_available_quests:
+                                self.npc_available_quests.remove(quest_id)
                             # Prefer the NPC's per-NPC quest_offer line
                             # from the speechbank (NL1 deterministic).
                             # Falls through to generic cycling when the
@@ -1502,6 +1624,25 @@ class GameEngine:
                             completion_lines = [self.active_npc.get_next_dialogue()]
                         self.npc_dialogue_lines = completion_lines
 
+                        # Faction/NPC affinity on turn-in (2026-07-11
+                        # affinity audit: quest completion previously
+                        # moved NO affinity anywhere — the designed
+                        # quest_tool had no caller). Best-effort.
+                        try:
+                            from world_system.living_world.factions.quest_tool import (
+                                QuestGenerator,
+                            )
+                            applied = QuestGenerator.apply_turn_in(
+                                player_id="player",
+                                giver_npc_id=getattr(self.active_npc, 'npc_id', '') or '',
+                                quest_id=quest_id,
+                                game_time=self.game_time,
+                            )
+                            if applied:
+                                print(f"   🤝 Affinity: {applied}")
+                        except Exception as aff_err:
+                            print(f"   (affinity skip: {aff_err})")
+
                         # Update quest state
                         self.npc_quest_to_turn_in = None
                         self.npc_available_quests = self.active_npc.get_available_quests(self.character.quests)
@@ -1541,12 +1682,12 @@ class GameEngine:
             # hearing the same first line every time.
             nearby_npc.reset_dialogue_state()
 
-            # Get opening dialogue. Prefer the LLM-powered NPCAgentSystem when
-            # available; fall back to the hardcoded cycling lines otherwise.
-            # NOTE: the generate_dialogue() call is synchronous — the UI will
-            # block for the LLM round-trip. Making this async is tracked in
-            # Development-Plan/WORLD_SYSTEM_WORKING_DOC.md.
-            self.npc_dialogue_lines = [self._generate_npc_opening(nearby_npc)]
+            # Show the deterministic speechbank line IMMEDIATELY, then let
+            # the LLM-personalized opening swap in when it arrives. The LLM
+            # call used to be synchronous here, freezing the whole UI for the
+            # backend round-trip (up to the 30s timeout on a dead backend).
+            self.npc_dialogue_lines = [nearby_npc.get_next_dialogue()]
+            self._start_async_npc_opening(nearby_npc)
 
             # Check for available quests
             self.npc_available_quests = nearby_npc.get_available_quests(self.character.quests)
@@ -1576,17 +1717,20 @@ class GameEngine:
         else:
             self.add_notification("No one nearby to talk to", (200, 200, 200))
 
-    def _generate_npc_opening(self, npc) -> str:
-        """Generate the opening dialogue line for an NPC interaction.
+    def _start_async_npc_opening(self, npc) -> None:
+        """Kick off LLM dialogue generation for an NPC opening, off-thread.
 
         Routes through NPCAgentSystem when available, which pulls NPC
         memory, personality, faction context, and current world
-        conditions. Falls back to the NPC's hardcoded cycling lines
-        if the agent system is absent or errors out.
+        conditions. The caller has already shown the deterministic
+        speechbank line; when the LLM result lands (polled each frame by
+        _poll_async_npc_dialogue), it replaces that line if this
+        conversation is still the active one.
         """
         agent = getattr(self, "npc_agent_system", None)
         if agent is None:
             # Graceful degrade: agent not initialized (e.g. boot failed).
+            # The speechbank line already shown IS the dialogue.
             try:
                 from world_system.living_world.infra.graceful_degrade import log_degrade
                 log_degrade(
@@ -1599,31 +1743,71 @@ class GameEngine:
                 )
             except Exception:
                 pass
-            return npc.get_next_dialogue()
-        try:
-            result = agent.generate_dialogue(
-                npc_id=npc.npc_def.npc_id,
-                player_input="*approaches and greets you*",
-                character=self.character,
-                npc_name=npc.npc_def.name,
-            )
-            if result and result.text:
-                return result.text
-        except Exception as e:
-            print(f"[NPCAgent] generate_dialogue failed for {npc.npc_def.npc_id}: {e}")
+            return
+
+        import threading
+
+        self._npc_dialogue_token += 1
+        request = {
+            "token": self._npc_dialogue_token,
+            "npc_id": npc.npc_def.npc_id,
+            "result": None,
+            "done": False,
+        }
+        self._npc_dialogue_pending = request
+
+        def _worker():
             try:
-                from world_system.living_world.infra.graceful_degrade import log_degrade
-                log_degrade(
-                    subsystem="npc_agent",
-                    operation="generate_dialogue",
-                    failure_reason=f"{type(e).__name__}: {e}",
-                    fallback_taken="hardcoded cycling dialogue",
-                    severity="warning",
-                    context={"npc_id": npc.npc_def.npc_id, "npc_name": npc.npc_def.name},
+                request["result"] = agent.generate_dialogue(
+                    npc_id=npc.npc_def.npc_id,
+                    player_input="*approaches and greets you*",
+                    character=self.character,
+                    npc_name=npc.npc_def.name,
                 )
-            except Exception:
-                pass
-        return npc.get_next_dialogue()
+            except Exception as e:
+                print(f"[NPCAgent] generate_dialogue failed for {npc.npc_def.npc_id}: {e}")
+                try:
+                    from world_system.living_world.infra.graceful_degrade import log_degrade
+                    log_degrade(
+                        subsystem="npc_agent",
+                        operation="generate_dialogue",
+                        failure_reason=f"{type(e).__name__}: {e}",
+                        fallback_taken="hardcoded cycling dialogue",
+                        severity="warning",
+                        context={"npc_id": npc.npc_def.npc_id, "npc_name": npc.npc_def.name},
+                    )
+                except Exception:
+                    pass
+            finally:
+                # Set last: the main thread only reads "result" after
+                # seeing done=True.
+                request["done"] = True
+
+        threading.Thread(target=_worker, daemon=True, name="npc-dialogue").start()
+
+    def _poll_async_npc_dialogue(self) -> None:
+        """Swap the LLM-generated opening into the dialogue panel when ready.
+
+        Called once per frame from update(). The result is discarded if the
+        player closed the panel, switched NPCs, or a newer request
+        superseded this one (token mismatch). When the agent itself fell
+        back to its generic template (from_fallback), the speechbank line
+        already on screen is the better, designer-authored voice — keep it.
+        """
+        request = self._npc_dialogue_pending
+        if request is None or not request["done"]:
+            return
+        self._npc_dialogue_pending = None
+        if request["token"] != self._npc_dialogue_token:
+            return
+        if not self.npc_dialogue_open or self.active_npc is None:
+            return
+        if self.active_npc.npc_def.npc_id != request["npc_id"]:
+            return
+        result = request["result"]
+        if (result is not None and result.text and result.success
+                and not result.from_fallback):
+            self.npc_dialogue_lines = [result.text]
 
     def _spawn_village_npcs(self) -> None:
         """Append village NPCs from the geographic system to ``self.npcs``.
@@ -1668,6 +1852,89 @@ class GameEngine:
         if added:
             print(f"✓ Spawned {added} village NPCs across "
                   f"{len(self.world._villages)} villages")
+
+    def _register_npcs_with_agent_system(self) -> None:
+        """Register each spawned NPC's personality + location with the
+        NPCAgentSystem.
+
+        Resolution order per NPC:
+        - If NPCDefinition.personality is non-empty (v3 inline), pass it
+          verbatim — the agent uses it as the NPC's unique voice.
+        - Else if NPCDefinition.tags hints at an archetype (blacksmith /
+          guard / merchant / herbalist / scholar), assign that shared
+          template.
+        - Else "default".
+
+        Location hierarchy: NPCDefinition.locality holds at minimum
+        ``home_chunk``. v3 NPCs may add ``locality_id``, ``district_id``,
+        ``region_id``, ``nation_id``. We assemble whatever is present.
+
+        Idempotent — re-running it just overwrites the same map entries.
+        """
+        agent = getattr(self, "npc_agent_system", None)
+        if agent is None:
+            return
+        if not hasattr(self, "npcs"):
+            return
+
+        # Tag → shared template fallback. Order matters: earlier matches win.
+        tag_template_map = [
+            ("blacksmith", "blacksmith"),
+            ("smith", "blacksmith"),
+            ("herbalist", "herbalist"),
+            ("alchemist", "herbalist"),
+            ("merchant", "merchant"),
+            ("trader", "merchant"),
+            ("guard", "guard"),
+            ("trainer", "guard"),
+            ("scholar", "scholar"),
+            ("mentor", "scholar"),
+            ("enchanter", "scholar"),
+        ]
+
+        registered = 0
+        for npc in self.npcs:
+            try:
+                npc_def = npc.npc_def
+            except AttributeError:
+                continue
+            npc_id = getattr(npc_def, "npc_id", None)
+            if not npc_id:
+                continue
+
+            personality = getattr(npc_def, "personality", None) or {}
+            locality = getattr(npc_def, "locality", None) or {}
+            tags = getattr(npc_def, "tags", None) or []
+
+            # Build the location hierarchy in canonical tier order. The
+            # dialogue_helper accepts whatever subset we can provide.
+            hierarchy: List[Tuple[str, Optional[str]]] = []
+            for tier in ("nation", "region", "district", "locality"):
+                key = f"{tier}_id"
+                value = locality.get(key) if isinstance(locality, dict) else None
+                if value:
+                    hierarchy.append((tier, str(value)))
+            # World tier always last with None — gives helper a chance to
+            # apply game-wide affinity defaults.
+            hierarchy.append(("world", None))
+
+            template_name = None
+            if not personality:
+                for tag_hint, template in tag_template_map:
+                    if any(tag_hint in str(t).lower() for t in tags):
+                        template_name = template
+                        break
+
+            agent.register_npc(
+                npc_id=npc_id,
+                personality=personality if personality else None,
+                location_hierarchy=hierarchy,
+                template_name=template_name,
+            )
+            registered += 1
+
+        if registered:
+            print(f"[NPCAgent] Registered {registered} NPCs with personality + locality data")
 
     def _initialize_world_with_loading_screen(
         self, *, seed=None, label: str = "World",
@@ -1720,10 +1987,62 @@ class GameEngine:
                      "The world remembers itself.")
         self.world.initialize_world(progress_callback=_on_progress)
 
+        # Test/temp world only: guarantee a village with NPCs near spawn so a
+        # tester can reach NPC dialogue / quests / factions in a few steps
+        # without exploring (real villages are 40+ chunks apart). The village
+        # location is fixed; its NPCs are drawn from the real generation
+        # templates — existence guaranteed, identities generation-driven.
+        # Must run BEFORE _spawn_village_npcs so its NPCs are instantiated.
+        if getattr(self, "temporary_world", False):
+            try:
+                self.world.inject_test_village()
+            except Exception as e:
+                print(f"⚠ Test village injection skipped (non-fatal): {e}")
+
         # Post-init: populate village NPCs from the freshly-initialized
         # geographic system. Idempotent against the boot-time call.
         if hasattr(self, "npcs"):
             self._spawn_village_npcs()
+
+    def handle_pause_menu_selection(self, option_index: int) -> None:
+        """Handle pause menu selection (0=Return, 1=Save & Exit, 2=Exit without saving)."""
+        if option_index == 0:
+            # Return to game
+            self.pause_menu_open = False
+            return
+
+        if option_index == 1:
+            # Save & Exit. Skip the save for temp worlds (no persistence).
+            if not self.temporary_world and self.character is not None:
+                try:
+                    saved = self.save_manager.save_game(
+                        self.character,
+                        self.world,
+                        self.character.quests,
+                        self.npcs,
+                        "autosave.json",
+                        self.dungeon_manager,
+                        self.game_time,
+                        self.map_system,
+                    )
+                    if saved:
+                        print("💾 Autosaved on Save & Exit")
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_save("autosave")
+                    else:
+                        print("⚠ Save returned falsy; exiting anyway")
+                except Exception as e:
+                    print(f"⚠ Save failed on Save & Exit: {e}; exiting anyway")
+            else:
+                print("💾 Skipping save (temporary world or no character)")
+            self.running = False
+            return
+
+        if option_index == 2:
+            # Exit without saving
+            print("🚪 Exiting without saving")
+            self.running = False
+            return
 
     def handle_start_menu_selection(self, option_index: int):
         """Handle start menu option selection (0=New World, 1=Load World, 2=Load Default Save, 3=Temporary World)"""
@@ -1963,7 +2282,16 @@ class GameEngine:
                 print("✓ Opening class selection...")
 
     def handle_mouse_click(self, mouse_pos: Tuple[int, int]):
-        # Start menu clicks (highest priority)
+        # Pause menu clicks (highest priority — even higher than start menu)
+        if self.pause_menu_open:
+            if hasattr(self, 'pause_menu_buttons') and self.pause_menu_buttons:
+                for idx, button_rect in enumerate(self.pause_menu_buttons):
+                    if button_rect.collidepoint(mouse_pos):
+                        self.handle_pause_menu_selection(idx)
+                        return
+            return  # Swallow other clicks while paused
+
+        # Start menu clicks
         if self.start_menu_open:
             if hasattr(self, 'start_menu_buttons') and self.start_menu_buttons:
                 for idx, button_rect in enumerate(self.start_menu_buttons):
@@ -1971,6 +2299,36 @@ class GameEngine:
                         self.handle_start_menu_selection(idx)
                         return
             return  # Ignore all other clicks when start menu is open
+
+        # 2026-06-09: Quest log clicks — Abandon buttons. Process before
+        # gameplay clicks so an Abandon click never falls through to e.g.
+        # moving the character or activating a resource node.
+        if getattr(self, "quest_log_open", False):
+            abandon_rects = getattr(self, "quest_log_abandon_rects", None) or {}
+            for quest_id, rect in abandon_rects.items():
+                if rect and rect.collidepoint(mouse_pos):
+                    try:
+                        ok = self.character.quests.abandon_quest(
+                            quest_id, self.character,
+                        )
+                        if ok:
+                            self.add_notification(
+                                f"Abandoned quest: {quest_id}",
+                                (220, 120, 120),
+                            )
+                        else:
+                            self.add_notification(
+                                f"Could not abandon quest: {quest_id}",
+                                (200, 200, 200),
+                            )
+                    except Exception as e:
+                        print(f"[QuestLog] abandon failed for {quest_id}: {e}")
+                    return
+            # If clicked inside the quest log window but not on an Abandon
+            # button, just consume the click — don't fall through.
+            window_rect = getattr(self, "quest_log_window_rect", None)
+            if window_rect and window_rect.collidepoint(mouse_pos):
+                return
 
         shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
 
@@ -2303,13 +2661,7 @@ class GameEngine:
 
         # Inventory - check for equipment equipping
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-            # CRITICAL: These values MUST match the renderer exactly!
-            # Renderer: tools_y = INVENTORY_PANEL_Y + 35 + 20 = +55
-            # Renderer: start_y = tools_y + 50 (tool slot) + 20 = INVENTORY_PANEL_Y + 125
-            tools_y = Config.INVENTORY_PANEL_Y + 55
-            tool_slot_size = 50
-            start_x = 20
-            start_y = tools_y + tool_slot_size + 20  # = INVENTORY_PANEL_Y + 125
+            start_x, start_y = Config.inventory_grid_origin()  # single source
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, Config.INVENTORY_SLOT_SPACING  # §15 trap 17
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -3826,11 +4178,36 @@ class GameEngine:
         return crafter_map.get(station_type)
 
     def _start_minigame(self, recipe: Recipe):
-        """Start the appropriate minigame for this recipe"""
+        """Start the appropriate minigame for this recipe.
+
+        2026-06-05: wrapped in a try/except that surfaces tracebacks to
+        the terminal. The user reported the minigame launch path going
+        silent after "Starting minigame..." with no error visible. Any
+        exception now hits stderr so we can diagnose.
+        """
+        try:
+            self._start_minigame_impl(recipe)
+        except Exception as e:
+            import traceback
+            print(f"\n❌❌❌ MINIGAME START FAILED: {type(e).__name__}: {e}")
+            traceback.print_exc()
+            self.add_notification(
+                f"Minigame error: {type(e).__name__}", (255, 100, 100),
+            )
+            # Clean up partial state so the player can re-open the
+            # crafting UI without a stuck active_minigame reference.
+            self.active_minigame = None
+            self.minigame_type = None
+            self.minigame_recipe = None
+
+    def _start_minigame_impl(self, recipe: Recipe):
+        """Start the appropriate minigame for this recipe (inner)."""
         crafter = self.get_crafter_for_station(recipe.station_type)
         if not crafter:
+            print(f"❌ No crafter for station_type={recipe.station_type!r}")
             self.add_notification("Invalid crafting station!", (255, 100, 100))
             return
+        print(f"  crafter ok: {type(crafter).__name__}")
 
         # Initialize all bonus variables (prevents UnboundLocalError)
         buff_time_bonus = 0.0
@@ -3884,6 +4261,8 @@ class GameEngine:
         total_quality_bonus = buff_quality_bonus + title_quality_bonus
 
         # Create minigame based on station type
+        print(f"  creating {recipe.station_type} minigame for {recipe.recipe_id} "
+              f"(time_bonus={total_time_bonus:.2f}, qual_bonus={total_quality_bonus:.2f})")
         if recipe.station_type == 'adornments':
             # Enchanting requires target_item parameter
             target_item = None
@@ -3892,14 +4271,19 @@ class GameEngine:
 
             minigame = crafter.create_minigame(recipe.recipe_id, target_item, total_time_bonus, total_quality_bonus)
             if not minigame:
+                print(f"❌ EnchantingCrafter.create_minigame returned None "
+                      f"(recipe_id={recipe.recipe_id!r}, target_item={target_item!r})")
                 self.add_notification("Minigame not available!", (255, 100, 100))
                 return
         else:
             # Other crafting disciplines: recipe_id, time_bonus, quality_bonus
             minigame = crafter.create_minigame(recipe.recipe_id, total_time_bonus, total_quality_bonus)
             if not minigame:
+                print(f"❌ {type(crafter).__name__}.create_minigame returned None "
+                      f"(recipe_id={recipe.recipe_id!r})")
                 self.add_notification("Minigame not available!", (255, 100, 100))
                 return
+        print(f"  minigame created: {type(minigame).__name__}")
 
         if total_time_bonus > 0 or total_quality_bonus > 0:
             print(f"⚡ Active bonuses:")
@@ -4005,7 +4389,9 @@ class GameEngine:
                     print(f"   Time limit: {minigame.time_limit}s (×{multiplier:.2f}, max {max_mult})")
 
         # Start minigame
+        print(f"  calling minigame.start()")
         minigame.start()
+        print(f"  minigame.start() returned")
 
         # Store minigame state
         self.active_minigame = minigame
@@ -4133,7 +4519,10 @@ class GameEngine:
                     # Get or create the backend (triggers model loading)
                     backend = classifier_mgr.get_backend(discipline)
                     if not backend or not backend.is_loaded():
-                        print(f"  Warning: {discipline} CNN failed to load")
+                        # Surface the buried _load_error — "failed to load"
+                        # with no reason cost a diagnosis pass (2026-06-10).
+                        reason = getattr(backend, '_load_error', None) or 'backend missing'
+                        print(f"  Warning: {discipline} CNN failed to load: {reason}")
                         continue
 
                     # Create dummy input for warmup prediction
@@ -4144,12 +4533,19 @@ class GameEngine:
                     else:
                         dummy_input = np.zeros((36, 36, 3), dtype=np.float32)
 
-                    # Run warmup prediction (compiles TensorFlow graph)
+                    # Run warmup prediction (compiles TensorFlow graph).
+                    # NOTE: the success print stays OUTSIDE the try and
+                    # ASCII-only — on a cp1252 stream a '✓' print raised
+                    # UnicodeEncodeError INSIDE the try, making a
+                    # successful warmup report itself as failed.
+                    warmup_ok = False
                     try:
                         _ = backend.predict(dummy_input)
-                        print(f"  ✓ {discipline} CNN warmup complete")
+                        warmup_ok = True
                     except Exception as e:
                         print(f"  Warning: {discipline} CNN warmup prediction failed: {e}")
+                    if warmup_ok:
+                        print(f"  {discipline} CNN warmup complete")
 
                     # Also initialize the image renderer (loads color encoder)
                     try:
@@ -4764,13 +5160,24 @@ class GameEngine:
 
             # ContentRegistry must be initialized before WES so the
             # orchestrator's commit path has somewhere to stage to.
+            #
+            # crux-foundry hermetic mode (GAME1_HERMETIC=1, set by the headless
+            # playtest harness): keep WES content generation from touching the
+            # shared content tree so runs stay isolated (DC6). game_root -> the
+            # per-run save dir confines any residual writes there; subscribe_to_bus
+            # =False stops the orchestrator from generating on narrative/behavior
+            # events at all. Normal play is unchanged (flag off -> today's behavior).
+            _hermetic = os.environ.get('GAME1_HERMETIC') == '1'
             content_registry = ContentRegistry.get_instance()
-            content_registry.initialize(save_dir=_wns_save_dir)
+            content_registry.initialize(
+                save_dir=_wns_save_dir,
+                game_root=(_wns_save_dir if _hermetic else None),
+            )
 
             self.wes_orchestrator = WESOrchestrator.get_instance()
             self.wes_orchestrator.initialize(
                 registry=content_registry,
-                subscribe_to_bus=True,
+                subscribe_to_bus=(not _hermetic),
             )
         except Exception as e:
             print(f"[WES] Orchestrator init failed (non-fatal): {e}")
@@ -4839,6 +5246,12 @@ class GameEngine:
                 backend_manager=backend_manager,
             )
 
+            # Register every spawned NPC's inline personality (v3 schema)
+            # and location hierarchy. Without this call, every NPC falls
+            # through to the "default" template and on_world_event() iterates
+            # an empty dict.
+            self._register_npcs_with_agent_system()
+
             # Wire NPCMemoryManager to FactionSystem so per-NPC dynamic
             # state (relationship, emotion, knowledge, conversation
             # summary, reputation tags) actually persists into the
@@ -4886,6 +5299,14 @@ class GameEngine:
 
             if not result_holder.completed:
                 return  # Not yet completed
+
+            # Player cancelled while the worker was in flight — drop the
+            # late result on the floor (no item added, no materials
+            # consumed; the overlay was already dismissed).
+            if getattr(result_holder, 'abandoned', False):
+                clear_background_result()
+                self._pending_generation_discipline = None
+                return
 
             # Get the result
             discipline = getattr(self, '_pending_generation_discipline', 'unknown')
@@ -6020,152 +6441,6 @@ class GameEngine:
         else:
             self.add_notification("Inventory full!", (255, 100, 100))
 
-    def _complete_minigame(self):
-        """Complete the active minigame and process results"""
-        if not self.active_minigame or not self.minigame_recipe:
-            return
-
-        print(f"\n{'='*80}")
-        print(f"🎮 MINIGAME COMPLETED")
-        print(f"Recipe: {self.minigame_recipe.recipe_id}")
-        print(f"Type: {self.minigame_type}")
-        print(f"Result: {self.active_minigame.result}")
-        print(f"{'='*80}\n")
-
-        recipe = self.minigame_recipe
-        result = self.active_minigame.result
-        crafter = self.get_crafter_for_station(self.minigame_type)
-
-        recipe_db = RecipeDatabase.get_instance()
-        equip_db = EquipmentDatabase.get_instance()
-        mat_db = MaterialDatabase.get_instance()
-
-        # Convert inventory to dict
-        inv_dict = self.inventory_to_dict()
-
-        # DEBUG MODE: Add infinite quantities of required materials (same as in craft_item)
-        if Config.DEBUG_INFINITE_RESOURCES:
-            print("🔧 DEBUG MODE: Adding infinite materials for minigame completion")
-            rarity_system.debug_mode = True
-            for inp in recipe.inputs:
-                mat_id = inp.get('materialId', '')
-                inv_dict[mat_id] = 999999
-        else:
-            rarity_system.debug_mode = False
-
-        # Get title bonuses for crafting
-        alloy_quality_bonus = 0.0
-        if recipe.station_type == 'refining' and hasattr(self.character, 'titles'):
-            alloy_quality_bonus = self.character.titles.get_total_bonus('alloyQuality')
-
-        # Use crafter to process minigame result
-        craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result, alloy_quality_bonus=alloy_quality_bonus)
-
-        if not craft_result.get('success'):
-            # Failure - materials may have been lost
-            message = craft_result.get('message', 'Crafting failed')
-            self.add_notification(message, (255, 100, 100))
-
-            # Sync inventory back (consume materials even on failure)
-            recipe_db.consume_materials(recipe, self.character.inventory)
-
-            # Clear enchantment selection if this was an enchantment
-            if self.enchantment_selected_item:
-                self.enchantment_selected_item = None
-        else:
-            # Success - consume materials and process output
-            recipe_db.consume_materials(recipe, self.character.inventory)
-
-            # Record activity and XP
-            activity_map = {
-                'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
-                'engineering': 'engineering', 'adornments': 'enchanting'
-            }
-            activity_type = activity_map.get(self.minigame_type, 'smithing')
-            self.character.activities.record_activity(activity_type, 1)
-
-            # Publish crafting event for World Memory System
-            try:
-                from events.event_bus import get_event_bus
-                quality = craft_result.get('quality', 'normal')
-                get_event_bus().publish("ITEM_CRAFTED", {
-                    "recipe_id": recipe.recipe_id,
-                    "output_id": recipe.output_id,
-                    "discipline": activity_type,
-                    "quality": quality,
-                    "station_tier": recipe.station_tier,
-                    "position_x": self.character.position.x,
-                    "position_y": self.character.position.y,
-                }, source="crafting")
-            except Exception:
-                pass
-
-            # Minigame gives XP (50% bonus over instant craft)
-            xp_reward = int(20 * recipe.station_tier * 1.5)
-            leveled_up = self.character.leveling.add_exp(xp_reward)
-            if leveled_up:
-                self.character.check_and_notify_new_skills()
-
-            new_title = self.character.titles.check_for_title(self.character)
-            if new_title:
-                self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
-
-            # Handle enchantment application (apply to selected item instead of adding to inventory)
-            if self.minigame_type == 'adornments' and self.enchantment_selected_item:
-                equipment = self.enchantment_selected_item['equipment']
-                enchantment_data = craft_result.get('enchantment', {})
-
-                # Apply enchantment to the equipment
-                success, message = equipment.apply_enchantment(
-                    recipe.output_id,
-                    recipe.enchantment_name,
-                    recipe.effect
-                )
-
-                if success:
-                    self.add_notification(f"Applied {recipe.enchantment_name} to {equipment.name}!", (100, 255, 255))
-                else:
-                    self.add_notification(f"❌ {message}", (255, 100, 100))
-
-                # Clear the stored item
-                self.enchantment_selected_item = None
-            else:
-                # Normal crafting - add output to inventory with rarity and stats
-                output_id = craft_result.get('outputId', recipe.output_id)
-                output_qty = craft_result.get('quantity', recipe.output_qty)
-                rarity = craft_result.get('rarity', 'common')
-                stats = craft_result.get('stats')
-
-                # Apply firstTryBonus if eligible
-                first_try_eligible = craft_result.get('first_try_eligible', False)
-                if first_try_eligible and hasattr(self.character, 'titles'):
-                    first_try_bonus = self.character.titles.get_total_bonus('firstTryBonus')
-                    if first_try_bonus > 0 and stats:
-                        # Apply bonus to all numeric stats
-                        for stat_name, stat_value in stats.items():
-                            if isinstance(stat_value, (int, float)):
-                                boosted_value = stat_value * (1.0 + first_try_bonus)
-                                stats[stat_name] = int(boosted_value) if isinstance(stat_value, int) else boosted_value
-                        print(f"   🌟 First-try bonus applied! +{first_try_bonus*100:.0f}% to all stats")
-
-                self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)
-
-            # Get proper name for notification
-            if equip_db.is_equipment(output_id):
-                equipment = equip_db.create_equipment_from_id(output_id)
-                out_name = equipment.name if equipment else output_id
-            else:
-                out_mat = mat_db.get_material(output_id)
-                out_name = out_mat.name if out_mat else output_id
-
-            message = craft_result.get('message', f"Crafted {out_name} x{output_qty}")
-            self.add_notification(message, (100, 255, 100))
-            print(f"✅ Minigame crafting complete: {out_name} x{output_qty}")
-
-        # Clear minigame state
-        self.active_minigame = None
-        self.minigame_type = None
-        self.minigame_recipe = None
 
     def add_crafted_item_to_inventory(self, item_id: str, quantity: int,
                                      rarity: str = 'common', stats: Dict = None):
@@ -7006,9 +7281,7 @@ class GameEngine:
         if self.character.inventory.dragging_stack:
             # Check if dropping onto inventory panel
             if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-                # Calculate start_y to match renderer: tools_y(+55) + tool_slot(50) + padding(20) = +125
-                tools_y = Config.INVENTORY_PANEL_Y + 55
-                start_x, start_y = 20, tools_y + 50 + 20  # = INVENTORY_PANEL_Y + 125
+                start_x, start_y = Config.inventory_grid_origin()  # single source
                 slot_size, spacing = Config.INVENTORY_SLOT_SIZE, Config.INVENTORY_SLOT_SPACING  # §15 trap 17
                 rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -7222,6 +7495,34 @@ class GameEngine:
             duration = (pygame.time.get_ticks() / 1000.0) - self._menu_open_times.pop(menu_type)
             if duration > 0 and hasattr(self.character, 'stat_tracker'):
                 self.character.stat_tracker.record_menu_time(menu_type, duration)
+
+    def _close_other_overlay_panels(self, keep: str):
+        """Enforce one full-screen overlay panel at a time.
+
+        Called right after a panel OPENS. The six overlay panels (stats,
+        equipment, skills, encyclopedia, map, quest log) were independent
+        booleans, so C+E+K+M could stack into unreadable overlap. Closing
+        goes through each panel's own toggle/close method so close-side
+        behavior (scroll reset, etc.) and menu-time stats stay correct.
+        """
+        char = self.character
+        if keep != 'stats' and char.stats_ui_open:
+            char.toggle_stats_ui()
+            self._record_menu_close_time("stats")
+        if keep != 'equipment' and char.equipment_ui_open:
+            char.toggle_equipment_ui()
+            self._record_menu_close_time("equipment")
+        if keep != 'skills' and char.skills_ui_open:
+            char.toggle_skills_ui()
+            self._record_menu_close_time("skills")
+        if keep != 'encyclopedia' and char.encyclopedia.is_open:
+            char.encyclopedia.toggle()
+            self._record_menu_close_time("encyclopedia")
+        if keep != 'map' and self.map_system.map_open:
+            self.map_system.close_map()
+            self._record_menu_close_time("map")
+        if keep != 'quest_log' and getattr(self, 'quest_log_open', False):
+            self.quest_log_open = False
 
     def _update_activity_time(self, dt: float):
         """Track activity time and flush periodically to stat_tracker."""
@@ -7564,7 +7865,11 @@ class GameEngine:
 
         chest = self.world.spawn_storage_chest
 
-        # Get item from inventory slot
+        # Get item from inventory slot. Explicit range guard — a negative
+        # index would silently address from the END of the list and move
+        # the wrong item.
+        if not (0 <= inventory_slot < len(self.character.inventory.slots)):
+            return False
         slot = self.character.inventory.slots[inventory_slot]
         if not slot:
             return False
@@ -7588,7 +7893,7 @@ class GameEngine:
             return False
 
         chest = self.world.spawn_storage_chest
-        if chest_item_idx >= len(chest.contents):
+        if not (0 <= chest_item_idx < len(chest.contents)):
             return False
 
         item_id, quantity = chest.contents[chest_item_idx]
@@ -7644,6 +7949,11 @@ class GameEngine:
 
         chest = self.active_death_chest
 
+        # Range guard — a negative index would silently retrieve (and pop)
+        # the wrong item.
+        if chest_item_idx < 0:
+            return False
+
         # Use rich_contents if available (death chests with full item state)
         if chest.is_death_chest and chest.rich_contents and chest_item_idx < len(chest.rich_contents):
             item_data = chest.rich_contents[chest_item_idx]
@@ -7674,7 +7984,7 @@ class GameEngine:
                 return False
 
         # Fallback to simple contents for non-death chests
-        if chest_item_idx >= len(chest.contents):
+        if not (0 <= chest_item_idx < len(chest.contents)):
             return False
 
         item_id, quantity = chest.contents[chest_item_idx]
@@ -7841,7 +8151,10 @@ class GameEngine:
         if not chest:
             return False
 
-        # Get item from inventory slot
+        # Get item from inventory slot (range-guarded — negative indices
+        # would silently move the wrong item).
+        if not (0 <= inventory_slot < len(self.character.inventory.slots)):
+            return False
         slot = self.character.inventory.slots[inventory_slot]
         if not slot:
             return False
@@ -7872,7 +8185,7 @@ class GameEngine:
             return False
 
         chest = self.dungeon_manager.get_chest()
-        if not chest or chest_item_idx >= len(chest.contents):
+        if not chest or not (0 <= chest_item_idx < len(chest.contents)):
             return False
 
         item_id, quantity = chest.contents[chest_item_idx]
@@ -7919,13 +8232,12 @@ class GameEngine:
         if not hasattr(self.character, 'inventory'):
             return -1
 
-        # Calculate slot positions (must match renderer.py render_inventory_panel)
-        # Tool section ends at: Config.INVENTORY_PANEL_Y + 35 + 20 + 50 = Y + 105
-        tools_y = Config.INVENTORY_PANEL_Y + 35
-        tool_slot_size = 50
-        start_x, start_y = 20, tools_y + tool_slot_size + 20  # Match renderer
+        # Single-source geometry (2026-06-10): this site had drifted from
+        # the renderer (+35 vs +55 → 20px offset, and unscaled spacing) —
+        # Q-drop could resolve the slot ABOVE the one the player hovered.
+        start_x, start_y = Config.inventory_grid_origin()
         slot_size = Config.INVENTORY_SLOT_SIZE
-        spacing = 10
+        spacing = Config.INVENTORY_SLOT_SPACING
         slots_per_row = Config.INVENTORY_SLOTS_PER_ROW
 
         mouse_x, mouse_y = self.mouse_pos
@@ -8049,12 +8361,17 @@ class GameEngine:
         self.add_notification("Exited dungeon!", (100, 255, 100))
 
     def update(self):
-        # Skip updates if in start menu or no character
-        if self.start_menu_open or self.character is None:
+        # Skip updates if in start menu, paused, or no character. The
+        # pause-menu guard means enemies don't keep attacking the player
+        # while they decide whether to quit.
+        if self.start_menu_open or self.pause_menu_open or self.character is None:
             return
 
         # Check for completed background LLM generation
         self._check_background_generation()
+
+        # Check for a completed async NPC dialogue request
+        self._poll_async_npc_dialogue()
 
         # Block movement and game updates when LLM overlay is active
         if self._is_llm_overlay_blocking():
@@ -8347,6 +8664,29 @@ class GameEngine:
             except Exception:
                 pass  # never let the overlay crash the game render
 
+        # 2026-06-09: Quest log overlay (J toggle). Returns abandon button
+        # rects keyed by quest_id; mouse-handler reads them via
+        # self.quest_log_abandon_rects to dispatch Abandon clicks.
+        if getattr(self, "quest_log_open", False):
+            try:
+                from systems.quest_log_overlay import render_quest_log_overlay
+                if not hasattr(self, "_quest_log_font"):
+                    self._quest_log_font = pygame.font.Font(None, 22)
+                    self._quest_log_small_font = pygame.font.Font(None, 16)
+                result = render_quest_log_overlay(
+                    self.screen,
+                    self._quest_log_font,
+                    self._quest_log_small_font,
+                    self.character,
+                    self.mouse_pos,
+                )
+                self.quest_log_window_rect = result.get("window_rect")
+                self.quest_log_abandon_rects = result.get("abandon_buttons", {})
+            except Exception:
+                # Never let the overlay crash the game render.
+                self.quest_log_window_rect = None
+                self.quest_log_abandon_rects = {}
+
         # Render dungeon chest UI if open
         if self.dungeon_chest_open and self.dungeon_manager.in_dungeon:
             chest = self.dungeon_manager.get_chest()
@@ -8495,6 +8835,17 @@ class GameEngine:
         # Render deferred tooltips LAST (on top of all UI including modals)
         self.renderer.render_pending_tooltip()
 
+        # Pause menu overlay (2026-06-05). Drawn LAST so it covers
+        # everything — gameplay UI stays visible underneath through a
+        # dim backdrop, but no input gets through except pause menu nav.
+        if self.pause_menu_open:
+            result = self.renderer.render_pause_menu(
+                self.pause_menu_selected_option, self.mouse_pos,
+                temporary_world=self.temporary_world,
+            )
+            if result is not None:
+                self.pause_menu_buttons = result
+
         pygame.display.flip()
 
     def _render_minigame(self):
@@ -8549,23 +8900,56 @@ class GameEngine:
                 inv_dict[mat_id] = 0
                 print(f"⚠ Warning: Recipe material '{mat_id}' not in inventory!")
 
+        # DEBUG MODE: add infinite quantities of required materials — parity
+        # with the instant-craft path (which toggles rarity_system.debug_mode
+        # the same way). Restored 2026-06-10: this block was lost when a
+        # second _complete_minigame definition shadowed the first.
+        if Config.DEBUG_INFINITE_RESOURCES:
+            print("🔧 DEBUG MODE: Adding infinite materials for minigame completion")
+            rarity_system.debug_mode = True
+            for inp in recipe.inputs:
+                mat_id = inp.get('materialId') or inp.get('itemId') or ''
+                inv_dict[mat_id] = 999999
+        else:
+            rarity_system.debug_mode = False
+
         # Use crafter to process minigame result
         # For adornments, pass target_item if available
         if self.minigame_type == 'adornments' and hasattr(self, 'enchantment_selected_item') and self.enchantment_selected_item:
             target_item = self.enchantment_selected_item.get('equipment')
             craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result, target_item=target_item)
+        elif self.minigame_type == 'refining' and hasattr(self.character, 'titles'):
+            # Refining: pass the alloyQuality title bonus (chance-based rarity
+            # upgrade — see RefiningCrafter.craft_with_minigame). Restored
+            # 2026-06-10: the only call site passing this bonus lived in the
+            # shadowed duplicate, so the bonus silently never applied. Only
+            # RefiningCrafter accepts the kwarg.
+            alloy_quality_bonus = self.character.titles.get_total_bonus('alloyQuality')
+            craft_result = crafter.craft_with_minigame(
+                recipe.recipe_id, inv_dict, result,
+                alloy_quality_bonus=alloy_quality_bonus)
         else:
             craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)
 
         if not craft_result.get('success'):
-            # Failure - materials may have been lost
+            # Failure — apply the crafter's TIER-SCALED material loss
+            # (30%-90% per reward_calculator.FAILURE_PENALTY). 2026-07 audit:
+            # the crafter deducted its designed partial loss from a throwaway
+            # dict copy while this block then consumed 100% from the real
+            # inventory — failures always cost everything, defeating the
+            # documented difficulty-scaled penalty.
             message = craft_result.get('message', 'Crafting failed')
             self.add_notification(message, (255, 100, 100))
 
-            # Sync inventory back
-            print(f"⚠ Consuming materials after FAILURE")
-            consumed = recipe_db.consume_materials(recipe, self.character.inventory)
-            print(f"   Consumed: {consumed}")
+            loss_fraction = craft_result.get('loss_fraction')
+            if loss_fraction is None:
+                lp = craft_result.get('loss_percentage')
+                loss_fraction = (lp / 100.0) if lp is not None else 1.0
+
+            print(f"⚠ Consuming {loss_fraction*100:.0f}% of materials after FAILURE")
+            materials_consumed = recipe_db.consume_materials_partial(
+                recipe, self.character.inventory, loss_fraction)
+            print(f"   Consumed: {materials_consumed}")
 
             # NEW: Track failed crafting attempts
             if hasattr(self.character, 'stat_tracker'):
@@ -8574,14 +8958,6 @@ class GameEngine:
                     'engineering': 'engineering', 'adornments': 'enchanting'
                 }
                 activity_type = activity_map.get(self.minigame_type, 'smithing')
-
-                # Collect materials consumed
-                materials_consumed = {}
-                for inp in recipe.inputs:
-                    mat_id = inp.get('materialId') or inp.get('itemId')
-                    qty = inp.get('quantity', 1)
-                    if mat_id:
-                        materials_consumed[mat_id] = qty
 
                 # Record failed craft
                 self.character.stat_tracker.record_crafting(
@@ -8604,6 +8980,24 @@ class GameEngine:
             }
             activity_type = activity_map.get(self.minigame_type, 'smithing')
             self.character.activities.record_activity(activity_type, 1)
+
+            # Publish crafting event for the World Memory System. Restored
+            # 2026-06-10: the only ITEM_CRAFTED publish in the codebase lived
+            # in the shadowed duplicate of this method, so the WMS crafting
+            # evaluators never received any crafting events.
+            try:
+                from events.event_bus import get_event_bus
+                get_event_bus().publish("ITEM_CRAFTED", {
+                    "recipe_id": recipe.recipe_id,
+                    "output_id": recipe.output_id,
+                    "discipline": activity_type,
+                    "quality": craft_result.get('quality') or craft_result.get('rarity', 'normal'),
+                    "station_tier": recipe.station_tier,
+                    "position_x": self.character.position.x,
+                    "position_y": self.character.position.y,
+                }, source="crafting")
+            except Exception:
+                pass
 
             # NEW: Comprehensive crafting stat tracking
             if hasattr(self.character, 'stat_tracker'):
@@ -8672,6 +9066,18 @@ class GameEngine:
                 rarity = craft_result.get('rarity') or 'common'  # Ensure not None
                 stats = craft_result.get('stats', {})
                 bonus_pct = craft_result.get('bonus', 0)
+
+                # Apply firstTryBonus title bonus if eligible. Restored
+                # 2026-06-10 (lost to the duplicate-method shadowing).
+                first_try_eligible = craft_result.get('first_try_eligible', False)
+                if first_try_eligible and hasattr(self.character, 'titles'):
+                    first_try_bonus = self.character.titles.get_total_bonus('firstTryBonus')
+                    if first_try_bonus > 0 and stats:
+                        for stat_name, stat_value in stats.items():
+                            if isinstance(stat_value, (int, float)):
+                                boosted_value = stat_value * (1.0 + first_try_bonus)
+                                stats[stat_name] = int(boosted_value) if isinstance(stat_value, int) else boosted_value
+                        print(f"   🌟 First-try bonus applied! +{first_try_bonus*100:.0f}% to all stats")
 
                 # Use add_crafted_item_to_inventory to apply enhanced stats
                 self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)
@@ -11566,11 +11972,64 @@ class GameEngine:
         print("\nTip: Crafting stations are right next to you!")
         print()
 
+        # Frame guard: an exception escaping a single frame previously killed
+        # the process outright — in the packaged build (console=False) the
+        # window just vanished, losing the session with zero feedback. A
+        # transient handler error now logs a crash report and the game keeps
+        # running; persistent failure (several consecutive bad frames, i.e.
+        # genuinely corrupted state) triggers an emergency save to a SEPARATE
+        # file (never overwriting a known-good autosave) and a clean exit.
+        consecutive_failures = 0
         while self.running:
-            self.handle_events()
-            self.update()
-            self.render()
+            try:
+                self.handle_events()
+                self.update()
+                self.render()
+                consecutive_failures = 0
+            except Exception as frame_error:
+                consecutive_failures += 1
+                if consecutive_failures == 1:
+                    from core.crash_handler import write_crash_report
+                    write_crash_report(context={
+                        "phase": "frame_loop",
+                        "character": getattr(getattr(self, 'character', None),
+                                             'name', None),
+                        "error": f"{type(frame_error).__name__}: {frame_error}",
+                    })
+                    try:
+                        self.add_notification(
+                            "An error occurred — crash report saved", (255, 100, 100))
+                    except Exception:
+                        pass
+                if consecutive_failures >= 5:
+                    print("[CRASH] Persistent frame failures — emergency save + exit")
+                    self._emergency_save()
+                    self.running = False
             self.clock.tick(Config.FPS)
 
         pygame.quit()
         sys.exit()
+
+    def _emergency_save(self):
+        """Best-effort save to crash_recovery.json after a fatal error.
+
+        Writes to a dedicated filename so a save built from possibly
+        corrupted state can never replace the player's last good autosave.
+        Mirrors the Save & Exit guard: skipped for temporary worlds.
+        """
+        if self.temporary_world or self.character is None:
+            return
+        try:
+            if self.save_manager.save_game(
+                self.character,
+                self.world,
+                self.character.quests,
+                self.npcs,
+                "crash_recovery.json",
+                self.dungeon_manager,
+                self.game_time,
+                self.map_system,
+            ):
+                print("[CRASH] Emergency save written to crash_recovery.json")
+        except Exception as e:
+            print(f"[CRASH] Emergency save failed: {e}")

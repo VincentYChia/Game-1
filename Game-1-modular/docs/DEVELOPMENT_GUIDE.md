@@ -1038,7 +1038,7 @@ class GameEngine:
 - [DEVELOPER_GUIDE_JSON_INTEGRATION.md](DEVELOPER_GUIDE_JSON_INTEGRATION.md) - JSON content authoring paths
 - [UPDATE_N_SYSTEM.md](UPDATE_N_SYSTEM.md) - Update-N deployment system
 - [GAME_MECHANICS_V6.md](GAME_MECHANICS_V6.md) - Master reference (5,089 lines)
-- [REPOSITORY_STATUS_REPORT_2026-01-27.md](REPOSITORY_STATUS_REPORT_2026-01-27.md) - Current status
+- [SYSTEMS_CATALOG.md](../../Development-Plan/SYSTEMS_CATALOG.md) - Current status (status report archived 2026-06-10)
 - [HOW_TO_RUN.md](../HOW_TO_RUN.md) - Quick start guide
 
 ### LLM Integration

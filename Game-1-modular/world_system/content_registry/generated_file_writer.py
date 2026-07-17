@@ -63,9 +63,24 @@ def _resolve_game_root(explicit_root: Optional[str]) -> str:
     Caller-supplied root wins. Otherwise we try ``core.paths`` (the
     same resolver the rest of the codebase uses) and fall back to a
     path walk from this module.
+
+    When no explicit root is given, ``GAME1_GENERATED_CONTENT_ROOT``
+    redirects the write: test harnesses set it to a temp dir so WES
+    commits during automated runs never land generated files in the
+    live content tree (2026-07 audit: integration runs — where the
+    engine passes game_root=None — had written skills-generated-*.JSON
+    siblings into Skills/, which every subsequent boot then auto-loaded
+    as real content). ``GAME1_HERMETIC=1`` is the writer-side backstop
+    for the same guarantee.
     """
     if explicit_root:
         return str(explicit_root)
+    env_root = os.environ.get("GAME1_GENERATED_CONTENT_ROOT")
+    if env_root:
+        return env_root
+    if os.environ.get("GAME1_HERMETIC") == "1":
+        import tempfile
+        return os.path.join(tempfile.gettempdir(), "game1_generated_hermetic")
     try:
         from core.paths import get_resource_path  # type: ignore
 

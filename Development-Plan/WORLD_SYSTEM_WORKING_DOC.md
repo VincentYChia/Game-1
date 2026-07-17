@@ -12,6 +12,8 @@
 > 1. **Live queries replaced by WNS-authored context bundles** (§2, §5, §8). Downstream consumers never query live — WNS pre-assembles everything WES needs.
 > 2. **WNS fires at every layer NL1-NL7** on an every-N-events-per-layer-per-address cadence; NL7 is *not* the sole WES trigger (§3, §4). WNS decides when to call WES.
 > 3. **NL1 = pre-generated NPC dialogue captured as narrative events** (§4, CC6). NPC interactions are bounded (greeting → accept → turn-in → closing), not live conversation.
+>
+> **2026-06-05 amendment (Model C):** Item 2's "cadence-only" model is now joined by a **WMS-layer-summary peak path**. When WMS Layer N produces a summary at an address, it publishes `WMS_LAYER_{N}_SUMMARY_CREATED`; `WMSToWNSBridge` subscribes and directly fires NL_N at that address with the L_N summary as primary context (cascade-down read for context: `wms_context_builder` prefers same-tier summary, falls through L_(N-1) → … → L_2). Cascade trigger stays as the baseline. **Additionally, NL1 dialogue captures publish `WMS_DIALOGUE_CAPTURED`** and Layer3Manager subscribes — dialogue and L2 interpretations count point-equivalent in the WMS weighted-bucket system. See `Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md` for the full trace.
 > 4. **Supervisor LLM added** (§2, §5, CC1). Common-sense checker over all WES I/O. Rerun-only authority.
 > 5. **Hubs are dispatchers, not orchestrators** (§5, §6, CC9). Batch XML fan-out in one pass; no sequential feedback loop; parallelism within a plan step by default.
 > 6. **WNS/WMS are sibling systems**, fully separate SQLite DBs, separate tag taxonomies, separate prompt fragment files (CC5, §9.Q5/Q6).

@@ -650,7 +650,7 @@ Player position sampled every ~10 real seconds as `POSITION_SAMPLE` events. Incl
 4. **Templates first, LLM when needed** — Layer 2-3 evaluators use templates or tiny LLMs. Only higher layers justify larger models.
 5. **Every evaluator can return None** — "Not interesting enough" is a valid result.
 
-## 6.2 Layer 2 Evaluators (9 Designed → 33 Implemented)
+## 6.2 Layer 2 Evaluators (9 Designed → 36 Implemented (33 original + 3 added 2026-06-05: fishing_activity, turret_activity, chest_loot))
 
 > **Implementation status (2026-04-10):** The 9 conceptual evaluators expanded into 33 concrete evaluators covering finer-grained domains. See `world_system/world_memory/evaluators/` for all files. LLM narration via WmsAI is operational — the LLM assigns `significance` tags via structured JSON output. Debug warnings log when the LLM returns no tags.
 
@@ -879,13 +879,21 @@ class RegionState:
     last_updated: float
 ```
 
-## 7.4 Layer 6: Nation Events  *(future)*
+## 7.4 Layer 6: Nation Events
+
+> **2026-06-05 status update:** the *(future)* qualifier on this section
+> was stale and has been removed. Layer 6 is implemented:
+> `world_system/world_memory/layer6_manager.py` (612 lines) +
+> `layer6_summarizer.py` (515 lines), initialized at
+> `WorldMemorySystem` boot at `world_memory_system.py:246-264`. Same
+> structural pattern as Layer 5, one tier up. See
+> `HANDOFF_STATUS.md` "Layer 5: Region Summarization (COMPLETE)" — the
+> same applies to Layer 6 and Layer 7.
 
 Nation-scoped consolidation: cross-region patterns, trade routes, and
 diplomatic state. Trivial copy of L5's pattern, one tier up — aggregates
 child regions into a single nation-level row per game Nation. Drops the
-`region:` address tag on output and retains `nation:/world:`. Not
-implemented yet.
+`region:` address tag on output and retains `nation:/world:`.
 
 ```python
 @dataclass

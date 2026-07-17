@@ -5,8 +5,23 @@ Handles enemy spawning, combat calculations, and loot
 import json
 import random
 import math
+import os
 from typing import Dict, List, Tuple, Optional, TYPE_CHECKING
 from pathlib import Path
+
+# crux-foundry tunable balance knob for the auto-tuning optimizer: STR damage-per-
+# point (default 0.05 = current behavior). Applied on the ACTION-COMBAT damage path
+# (player_attack_enemy_with_tags) that real melee actually uses — unlike the
+# luck/crit knob which only exists on the unused legacy path (see FINDINGS F4).
+# Read once at import; the optimizer sets CRUX_STR_DMG_PER_POINT per subprocess.
+_STR_DMG_PER_POINT = float(os.environ.get('CRUX_STR_DMG_PER_POINT', '0.05'))
+# crux-foundry F4 FIX + optimizer knob: LCK crit-per-point on the ACTION-combat path.
+# Before this fix that path applied NO crit at all (LCK was a dead stat). The original
+# 0.02 default mirrored the legacy path's 2%/pt but left lck_crit the viability floor
+# (0.566, weakest of four personas). 2026-07-11: retuned to 0.12 per the optimizer's
+# 0.10-0.14 prescription (user-approved) — lifts lck_crit to ~0.900 and cuts the
+# persona spread ~32% in the 8-seed report. Tune via CRUX_LCK_CRIT_PER_POINT.
+_LCK_CRIT_PER_POINT = float(os.environ.get('CRUX_LCK_CRIT_PER_POINT', '0.12'))
 
 if TYPE_CHECKING:
     from ..main import WorldSystem, Character, Inventory
@@ -115,9 +130,13 @@ class CombatConfig:
 class CombatManager:
     """Manages all combat in the game"""
 
-    def __init__(self, world_system, character):
+    def __init__(self, world_system, character, rng=None):
         self.world = world_system
         self.character = character
+        # crux-foundry D1: deterministic RNG injection point. Defaults to the
+        # global `random` module so normal play is byte-identical; inject a
+        # seeded random.Random (arg) or call seed_rng() for reproducible sims.
+        self._rng = rng if rng is not None else random
         self.config = CombatConfig()
         self.enemy_db = EnemyDatabase.get_instance()
 
@@ -175,6 +194,11 @@ class CombatManager:
         self._hitbox_system = None      # combat.HitboxSystem
         self._combat_data = None        # combat.CombatDataLoader
         self._action_combat = False     # Whether action combat is active
+
+    def seed_rng(self, seed):
+        """crux-foundry D1: make combat RNG deterministic. No behavioral effect
+        unless called; used by the headless playtest harness for reproducible runs."""
+        self._rng = random.Random(seed)
 
     def on_chunk_unloaded(self, chunk_key: Tuple[int, int]):
         """Clean up enemies and corpses belonging to an unloaded chunk.
@@ -377,7 +401,7 @@ class CombatManager:
         weights = [weight for enemy_def, weight in spawn_pool]
 
         # Weighted random choice
-        return random.choices(enemies, weights=weights, k=1)[0]
+        return self._rng.choices(enemies, weights=weights, k=1)[0]
 
     def spawn_enemies_in_chunk(self, chunk, initial_spawn=False):
         """
@@ -412,7 +436,7 @@ class CombatManager:
         # Determine how many to spawn
         min_enemies = spawn_config.get('minEnemies', 1)
         max_enemies = spawn_config.get('maxEnemies', 3)
-        target_count = random.randint(min_enemies, max_enemies)
+        target_count = self._rng.randint(min_enemies, max_enemies)
         to_spawn = max(0, target_count - current_count)
 
         # Build weighted spawn pool (uses chunk template enemySpawns + general tier pool)
@@ -426,8 +450,8 @@ class CombatManager:
                 continue
 
             # Pick random position in chunk
-            spawn_x = chunk.chunk_x * 16 + random.uniform(2, 14)
-            spawn_y = chunk.chunk_y * 16 + random.uniform(2, 14)
+            spawn_x = chunk.chunk_x * 16 + self._rng.uniform(2, 14)
+            spawn_y = chunk.chunk_y * 16 + self._rng.uniform(2, 14)
 
             # Create enemy
             enemy = Enemy(enemy_def, (spawn_x, spawn_y), chunk_coords)
@@ -487,8 +511,8 @@ class CombatManager:
                             continue
 
                     # Random position in chunk
-                    spawn_x = chunk_x * 16 + random.uniform(4, 12)
-                    spawn_y = chunk_y * 16 + random.uniform(4, 12)
+                    spawn_x = chunk_x * 16 + self._rng.uniform(4, 12)
+                    spawn_y = chunk_y * 16 + self._rng.uniform(4, 12)
 
                     # Create enemy
                     enemy = Enemy(enemy_def, (spawn_x, spawn_y), chunk_coords)
@@ -519,7 +543,7 @@ class CombatManager:
         if not tiers:
             return 1
 
-        return random.choices(tiers, weights=weights)[0]
+        return self._rng.choices(tiers, weights=weights)[0]
 
     def update(self, dt: float, shield_blocking: bool = False, is_night: bool = False):
         """Update all enemies and combat logic
@@ -541,6 +565,10 @@ class CombatManager:
 
         # Update all enemies
         dead_enemies = []
+        # Lazily-built once-per-update snapshot of alive turrets. Previously
+        # this list was rebuilt from world.placed_entities inside the loop
+        # for every enemy that fired a special ability in the same frame.
+        turrets_snapshot = None
         for chunk_coords, enemy_list in self.enemies.items():
             for enemy in enemy_list:
                 if enemy.is_alive:
@@ -555,12 +583,14 @@ class CombatManager:
                     special_ability = enemy.can_use_special_ability(dist_to_target=dist, target_position=player_pos)
                     if special_ability:
                         # Execute special ability immediately with visual
+                        if turrets_snapshot is None:
+                            turrets_snapshot = []
+                            if hasattr(self.world, 'placed_entities'):
+                                from systems.world_system import PlacedEntityType
+                                turrets_snapshot = [e for e in self.world.placed_entities
+                                                    if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
                         available_targets = [self.character]
-                        if hasattr(self.world, 'placed_entities'):
-                            from systems.world_system import PlacedEntityType
-                            turrets = [e for e in self.world.placed_entities
-                                      if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
-                            available_targets.extend(turrets)
+                        available_targets.extend(turrets_snapshot)
                         enemy.use_special_ability(special_ability, self.character, available_targets)
                         enemy.attack_cooldown = 1.0 / enemy.definition.attack_speed
 
@@ -644,14 +674,17 @@ class CombatManager:
         from core.debug_display import debug_print
         import math
 
-        # Find all enemies in radius
+        # Find all enemies in radius. NOTE: self.active_enemies never
+        # existed as an attribute — this previously raised AttributeError
+        # whenever a DEVASTATE buff triggered an AoE attack. Squared
+        # distance avoids the per-enemy sqrt.
         targets = []
-        for e in self.active_enemies:
-            if e.is_alive():
+        radius_sq = radius * radius
+        for e in self.get_all_active_enemies():
+            if e.is_alive:
                 dx = e.position.x - self.character.position.x
                 dy = e.position.y - self.character.position.y
-                distance = math.sqrt(dx*dx + dy*dy)
-                if distance <= radius:
+                if dx * dx + dy * dy <= radius_sq:
                     targets.append(e)
 
         if not targets:
@@ -712,8 +745,10 @@ class CombatManager:
         # TODO: Extract full attack logic to avoid duplication
         base_damage = weapon_damage
 
-        # Apply stat bonuses
-        strength_mult = 1.0 + (self.character.stats.strength * 0.01)
+        # Apply stat bonuses (2026-07 conformance, FINDINGS F8: this AoE
+        # sub-path used STR x0.01 — 5x weaker than the documented x0.05 — and
+        # a flat 10% crit that ignored LCK entirely. Aligned with the family.)
+        strength_mult = 1.0 + (self.character.stats.strength * _STR_DMG_PER_POINT)
         base_damage = base_damage * strength_mult
 
         # Apply empower buffs
@@ -724,10 +759,10 @@ class CombatManager:
             if empower_bonus > 0:
                 base_damage = base_damage * (1.0 + empower_bonus)
 
-        # Crit check (10% base)
+        # Crit check — shared composition (F3: single source of truth)
         is_crit = False
-        crit_chance = 0.10
-        if random.random() < crit_chance:
+        crit_chance = self._player_crit_chance()
+        if self._rng.random() < crit_chance:
             is_crit = True
             base_damage *= 2.0
 
@@ -819,6 +854,33 @@ class CombatManager:
 
         return (final_damage, is_crit, loot)
 
+    def _player_crit_chance(self, weapon_tags: Optional[List[str]] = None) -> float:
+        """Single source of truth for the player's crit chance (FINDINGS F3).
+
+        Composition per the documented pipeline: LCK (2%/pt via
+        _LCK_CRIT_PER_POINT) + pierce skill buffs + Precision weapon tag +
+        title criticalChance. Previously three attack paths each had their
+        own divergent computation (flat 10% / LCK-only / LCK+title), so a
+        0-LCK character could crit 10% or 0% depending on which code ran.
+        """
+        chance = _LCK_CRIT_PER_POINT * self.character.get_effective_luck()
+
+        # Pierce skill buffs (crit chance)
+        if hasattr(self.character, 'buffs'):
+            pierce_bonus = self.character.buffs.get_total_bonus('pierce', 'damage')
+            if pierce_bonus == 0:
+                pierce_bonus = self.character.buffs.get_total_bonus('pierce', 'combat')
+            chance += pierce_bonus
+
+        # Precision weapon tag (+crit)
+        if weapon_tags:
+            from entities.components.weapon_tag_calculator import WeaponTagModifiers
+            chance += WeaponTagModifiers.get_crit_chance_bonus(weapon_tags)
+
+        # Title bonuses (criticalChance from earned titles)
+        chance += self.character.titles.get_total_bonus('criticalChance')
+        return chance
+
     def player_attack_enemy(self, enemy: Enemy, hand: str = 'mainHand') -> Tuple[float, bool, List[Tuple[str, int]]]:
         """
         Calculate player damage to enemy
@@ -865,7 +927,6 @@ class CombatManager:
 
         # WEAPON TAG MODIFIERS
         weapon_tag_damage_mult = 1.0
-        weapon_tag_crit_bonus = 0.0
         armor_penetration = 0.0
         crushing_bonus = 0.0
 
@@ -878,8 +939,7 @@ class CombatManager:
                 has_offhand = self.character.equipment.slots.get('offHand') is not None
                 weapon_tag_damage_mult = WeaponTagModifiers.get_damage_multiplier(weapon_tags, has_offhand)
 
-                # Precision crit bonus (+10%)
-                weapon_tag_crit_bonus = WeaponTagModifiers.get_crit_chance_bonus(weapon_tags)
+                # (Precision crit bonus now composed inside _player_crit_chance)
 
                 # Armor penetration (armor_breaker = ignore 25% defense)
                 armor_penetration = WeaponTagModifiers.get_armor_penetration(weapon_tags)
@@ -900,7 +960,7 @@ class CombatManager:
         weapon_damage = int(weapon_damage * weapon_tag_damage_mult)
 
         # Calculate multipliers
-        str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
+        str_multiplier = 1.0 + (self.character.stats.strength * _STR_DMG_PER_POINT)  # tunable: CRUX_STR_DMG_PER_POINT
         print(f"   STR multiplier: {str_multiplier:.2f} (STR: {self.character.stats.strength})")
 
         # Title bonuses (meleeDamage from earned titles)
@@ -934,31 +994,15 @@ class CombatManager:
                 base_damage *= (1.0 + skill_damage_bonus)
                 print(f"   ⚡ Skill buff: +{skill_damage_bonus*100:.0f}% damage (total: {base_damage:.1f})")
 
-        # Check for critical hit
+        # Check for critical hit — composition via the shared helper (F3:
+        # one crit implementation for every player attack path).
         is_crit = False
-        # Use effective luck (includes title and skill bonuses)
-        effective_luck = self.character.get_effective_luck()
-        base_crit_chance = 0.02 * effective_luck  # 2% per luck point
+        crit_chance = self._player_crit_chance(
+            weapon_tags=equipped_weapon.get_metadata_tags() if equipped_weapon else None)
+        if crit_chance > 0:
+            print(f"   🎯 Crit chance: {crit_chance*100:.1f}% (LCK/pierce/precision/titles)")
 
-        # SKILL BUFF BONUSES: Check for pierce buffs (critical chance)
-        pierce_bonus = 0.0
-        if hasattr(self.character, 'buffs'):
-            pierce_bonus = self.character.buffs.get_total_bonus('pierce', 'damage')
-            if pierce_bonus == 0:
-                pierce_bonus = self.character.buffs.get_total_bonus('pierce', 'combat')
-
-        # Title bonuses (criticalChance from earned titles)
-        title_crit_bonus = self.character.titles.get_total_bonus('criticalChance')
-
-        # Add weapon tag crit bonus (precision) and title bonuses
-        crit_chance = base_crit_chance + pierce_bonus + weapon_tag_crit_bonus + title_crit_bonus
-
-        if pierce_bonus > 0:
-            print(f"   ⚡ Pierce buff: +{pierce_bonus*100:.0f}% crit chance (total: {crit_chance*100:.1f}%)")
-        elif weapon_tag_crit_bonus > 0:
-            print(f"   🎯 Precision: +{weapon_tag_crit_bonus*100:.0f}% crit chance (total: {crit_chance*100:.1f}%)")
-
-        if random.random() < crit_chance:
+        if self._rng.random() < crit_chance:
             is_crit = True
             base_damage *= 2.0
             print(f"   💥 CRITICAL HIT! x2 damage")
@@ -972,7 +1016,7 @@ class CombatManager:
         # Block: Chance to negate incoming damage (requires shield)
         # Parry: Chance to deflect and counterattack
         # counter_chance = self.character.titles.get_total_bonus('counterChance')
-        # if random.random() < counter_chance:
+        # if self._rng.random() < counter_chance:
         #     # Apply counter damage, stun effect, etc.
         #     pass
 
@@ -1045,10 +1089,13 @@ class CombatManager:
                     chain_count = int(effect.get('value', 2))  # Chain to 2 enemies default
                     chain_damage_percent = effect.get('damagePercent', 0.5)  # 50% damage default
 
-                    # Find chain targets (exclude primary target)
+                    # Find chain targets (exclude primary target).
+                    # self.active_enemies never existed — this previously
+                    # raised AttributeError whenever a Chain Damage
+                    # enchantment proc'd on hit.
                     from core.geometry.target_finder import TargetFinder
                     finder = TargetFinder()
-                    available_enemies = [e for e in self.active_enemies if e.is_alive and e != enemy]
+                    available_enemies = [e for e in self.get_all_active_enemies() if e.is_alive and e != enemy]
 
                     chain_targets = finder.find_chain_targets(
                         primary=enemy,
@@ -1331,7 +1378,7 @@ class CombatManager:
                 base_damage += weapon_damage
 
             # STR multiplier
-            str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
+            str_multiplier = 1.0 + (self.character.stats.strength * _STR_DMG_PER_POINT)  # tunable: CRUX_STR_DMG_PER_POINT
             base_damage *= str_multiplier
 
             # Title bonuses (meleeDamage from earned titles)
@@ -1548,23 +1595,72 @@ class CombatManager:
 
         # Setup effect parameters
         effect_params = params.copy() if params else {}
+        is_crit = False  # crux-foundry F4 FIX: this path previously applied NO crit
 
-        # Apply character stat bonuses to base damage
+        # Apply character stat bonuses to base damage.
+        # 2026-07 conformance pass (FINDINGS F5-F9): this path is the ONLY melee
+        # path real players hit (action combat is the shipped mode), yet it was
+        # missing several multipliers the documented pipeline specifies and the
+        # legacy path applies: hand-requirement bonus, enemy-specific title
+        # damage, crushing-vs-armored, the pierce/precision crit components,
+        # and — most importantly — enemy DEFENSE was never applied at all
+        # (see the executor-side application below via _apply_enemy_defense).
         if "baseDamage" in effect_params:
             base_damage = effect_params["baseDamage"]
 
-            # Weapon damage
-            weapon_damage = self.character.get_weapon_damage()
+            # Weapon tags drive hand bonus / precision / armor pen / crushing —
+            # exactly as on the legacy path.
+            equipped_weapon = None
+            if hasattr(self.character, '_selected_slot') and self.character._selected_slot:
+                equipped_weapon = self.character.equipment.slots.get(self.character._selected_slot)
+            if equipped_weapon is None:
+                equipped_weapon = self.character.equipment.slots.get('mainHand')
+            weapon_tags = equipped_weapon.get_metadata_tags() if equipped_weapon else []
+
+            armor_penetration = 0.0
+            hand_mult = 1.0
+            crushing_bonus = 0.0
+            if weapon_tags:
+                from entities.components.weapon_tag_calculator import WeaponTagModifiers
+                has_offhand = self.character.equipment.slots.get('offHand') is not None
+                hand_mult = WeaponTagModifiers.get_damage_multiplier(weapon_tags, has_offhand)
+                armor_penetration = WeaponTagModifiers.get_armor_penetration(weapon_tags)
+                crushing_bonus = WeaponTagModifiers.get_damage_vs_armored_bonus(weapon_tags)
+
+            # Weapon damage (hand-requirement bonus applies to the weapon
+            # component, mirroring the legacy path: 2H +20%, versatile +10%)
+            weapon_damage = self.character.get_weapon_damage() * hand_mult
             if weapon_damage > 0:
                 base_damage += weapon_damage
 
             # STR multiplier
-            str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
+            str_multiplier = 1.0 + (self.character.stats.strength * _STR_DMG_PER_POINT)  # tunable: CRUX_STR_DMG_PER_POINT
             base_damage *= str_multiplier
 
             # Title bonuses (meleeDamage from earned titles)
             title_melee_bonus = self.character.titles.get_total_bonus('meleeDamage')
             base_damage *= (1.0 + title_melee_bonus)
+
+            # Enemy-specific title bonuses (beastDamage, wolfDamage, ...) —
+            # applied for the primary target (multi-target geometry shares the
+            # primary's multiplier; per-target typing is an accepted
+            # approximation, documented here).
+            base_damage *= self.character.get_enemy_damage_multiplier(enemy)
+
+            # INT elemental damage (+5%/pt, documented) had NO combat
+            # consumer anywhere (2026-07 audit: dead documented stat).
+            # Applies when the attack carries an elemental damage tag.
+            _ELEMENTAL = ('fire', 'ice', 'lightning', 'poison', 'arcane',
+                          'shadow', 'holy')
+            if tags and any(t in _ELEMENTAL for t in tags):
+                int_mult = 1.0 + (self.character.stats.intelligence * 0.05)
+                if int_mult > 1.0:
+                    base_damage *= int_mult
+                    print(f"   🔮 INT elemental: x{int_mult:.2f}")
+
+            # Crushing bonus vs armored primary target (+X% if defense > 10)
+            if crushing_bonus > 0 and enemy.definition.defense > 10:
+                base_damage *= (1.0 + crushing_bonus)
 
             # Skill buff bonuses (empower)
             if hasattr(self.character, 'buffs'):
@@ -1575,7 +1671,25 @@ class CombatManager:
                     base_damage *= (1.0 + skill_bonus)
                     print(f"   ⚡ Skill buff: +{skill_bonus*100:.0f}% damage")
 
+            # Critical hit (crux-foundry F4 FIX, completed by F6): full crit
+            # composition via the shared helper — LCK + pierce buffs +
+            # Precision weapon tag + titles. Applied LAST, on the fully-
+            # bonused damage.
+            crit_chance = self._player_crit_chance(weapon_tags=weapon_tags)
+            if self._rng.random() < crit_chance:
+                is_crit = True
+                base_damage *= 2.0
+                print(f"   💥 CRITICAL HIT! x2 damage")
+
             effect_params["baseDamage"] = base_damage
+            # F5: enemy defense was NEVER applied on this path (players did
+            # full damage to armored enemies). The effect executor now applies
+            # per-target defense (max 75% reduction, honoring armor
+            # penetration) when this flag is set. Melee-only for now: whether
+            # SKILL damage should respect enemy defense is unspecified in the
+            # design docs — preserved as-is and logged as an open question.
+            effect_params["_apply_enemy_defense"] = True
+            effect_params["_armor_penetration"] = armor_penetration
             print(f"   Base damage (with bonuses): {base_damage:.1f}")
 
         # Execute effect using tag system
@@ -1630,7 +1744,7 @@ class CombatManager:
                     target_id=getattr(enemy, 'entity_id', enemy.definition.enemy_id),
                     attacker_id="player", amount=final_damage,
                     damage_type=_dmg_type,
-                    is_crit=getattr(context, 'any_crit', False) if hasattr(context, 'any_crit') else False,
+                    is_crit=is_crit,  # crux-foundry F4 FIX
                     position_x=enemy.position[0], position_y=enemy.position[1],
                     source="combat_manager_tags")
             except (ImportError, Exception):
@@ -1755,7 +1869,7 @@ class CombatManager:
                         amount=final_damage,
                         damage_type=damage_type,
                         attack_type=attack_type,
-                        was_crit=context.any_crit if hasattr(context, 'any_crit') else False,
+                        was_crit=is_crit,  # crux-foundry F4 FIX
                         weapon_element=weapon_element,
                         target_type=enemy_base_id,
                     )
@@ -1789,8 +1903,8 @@ class CombatManager:
                         except Exception:
                             pass
 
-            # Tag-based attacks don't use traditional crit system (handled by tags)
-            return (total_damage, False, loot)
+            # crux-foundry F4 FIX: crit is now applied above (this path had none before)
+            return (total_damage, is_crit, loot)
 
         except Exception as e:
             self.debugger.error(f"Tag-based attack failed: {e}")
@@ -1928,11 +2042,15 @@ class CombatManager:
         def_multiplier = 1.0 - (defense_stat * 0.02)
         print(f"   DEF multiplier: {def_multiplier:.2f} (DEF: {defense_stat:.1f})")
 
-        # Armor bonus from equipment
+        # Armor bonus from equipment. DEF's documented "+3% armor
+        # effectiveness per point" was loaded from stats-calculations.JSON
+        # but never applied anywhere (2026-07 audit: dead documented stat)
+        # — DEF now makes worn armor more effective, per the spec.
         armor_bonus = 0.0
         if hasattr(self.character, 'equipment'):
             armor_bonus = self.character.equipment.get_total_defense()
-        print(f"   Armor bonus: {armor_bonus}")
+            armor_bonus *= (1.0 + self.character.stats.defense * 0.03)
+        print(f"   Armor bonus: {armor_bonus:.1f} (incl. DEF effectiveness)")
 
         armor_multiplier = 1.0 - (armor_bonus * 0.01)
 
@@ -2370,7 +2488,7 @@ class CombatManager:
                 continue
 
             # Select random enemy from tier
-            definition = random.choice(available)
+            definition = self._rng.choice(available)
 
             # Get spawn position in dungeon
             spawn_pos = dungeon.get_spawn_position()

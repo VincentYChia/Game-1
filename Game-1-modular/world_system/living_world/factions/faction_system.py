@@ -242,11 +242,18 @@ class FactionSystem:
         return clamped
 
     def adjust_player_affinity(
-        self, player_id: str, tag: str, delta: float, game_time: float = 0.0
+        self, player_id: str, tag: str, delta: float, game_time: float = 0.0,
+        source: str = "adjust",
     ) -> float:
         """Adjust player affinity by delta, return new value.
 
-        Publishes FACTION_AFFINITY_CHANGED with source="adjust".
+        Publishes FACTION_AFFINITY_CHANGED with the given ``source``
+        (default "adjust"). 2026-07-11 affinity audit: the WNS
+        AffinityResolver has always passed ``source="wns:<row_id>"`` for
+        causation provenance, but this method didn't accept the kwarg —
+        so EVERY live faction-targeted AffinityShift died with a
+        TypeError (caught + ledgered as unapplied; the earlier parser
+        certification used a fake that masked the interface drift).
         """
         self._require_connection()
         cursor = self.connection.cursor()
@@ -272,7 +279,7 @@ class FactionSystem:
                 tag=tag,
                 delta=actual_delta,
                 new_value=new_value,
-                source="adjust",
+                source=source or "adjust",
             )
         return new_value
 

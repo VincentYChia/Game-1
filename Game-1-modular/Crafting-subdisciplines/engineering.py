@@ -1058,7 +1058,12 @@ class EngineeringCrafter:
 
     def load_recipes(self):
         """Load engineering recipes from JSON files"""
-        possible_paths = [
+        try:
+            from core.paths import get_resource_path
+            _resolved = [str(get_resource_path("recipes.JSON/recipes-engineering-1.json"))]
+        except Exception:
+            _resolved = []
+        possible_paths = _resolved + [
             "../recipes.JSON/recipes-engineering-1.json",
             "recipes.JSON/recipes-engineering-1.json",
         ]
@@ -1081,7 +1086,12 @@ class EngineeringCrafter:
     
     def load_placements(self):
         """Load placement data from JSON files"""
-        possible_paths = [
+        try:
+            from core.paths import get_resource_path
+            _resolved = [str(get_resource_path("placements.JSON/placements-engineering-1.JSON"))]
+        except Exception:
+            _resolved = []
+        possible_paths = _resolved + [
             "../placements.JSON/placements-engineering-1.JSON",
             "placements.JSON/placements-engineering-1.JSON",
         ]

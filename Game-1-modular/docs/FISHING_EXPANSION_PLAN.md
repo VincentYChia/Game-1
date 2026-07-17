@@ -1,3 +1,5 @@
+> **STALENESS NOTICE (2026-06-10 repo audit)**: Fishing shipped (Update-2 + resource-interaction entry at game_engine). This plan is retained for unimplemented expansion ideas only.
+
 # Fishing System Implementation
 
 **Status**: FULLY IMPLEMENTED

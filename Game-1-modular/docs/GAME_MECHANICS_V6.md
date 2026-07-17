@@ -3718,7 +3718,7 @@ Players can **invent new items** by placing materials in unique arrangements not
 
 **LLM Configuration:**
 ```python
-model = "claude-sonnet-4-20250514"
+model = "claude-haiku-4-5"
 temperature = 0.4
 max_tokens = 2000
 timeout = 30.0

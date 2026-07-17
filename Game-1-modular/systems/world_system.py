@@ -212,26 +212,23 @@ class WorldSystem:
         for rt, count in sorted(resource_types.items(), key=lambda x: -x[1])[:10]:
             print(f"      {rt}: {count}")
 
-        # Setting tag distribution (sample 1000 chunks)
+        # Setting tag distribution (sample). Previously called a
+        # get_chunk_tags() that no longer exists (the tag API was split:
+        # setting is geographic and lives in setting_resolver, while
+        # population/resource status are Layer 2/3 concerns computed
+        # elsewhere — see setting_resolver's module docstring). The dump
+        # silently printed "Setting tags: failed" every world-gen. Now it
+        # uses the real resolver and reports only the setting it can
+        # actually derive here.
         try:
-            from systems.geography.setting_resolver import get_chunk_tags
+            from systems.geography.setting_resolver import resolve_setting
             setting_counts = {}
-            pop_counts = {}
-            res_counts = {}
             sample = list(cd.values())[:5000]
             for geo in sample:
-                tags = get_chunk_tags(geo, gm)
-                setting_counts[tags["setting"]] = setting_counts.get(tags["setting"], 0) + 1
-                pop_counts[tags["population_status"]] = pop_counts.get(tags["population_status"], 0) + 1
-                res_counts[tags["resource_status"]] = res_counts.get(tags["resource_status"], 0) + 1
+                setting = resolve_setting(geo, gm)
+                setting_counts[setting] = setting_counts.get(setting, 0) + 1
             print(f"   Setting tags (sample {len(sample)}):")
             for s, c in sorted(setting_counts.items(), key=lambda x: -x[1]):
-                print(f"      {s}: {c}")
-            print(f"   Population status:")
-            for s, c in sorted(pop_counts.items(), key=lambda x: -x[1]):
-                print(f"      {s}: {c}")
-            print(f"   Resource status:")
-            for s, c in sorted(res_counts.items(), key=lambda x: -x[1]):
                 print(f"      {s}: {c}")
         except Exception as e:
             print(f"   Setting tags: failed ({e})")
@@ -481,6 +478,96 @@ class WorldSystem:
                 })
         return npc_defs
 
+    def inject_test_village(self, center_chunk: Tuple[int, int] = (1, 0),
+                            name: str = "Proving Grounds") -> bool:
+        """Guarantee a village with NPCs near spawn — TEST/TEMP WORLD ONLY.
+
+        Real villages are scattered 40+ chunks apart, so the nearest one to
+        the (0,0) spawn is a long walk away. This drops a village at a FIXED,
+        near-spawn location (default chunk (1,0) → NPCs ~20 tiles east of
+        spawn, clear of the crafting stations to the north) so a tester can
+        reach NPCs in a few steps and exercise dialogue / quests / factions
+        without exploring.
+
+        The village's EXISTENCE is guaranteed and deterministic; WHO lives
+        there is drawn from the same generation templates real villages use
+        (village-config.JSON tiers + npc_templates, via _select_tier /
+        _select_npc_template), seeded off self.seed — so NPC identities are
+        generation-driven, not hardcoded. The produced dict mirrors the shape
+        from _rebuild_villages_from_localities exactly, so the normal
+        NPC-spawn and wall/building-application paths consume it unchanged.
+
+        Idempotent (sentinel locality_id). Returns True if a village was added.
+        """
+        TEST_LOCALITY_ID = 999_999  # sentinel — generated localities are small ints
+        if any(v.get("locality_id") == TEST_LOCALITY_ID for v in self._villages):
+            return False
+
+        rng = random.Random(self.seed + 424242)
+        try:
+            from systems.geography.village_generator import (
+                _load_config, _select_npc_template,
+            )
+            cfg = _load_config()
+        except Exception:
+            cfg = None
+
+        # Fixed SMALL tier so the test village is predictable and tight against
+        # spawn (a large generated tier would push NPCs ~40 tiles out). The
+        # village structure is the fixed test scaffold; only WHO lives there is
+        # generation-driven (via _select_npc_template below).
+        tier = {"size": 2, "npc_min": 3, "npc_max": 4, "wall_inset": 1,
+                "entrances": 4, "entrance_width": 3,
+                "buildings_min": 2, "buildings_max": 4,
+                "building_width_range": [4, 6], "building_height_range": [3, 4]}
+
+        size = tier.get("size", 2)
+        npc_count = rng.randint(tier.get("npc_min", 3), tier.get("npc_max", 4))
+        inset = tier.get("wall_inset", 1)
+        cx, cy = center_chunk
+        inner_x = cx * Config.CHUNK_SIZE + inset + 3
+        inner_y = cy * Config.CHUNK_SIZE + inset + 3
+        inner_w = size * Config.CHUNK_SIZE - (inset + 3) * 2
+        inner_h = size * Config.CHUNK_SIZE - (inset + 3) * 2
+
+        npc_positions, npc_templates = [], []
+        for _ in range(npc_count):
+            nx = inner_x + rng.randint(2, max(3, inner_w - 2))
+            ny = inner_y + rng.randint(2, max(3, inner_h - 2))
+            npc_positions.append((nx, ny))
+            if cfg:
+                npc_templates.append(_select_npc_template(rng))
+            else:
+                npc_templates.append({"npc_id_prefix": "villager", "name": "Villager",
+                                      "sprite_color": [180, 160, 140],
+                                      "dialogue_lines": ["Hello!"]})
+
+        chunks = [(cx + dx, cy + dy) for dx in range(size) for dy in range(size)]
+        self._villages.append({
+            "center_chunk": (cx, cy),
+            "chunks": chunks,
+            "size": size,
+            "tier_config": tier,
+            "npc_positions": npc_positions,
+            "npc_templates": npc_templates,
+            "locality_id": TEST_LOCALITY_ID,
+            "name": name,
+        })
+
+        # Register the new chunks so future get_chunk() calls apply walls/
+        # buildings, then paint structure onto any chunks already resident
+        # (the spawn load-ring) and force-load the rest.
+        self._init_village_data()
+        for ck in chunks:
+            if ck in self.loaded_chunks:
+                self._apply_village_to_chunk(self.loaded_chunks[ck])
+            else:
+                self.get_chunk(*ck)
+
+        print(f"🏘️  TEST village '{name}' guaranteed near spawn at chunk "
+              f"{center_chunk} — {npc_count} template-driven NPCs")
+        return True
+
     def _apply_village_to_chunk(self, chunk: Chunk):
         """Apply village structures (walls, buildings) to a chunk that's part of a village."""
         key = (chunk.chunk_x, chunk.chunk_y)
@@ -638,9 +725,10 @@ class WorldSystem:
         if not rich_items:
             return None
 
-        # Generate unique chest ID based on position and timestamp
-        import time
-        chest_id = f"death_chest_{int(position.x)}_{int(position.y)}_{int(time.time())}"
+        # Generate unique chest ID based on position and a monotonic counter.
+        # crux-foundry D5: deterministic id (was int(time.time())).
+        self._death_chest_seq = getattr(self, '_death_chest_seq', 0) + 1
+        chest_id = f"death_chest_{int(position.x)}_{int(position.y)}_{self._death_chest_seq}"
 
         # Build simple contents list for backwards compatibility
         simple_contents = []
@@ -753,15 +841,44 @@ class WorldSystem:
                 if self.in_world_bounds(pos[0], pos[1]):
                     should_be_loaded.add(pos)
 
-        # Load missing chunks
-        for key in should_be_loaded:
-            if key not in self.loaded_chunks:
-                self.get_chunk(*key)
+        # Load missing chunks — budgeted to kill the boundary frame-hitch.
+        # Crossing a chunk boundary at load_radius 4 used to generate up to
+        # 9 chunks synchronously in ONE frame (256-tile loops + resource
+        # spawning each, ~1-5ms apiece). Now: anything in the player's 3x3
+        # still loads immediately (the ground being walked onto is never
+        # deferred), while the outer prefetch ring streams in nearest-first
+        # at a few chunks per frame. A deferred chunk touched early via
+        # get_tile/collision still generates on demand through get_chunk,
+        # so the budget can never strand the player.
+        loads_per_frame = getattr(world_config.chunk_loading,
+                                  'prefetch_loads_per_frame', 2)
+        missing = [key for key in should_be_loaded
+                   if key not in self.loaded_chunks]
+        if missing:
+            def _dist(key):
+                return max(abs(key[0] - player_chunk_x),
+                           abs(key[1] - player_chunk_y))
+            missing.sort(key=_dist)
+            budget = loads_per_frame
+            for key in missing:
+                if _dist(key) <= 1:
+                    self.get_chunk(*key)  # gameplay-critical, never deferred
+                elif budget > 0:
+                    self.get_chunk(*key)
+                    budget -= 1
+                else:
+                    break  # nearest-first order: everything further also waits
 
-        # Unload distant chunks
+        # Unload with hysteresis: keep a 1-chunk ring beyond load_radius so
+        # walking back and forth along a boundary doesn't thrash
+        # load -> unload -> regenerate cycles.
+        unload_radius = load_radius + 1
         chunks_to_unload = []
         for key in self.loaded_chunks:
-            if key not in should_be_loaded:
+            if key in should_be_loaded:
+                continue
+            if (max(abs(key[0] - player_chunk_x),
+                    abs(key[1] - player_chunk_y)) > unload_radius):
                 chunks_to_unload.append(key)
 
         for key in chunks_to_unload:

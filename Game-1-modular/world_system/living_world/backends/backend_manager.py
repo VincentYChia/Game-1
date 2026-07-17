@@ -102,10 +102,16 @@ class OllamaBackend(ModelBackend):
 
     def __init__(self, base_url: str = "http://localhost:11434",
                  model: str = "llama3.1:8b",
-                 timeout: float = 30.0):
+                 timeout: float = 30.0,
+                 num_ctx: int = 8192):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = timeout
+        # Ollama's DEFAULT context window (2048-4096, prompt included)
+        # silently truncates long structured outputs mid-JSON — found
+        # 2026-07-10: the NPC v3 schema cut off at ~1,200 output tokens
+        # regardless of num_predict. Always request an explicit window.
+        self.num_ctx = num_ctx
         self._available: Optional[bool] = None
 
     def generate(self, system_prompt: str, user_prompt: str,
@@ -123,6 +129,7 @@ class OllamaBackend(ModelBackend):
                 "options": {
                     "temperature": temperature,
                     "num_predict": max_tokens,
+                    "num_ctx": self.num_ctx,
                 },
             }).encode("utf-8")
 
@@ -170,7 +177,7 @@ class ClaudeBackend(ModelBackend):
     the abstract ModelBackend interface.
     """
 
-    def __init__(self, model: str = "claude-sonnet-4-20250514",
+    def __init__(self, model: str = "claude-haiku-4-5",
                  timeout: float = 30.0,
                  max_tokens: int = 2000,
                  top_p: float = 0.95):
@@ -228,16 +235,34 @@ class ClaudeBackend(ModelBackend):
                  max_tokens: int = 2000) -> Tuple[str, Optional[str]]:
         try:
             client = self._get_client()
-            response = client.messages.create(
+            # Haiku 4.5 rejects temperature + top_p together (400
+            # invalid_request_error) — the older Sonnet accepted both.
+            # Found live 2026-07-10: this broke EVERY game-path Claude
+            # call since the 2026-06-15 model swap (fixtures/mock had
+            # masked it). Temperature is the per-task tuning axis, so
+            # send only it; top_p applies only when temperature is unset.
+            kwargs = dict(
                 model=self.model,
                 max_tokens=max_tokens or self.max_tokens_default,
-                temperature=temperature,
-                top_p=self.top_p,
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_prompt}],
             )
+            if temperature is not None:
+                kwargs["temperature"] = temperature
+            elif self.top_p is not None:
+                kwargs["top_p"] = self.top_p
+            response = client.messages.create(**kwargs)
             return response.content[0].text, None
         except Exception as e:
+            msg = str(e)
+            if "authentication_error" in msg or "invalid x-api-key" in msg:
+                # A key that is PRESENT but rejected. is_available() only
+                # checks presence, so everything upstream reports claude
+                # as available until the first real call 401s — make the
+                # operator-facing error unmissable (2026-07 audit).
+                return "", ("Claude API error: API KEY REJECTED (401). "
+                            "ANTHROPIC_API_KEY is set but invalid — rotate "
+                            "the key before the playtest. Raw: " + msg)
             return "", f"Claude API error: {e}"
 
     def is_available(self) -> bool:
@@ -480,7 +505,7 @@ class BackendManager:
         claude_cfg = backends_cfg.get("claude", {})
         if claude_cfg.get("enabled", True):
             self._backends["claude"] = ClaudeBackend(
-                model=claude_cfg.get("model", "claude-sonnet-4-20250514"),
+                model=claude_cfg.get("model", "claude-haiku-4-5"),
                 timeout=claude_cfg.get("timeout_seconds", 30.0),
                 max_tokens=claude_cfg.get("max_tokens", 2000),
                 top_p=claude_cfg.get("top_p", 0.95),
@@ -521,7 +546,8 @@ class BackendManager:
     def generate(self, task: str, system_prompt: str, user_prompt: str,
                  temperature: Optional[float] = None,
                  max_tokens: Optional[int] = None,
-                 backend_override: Optional[str] = None) -> Tuple[str, Optional[str]]:
+                 backend_override: Optional[str] = None,
+                 log_extra: Optional[Dict[str, Any]] = None) -> Tuple[str, Optional[str]]:
         """Generate text using the appropriate backend for a task.
 
         Routes to the configured primary backend for this task type,
@@ -603,6 +629,12 @@ class BackendManager:
                         record_call,
                     )
                     info = backend.get_info() if hasattr(backend, "get_info") else {}
+                    extra = {"temperature": temp, "max_tokens": tokens}
+                    if log_extra:
+                        # Caller-supplied context telemetry (fragment
+                        # composition, data-block sizes, budget events) —
+                        # the observability the design charter requires.
+                        extra.update(log_extra)
                     record_call(
                         task=task,
                         backend=name,
@@ -612,7 +644,7 @@ class BackendManager:
                         response=text,
                         error=err,
                         elapsed_s=elapsed,
-                        extra={"temperature": temp, "max_tokens": tokens},
+                        extra=extra,
                     )
                 except Exception:
                     pass

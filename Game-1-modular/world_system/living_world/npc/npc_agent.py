@@ -72,6 +72,16 @@ class NPCAgentSystem:
         self._backend_manager = None  # BackendManager instance
         self._pending_gossip: List[Tuple[str, GossipEvent, float]] = []  # (npc_id, event, deliver_at)
         self._npc_personalities: Dict[str, str] = {}  # npc_id → template_name
+        # 2026-06-09: per-NPC inline personality (v3 schema). When present,
+        # get_personality returns this directly instead of a shared template.
+        # Rationale: data/models/npcs.py:11 — every NPC has a unique voice.
+        self._npc_inline_personalities: Dict[str, Dict[str, Any]] = {}
+        # 2026-07-11: NPCs hydrated from SQLite this session (see
+        # _get_memory_hydrated — the persistence pump).
+        self._hydrated_npcs: set = set()
+        # 2026-06-09: per-NPC location hierarchy for dialogue_helper.
+        # Format: [("locality", "westhollow"), ("district", "iron_hills"), ...]
+        self._npc_locations: Dict[str, List[Tuple[str, Optional[str]]]] = {}
         self._initialized: bool = False
 
     @classmethod
@@ -128,11 +138,41 @@ class NPCAgentSystem:
         print(f"[NPCAgentSystem] Initialized with {len(self._personality_templates)} personality templates")
 
     def assign_personality(self, npc_id: str, template_name: str) -> None:
-        """Assign a personality template to an NPC."""
+        """Assign a shared personality template to an NPC by name."""
         self._npc_personalities[npc_id] = template_name
 
+    def register_npc(self, npc_id: str, personality: Optional[Dict[str, Any]] = None,
+                     location_hierarchy: Optional[List[Tuple[str, Optional[str]]]] = None,
+                     template_name: Optional[str] = None) -> None:
+        """Register an NPC with the agent system.
+
+        v3 NPCs ship inline personality (data/models/npcs.py:11). Pass it in
+        ``personality`` and the agent uses it verbatim. Generated or template-
+        based NPCs can pass ``template_name`` to use a shared archetype.
+
+        ``location_hierarchy`` is the geographic address (locality → world)
+        the dialogue_helper needs to compute inherited affinity defaults.
+        Empty list / None is tolerated — the helper just returns no inherited
+        location context.
+        """
+        if personality:
+            self._npc_inline_personalities[npc_id] = dict(personality)
+            self._npc_personalities[npc_id] = f"inline:{npc_id}"
+        elif template_name:
+            self._npc_personalities[npc_id] = template_name
+        else:
+            self._npc_personalities[npc_id] = "default"
+        if location_hierarchy is not None:
+            self._npc_locations[npc_id] = list(location_hierarchy)
+
     def get_personality(self, npc_id: str) -> Dict[str, Any]:
-        """Get the personality template for an NPC."""
+        """Get the personality data for an NPC.
+
+        Resolution order: inline (v3 per-NPC) → shared template name → default.
+        """
+        inline = self._npc_inline_personalities.get(npc_id)
+        if inline:
+            return inline
         template_name = self._npc_personalities.get(npc_id, "default")
         return self._personality_templates.get(
             template_name,
@@ -160,7 +200,7 @@ class NPCAgentSystem:
                 text="...", success=False, from_fallback=True
             )
 
-        memory = self._memory_manager.get_memory(npc_id)
+        memory = self._get_memory_hydrated(npc_id)
         personality = self.get_personality(npc_id)
 
         # Build context
@@ -181,10 +221,42 @@ class NPCAgentSystem:
             if text and not err:
                 result = self._parse_dialogue_response(text, memory)
                 self._update_memory_after_dialogue(memory, player_input, result)
+                self._flush_memory(npc_id)
                 return result
 
         # Fallback: use personality-flavored template
         return self._generate_fallback(npc_id, npc_name, personality, memory)
+
+    # ── Persistence pump (2026-07-11 affinity audit) ──────────────────
+    # The SQLite facade (hydrate_npc_from_db / flush_npc_to_db) existed
+    # since June but had ZERO callers: relationship_score, interaction
+    # counts, knowledge, and conversation summaries accumulated in-memory
+    # only and were lost on quit — never rehydrated at boot either.
+    # Invisible in a short test, glaring after hours of play.
+
+    def _get_memory_hydrated(self, npc_id: str):
+        """First touch per session pulls persisted state from SQLite."""
+        if (npc_id not in self._hydrated_npcs
+                and self._memory_manager is not None
+                and getattr(self._memory_manager, "_faction_system", None)
+                is not None):
+            try:
+                self._memory_manager.hydrate_npc_from_db(npc_id)
+            except Exception as e:
+                print(f"[NPCAgent] hydrate failed for {npc_id}: {e}")
+            self._hydrated_npcs.add(npc_id)
+        return self._memory_manager.get_memory(npc_id)
+
+    def _flush_memory(self, npc_id: str) -> None:
+        """Best-effort write-through after each dialogue exchange."""
+        if (self._memory_manager is None
+                or getattr(self._memory_manager, "_faction_system", None)
+                is None):
+            return
+        try:
+            self._memory_manager.flush_npc_to_db(npc_id)
+        except Exception as e:
+            print(f"[NPCAgent] flush failed for {npc_id}: {e}")
 
     def _build_system_prompt(self, npc_id: str, npc_name: str,
                              personality: Dict, memory: NPCMemory) -> str:
@@ -225,8 +297,14 @@ class NPCAgentSystem:
             f"disposition_change should be between -0.1 and 0.1 based on the interaction."
         )
 
-    def _build_faction_context(self, npc_id: str) -> str:
+    def _build_faction_context(self, npc_id: str, player_id: str = "_player") -> str:
         """Build faction affinity context for dialogue.
+
+        Pulls three signals through the dialogue_helper:
+        - NPC's top affiliations (significance-ranked)
+        - NPC's personal opinion of the player (npc_opinion)
+        - Inherited location affinity defaults along the NPC's geographic
+          address (player's standing in this place)
 
         Returns formatted faction information or empty string if unavailable.
         """
@@ -236,16 +314,70 @@ class NPCAgentSystem:
             if not npc_profile or not npc_profile.belonging_tags:
                 return ""
 
-            # Summarize NPC's top 5 faction tags by significance
+            location_hierarchy = self._npc_locations.get(npc_id, [])
+            context = assemble_dialogue_context(
+                npc_id=npc_id,
+                player_id=player_id,
+                location_hierarchy=location_hierarchy,
+            )
+
+            # NPC affiliations — top 5 by significance.
             sorted_tags = sorted(
                 npc_profile.belonging_tags.values(),
                 key=lambda t: t.significance,
                 reverse=True,
             )[:5]
-            tags = [f"{t.tag} ({t.significance:.1%})" for t in sorted_tags]
-            return f"NPC affiliations: {', '.join(tags)}\n\n"
+            tag_lines = [f"{t.tag} ({t.significance:.1%})" for t in sorted_tags]
+
+            parts: List[str] = [f"NPC affiliations: {', '.join(tag_lines)}"]
+
+            # Personal opinion toward the player (-100..100 → adjective).
+            opinion = context.get("npc_opinion")
+            if isinstance(opinion, (int, float)):
+                parts.append(
+                    f"Personal opinion of player: {self._affinity_label(opinion)} ({opinion:+.0f})"
+                )
+
+            # Player's standing with this NPC's tags — surface the top 3 hits
+            # against NPC's affiliations so the prompt sees alignment vs gap.
+            player_aff = (context.get("player") or {}).get("affinity_with_tags") or {}
+            relevant = [
+                (t.tag, player_aff.get(t.tag, 0.0))
+                for t in sorted_tags
+                if t.tag in player_aff
+            ]
+            if relevant:
+                relevant.sort(key=lambda kv: abs(kv[1]), reverse=True)
+                rel_lines = [
+                    f"{tag}={value:+.0f}" for tag, value in relevant[:3]
+                ]
+                parts.append(f"Player standing with NPC's tags: {', '.join(rel_lines)}")
+
+            # Inherited location affinity for the player (regional/national bias).
+            location_aff = context.get("location") or {}
+            if location_aff:
+                top_loc = sorted(
+                    location_aff.items(), key=lambda kv: abs(kv[1]), reverse=True
+                )[:3]
+                loc_lines = [f"{tag}={value:+.0f}" for tag, value in top_loc]
+                parts.append(f"Local sentiment toward {tag_lines and 'these tags' or 'player'}: {', '.join(loc_lines)}")
+
+            return "\n".join(parts) + "\n\n"
         except Exception:
             return ""
+
+    @staticmethod
+    def _affinity_label(value: float) -> str:
+        """Map an affinity score in [-100, 100] to a one-word adjective."""
+        if value <= -75:
+            return "hateful"
+        if value <= -25:
+            return "hostile"
+        if value < 25:
+            return "neutral"
+        if value < 75:
+            return "friendly"
+        return "devoted"
 
     def _build_user_prompt(self, player_input: str, character,
                            memory: NPCMemory) -> str:
@@ -328,17 +460,19 @@ class NPCAgentSystem:
         memory.set_emotion(result.emotion)
         memory.adjust_relationship(result.relationship_delta)
 
-        # Append to conversation summary (keep bounded)
+        # Append to conversation summary (keep bounded). Trimming drops the
+        # OLDEST whole snippets — the previous tail-slice cut mid-snippet at
+        # a char boundary, feeding the next prompt a gibberish head
+        # ("...er: hello. NPC: We") that degraded dialogue coherence.
         snippet = f"Player: {player_input[:60]}. NPC: {result.text[:60]}"
         if memory.conversation_summary:
             memory.conversation_summary += f" | {snippet}"
         else:
             memory.conversation_summary = snippet
 
-        max_len = memory._max_summary_length
-        if len(memory.conversation_summary) > max_len:
-            # Keep the most recent portion
-            memory.conversation_summary = memory.conversation_summary[-max_len:]
+        from world_system.world_memory.text_budget import clamp_snippet_window
+        memory.conversation_summary = clamp_snippet_window(
+            memory.conversation_summary, memory._max_summary_length)
 
     def _generate_fallback(self, npc_id: str, npc_name: str,
                            personality: Dict, memory: NPCMemory) -> NPCDialogueResult:

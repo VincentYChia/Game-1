@@ -537,9 +537,23 @@ class Layer6Manager:
             event_id=summary.summary_id,
         )
 
-        # Notify Layer 7 of the new L6 event (future hook — L7 not
-        # implemented yet). Same error-isolating pattern as
-        # Layer4/Layer5 callbacks.
+        # 2026-06-05: publish WMS_LAYER_6_SUMMARY_CREATED for bridge.
+        # See Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md §5.3.
+        try:
+            from world_system.world_memory.layer_publish import _publish_layer_summary_created
+            _publish_layer_summary_created(
+                layer=6,
+                event_id=summary.summary_id,
+                tags=list(summary.tags),
+                category="nation_summary",
+                severity=summary.severity,
+                game_time=game_time,
+            )
+        except Exception as e:
+            print(f"[Layer6] Bus publish error (non-fatal): {e}")
+
+        # Notify Layer 7 of the new L6 event. Same error-isolating
+        # pattern as Layer4/Layer5 callbacks.
         if self._layer7_callback:
             try:
                 l6_event_dict = {

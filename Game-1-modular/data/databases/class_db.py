@@ -20,7 +20,7 @@ class ClassDatabase:
 
     def load_from_file(self, filepath: str):
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             for class_data in data.get('classes', []):
                 starting_bonuses = class_data.get('startingBonuses', {})

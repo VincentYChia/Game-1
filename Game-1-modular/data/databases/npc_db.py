@@ -261,7 +261,7 @@ class NPCDatabase:
             v2_path = get_resource_path("progression/npcs-enhanced.JSON")
 
             if v3_path.exists():
-                with open(v3_path, 'r') as f:
+                with open(v3_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     for npc_data in data.get("npcs", []):
                         npc_def = _build_npc_from_v3(npc_data)
@@ -269,7 +269,7 @@ class NPCDatabase:
                 self.source_version = "v3"
                 print(f"[OK] Loaded {len(self.npcs)} NPCs from {v3_path.name} (v3)")
             elif v2_path.exists():
-                with open(v2_path, 'r') as f:
+                with open(v2_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     for npc_data in data.get("npcs", []):
                         npc_def = _build_npc_from_v2(npc_data)
@@ -284,7 +284,7 @@ class NPCDatabase:
             v2_quest_path = get_resource_path("progression/quests-enhanced.JSON")
 
             if v3_quest_path.exists():
-                with open(v3_quest_path, 'r') as f:
+                with open(v3_quest_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     for quest_data in data.get("quests", []):
                         quest_def = _build_quest_from_v3(quest_data)
@@ -292,7 +292,7 @@ class NPCDatabase:
                 self.quest_source_version = "v3"
                 print(f"[OK] Loaded {len(self.quests)} quests from {v3_quest_path.name} (v3)")
             elif v2_quest_path.exists():
-                with open(v2_quest_path, 'r') as f:
+                with open(v2_quest_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     for quest_data in data.get("quests", []):
                         quest_def = _build_quest_from_v2(quest_data)
@@ -421,7 +421,7 @@ class NPCDatabase:
         try:
             for path in sorted(progression_dir.glob("npcs-generated-*.JSON")):
                 try:
-                    with open(path, "r") as f:
+                    with open(path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                     for npc_data in data.get("npcs", []):
                         try:
@@ -434,7 +434,7 @@ class NPCDatabase:
 
             for path in sorted(progression_dir.glob("quests-generated-*.JSON")):
                 try:
-                    with open(path, "r") as f:
+                    with open(path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                     for quest_data in data.get("quests", []):
                         try:

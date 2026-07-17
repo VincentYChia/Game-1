@@ -146,6 +146,152 @@ class ParseFailuresTests(unittest.TestCase):
                 '</specs>'
             )
 
+    def test_duplicate_spec_ids_raise(self) -> None:
+        """Duplicate ids would clobber/double-execute downstream work
+        keyed by spec_id (2026-07 LLM-pipeline audit)."""
+        with self.assertRaises(XMLBatchParseError):
+            parse_xml_batch(
+                '<specs plan_step_id="s1">'
+                '<spec id="a" tool="materials"/>'
+                '<spec id="a" tool="materials"/>'
+                '</specs>'
+            )
+
+
+class ElementChildrenDialectTests(unittest.TestCase):
+    """2026-07-10 real-LLM certification: EVERY real model tested (Haiku
+    4.5, qwen2.5:14b, gemma3:4b) ignores the attribute dialect and emits
+    payloads as child elements. Only hand-written fixtures used the
+    canonical shape, so the WES cascade silently produced ZERO content
+    on real backends. These fixtures are captured real model output."""
+
+    # Abridged from Haiku 4.5's actual response, 2026-07-10.
+    HAIKU_SHAPE = """```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<specs>
+  <spec>
+    <intent>Bog-mineral material anchoring salt moors copper economy</intent>
+    <hard_constraints>
+      <tier>2</tier>
+      <biome>salt_moors</biome>
+      <category>stone</category>
+    </hard_constraints>
+    <flavor_hints>
+      <name_hint>Verdigris Silt</name_hint>
+      <properties>["copper_affinity", "salt_binding"]</properties>
+    </flavor_hints>
+    <cross_ref_hints>{}</cross_ref_hints>
+    <metadata><address>region:ashfall_moors</address></metadata>
+  </spec>
+</specs>
+```"""
+
+    # Abridged from qwen2.5:14b's actual response, 2026-07-10.
+    QWEN_SHAPE = (
+        '<specs><spec>'
+        '<hard_constraints>{"tier": 2, "biome": "bog"}</hard_constraints>'
+        '<flavor_hints>{"name_hint": "Mossy Bog Pebble"}</flavor_hints>'
+        '</spec></specs>'
+    )
+
+    def test_haiku_element_children_shape_parses(self) -> None:
+        specs = parse_xml_batch(self.HAIKU_SHAPE, default_plan_step_id="s1")
+        self.assertEqual(len(specs), 1)
+        s = specs[0]
+        self.assertEqual(s.plan_step_id, "s1")
+        self.assertEqual(s.spec_id, "spec_001")
+        self.assertIn("Bog-mineral", s.item_intent)
+        self.assertEqual(s.hard_constraints["tier"], 2)
+        self.assertEqual(s.hard_constraints["biome"], "salt_moors")
+        self.assertEqual(s.flavor_hints["properties"],
+                         ["copper_affinity", "salt_binding"])
+        self.assertEqual(s.cross_ref_hints, {})
+
+    def test_qwen_json_in_elements_shape_parses(self) -> None:
+        specs = parse_xml_batch(self.QWEN_SHAPE, default_plan_step_id="s9")
+        self.assertEqual(len(specs), 1)
+        self.assertEqual(specs[0].hard_constraints,
+                         {"tier": 2, "biome": "bog"})
+        self.assertEqual(specs[0].flavor_hints,
+                         {"name_hint": "Mossy Bog Pebble"})
+
+    def test_strict_mode_unchanged_without_default(self) -> None:
+        """No default_plan_step_id -> the legacy strict contract holds."""
+        with self.assertRaises(XMLBatchParseError):
+            parse_xml_batch(self.HAIKU_SHAPE)
+
+    def test_dedup_guard_drops_live_registry_collisions(self) -> None:
+        """2026-07-17: small models occasionally re-emit a live registry
+        entry's name despite the do-NOT-recreate instruction. The hub's
+        post-parse guard makes dedup deterministic; co-emitted entries
+        stay referenceable."""
+        from world_system.wes.llm_tiers.llm_execution_hub import (
+            LLMExecutionHub,
+        )
+        from world_system.wes.dataclasses import WESPlanStep
+        from world_system.living_world.infra.context_bundle import (
+            BundleToolSlice,
+        )
+        hub = LLMExecutionHub(tool_name="hostiles")
+        step = WESPlanStep(step_id="s1", tool="hostiles", intent="x",
+                           depends_on=[], slots={})
+        slice_ = BundleToolSlice(
+            tool_name="hostiles", bundle_id="b", firing_tier=4,
+            directive_text="", address_hint="", threads_in_focal_address=[],
+            recent_registry_entries=[
+                {"content_id": "copperlash_rider",
+                 "display_name": "Copperlash Rider", "source": "live"},
+                {"content_id": "new_thing", "display_name": "New Thing",
+                 "source": "co_emitted_this_plan"},
+            ],
+            firing_layer_summary="", parent_summaries={},
+            geographic_chain=[], threads_in_parent_addresses=[],
+            wms_events_since_last=[], npc_dialogue_since_last=[],
+            trigger_archetype="narrative",
+        )
+        specs = parse_xml_batch(
+            '<specs plan_step_id="s1">'
+            '<spec id="a"><intent>x</intent>'
+            '<flavor_hints>{"name_hint": "Copperlash Rider"}</flavor_hints>'
+            '</spec>'
+            '<spec id="b"><intent>y</intent>'
+            '<flavor_hints>{"name_hint": "New Thing"}</flavor_hints>'
+            '</spec>'
+            '<spec id="c"><intent>z</intent>'
+            '<flavor_hints>{"name_hint": "Fresh Beast"}</flavor_hints>'
+            '</spec></specs>',
+            default_plan_step_id="s1",
+        )
+        kept = hub._filter_registry_collisions(specs, slice_, step)
+        names = [(s.flavor_hints or {}).get("name_hint") for s in kept]
+        self.assertNotIn("Copperlash Rider", names)   # live -> dropped
+        self.assertIn("New Thing", names)             # co-emitted -> kept
+        self.assertIn("Fresh Beast", names)
+
+    def test_double_braced_payload_tolerated(self) -> None:
+        """gemma3:4b live artifact: {{...}} payloads (example's {} merged
+        with the shape doc's {key: ...}). Never valid JSON, so stripping
+        one layer is unambiguous."""
+        specs = parse_xml_batch(
+            '<specs plan_step_id="s1"><spec id="a"><intent>x</intent>'
+            '<cross_ref_hints>{{"derived_from": "moors_copper"}}'
+            '</cross_ref_hints></spec></specs>',
+            default_plan_step_id="s1",
+        )
+        self.assertEqual(specs[0].cross_ref_hints,
+                         {"derived_from": "moors_copper"})
+
+    def test_attribute_dialect_still_canonical(self) -> None:
+        specs = parse_xml_batch(
+            '<specs plan_step_id="s1">'
+            '<spec id="a" intent="x" hard_constraints=\'{"tier": 3}\'/>'
+            '</specs>',
+            default_plan_step_id="ignored",
+        )
+        self.assertEqual(specs[0].spec_id, "a")
+        self.assertEqual(specs[0].plan_step_id, "s1")
+        self.assertEqual(specs[0].hard_constraints, {"tier": 3})
+
 
 if __name__ == "__main__":
     unittest.main()

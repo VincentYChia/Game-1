@@ -31,7 +31,7 @@ def get_installed_updates(project_root: Path) -> List[str]:
         return []
 
     try:
-        with open(manifest_path, 'r') as f:
+        with open(manifest_path, 'r', encoding='utf-8') as f:
             manifest = json.load(f)
         return manifest.get('installed_updates', [])
     except:
@@ -339,7 +339,7 @@ def list_update_content(update_name: str, project_root: Path = None):
     all_json = list(update_dir.glob("*.JSON")) + list(update_dir.glob("*.json"))
     for json_file in sorted(set(all_json)):
         try:
-            with open(json_file, 'r') as f:
+            with open(json_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             print(f"📄 {json_file.name}")

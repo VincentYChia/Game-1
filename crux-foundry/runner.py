@@ -1,0 +1,276 @@
+"""
+crux-foundry — the run unit:  run_once(seed, out_dir, persona) -> result
+
+Boots the real GameEngine headless in an ISOLATED per-run save dir (so the
+WMS/StatStore SQLite is private to the run), seeds it, drives a persona against a
+controlled enemy gauntlet through the capture-feeding action-combat path,
+captures the StatStore, GUARDS against capture-blindness, and writes result.json
+atomically. This is the embryo of the Crux job-array worker.
+
+CLI:  python crux-foundry/runner.py <seed> <out_dir> [persona]
+"""
+import os
+import sys
+import io
+import json
+import contextlib
+from pathlib import Path
+
+for _s in ('stdout', 'stderr'):
+    try:
+        getattr(sys, _s).reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
+os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
+os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
+os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '3')
+os.environ.setdefault('GAME1_HERMETIC', '1')  # no WES content generation / no shared-tree writes
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.join(os.path.dirname(HERE), 'Game-1-modular')
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)          # so `import scoring` (sibling module) resolves
+os.chdir(PROJECT_ROOT)
+
+from scoring import compute_score     # pure, unit-testable (crux-foundry/scoring.py)
+
+SCHEMA_VERSION = 1
+WEAPON_ID = 'iron_shortsword'
+# Calibrated differentiating challenge (tier 2 / size 8): at this difficulty
+# mid-game builds rank distinctly instead of all trivially clearing. Env-overridable.
+GAUNTLET_SIZE = int(os.environ.get('CRUX_GAUNTLET_SIZE', '8'))
+GAUNTLET_TIER = int(os.environ.get('CRUX_GAUNTLET_TIER', '2'))
+GAUNTLET_COMPOSE_SEED = 20260706  # fixed: identical challenge across all run seeds
+SWINGS_CAP = 30
+
+
+def _git_sha():
+    try:
+        import subprocess
+        return subprocess.check_output(
+            ['git', 'rev-parse', '--short', 'HEAD'],
+            cwd=PROJECT_ROOT, stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        return 'unknown'
+
+
+_GIT_SHA = _git_sha()
+
+
+def boot_engine(save_dir: Path):
+    """Boot GameEngine + enter the temp world; WMS/StatStore write to save_dir."""
+    import core.paths as paths
+    paths._path_manager.save_path = Path(save_dir)
+
+    from core.config import Config
+    _orig = Config.init_screen_settings
+    Config.init_screen_settings = lambda width=None, height=None, fullscreen=False: _orig(1280, 720, False)
+
+    from core.game_engine import GameEngine
+    eng = GameEngine()
+    eng.handle_start_menu_selection(3)
+    if getattr(eng.character, 'class_selection_open', False):
+        from data.databases.class_db import ClassDatabase
+        eng.character.select_class(next(iter(ClassDatabase.get_instance().classes.values())))
+        eng.character.class_selection_open = False
+    return eng
+
+
+def spawn_gauntlet(eng, n, tier):
+    """Clean arena at (0,0), clear boot-spawned enemies, spawn a controlled,
+    hitbox-registered gauntlet in a row in front of the player."""
+    from Combat.enemy import Enemy
+    cm = eng.combat_manager
+    c = eng.character
+    c.position.x, c.position.y = 0.0, 0.0
+    cm.enemies.clear()
+    cm.corpses.clear()
+    chunk = (0, 0)
+    gauntlet = []
+    # Compose a FIXED challenge (same enemies every run) independent of the run
+    # seed, so seeds vary only combat RNG (crit / enemy-damage / loot), not the
+    # challenge itself. Save/restore the global RNG so the run-seed stream that
+    # the fight draws from is untouched.
+    import random
+    _state = random.getstate()
+    random.seed(GAUNTLET_COMPOSE_SEED)
+    try:
+        for i in range(n):
+            edef = cm.enemy_db.get_random_enemy(tier)
+            if edef is None:
+                continue
+            e = Enemy(edef, (2.0 + i * 2.0, 0.0), chunk)
+            cm.enemies.setdefault(chunk, []).append(e)
+            cm._register_enemy_action_combat(e)
+            gauntlet.append(e)
+    finally:
+        random.setstate(_state)
+    return gauntlet
+
+
+# Personas as BUILD SPECS (stat allocation + weapon at a matched level). At level 1
+# with 0 stats every build is identical; builds only diverge once points are
+# allocated — so a persona levels to a matched investment and distributes points.
+# This is the "power-at-matched-investment" yardstick (METHODOLOGY §2.2 v1):
+# compare builds' combat viability against one fixed challenge.
+PERSONAS = {
+    'melee_basic': {'level': 1,  'stats': {},                'weapon': 'iron_shortsword'},
+    'str_brawler': {'level': 10, 'stats': {'strength': 9},   'weapon': 'iron_shortsword'},
+    'vit_tank':    {'level': 10, 'stats': {'vitality': 9},   'weapon': 'iron_shortsword'},
+    'lck_crit':    {'level': 10, 'stats': {'luck': 9},       'weapon': 'iron_shortsword'},
+    'balanced':    {'level': 10, 'stats': {'strength': 2, 'vitality': 2, 'defense': 2,
+                                           'luck': 1, 'agility': 1, 'intelligence': 1},
+                    'weapon': 'iron_shortsword'},
+}
+
+
+def apply_build(harness, spec):
+    """Configure the character to a persona's build via the REAL APIs: level up to
+    the target level (each level grants 1 stat point), allocate the points per the
+    build, equip the weapon. No RNG use -> determinism-safe."""
+    c = harness.engine.character
+    target = spec.get('level', 1)
+    guard = 0
+    while c.leveling.level < target and guard < 200:
+        need = c.leveling.get_exp_for_next_level() - c.leveling.current_exp
+        c.leveling.add_exp(max(1, need), source='setup', character=c)
+        guard += 1
+    for stat, n in spec.get('stats', {}).items():
+        for _ in range(int(n)):
+            c.allocate_stat_point(stat)
+    harness.equip(spec.get('weapon', WEAPON_ID))
+    c._selected_slot = 'mainHand'
+
+
+def drive_persona(harness, persona):
+    """Apply the persona's build, then fight the fixed gauntlet (swing each enemy
+    until dead or the swing cap)."""
+    eng = harness.engine
+    c = eng.character
+    spec = PERSONAS.get(persona, PERSONAS['melee_basic'])
+    apply_build(harness, spec)
+    gauntlet = spawn_gauntlet(eng, GAUNTLET_SIZE, GAUNTLET_TIER)
+    gauntlet_ids = [getattr(e.definition, 'enemy_id', '?') for e in gauntlet]
+    kills = 0
+    for e in gauntlet:
+        c.position.x, c.position.y = e.position[0] - 1.0, e.position[1]
+        for _ in range(SWINGS_CAP):
+            if not e.is_alive:
+                break
+            harness.melee_swing(e, frames=30)
+        if not e.is_alive:
+            kills += 1
+        harness.tick(3)
+    return {'gauntlet': len(gauntlet), 'gauntlet_ids': gauntlet_ids, 'kills': kills,
+            'build_level': c.leveling.level, 'build_stats': dict(spec.get('stats', {}))}
+
+
+def capture(eng):
+    c = eng.character
+    store = c.stat_tracker._store
+    store.flush()
+    allstats = store.get_all()
+    return {
+        'level': c.leveling.level,
+        'exp': c.leveling.current_exp,
+        'combat': store.get_prefix('combat'),
+        'progression': store.get_prefix('progression'),
+        'total_stat_keys': len(allstats),
+        'all': allstats,
+    }
+
+
+def run_once(seed, out_dir, persona='melee_basic'):
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    wms_dir = out_dir / 'wms'
+    wms_dir.mkdir(exist_ok=True)
+
+    import random
+    with contextlib.redirect_stdout(io.StringIO()):
+        # Seed BEFORE boot so ambient enemy spawns + spawn-timers created during
+        # world entry are deterministic per seed; seed_all() after boot re-seeds
+        # for the fight (combat crit stream + a clean global-stream restart).
+        random.seed(seed)
+        eng = boot_engine(wms_dir)
+        from tests.integration.harness import PlaytestHarness
+        h = PlaytestHarness(eng)
+        h.settle()
+        h.seed_all(seed)
+        drive = drive_persona(h, persona)
+        cap = capture(eng)
+
+    combat = cap['combat']
+    kills, gauntlet_n = drive['kills'], drive['gauntlet']
+    captured = combat.get('combat.damage_dealt', 0.0) > 0.0
+
+    # Explicit terminal state. capture_blind is a HARNESS failure (the driving
+    # path didn't feed the capture layer) — surfaced loudly, never silent.
+    if not captured:
+        outcome = 'capture_blind'
+    elif gauntlet_n > 0 and kills >= gauntlet_n:
+        outcome = 'cleared'
+    elif kills == 0:
+        outcome = 'wiped'
+    else:
+        outcome = 'partial'
+
+    result = {
+        'schema': SCHEMA_VERSION,
+        'manifest': {
+            'run_id': f'{persona}-{seed}',
+            'seed': seed,
+            'persona': persona,
+            'config': {
+                'weapon': WEAPON_ID,
+                'gauntlet_size': GAUNTLET_SIZE,
+                'gauntlet_tier': GAUNTLET_TIER,
+                'compose_seed': GAUNTLET_COMPOSE_SEED,
+            },
+            'git_sha': _GIT_SHA,
+        },
+        'outcome': outcome,
+        'score': compute_score(cap['all'], cap['level']),
+        'metrics': {
+            'level': cap['level'],
+            'exp': cap['exp'],
+            'gauntlet': gauntlet_n,
+            'gauntlet_ids': drive['gauntlet_ids'],
+            'build_stats': drive['build_stats'],
+            'kills': kills,
+            'deaths': combat.get('combat.deaths', 0.0),
+            'damage_dealt': combat.get('combat.damage_dealt', 0.0),
+            'damage_taken': combat.get('combat.damage_taken', 0.0),
+            'combat_kills': combat.get('combat.kills', 0.0),
+            'total_stat_keys': cap['total_stat_keys'],
+        },
+        'combat_stats': combat,
+        'progression_stats': cap['progression'],
+    }
+    tmp = out_dir / 'result.json.tmp'
+    tmp.write_text(json.dumps(result, indent=2, default=str), encoding='utf-8')
+    os.replace(tmp, out_dir / 'result.json')  # atomic
+
+    if outcome == 'capture_blind':
+        sys.stderr.write(
+            f"[runner] WARNING {result['manifest']['run_id']}: CAPTURE_BLIND — combat "
+            f"stats empty; the driving path is not feeding the capture layer\n")
+    return result
+
+
+def main():
+    if len(sys.argv) < 3:
+        print("usage: runner.py <seed> <out_dir> [persona]")
+        sys.exit(2)
+    seed = int(sys.argv[1])
+    out_dir = sys.argv[2]
+    persona = sys.argv[3] if len(sys.argv) > 3 else 'melee_basic'
+    r = run_once(seed, out_dir, persona)
+    print(json.dumps({**r['manifest'], **r['metrics'], 'outcome': r['outcome']}, default=str))
+
+
+if __name__ == '__main__':
+    main()

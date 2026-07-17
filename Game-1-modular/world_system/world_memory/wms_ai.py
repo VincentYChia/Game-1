@@ -31,6 +31,42 @@ import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable, ClassVar, Dict, List, Optional
 
+from world_system.world_memory.event_schema import SEVERITY_ORDER
+from world_system.world_memory.tag_library import validate_tag
+
+
+def _extract_json_object(text: str) -> Optional[dict]:
+    """Best-effort extraction of a JSON object from an LLM reply.
+
+    Real model outputs routinely wrap JSON in markdown fences or lead
+    with prose ("Here is the narration: {...}"). The old parser only
+    tried json.loads when the reply STARTED with '{' — a fenced or
+    preambled but otherwise valid reply fell through raw, so the
+    narrative became literal ```json garbage and tags were lost
+    (2026-07 audit). Order: direct parse, fence-stripped parse, then
+    the first-'{'-to-last-'}' substring.
+    """
+    candidates = [text]
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        inner = stripped.strip("`")
+        # Drop a language hint like "json" on the first line
+        first_newline = inner.find("\n")
+        if first_newline != -1 and len(inner[:first_newline].split()) <= 1:
+            inner = inner[first_newline + 1:]
+        candidates.append(inner)
+    start, end = text.find("{"), text.rfind("}")
+    if start != -1 and end > start:
+        candidates.append(text[start:end + 1])
+    for candidate in candidates:
+        try:
+            parsed = json.loads(candidate)
+            if isinstance(parsed, dict):
+                return parsed
+        except (json.JSONDecodeError, TypeError):
+            continue
+    return None
+
 
 @dataclass
 class NarrationResult:
@@ -46,42 +82,55 @@ class NarrationResult:
     generation_time_ms: float = 0.0
 
 
-# Layer-specific LLM configuration
+# Layer-specific LLM configuration.
+# data_budget (chars, ~4 chars/token) bounds the DATA BLOCK handed to the
+# prompt. 2026-07 audit: data blocks were unbounded — a burst district could
+# stuff arbitrarily many events into one consolidation prompt, violating the
+# design doctrine that budgets are enforced at assembly time (WORKING_DOC
+# §8.4). Values are generous (typical blocks sit well under them) so normal
+# behavior is unchanged; they exist to bound the tail. Whole-event
+# truncation via text_budget.clamp_xml_events_to_budget.
 LAYER_CONFIG = {
     2: {
         "task": "wms_layer2",
         "temperature": 0.3,
         "max_tokens": 150,
+        "data_budget": 2400,
         "description": "Layer 2: one-sentence factual narrations from evaluator triggers",
     },
     3: {
         "task": "wms_layer3",
         "temperature": 0.4,
         "max_tokens": 300,
+        "data_budget": 6000,
         "description": "Layer 3: cross-domain consolidation across districts",
     },
     4: {
         "task": "wms_layer4",
         "temperature": 0.4,
         "max_tokens": 400,
+        "data_budget": 8000,
         "description": "Layer 4: provincial summaries",
     },
     5: {
         "task": "wms_layer5",
         "temperature": 0.5,
         "max_tokens": 500,
+        "data_budget": 8000,
         "description": "Layer 5: region-level summaries",
     },
     6: {
         "task": "wms_layer6",
         "temperature": 0.5,
         "max_tokens": 500,
+        "data_budget": 8000,
         "description": "Layer 6: nation-level summaries",
     },
     7: {
         "task": "wms_layer7",
         "temperature": 0.6,
         "max_tokens": 600,
+        "data_budget": 9000,
         "description": "Layer 7: world narrative threads",
     },
 }
@@ -190,6 +239,19 @@ class WmsAI:
         if tags is None:
             tags = self._assembler.tags_from_event(event_type, event_subtype, tier)
 
+        # 1.5 Enforce the per-layer data-block budget BEFORE assembly (whole-
+        # event truncation; the <omitted/> marker tells the model the view
+        # was capped). This is the single choke point every L2-L7 call
+        # flows through, so all five XML builders are bounded transitively.
+        config = LAYER_CONFIG.get(layer, LAYER_CONFIG[2])
+        events_omitted = 0
+        data_budget = config.get("data_budget", 0)
+        if data_budget and data_block and len(data_block) > data_budget:
+            from world_system.world_memory.text_budget import clamp_xml_events_to_budget
+            data_block, events_omitted = clamp_xml_events_to_budget(data_block, data_budget)
+            print(f"[WmsAI] L{layer} data block over budget "
+                  f"({data_budget} chars): dropped {events_omitted} oldest events")
+
         # 2. Assemble prompt (layer-specific assembly for Layer 3+)
         if layer == 7:
             prompt = self._assembler.assemble_l7(data_block, event_tags=tags)
@@ -206,14 +268,25 @@ class WmsAI:
         else:
             prompt = self._assembler.assemble(tags, data_block)
 
-        # 3. Call LLM
-        config = LAYER_CONFIG.get(layer, LAYER_CONFIG[2])
+        # 3. Call LLM (config resolved above at the budget step). The
+        # log_extra rides into llm_debug_logs so designers can see WHICH
+        # fragments composed each prompt — the observability the design
+        # charter calls non-negotiable (WORKING_DOC §8.11).
         result = self._call_llm(
             system_prompt=prompt.system,
             user_prompt=prompt.user,
             task=config["task"],
             temperature=config["temperature"],
             max_tokens=config["max_tokens"],
+            log_extra={
+                "layer": layer,
+                "fragments": [k for k, _ in prompt.fragments_used],
+                "fragment_chars": sum(len(t) for _, t in prompt.fragments_used),
+                "data_block_chars": len(data_block),
+                "events_omitted": events_omitted,
+                "token_estimate": prompt.token_estimate,
+            },
+            layer=layer,
         )
 
         elapsed_ms = (time.time() - start) * 1000
@@ -262,8 +335,29 @@ class WmsAI:
 
     def _call_llm(self, system_prompt: str, user_prompt: str,
                   task: str, temperature: float,
-                  max_tokens: int) -> NarrationResult:
-        """Route an LLM call through BackendManager."""
+                  max_tokens: int,
+                  log_extra: Optional[Dict[str, Any]] = None,
+                  layer: Optional[int] = None) -> NarrationResult:
+        """Route an LLM call through BackendManager.
+
+        Response parsing (2026-07 audit rewrite — the old parser failed
+        against its own prompt contract):
+        - JSON is extracted tolerantly (markdown fences, prose preamble)
+          instead of requiring the reply to START with '{'.
+        - Severity comes from a ``significance:``/``severity:`` tag with
+          a validated vocabulary. The prompt asks for ``significance:``
+          but the old code only matched ``severity:``, so a fully
+          compliant reply never set severity — and the old fallback
+          substring-searched the narrative, so innocent fantasy prose
+          ("a critical blow") silently inflated severity. That fallback
+          is REMOVED: no valid tag -> "minor", which downstream means
+          "no override" (the evaluator's template severity stands).
+        - Tags are validated against the tag library allow-list when the
+          layer is known — the tag system is load-bearing; LLM-invented
+          categories must not enter the retrieval index.
+        - An empty narrative is a FAILURE (callers fall back to the
+          template), not an empty success.
+        """
         if not self._backend:
             return NarrationResult(
                 success=False,
@@ -277,52 +371,72 @@ class WmsAI:
                 user_prompt=user_prompt,
                 temperature=temperature,
                 max_tokens=max_tokens,
+                log_extra=log_extra,
             )
 
             if error:
                 return NarrationResult(success=False, error=error)
 
-            # Parse response — handle JSON with narrative + tags
-            text = text.strip()
-            llm_tags = []
+            text = (text or "").strip()
+            llm_tags: List[str] = []
 
-            if text.startswith("{"):
-                try:
-                    parsed = json.loads(text)
-                    text = parsed.get("narrative", parsed.get("text",
-                           parsed.get("dialogue", text)))
-                    # Extract LLM-assigned tags
-                    raw_tags = parsed.get("tags", [])
-                    if isinstance(raw_tags, list):
-                        llm_tags = [t for t in raw_tags
-                                    if isinstance(t, str) and ":" in t]
-                except (json.JSONDecodeError, TypeError):
-                    pass
+            parsed = _extract_json_object(text)
+            if parsed is not None:
+                text = parsed.get("narrative", parsed.get("text",
+                       parsed.get("dialogue", text)))
+                raw_tags = parsed.get("tags", [])
+                if isinstance(raw_tags, list):
+                    llm_tags = [t for t in raw_tags
+                                if isinstance(t, str) and ":" in t]
+            elif text.startswith("{") or text.startswith("```"):
+                # Meant to be JSON but unparseable (usually truncated by
+                # max_tokens) — fail to the template rather than persist
+                # a broken-JSON fragment as the narrative.
+                return NarrationResult(success=False,
+                                       error="unparseable JSON in response")
 
             if isinstance(text, dict):
                 text = str(text)
-            text = text.strip().strip('"').strip("'")
+            text = str(text).strip().strip('"').strip("'")
 
-            # Extract severity from tags first, then fallback to text search
+            if not text:
+                return NarrationResult(success=False,
+                                       error="empty narrative in response")
+
+            # Severity from significance:/severity: tags only, with a
+            # validated vocabulary. These tags are consumed here and NOT
+            # forwarded — the enriched tag set already carries the
+            # canonical significance tag derived from the final severity.
             severity = "minor"
+            kept_tags: List[str] = []
             for tag in llm_tags:
-                if tag.startswith("severity:"):
-                    severity = tag.split(":", 1)[1]
-                    llm_tags = [t for t in llm_tags
-                                if not t.startswith("severity:")]
-                    break
-            else:
-                text_lower = text.lower()
-                for sev in ("critical", "major", "significant",
-                            "moderate", "minor"):
-                    if sev in text_lower:
-                        severity = sev
-                        break
+                category, _, value = tag.partition(":")
+                if category in ("severity", "significance"):
+                    value = value.strip().lower()
+                    if value in SEVERITY_ORDER:
+                        severity = value
+                    else:
+                        print(f"[WmsAI] Ignoring invalid severity value "
+                              f"{value!r} from LLM ({task})")
+                    continue
+                kept_tags.append(tag)
+
+            # Allow-list: the tag library is the single source of truth.
+            if layer is not None and kept_tags:
+                valid_tags = []
+                for tag in kept_tags:
+                    if validate_tag(tag, layer):
+                        valid_tags.append(tag)
+                    else:
+                        print(f"[WmsAI] Dropping LLM-invented tag "
+                              f"{tag!r} (not in tag library for layer "
+                              f"{layer})")
+                kept_tags = valid_tags
 
             return NarrationResult(
                 text=text,
                 severity=severity,
-                tags=llm_tags,
+                tags=kept_tags,
                 success=True,
                 model_used=task,
             )

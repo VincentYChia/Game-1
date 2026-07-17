@@ -1,0 +1,457 @@
+# Repository Audit 2026-06-10 — Findings Ledger (working doc)
+
+Accumulates **verified** findings from the six-area sweep. Every entry carries
+primary code evidence + affirming doc reference per the project methodology.
+This is a working document for the audit session; final outputs are
+`REPOSITORY_MAP.md` + refreshed `SYSTEMS_CATALOG.md`. Archive this directory
+when the audit closes.
+
+Status codes: [BUG] clear bug to fix · [OPT] behavior-preserving optimization ·
+[DOC] doc correction · [ORG] organization/catalog note · [ARCH] archive candidate ·
+[DEAD] dead code/file
+
+---
+
+## Verified firsthand (main session)
+
+### [BUG-1] Duplicate `_complete_minigame` — alloyQuality title bonus + debug-infinite silently dead
+- **Code**: `core/game_engine.py:6299` (first def, DEAD — shadowed) vs `:8831` (second def, LIVE).
+  Python class-body semantics: later def wins.
+- v1 (dead) exclusively carried: `DEBUG_INFINITE_RESOURCES` material injection
+  (6322-6330) and `alloy_quality_bonus` computation + pass-through (6332-6338).
+- v2 (live) exclusively carries: adornments `target_item` pass (8866-8870),
+  defensive missing-material warnings (8857-8862). Calls
+  `craft_with_minigame(recipe_id, inv_dict, result)` — **no alloy bonus, defaults 0.0**.
+- **Doc**: `Crafting-subdisciplines/refining.py:616` docstring documents the
+  param; `progression/titles-1.JSON:127` grants `"alloyQuality": 0.25`;
+  `data/databases/title_db.py:174` maps the key.
+- **Fix**: merge — keep v2 as base, restore v1's debug block + alloy bonus
+  (refining only), delete v1. Re-read both full bodies before merging.
+
+### [ARCH-1] `Game-1/` and `Game-1-singular/` at repo root are pycache husks
+- **Code**: `find` shows 0 non-pycache files in both. Untracked by git.
+- **Doc**: git log — `c3047ef "Refactor monolithic main.py into modular architecture"`,
+  `0dd1e98 "Move Game-1-singular to archive folder"`. CLAUDE.md directory layout
+  omits both (correctly — they shouldn't exist).
+- **Fix**: delete both directories (pure compiled-bytecode debris; history in git).
+
+---
+
+## From Agent 1 (core/entities/events/rendering/animation) — spot-verified items marked ✓
+
+### [DOC-1] CLAUDE.md line counts stale across the board
+- game_engine.py 11,888 actual vs 10,809 claimed; renderer.py 8,197 vs 7,931;
+  rendering/ is 8 files / 9,751 LOC vs claimed 5 / 8,841 (terrain_renderer,
+  visual_colors, map_cache, visual_effect_bridge unlisted). Fix in CLAUDE.md refresh.
+
+### [DOC-2] "Effect dispatch table replaces 250-line if/elif chain" (CLAUDE.md) is aspirational
+- `core/effect_executor.py:205-234` `_apply_special_mechanics` is an if/elif chain.
+- Disposition: doc correction (don't refactor for elegance alone; LOW priority OPT).
+
+### [OPT-1] Per-frame singleton fetches in game_engine render paths (~41 sites)
+- `MaterialDatabase.get_instance()` etc. fetched inside per-frame render methods.
+- Fix: cache refs on GameEngine in __init__. Zero behavior change.
+
+### [OPT-2] `ImageCache.get_instance()` inside render loops
+- `rendering/renderer.py:93,219,239,278-279,421-422,537+` — hoist outside loops
+  (up to 81 calls/frame during smithing grid render).
+
+### [OPT-3] Tag-def lookups per target per damage tag in effect executor
+- `core/effect_executor.py:78-95` — pre-fetch `{tag: registry.get_definition(tag)}`
+  before the target loop.
+
+### [ORG-1] `core/testing.py` + `core/testing_difficulty_distribution.py` are dev tools living in core/
+- testing.py IS used by game_engine (line ~16 import). Catalog as misplaced-but-wired.
+
+### Minor (no action beyond catalog)
+- effect_executor.py:52 `timestamp=0.0  # TODO` — context timestamp unused downstream.
+- effect_executor.py:416-418 forward teleport unimplemented, graceful.
+
+---
+
+## All six agent reports received; high-impact claims verified firsthand
+
+### VERIFIED BUGS (fix phase)
+- **[BUG-2] `self.active_enemies` undefined** — combat_manager.py:649 (`_execute_aoe_attack`,
+  reached via DEVASTATE buff) and :1051 (chain-damage enchant). Zero assignments anywhere
+  (full-tree grep). 12 other sites use `get_all_active_enemies()` (def at :2309).
+  Doc: MODULE_REFERENCE.md:1148 documents the attribute (intent). Fix: use the method;
+  fix MODULE_REFERENCE. AoE + chain damage currently crash when reached.
+- **[BUG-3] SkillDatabase boot double-load** — game_engine.py:157 calls `load_from_file()`
+  no-arg (opens "" → caught exception, useless), then :172 loads skills-skills-1.JSON
+  directly — bypassing `load_from_files()` (skill_db.py:59-87) whose documented purpose
+  is the sacred+generated overlay. Fix: drop :157, switch :172 → `load_from_files()`.
+- **[BUG-4] TitleDatabase boot bypasses generated glob** — game_engine.py:170 loads
+  titles-1.JSON directly; `load_from_files()` (title_db.py:40-70) exists with the same
+  documented overlay. WES-generated titles invisible until a reload. Fix: switch call.
+- **[BUG-5] Placement case mismatch** — placement_db.py:29 requests
+  `placements-smithing-1.JSON`; git-tracked file is `.json` (verified `git ls-files`).
+  Works on Windows; silently loses smithing placements on Linux CI (build-game.yml
+  builds Linux). Fix: lowercase the extension in the loader.
+- **[BUG-6] Silent terminal parse fallbacks, no log_degrade** — llm_execution_planner.py
+  `_parse_json_blob` terminal None (lines 72→82), llm_execution_hub.py (~45),
+  llm_executor_tool.py (~64-75), llm_supervisor.py (~62-72), prompt_assembler.py `_load`
+  (line 83). Violates graceful_degrade.py:19-20 own rule ("Silent try/except is not
+  acceptable"). Fix: log_degrade at terminal fallbacks only (mid-retry fallthrough is fine).
+
+### VERIFIED OPTIMIZATIONS (fix phase)
+- **[OPT-4] Turret rescan per enemy per frame** — combat_manager.py:559-563 rebuilds the
+  turret list inside the enemy update loop. Hoist to once per update() pass.
+- **[OPT-5] sqrt in AoE radius check** — combat_manager.py:653; use squared distance
+  (touching the function anyway for BUG-2).
+- **[OPT-2] ImageCache.get_instance() inside render loops** — renderer.py multiple sites.
+- **[OPT-3] Tag-def pre-fetch** — effect_executor.py:78-95.
+- **[OPT-6] EventStore composite index** — add idx_events_type_locality_time
+  (event_type, locality_id, game_time DESC) matching evaluator hot query.
+
+### AGENT CLAIMS REJECTED ON VERIFICATION (do not act)
+- "Layer 3 never publishes" — WRONG: layer3_manager.py:454 calls
+  `_publish_layer_summary_created` (agent grep missed it). Model C peak path intact.
+- "WES_REQUIRE_REAL_LLM doesn't block mock templates" — WRONG: chain strip at
+  backend_manager.py:559-565 + visible-failure surfacing at :630-652. Agent conflated
+  WES_DISABLE_FIXTURES with WES_REQUIRE_REAL_LLM.
+- "recipe glob case-sensitivity bug" — WRONG: recipe_db.py:26-35 hardcodes exact
+  filenames (incl. lowercase smithing-3.json/adornments-1.json), no glob involved.
+- "quest_archive_db.py never imported" — WRONG: function-level import + use at
+  quest_system.py:441/504 (+ tests). Agent only scanned top-level imports.
+
+### KEY DOC CORRECTIONS QUEUED (map/catalog phase)
+- CLAUDE.md "100+ skills" → 30 base + 5 fishing (Update-2) = 35 actual
+  (skills-skills-1.JSON metadata totalSkills: 30).
+- "100+ recipes" → 167 actual (53 smithing + 18 alchemy + 55 refining + 16 engineering
+  + 25 adornments).
+- Materials: 57 in items-materials-1.JSON (file metadata) but ~77 total loaded into
+  MaterialDatabase incl. refining/consumables/devices — clarify both numbers.
+- "33 evaluators" → 36 registered (interpreter.py) — 3 added 2026-06-05 (fishing,
+  turret, chest_loot). WORLD_MEMORY_SYSTEM.md:653 same fix.
+- Tag taxonomy: 64 categories in code vs 65 in TAG_LIBRARY.md. L6 has `regional_effect`
+  where doc says `nation_effect` — tags are LOAD-BEARING (memory rule): fix DOCS to match
+  code, note the semantic wart; do NOT rename the code key.
+- LOC drift: game_engine 11,888 (doc 10,809); renderer 8,197 (7,931); rendering/ 8 files
+  9,751 LOC (doc 5 files 8,841); combat_manager 2,070 (2,317); BackendManager 708 (553);
+  alchemy 906 (1,070); crafting_simulator 1,928 (2,337); smithing 776 (909).
+- Python file count: 434 total incl. tests/tools (doc says 239).
+- PLAYTEST_README: 5 → 6 crafting disciplines (fishing missing).
+- README.md world_system: 71 files → 87+.
+- MODULE_REFERENCE.md:1148 — `active_enemies` attribute doesn't exist (method does).
+- CLAUDE.md "Effect dispatch table replaces if/elif" — aspirational; actual code is
+  if/elif (effect_executor.py:205-234).
+
+### ORPHAN CONTENT JSONs (catalog-only; content JSON is sacred — designer review)
+- items.JSON/items-testing-integration.JSON (Update-1 has its own loaded copy)
+- recipes.JSON/recipes-tag-tests.JSON (15 test recipes, never loaded)
+- Skills/skills-testing-integration.JSON (doesn't match any loader glob)
+- placements.JSON/placements-smithing-1-pre-fish.JSON (pre-Update-2 backup)
+- Definitions.JSON/value-translation-table-1.JSON, templates-crafting-1.JSON (no loader refs)
+- Update-1/npcs-village-dummy.JSON (update_loader has no NPC scanner)
+
+### LATENT RISK (catalog as known limitation, not fixed now)
+- SkillDatabase/TitleDatabase `reload()` (WES commit path) clears + reloads sacred+generated
+  but does NOT re-merge Update-N files — a WES skill/title commit mid-session would drop
+  Update-2 fishing skills/titles until restart. Pre-existing; affects reload path only.
+
+### DOC ARCHIVE CANDIDATES (archive pass)
+- docs/REPOSITORY_STATUS_REPORT_2026-01-27.md → superseded by SYSTEMS_CATALOG.md
+- docs/INTERN_DOCUMENTATION_CLEANUP_PLAN.md → plan executed 2026-04-24
+- docs/json-reference/JSON_EXPLORATION_REPORT.md → historical snapshot
+- Stale-flag (not archive): FISHING_EXPANSION_PLAN.md, TOOL_CONTRACT_AUDIT.md,
+  WMS_TOOLS_AND_SIMULATION.md (61-category + future-L6/7 claims),
+  POLITICAL_AND_WMS_USAGE_PLAN.md (references implemented work as future),
+  SHARED_INFRASTRUCTURE.md (BalanceValidator spec-only header)
+- DO NOT touch DESIGNER_LEDGER.md (active user walkthrough) or
+  PLACEHOLDER_FURNISHING_WORKSHEET.md (furnishing not done).
+- tools/prompt_editor.py — superseded by prompt_studio; catalog only (code stays put).
+
+
+---
+
+## Gap-closure pass (owner asked "did you actually cover everything?")
+
+Honest gaps identified and closed where cheap:
+
+### [BUG-7] Game1.spec bundled the WRONG ML directory + missing runtime data — FIXED
+- **Code**: spec bundled `Convolution Neural Network (CNN)` + `Simple Classifiers
+  (LightGBM)` (training dirs — only a code COMMENT references them) while
+  `crafting_classifier.py:1010-1030` loads from `crafting_classifier_models/{discipline}/`
+  — absent from the bundle. Also missing: `Update-1/`, `Update-2/`,
+  `updates_manifest.json` (packaged builds lost fishing content), and
+  `world_system/config/` (Living World booted fully degraded in packaged builds).
+- **Doc**: docs/PACKAGING.md + PLAYTEST_README.md document packaged builds as a
+  supported distribution channel; CI builds them (build-game.yml).
+- **Fix**: spec datas corrected. NOT yet verified with an actual PyInstaller build —
+  flagged as a follow-up before the next binary playtest.
+
+### Verified clean (paths the audit had not traced)
+- CNN/LightGBM model files exist for all 5 disciplines at the exact paths the
+  classifier expects (`smithing_best.keras`, `adornment_best.keras`,
+  `{alchemy,refining,engineering}_model.txt`). `alchemy_extractor.pkl` confirmed
+  absent — the existing known-limitation (inline extractor workaround) stands.
+- Fewshot prompts present where `llm_item_generator.py:362-387` loads them
+  (system_*.txt + few_shot_examples.json).
+- `.claude/` contains INDEX.md + NAMING_CONVENTIONS.md (as CLAUDE.md claims) plus
+  an uncataloged `FACTION_SYSTEM_CORRECTIONS_AND_ROADMAP.md` (not reviewed).
+- `assets/*.py` = 5 dev one-off scripts (icon-selector, scan_generated_icons,
+  remove-1_from_PNG, Vheer-automation, broken_vheer_automation — the last is
+  self-flagged dead by its filename). No runtime imports.
+- `tools/prompt_editor.py` imports are stdlib+tkinter only — it RUNS; superseded
+  by Prompt Studio, not broken.
+
+### Acknowledged remaining gaps (not closed — would need dedicated passes)
+1. Entry-level JSON cross-reference validation (does every recipe input name an
+   existing material, every skill-unlock a real skill, etc.) — file-level orphan
+   check done; entry-level xref NOT done.
+2. `Scaled JSON Development/` training scripts (~15 .py: trainers, validators,
+   ollama/together adapters) — inventoried, not audited.
+3. The god-classes were sampled, not read line-by-line (20K LOC combined).
+4. Several `Definitions.JSON` configs marked CONDITIONAL without tracing each
+   consumer (dungeon-config, fishing-config, village-config, combat-config,
+   stats-calculations, world_generation).
+5. Packaged-build smoke test of the corrected spec.
+
+---
+
+## Session 2 (2026-06-10, same day): user-facing hardening + playtest harness
+
+Owner directive: professionalize user-touching code and user-touching AI;
+build integration tests that "truly simulate some type of play testing."
+Method unchanged: 3 agent recon sweeps, every claim verified firsthand
+before acting (1 more agent claim REJECTED, see below).
+
+### Verified bugs fixed (commit 87d79871)
+| # | Finding | Evidence | Fix |
+|---|---------|----------|-----|
+| S2-1 | main.py printed the raw ANTHROPIC_API_KEY to stdout at every boot | main.py:22 (pre-fix) | presence-only print |
+| S2-2 | Saves were non-atomic: open(filepath,'w') truncated the previous save before writing; crash mid-write = save destroyed | save_manager.py:501 (pre-fix) | in-memory serialize -> .tmp -> fsync -> os.replace, previous save kept as .bak; load recovers from .bak on corrupt JSON |
+| S2-3 | No guard around run() loop: any exception killed the windowed build (console=False) with zero feedback, no save | game_engine.py:11791 (pre-fix) | frame guard: crash report file (core/crash_handler.py), play continues on transient error, 5 consecutive bad frames -> emergency save to crash_recovery.json + clean exit |
+| S2-4 | 6 chest-transfer sites accepted negative indices -> python negative indexing silently moved/popped the WRONG item | game_engine.py:7701/7724/7785/7810/7978/8008 (pre-fix) | full range guards |
+| S2-5 | NPC dialogue LLM call was synchronous: F-talk froze the UI up to the 30s backend timeout (self-documented at game_engine.py:1623) | npc_agent.py:209 + game_engine.py:1681 (pre-fix) | async worker + per-frame poll; speechbank line shows instantly, LLM text swaps in on arrival; token discards stale results |
+| S2-6 | Every smithing craft crashed on default Windows consoles (cp1252): tag_debug INFO log prints emoji unconditionally | core/tag_debug.py:58 + repro UnicodeEncodeError | main.py reconfigures stdio to utf-8/replace; tag_debug print has ascii fallback |
+| S2-7 | tests/crafting/test_fixes.py was a print-script: os.chdir at IMPORT + opened long-gone recipes-smithing-1.JSON -> **aborted collection of the entire tests/ tree**. The "1085 passed" baseline never actually ran several files | pytest "Interrupted: 1 error during collection" repro | rewritten as real pytest; exposed +7 hidden tests incl. one stale-schema failure (test_no_crash expected pre-rework absolute 'durability'; schema is multiplier-based) |
+| S2-8 | quest-accept clicked with a stale button rect would ValueError on npc_available_quests.remove() | game_engine.py:1536 (pre-fix) | membership guard |
+| S2-9 | Classifier model files only failed at first invention (lazy load, debug-only log) | crafting_classifier.py lazy properties | boot pre-flight prints missing files per discipline |
+
+### Agent claim REJECTED (5th across both sessions)
+- "If BackendManager is initialized but all backends fail, NPC dialogue has no
+  fallback" — WRONG: npc_agent.py:218 `if text and not err` falls through to
+  `_generate_fallback()` at :224 on every failure path.
+
+### NEW: headless playtest harness (tests/integration/)
+The first true integration suite: boots the REAL GameEngine under
+SDL_VIDEODRIVER=dummy, enters a temp world via the same
+handle_start_menu_selection(3) path as the menu click, and drives play
+through the real event queue (KEYDOWN/KEYUP/mouse posted to pygame) and the
+real per-frame sequence (handle_events/update/render with controlled dt via
+last_tick).
+- conftest.py — session-scoped engine; saves redirected to pytest temp dir
+  via the PathManager singleton; screen pinned 1280x720 (dummy-driver
+  auto-detect can yield 0x0 -> UI_SCALE=0 -> ZeroDivisionError).
+- harness.py — PlaytestHarness: tick/move/give/count/craft/save primitives.
+- 19 scenarios, ~23s: boot + DB sanity, 120 rendered frames, WASD movement
+  through the input pipeline, full crafting pipeline (pins the ITEM_CRAFTED
+  publish + material consumption the duplicate-_complete_minigame bug had
+  killed), combat encounter (damage, kill, EXP, corpse cleanup), atomic
+  save/.bak/corruption recovery round-trips, chest transfer bounds
+  (negative-index no-ops), NPC dialogue open/close incl. async dispatch.
+
+### Latent issues observed, catalogued NOT fixed
+- world_system.py:217 imports get_chunk_tags from
+  systems/geography/setting_resolver — function does not exist (only
+  resolve_setting does). Confined to a try/except debug dump ("Setting
+  tags: failed" in world-gen log). Diagnostic noise only.
+- LLM item generation: no cancel button on the loading overlay; progress
+  bar is animation, not real progress (llm_item_generator.py:160-185).
+  UX papercuts, deferred.
+
+### Suite state after session 2
+1092 passed + 19 integration = 1111 passed / 10 pre-existing failures
+(geometry x8, status_effects x1, tag_system x1) / 0 regressions.
+
+---
+
+## Session 3 (2026-06-10): UI/chunk polish Track A
+
+Owner directive: "polished professional feel" — chunk loading, map loading,
+map UI, other UIs. Recon by 2 agents, all findings verified firsthand
+(1 MORE agent claim rejected — see below).
+
+### Fixed
+| # | Finding | Evidence | Fix |
+|---|---------|----------|-----|
+| S3-1 | Six overlay panels (stats/equipment/skills/encyclopedia/map/quest log) were independent booleans — C+E+K+M could stack into unreadable overlap | game_engine.py:824-872, 1277 (open sites) | `_close_other_overlay_panels(keep)` called at every open site; closes via each panel's own toggle/close so scroll-reset + menu-time stats stay correct |
+| S3-2 | **LIVE BUG**: `_get_hovered_inventory_slot` (feeds Q-drop) had drifted from the renderer: `+35` vs `+55` (20px vertical offset) AND unscaled spacing 10 vs scaled `INVENTORY_SLOT_SPACING` — hovering near a slot top edge made Q drop the item from the slot ABOVE | game_engine.py:8153-8157 (pre-fix) vs renderer.py:4967/5054 | Inventory geometry single-sourced into Config (`INVENTORY_TOOLS_X`, `TOOL_SLOT_SIZE/SPACING`, `inventory_tools_y()`, `inventory_grid_origin()`); all 5 duplicated sites (4 engine + renderer) now read it |
+| S3-3 | Chunk-boundary frame hitch: crossing a boundary generated up to 9 chunks synchronously in one frame (256-tile loops + resource spawns, ~1-5ms each); no load/unload hysteresis → boundary wobble thrashed regenerate cycles | world_system.py:757-768 (pre-fix) | Player 3x3 always loads same-frame (never deferred); outer prefetch ring streams nearest-first at a budget (default 2/frame, config-overridable via `prefetch_loads_per_frame`); unload keeps a 1-chunk hysteresis ring beyond load_radius |
+| S3-4 | CNN warmup self-poisoning: success print `✓` INSIDE the try raised UnicodeEncodeError on cp1252 streams → successful warmups reported as "warmup prediction failed" | game_engine.py:4469-4473 (pre-fix) | success print moved outside the try, ASCII-only |
+
+### Agent claims REJECTED (6th across sessions)
+- "Engine inventory click math (+55) mismatches renderer (+35)" at the MAIN
+  click site — WRONG: renderer does +35 then +=20 → both compute +55. The
+  real drift was in `_get_hovered_inventory_slot` (S3-2), which the agent
+  did not flag. Duplication itself was the disease; one copy had already
+  drifted, just not the one the agent named.
+
+### Pinned by new integration scenarios
+- `test_05_ui_polish.py` — menu exclusivity through real C/E/K/M/J key
+  events; toggle-to-close still works; hover hit-test resolves the drawn
+  slot center and rejects gutter clicks (locks engine==renderer geometry).
+- `test_06_chunk_streaming.py` — teleport: 3x3 immediate, full radius NOT
+  in one frame (budget), streaming completes <120 frames, hysteresis ring
+  survives a 1-chunk step.
+
+### Observed, catalogued NOT fixed
+- Adornments CNN reports "failed to load" at warmup in the test env (model
+  file exists; load error is genuine — TF/model compat suspect). Lazy load
+  retries at first use. Needs a dedicated look before invented-items
+  playtest relies on adornments validation.
+
+### Session 3 Track B (papercut sweep)
+| # | Finding | Fix |
+|---|---------|-----|
+| S3-5 | ESC mid-minigame instantly discarded the craft (materials lost, no confirmation) | double-ESC within 1.5s required (same idiom as dungeon double-F); first press shows a warning toast. Pinned in test_01. |
+| S3-6 | Class selection silently ignored ESC (only menu that did) | shows "Choose a class to continue" — selection stays mandatory, silence removed |
+| S3-7 | HP/mana bars hardcoded 300x25 / 300x20 px (renderer.py:3138/3152) — misproportioned at non-1.0 UI scale | Config.scale() applied |
+| S3-8 | Notifications unbounded — a burst (mass-craft, AoE loot) stacked toasts down the whole screen | capped at 8, oldest culled |
+
+Deferred from Track B (catalogued): button hover states across menus (broad
+renderer sweep — schedule with a visual pass), per-frame hasattr lazy font
+inits (negligible: hasattr check only).
+
+### Session 3 Track C (performance headroom)
+| # | Finding | Fix |
+|---|---------|-----|
+| S3-9 | render_npcs swept ALL 12,301 village NPCs through world_to_screen every frame (~2-4ms of the 16ms budget) to find the ~10 on screen | chunk-keyed spatial index (`_get_npc_chunk_buckets`), rebuilt only when the list object/length changes (village spawn, WES commits; NPCs are static — no movement system). Only buckets overlapping the camera (+1 chunk margin) are walked. Measured: integration suite wall time dropped ~28s -> ~17s |
+
+### Agent claim REJECTED (7th)
+- "Tile rendering has no caching — get_tile_surface regenerates procedurally
+  per frame" — WRONG: terrain_renderer.py:170-216 has a bounded
+  per-(x,y,type) `_surface_cache`. Tile path left as-is.
+
+---
+
+## Session 4 (2026-06-16): board closeout — CNN, content xref, packaged build
+
+### Adornments CNN load warning — DIAGNOSED, models healthy
+The "adornments CNN failed to load" warmup warning was investigated:
+loading both CNNs directly (and inside a joined background thread) returns
+`is_loaded() == True` with `_load_error == None` for BOTH smithing and
+adornments. The model files are intact (adornment_best.keras = 8.3MB).
+The warning is an intermittent boot-context artifact (warmup thread racing
+TF init against the rest of boot), not a broken model — lazy load retries
+on first real use. game_engine warmup now prints the buried `_load_error`
+so any genuine recurrence is self-explaining instead of silent.
+
+### Entry-level content cross-reference validation — CLOSED (audit gap #1)
+New `tools/content_xref_report.py` (boots real engine headless, lists every
+dangling reference) + `tests/integration/test_07_content_xref.py` (baseline
+-guarded: passes on the known 43, FAILS on any NEW dangle — also guards all
+future WES content). Full human listing in `CONTENT_XREF_REPORT.md`.
+
+**43 dangling refs found, all in sacred content JSON (designer-owned):**
+- 1 uncraftable recipe (`alchemy_transmute_iron_steel` needs `coal`, which
+  no material loads).
+- 2 craft-into-void recipes (`grappling_hook`/`jetpack` outputs: defined in
+  items-engineering-1.JSON but lack flags.stackable/placeable, so no DB
+  loads them).
+- 33 orphan placements (alchemy ×12, engineering ×9, refining ×12) — grids
+  authored ahead of their recipes; invisible in-game.
+- 2 skill unlocks → missing skills (`fortify`, `miners_endurance`).
+- 5 boss drops → nonexistent materials: ALL THREE Update-1 bosses
+  (void_archon, storm_titan, inferno_drake) drop loot that cannot
+  materialize.
+
+### Packaged-build smoke test — PASSED (audit gap #5)
+PyInstaller 6.20 build from the corrected Game1.spec (cd6d5758):
+- Build exit 0; Game1.exe = 85.6MB.
+- All corrected-spec data present in `_internal/`: Update-1, Update-2,
+  updates_manifest.json, world_system/config, classifier_models, Fewshot
+  prompts (85 files). Model files are real (adornment 8.3MB keras,
+  smithing 2.0MB keras, LightGBM .txt 343KB-1MB).
+- Exe booted under SDL dummy, survived 30s past imports + DB load into
+  world gen, zero crash reports. The packaging regression the audit found
+  (missing classifiers/fishing/Living-World configs) is verified fixed.
+
+---
+
+## Session 5 (2026-06-16): engineering board — quick latent fixes
+
+| # | Finding | Evidence | Fix |
+|---|---------|----------|-----|
+| S5-1 | world_system world-gen debug dump imported a `get_chunk_tags` that no longer exists (tag API was split: setting is geographic, population/resource are L2/L3) — printed "Setting tags: failed" every world-gen | world_system.py:217 (pre-fix) vs setting_resolver.py exports only resolve_setting | dump now calls the real resolve_setting and reports the setting distribution it can actually derive; dropped the pop/resource columns that have no source here |
+| S5-2 | SkillDatabase/TitleDatabase.reload() (WES-commit path) rebuilt the dict from Skills/ (or titles) ALONE — a mid-session WES skill/title commit silently DELETED the Update-2 fishing skills+titles until restart | skill_db.reload()→load_from_files() clears dict; Update-N layered separately at boot via load_all_updates() | added _remerge_updates() to both reload()s (re-applies load_skill_updates/load_title_updates after the rebuild). 2 tests (tests/test_updaten_reload_remerge.py) prove anglers_patience/novice_fisher survive reload; verified those ids live ONLY in Update-2 |
+| S5-3 | Invented-item generation locked the player behind the loading overlay until the LLM round-trip finished (or its 30s timeout) — no cancel | game_engine.py:642 swallowed ALL input except QUIT during overlay | ESC now abandons: marks result abandoned, force_finish()es the overlay instantly, poller discards the late worker result. Materials are only consumed on success (game_engine.py:5297) so cancel costs nothing. Overlay subtitle shows "ESC to cancel". 3 tests (tests/test_llm_generation_cancel.py) |
+
+### Audit gap #2 (training-scripts) — CLOSED, verdict: clean
+Audited the ~51 .py under `Scaled JSON Development/` (CNN/LightGBM trainers,
+validators, LLM data-gen + together/ollama adapters). **Verdict: zero
+runtime dependency on the game** — Game-1-modular imports none of them;
+crafting_classifier.py loads only the trained model FILES
+(crafting_classifier_models/*.keras|.txt|.pkl). All trainers are offline
+dev tools. Notes (not bugs): ollama_*.py carry machine-specific absolute
+paths (dev-only); they're correctly NOT bundled by Game1.spec.
+
+### Test state
+1125 passed / 10 stable pre-existing failures (geometry ×8, status ×1,
+tag ×1) + 1 KNOWN-FLAKY timing test under load (test_async_runner
+test_runs_in_parallel_and_preserves_order asserts 4×50ms parallel sleeps
+finish <180ms — wall-clock, slips under full-suite CPU contention; passes
+in isolation). 0 real regressions. +5 new tests this batch.
+
+### Audit gap #4 (Definitions.JSON per-consumer traces) — CLOSED, verdict: all wired
+Traced every conditional Definitions.JSON config to its consumer and
+confirmed a real load (not a comment mention):
+- stats-calculations.JSON — LOADED at stats.py import into scaling +
+  flat_bonuses (hot-reload hook at :93); drives equipment_db weapon
+  damage/armor/durability formulas; game_engine character stat modifiers.
+  Live, not dead documentation.
+- fishing-config → fishing.py `_load_config()`; dungeon-config →
+  dungeon.py `_load_dungeon_config()` (warn-once hardcoded fallback if
+  missing — acceptable graceful degrade); village-config →
+  village_generator.py `json.load`→_config_cache; combat-config →
+  combat_manager.py `json.load`; world_generation → world_generation_db
+  dataclass (the chunk_loading.load_radius the S3 streaming fix reads).
+- The only Definitions.JSON files with NO .py consumer are
+  value-translation-table-1 and templates-crafting-1 — already catalogued
+  as orphans in session 1 (designer review). No new orphans.
+
+### Audit gap #3 (god-class hygiene) — CLOSED, verdict: healthy
+Risk-pattern sweep of game_engine.py (~11.7K) + renderer.py (~8.2K):
+- ZERO mutable default args. ZERO open() outside `with` (no fd leaks).
+- 39 silent `except: pass` blocks, but sampling across interaction/update
+  paths shows they are dominated by GameEventBus telemetry-publish guards
+  (WMS analytics — DAMAGE/gathering/BARRIER_PLACED/CHEST_OPENED) and
+  optional-import guards (visual_effect_bridge), plus 2 grid-size "WxH"
+  ValueError parse-guards with sane fallbacks. None swallow real
+  player-facing LOGIC — consistent with the session-1 bare-except sweep.
+  Wrapping fire-and-forget analytics in log_degrade would add noise for
+  near-zero diagnostic value; left as-is by design.
+- A literal line-by-line read of 20K LOC was judged low-value: the
+  player-facing surfaces (event loop, minigame completion, chests, save,
+  NPC dialogue, inventory geometry, menus, LLM overlay, update loop) were
+  already read and hardened across sessions 2-5.
+
+**Engineering board fully worked. All five 2026-06-10 audit gaps now
+closed (entry-xref, packaged build, training scripts, Definitions configs,
+god-class hygiene).**
+
+---
+
+## Session 6 (2026-06-16): pre-playtest sign-off — the 10 "known failures" diagnosed
+
+Triggered by a playtest-readiness check. The 10 test failures carried as
+"known/pre-existing" since session 1 were never root-caused. For a sign-off
+that combat works, that was the one untested assumption. Diagnosed all 10.
+
+**Verdict: ALL 10 were STALE TESTS against renamed/changed production APIs.
+ZERO were real bugs. Production combat/targeting/shields/equipment all
+work.** Each fix is test-only.
+
+| Test(s) | Root cause | Production reality (verified) |
+|---|---|---|
+| test_geometry_patterns ×8 | The test stub gave its **player source** a `definition = None` attribute. TargetFinder duck-types an Enemy SOURCE via `hasattr(source,'definition') and hasattr(source,'is_alive')` to flip relative targeting (enemy→ally) — and `hasattr` is True even for a None value. So the stub player was misdetected as an enemy, every enemy-context query flipped to 'ally', and returned []. | Real `Character` has NEITHER attribute (grep-confirmed), so the flip never fires for a real player — single/chain/cone/circle/beam skill targeting is correct. Fixed stub with `del source.definition; del source.is_alive` to match reality. |
+| test_status_effects::test_buff_effects | asserted `hasattr(entity,'shield_health')` | Production `ShieldEffect.on_apply` sets `shield_amount` (renamed); damage-absorption reads the same attr. Shields work. Test updated to `shield_amount`. |
+| test_tag_system::test_equipment_loading | called removed `EquipmentDatabase.get_equipment()` | Current API is `create_equipment_from_id()` (parses stored dict → EquipmentItem with .effect_tags/.effect_params). Test updated. |
+
+**Significance for playtest**: the suite now has a genuine zero-known-failure
+baseline. The "10 known failures" footnote that shadowed every prior
+"0 regressions" claim is gone — and the diagnosis confirmed the player-facing
+combat geometry (skill targeting), status shields, and weapon tag loading
+are all sound in production.

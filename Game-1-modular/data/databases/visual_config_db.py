@@ -43,7 +43,7 @@ class VisualConfig:
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         path = os.path.join(base_dir, "Definitions.JSON", "visual-config.JSON")
         try:
-            with open(path, 'r') as f:
+            with open(path, 'r', encoding='utf-8') as f:
                 self._data = json.load(f)
             self._loaded = True
         except (FileNotFoundError, json.JSONDecodeError) as e:

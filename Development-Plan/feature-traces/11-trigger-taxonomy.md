@@ -1,5 +1,7 @@
 # Feature Trace 11 — Trigger Taxonomy (Meta-Trace, Wave 4)
 
+> **2026-06-05 STALENESS NOTICE.** This trace's "two archetypes" framework (narrative-causal via NL cascade vs. behavior-causal via WMS threshold) was conceptually correct but predates the **Model C** implementation that wired them together at the bridge layer. Specifically: WMS Layer N firing now publishes `WMS_LAYER_{N}_SUMMARY_CREATED`; the `WMSToWNSBridge` subscribes and fires NL_N directly at the address (the "behavior-causal peak path" this trace anticipated). NL1 dialogue ALSO feeds the WMS weighted-bucket triggers point-equivalent to L2 events. Read `Development-Plan/WMS_WNS_LAYER_CORRESPONDENCE.md` for the now-canonical wiring.
+
 **Wave:** 4 (meta-trace; consumes 1-10)
 **Owned endpoints:** NONE directly — this is a cross-cutting taxonomy. Affects: `wes_execution_planner`, `wes_supervisor`, `wns_layer{2..7}`, every `wes_hub_*`, every `wes_tool_*`, the `WMS→WNS bridge` (cascade trigger), `RequestLayer.build_specs`.
 **Final output artifact:** **a framework, not a JSON.** The framework: two trigger archetypes (narrative-causal + behavior-causal) feeding the same 8 WES tools through the same WNS-WES pipeline, with explicit plumbing for the milestone path that the prior 10 traces under-covered.

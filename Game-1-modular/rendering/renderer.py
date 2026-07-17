@@ -904,13 +904,49 @@ class Renderer:
 
         return slot_rects
 
+    def _get_npc_chunk_buckets(self, npcs):
+        """Chunk-keyed spatial index over the NPC list.
+
+        12,301 village NPCs made render_npcs an O(N) world_to_screen
+        sweep every frame (~2-4ms of the 16ms budget) to find the ~10 on
+        screen. NPCs are static (there is no NPC movement system), so
+        bucket them once by chunk and rebuild only when the list object
+        or its length changes (e.g. village spawning, WES NPC commits).
+        """
+        key = (id(npcs), len(npcs))
+        if getattr(self, '_npc_bucket_key', None) != key:
+            buckets = {}
+            chunk = Config.CHUNK_SIZE
+            for npc in npcs:
+                bucket = (int(npc.position.x) // chunk,
+                          int(npc.position.y) // chunk)
+                buckets.setdefault(bucket, []).append(npc)
+            self._npc_buckets = buckets
+            self._npc_bucket_key = key
+        return self._npc_buckets
+
     def render_npcs(self, camera: Camera, character: Character):
         """Render NPCs in the world with interaction indicators"""
         # Get NPCs from game engine (passed via temporary attribute)
         if not hasattr(self, '_temp_npcs'):
             return
 
-        npcs = self._temp_npcs
+        buckets = self._get_npc_chunk_buckets(self._temp_npcs)
+
+        # Only walk buckets overlapping the camera view (+1 chunk margin
+        # so sprites straddling an edge still draw).
+        chunk = Config.CHUNK_SIZE
+        half_w = camera.viewport_width / (2 * Config.TILE_SIZE)
+        half_h = camera.viewport_height / (2 * Config.TILE_SIZE)
+        cx0 = int(camera.position.x - half_w) // chunk - 1
+        cx1 = int(camera.position.x + half_w) // chunk + 1
+        cy0 = int(camera.position.y - half_h) // chunk - 1
+        cy1 = int(camera.position.y + half_h) // chunk + 1
+
+        npcs = []
+        for bx in range(cx0, cx1 + 1):
+            for by in range(cy0, cy1 + 1):
+                npcs.extend(buckets.get((bx, by), ()))
 
         for npc in npcs:
             nx, ny = camera.world_to_screen(npc.position)
@@ -3135,7 +3171,7 @@ class Renderer:
             y += 22
 
     def render_health_bar(self, char, x, y):
-        w, h = 300, 25
+        w, h = Config.scale(300), Config.scale(25)
         pygame.draw.rect(self.screen, Config.COLOR_HEALTH_BG, (x, y, w, h))
         hp_w = int(w * (char.health / char.max_health))
         pygame.draw.rect(self.screen, Config.COLOR_HEALTH, (x, y, hp_w, h))
@@ -3149,7 +3185,7 @@ class Renderer:
             self.screen.blit(shield_text, (x + w + 10, y))
 
     def render_mana_bar(self, char, x, y):
-        w, h = 300, 20
+        w, h = Config.scale(300), Config.scale(20)
         pygame.draw.rect(self.screen, Config.COLOR_HEALTH_BG, (x, y, w, h))
         mana_w = int(w * (char.mana / char.max_mana))
         pygame.draw.rect(self.screen, (50, 150, 255), (x, y, mana_w, h))
@@ -4963,16 +4999,19 @@ class Renderer:
         weight_surf = self.tiny_font.render(weight_text, True, (255, 255, 255))
         self.screen.blit(weight_surf, (weight_bar_x + weight_bar_width + 5, weight_bar_y))
 
-        # Render equipped tools section
-        tools_y = Config.INVENTORY_PANEL_Y + 35
-        self.render_text("Equipped Tools:", 20, tools_y, small=True)
-        tools_y += 20
+        # Render equipped tools section. Geometry comes from the single
+        # source in Config (inventory_tools_y / inventory_grid_origin) —
+        # the engine's click/hover hit-testing reads the same values, so
+        # the two can no longer drift apart.
+        tools_y = Config.inventory_tools_y()
+        self.render_text("Equipped Tools:", Config.INVENTORY_TOOLS_X,
+                         tools_y - 20, small=True)
 
-        slot_size = 50
-        spacing = 10
+        slot_size = Config.TOOL_SLOT_SIZE
+        spacing = Config.TOOL_SLOT_SPACING
 
         # Render axe slot
-        axe_x = 20
+        axe_x = Config.INVENTORY_TOOLS_X
         axe_rect = pygame.Rect(axe_x, tools_y, slot_size, slot_size)
         equipped_axe = character.equipment.slots.get('axe')
         axe_hovered = axe_rect.collidepoint(mouse_pos)
@@ -5051,7 +5090,7 @@ class Renderer:
             label_surf = self.tiny_font.render("Pick", True, (100, 100, 100))
             self.screen.blit(label_surf, (pick_x + 8, tools_y + 18))
 
-        start_x, start_y = 20, tools_y + slot_size + 20
+        start_x, start_y = Config.inventory_grid_origin()  # single source
         slot_size = Config.INVENTORY_SLOT_SIZE
         spacing = Config.INVENTORY_SLOT_SPACING  # §15 trap 17: single source
         slots_per_row = Config.INVENTORY_SLOTS_PER_ROW
@@ -7289,6 +7328,108 @@ class Renderer:
                 save_count_text = self.tiny_font.render(f"Found {len(save_files)} save file(s)", True, (100, 200, 100))
                 save_count_rect = save_count_text.get_rect(centerx=ww // 2, y=wh - s(70))
                 surf.blit(save_count_text, save_count_rect)
+
+        self.screen.blit(surf, (wx, wy))
+        return button_rects
+
+    def render_pause_menu(self, selected_option: int,
+                          mouse_pos: Tuple[int, int],
+                          *, temporary_world: bool = False):
+        """Render the in-game pause menu.
+
+        2026-06-05. Opened by ESC during gameplay so accidental ESC
+        presses no longer quit the game. Three options: Return,
+        Save & Exit (disabled in temp world), Exit without saving.
+        Returns a list of pygame.Rect for click hit-testing, matching
+        :meth:`render_start_menu` so the click handler can stay uniform.
+        """
+        s = Config.scale
+        sw = Config.SCREEN_WIDTH
+        sh = Config.SCREEN_HEIGHT
+
+        # Dim the world behind the menu so it's clear gameplay is paused.
+        dim = pygame.Surface((sw, sh), pygame.SRCALPHA)
+        dim.fill((0, 0, 0, 160))
+        self.screen.blit(dim, (0, 0))
+
+        ww = Config.MENU_SMALL_W
+        wh = s(420)
+        wx = max(0, (sw - ww) // 2)
+        wy = max(0, (sh - wh) // 2)
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+        pygame.draw.rect(surf, (100, 100, 120), surf.get_rect(), s(3))
+
+        # Title
+        title = self.font.render("PAUSED", True, (255, 215, 0))
+        surf.blit(title, title.get_rect(centerx=ww // 2, y=s(28)))
+
+        # Subtitle
+        sub = self.small_font.render("ESC to return; ↑/↓ to navigate; "
+                                     "ENTER to select",
+                                     True, (160, 160, 180))
+        surf.blit(sub, sub.get_rect(centerx=ww // 2, y=s(68)))
+
+        options = [
+            ("Return to game", "Resume play"),
+            ("Save & Exit",
+             "Temporary world — no save" if temporary_world
+             else "Autosave to autosave.json, then quit"),
+            ("Exit without saving", "Quit immediately; lose unsaved progress"),
+        ]
+
+        button_rects = []
+        y_offset = s(110)
+        button_height = s(80)
+        button_spacing = s(12)
+
+        for idx, (option_name, option_desc) in enumerate(options):
+            disabled = (idx == 1 and temporary_world)
+            button_rect = pygame.Rect(s(40), y_offset + idx * (button_height + button_spacing),
+                                       ww - s(80), button_height)
+
+            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+            is_hovered = (not disabled) and button_rect.collidepoint(rx, ry)
+            is_selected = (idx == selected_option) and not disabled
+
+            if disabled:
+                bg_color = (30, 30, 40)
+                border_color = (60, 60, 75)
+                name_color = (110, 110, 130)
+                desc_color = (90, 90, 110)
+            elif is_hovered:
+                bg_color = (80, 100, 140)
+                border_color = (150, 180, 220)
+                name_color = (240, 240, 250)
+                desc_color = (200, 200, 220)
+            elif is_selected:
+                bg_color = (60, 80, 120)
+                border_color = (120, 140, 180)
+                name_color = (230, 230, 245)
+                desc_color = (180, 180, 200)
+            else:
+                bg_color = (40, 50, 70)
+                border_color = (80, 90, 110)
+                name_color = (220, 220, 240)
+                desc_color = (160, 160, 180)
+
+            pygame.draw.rect(surf, bg_color, button_rect)
+            pygame.draw.rect(surf, border_color, button_rect, s(2))
+
+            name_text = self.font.render(option_name, True, name_color)
+            surf.blit(name_text,
+                      name_text.get_rect(centerx=button_rect.centerx,
+                                         y=button_rect.y + s(15)))
+            desc_text = self.small_font.render(option_desc, True, desc_color)
+            surf.blit(desc_text,
+                      desc_text.get_rect(centerx=button_rect.centerx,
+                                         y=button_rect.y + s(48)))
+
+            button_rects.append(pygame.Rect(wx + button_rect.x,
+                                             wy + button_rect.y,
+                                             button_rect.width,
+                                             button_rect.height))
 
         self.screen.blit(surf, (wx, wy))
         return button_rects

@@ -537,7 +537,22 @@ class SmithingCrafter:
 
     def load_recipes(self):
         """Load smithing recipes from JSON files"""
-        possible_paths = [
+        # 2026-06-05: cwd-robust path resolution via PathManager. Without
+        # this, launching from a cwd other than Game-1-modular/ (e.g.
+        # from PyCharm at the project root) silently drops every recipe
+        # — the UI still shows them via RecipeDatabase but
+        # SmithingCrafter.create_minigame returns None on click.
+        try:
+            from core.paths import get_resource_path
+            _resolved = [
+                str(get_resource_path("recipes.JSON/recipes-smithing-1.json")),
+                str(get_resource_path("recipes.JSON/recipes-smithing-2.json")),
+                str(get_resource_path("recipes.JSON/recipes-smithing-3.json")),
+                str(get_resource_path("recipes.JSON/recipes-tag-tests.JSON")),
+            ]
+        except Exception:
+            _resolved = []
+        possible_paths = _resolved + [
             "../recipes.JSON/recipes-smithing-1.json",
             "../recipes.JSON/recipes-smithing-2.json",
             "../recipes.JSON/recipes-smithing-3.json",
@@ -633,7 +648,12 @@ class SmithingCrafter:
 
     def load_placements(self):
         """Load placement data from JSON files"""
-        possible_paths = [
+        try:
+            from core.paths import get_resource_path
+            _resolved = [str(get_resource_path("placements.JSON/placements-smithing-1.JSON"))]
+        except Exception:
+            _resolved = []
+        possible_paths = _resolved + [
             "../placements.JSON/placements-smithing-1.JSON",
             "placements.JSON/placements-smithing-1.JSON",
         ]

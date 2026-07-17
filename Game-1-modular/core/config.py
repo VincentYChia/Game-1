@@ -64,6 +64,26 @@ class Config:
     INVENTORY_SLOT_SIZE = 50
     INVENTORY_SLOTS_PER_ROW = 10
 
+    # ── Inventory panel layout: SINGLE SOURCE OF TRUTH ──────────────────
+    # The renderer (drawing) and GameEngine (click/hover hit-testing) must
+    # use identical geometry. Five sites previously each hardcoded these
+    # offsets behind "MUST match the renderer exactly!" comments — and one
+    # had already drifted (+35 vs +55 → Q-drop targeted the wrong slot).
+    INVENTORY_TOOLS_X = 20    # left edge of the tool slots / grid
+    TOOL_SLOT_SIZE = 50       # tool slots are unscaled (parity with renderer)
+    TOOL_SLOT_SPACING = 10
+
+    @classmethod
+    def inventory_tools_y(cls) -> int:
+        """Top of the equipped-tools slot row (label sits 20px above)."""
+        return cls.INVENTORY_PANEL_Y + 55
+
+    @classmethod
+    def inventory_grid_origin(cls):
+        """Top-left of inventory grid slot [0] (x, y)."""
+        return (cls.INVENTORY_TOOLS_X,
+                cls.inventory_tools_y() + cls.TOOL_SLOT_SIZE + 20)
+
     @classmethod
     def init_screen_settings(cls, width=None, height=None, fullscreen=False):
         """Initialize screen settings based on display or custom size

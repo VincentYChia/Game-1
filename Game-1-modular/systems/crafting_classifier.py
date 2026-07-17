@@ -1069,6 +1069,28 @@ class CraftingClassifierManager:
         print(f"CraftingClassifierManager initialized")
         print(f"  Project root: {self.project_root}")
         print(f"  Disciplines: {list(self.configs.keys())}")
+        self._preflight_check()
+
+    def _preflight_check(self) -> None:
+        """Report missing model files at boot instead of at first craft.
+
+        Models are lazy-loaded, so a missing file used to surface only as
+        a debug-logged exception inside predict() the first time a player
+        submitted an invention. This makes the degradation visible up
+        front. Never raises — the game runs fine without classifiers
+        (validation is skipped, not blocking).
+        """
+        missing = []
+        for discipline, config in self.configs.items():
+            for attr in ('model_path', 'extractor_path'):
+                rel = getattr(config, attr, None)
+                if rel and not (self.project_root / rel).exists():
+                    missing.append(f"{discipline}: {rel}")
+        if missing:
+            print("  WARNING: classifier model files missing — recipe "
+                  "validation will be skipped for these disciplines:")
+            for entry in missing:
+                print(f"    - {entry}")
 
     @property
     def color_encoder(self) -> MaterialColorEncoder:

@@ -81,7 +81,12 @@ def get_llm_debug_logger() -> LLMDebugLogger:
 class LLMConfig:
     """Configuration for LLM item generation"""
     api_key: str = os.getenv('ANTHROPIC_API_KEY')  # Set via environment or explicitly
-    model: str = "claude-sonnet-4-20250514"
+    # 2026-06: claude-sonnet-4-20250514 retired 2026-06-15. Haiku 4.5 chosen
+    # for speed + cost (this path is designed to run on local LLMs eventually;
+    # any cloud model suffices for now). NOTE: Haiku 4.5 REJECTS requests
+    # that set temperature and top_p together (400) — verified live
+    # 2026-07-10; the client sends only temperature.
+    model: str = "claude-haiku-4-5"
     max_tokens: int = 2000
     temperature: float = 0.4  # Slightly lower for more consistent output
     top_p: float = 0.95
@@ -221,6 +226,21 @@ class LoadingState:
             if subtitle is not None:
                 self._subtitle = subtitle
 
+    def force_finish(self):
+        """Close immediately, skipping the completion animation.
+
+        Used by cancel: the player wants control back NOW, not after the
+        0.5s checkmark celebration.
+        """
+        with self._lock:
+            self._is_loading = False
+            self._message = ""
+            self._subtitle = ""
+            self._progress = 0.0
+            self._overlay_mode = False
+            self._complete_state = False
+            self._complete_time = 0.0
+
     def finish(self):
         """
         Transition to completion state (shows checkmark) before actually finishing.
@@ -264,6 +284,23 @@ class BackgroundGenerationResult:
         self._completed = False
         self._result = None
         self._error = None
+        self._abandoned = False
+
+    @property
+    def abandoned(self) -> bool:
+        with self._lock:
+            return self._abandoned
+
+    def abandon(self):
+        """Mark this result abandoned (player cancelled).
+
+        The daemon worker keeps running (a blocking network call can't be
+        force-killed), but its eventual result is discarded by the poller
+        instead of applied. Materials are only consumed on the success
+        path, so an abandoned generation costs the player nothing.
+        """
+        with self._lock:
+            self._abandoned = True
 
     @property
     def completed(self) -> bool:
@@ -313,6 +350,23 @@ def clear_background_result():
     global _background_result, _background_thread
     _background_result = None
     _background_thread = None
+
+
+def abandon_background_generation() -> bool:
+    """Player cancelled — abandon the in-flight generation and drop the overlay.
+
+    Marks the pending result abandoned (so the late worker result is
+    discarded, not applied) and force-closes the loading overlay so the
+    player regains control immediately. The worker thread keeps running
+    to completion in the background; its result is thrown away. Returns
+    True if there was something to abandon.
+    """
+    global _background_result
+    had_pending = _background_result is not None and not _background_result.completed
+    if _background_result is not None:
+        _background_result.abandon()
+    get_loading_state().force_finish()
+    return had_pending
 
 
 # ==============================================================================
@@ -451,16 +505,23 @@ class AnthropicBackend:
         try:
             client = self._get_client()
 
-            response = client.messages.create(
+            # Haiku 4.5 rejects temperature + top_p together (400) —
+            # found live 2026-07-10, same bug as backend_manager's
+            # ClaudeBackend. Send temperature only; top_p applies only
+            # when temperature is unset.
+            kwargs = dict(
                 model=config.model,
                 max_tokens=config.max_tokens,
-                temperature=config.temperature,
-                top_p=config.top_p,
                 system=system_prompt,
                 messages=[
                     {"role": "user", "content": user_prompt}
-                ]
+                ],
             )
+            if config.temperature is not None:
+                kwargs["temperature"] = config.temperature
+            elif config.top_p is not None:
+                kwargs["top_p"] = config.top_p
+            response = client.messages.create(**kwargs)
 
             return response.content[0].text, None
 
@@ -655,6 +716,9 @@ class LLMItemGenerator:
             print(f"  DEBUG: Attempting to parse response ({len(response_text)} chars)")
             item_data = self._parse_response(response_text)
             print(f"  DEBUG: Parsed successfully, keys: {list(item_data.keys())}")
+
+            # Sanity gate: collision guard, tier clamp, stat ceilings.
+            item_data = self._sanitize_item_data(item_data)
 
             # Validate required fields
             item_id = item_data.get('itemId', item_data.get('materialId'))
@@ -871,6 +935,81 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
                 raise ValueError(f"Invalid JSON: {e}")
 
         raise ValueError("No valid JSON found in response")
+
+    # Tier-scaled ceilings for combat-relevant numeric fields, matching
+    # the documented tier multipliers (T1=1x .. T4=8x). STOPGAP until
+    # BalanceValidator exists (spec: Development-Plan/
+    # SHARED_INFRASTRUCTURE.md) — before this, the ONLY validation on an
+    # invented item was "has an itemId": a single sloppy LLM output could
+    # inject damage 999999 or tier 99 straight into the inventory
+    # (2026-07 LLM-pipeline audit). Values are generous by design; the
+    # designer owns real balance policy.
+    _STAT_CEILING_BY_TIER = {1: 60, 2: 120, 3: 240, 4: 480}
+    _BOUNDED_STAT_KEYS = ("damage", "baseDamage", "defense", "armor",
+                          "healAmount", "healing", "attackSpeed")
+
+    def _sanitize_item_data(self, item_data: Dict) -> Dict:
+        """Sanity-gate a parsed invented item before it enters the game.
+
+        - itemId/materialId colliding with existing game content gets an
+          ``invented_`` prefix so an LLM output can never shadow a sacred
+          item definition.
+        - tier is clamped to 1-4.
+        - combat-relevant numeric fields are clamped to tier-scaled
+          ceilings.
+        Every adjustment is logged.
+        """
+        # Tier clamp first — the stat ceilings key off it.
+        raw_tier = item_data.get('tier')
+        if raw_tier is not None:
+            try:
+                tier = int(raw_tier)
+            except (TypeError, ValueError):
+                tier = 1
+            clamped_tier = max(1, min(4, tier))
+            if clamped_tier != raw_tier:
+                print(f"  [Sanitize] tier {raw_tier!r} -> {clamped_tier}")
+            item_data['tier'] = clamped_tier
+        tier = item_data.get('tier') or 1
+
+        # Id-collision guard against existing content.
+        for id_key in ('itemId', 'materialId'):
+            item_id = item_data.get(id_key)
+            if not item_id:
+                continue
+            if self._id_exists_in_game(item_id):
+                new_id = f"invented_{item_id}"
+                print(f"  [Sanitize] {id_key} {item_id!r} collides with "
+                      f"existing content -> {new_id!r}")
+                item_data[id_key] = new_id
+
+        # Combat-stat ceilings.
+        ceiling = self._STAT_CEILING_BY_TIER.get(tier, 480)
+        for key in self._BOUNDED_STAT_KEYS:
+            value = item_data.get(key)
+            if isinstance(value, (int, float)) and value > ceiling:
+                print(f"  [Sanitize] {key} {value} exceeds tier-{tier} "
+                      f"ceiling -> {ceiling}")
+                item_data[key] = ceiling
+
+        return item_data
+
+    def _id_exists_in_game(self, item_id: str) -> bool:
+        """True if the id belongs to already-loaded game content."""
+        try:
+            if self.materials_db and item_id in getattr(
+                    self.materials_db, 'materials', {}):
+                return True
+        except Exception:
+            pass
+        try:
+            from data.databases.equipment_db import EquipmentDatabase
+            eq = EquipmentDatabase.get_instance()
+            if item_id in getattr(eq, 'items', {}):
+                return True
+        except Exception:
+            pass
+        return False
 
     def _get_cache_key(self, discipline: str, recipe_context: Dict) -> str:
         """Generate cache key from recipe context"""
@@ -1338,7 +1477,7 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
         loading_state.start(
             message="Generating Item...",
             overlay=True,
-            subtitle=f"Creating {discipline} invention"
+            subtitle=f"Creating {discipline} invention  —  ESC to cancel"
         )
 
         # Create result holder
@@ -1346,7 +1485,7 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
 
         def background_task():
             try:
-                loading_state.update(subtitle="Calling AI model...")
+                loading_state.update(subtitle="Calling AI model...  —  ESC to cancel")
                 # Pass _from_async=True so generate() doesn't overwrite our overlay settings
                 result = self.generate(discipline, interactive_ui, narrative, _from_async=True)
                 _background_result.set_result(result)
