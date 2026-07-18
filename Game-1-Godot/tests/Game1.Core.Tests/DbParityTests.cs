@@ -316,6 +316,124 @@ public class DbParityTests
     }
 
     [Fact]
+    public void WorldGeneration_MatchesPythonResolvedConfig()
+    {
+        var root = ContentPaths.TryGetContentRoot()!;
+        var cfg = new WorldGenerationConfig();
+        cfg.Load(root);
+        var golden = GoldenFixture.Load("db_parity/world_generation.json");
+
+        static JsonObject Dist(DangerDistribution d) => new()
+        { ["peaceful"] = d.Peaceful, ["dangerous"] = d.Dangerous, ["rare"] = d.Rare };
+        static JsonObject Spawn(ResourceSpawnConfig r) => new()
+        {
+            ["min_resources"] = r.MinResources, ["max_resources"] = r.MaxResources,
+            ["tier_range"] = new JsonArray(r.TierMin, r.TierMax),
+        };
+        static JsonObject Fish(FishingSpotConfig f) => new()
+        {
+            ["min_spots"] = f.MinSpots, ["max_spots"] = f.MaxSpots,
+            ["tier_range"] = new JsonArray(f.TierMin, f.TierMax),
+        };
+
+        var actual = new JsonObject
+        {
+            ["loaded_from_file"] = cfg.LoadedFromFile,
+            ["chunk_loading"] = new JsonObject
+            {
+                ["load_radius"] = cfg.ChunkLoading.LoadRadius,
+                ["spawn_always_loaded_radius"] = cfg.ChunkLoading.SpawnAlwaysLoadedRadius,
+                ["chunk_size"] = cfg.ChunkLoading.ChunkSize,
+            },
+            ["biome_distribution"] = new JsonObject
+            {
+                ["water"] = cfg.BiomeDistribution.Water,
+                ["forest"] = cfg.BiomeDistribution.Forest,
+                ["cave"] = cfg.BiomeDistribution.Cave,
+            },
+            ["biome_clustering"] = new JsonObject
+            {
+                ["biome_noise_scale"] = cfg.BiomeClustering.BiomeNoiseScale,
+                ["biome_noise_octaves"] = cfg.BiomeClustering.BiomeNoiseOctaves,
+                ["danger_noise_scale"] = cfg.BiomeClustering.DangerNoiseScale,
+            },
+            ["danger_zones"] = new JsonObject
+            {
+                ["safe_zone_radius"] = cfg.DangerZones.SafeZoneRadius,
+                ["transition_zone_radius"] = cfg.DangerZones.TransitionZoneRadius,
+                ["max_danger_enabled"] = cfg.DangerZones.MaxDangerEnabled,
+                ["safe_zone_distribution"] = Dist(cfg.DangerZones.SafeZone),
+                ["transition_zone_distribution"] = Dist(cfg.DangerZones.TransitionZone),
+                ["outer_zone_distribution"] = Dist(cfg.DangerZones.OuterZone),
+            },
+            ["spawn_area"] = new JsonObject
+            {
+                ["resource_exclusion_radius"] = cfg.SpawnResourceExclusionRadius,
+                ["crafting_stations_enabled"] = cfg.SpawnCraftingStationsEnabled,
+            },
+            ["resource_spawning"] = new JsonObject
+            {
+                ["peaceful_chunks"] = Spawn(cfg.PeacefulChunks),
+                ["dangerous_chunks"] = Spawn(cfg.DangerousChunks),
+                ["rare_chunks"] = Spawn(cfg.RareChunks),
+            },
+            ["water_chunks"] = new JsonObject
+            {
+                ["normal_water"] = Fish(cfg.NormalWater),
+                ["cursed_swamp"] = Fish(cfg.CursedSwamp),
+                ["lake_chance"] = cfg.LakeChance,
+                ["river_chance"] = cfg.RiverChance,
+                ["cursed_swamp_chance"] = cfg.CursedSwampChance,
+            },
+            ["dungeon_spawning"] = new JsonObject
+            {
+                ["enabled"] = cfg.DungeonSpawning.Enabled,
+                ["spawn_chance_per_chunk"] = cfg.DungeonSpawning.SpawnChancePerChunk,
+                ["excluded_in_spawn_area"] = cfg.DungeonSpawning.ExcludedInSpawnArea,
+                ["excluded_in_water"] = cfg.DungeonSpawning.ExcludedInWater,
+                ["min_distance_from_spawn"] = cfg.DungeonSpawning.MinDistanceFromSpawn,
+            },
+            ["chunk_unloading"] = new JsonObject
+            {
+                ["enabled"] = cfg.UnloadingEnabled,
+                ["save_modified_chunks"] = cfg.SaveModifiedChunks,
+                ["track_unload_time"] = cfg.TrackUnloadTime,
+            },
+            ["debug"] = new JsonObject
+            {
+                ["log_chunk_generation"] = cfg.LogChunkGeneration,
+                ["log_biome_assignments"] = cfg.LogBiomeAssignments,
+                ["log_dungeon_spawns"] = cfg.LogDungeonSpawns,
+                ["show_seed_on_f1"] = cfg.ShowSeedOnF1,
+            },
+        };
+
+        foreach (var key in new[]
+                 {
+                     "loaded_from_file", "chunk_loading", "biome_distribution",
+                     "biome_clustering", "danger_zones", "spawn_area",
+                     "resource_spawning", "water_chunks", "dungeon_spawning",
+                     "chunk_unloading", "debug",
+                 })
+        {
+            var diffs = JsonTreeComparer.Diff(golden.GetProperty(key), actual[key]);
+            Assert.True(diffs.Count == 0, $"{key}: " + string.Join("; ", diffs.Take(10)));
+        }
+
+        foreach (var e in golden.GetProperty("danger_distribution_by_distance").EnumerateObject())
+        {
+            var diffs = JsonTreeComparer.Diff(e.Value,
+                Dist(cfg.GetDangerDistribution(double.Parse(e.Name))));
+            Assert.True(diffs.Count == 0, $"danger@{e.Name}: " + string.Join("; ", diffs.Take(5)));
+        }
+        foreach (var e in golden.GetProperty("resource_config_by_level").EnumerateObject())
+        {
+            var diffs = JsonTreeComparer.Diff(e.Value, Spawn(cfg.GetResourceConfig(e.Name)));
+            Assert.True(diffs.Count == 0, $"resource@{e.Name}: " + string.Join("; ", diffs.Take(5)));
+        }
+    }
+
+    [Fact]
     public void Translations_MatchPython()
     {
         var db = BootedDatabases.All.Value.Translations;

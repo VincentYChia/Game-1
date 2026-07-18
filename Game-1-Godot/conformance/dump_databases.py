@@ -121,6 +121,9 @@ def boot() -> dict:
     from data.databases.chunk_template_db import ChunkTemplateDatabase
     chunk_db = ChunkTemplateDatabase.get_instance()
 
+    from data.databases.world_generation_db import WorldGenerationConfig
+    wg_db = WorldGenerationConfig.get_instance()
+
     # Update-N overlay LAST, exactly like boot (also touches enemy /
     # skill-unlock DBs — harmless here, they just load too).
     load_all_updates(get_resource_path(""))
@@ -130,6 +133,7 @@ def boot() -> dict:
         "equipment": equip_db, "titles": title_db, "classes": class_db,
         "skills": skill_db, "placements": placement_db,
         "resource_nodes": res_db, "npcs": npc_db, "chunk_templates": chunk_db,
+        "world_generation": wg_db,
     }
 
 
@@ -248,6 +252,29 @@ def dump_all(dbs: dict) -> None:
         "stats": chunks.stats(),
         "density_weights": dict(ctd.DENSITY_WEIGHTS),
         "tier_bias_order": dict(ctd.TIER_BIAS_ORDER),
+    })
+
+    wg = dbs["world_generation"]
+    write("world_generation.json", {
+        "_meta": meta("data/databases/world_generation_db.py (resolved config "
+                      "incl. dilutive normalization; zone lookups executed)"),
+        "loaded_from_file": wg.loaded_from_file,
+        "chunk_loading": asdict(wg.chunk_loading),
+        "biome_distribution": asdict(wg.biome_distribution),
+        "biome_clustering": asdict(wg.biome_clustering),
+        "danger_zones": asdict(wg.danger_zones),
+        "spawn_area": asdict(wg.spawn_area),
+        "resource_spawning": asdict(wg.resource_spawning),
+        "water_chunks": asdict(wg.water_chunks),
+        "dungeon_spawning": asdict(wg.dungeon_spawning),
+        "chunk_unloading": asdict(wg.chunk_unloading),
+        "debug": asdict(wg.debug),
+        "danger_distribution_by_distance": {
+            str(d): asdict(wg.get_danger_distribution(d))
+            for d in [0, 1, 2, 3, 5, 10, 11, 50]},
+        "resource_config_by_level": {
+            lvl: asdict(wg.get_resource_config(lvl))
+            for lvl in ["peaceful", "dangerous", "rare", "unknown"]},
     })
 
     write("translations.json", {

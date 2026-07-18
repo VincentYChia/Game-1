@@ -1,0 +1,189 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-18",
+    "git_sha": "64374480",
+    "source": "data/databases/world_generation_db.py (resolved config incl. dilutive normalization; zone lookups executed)"
+  },
+  "biome_clustering": {
+    "biome_noise_octaves": 3,
+    "biome_noise_scale": 4.0,
+    "danger_noise_scale": 4.0
+  },
+  "biome_distribution": {
+    "cave": 0.4,
+    "forest": 0.5,
+    "water": 0.1
+  },
+  "chunk_loading": {
+    "chunk_size": 16,
+    "load_radius": 4,
+    "spawn_always_loaded_radius": 1
+  },
+  "chunk_unloading": {
+    "enabled": true,
+    "save_modified_chunks": true,
+    "track_unload_time": true
+  },
+  "danger_distribution_by_distance": {
+    "0": {
+      "dangerous": 0.0,
+      "peaceful": 1.0,
+      "rare": 0.0
+    },
+    "1": {
+      "dangerous": 0.0,
+      "peaceful": 1.0,
+      "rare": 0.0
+    },
+    "10": {
+      "dangerous": 0.4,
+      "peaceful": 0.4,
+      "rare": 0.2
+    },
+    "11": {
+      "dangerous": 0.4,
+      "peaceful": 0.4,
+      "rare": 0.2
+    },
+    "2": {
+      "dangerous": 0.0,
+      "peaceful": 1.0,
+      "rare": 0.0
+    },
+    "3": {
+      "dangerous": 0.0,
+      "peaceful": 1.0,
+      "rare": 0.0
+    },
+    "5": {
+      "dangerous": 0.0,
+      "peaceful": 1.0,
+      "rare": 0.0
+    },
+    "50": {
+      "dangerous": 0.4,
+      "peaceful": 0.4,
+      "rare": 0.2
+    }
+  },
+  "danger_zones": {
+    "max_danger_enabled": true,
+    "outer_zone_distribution": {
+      "dangerous": 0.4,
+      "peaceful": 0.4,
+      "rare": 0.2
+    },
+    "safe_zone_distribution": {
+      "dangerous": 0.0,
+      "peaceful": 1.0,
+      "rare": 0.0
+    },
+    "safe_zone_radius": 8,
+    "transition_zone_distribution": {
+      "dangerous": 0.5,
+      "peaceful": 0.4,
+      "rare": 0.1
+    },
+    "transition_zone_radius": 8
+  },
+  "debug": {
+    "log_biome_assignments": false,
+    "log_chunk_generation": false,
+    "log_dungeon_spawns": true,
+    "show_seed_on_f1": true
+  },
+  "dungeon_spawning": {
+    "enabled": true,
+    "excluded_in_spawn_area": true,
+    "excluded_in_water": true,
+    "min_distance_from_spawn": 2,
+    "spawn_chance_per_chunk": 0.01
+  },
+  "loaded_from_file": true,
+  "resource_config_by_level": {
+    "dangerous": {
+      "max_resources": 8,
+      "min_resources": 5,
+      "tier_range": [
+        2,
+        3
+      ]
+    },
+    "peaceful": {
+      "max_resources": 6,
+      "min_resources": 3,
+      "tier_range": [
+        1,
+        2
+      ]
+    },
+    "rare": {
+      "max_resources": 10,
+      "min_resources": 6,
+      "tier_range": [
+        3,
+        4
+      ]
+    },
+    "unknown": {
+      "max_resources": 10,
+      "min_resources": 6,
+      "tier_range": [
+        3,
+        4
+      ]
+    }
+  },
+  "resource_spawning": {
+    "dangerous_chunks": {
+      "max_resources": 8,
+      "min_resources": 5,
+      "tier_range": [
+        2,
+        3
+      ]
+    },
+    "peaceful_chunks": {
+      "max_resources": 6,
+      "min_resources": 3,
+      "tier_range": [
+        1,
+        2
+      ]
+    },
+    "rare_chunks": {
+      "max_resources": 10,
+      "min_resources": 6,
+      "tier_range": [
+        3,
+        4
+      ]
+    }
+  },
+  "spawn_area": {
+    "crafting_stations_enabled": true,
+    "resource_exclusion_radius": 8
+  },
+  "water_chunks": {
+    "cursed_swamp": {
+      "max_spots": 8,
+      "min_spots": 5,
+      "tier_range": [
+        3,
+        4
+      ]
+    },
+    "cursed_swamp_chance": 0.1,
+    "lake_chance": 0.45,
+    "normal_water": {
+      "max_spots": 6,
+      "min_spots": 3,
+      "tier_range": [
+        1,
+        2
+      ]
+    },
+    "river_chance": 0.45
+  }
+}
