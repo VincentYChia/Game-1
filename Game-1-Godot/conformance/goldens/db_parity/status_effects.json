@@ -2,8 +2,8 @@
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
     "generated": "2026-07-18",
-    "git_sha": "a33f2f6c",
-    "source": "entities/status_effect.py + status_manager.py (scenarios EXECUTED through the real classes)"
+    "git_sha": "3e075b35",
+    "source": "entities/status_effect.py + status_manager.py + equipment_manager.py (scenarios EXECUTED through the real classes)"
   },
   "scenarios": {
     "burn_dot": {
@@ -62,6 +62,47 @@
         "no_match": 0.0,
         "one_match": 0.05,
         "own_tags": 0.2
+      }
+    },
+    "equipment_manager": {
+      "hand_rules": {
+        "equip_2h": "OK",
+        "equip_default": "OK",
+        "equip_versatile": "OK",
+        "invalid_slot": "Invalid slot: ring",
+        "offhand_alone": "OK",
+        "offhand_vs_2h": "Cannot equip offhand - mainhand is 2H weapon",
+        "oneh_vs_default": "Mainhand weapon doesn't support offhand",
+        "oneh_vs_versatile": "OK",
+        "requirements_fail": "Requires level 99",
+        "shield_vs_default": "OK",
+        "versatile_vs_versatile": "Versatile mainhand only allows 1H or shield in offhand"
+      },
+      "queries": {
+        "attack_speed_default": 1.0,
+        "is_equipped": true,
+        "is_equipped_after": false,
+        "no_offhand_damage": [
+          0,
+          0
+        ],
+        "no_offhand_range": 0.0,
+        "stat_bonuses": {
+          "crit_chance": 0.07,
+          "max_health": 10
+        },
+        "total_defense": 62,
+        "unarmed_damage": [
+          1,
+          2
+        ],
+        "unarmed_range": 1.0,
+        "unequip_returns": "reach_spear",
+        "weapon_damage": [
+          10,
+          20
+        ],
+        "weapon_range_with_reach": 4.5
       }
     },
     "factory_durations": {

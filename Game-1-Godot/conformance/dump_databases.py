@@ -982,9 +982,97 @@ def dump_all(dbs: dict) -> None:
         }
     st["class_affinity"] = affinity
 
+    # Equipment manager (8 slots + 2 tool slots) through the real class
+    from entities.components.equipment_manager import EquipmentManager
+
+    def eq_char(level=30):
+        return SimpleNamespace(
+            leveling=SimpleNamespace(level=level),
+            stats=SimpleNamespace(strength=0, defense=0, vitality=0, luck=0,
+                                  agility=0, intelligence=0),
+            recalculate_stats=lambda: None)
+
+    def weapon(iid, hand_type, item_type="weapon", slot="mainHand",
+               damage=(10, 20), rng=1.0, tags=None, bonuses=None, reqs=None):
+        it = EquipmentItem(iid, iid, 1, "common", slot, damage=damage,
+                          durability_current=100, durability_max=100,
+                          hand_type=hand_type, item_type=item_type)
+        it.range = rng
+        it.tags = tags or []
+        it.bonuses = bonuses or {}
+        it.requirements = reqs or {}
+        return it
+
+    def armor(iid, slot, defense):
+        return EquipmentItem(iid, iid, 1, "common", slot, damage=(0, 0),
+                            defense=defense, durability_current=100,
+                            durability_max=100, item_type="armor")
+
+    ch = eq_char()
+    em = EquipmentManager()
+    hand_rules = {}
+    _, r = em.equip(weapon("two_hander", "2H"), ch)
+    hand_rules["equip_2h"] = r
+    _, r = em.equip(weapon("dagger", "1H", slot="offHand"), ch)
+    hand_rules["offhand_vs_2h"] = r
+    em.unequip("mainHand", ch)
+    _, r = em.equip(weapon("plain_sword", "default"), ch)
+    hand_rules["equip_default"] = r
+    _, r = em.equip(weapon("shield_item", "default", item_type="shield",
+                           slot="offHand"), ch)
+    hand_rules["shield_vs_default"] = r
+    em.unequip("offHand", ch)
+    _, r = em.equip(weapon("dagger2", "1H", slot="offHand"), ch)
+    hand_rules["oneh_vs_default"] = r
+    em.unequip("mainHand", ch)
+    _, r = em.equip(weapon("versatile_spear", "versatile"), ch)
+    hand_rules["equip_versatile"] = r
+    _, r = em.equip(weapon("dagger3", "1H", slot="offHand"), ch)
+    hand_rules["oneh_vs_versatile"] = r
+    em.unequip("offHand", ch)
+    _, r = em.equip(weapon("versatile2", "versatile", slot="offHand"), ch)
+    hand_rules["versatile_vs_versatile"] = r
+    em2 = EquipmentManager()
+    _, r = em2.equip(weapon("solo_off", "1H", slot="offHand"), ch)
+    hand_rules["offhand_alone"] = r
+    _, r = em2.equip(weapon("bad_slot", "1H", slot="ring"), ch)
+    hand_rules["invalid_slot"] = r
+    _, r = em2.equip(weapon("too_strong", "1H", reqs={"level": 99}), eq_char(level=1))
+    hand_rules["requirements_fail"] = r
+
+    em3 = EquipmentManager()
+    for a_slot, d in [("helmet", 10), ("chestplate", 25), ("leggings", 18),
+                      ("boots", 8), ("gauntlets", 6)]:
+        em3.equip(armor(f"a_{a_slot}", a_slot, d), ch)
+    worn = em3.slots["chestplate"]
+    worn.durability_current = 10  # effectiveness kicks in
+    equip_queries = {
+        "total_defense": em3.get_total_defense(),
+        "unarmed_damage": list(EquipmentManager().get_weapon_damage()),
+        "no_offhand_damage": list(EquipmentManager().get_weapon_damage("offHand")),
+        "unarmed_range": EquipmentManager().get_weapon_range(),
+        "no_offhand_range": EquipmentManager().get_weapon_range("offHand"),
+    }
+    em4 = EquipmentManager()
+    em4.equip(weapon("reach_spear", "2H", rng=2.5, tags=["reach"],
+                     bonuses={"crit_chance": 0.05}), ch)
+    em4.equip(armor("lucky_helm", "helmet", 5), ch)
+    em4.slots["helmet"].bonuses = {"crit_chance": 0.02, "max_health": 10}
+    equip_queries["weapon_damage"] = list(em4.get_weapon_damage())
+    equip_queries["weapon_range_with_reach"] = em4.get_weapon_range()
+    equip_queries["attack_speed_default"] = em4.get_weapon_attack_speed("offHand")
+    equip_queries["stat_bonuses"] = em4.get_stat_bonuses()
+    equip_queries["is_equipped"] = em4.is_equipped("reach_spear")
+    unequipped = em4.unequip("mainHand", ch)
+    equip_queries["unequip_returns"] = unequipped.item_id if unequipped else None
+    equip_queries["is_equipped_after"] = em4.is_equipped("reach_spear")
+
+    st["equipment_manager"] = {"hand_rules": hand_rules, "queries": equip_queries}
+
     write("status_effects.json", {
-        "_meta": meta("entities/status_effect.py + status_manager.py "
-                      "(scenarios EXECUTED through the real classes)"),
+        "_meta": meta("entities/status_effect.py + status_manager.py + "
+                      "equipment_manager.py (scenarios EXECUTED through the "
+                      "real classes)"),
         "scenarios": st,
     })
 
