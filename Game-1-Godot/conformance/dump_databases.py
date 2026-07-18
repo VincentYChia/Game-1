@@ -325,6 +325,66 @@ def dump_all(dbs: dict) -> None:
         "count": qa.count(),
     })
 
+    from data.databases.visual_config_db import get_visual_config
+    vc = get_visual_config()
+    vc_values = {
+        "damage_number_lifetime_ms": vc.damage_number_lifetime_ms,
+        "damage_number_velocity_y": vc.damage_number_velocity_y,
+        "damage_number_horizontal_spread": vc.damage_number_horizontal_spread,
+        "damage_number_gravity": vc.damage_number_gravity,
+        "damage_number_shrink_rate": vc.damage_number_shrink_rate,
+        "damage_number_crit_scale": vc.damage_number_crit_scale,
+        "damage_number_crit_color": list(vc.damage_number_crit_color),
+        "damage_number_stack_offset": vc.damage_number_stack_offset,
+        "player_radius_tiles": vc.player_radius_tiles,
+        "player_color": list(vc.player_color),
+        "player_outline_color": list(vc.player_outline_color),
+        "facing_indicator_length": vc.facing_indicator_length,
+        "facing_indicator_color": list(vc.facing_indicator_color),
+        "shadow_enabled": vc.shadow_enabled,
+        "shadow_alpha": vc.shadow_alpha,
+        "shadow_scale": vc.shadow_scale,
+        "idle_bob_amplitude": vc.idle_bob_amplitude,
+        "idle_bob_period_ms": vc.idle_bob_period_ms,
+        "boss_glow_color": list(vc.boss_glow_color),
+        "death_fade_duration_ms": vc.death_fade_duration_ms,
+        "death_shrink_factor": vc.death_shrink_factor,
+        "corpse_linger_ms": vc.corpse_linger_ms,
+        "spawn_fade_in_ms": vc.spawn_fade_in_ms,
+        "telegraph_player_color": list(vc.telegraph_player_color),
+        "telegraph_enemy_color": list(vc.telegraph_enemy_color),
+        "telegraph_pulse_frequency": vc.telegraph_pulse_frequency,
+        "max_particles": vc.max_particles,
+        "hit_spark_count": list(vc.hit_spark_count),
+        "death_burst_count": vc.death_burst_count,
+        "shake_decay_rate": vc.shake_decay_rate,
+        "shake_max_offset": vc.shake_max_offset,
+        "debug_hitbox_color": list(vc.debug_hitbox_color()),
+        "debug_hitbox_alpha": vc.debug_hitbox_alpha,
+        "debug_hurtbox_color": list(vc.debug_hurtbox_color()),
+        "debug_hurtbox_alpha": vc.debug_hurtbox_alpha,
+        "debug_iframe_color": list(vc.debug_iframe_color()),
+        "debug_show_facing": vc.debug_show_facing,
+        "debug_show_attack_phase": vc.debug_show_attack_phase,
+    }
+    write("visual_config.json", {
+        "_meta": meta("data/databases/visual_config_db.py (every accessor "
+                      "EXECUTED against the live JSON + defaults)"),
+        "values": vc_values,
+        "damage_type_colors": {t: list(vc.damage_type_color(t)) for t in
+                               ["physical", "fire", "ice", "lightning", "poison",
+                                "arcane", "shadow", "holy", "__unknown__"]},
+        "damage_special_text": {t: [vc.damage_special_text(t)[0],
+                                    list(vc.damage_special_text(t)[1])]
+                                for t in ["miss", "block", "dodge", "__unknown__"]},
+        "enemy_tier_scale": {str(t): vc.enemy_tier_scale(t) for t in [1, 2, 3, 4, 99]},
+        "enemy_tier_glow": {str(t): vc.enemy_tier_has_glow(t) for t in [1, 2, 3, 4, 99]},
+        "enemy_tier_glow_intensity": {str(t): vc.enemy_tier_glow_intensity(t)
+                                      for t in [1, 2, 3, 4, 99]},
+        "enemy_state_colors": {s: list(vc.enemy_state_color(s)) for s in
+                               ["idle", "aggro", "attacking", "fleeing", "__unknown__"]},
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,

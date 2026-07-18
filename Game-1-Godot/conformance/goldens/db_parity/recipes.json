@@ -2,7 +2,7 @@
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
     "generated": "2026-07-18",
-    "git_sha": "7ec23308",
+    "git_sha": "c0f3cc50",
     "source": "data/databases/recipe_db.py (5 discipline files, 3 output dialects + Update-N)"
   },
   "by_station": {

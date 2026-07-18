@@ -1,0 +1,220 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-18",
+    "git_sha": "c0f3cc50",
+    "source": "data/databases/visual_config_db.py (every accessor EXECUTED against the live JSON + defaults)"
+  },
+  "damage_special_text": {
+    "__unknown__": [
+      "__UNKNOWN__",
+      [
+        180,
+        180,
+        180
+      ]
+    ],
+    "block": [
+      "BLOCKED",
+      [
+        100,
+        160,
+        255
+      ]
+    ],
+    "dodge": [
+      "DODGE",
+      [
+        150,
+        200,
+        255
+      ]
+    ],
+    "miss": [
+      "MISS",
+      [
+        180,
+        180,
+        180
+      ]
+    ]
+  },
+  "damage_type_colors": {
+    "__unknown__": [
+      255,
+      255,
+      255
+    ],
+    "arcane": [
+      200,
+      100,
+      255
+    ],
+    "fire": [
+      255,
+      140,
+      40
+    ],
+    "holy": [
+      255,
+      255,
+      180
+    ],
+    "ice": [
+      100,
+      200,
+      255
+    ],
+    "lightning": [
+      255,
+      255,
+      80
+    ],
+    "physical": [
+      255,
+      255,
+      255
+    ],
+    "poison": [
+      100,
+      255,
+      80
+    ],
+    "shadow": [
+      160,
+      100,
+      200
+    ]
+  },
+  "enemy_state_colors": {
+    "__unknown__": [
+      150,
+      150,
+      150
+    ],
+    "aggro": [
+      150,
+      150,
+      150
+    ],
+    "attacking": [
+      150,
+      150,
+      150
+    ],
+    "fleeing": [
+      150,
+      150,
+      150
+    ],
+    "idle": [
+      100,
+      200,
+      100
+    ]
+  },
+  "enemy_tier_glow": {
+    "1": false,
+    "2": false,
+    "3": true,
+    "4": true,
+    "99": false
+  },
+  "enemy_tier_glow_intensity": {
+    "1": 0.0,
+    "2": 0.0,
+    "3": 0.3,
+    "4": 0.6,
+    "99": 0.0
+  },
+  "enemy_tier_scale": {
+    "1": 1.0,
+    "2": 1.3,
+    "3": 1.6,
+    "4": 2.0,
+    "99": 1.0
+  },
+  "values": {
+    "boss_glow_color": [
+      255,
+      215,
+      0
+    ],
+    "corpse_linger_ms": 5000,
+    "damage_number_crit_color": [
+      255,
+      220,
+      50
+    ],
+    "damage_number_crit_scale": 1.8,
+    "damage_number_gravity": 0.08,
+    "damage_number_horizontal_spread": 0.6,
+    "damage_number_lifetime_ms": 1200,
+    "damage_number_shrink_rate": 0.997,
+    "damage_number_stack_offset": 18,
+    "damage_number_velocity_y": -2.5,
+    "death_burst_count": 12,
+    "death_fade_duration_ms": 600,
+    "death_shrink_factor": 0.3,
+    "debug_hitbox_alpha": 100,
+    "debug_hitbox_color": [
+      255,
+      60,
+      60
+    ],
+    "debug_hurtbox_alpha": 80,
+    "debug_hurtbox_color": [
+      60,
+      255,
+      60
+    ],
+    "debug_iframe_color": [
+      60,
+      60,
+      255
+    ],
+    "debug_show_attack_phase": true,
+    "debug_show_facing": true,
+    "facing_indicator_color": [
+      200,
+      220,
+      255
+    ],
+    "facing_indicator_length": 0.5,
+    "hit_spark_count": [
+      5,
+      8
+    ],
+    "idle_bob_amplitude": 1.5,
+    "idle_bob_period_ms": 2000,
+    "max_particles": 400,
+    "player_color": [
+      80,
+      180,
+      255
+    ],
+    "player_outline_color": [
+      40,
+      100,
+      160
+    ],
+    "player_radius_tiles": 0.33,
+    "shadow_alpha": 40,
+    "shadow_enabled": true,
+    "shadow_scale": 0.7,
+    "shake_decay_rate": 0.88,
+    "shake_max_offset": 12,
+    "spawn_fade_in_ms": 400,
+    "telegraph_enemy_color": [
+      255,
+      100,
+      100
+    ],
+    "telegraph_player_color": [
+      100,
+      180,
+      255
+    ],
+    "telegraph_pulse_frequency": 10.0
+  }
+}

@@ -2,7 +2,7 @@
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
     "generated": "2026-07-18",
-    "git_sha": "7ec23308",
+    "git_sha": "c0f3cc50",
     "source": "data/databases/quest_archive_db.py (behavioral fixture: synthetic records through the REAL class, queries executed)"
   },
   "count": 4,
