@@ -195,6 +195,40 @@ Godot once so it generates its solution glue.
   Remaining P2: EquipmentItem materialization (+ SmithingTagProcessor),
   inventory, buffs, status effects, durability/weight, save fragments.
 
+- **2026-07-18 (P2 CHARACTER CORE COMPLETE) — suite 67/67.** Full autonomous
+  run: equipment stack (all 38 items materialize byte-identically; EquipmentItem
+  behaviors incl. the sacred durability curve, repair, enchant family/tier/
+  conflict rules with the coexisting-tiers quirk pinned; full WeaponTagModifiers;
+  Smithing/Enchanting tag processors), Inventory + ItemStack (rarity/crafted-
+  stats stacking splits, drag merge/swap semantics), BuffManager (additive
+  bonuses, consume-on-use matrix), the complete status-effect system (17 classes,
+  factory aliases, stacking rules, mutual exclusions, resistance hook — the
+  chill-over-slow alias duplication bug-compatibly pinned), class skill-affinity
+  (+5%/tag cap 20%), and EquipmentManager (8+2 slots, hand-rule matrix).
+  Everything oracled by executing the REAL Python classes. One .NET pitfall
+  fixed at the helper layer: C#-constructed int JsonValues fail
+  TryGetValue&lt;double&gt; unlike parsed numbers (J.AsNum).
+  **Scope note:** the save-fragment round-trip gate folds into P8 (save_manager
+  ports as a whole there — component serialization lives in save_manager.py, not
+  the components), and Character assembly (character.py composition root) builds
+  in P3/P4 alongside its consumers. Both documented, not dropped.
+
+- **2026-07-18 (P3 CORE LANDED) — suite 72/72; solution + Godot import clean.**
+  PythonRandom: MT19937 bit-exact vs CPython (init_by_array BigInteger seeding,
+  getrandbits/randbelow/choice/randint/shuffle/uniform) — retires the ADR-5 RNG
+  risk and unblocks village gen + P4 crux parity. BiomeGenerator (legacy
+  fallback, oracle for pre-geographic saves): 25×25 chunk grid sha256-matches
+  Python per seed — the P3 "same seed → identical grid hash" exit oracle, green.
+  GeoNoise (the primary geographic system's determinism core): hash/value/
+  fractal noise, contiguity, Voronoi subdivision at full region parity.
+  Engine scaffold: WorldBootstrap procedurally builds the playable world from
+  the certified generation (biome-colored chunk floor, sun/sky, CharacterBody3D
+  + camera-relative WASD, SpringArm orbit camera); Godot 4.4.1 headless import
+  validates project + scene. REMAINING P3 (tranche 2): the geography
+  generators above noise (~3k lines: world/nation/region/political/village/
+  ecosystem/names → 512×512 finite world), chunk.py per-chunk tile+resource
+  placement parity, then first VISUAL run in the editor (user-facing milestone).
+
 ## 7a. Parked — DO NOT FORGET
 
 | Item | Why parked | Unblock |
