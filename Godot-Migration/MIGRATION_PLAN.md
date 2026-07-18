@@ -65,9 +65,12 @@ Ordering follows the dependency graph; each phase lists its **exit oracle**.
 | **P7 Skills & progression UI** | 35 skills, mana/cooldowns, skill unlocks, encyclopedia, map/waypoints, quest log UI | Skill-effect goldens (executor paths); UI parity checklist |
 | **P8 Save/load** | Full save schema, atomic .bak writes, versioning | **A Python save loads in Godot and round-trips** (ADR-9) |
 | **P9 Living-world bridge** | Sidecar launcher/health/restart, IPC per the doc-09 contract, event forwarding, NPC dialogue, quests + affinity turn-in, F12 overlay data, speechbanks | All doc-09 crossings exercised end-to-end against the real sidecar; degrade paths verified with sidecar killed |
-| **P10 3D-necessitated & polish** | Camera polish, lighting, 3D audio, nav for NPC wander, art upgrade pass (billboard→model where wanted), *optional* gameplay verticality (explicitly re-balanced if adopted) | Feature-parity checklist 100% ticked; playtest sign-off |
+| **P10 3D polish & parity sign-off** | Camera polish, lighting, 3D audio, nav for NPC wander, art upgrade pass (billboard→model where wanted) | Feature-parity checklist 100% ticked; playtest sign-off on the parity build |
+| **P11 True 3D gameplay** — **REQUIRED; the migration is NOT done without it** (user directive 2026-07-18) | Gameplay verticality: jump, cliff/height traversal, fall damage, height-aware hitboxes/AoE/projectiles, vertical camera work, 3D navmesh combat AI; explicit rebalance pass for every number verticality touches | New conformance baseline ratified (deliberate, documented deltas from the parity goldens) + 3D playtest sign-off |
 
 Phases P1–P2 are pure `dotnet` work (no Godot needed). P3 is where the engine enters.
+P11 is deliberately last: it *intentionally* breaks planar-parity balance, so it needs
+the certified baseline to deviate from on purpose rather than by accident.
 
 ## 4. 3D-necessitated additions (the ONLY allowed feature additions)
 
@@ -79,8 +82,10 @@ Tracked explicitly so scope stays honest:
 - Billboarded entity rendering (Sprite3D) and its draw-order/lighting rules
 - 3D-positional audio (was flat 2D)
 - NPC navmesh wander (replaces 2D grid wander, same behavioral envelope)
-- *Deferred decision:* true verticality (jump/cliffs/fall damage) — post-parity only,
-  because it changes balance
+- **True verticality (jump/cliffs/fall damage/height-aware combat) — COMMITTED
+  scope, Phase 11.** Not optional: the user's definition of done includes true 3D
+  (2026-07-18). Sequenced last because it changes balance and needs the certified
+  parity baseline to deviate from deliberately.
 
 ## 5. Risk register
 
@@ -117,6 +122,22 @@ Godot once so it generates its solution glue.
   `DefenseReduction`, `DamageComposition`, reward/difficulty bands) authored with
   xunit conformance tests. Blocked only on the two installs above for the first
   `dotnet test` run.
+
+- **2026-07-18 — ADRs user-confirmed; toolchain live; checkpoint green.** All four
+  headline decisions confirmed by the user, with one amendment: **true 3D
+  verticality is required scope** — added as Phase 11, the migration's final gate.
+  Toolchain installed without winget (broken App Installer): .NET SDK 8.0.423
+  user-scoped + Godot 4.4.1 .NET, both on user PATH, DOTNET_ROOT persisted (Godot
+  mono hard-crashes without it). First real run: **24/24 conformance tests pass**,
+  solution builds clean incl. Game1.Godot, Godot boots the project headless.
+  PR #83 (crux-foundry → main) merged.
+
+## 7a. Parked — DO NOT FORGET
+
+| Item | Why parked | Unblock |
+|---|---|---|
+| Formal adversarial verification of the 11 inventory contracts (0/11 formally verified; 3/3 inline spot-checks exact) | Monthly subagent spend limit hit mid-workflow 2026-07-17 | When budget resets: resume `wf_243bf9af-658` per `inventory/README.md`; until then, re-verify any contract claim firsthand before acting on it |
+| **P11 True 3D** — user will "not consider this fully done until we get there" | Deliberately sequenced after parity certification | Automatic: it is the final phase gate, not an optional item |
 
 ## 8. Load-bearing findings from the inventory pass
 
