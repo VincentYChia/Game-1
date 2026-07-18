@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Game1.Core</RootNamespace>
+    <!-- Pure game logic: NO Godot reference, ever. Testable via dotnet test. -->
+  </PropertyGroup>
+</Project>

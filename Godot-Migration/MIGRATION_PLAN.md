@@ -1,0 +1,153 @@
+# Game-1 → Godot 4 (3D) — Master Migration Plan
+
+**Branch:** `godot-migration` · **Started:** 2026-07-17
+**Mandate:** Complete game migration to Godot 3D. **No gameplay features lost** —
+only features *added* where 2D→3D necessitates them.
+
+Read [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) first — the nine ADRs
+are the load-bearing choices. [CONFORMANCE.md](CONFORMANCE.md) is the verification
+doctrine. [inventory/](inventory/) holds the eleven per-subsystem porting contracts
+(each adversarially verified against the code).
+
+---
+
+## 1. Purpose and non-negotiables
+
+The Python/Pygame build (434 files, ~159,800 LOC, 1,219 green tests, playtest-GO as
+of 2026-07-17) is the **reference build**. It keeps running unmodified throughout
+the migration — it is the oracle, the fallback, and the playtest vehicle until the
+Godot build reaches parity.
+
+Non-negotiables:
+1. **Sacred constants survive verbatim** — damage `base × hand(1.1–1.2) ×
+   STR(1+STR×0.05) × skill × class(≤1.2) × crit(2×) − def(≤75%)`; EXP
+   `int(200 × 1.75^(lvl−1))`, max level 30; tier multipliers 1/2/4/8; durability
+   floor 50% (never breaks); LCK crit 0.12/pt; the full ledger is
+   [inventory/11-constants-and-tests.md](inventory/11-constants-and-tests.md).
+2. **Content JSON untouched** (ADR-4). Loaders port; content does not move.
+3. **Every phase exits through an oracle**, not through "looks right" (ADR-5).
+4. **The feature-parity checklist** ([inventory/08-presentation.md](inventory/08-presentation.md))
+   must be fully ticked before the Python build is retired. Nothing player-visible
+   is silently dropped.
+
+## 2. Methodology
+
+**Conformance-gated vertical slices** (strangler-fig, not big-bang):
+
+- Port bottom-up along the dependency graph: pure logic → data layer → simulation →
+  engine presentation. Each phase produces a *playable or testable* artifact.
+- `Game1.Core` (pure .NET, no Godot) holds all rules; `dotnet test` runs the
+  conformance suite on every change without booting an engine. Engine glue stays thin.
+- The golden-vector generator is re-runnable at any time; if Python balance changes
+  mid-migration (it will — playtests are running), regenerate and the C# suite tells
+  you exactly what moved.
+- Each subsystem's inventory doc is its **porting contract**: file dispositions,
+  public surface, constants, event topics, 3D notes, Godot mapping. A port PR is
+  reviewed against its contract.
+- **Why the Unity attempt failed, and what we do differently:** it ported logic in
+  engine-shaped phases with no behavioral oracle and no continuously-runnable
+  reference. Here the reference build never stops working, every slice is
+  conformance-gated, and the engine is the last thing wired, not the first.
+
+## 3. Phase plan
+
+Ordering follows the dependency graph; each phase lists its **exit oracle**.
+
+| Phase | Scope | Exit oracle |
+|---|---|---|
+| **P0 Foundation & Oracle** *(this session)* | Branch, inventory contracts, ADRs, Godot+C# scaffold, golden generator, first conformance slice (EXP, stats, crit, defense, damage composition, difficulty, reward) | `generate_goldens.py` runs green from live Python; C# tests compile and pass on goldens once SDK installed |
+| **P1 Data layer** | C# models + all 16 database loaders, Update-N overlay, generated-content registries, tag definitions | Loader-parity goldens: Python dumps normalized DB contents; C# loads the same JSON; diff is empty |
+| **P2 Character core** | Stats, leveling, inventory (30 slots/stacking), equipment (8 slots), buffs, titles, classes, durability/weight/repair, status effects | Golden vectors + ported unit tests; save fragment round-trip |
+| **P3 World & 3D ground** | Chunk/biome generation (deterministic), GridMap terrain, collision, player controller, camera, interaction raycasts | Same seed → identical tile grid hash Python vs C#; walkable 3D world |
+| **P4 Combat** | Damage pipeline, crit, per-target defense, attack state machine, hitboxes (2D→3D volumes), projectiles, enemies, enchantments (all 14), status ticks, dungeon waves | crux-foundry scenario parity on deterministic seeds (MT19937 port for exact RNG streams where needed); viability report reproduces within tolerance |
+| **P5 Gathering & resources** | Resource nodes, tool effectiveness, yields, LCK quality/rare-drop, forestry/mining | Golden yield tables; gather loop playable in 3D |
+| **P6 Crafting** | Stations, 6 minigame logic cores + Control-panel UIs, difficulty/reward calculators (pinned in P0), failure-loss, invented items + classifiers via sidecar | Minigame logic goldens (scoring scenarios); classifier round-trip through sidecar |
+| **P7 Skills & progression UI** | 35 skills, mana/cooldowns, skill unlocks, encyclopedia, map/waypoints, quest log UI | Skill-effect goldens (executor paths); UI parity checklist |
+| **P8 Save/load** | Full save schema, atomic .bak writes, versioning | **A Python save loads in Godot and round-trips** (ADR-9) |
+| **P9 Living-world bridge** | Sidecar launcher/health/restart, IPC per the doc-09 contract, event forwarding, NPC dialogue, quests + affinity turn-in, F12 overlay data, speechbanks | All doc-09 crossings exercised end-to-end against the real sidecar; degrade paths verified with sidecar killed |
+| **P10 3D-necessitated & polish** | Camera polish, lighting, 3D audio, nav for NPC wander, art upgrade pass (billboard→model where wanted), *optional* gameplay verticality (explicitly re-balanced if adopted) | Feature-parity checklist 100% ticked; playtest sign-off |
+
+Phases P1–P2 are pure `dotnet` work (no Godot needed). P3 is where the engine enters.
+
+## 4. 3D-necessitated additions (the ONLY allowed feature additions)
+
+Tracked explicitly so scope stays honest:
+- Third-person camera (orbit/follow, collision-aware)
+- Camera-relative WASD movement mapping
+- 3D hitbox volumes (extruded equivalents of the 2D shapes — zero balance change)
+- Terrain visual relief + biome meshing (visual-only in P3)
+- Billboarded entity rendering (Sprite3D) and its draw-order/lighting rules
+- 3D-positional audio (was flat 2D)
+- NPC navmesh wander (replaces 2D grid wander, same behavioral envelope)
+- *Deferred decision:* true verticality (jump/cliffs/fall damage) — post-parity only,
+  because it changes balance
+
+## 5. Risk register
+
+| Risk | Mitigation |
+|---|---|
+| Formula drift during port (the Unity failure mode) | ADR-5 oracle; goldens generated from live code, never hand-derived |
+| Python `random` vs C# RNG divergence breaks crux parity | Port MT19937 (fully specified, ~60 lines) behind an injected RNG interface; distribution tests elsewhere |
+| game_engine.py hidden coupling (11.7k-line monolith) | Doc-01 decomposition map with per-cluster line ranges + update-order contract; port clusters one at a time |
+| Sidecar lifecycle on player machines (no Python installed) | PyInstaller-frozen sidecar, health-check + auto-restart + graceful degrade (degrade paths already exist and are tested) |
+| Save incompatibility discovered late | Save round-trip is its own phase gate (P8) and P2 already round-trips fragments |
+| Content JSON pixel-space fields misinterpreted in 3D | Doc-10 engine-agnosticism audit enumerates them; interpretation layer, never content edits |
+| Balance changes on `main` during long migration | Reference build stays live; goldens regenerate on demand; diff = exact behavioral delta |
+| Toolchain absent on dev machine | Two installs (below); everything else in P0 was built file-complete so the first `dotnet test` run is immediate |
+
+## 6. Operator setup (one-time, ~10 minutes)
+
+Neither tool is currently installed (probed 2026-07-17):
+1. **.NET 8 SDK** — `winget install Microsoft.DotNet.SDK.8` (or dotnet.microsoft.com)
+2. **Godot 4.4+ .NET edition** — godotengine.org/download (the "\.NET" build, not the
+   standard one)
+
+Then: `cd Game-1-Godot && dotnet test` (conformance suite) and open the project in
+Godot once so it generates its solution glue.
+
+## 7. Status log
+
+- **2026-07-17 — P0 executed.** Branch created; 11 inventory contracts written by
+  parallel subagents (the formal adversarial-verification pass was cut short by the
+  monthly subagent spend limit — see `inventory/README.md` for status, inline
+  spot-check results 3/3 exact, and the workflow-resume command); ADRs 1–9 accepted;
+  Godot project + C# solution scaffolded; golden generator built and run against the
+  live Python modules (fixtures in `Game-1-Godot/conformance/goldens/`); first C#
+  port slice (`GameConstants`, `ExperienceCurve`, `StatScaling`, `CritChance`,
+  `DefenseReduction`, `DamageComposition`, reward/difficulty bands) authored with
+  xunit conformance tests. Blocked only on the two installs above for the first
+  `dotnet test` run.
+
+## 8. Load-bearing findings from the inventory pass
+
+Full detail in the per-subsystem docs; these shape phase work:
+
+1. **The per-frame update order is a contract** — `game_engine.py:8363-8576`
+   encodes strict sequencing (WMS drain before combat; enemy attacks/status resolve
+   before player buff ticks; hitboxes before projectiles; world fully pauses during
+   minigames/pause). `_PhysicsProcess` must reproduce it or combat feel and DoT
+   timing silently change. (doc 01)
+2. **Two independent crit systems must NOT be unified** — the effect executor's
+   `critical` special tag (0.15 chance / 2.0×, `effect_executor.py:119-126`) is
+   separate from the sacred LCK crit (0.12/pt) in the combat manager. (doc 02)
+3. **Duck typing is the correctness surface** — `hasattr` chains and
+   signature-sniffing dispatch silently no-op in Python; the C# port needs explicit
+   complete interfaces (`IDamageable`, `IStatusReceiver`, INT-scalable minigames via
+   an `IIntScalable` interface or the sacred INT difficulty reduction silently
+   drops). (docs 01, 02)
+4. **Bug-compatible behaviors survive verbatim until parity is certified** — full
+   base damage applied once per damage tag; `converts_to_healing` early-return;
+   status params merged only for keys present in tag defaults; first-try-bonus
+   inconsistency between reward_calculator and engineering.py. Port them as-is,
+   flag for post-parity cleanup. (doc 02)
+5. **Invented-item persistence is a 4-way registration** (Crafter, RecipeDatabase,
+   PlacementDatabase, Material/Equipment DB) keyed by an MD5 placement-hash dedup —
+   miss one on load and player-invented items vanish. (doc 01)
+6. **Known engine bugs to DECIDE on, not blindly port** — activity time
+   double-ticked per frame (8394 + 8442, verified); CHEST_OPENED/FISH_CAUGHT always
+   publish position (0,0); F9 quick-load skips `game_time` restore; enchant
+   test-apply mutates real equipment. Decision: fix in C# and note the behavioral
+   diff in goldens, or port bug-compatible. Default: fix, document, regenerate. (doc 01)
+7. **Doc drift confirmed again** — invented-item LLM temperature is 0.7 in code
+   (game_engine.py:5031, verified) vs 0.4 documented; game_engine.py is 12,035
+   lines (verified). The code-is-truth doctrine stands.
