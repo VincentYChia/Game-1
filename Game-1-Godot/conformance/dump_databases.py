@@ -1137,6 +1137,51 @@ def dump_all(dbs: dict) -> None:
         "cases": biome_cases,
     })
 
+    # ── P3: geography noise module (pure functions, EXECUTED) ────────────
+    from systems.geography import noise as geo_noise
+
+    territory = set()
+    for ty in range(0, 20):
+        for tx in range(0, 30):
+            if not (12 <= tx <= 17 and 8 <= ty <= 11):  # notch
+                territory.add((tx, ty))
+    island = {(50, 50), (51, 50), (50, 51)}
+    two_part = territory | island
+
+    def chunks_sorted(s):
+        return sorted([list(c) for c in s])
+
+    regions_plain = geo_noise.voronoi_subdivide(territory, 5, seed=4242)
+    regions_noisy = geo_noise.voronoi_subdivide(territory, 5, seed=4242,
+                                                noise_amplitude=1.5,
+                                                noise_frequency=0.05)
+    write("geo_noise.json", {
+        "_meta": meta("systems/geography/noise.py (hash noise, contiguity, "
+                      "Voronoi subdivision — all executed)"),
+        "hash_2d": {f"{x},{y},{s}": geo_noise.hash_2d(x, y, s)
+                    for x, y, s in [(0, 0, 1), (5, -3, 4242), (-7, 11, 999),
+                                    (300, 412, 123456), (511, 511, 1)]},
+        "hash_2d_int": {f"{x},{y},{s},{m}": geo_noise.hash_2d_int(x, y, s, m)
+                        for x, y, s, m in [(0, 0, 999, 600), (3, 17, 999, 600),
+                                           (1, 2, 1000, 7), (4, 4, 1, 0)]},
+        "value_noise": {f"{x},{y},{s}": geo_noise.value_noise_2d(x, y, s)
+                        for x, y, s in [(0.5, 0.5, 42), (-1.25, 3.75, 42),
+                                        (10.1, -20.9, 7), (0.0, 0.0, 7)]},
+        "fractal_noise": {f"{x},{y},{s}": geo_noise.fractal_noise_2d(x, y, s)
+                          for x, y, s in [(0.5, 0.5, 42), (12.3, 45.6, 7),
+                                          (-3.3, 2.2, 99)]},
+        "contiguous_true": geo_noise.is_contiguous(territory),
+        "contiguous_false": geo_noise.is_contiguous(two_part),
+        "components": [chunks_sorted([c])[0] and sorted([list(p) for p in c])
+                       for c in sorted(geo_noise.find_components(two_part),
+                                       key=len, reverse=True)],
+        "corridor_width": geo_noise.measure_min_corridor_width(territory),
+        "voronoi_plain": sorted([sorted([list(p) for p in r])
+                                 for r in regions_plain]),
+        "voronoi_noisy": sorted([sorted([list(p) for p in r])
+                                 for r in regions_noisy]),
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,
