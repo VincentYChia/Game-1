@@ -1,0 +1,336 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-18",
+    "git_sha": "64e5b36f",
+    "source": "data/databases/map_waypoint_db.py (resolved config + executed lookups)"
+  },
+  "biome_color_lookup": {
+    "PEACEFUL_FOREST": [
+      34,
+      139,
+      34
+    ],
+    "crystal_cavern": [
+      120,
+      80,
+      180
+    ],
+    "lake": [
+      55,
+      100,
+      200
+    ],
+    "nonexistent_biome": [
+      30,
+      30,
+      40
+    ],
+    "peaceful_forest": [
+      34,
+      139,
+      34
+    ]
+  },
+  "biome_colors": {
+    "barren_quarry": [
+      140,
+      130,
+      110
+    ],
+    "barren_waste": [
+      140,
+      130,
+      110
+    ],
+    "cave": [
+      95,
+      95,
+      100
+    ],
+    "crystal_cave": [
+      120,
+      80,
+      180
+    ],
+    "crystal_cavern": [
+      120,
+      80,
+      180
+    ],
+    "cursed_marsh": [
+      55,
+      70,
+      55
+    ],
+    "dangerous_cave": [
+      64,
+      64,
+      64
+    ],
+    "dangerous_forest": [
+      0,
+      100,
+      0
+    ],
+    "dangerous_quarry": [
+      139,
+      69,
+      19
+    ],
+    "deep_cave": [
+      60,
+      55,
+      80
+    ],
+    "dense_forest": [
+      22,
+      100,
+      30
+    ],
+    "dense_thicket": [
+      22,
+      100,
+      30
+    ],
+    "flooded_cave": [
+      70,
+      85,
+      130
+    ],
+    "forest": [
+      46,
+      139,
+      50
+    ],
+    "lake": [
+      55,
+      100,
+      200
+    ],
+    "overgrown_ruins": [
+      100,
+      110,
+      75
+    ],
+    "peaceful_cave": [
+      105,
+      105,
+      105
+    ],
+    "peaceful_forest": [
+      34,
+      139,
+      34
+    ],
+    "peaceful_quarry": [
+      160,
+      82,
+      45
+    ],
+    "quarry": [
+      155,
+      120,
+      85
+    ],
+    "rare_ancient_quarry": [
+      255,
+      140,
+      0
+    ],
+    "rare_deep_cave": [
+      138,
+      43,
+      226
+    ],
+    "rare_hidden_forest": [
+      50,
+      205,
+      50
+    ],
+    "river": [
+      65,
+      120,
+      185
+    ],
+    "rocky_forest": [
+      75,
+      115,
+      65
+    ],
+    "rocky_forest_quarry": [
+      75,
+      115,
+      65
+    ],
+    "rocky_highlands": [
+      130,
+      130,
+      120
+    ],
+    "rocky_quarry": [
+      130,
+      130,
+      120
+    ],
+    "ruins_quarry": [
+      100,
+      110,
+      75
+    ],
+    "spawn_area": [
+      255,
+      215,
+      0
+    ],
+    "unexplored": [
+      30,
+      30,
+      40
+    ],
+    "water_cursed_swamp": [
+      75,
+      0,
+      130
+    ],
+    "water_lake": [
+      65,
+      105,
+      225
+    ],
+    "water_river": [
+      70,
+      130,
+      180
+    ],
+    "wetland": [
+      60,
+      110,
+      90
+    ]
+  },
+  "dungeon_marker": {
+    "color": [
+      220,
+      20,
+      60
+    ],
+    "shape": "skull",
+    "show_label": false,
+    "size": 8
+  },
+  "loaded": true,
+  "map_display": {
+    "center_on_player": true,
+    "chunk_render_size": 12,
+    "default_zoom": 0.5,
+    "max_zoom": 4.0,
+    "min_zoom": 0.08,
+    "show_coordinates": true,
+    "show_grid": true,
+    "show_player_marker": true,
+    "show_waypoint_markers": true,
+    "zoom_step": 0.25
+  },
+  "max_waypoints_by_level": {
+    "1": 1,
+    "10": 3,
+    "11": 3,
+    "12": 3,
+    "13": 3,
+    "14": 3,
+    "15": 4,
+    "16": 4,
+    "17": 4,
+    "18": 4,
+    "19": 4,
+    "2": 1,
+    "20": 5,
+    "21": 5,
+    "22": 5,
+    "23": 5,
+    "24": 5,
+    "25": 6,
+    "26": 6,
+    "27": 6,
+    "28": 6,
+    "29": 6,
+    "3": 1,
+    "30": 7,
+    "4": 1,
+    "5": 2,
+    "6": 2,
+    "7": 2,
+    "8": 2,
+    "9": 2
+  },
+  "player_marker": {
+    "color": [
+      255,
+      255,
+      255
+    ],
+    "shape": "triangle",
+    "show_label": false,
+    "size": 8
+  },
+  "ui": {
+    "background_color": [
+      20,
+      20,
+      30,
+      240
+    ],
+    "border_color": [
+      100,
+      100,
+      120
+    ],
+    "font_color": [
+      220,
+      220,
+      220
+    ],
+    "map_window_size": [
+      700,
+      600
+    ],
+    "waypoint_panel_width": 200
+  },
+  "waypoint": {
+    "blocked_in_combat": true,
+    "blocked_in_dungeons": true,
+    "default_name_format": "Waypoint {number}",
+    "enabled": true,
+    "max_name_length": 24,
+    "max_waypoints": 7,
+    "min_distance_between_waypoints": 32,
+    "require_solid_ground": true,
+    "spawn_always_available": true,
+    "spawn_default_name": "Spawn",
+    "spawn_position": [
+      0,
+      0
+    ],
+    "teleport_cooldown": 30.0,
+    "teleport_mana_cost": 0,
+    "unlock_levels": [
+      5,
+      10,
+      15,
+      20,
+      25,
+      30
+    ]
+  },
+  "waypoint_marker": {
+    "color": [
+      255,
+      215,
+      0
+    ],
+    "shape": "diamond",
+    "show_label": true,
+    "size": 10
+  }
+}

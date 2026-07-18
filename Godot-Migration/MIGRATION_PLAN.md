@@ -162,11 +162,21 @@ Godot once so it generates its solution glue.
   boundary substrate — BEHAVIORAL oracle: synthetic records through the
   real Python class, its query results replayed in C#: tag match_all/any +
   limit-break order, stable recency sort, round-trip). All green on first
-  parity runs. Remaining for P1: map_waypoint_db (decompose: rules port /
-  pixel+color config → Godot theme), visual_config_db (thin typed reader),
-  skill_unlock_db (deliberately sequenced into P2 with the
-  UnlockRequirements condition graph / ICharacterQuery), world.py models
-  (port alongside their consumers in P2/P3).
+  parity runs.
+- **2026-07-18 (close) — P1 DATA LAYER COMPLETE: 15/16 databases, suite
+  47/47.** VisualConfig (every accessor executed as oracle — designer visual
+  tuning survives the engine swap) and MapWaypointConfig (waypoint rules
+  incl. `get_max_waypoints_for_level` executed for all 30 levels, biome
+  color table + UI config kept as Godot-theme data) close out the loaders.
+  The 16th database, skill_unlock_db, is **deliberately P2 scope**: it
+  parses the UnlockRequirements condition graph, which types together with
+  title requirements behind ICharacterQuery. world.py models port alongside
+  their consumers in P2/P3. **P1 exit oracle satisfied** — every
+  content-loading database reproduces the Python loaders' normalized state
+  from the same content files. Next: P2 character core (stats/leveling
+  already pinned in P0; inventory, equipment incl. EquipmentItem
+  materialization formulas, buffs, titles+conditions, status effects,
+  durability/weight, save fragments).
 
 ## 7a. Parked — DO NOT FORGET
 

@@ -385,6 +385,26 @@ def dump_all(dbs: dict) -> None:
                                ["idle", "aggro", "attacking", "fleeing", "__unknown__"]},
     })
 
+    from data.databases.map_waypoint_db import MapWaypointConfig
+    mw = MapWaypointConfig.get_instance()
+    write("map_waypoint.json", {
+        "_meta": meta("data/databases/map_waypoint_db.py (resolved config + "
+                      "executed lookups)"),
+        "loaded": mw.loaded,
+        "map_display": asdict(mw.map_display),
+        "biome_colors": {k: list(v) for k, v in sorted(mw.biome_colors.items())},
+        "player_marker": asdict(mw.player_marker),
+        "waypoint_marker": asdict(mw.waypoint_marker),
+        "dungeon_marker": asdict(mw.dungeon_marker),
+        "waypoint": asdict(mw.waypoint),
+        "ui": asdict(mw.ui),
+        "biome_color_lookup": {t: list(mw.get_biome_color(t)) for t in
+                               ["peaceful_forest", "PEACEFUL_FOREST", "lake",
+                                "crystal_cavern", "nonexistent_biome"]},
+        "max_waypoints_by_level": {str(lvl): mw.get_max_waypoints_for_level(lvl)
+                                   for lvl in range(1, 31)},
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,
