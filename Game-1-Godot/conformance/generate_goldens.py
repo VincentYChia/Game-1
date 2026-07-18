@@ -284,8 +284,8 @@ def gen_difficulty() -> None:
     input_sets = {
         "t1_single": mk([(1, 3)]),
         "t1_pair": mk([(1, 2), (1, 1)]) if len(samples.get(1, [])) < 2 else
-                   [{"materialId": samples[1][0], "quantity": 2},
-                    {"materialId": samples[1][1], "quantity": 1}],
+                   [{"materialId": samples[1][0], "quantity": 2, "tier": 1},
+                    {"materialId": samples[1][1], "quantity": 1, "tier": 1}],
         "t2_mix": mk([(1, 2), (2, 2)]),
         "t3_heavy": mk([(3, 4), (2, 2), (1, 1)]),
         "t4_epic": mk([(4, 5), (3, 3)]),

@@ -11,7 +11,7 @@ public class ExperienceCurveTests
     [Fact]
     public void RequirementTable_MatchesPython()
     {
-        Assert.Equal(G.GetProperty("max_level").GetInt32(), ExperienceCurve.MaxLevel);
+        Assert.Equal(ExperienceCurve.MaxLevel, G.GetProperty("max_level").GetInt32());
         foreach (var prop in G.GetProperty("requirements_to_reach_level").EnumerateObject())
         {
             var level = int.Parse(prop.Name);
