@@ -1076,6 +1076,67 @@ def dump_all(dbs: dict) -> None:
         "scenarios": st,
     })
 
+    # ── P3: Python-exact RNG (MT19937) + legacy BiomeGenerator parity ────
+    import hashlib
+    import random as _pyrandom
+
+    def rng_stream(seed, fn, n):
+        r = _pyrandom.Random(seed)
+        return [fn(r) for _ in range(n)]
+
+    rng_cases = {}
+    for seed in [0, 1, 42, 12345, 2**31 - 1, 2**40 + 123]:
+        shuffled = list(range(10))
+        _pyrandom.Random(seed).shuffle(shuffled)
+        rng_cases[str(seed)] = {
+            "random": rng_stream(seed, lambda r: r.random(), 10),
+            "getrandbits_5": rng_stream(seed, lambda r: r.getrandbits(5), 10),
+            "getrandbits_32": rng_stream(seed, lambda r: r.getrandbits(32), 10),
+            "getrandbits_64": [str(v) for v in
+                               rng_stream(seed, lambda r: r.getrandbits(64), 5)],
+            "randint_3_17": rng_stream(seed, lambda r: r.randint(3, 17), 10),
+            "choice_range7": rng_stream(seed, lambda r: r.choice(list(range(7))), 10),
+            "uniform_m5_5": rng_stream(seed, lambda r: r.uniform(-5.0, 5.0), 5),
+            "shuffle_10": shuffled,
+        }
+    write("python_rng.json", {
+        "_meta": meta("stdlib random.Random (MT19937 + init_by_array + "
+                      "_randbelow) — every stream from a FRESH Random(seed)"),
+        "cases": rng_cases,
+    })
+
+    from systems.biome_generator import BiomeGenerator
+    biome_cases = {}
+    for seed in [12345, 999]:
+        gen = BiomeGenerator(world_seed=seed)
+        grid = {}
+        water = {}
+        dungeon = {}
+        for cy in range(-12, 13):
+            for cx in range(-12, 13):
+                key = f"{cx},{cy}"
+                grid[key] = gen.get_chunk_type(cx, cy)
+                water[key] = gen.is_water_chunk(cx, cy)
+                dungeon[key] = gen.should_spawn_dungeon(cx, cy)
+        canon = ";".join(f"{k}:{grid[k]}" for k in sorted(grid))
+        biome_cases[str(seed)] = {
+            "grid": grid,
+            "water": water,
+            "dungeon": dungeon,
+            "grid_sha256": hashlib.sha256(canon.encode()).hexdigest(),
+            "chunk_seeds": {f"{x},{y}": gen.get_chunk_seed(x, y)
+                            for x, y in [(0, 0), (5, -3), (-7, 11), (300, -412)]},
+            "hash2d_samples": {f"{x},{y},{o}": gen._hash_2d(x, y, o)
+                               for x, y, o in [(0, 0, 100), (5, -3, 5000),
+                                               (-7, 11, 10000), (12, 12, 3000)]},
+        }
+    write("biome_generator.json", {
+        "_meta": meta("systems/biome_generator.py (legacy fallback — still the "
+                      "oracle for pre-geographic saves): 25x25 chunk grid + "
+                      "water/dungeon flags EXECUTED per seed; sha256 canon"),
+        "cases": biome_cases,
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,
