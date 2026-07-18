@@ -17,7 +17,8 @@ public static class BootedDatabases
     public static readonly Lazy<(MaterialDatabase Materials, TranslationDatabase Translations,
         RecipeDatabase Recipes, EquipmentDatabase Equipment, TitleDatabase Titles,
         ClassDatabase Classes, SkillDatabase Skills, PlacementDatabase Placements,
-        ResourceNodeDatabase ResourceNodes, NpcDatabase Npcs)> All = new(() =>
+        ResourceNodeDatabase ResourceNodes, NpcDatabase Npcs,
+        ChunkTemplateDatabase ChunkTemplates)> All = new(() =>
     {
         var root = ContentPaths.TryGetContentRoot()
                    ?? throw new InvalidOperationException("Game-1-modular content root not found");
@@ -63,10 +64,13 @@ public static class BootedDatabases
         var npcs = new NpcDatabase();
         npcs.LoadFromFiles(root);  // boot state: no generated merge
 
+        var chunkTemplates = new ChunkTemplateDatabase();
+        chunkTemplates.LoadFromFiles(root);
+
         UpdateLoader.LoadAll(root, equipment, skills, materials, recipes, titles);
 
         return (materials, translations, recipes, equipment, titles, classes, skills,
-                placements, resourceNodes, npcs);
+                placements, resourceNodes, npcs, chunkTemplates);
     });
 }
 
@@ -274,6 +278,41 @@ public class DbParityTests
         var diffs = JsonTreeComparer.Diff(golden.GetProperty("quests"), actual);
         Assert.True(diffs.Count == 0,
             $"quests: {diffs.Count} diffs:\n  " + string.Join("\n  ", diffs.Take(25)));
+    }
+
+    [Fact]
+    public void ChunkTemplates_MatchPythonLoaderState()
+    {
+        var db = BootedDatabases.All.Value.ChunkTemplates;
+        var actual = new JsonObject();
+        foreach (var kv in db.Templates)
+            actual[kv.Key] = kv.Value.ToParityNode();
+        AssertParity("chunk_templates.json", "templates", actual, db.Templates.Count);
+    }
+
+    [Fact]
+    public void ChunkTemplates_GeoDispatchAndConstants_MatchPython()
+    {
+        var db = BootedDatabases.All.Value.ChunkTemplates;
+        var golden = GoldenFixture.Load("db_parity/chunk_templates.json");
+
+        var dispatch = new JsonObject();
+        foreach (var kv in db.GeoDispatch) dispatch[kv.Key] = kv.Value;
+        var diffs = JsonTreeComparer.Diff(golden.GetProperty("geo_dispatch"), dispatch);
+        Assert.True(diffs.Count == 0, "geo_dispatch: " + string.Join("; ", diffs.Take(10)));
+
+        foreach (var e in golden.GetProperty("density_weights").EnumerateObject())
+            GoldenFixture.AssertClose(e.Value.GetDouble(),
+                ChunkTemplateDatabase.DensityWeights[e.Name], $"density[{e.Name}]");
+        foreach (var e in golden.GetProperty("tier_bias_order").EnumerateObject())
+            Assert.Equal(e.Value.GetInt32(), ChunkTemplateDatabase.TierBiasOrder[e.Name]);
+
+        var stats = golden.GetProperty("stats");
+        var (total, sacred, generated, geoEntries) = db.Stats();
+        Assert.Equal(stats.GetProperty("total").GetInt32(), total);
+        Assert.Equal(stats.GetProperty("sacred").GetInt32(), sacred);
+        Assert.Equal(stats.GetProperty("generated").GetInt32(), generated);
+        Assert.Equal(stats.GetProperty("geo_dispatch_entries").GetInt32(), geoEntries);
     }
 
     [Fact]

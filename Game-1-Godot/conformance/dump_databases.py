@@ -117,6 +117,10 @@ def boot() -> dict:
     npc_db = NPCDatabase.get_instance()
     npc_db.load_from_files()  # boot does NOT merge generated files (reload-only)
 
+    # Lazy-loaded in-game on first get_instance(); explicit here.
+    from data.databases.chunk_template_db import ChunkTemplateDatabase
+    chunk_db = ChunkTemplateDatabase.get_instance()
+
     # Update-N overlay LAST, exactly like boot (also touches enemy /
     # skill-unlock DBs — harmless here, they just load too).
     load_all_updates(get_resource_path(""))
@@ -125,7 +129,7 @@ def boot() -> dict:
         "materials": mat_db, "translations": trans_db, "recipes": recipe_db,
         "equipment": equip_db, "titles": title_db, "classes": class_db,
         "skills": skill_db, "placements": placement_db,
-        "resource_nodes": res_db, "npcs": npc_db,
+        "resource_nodes": res_db, "npcs": npc_db, "chunk_templates": chunk_db,
     }
 
 
@@ -231,6 +235,19 @@ def dump_all(dbs: dict) -> None:
         "quest_source_version": npcs.quest_source_version,
         "npcs": {nid: asdict(n) for nid, n in sorted(npcs.npcs.items())},
         "quests": {qid: asdict(q) for qid, q in sorted(npcs.quests.items())},
+    })
+
+    chunks = dbs["chunk_templates"]
+    import data.databases.chunk_template_db as ctd
+    write("chunk_templates.json", {
+        "_meta": meta("data/databases/chunk_template_db.py (sacred + generated "
+                      "overlay + geo dispatch bridge + geoTypes auto-register)"),
+        "count": len(chunks.templates),
+        "templates": {ct: asdict(t) for ct, t in sorted(chunks.templates.items())},
+        "geo_dispatch": chunks.geo_dispatch_map(),
+        "stats": chunks.stats(),
+        "density_weights": dict(ctd.DENSITY_WEIGHTS),
+        "tier_bias_order": dict(ctd.TIER_BIAS_ORDER),
     })
 
     write("translations.json", {
