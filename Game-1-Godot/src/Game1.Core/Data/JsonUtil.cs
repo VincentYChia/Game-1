@@ -17,14 +17,20 @@ internal static class J
         return def;
     }
 
-    public static double Num(JsonObject o, string key, double def)
+    /// <summary>Numeric value of a node, tolerant of BOTH parsed JSON numbers
+    /// and C#-constructed JsonValues (int-backed nodes fail TryGetValue&lt;double&gt;).</summary>
+    public static double? AsNum(JsonNode? n)
     {
-        if (o.TryGetPropertyValue(key, out var n) && n is JsonValue v)
-        {
-            if (v.TryGetValue<double>(out var d)) return d;
-        }
-        return def;
+        if (n is not JsonValue v) return null;
+        if (v.TryGetValue<double>(out var d)) return d;
+        if (v.TryGetValue<long>(out var l)) return l;
+        if (v.TryGetValue<int>(out var i)) return i;
+        if (v.TryGetValue<decimal>(out var m)) return (double)m;
+        return null;
     }
+
+    public static double Num(JsonObject o, string key, double def) =>
+        o.TryGetPropertyValue(key, out var n) ? AsNum(n) ?? def : def;
 
     public static int Int(JsonObject o, string key, int def) =>
         (int)Num(o, key, def);

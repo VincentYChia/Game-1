@@ -526,6 +526,169 @@ def dump_all(dbs: dict) -> None:
                              for sid, u in sorted(su_db.unlocks_by_skill.items())},
     })
 
+    # ── Equipment materialization + EquipmentItem behaviors ──────────────
+    from data.models.equipment import EquipmentItem
+    from entities.components.weapon_tag_calculator import WeaponTagModifiers
+    from core.crafting_tag_processor import (SmithingTagProcessor,
+                                             EnchantingTagProcessor)
+
+    def item_state(it):
+        d = dict(vars(it))
+        d["damage"] = list(d["damage"])
+        return d
+
+    materialized = {}
+    for iid in sorted(dbs["equipment"].items):
+        it = dbs["equipment"].create_equipment_from_id(iid)
+        if it is not None:
+            materialized[iid] = item_state(it)
+
+    def synth(damage=(10, 20), defense=0, cur=100, mx=100, item_type="weapon",
+              efficiency=1.0, bonuses=None, ench=None, slot="mainHand"):
+        it = EquipmentItem("synth", "Synth", 1, "common", slot,
+                           damage=damage, defense=defense,
+                           durability_current=cur, durability_max=mx,
+                           item_type=item_type)
+        it.efficiency = efficiency
+        it.bonuses = bonuses or {}
+        it.enchantments = ench or []
+        return it
+
+    dur_grid = [(100, 100), (75, 100), (60, 100), (50, 100), (49, 100),
+                (25, 100), (20, 100), (1, 100), (0, 100)]
+    effectiveness = {f"{c}/{m}": synth(cur=c, mx=m).get_effectiveness()
+                     for c, m in dur_grid}
+    urgency = {f"{c}/{m}": synth(cur=c, mx=m).get_repair_urgency()
+               for c, m in dur_grid}
+
+    r1 = synth(cur=10, mx=100)
+    rep_amount = r1.repair(amount=25)
+    r2 = synth(cur=10, mx=100)
+    rep_percent = r2.repair(percent=0.5)
+    r3 = synth(cur=10, mx=100)
+    rep_full = r3.repair()
+
+    dmg_cases = {
+        "plain": synth().get_actual_damage(),
+        "crafted_mult": synth(bonuses={"damage_multiplier": 0.25}).get_actual_damage(),
+        "tool_efficiency": synth(item_type="tool", efficiency=1.2).get_actual_damage(),
+        "weapon_efficiency_ignored": synth(item_type="weapon", efficiency=1.2).get_actual_damage(),
+        "ench_mult": synth(ench=[{"enchantment_id": "sharpness_1", "name": "S",
+                                  "effect": {"type": "damage_multiplier", "value": 0.15}}]
+                           ).get_actual_damage(),
+        "worn_30": synth(cur=30).get_actual_damage(),
+        "broken_0": synth(cur=0).get_actual_damage(),
+        "stacked": synth(cur=30, item_type="tool", efficiency=1.2,
+                         bonuses={"damage_multiplier": 0.25},
+                         ench=[{"enchantment_id": "sharpness_1", "name": "S",
+                                "effect": {"type": "damage_multiplier", "value": 0.15}}]
+                         ).get_actual_damage(),
+    }
+    def_cases = {
+        "plain": synth(damage=(0, 0), defense=50, slot="chestplate",
+                       item_type="armor").get_defense_with_enchantments(),
+        "crafted_and_ench": synth(damage=(0, 0), defense=50, slot="chestplate",
+                                  item_type="armor",
+                                  bonuses={"defense_multiplier": -0.1},
+                                  ench=[{"enchantment_id": "protection_1", "name": "P",
+                                         "effect": {"type": "defense_multiplier",
+                                                    "value": 0.2}}]
+                                  ).get_defense_with_enchantments(),
+        "worn_10": synth(damage=(0, 0), defense=50, slot="chestplate",
+                         item_type="armor", cur=10).get_defense_with_enchantments(),
+    }
+
+    seq_item = synth()
+    ench_seq = []
+    for eid, name, effect in [
+        ("sharpness_2", "Sharpness II", {"type": "damage_multiplier", "value": 0.2}),
+        ("sharpness_2", "Sharpness II", {"type": "damage_multiplier", "value": 0.2}),
+        ("sharpness_1", "Sharpness I", {"type": "damage_multiplier", "value": 0.1}),
+        ("sharpness_3", "Sharpness III", {"type": "damage_multiplier", "value": 0.3}),
+        ("frost_1", "Frost I", {"type": "slow", "value": 0.3,
+                                "conflictsWith": ["sharpness_3"]}),
+    ]:
+        ok, reason = seq_item.apply_enchantment(eid, name, effect)
+        ench_seq.append({"apply": eid, "ok": ok, "reason": reason,
+                         "now": [e["enchantment_id"] for e in seq_item.enchantments]})
+
+    type_grid = []
+    for slot, damage, itype in [("mainHand", (5, 9), "weapon"),
+                                ("mainHand", (5, 9), "shield"),
+                                ("mainHand", (0, 0), ""),
+                                ("mainHand", (5, 9), ""),
+                                ("tool", (0, 0), ""),
+                                ("helmet", (0, 0), ""),
+                                ("accessory", (0, 0), ""),
+                                ("offHand", (0, 0), "invalid_type")]:
+        it = synth(damage=damage, slot=slot, item_type=itype)
+        type_grid.append({"slot": slot, "damage": list(damage),
+                          "item_type_in": itype, "resolved": it._get_item_type()})
+
+    can_equip_stub = SimpleNamespace(
+        leveling=SimpleNamespace(level=4),
+        stats=SimpleNamespace(strength=8, defense=0, vitality=0, luck=0,
+                              agility=3, intelligence=0))
+    ce_cases = {}
+    for name, reqs in [("level_fail", {"level": 5}),
+                       ("level_ok", {"level": 4}),
+                       ("stat_fail", {"stats": {"STR": 10}}),
+                       ("stat_ok", {"stats": {"str": 8}}),
+                       ("dex_alias", {"stats": {"DEX": 5}}),
+                       ("combined_fail", {"level": 3, "stats": {"AGI": 4}}),
+                       ("empty", {})]:
+        it = synth()
+        it.requirements = reqs
+        ok, reason = it.can_equip(can_equip_stub)
+        ce_cases[name] = {"ok": ok, "reason": reason}
+
+    TAG_SETS = [["2H"], ["versatile"], ["1H"], ["2H", "fast", "precision"],
+                ["reach"], ["armor_breaker"], ["crushing"], ["cleaving"],
+                ["fast", "reach", "crushing"], []]
+    wtm = {"-".join(t) or "none": {
+        "dmg_no_off": WeaponTagModifiers.get_damage_multiplier(t, False),
+        "dmg_off": WeaponTagModifiers.get_damage_multiplier(t, True),
+        "speed": WeaponTagModifiers.get_attack_speed_bonus(t),
+        "crit": WeaponTagModifiers.get_crit_chance_bonus(t),
+        "range": WeaponTagModifiers.get_range_bonus(t),
+        "pen": WeaponTagModifiers.get_armor_penetration(t),
+        "vs_armored": WeaponTagModifiers.get_damage_vs_armored_bonus(t),
+        "cleaving": WeaponTagModifiers.has_cleaving(t),
+    } for t in TAG_SETS}
+
+    SLOT_SETS = [["helmet"], ["chestplate", "armor"], ["pickaxe", "tool"],
+                 ["axe"], ["shovel"], ["weapon"], ["shield"], ["accessory"],
+                 ["armor"], ["tool"], ["basic", "starter"], []]
+    slots = {"-".join(t) or "none": SmithingTagProcessor.get_equipment_slot(t)
+             for t in SLOT_SETS}
+
+    ench_rules = {}
+    for tags in [["universal"], ["weapon"], ["armor"], ["tool"], ["basic"], []]:
+        for itype in ["weapon", "armor", "tool"]:
+            ok, reason = EnchantingTagProcessor.can_apply_to_item(tags, itype)
+            ench_rules[f"{'-'.join(tags) or 'none'}|{itype}"] = {"ok": ok,
+                                                                "reason": reason}
+
+    write("equipment_items.json", {
+        "_meta": meta("equipment_db.create_equipment_from_id + models/equipment.py "
+                      "+ weapon_tag_calculator + tag processors (ALL EXECUTED)"),
+        "count": len(materialized),
+        "items": materialized,
+        "effectiveness": effectiveness,
+        "repair_urgency": urgency,
+        "repair": {"amount_25": {"restored": rep_amount, "now": r1.durability_current},
+                   "percent_50": {"restored": rep_percent, "now": r2.durability_current},
+                   "full": {"restored": rep_full, "now": r3.durability_current}},
+        "actual_damage": {k: list(v) for k, v in dmg_cases.items()},
+        "defense": def_cases,
+        "enchant_sequence": ench_seq,
+        "item_type_grid": type_grid,
+        "can_equip": ce_cases,
+        "weapon_tag_modifiers": wtm,
+        "slot_inference": slots,
+        "enchant_applicability": ench_rules,
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,

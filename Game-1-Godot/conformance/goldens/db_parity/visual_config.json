@@ -2,7 +2,7 @@
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
     "generated": "2026-07-18",
-    "git_sha": "2e1283cb",
+    "git_sha": "da59494b",
     "source": "data/databases/visual_config_db.py (every accessor EXECUTED against the live JSON + defaults)"
   },
   "damage_special_text": {
