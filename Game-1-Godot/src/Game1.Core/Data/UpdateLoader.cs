@@ -102,6 +102,18 @@ public sealed class UpdateLoader
         }
     }
 
+    /// <summary>update_loader.py:215-238 — skill-unlock update routing.</summary>
+    public static void LoadSkillUnlockUpdates(string projectRoot, SkillUnlockDatabase db)
+    {
+        foreach (var update in GetInstalledUpdates(projectRoot))
+        {
+            var dir = Path.Combine(projectRoot, update);
+            if (!Directory.Exists(dir)) continue;
+            foreach (var f in J.GlobSorted(dir, "*skill-unlocks*.JSON", "*skill_unlocks*.JSON"))
+                Try(() => db.LoadFromFile(f), f);
+        }
+    }
+
     private static void Try(Action load, string file)
     {
         try { load(); }

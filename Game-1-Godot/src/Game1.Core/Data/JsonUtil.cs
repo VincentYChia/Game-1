@@ -54,6 +54,14 @@ internal static class J
         o.TryGetPropertyValue(key, out var n) && n is JsonObject ob
             ? (JsonObject)ob.DeepClone() : new JsonObject();
 
+    /// <summary>Python str() of a JSON number: integral values print without
+    /// a decimal point (content uses ints; a true float would print
+    /// differently in Python — not present in shipped content).</summary>
+    public static string PyNum(double v) =>
+        v == Math.Floor(v) && !double.IsInfinity(v)
+            ? ((long)v).ToString()
+            : v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
     /// <summary>Files matching pattern, sorted ordinal. Deterministic where
     /// Python's update_loader uses list(set(glob)) (unordered) — a documented
     /// deviation that only matters on intra-update id collisions.</summary>

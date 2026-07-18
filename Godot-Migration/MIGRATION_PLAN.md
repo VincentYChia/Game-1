@@ -178,6 +178,23 @@ Godot once so it generates its solution glue.
   materialization formulas, buffs, titles+conditions, status effects,
   durability/weight, save fragments).
 
+- **2026-07-18 (P2 opened) — UnlockConditions + ICharacterQuery ported; P1 now
+  16/16; suite 51/51.** The tag-driven condition system (8 condition types,
+  factory with new + legacy formats incl. milestone mappings and the
+  gather_count half-split) ports with a two-sided oracle: parse parity (specs
+  from the fixture through both factories → identical to_dict/descriptions,
+  incl. Python str.title() semantics) and evaluation parity (stub characters ×
+  requirement matrix through the real Python classes). Character duck-typing
+  is now the explicit ICharacterQuery interface (per contract docs 03/04).
+  This closed the P1 titles-requirements exclusion AND unblocked
+  SkillUnlockDatabase (sacred + Update-N fishing overlay, trigger/cost/
+  requirements gated per unlock). Two dump-harness bugs found by the gate
+  itself: sort_keys reordering order-sensitive spec dicts (fixed by
+  pre-sorted specs), and the dump loading skill-unlocks after the update
+  overlay instead of boot order (fixed to game_engine.py:177 order).
+  Remaining P2: EquipmentItem materialization (+ SmithingTagProcessor),
+  inventory, buffs, status effects, durability/weight, save fragments.
+
 ## 7a. Parked — DO NOT FORGET
 
 | Item | Why parked | Unblock |

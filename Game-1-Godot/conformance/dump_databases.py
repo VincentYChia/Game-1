@@ -113,6 +113,11 @@ def boot() -> dict:
     skill_db = SkillDatabase.get_instance()
     skill_db.load_from_files()
 
+    # game_engine.py:177 — sacred skill-unlocks BEFORE Update-N overlay
+    from data.databases.skill_unlock_db import SkillUnlockDatabase
+    su_db = SkillUnlockDatabase.get_instance()
+    su_db.load_from_file(str(get_resource_path("progression/skill-unlocks.JSON")))
+
     from data.databases.npc_db import NPCDatabase
     npc_db = NPCDatabase.get_instance()
     npc_db.load_from_files()  # boot does NOT merge generated files (reload-only)
@@ -133,7 +138,7 @@ def boot() -> dict:
         "equipment": equip_db, "titles": title_db, "classes": class_db,
         "skills": skill_db, "placements": placement_db,
         "resource_nodes": res_db, "npcs": npc_db, "chunk_templates": chunk_db,
-        "world_generation": wg_db,
+        "world_generation": wg_db, "skill_unlocks": su_db,
     }
 
 
@@ -403,6 +408,122 @@ def dump_all(dbs: dict) -> None:
                                 "crystal_cavern", "nonexistent_biome"]},
         "max_waypoints_by_level": {str(lvl): mw.get_max_waypoints_for_level(lvl)
                                    for lvl in range(1, 31)},
+    })
+
+    # ── Unlock-condition system: parse + evaluate oracles ────────────────
+    from types import SimpleNamespace
+    from data.models.unlock_conditions import ConditionFactory
+
+    su_db = dbs["skill_unlocks"]
+
+    def stub_char(level=1, stats=None, activities=None, titles=None, skills=None,
+                  quests=None, class_id=None, tracker=None):
+        s = dict(strength=0, defense=0, vitality=0, luck=0, agility=0,
+                 intelligence=0)
+        s.update(stats or {})
+        acts = activities or {}
+        ttl = set(titles or [])
+        sk = set(skills or [])
+        q = set(quests or [])
+        c = SimpleNamespace(
+            leveling=SimpleNamespace(level=level),
+            stats=SimpleNamespace(**s),
+            activities=SimpleNamespace(get_count=lambda a: acts.get(a, 0)),
+            titles=SimpleNamespace(has_title=lambda t: t in ttl),
+            skills=SimpleNamespace(known_skills=sk),
+            quests=SimpleNamespace(is_quest_completed=lambda x: x in q),
+            class_system=SimpleNamespace(
+                current_class=SimpleNamespace(class_id=class_id) if class_id else None),
+        )
+        if tracker is not None:
+            c.stat_tracker = tracker
+        return c
+
+    STUB_SPECS = {
+        "fresh": {},
+        "veteran": dict(
+            level=20, stats={"strength": 12, "luck": 6},
+            activities={"mining": 150, "forestry": 40, "smithing": 60},
+            titles=["novice_miner", "apprentice_smith"],
+            skills=["power_strike", "mining_focus"],
+            quests=["q_tutorial", "q_vendetta_001"], class_id="warrior",
+            tracker={"gathering_totals": {"total_ores_mined": 500},
+                     "combat_kills": {"total_kills": 75},
+                     "crafting_by_discipline": {"smithing": {"total_crafts": 30}}}),
+        "no_tracker": dict(level=30, stats={"strength": 30}),
+    }
+    STUBS = {name: stub_char(**spec) for name, spec in STUB_SPECS.items()}
+
+    REQ_SPECS = {
+        "new_level": {"conditions": [{"type": "level", "min_level": 10}]},
+        "new_stat_reqs": {"conditions": [{"type": "stat",
+                                          "requirements": {"luck": 5, "strength": 10}}]},
+        "new_stat_abbrev": {"conditions": [{"type": "stat", "stat_name": "STR",
+                                            "min_value": 5}]},
+        "new_activity": {"conditions": [{"type": "activity", "activity": "mining",
+                                         "min_count": 100}]},
+        "new_stat_tracker": {"conditions": [{"type": "stat_tracker",
+                                             "stat_path": "combat_kills.total_kills",
+                                             "min_value": 50}]},
+        "new_title_single": {"conditions": [{"type": "title",
+                                             "required_title": "novice_miner"}]},
+        "new_skill": {"conditions": [{"type": "skill",
+                                      "required_skills": ["power_strike"]}]},
+        "new_quest": {"conditions": [{"type": "quest",
+                                      "required_quests": ["q_vendetta_001"]}]},
+        "new_class": {"conditions": [{"type": "class", "required_class": "warrior"}]},
+        "new_unknown_type": {"conditions": [{"type": "nonsense", "x": 1}]},
+        "new_title_missing_keys": {"conditions": [{"type": "title"}]},
+        "legacy_level_stats": {"characterLevel": 15, "stats": {"strength": 10}},
+        "legacy_titles_quests": {"titles": ["novice_miner"],
+                                 "requiredTitles": ["apprentice_smith"],
+                                 "completedQuests": ["q_tutorial"]},
+        "legacy_milestones": {"activityMilestones": [
+            {"type": "craft_count", "discipline": "smithing", "count": 25},
+            {"type": "kill_count", "count": 50},
+            {"type": "gather_count", "count": 101}]},
+        # keys pre-sorted: the fixture dumps with sort_keys=True, and the C#
+        # test re-parses the spec FROM the fixture — insertion order must
+        # survive the sorted dump for this order-sensitive legacy dict
+        "legacy_activities": {"activities": {"bossesDefeated": 3, "oresMined": 100}},
+        "empty": {},
+    }
+
+    reqs = {name: ConditionFactory.create_requirements_from_json(spec)
+            for name, spec in REQ_SPECS.items()}
+
+    write("unlock_conditions.json", {
+        "_meta": meta("data/models/unlock_conditions.py (parse via real "
+                      "ConditionFactory; evaluation via real condition classes "
+                      "against stub characters)"),
+        "specs": REQ_SPECS,
+        "stub_specs": STUB_SPECS,
+        "parsed": {name: {"to_dict": r.to_dict(),
+                          "description": r.get_description()}
+                   for name, r in reqs.items()},
+        "evaluations": {name: {stub_name: {
+                            "met": r.evaluate(c),
+                            "missing_count": len(r.get_missing_conditions(c))}
+                        for stub_name, c in STUBS.items()}
+                        for name, r in reqs.items()},
+        "title_requirements": {tid: {"to_dict": t.requirements.to_dict(),
+                                     "description": t.requirements.get_description()}
+                               for tid, t in sorted(dbs["titles"].titles.items())},
+        "skill_unlocks": {uid: {
+            "skill_id": u.skill_id,
+            "unlock_method": u.unlock_method,
+            "narrative": u.narrative,
+            "category": u.category,
+            "trigger": {"type": u.trigger.type,
+                        "trigger_value": u.trigger.trigger_value,
+                        "message": u.trigger.message},
+            "cost": {"gold": u.cost.gold, "materials": u.cost.materials,
+                     "skill_points": u.cost.skill_points},
+            "requirements_to_dict": u.requirements.to_dict(),
+            "requirements_description": u.requirements.get_description(),
+        } for uid, u in sorted(su_db.unlocks.items())},
+        "unlocks_by_skill": {sid: u.unlock_id
+                             for sid, u in sorted(su_db.unlocks_by_skill.items())},
     })
 
     write("translations.json", {

@@ -1,0 +1,1594 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-18",
+    "git_sha": "2e1283cb",
+    "source": "data/models/unlock_conditions.py (parse via real ConditionFactory; evaluation via real condition classes against stub characters)"
+  },
+  "evaluations": {
+    "empty": {
+      "fresh": {
+        "met": true,
+        "missing_count": 0
+      },
+      "no_tracker": {
+        "met": true,
+        "missing_count": 0
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "legacy_activities": {
+      "fresh": {
+        "met": false,
+        "missing_count": 2
+      },
+      "no_tracker": {
+        "met": false,
+        "missing_count": 2
+      },
+      "veteran": {
+        "met": false,
+        "missing_count": 1
+      }
+    },
+    "legacy_level_stats": {
+      "fresh": {
+        "met": false,
+        "missing_count": 2
+      },
+      "no_tracker": {
+        "met": true,
+        "missing_count": 0
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "legacy_milestones": {
+      "fresh": {
+        "met": false,
+        "missing_count": 4
+      },
+      "no_tracker": {
+        "met": false,
+        "missing_count": 4
+      },
+      "veteran": {
+        "met": false,
+        "missing_count": 1
+      }
+    },
+    "legacy_titles_quests": {
+      "fresh": {
+        "met": false,
+        "missing_count": 3
+      },
+      "no_tracker": {
+        "met": false,
+        "missing_count": 3
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "new_activity": {
+      "fresh": {
+        "met": false,
+        "missing_count": 1
+      },
+      "no_tracker": {
+        "met": false,
+        "missing_count": 1
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "new_class": {
+      "fresh": {
+        "met": false,
+        "missing_count": 1
+      },
+      "no_tracker": {
+        "met": false,
+        "missing_count": 1
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "new_level": {
+      "fresh": {
+        "met": false,
+        "missing_count": 1
+      },
+      "no_tracker": {
+        "met": true,
+        "missing_count": 0
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "new_quest": {
+      "fresh": {
+        "met": false,
+        "missing_count": 1
+      },
+      "no_tracker": {
+        "met": false,
+        "missing_count": 1
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "new_skill": {
+      "fresh": {
+        "met": false,
+        "missing_count": 1
+      },
+      "no_tracker": {
+        "met": false,
+        "missing_count": 1
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "new_stat_abbrev": {
+      "fresh": {
+        "met": false,
+        "missing_count": 1
+      },
+      "no_tracker": {
+        "met": true,
+        "missing_count": 0
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "new_stat_reqs": {
+      "fresh": {
+        "met": false,
+        "missing_count": 1
+      },
+      "no_tracker": {
+        "met": false,
+        "missing_count": 1
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "new_stat_tracker": {
+      "fresh": {
+        "met": false,
+        "missing_count": 1
+      },
+      "no_tracker": {
+        "met": false,
+        "missing_count": 1
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "new_title_missing_keys": {
+      "fresh": {
+        "met": true,
+        "missing_count": 0
+      },
+      "no_tracker": {
+        "met": true,
+        "missing_count": 0
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "new_title_single": {
+      "fresh": {
+        "met": false,
+        "missing_count": 1
+      },
+      "no_tracker": {
+        "met": false,
+        "missing_count": 1
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    },
+    "new_unknown_type": {
+      "fresh": {
+        "met": true,
+        "missing_count": 0
+      },
+      "no_tracker": {
+        "met": true,
+        "missing_count": 0
+      },
+      "veteran": {
+        "met": true,
+        "missing_count": 0
+      }
+    }
+  },
+  "parsed": {
+    "empty": {
+      "description": "No requirements",
+      "to_dict": {
+        "conditions": []
+      }
+    },
+    "legacy_activities": {
+      "description": "Combat: 3+ AND Mining: 100+",
+      "to_dict": {
+        "conditions": [
+          {
+            "activity": "combat",
+            "min_count": 3,
+            "type": "activity"
+          },
+          {
+            "activity": "mining",
+            "min_count": 100,
+            "type": "activity"
+          }
+        ]
+      }
+    },
+    "legacy_level_stats": {
+      "description": "Level 15+ AND Strength 10+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_level": 15,
+            "type": "level"
+          },
+          {
+            "requirements": {
+              "strength": 10
+            },
+            "type": "stat"
+          }
+        ]
+      }
+    },
+    "legacy_milestones": {
+      "description": "Crafting By Discipline → Smithing → Total Crafts: 25+ AND Combat Kills → Total Kills: 50+ AND Mining: 50+ AND Forestry: 50+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 25,
+            "stat_path": "crafting_by_discipline.smithing.total_crafts",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 50,
+            "stat_path": "combat_kills.total_kills",
+            "type": "stat_tracker"
+          },
+          {
+            "activity": "mining",
+            "min_count": 50,
+            "type": "activity"
+          },
+          {
+            "activity": "forestry",
+            "min_count": 50,
+            "type": "activity"
+          }
+        ]
+      }
+    },
+    "legacy_titles_quests": {
+      "description": "Title: novice_miner AND Title: apprentice_smith AND Quest: q_tutorial",
+      "to_dict": {
+        "conditions": [
+          {
+            "required_titles": [
+              "novice_miner"
+            ],
+            "type": "title"
+          },
+          {
+            "required_titles": [
+              "apprentice_smith"
+            ],
+            "type": "title"
+          },
+          {
+            "required_quests": [
+              "q_tutorial"
+            ],
+            "type": "quest"
+          }
+        ]
+      }
+    },
+    "new_activity": {
+      "description": "Mining: 100+",
+      "to_dict": {
+        "conditions": [
+          {
+            "activity": "mining",
+            "min_count": 100,
+            "type": "activity"
+          }
+        ]
+      }
+    },
+    "new_class": {
+      "description": "Class: warrior",
+      "to_dict": {
+        "conditions": [
+          {
+            "required_class": "warrior",
+            "type": "class"
+          }
+        ]
+      }
+    },
+    "new_level": {
+      "description": "Level 10+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_level": 10,
+            "type": "level"
+          }
+        ]
+      }
+    },
+    "new_quest": {
+      "description": "Quest: q_vendetta_001",
+      "to_dict": {
+        "conditions": [
+          {
+            "required_quests": [
+              "q_vendetta_001"
+            ],
+            "type": "quest"
+          }
+        ]
+      }
+    },
+    "new_skill": {
+      "description": "Skill: power_strike",
+      "to_dict": {
+        "conditions": [
+          {
+            "required_skills": [
+              "power_strike"
+            ],
+            "type": "skill"
+          }
+        ]
+      }
+    },
+    "new_stat_abbrev": {
+      "description": "Strength 5+",
+      "to_dict": {
+        "conditions": [
+          {
+            "requirements": {
+              "strength": 5
+            },
+            "type": "stat"
+          }
+        ]
+      }
+    },
+    "new_stat_reqs": {
+      "description": "Luck 5+, Strength 10+",
+      "to_dict": {
+        "conditions": [
+          {
+            "requirements": {
+              "luck": 5,
+              "strength": 10
+            },
+            "type": "stat"
+          }
+        ]
+      }
+    },
+    "new_stat_tracker": {
+      "description": "Combat Kills → Total Kills: 50+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 50,
+            "stat_path": "combat_kills.total_kills",
+            "type": "stat_tracker"
+          }
+        ]
+      }
+    },
+    "new_title_missing_keys": {
+      "description": "No requirements",
+      "to_dict": {
+        "conditions": []
+      }
+    },
+    "new_title_single": {
+      "description": "Title: novice_miner",
+      "to_dict": {
+        "conditions": [
+          {
+            "required_titles": [
+              "novice_miner"
+            ],
+            "type": "title"
+          }
+        ]
+      }
+    },
+    "new_unknown_type": {
+      "description": "No requirements",
+      "to_dict": {
+        "conditions": []
+      }
+    }
+  },
+  "skill_unlocks": {
+    "unlock_alchemists_insight": {
+      "category": "milestone_unlock",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Discovered through dedication. Only brewers of many potions gain this.",
+      "requirements_description": "Level 5+ AND Intelligence 8+ AND Crafting By Discipline → Alchemy → Total Crafts: 25+",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 5,
+            "type": "level"
+          },
+          {
+            "requirements": {
+              "intelligence": 8
+            },
+            "type": "stat"
+          },
+          {
+            "min_value": 25,
+            "stat_path": "crafting_by_discipline.alchemy.total_crafts",
+            "type": "stat_tracker"
+          }
+        ]
+      },
+      "skill_id": "alchemists_insight",
+      "trigger": {
+        "message": "Through countless experiments, you've developed Alchemist's Insight!",
+        "trigger_value": 25,
+        "type": "activity_threshold"
+      },
+      "unlock_method": "milestone_unlock"
+    },
+    "unlock_anglers_patience": {
+      "category": "fishing_starter",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "After catching your first several fish, you begin to understand the rhythm of the waters.",
+      "requirements_description": "Level 1+ AND Gathering Totals → Total Fish Caught: 10+",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 1,
+            "type": "level"
+          },
+          {
+            "min_value": 10,
+            "stat_path": "gathering_totals.total_fish_caught",
+            "type": "stat_tracker"
+          }
+        ]
+      },
+      "skill_id": "anglers_patience",
+      "trigger": {
+        "message": "Your patience with the waters has taught you: Angler's Patience!",
+        "trigger_value": 10,
+        "type": "stat_threshold"
+      },
+      "unlock_method": "automatic"
+    },
+    "unlock_battle_fury": {
+      "category": "milestone_unlock",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Only those who have defeated many foes unlock this combat prowess.",
+      "requirements_description": "Level 10+ AND Strength 15+ AND Combat Kills → Total Kills: 50+",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 10,
+            "type": "level"
+          },
+          {
+            "requirements": {
+              "strength": 15
+            },
+            "type": "stat"
+          },
+          {
+            "min_value": 50,
+            "stat_path": "combat_kills.total_kills",
+            "type": "stat_tracker"
+          }
+        ]
+      },
+      "skill_id": "battle_fury",
+      "trigger": {
+        "message": "Through countless battles, you've awakened Battle Fury!",
+        "trigger_value": 50,
+        "type": "activity_threshold"
+      },
+      "unlock_method": "milestone_unlock"
+    },
+    "unlock_chain_harvest": {
+      "category": "title_unlock",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Only Master Gatherers can perform this advanced technique.",
+      "requirements_description": "Level 15+ AND Title: master_gatherer",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 15,
+            "type": "level"
+          },
+          {
+            "required_titles": [
+              "master_gatherer"
+            ],
+            "type": "title"
+          }
+        ]
+      },
+      "skill_id": "chain_harvest",
+      "trigger": {
+        "message": "As a Master Gatherer, you've unlocked Chain Harvest!",
+        "trigger_value": "master_gatherer",
+        "type": "title_earned"
+      },
+      "unlock_method": "title_unlock"
+    },
+    "unlock_combat_strike": {
+      "category": "quest_reward",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Granted by the Battle Master for proving your worth in combat.",
+      "requirements_description": "Level 1+ AND Quests: ",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 1,
+            "type": "level"
+          },
+          {
+            "required_quests": [],
+            "type": "quest"
+          }
+        ]
+      },
+      "skill_id": "combat_strike",
+      "trigger": {
+        "message": "The Battle Master teaches you Combat Strike!",
+        "trigger_value": "combat_quest",
+        "type": "quest_complete"
+      },
+      "unlock_method": "quest_reward"
+    },
+    "unlock_fishers_strength": {
+      "category": "fishing_starter",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Hauling in catch after catch has strengthened your arms and grip.",
+      "requirements_description": "Level 1+ AND Gathering Totals → Total Fish Caught: 25+",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 1,
+            "type": "level"
+          },
+          {
+            "min_value": 25,
+            "stat_path": "gathering_totals.total_fish_caught",
+            "type": "stat_tracker"
+          }
+        ]
+      },
+      "skill_id": "fishers_strength",
+      "trigger": {
+        "message": "Your growing strength as a fisher has unlocked: Fisher's Strength!",
+        "trigger_value": 25,
+        "type": "stat_threshold"
+      },
+      "unlock_method": "automatic"
+    },
+    "unlock_fortify": {
+      "category": "quest_reward",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Granted by the Battle Master for proving your worth in combat.",
+      "requirements_description": "Level 1+ AND Quests: ",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 1,
+            "type": "level"
+          },
+          {
+            "required_quests": [],
+            "type": "quest"
+          }
+        ]
+      },
+      "skill_id": "fortify",
+      "trigger": {
+        "message": "The Battle Master teaches you Fortify!",
+        "trigger_value": "combat_quest",
+        "type": "quest_complete"
+      },
+      "unlock_method": "quest_reward"
+    },
+    "unlock_keen_eye": {
+      "category": "milestone_unlock",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Veteran gatherers develop an eye for spotting rare materials.",
+      "requirements_description": "Level 8+ AND Luck 12+ AND Gathering Totals → Total Trees Chopped: 100+ AND Gathering Totals → Total Ores Mined: 100+",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 8,
+            "type": "level"
+          },
+          {
+            "requirements": {
+              "luck": 12
+            },
+            "type": "stat"
+          },
+          {
+            "min_value": 100,
+            "stat_path": "gathering_totals.total_trees_chopped",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 100,
+            "stat_path": "gathering_totals.total_ores_mined",
+            "type": "stat_tracker"
+          }
+        ]
+      },
+      "skill_id": "keen_eye",
+      "trigger": {
+        "message": "Your experience gathering has sharpened your Keen Eye!",
+        "trigger_value": 200,
+        "type": "activity_threshold"
+      },
+      "unlock_method": "milestone_unlock"
+    },
+    "unlock_lucky_catch": {
+      "category": "fishing_progression",
+      "cost": {
+        "gold": 100,
+        "materials": [],
+        "skill_points": 1
+      },
+      "narrative": "Fortune smiles upon those who persistently seek the rare denizens of the deep.",
+      "requirements_description": "Level 5+ AND Gathering Advanced → Rare Fish Caught: 3+ AND Luck 3+",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 5,
+            "type": "level"
+          },
+          {
+            "min_value": 3,
+            "stat_path": "gathering_advanced.rare_fish_caught",
+            "type": "stat_tracker"
+          },
+          {
+            "requirements": {
+              "luck": 3
+            },
+            "type": "stat"
+          }
+        ]
+      },
+      "skill_id": "lucky_catch",
+      "trigger": {
+        "message": "Your luck with rare catches has granted you: Lucky Catch!",
+        "trigger_value": 3,
+        "type": "stat_threshold"
+      },
+      "unlock_method": "achievement"
+    },
+    "unlock_master_angler": {
+      "category": "fishing_mastery",
+      "cost": {
+        "gold": 500,
+        "materials": [
+          {
+            "materialId": "rare_fish_scale",
+            "qty": 5
+          }
+        ],
+        "skill_points": 2
+      },
+      "narrative": "Only those who have proven themselves as true masters of fishing may wield this power.",
+      "requirements_description": "Level 15+ AND Title: journeyman_fisher AND Gathering Totals → Total Fish Caught: 500+ AND Strength 5+ AND Luck 5+",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 15,
+            "type": "level"
+          },
+          {
+            "required_titles": [
+              "journeyman_fisher"
+            ],
+            "type": "title"
+          },
+          {
+            "min_value": 500,
+            "stat_path": "gathering_totals.total_fish_caught",
+            "type": "stat_tracker"
+          },
+          {
+            "requirements": {
+              "strength": 5
+            },
+            "type": "stat"
+          },
+          {
+            "requirements": {
+              "luck": 5
+            },
+            "type": "stat"
+          }
+        ]
+      },
+      "skill_id": "master_angler",
+      "trigger": {
+        "message": "Your mastery of the waters unlocks the ultimate technique: Master Angler!",
+        "trigger_value": "journeyman_fisher",
+        "type": "title_earned"
+      },
+      "unlock_method": "title_reward"
+    },
+    "unlock_master_craftsman": {
+      "category": "title_unlock",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Only Master Smiths possess the skill to craft without failure.",
+      "requirements_description": "Level 20+ AND Title: master_smith",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 20,
+            "type": "level"
+          },
+          {
+            "required_titles": [
+              "master_smith"
+            ],
+            "type": "title"
+          }
+        ]
+      },
+      "skill_id": "master_craftsman",
+      "trigger": {
+        "message": "As a Master Smith, you've unlocked Master Craftsman!",
+        "trigger_value": "master_smith",
+        "type": "title_earned"
+      },
+      "unlock_method": "title_unlock"
+    },
+    "unlock_miners_endurance": {
+      "category": "quest_reward",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Granted by the Wandering Trader for helping gather rare ores.",
+      "requirements_description": "Level 1+ AND Quests: ",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 1,
+            "type": "level"
+          },
+          {
+            "required_quests": [],
+            "type": "quest"
+          }
+        ]
+      },
+      "skill_id": "miners_endurance",
+      "trigger": {
+        "message": "The Wandering Trader teaches you Miner's Endurance!",
+        "trigger_value": "gathering_quest",
+        "type": "quest_complete"
+      },
+      "unlock_method": "quest_reward"
+    },
+    "unlock_miners_fury": {
+      "category": "starter_skill",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Given freely to all who begin their journey into mining.",
+      "requirements_description": "Level 1+",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 1,
+            "type": "level"
+          }
+        ]
+      },
+      "skill_id": "miners_fury",
+      "trigger": {
+        "message": "You've unlocked the skill: Miner's Fury!",
+        "trigger_value": 1,
+        "type": "level_up"
+      },
+      "unlock_method": "automatic"
+    },
+    "unlock_smiths_focus": {
+      "category": "milestone_unlock",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Discovered through dedication. Only smiths who craft many items gain this.",
+      "requirements_description": "Level 3+ AND Crafting By Discipline → Smithing → Total Crafts: 10+",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 3,
+            "type": "level"
+          },
+          {
+            "min_value": 10,
+            "stat_path": "crafting_by_discipline.smithing.total_crafts",
+            "type": "stat_tracker"
+          }
+        ]
+      },
+      "skill_id": "smiths_focus",
+      "trigger": {
+        "message": "Through practice, you've developed Smith's Focus!",
+        "trigger_value": 10,
+        "type": "activity_threshold"
+      },
+      "unlock_method": "milestone_unlock"
+    },
+    "unlock_sprint": {
+      "category": "quest_reward",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Granted by the Elder Sage as reward for completing your first task.",
+      "requirements_description": "Level 1+ AND Quests: ",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 1,
+            "type": "level"
+          },
+          {
+            "required_quests": [],
+            "type": "quest"
+          }
+        ]
+      },
+      "skill_id": "sprint",
+      "trigger": {
+        "message": "The Elder Sage teaches you Sprint!",
+        "trigger_value": "tutorial_quest",
+        "type": "quest_complete"
+      },
+      "unlock_method": "quest_reward"
+    },
+    "unlock_treasure_sense": {
+      "category": "milestone_unlock",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Discovered through exceptional luck in finding rare treasures.",
+      "requirements_description": "Level 8+ AND Luck 10+ AND Item Collection → Rare Drops Total: 20+",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 8,
+            "type": "level"
+          },
+          {
+            "requirements": {
+              "luck": 10
+            },
+            "type": "stat"
+          },
+          {
+            "min_value": 20,
+            "stat_path": "item_collection.rare_drops_total",
+            "type": "stat_tracker"
+          }
+        ]
+      },
+      "skill_id": "treasure_sense",
+      "trigger": {
+        "message": "Your luck in finding rare items has awakened Treasure Sense!",
+        "trigger_value": 20,
+        "type": "activity_threshold"
+      },
+      "unlock_method": "milestone_unlock"
+    },
+    "unlock_waters_blessing": {
+      "category": "fishing_progression",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Earning the respect of the waters as a true fisher opens new paths.",
+      "requirements_description": "Level 8+ AND Title: novice_fisher",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 8,
+            "type": "level"
+          },
+          {
+            "required_titles": [
+              "novice_fisher"
+            ],
+            "type": "title"
+          }
+        ]
+      },
+      "skill_id": "waters_blessing",
+      "trigger": {
+        "message": "The title of Novice Fisher grants you: Water's Blessing!",
+        "trigger_value": "novice_fisher",
+        "type": "title_earned"
+      },
+      "unlock_method": "title_reward"
+    },
+    "unlock_whirlwind_strike": {
+      "category": "title_unlock",
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skill_points": 0
+      },
+      "narrative": "Only Master Warriors can execute this devastating attack.",
+      "requirements_description": "Level 15+ AND Title: master_warrior",
+      "requirements_to_dict": {
+        "conditions": [
+          {
+            "min_level": 15,
+            "type": "level"
+          },
+          {
+            "required_titles": [
+              "master_warrior"
+            ],
+            "type": "title"
+          }
+        ]
+      },
+      "skill_id": "whirlwind_strike",
+      "trigger": {
+        "message": "As a Master Warrior, you've unlocked Whirlwind Strike!",
+        "trigger_value": "master_warrior",
+        "type": "title_earned"
+      },
+      "unlock_method": "title_unlock"
+    }
+  },
+  "specs": {
+    "empty": {},
+    "legacy_activities": {
+      "activities": {
+        "bossesDefeated": 3,
+        "oresMined": 100
+      }
+    },
+    "legacy_level_stats": {
+      "characterLevel": 15,
+      "stats": {
+        "strength": 10
+      }
+    },
+    "legacy_milestones": {
+      "activityMilestones": [
+        {
+          "count": 25,
+          "discipline": "smithing",
+          "type": "craft_count"
+        },
+        {
+          "count": 50,
+          "type": "kill_count"
+        },
+        {
+          "count": 101,
+          "type": "gather_count"
+        }
+      ]
+    },
+    "legacy_titles_quests": {
+      "completedQuests": [
+        "q_tutorial"
+      ],
+      "requiredTitles": [
+        "apprentice_smith"
+      ],
+      "titles": [
+        "novice_miner"
+      ]
+    },
+    "new_activity": {
+      "conditions": [
+        {
+          "activity": "mining",
+          "min_count": 100,
+          "type": "activity"
+        }
+      ]
+    },
+    "new_class": {
+      "conditions": [
+        {
+          "required_class": "warrior",
+          "type": "class"
+        }
+      ]
+    },
+    "new_level": {
+      "conditions": [
+        {
+          "min_level": 10,
+          "type": "level"
+        }
+      ]
+    },
+    "new_quest": {
+      "conditions": [
+        {
+          "required_quests": [
+            "q_vendetta_001"
+          ],
+          "type": "quest"
+        }
+      ]
+    },
+    "new_skill": {
+      "conditions": [
+        {
+          "required_skills": [
+            "power_strike"
+          ],
+          "type": "skill"
+        }
+      ]
+    },
+    "new_stat_abbrev": {
+      "conditions": [
+        {
+          "min_value": 5,
+          "stat_name": "STR",
+          "type": "stat"
+        }
+      ]
+    },
+    "new_stat_reqs": {
+      "conditions": [
+        {
+          "requirements": {
+            "luck": 5,
+            "strength": 10
+          },
+          "type": "stat"
+        }
+      ]
+    },
+    "new_stat_tracker": {
+      "conditions": [
+        {
+          "min_value": 50,
+          "stat_path": "combat_kills.total_kills",
+          "type": "stat_tracker"
+        }
+      ]
+    },
+    "new_title_missing_keys": {
+      "conditions": [
+        {
+          "type": "title"
+        }
+      ]
+    },
+    "new_title_single": {
+      "conditions": [
+        {
+          "required_title": "novice_miner",
+          "type": "title"
+        }
+      ]
+    },
+    "new_unknown_type": {
+      "conditions": [
+        {
+          "type": "nonsense",
+          "x": 1
+        }
+      ]
+    }
+  },
+  "stub_specs": {
+    "fresh": {},
+    "no_tracker": {
+      "level": 30,
+      "stats": {
+        "strength": 30
+      }
+    },
+    "veteran": {
+      "activities": {
+        "forestry": 40,
+        "mining": 150,
+        "smithing": 60
+      },
+      "class_id": "warrior",
+      "level": 20,
+      "quests": [
+        "q_tutorial",
+        "q_vendetta_001"
+      ],
+      "skills": [
+        "power_strike",
+        "mining_focus"
+      ],
+      "stats": {
+        "luck": 6,
+        "strength": 12
+      },
+      "titles": [
+        "novice_miner",
+        "apprentice_smith"
+      ],
+      "tracker": {
+        "combat_kills": {
+          "total_kills": 75
+        },
+        "crafting_by_discipline": {
+          "smithing": {
+            "total_crafts": 30
+          }
+        },
+        "gathering_totals": {
+          "total_ores_mined": 500
+        }
+      }
+    }
+  },
+  "title_requirements": {
+    "apprentice_fisher": {
+      "description": "Gathering Totals → Total Fish Caught: 250+ AND Gathering Advanced → Rare Fish Caught: 5+ AND Title: novice_fisher AND Level 5+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 250,
+            "stat_path": "gathering_totals.total_fish_caught",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 5,
+            "stat_path": "gathering_advanced.rare_fish_caught",
+            "type": "stat_tracker"
+          },
+          {
+            "required_titles": [
+              "novice_fisher"
+            ],
+            "type": "title"
+          },
+          {
+            "min_level": 5,
+            "type": "level"
+          }
+        ]
+      }
+    },
+    "apprentice_flame_miner": {
+      "description": "Gathering Totals → Total Ores Mined: 1000+ AND Gathering Totals → Fire Resources Gathered: 200+ AND Title: novice_miner AND Level 5+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 1000,
+            "stat_path": "gathering_totals.total_ores_mined",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 200,
+            "stat_path": "gathering_totals.fire_resources_gathered",
+            "type": "stat_tracker"
+          },
+          {
+            "required_titles": [
+              "novice_miner"
+            ],
+            "type": "title"
+          },
+          {
+            "min_level": 5,
+            "type": "level"
+          }
+        ]
+      }
+    },
+    "expert_angler": {
+      "description": "Gathering Totals → Total Fish Caught: 5000+ AND Gathering Advanced → Rare Fish Caught: 100+ AND Gathering Advanced → Legendary Fish Caught: 5+ AND Title: journeyman_fisher AND Level 18+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 5000,
+            "stat_path": "gathering_totals.total_fish_caught",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 100,
+            "stat_path": "gathering_advanced.rare_fish_caught",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 5,
+            "stat_path": "gathering_advanced.legendary_fish_caught",
+            "type": "stat_tracker"
+          },
+          {
+            "required_titles": [
+              "journeyman_fisher"
+            ],
+            "type": "title"
+          },
+          {
+            "min_level": 18,
+            "type": "level"
+          }
+        ]
+      }
+    },
+    "expert_battle_sage": {
+      "description": "Combat Kills → Total Kills: 1000+ AND Combat Actions → Critical Hits: 500+ AND Combat Survival → Perfect Dodges: 100+ AND Title: journeyman_warrior AND Level 20+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 1000,
+            "stat_path": "combat_kills.total_kills",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 500,
+            "stat_path": "combat_actions.critical_hits",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 100,
+            "stat_path": "combat_survival.perfect_dodges",
+            "type": "stat_tracker"
+          },
+          {
+            "required_titles": [
+              "journeyman_warrior"
+            ],
+            "type": "title"
+          },
+          {
+            "min_level": 20,
+            "type": "level"
+          }
+        ]
+      }
+    },
+    "hidden_dragons_bane": {
+      "description": "Combat Kills → Dragons Killed: 1+ AND Level 25+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 1,
+            "stat_path": "combat_kills.dragons_killed",
+            "type": "stat_tracker"
+          },
+          {
+            "min_level": 25,
+            "type": "level"
+          }
+        ]
+      }
+    },
+    "hidden_lucky_bastard": {
+      "description": "Crafting Advanced → Consecutive First Try Bonuses: 10+ AND Item Collection → Rare Drops Total: 50+ AND Level 15+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 10,
+            "stat_path": "crafting_advanced.consecutive_first_try_bonuses",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 50,
+            "stat_path": "item_collection.rare_drops_total",
+            "type": "stat_tracker"
+          },
+          {
+            "min_level": 15,
+            "type": "level"
+          }
+        ]
+      }
+    },
+    "journeyman_fisher": {
+      "description": "Gathering Totals → Total Fish Caught: 1000+ AND Gathering Advanced → Rare Fish Caught: 25+ AND Gathering Advanced → Longest Fish Catch Streak: 10+ AND Title: apprentice_fisher AND Level 10+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 1000,
+            "stat_path": "gathering_totals.total_fish_caught",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 25,
+            "stat_path": "gathering_advanced.rare_fish_caught",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 10,
+            "stat_path": "gathering_advanced.longest_fish_catch_streak",
+            "type": "stat_tracker"
+          },
+          {
+            "required_titles": [
+              "apprentice_fisher"
+            ],
+            "type": "title"
+          },
+          {
+            "min_level": 10,
+            "type": "level"
+          }
+        ]
+      }
+    },
+    "journeyman_refiner": {
+      "description": "Crafting By Discipline → Refining → Total Crafts: 500+ AND Crafting By Discipline → Refining → Total Crafts: 50+ AND Title: novice_refiner AND Level 10+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 500,
+            "stat_path": "crafting_by_discipline.refining.total_crafts",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 50,
+            "stat_path": "crafting_by_discipline.refining.total_crafts",
+            "type": "stat_tracker"
+          },
+          {
+            "required_titles": [
+              "novice_refiner"
+            ],
+            "type": "title"
+          },
+          {
+            "min_level": 10,
+            "type": "level"
+          }
+        ]
+      }
+    },
+    "master_eternal_smith": {
+      "description": "Crafting By Discipline → Smithing → Total Crafts: 5000+ AND Crafting By Discipline → Smithing → Legendary Crafts: 10+ AND Crafting By Discipline → Smithing → Perfect Crafts: 500+ AND Title: expert_master_smith AND Level 40+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 5000,
+            "stat_path": "crafting_by_discipline.smithing.total_crafts",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 10,
+            "stat_path": "crafting_by_discipline.smithing.legendary_crafts",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 500,
+            "stat_path": "crafting_by_discipline.smithing.perfect_crafts",
+            "type": "stat_tracker"
+          },
+          {
+            "required_titles": [
+              "expert_master_smith"
+            ],
+            "type": "title"
+          },
+          {
+            "min_level": 40,
+            "type": "level"
+          }
+        ]
+      }
+    },
+    "master_of_tides": {
+      "description": "Gathering Totals → Total Fish Caught: 20000+ AND Gathering Advanced → Legendary Fish Caught: 25+ AND Gathering Advanced → Longest Fish Catch Streak: 50+ AND Title: expert_angler AND Level 25+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 20000,
+            "stat_path": "gathering_totals.total_fish_caught",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 25,
+            "stat_path": "gathering_advanced.legendary_fish_caught",
+            "type": "stat_tracker"
+          },
+          {
+            "min_value": 50,
+            "stat_path": "gathering_advanced.longest_fish_catch_streak",
+            "type": "stat_tracker"
+          },
+          {
+            "required_titles": [
+              "expert_angler"
+            ],
+            "type": "title"
+          },
+          {
+            "min_level": 25,
+            "type": "level"
+          }
+        ]
+      }
+    },
+    "novice_fisher": {
+      "description": "Gathering Totals → Total Fish Caught: 50+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 50,
+            "stat_path": "gathering_totals.total_fish_caught",
+            "type": "stat_tracker"
+          }
+        ]
+      }
+    },
+    "novice_lumberjack": {
+      "description": "Gathering Totals → Total Trees Chopped: 100+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 100,
+            "stat_path": "gathering_totals.total_trees_chopped",
+            "type": "stat_tracker"
+          }
+        ]
+      }
+    },
+    "novice_miner": {
+      "description": "Gathering Totals → Total Ores Mined: 100+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 100,
+            "stat_path": "gathering_totals.total_ores_mined",
+            "type": "stat_tracker"
+          }
+        ]
+      }
+    },
+    "novice_smith": {
+      "description": "Crafting By Discipline → Smithing → Total Crafts: 50+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 50,
+            "stat_path": "crafting_by_discipline.smithing.total_crafts",
+            "type": "stat_tracker"
+          }
+        ]
+      }
+    },
+    "novice_warrior": {
+      "description": "Combat Kills → Total Kills: 50+",
+      "to_dict": {
+        "conditions": [
+          {
+            "min_value": 50,
+            "stat_path": "combat_kills.total_kills",
+            "type": "stat_tracker"
+          }
+        ]
+      }
+    }
+  },
+  "unlocks_by_skill": {
+    "alchemists_insight": "unlock_alchemists_insight",
+    "anglers_patience": "unlock_anglers_patience",
+    "battle_fury": "unlock_battle_fury",
+    "chain_harvest": "unlock_chain_harvest",
+    "combat_strike": "unlock_combat_strike",
+    "fishers_strength": "unlock_fishers_strength",
+    "fortify": "unlock_fortify",
+    "keen_eye": "unlock_keen_eye",
+    "lucky_catch": "unlock_lucky_catch",
+    "master_angler": "unlock_master_angler",
+    "master_craftsman": "unlock_master_craftsman",
+    "miners_endurance": "unlock_miners_endurance",
+    "miners_fury": "unlock_miners_fury",
+    "smiths_focus": "unlock_smiths_focus",
+    "sprint": "unlock_sprint",
+    "treasure_sense": "unlock_treasure_sense",
+    "waters_blessing": "unlock_waters_blessing",
+    "whirlwind_strike": "unlock_whirlwind_strike"
+  }
+}
