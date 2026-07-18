@@ -1,0 +1,335 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-18",
+    "git_sha": "46d92898",
+    "note": "'requirements' (UnlockRequirements object graph) is EXCLUDED from Phase-1 parity — typed in Phase 2 with ICharacterQuery; every other field is gated here",
+    "source": "data/databases/title_db.py"
+  },
+  "count": 15,
+  "titles": {
+    "apprentice_fisher": {
+      "acquisition_method": "event_based_rng",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+15% Fishing Accuracy",
+      "bonuses": {
+        "fishing_accuracy": 0.15,
+        "fishing_speed": 0.15,
+        "rare_fish_chance": 0.05
+      },
+      "category": "gathering",
+      "generation_chance": 0.2,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/apprentice_fisher.png",
+      "name": "Apprentice Fisher",
+      "prerequisites": [],
+      "tier": "apprentice",
+      "title_id": "apprentice_fisher"
+    },
+    "apprentice_flame_miner": {
+      "acquisition_method": "event_based_rng",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+25% Mining Damage",
+      "bonuses": {
+        "elementalafinity": "fire",
+        "fire_ore_chance": 0.15,
+        "mining_damage": 0.25
+      },
+      "category": "gathering",
+      "generation_chance": 0.2,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/apprentice_flame_miner.png",
+      "name": "Apprentice Flame Miner",
+      "prerequisites": [],
+      "tier": "apprentice",
+      "title_id": "apprentice_flame_miner"
+    },
+    "expert_angler": {
+      "acquisition_method": "event_based_rng",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+40% Fishing Accuracy",
+      "bonuses": {
+        "fishing_accuracy": 0.4,
+        "fishing_speed": 0.4,
+        "fishing_yield": 0.25,
+        "rare_fish_chance": 0.3
+      },
+      "category": "gathering",
+      "generation_chance": 0.05,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/expert_angler.png",
+      "name": "Expert Angler",
+      "prerequisites": [],
+      "tier": "expert",
+      "title_id": "expert_angler"
+    },
+    "expert_battle_sage": {
+      "acquisition_method": "event_based_rng",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+100% Melee Damage",
+      "bonuses": {
+        "combat_skill_exp": 0.25,
+        "counter_chance": 0.15,
+        "crit_chance": 0.2,
+        "melee_damage": 1.0
+      },
+      "category": "combat",
+      "generation_chance": 0.05,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/expert_battle_sage.png",
+      "name": "Expert Battle Sage",
+      "prerequisites": [],
+      "tier": "expert",
+      "title_id": "expert_battle_sage"
+    },
+    "hidden_dragons_bane": {
+      "acquisition_method": "hidden_discovery",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+50% Dragon Damage",
+      "bonuses": {
+        "dragon_damage": 0.5,
+        "fire_resistance": 0.3,
+        "legendary_drop_rate": 0.1
+      },
+      "category": "combat",
+      "generation_chance": 1.0,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": true,
+      "icon_path": "titles/hidden_dragons_bane.png",
+      "name": "Dragon's Bane",
+      "prerequisites": [],
+      "tier": "special",
+      "title_id": "hidden_dragons_bane"
+    },
+    "hidden_lucky_bastard": {
+      "acquisition_method": "hidden_discovery",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+25% Luck Stat",
+      "bonuses": {
+        "crit_chance": 0.1,
+        "first_try_bonus": 0.1,
+        "luck_stat": 0.25,
+        "rare_drop_rate": 0.15
+      },
+      "category": "utility",
+      "generation_chance": 1.0,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": true,
+      "icon_path": "titles/hidden_lucky_bastard.png",
+      "name": "Lucky Bastard",
+      "prerequisites": [],
+      "tier": "special",
+      "title_id": "hidden_lucky_bastard"
+    },
+    "journeyman_fisher": {
+      "acquisition_method": "event_based_rng",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+25% Fishing Accuracy",
+      "bonuses": {
+        "fishing_accuracy": 0.25,
+        "fishing_speed": 0.25,
+        "fishing_yield": 0.1,
+        "rare_fish_chance": 0.15
+      },
+      "category": "gathering",
+      "generation_chance": 0.1,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/journeyman_fisher.png",
+      "name": "Journeyman Fisher",
+      "prerequisites": [],
+      "tier": "journeyman",
+      "title_id": "journeyman_fisher"
+    },
+    "journeyman_refiner": {
+      "acquisition_method": "event_based_rng",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+50% Refining Speed",
+      "bonuses": {
+        "alloy_quality": 0.25,
+        "material_yield": 0.1,
+        "refining_speed": 0.5
+      },
+      "category": "crafting",
+      "generation_chance": 0.1,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/journeyman_refiner.png",
+      "name": "Journeyman Refiner",
+      "prerequisites": [],
+      "tier": "journeyman",
+      "title_id": "journeyman_refiner"
+    },
+    "master_eternal_smith": {
+      "acquisition_method": "special_achievement",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+200% Smithing Speed",
+      "bonuses": {
+        "durability_bonus": 0.25,
+        "first_try_bonus": 0.1,
+        "legendary_chance": 0.05,
+        "smithing_quality": 0.5,
+        "smithing_speed": 2.0
+      },
+      "category": "crafting",
+      "generation_chance": 0.02,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/master_eternal_smith.png",
+      "name": "Master Eternal Smith",
+      "prerequisites": [],
+      "tier": "master",
+      "title_id": "master_eternal_smith"
+    },
+    "master_of_tides": {
+      "acquisition_method": "special_achievement",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+60% Fishing Accuracy",
+      "bonuses": {
+        "fishing_accuracy": 0.6,
+        "fishing_speed": 0.6,
+        "fishing_yield": 0.5,
+        "luck_stat": 0.05,
+        "rare_fish_chance": 0.5
+      },
+      "category": "gathering",
+      "generation_chance": 0.02,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/master_of_tides.png",
+      "name": "Master of Tides",
+      "prerequisites": [],
+      "tier": "master",
+      "title_id": "master_of_tides"
+    },
+    "novice_fisher": {
+      "acquisition_method": "guaranteed_milestone",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+10% Fishing Accuracy",
+      "bonuses": {
+        "fishing_accuracy": 0.1,
+        "fishing_speed": 0.0,
+        "rare_fish_chance": 0.0
+      },
+      "category": "gathering",
+      "generation_chance": 1.0,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/novice_fisher.png",
+      "name": "Novice Fisher",
+      "prerequisites": [],
+      "tier": "novice",
+      "title_id": "novice_fisher"
+    },
+    "novice_lumberjack": {
+      "acquisition_method": "guaranteed_milestone",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+10% Forestry Damage",
+      "bonuses": {
+        "forestry_damage": 0.1,
+        "forestry_speed": 0.0,
+        "rare_wood_chance": 0.0
+      },
+      "category": "gathering",
+      "generation_chance": 1.0,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/novice_lumberjack.png",
+      "name": "Novice Lumberjack",
+      "prerequisites": [],
+      "tier": "novice",
+      "title_id": "novice_lumberjack"
+    },
+    "novice_miner": {
+      "acquisition_method": "guaranteed_milestone",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+10% Mining Damage",
+      "bonuses": {
+        "mining_damage": 0.1,
+        "mining_speed": 0.0,
+        "rare_ore_chance": 0.0
+      },
+      "category": "gathering",
+      "generation_chance": 1.0,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/novice_miner.png",
+      "name": "Novice Miner",
+      "prerequisites": [],
+      "tier": "novice",
+      "title_id": "novice_miner"
+    },
+    "novice_smith": {
+      "acquisition_method": "guaranteed_milestone",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+10% Smithing Speed",
+      "bonuses": {
+        "first_try_bonus": 0.0,
+        "smithing_quality": 0.0,
+        "smithing_speed": 0.1
+      },
+      "category": "crafting",
+      "generation_chance": 1.0,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/novice_smith.png",
+      "name": "Novice Smith",
+      "prerequisites": [],
+      "tier": "novice",
+      "title_id": "novice_smith"
+    },
+    "novice_warrior": {
+      "acquisition_method": "guaranteed_milestone",
+      "acquisition_threshold": 0,
+      "activity_type": "general",
+      "bonus_description": "+10% Melee Damage",
+      "bonuses": {
+        "attack_speed": 0.0,
+        "crit_chance": 0.0,
+        "melee_damage": 0.1
+      },
+      "category": "combat",
+      "generation_chance": 1.0,
+      "granted_by_npc_id": null,
+      "granted_by_quest_id": null,
+      "hidden": false,
+      "icon_path": "titles/novice_warrior.png",
+      "name": "Novice Warrior",
+      "prerequisites": [],
+      "tier": "novice",
+      "title_id": "novice_warrior"
+    }
+  }
+}

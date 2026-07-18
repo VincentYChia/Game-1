@@ -1,0 +1,210 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-18",
+    "git_sha": "46d92898",
+    "source": "data/databases/class_db.py"
+  },
+  "classes": {
+    "adventurer": {
+      "bonuses": {
+        "carry_capacity": 0,
+        "crafting_bonus": 0.05,
+        "gathering_bonus": 0.05,
+        "inventory_slots": 0,
+        "max_health": 50,
+        "max_mana": 50,
+        "melee_damage": 0.0,
+        "movement_speed": 0.0
+      },
+      "class_id": "adventurer",
+      "description": "Balanced generalists who dabble in everything. Adventurers have flexibility and choice.",
+      "name": "Adventurer",
+      "preferred_armor_type": "medium",
+      "preferred_damage_types": [
+        "physical",
+        "arcane"
+      ],
+      "recommended_stats": [
+        "Balanced - player choice"
+      ],
+      "starting_skill": "versatile_start",
+      "tags": [
+        "adventurer",
+        "balanced",
+        "versatile",
+        "generalist",
+        "adaptive"
+      ]
+    },
+    "artisan": {
+      "bonuses": {
+        "carry_capacity": 0,
+        "crafting_speed": 0.1,
+        "durability_bonus": 0.05,
+        "first_try_bonus": 0.1,
+        "inventory_slots": 0,
+        "max_health": 0,
+        "max_mana": 0,
+        "melee_damage": 0.0,
+        "movement_speed": 0.0
+      },
+      "class_id": "artisan",
+      "description": "Master crafters who excel at all creation disciplines. Artisans create better items faster.",
+      "name": "Artisan",
+      "preferred_armor_type": "medium",
+      "preferred_damage_types": [
+        "physical"
+      ],
+      "recommended_stats": [
+        "AGI",
+        "INT",
+        "LCK"
+      ],
+      "starting_skill": "smithing_focus",
+      "tags": [
+        "artisan",
+        "crafting",
+        "smithing",
+        "engineering",
+        "utility"
+      ]
+    },
+    "ranger": {
+      "bonuses": {
+        "carry_capacity": 0,
+        "crit_chance": 0.1,
+        "forestry_damage": 0.1,
+        "inventory_slots": 0,
+        "max_health": 0,
+        "max_mana": 0,
+        "melee_damage": 0.0,
+        "movement_speed": 0.15
+      },
+      "class_id": "ranger",
+      "description": "Swift explorers and natural harvesters. Rangers move quickly and gather resources efficiently.",
+      "name": "Ranger",
+      "preferred_armor_type": "light",
+      "preferred_damage_types": [
+        "physical",
+        "piercing",
+        "poison"
+      ],
+      "recommended_stats": [
+        "AGI",
+        "LCK",
+        "VIT"
+      ],
+      "starting_skill": "forestry_frenzy",
+      "tags": [
+        "ranger",
+        "ranged",
+        "agile",
+        "nature",
+        "mobile"
+      ]
+    },
+    "scavenger": {
+      "bonuses": {
+        "carry_capacity": 100,
+        "inventory_slots": 0,
+        "max_health": 0,
+        "max_mana": 0,
+        "melee_damage": 0.0,
+        "movement_speed": 0.0,
+        "rare_drops": 0.2,
+        "resource_quality": 0.1
+      },
+      "class_id": "scavenger",
+      "description": "Lucky opportunists who find better loot and resources. Scavengers thrive on discovery.",
+      "name": "Scavenger",
+      "preferred_armor_type": "light",
+      "preferred_damage_types": [
+        "physical"
+      ],
+      "recommended_stats": [
+        "LCK",
+        "STR",
+        "VIT"
+      ],
+      "starting_skill": "treasure_hunters_luck",
+      "tags": [
+        "scavenger",
+        "luck",
+        "gathering",
+        "treasure",
+        "explorer"
+      ]
+    },
+    "scholar": {
+      "bonuses": {
+        "carry_capacity": 0,
+        "inventory_slots": 0,
+        "max_health": 0,
+        "max_mana": 100,
+        "melee_damage": 0.0,
+        "movement_speed": 0.0,
+        "recipe_discovery": 0.1,
+        "skill_exp": 0.05
+      },
+      "class_id": "scholar",
+      "description": "Intellectuals who master alchemy and magical arts. Scholars excel at discovery and experimentation.",
+      "name": "Scholar",
+      "preferred_armor_type": "robes",
+      "preferred_damage_types": [
+        "arcane",
+        "fire",
+        "frost",
+        "lightning"
+      ],
+      "recommended_stats": [
+        "INT",
+        "LCK",
+        "AGI"
+      ],
+      "starting_skill": "alchemists_touch",
+      "tags": [
+        "scholar",
+        "magic",
+        "alchemy",
+        "arcane",
+        "caster"
+      ]
+    },
+    "warrior": {
+      "bonuses": {
+        "carry_capacity": 0,
+        "crit_chance": 0.0,
+        "defense_bonus": 0.0,
+        "inventory_slots": 20,
+        "max_health": 30,
+        "max_mana": 0,
+        "melee_damage": 0.1,
+        "movement_speed": 0.0
+      },
+      "class_id": "warrior",
+      "description": "Masters of combat and physical might. Warriors excel at dealing and taking damage in melee combat.",
+      "name": "Warrior",
+      "preferred_armor_type": "heavy",
+      "preferred_damage_types": [
+        "physical",
+        "slashing",
+        "crushing"
+      ],
+      "recommended_stats": [
+        "STR",
+        "VIT",
+        "DEF"
+      ],
+      "starting_skill": "battle_rage",
+      "tags": [
+        "warrior",
+        "melee",
+        "physical",
+        "tanky",
+        "frontline"
+      ]
+    }
+  },
+  "count": 6
+}

@@ -1,0 +1,2055 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-18",
+    "git_sha": "46d92898",
+    "source": "data/databases/skill_db.py (sacred glob + generated overlay + Update-N)"
+  },
+  "count": 41,
+  "skills": {
+    "absolute_destruction": {
+      "categories": [
+        "combat"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 600,
+        "mana": 150
+      },
+      "description": "Unleash catastrophic damage in a massive area, obliterating everything.",
+      "effect": {
+        "additional_effects": [
+          {
+            "category": "damage",
+            "duration": "instant",
+            "magnitude": "major",
+            "target": "area",
+            "type": "empower"
+          }
+        ],
+        "category": "damage",
+        "duration": "instant",
+        "effect_type": "devastate",
+        "magnitude": "extreme",
+        "target": "area"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/absolute_destruction.png",
+      "name": "Absolute Destruction",
+      "narrative": "Subtlety is for people who can't level mountains.",
+      "rarity": "epic",
+      "requirements": {
+        "character_level": 20,
+        "stats": {
+          "INT": 15,
+          "STR": 25
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "absolute_destruction",
+      "tags": [
+        "aoe",
+        "damage",
+        "destruction",
+        "ultimate"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 3
+    },
+    "alchemists_insight": {
+      "categories": [
+        "crafting",
+        "alchemy"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 200,
+        "mana": 70
+      },
+      "description": "Gain extra time for your alchemy mini-game and increase potion quality.",
+      "effect": {
+        "additional_effects": [
+          {
+            "category": "alchemy",
+            "duration": "instant",
+            "magnitude": "minor",
+            "target": "self",
+            "type": "empower"
+          }
+        ],
+        "category": "alchemy",
+        "duration": "instant",
+        "effect_type": "quicken",
+        "magnitude": "moderate",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/alchemists_insight.png",
+      "name": "Alchemist's Insight",
+      "narrative": "The brew reveals its secrets to those patient enough to watch. And lucky enough to not explode.",
+      "rarity": "uncommon",
+      "requirements": {
+        "character_level": 6,
+        "stats": {
+          "INT": 8
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "alchemists_insight",
+      "tags": [
+        "crafting",
+        "alchemy",
+        "quality"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "anglers_patience": {
+      "categories": [
+        "gathering",
+        "fishing"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 180,
+        "mana": 50
+      },
+      "description": "Slow down the expansion of ripples, giving you more time to click accurately.",
+      "effect": {
+        "additional_effects": [],
+        "category": "fishing",
+        "duration": "moderate",
+        "effect_type": "quicken",
+        "magnitude": "moderate",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/anglers_patience.png",
+      "name": "Angler's Patience",
+      "narrative": "The patient angler understands that rushing yields nothing but empty nets and broken lines.",
+      "rarity": "common",
+      "requirements": {
+        "character_level": 1,
+        "stats": {},
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "anglers_patience",
+      "tags": [
+        "speed_boost",
+        "gathering",
+        "fishing",
+        "basic"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 1
+    },
+    "arctic_cone": {
+      "categories": [
+        "combat",
+        "ice"
+      ],
+      "combat_params": {
+        "baseDamage": 45,
+        "cone_angle": 90.0,
+        "cone_range": 10.0,
+        "freeze_duration": 4.0,
+        "slow_duration": 8.0,
+        "slow_percent": 0.5
+      },
+      "combat_tags": [
+        "ice",
+        "cone",
+        "freeze",
+        "slow"
+      ],
+      "cost": {
+        "cooldown": "moderate",
+        "mana": "moderate"
+      },
+      "description": "Blast of freezing wind in a cone that slows and freezes enemies",
+      "effect": {
+        "additional_effects": [],
+        "category": "damage",
+        "duration": "instant",
+        "effect_type": "fortify",
+        "magnitude": "moderate",
+        "target": "area"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/arctic_cone.png",
+      "name": "Arctic Cone",
+      "narrative": "Exhale winter itself. A cone of absolute zero flash-freezes everything before you, leaving your enemies slowed or frozen solid.",
+      "rarity": "uncommon",
+      "requirements": {
+        "character_level": 12,
+        "stats": {
+          "INT": 15
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "arctic_cone",
+      "tags": [
+        "damage",
+        "ice",
+        "aoe",
+        "control"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "battle_fury": {
+      "categories": [
+        "combat"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 480,
+        "mana": 110
+      },
+      "description": "Dramatically increase attack damage and speed simultaneously.",
+      "effect": {
+        "additional_effects": [
+          {
+            "category": "combat",
+            "duration": "moderate",
+            "magnitude": "moderate",
+            "target": "self",
+            "type": "quicken"
+          }
+        ],
+        "category": "damage",
+        "duration": "moderate",
+        "effect_type": "empower",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/battle_fury.png",
+      "name": "Battle Fury",
+      "narrative": "Rage is a weapon. Control it, channel it, unleash it.",
+      "rarity": "rare",
+      "requirements": {
+        "character_level": 10,
+        "stats": {
+          "STR": 15
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "battle_fury",
+      "tags": [
+        "combat",
+        "damage",
+        "speed",
+        "berserker"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "battle_stance": {
+      "categories": [
+        "combat",
+        "defense"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 360,
+        "mana": 70
+      },
+      "description": "Brace yourself against incoming attacks, reducing damage taken significantly.",
+      "effect": {
+        "additional_effects": [],
+        "category": "defense",
+        "duration": "long",
+        "effect_type": "fortify",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/battle_stance.png",
+      "name": "Battle Stance",
+      "narrative": "Plant your feet. Lower your center. Become the immovable object.",
+      "rarity": "uncommon",
+      "requirements": {
+        "character_level": 3,
+        "stats": {
+          "DEF": 5
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "battle_stance",
+      "tags": [
+        "defense",
+        "damage_reduction",
+        "combat"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 1
+    },
+    "bountiful_harvest": {
+      "categories": [
+        "gathering"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 200,
+        "mana": 70
+      },
+      "description": "Gather extra materials from each resource node you harvest.",
+      "effect": {
+        "additional_effects": [],
+        "category": "mining",
+        "duration": "extended",
+        "effect_type": "enrich",
+        "magnitude": "moderate",
+        "target": "resource_node"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/bountiful_harvest.png",
+      "name": "Bountiful Harvest",
+      "narrative": "The generous earth rewards those who know where to look. And how to ask nicely.",
+      "rarity": "uncommon",
+      "requirements": {
+        "character_level": 2,
+        "stats": {
+          "LCK": 5
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "bountiful_harvest",
+      "tags": [
+        "yield",
+        "gathering",
+        "bonus"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 1
+    },
+    "chain_harvest": {
+      "categories": [
+        "gathering"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 500,
+        "mana": 140
+      },
+      "description": "Gather from multiple resource nodes in a small area simultaneously.",
+      "effect": {
+        "additional_effects": [],
+        "category": "mining",
+        "duration": "instant",
+        "effect_type": "devastate",
+        "magnitude": "major",
+        "target": "area"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/chain_harvest.png",
+      "name": "Chain Harvest",
+      "narrative": "Why harvest one at a time when you can harvest all of them?",
+      "rarity": "epic",
+      "requirements": {
+        "character_level": 15,
+        "stats": {
+          "STR": 20
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "chain_harvest",
+      "tags": [
+        "aoe",
+        "gathering",
+        "efficiency"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 3
+    },
+    "chain_lightning": {
+      "categories": [
+        "combat",
+        "lightning"
+      ],
+      "combat_params": {
+        "baseDamage": 100,
+        "chain_count": 5,
+        "chain_range": 7.0,
+        "shock_damage_per_tick": 4.0,
+        "shock_duration": 6.0,
+        "shock_tick_rate": 1.5
+      },
+      "combat_tags": [
+        "lightning",
+        "chain",
+        "shock"
+      ],
+      "cost": {
+        "cooldown": "long",
+        "mana": "high"
+      },
+      "description": "Lightning that jumps between enemies, shocking each target",
+      "effect": {
+        "additional_effects": [],
+        "category": "damage",
+        "duration": "instant",
+        "effect_type": "empower",
+        "magnitude": "major",
+        "target": "area"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/chain_lightning.png",
+      "name": "Chain Lightning",
+      "narrative": "A single bolt becomes many. Watch as lightning leaps from foe to foe, each target convulsing as the shock spreads through the battlefield.",
+      "rarity": "epic",
+      "requirements": {
+        "character_level": 18,
+        "stats": {
+          "INT": 20
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "chain_lightning",
+      "tags": [
+        "damage",
+        "lightning",
+        "chain",
+        "elemental"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 3
+    },
+    "combat_rush": {
+      "categories": [
+        "combat"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 150,
+        "mana": 60
+      },
+      "description": "Attack much faster for a short burst of time.",
+      "effect": {
+        "additional_effects": [],
+        "category": "combat",
+        "duration": "brief",
+        "effect_type": "quicken",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/combat_rush.png",
+      "name": "Combat Rush",
+      "narrative": "Precision is overrated when you can just hit them twelve times before they blink.",
+      "rarity": "common",
+      "requirements": {
+        "character_level": 1,
+        "stats": {},
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "combat_rush",
+      "tags": [
+        "attack_speed",
+        "combat",
+        "burst"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 1
+    },
+    "combat_strike": {
+      "categories": [
+        "combat"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 30,
+        "mana": 50
+      },
+      "description": "Your next attack hits with devastating force, dealing massive damage.",
+      "effect": {
+        "additional_effects": [],
+        "category": "damage",
+        "duration": "instant",
+        "effect_type": "empower",
+        "magnitude": "extreme",
+        "target": "enemy"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/combat_strike.png",
+      "name": "Power Strike",
+      "narrative": "Sometimes subtlety fails. Sometimes you just need to hit something really, really hard.",
+      "rarity": "common",
+      "requirements": {
+        "character_level": 1,
+        "stats": {},
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "combat_strike",
+      "tags": [
+        "damage",
+        "single_hit",
+        "combat"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 1
+    },
+    "enchanters_grace": {
+      "categories": [
+        "crafting",
+        "enchanting"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 220,
+        "mana": 100
+      },
+      "description": "Gain increased chance for perfect enchantment patterns and rarity upgrades.",
+      "effect": {
+        "additional_effects": [
+          {
+            "category": "enchanting",
+            "duration": "instant",
+            "magnitude": "moderate",
+            "target": "self",
+            "type": "elevate"
+          }
+        ],
+        "category": "enchanting",
+        "duration": "instant",
+        "effect_type": "pierce",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/enchanters_grace.png",
+      "name": "Enchanter's Grace",
+      "narrative": "Magic flows where intention directs it. Unless you sneeze. Then it flows everywhere.",
+      "rarity": "rare",
+      "requirements": {
+        "character_level": 8,
+        "stats": {
+          "INT": 12,
+          "LCK": 8
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "enchanters_grace",
+      "tags": [
+        "crafting",
+        "enchanting",
+        "rarity",
+        "critical"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "endless_bounty": {
+      "categories": [
+        "gathering"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 600,
+        "mana": 120
+      },
+      "description": "Gain massive bonus materials from every gather for an extended period.",
+      "effect": {
+        "additional_effects": [],
+        "category": "mining",
+        "duration": "extended",
+        "effect_type": "enrich",
+        "magnitude": "extreme",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/endless_bounty.png",
+      "name": "Endless Bounty",
+      "narrative": "The earth provides for those who know its secrets. And sometimes, it just really likes you.",
+      "rarity": "rare",
+      "requirements": {
+        "character_level": 17,
+        "stats": {
+          "LCK": 20
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "endless_bounty",
+      "tags": [
+        "yield",
+        "gathering",
+        "abundance"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 3
+    },
+    "engineers_precision": {
+      "categories": [
+        "crafting",
+        "engineering"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 220,
+        "mana": 100
+      },
+      "description": "Extend engineering puzzle time and improve device quality significantly.",
+      "effect": {
+        "additional_effects": [
+          {
+            "category": "engineering",
+            "duration": "instant",
+            "magnitude": "moderate",
+            "target": "self",
+            "type": "empower"
+          }
+        ],
+        "category": "engineering",
+        "duration": "instant",
+        "effect_type": "quicken",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/engineers_precision.png",
+      "name": "Engineer's Precision",
+      "narrative": "Complex mechanisms demand careful attention. Rush the gears, get your fingers caught.",
+      "rarity": "rare",
+      "requirements": {
+        "character_level": 9,
+        "stats": {
+          "AGI": 10,
+          "INT": 10
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "engineers_precision",
+      "tags": [
+        "crafting",
+        "engineering",
+        "quality"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "field_medic": {
+      "categories": [
+        "combat",
+        "utility"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 400,
+        "mana": 70
+      },
+      "description": "Instantly restore a moderate amount of health.",
+      "effect": {
+        "additional_effects": [],
+        "category": "defense",
+        "duration": "instant",
+        "effect_type": "restore",
+        "magnitude": "moderate",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/field_medic.png",
+      "name": "Field Medic",
+      "narrative": "Bandages are for people with time. This is for people who don't.",
+      "rarity": "uncommon",
+      "requirements": {
+        "character_level": 2,
+        "stats": {
+          "VIT": 5
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "field_medic",
+      "tags": [
+        "healing",
+        "instant",
+        "survival"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 1
+    },
+    "fishers_strength": {
+      "categories": [
+        "gathering",
+        "fishing"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 180,
+        "mana": 60
+      },
+      "description": "Strengthen your grip and increase hit tolerance, making it easier to land catches.",
+      "effect": {
+        "additional_effects": [],
+        "category": "fishing",
+        "duration": "moderate",
+        "effect_type": "empower",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/fishers_strength.png",
+      "name": "Fisher's Strength",
+      "narrative": "A strong arm and steady hand can wrestle even the most stubborn fish from the depths.",
+      "rarity": "common",
+      "requirements": {
+        "character_level": 1,
+        "stats": {},
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "fishers_strength",
+      "tags": [
+        "damage_boost",
+        "gathering",
+        "fishing",
+        "basic"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 1
+    },
+    "fortunes_favor": {
+      "categories": [
+        "gathering",
+        "combat",
+        "crafting"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 600,
+        "mana": 150
+      },
+      "description": "Massively increase critical chance and rarity for all actions.",
+      "effect": {
+        "additional_effects": [
+          {
+            "category": "mining",
+            "duration": "long",
+            "magnitude": "major",
+            "target": "self",
+            "type": "elevate"
+          }
+        ],
+        "category": "damage",
+        "duration": "long",
+        "effect_type": "pierce",
+        "magnitude": "extreme",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/fortunes_favor.png",
+      "name": "Fortune's Favor",
+      "narrative": "Luck is what happens when preparation meets opportunity. This is what happens when luck meets steroids.",
+      "rarity": "epic",
+      "requirements": {
+        "character_level": 18,
+        "stats": {
+          "LCK": 25
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "fortunes_favor",
+      "tags": [
+        "luck",
+        "critical",
+        "rarity",
+        "universal"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 3
+    },
+    "gravity_well": {
+      "categories": [
+        "combat",
+        "arcane"
+      ],
+      "combat_params": {
+        "baseDamage": 100,
+        "circle_radius": 7.0,
+        "origin": "target",
+        "pull_distance": 5.0,
+        "stun_duration": 3.0
+      },
+      "combat_tags": [
+        "arcane",
+        "circle",
+        "pull",
+        "stun"
+      ],
+      "cost": {
+        "cooldown": "extreme",
+        "mana": "extreme"
+      },
+      "description": "Create a point of intense gravity that pulls and crushes all nearby foes",
+      "effect": {
+        "additional_effects": [],
+        "category": "damage",
+        "duration": "instant",
+        "effect_type": "devastate",
+        "magnitude": "extreme",
+        "target": "area"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/gravity_well.png",
+      "name": "Gravity Well",
+      "narrative": "Bend space itself to your will. A singularity forms at your target, pulling enemies inward before crushing them with arcane force.",
+      "rarity": "legendary",
+      "requirements": {
+        "character_level": 28,
+        "stats": {
+          "INT": 32
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "gravity_well",
+      "tags": [
+        "damage",
+        "arcane",
+        "aoe",
+        "control"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 4
+    },
+    "keen_eye": {
+      "categories": [
+        "gathering",
+        "combat"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 240,
+        "mana": 90
+      },
+      "description": "Significantly increase critical hit chance for all actions.",
+      "effect": {
+        "additional_effects": [],
+        "category": "damage",
+        "duration": "moderate",
+        "effect_type": "pierce",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/keen_eye.png",
+      "name": "Keen Eye",
+      "narrative": "See the weaknesses others miss. Strike where it matters most.",
+      "rarity": "rare",
+      "requirements": {
+        "character_level": 8,
+        "stats": {
+          "AGI": 10,
+          "LCK": 10
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "keen_eye",
+      "tags": [
+        "critical",
+        "precision",
+        "multi_purpose"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "lucky_catch": {
+      "categories": [
+        "gathering",
+        "fishing"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 300,
+        "mana": 80
+      },
+      "description": "Increase your chances of catching rare and legendary fish.",
+      "effect": {
+        "additional_effects": [],
+        "category": "fishing",
+        "duration": "long",
+        "effect_type": "elevate",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/lucky_catch.png",
+      "name": "Lucky Catch",
+      "narrative": "Fortune favors the prepared. Or maybe the fish just like you better.",
+      "rarity": "uncommon",
+      "requirements": {
+        "character_level": 5,
+        "stats": {
+          "LCK": 3
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "lucky_catch",
+      "tags": [
+        "quality_boost",
+        "gathering",
+        "fishing",
+        "luck"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "lumberjacks_rhythm": {
+      "categories": [
+        "gathering",
+        "forestry"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 180,
+        "mana": 60
+      },
+      "description": "Fall into a steady rhythm, chopping wood much faster than normal.",
+      "effect": {
+        "additional_effects": [],
+        "category": "forestry",
+        "duration": "moderate",
+        "effect_type": "quicken",
+        "magnitude": "moderate",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/lumberjacks_rhythm.png",
+      "name": "Lumberjack's Rhythm",
+      "narrative": "Listen to the forest. Find the heartbeat. Match your swing to the ancient pulse.",
+      "rarity": "common",
+      "requirements": {
+        "character_level": 1,
+        "stats": {},
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "lumberjacks_rhythm",
+      "tags": [
+        "speed_boost",
+        "gathering",
+        "basic"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 1
+    },
+    "master_angler": {
+      "categories": [
+        "gathering",
+        "fishing"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 600,
+        "mana": 120
+      },
+      "description": "Channel your mastery of the waters, boosting all fishing abilities significantly.",
+      "effect": {
+        "additional_effects": [
+          {
+            "magnitude": "moderate",
+            "type": "quicken"
+          },
+          {
+            "magnitude": "moderate",
+            "type": "elevate"
+          }
+        ],
+        "category": "fishing",
+        "duration": "long",
+        "effect_type": "empower",
+        "magnitude": "extreme",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/master_angler.png",
+      "name": "Master Angler",
+      "narrative": "The waters recognize you as one of their own. All who dwell within answer your call.",
+      "rarity": "rare",
+      "requirements": {
+        "character_level": 15,
+        "stats": {
+          "LCK": 5,
+          "STR": 5
+        },
+        "titles": [
+          "journeyman_fisher"
+        ]
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "master_angler",
+      "tags": [
+        "damage_boost",
+        "speed_boost",
+        "quality_boost",
+        "fishing",
+        "mastery"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 3
+    },
+    "master_craftsman": {
+      "categories": [
+        "crafting",
+        "smithing",
+        "refining"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 600,
+        "mana": 150
+      },
+      "description": "Dramatically boost crafted item quality and gain massive rarity upgrade chance.",
+      "effect": {
+        "additional_effects": [
+          {
+            "category": "smithing",
+            "duration": "instant",
+            "magnitude": "major",
+            "target": "self",
+            "type": "elevate"
+          }
+        ],
+        "category": "smithing",
+        "duration": "instant",
+        "effect_type": "empower",
+        "magnitude": "extreme",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/master_craftsman.png",
+      "name": "Master Craftsman",
+      "narrative": "Mastery isn't a destination. It's a standard you refuse to compromise.",
+      "rarity": "legendary",
+      "requirements": {
+        "character_level": 20,
+        "stats": {
+          "AGI": 15,
+          "INT": 20
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "master_craftsman",
+      "tags": [
+        "crafting",
+        "quality",
+        "rarity",
+        "mastery"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 3
+    },
+    "meteor_strike": {
+      "categories": [
+        "combat",
+        "fire"
+      ],
+      "combat_params": {
+        "baseDamage": 150,
+        "burn_damage_per_second": 10.0,
+        "burn_duration": 12.0,
+        "circle_radius": 10.0,
+        "knockback_distance": 5.0,
+        "origin": "source"
+      },
+      "combat_tags": [
+        "fire",
+        "circle",
+        "burn",
+        "knockback"
+      ],
+      "cost": {
+        "cooldown": "extreme",
+        "mana": "extreme"
+      },
+      "description": "Call down a meteor that devastates an area and ignites all enemies",
+      "effect": {
+        "additional_effects": [],
+        "category": "damage",
+        "duration": "instant",
+        "effect_type": "devastate",
+        "magnitude": "extreme",
+        "target": "area"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/meteor_strike.png",
+      "name": "Meteor Strike",
+      "narrative": "You tear a fragment from the heavens itself. The meteor crashes down with the fury of a dying star, leaving nothing but scorched earth and burning foes.",
+      "rarity": "legendary",
+      "requirements": {
+        "character_level": 25,
+        "stats": {
+          "INT": 30,
+          "STR": 20
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "meteor_strike",
+      "tags": [
+        "damage",
+        "fire",
+        "aoe",
+        "elemental"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 4
+    },
+    "miners_fury": {
+      "categories": [
+        "gathering",
+        "mining"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 180,
+        "mana": 60
+      },
+      "description": "Channel raw strength into your pickaxe, doubling mining damage for a sustained period.",
+      "effect": {
+        "additional_effects": [],
+        "category": "mining",
+        "duration": "moderate",
+        "effect_type": "empower",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/miners_fury.png",
+      "name": "Miner's Fury",
+      "narrative": "The mountain yields to those who show it proper respect. Or, failing that, overwhelming force.",
+      "rarity": "common",
+      "requirements": {
+        "character_level": 1,
+        "stats": {},
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "miners_fury",
+      "tags": [
+        "damage_boost",
+        "gathering",
+        "basic"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 1
+    },
+    "omega_strike": {
+      "categories": [
+        "combat"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 600,
+        "mana": 150
+      },
+      "description": "A single attack of unimaginable power that ignores defenses and deals catastrophic damage.",
+      "effect": {
+        "additional_effects": [
+          {
+            "category": "damage",
+            "duration": "instant",
+            "magnitude": "extreme",
+            "target": "enemy",
+            "type": "pierce"
+          }
+        ],
+        "category": "damage",
+        "duration": "instant",
+        "effect_type": "empower",
+        "magnitude": "extreme",
+        "target": "enemy"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/omega_strike.png",
+      "name": "Omega Strike",
+      "narrative": "One strike. One chance. One ending.",
+      "rarity": "legendary",
+      "requirements": {
+        "character_level": 28,
+        "stats": {
+          "AGI": 25,
+          "STR": 30
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "omega_strike",
+      "tags": [
+        "damage",
+        "ultimate",
+        "single_target",
+        "finisher"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 4
+    },
+    "phoenix_resurrection": {
+      "categories": [
+        "combat",
+        "defense"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 600,
+        "mana": 150
+      },
+      "description": "Continuously regenerate massive health and repair equipment durability.",
+      "effect": {
+        "additional_effects": [
+          {
+            "category": "durability",
+            "duration": "extended",
+            "magnitude": "major",
+            "target": "self",
+            "type": "regenerate"
+          }
+        ],
+        "category": "defense",
+        "duration": "extended",
+        "effect_type": "regenerate",
+        "magnitude": "extreme",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/phoenix_resurrection.png",
+      "name": "Phoenix Resurrection",
+      "narrative": "From ashes, rise. From wounds, strength. Death is merely an inconvenience.",
+      "rarity": "legendary",
+      "requirements": {
+        "character_level": 22,
+        "stats": {
+          "VIT": 25
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "phoenix_resurrection",
+      "tags": [
+        "healing",
+        "regeneration",
+        "durability",
+        "sustain"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 3
+    },
+    "quick_repair": {
+      "categories": [
+        "utility",
+        "durability"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 300,
+        "mana": 25
+      },
+      "description": "Instantly restore durability to your equipped tools and weapons.",
+      "effect": {
+        "additional_effects": [],
+        "category": "durability",
+        "duration": "instant",
+        "effect_type": "restore",
+        "magnitude": "moderate",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/quick_repair.png",
+      "name": "Quick Repair",
+      "narrative": "A warrior who maintains their tools never finds themselves defenseless.",
+      "rarity": "common",
+      "requirements": {
+        "character_level": 1,
+        "stats": {},
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "quick_repair",
+      "tags": [
+        "durability",
+        "repair",
+        "instant"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 1
+    },
+    "reality_breach": {
+      "categories": [
+        "utility"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 600,
+        "mana": 150
+      },
+      "description": "Temporarily ignore all tier restrictions and requirements. Use any tool on any material, craft at any station.",
+      "effect": {
+        "additional_effects": [],
+        "category": "mining",
+        "duration": "moderate",
+        "effect_type": "transcend",
+        "magnitude": "extreme",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/reality_breach.png",
+      "name": "Reality Breach",
+      "narrative": "Rules are for people who lack imagination. And sufficient mana reserves.",
+      "rarity": "mythic",
+      "requirements": {
+        "character_level": 25,
+        "stats": {
+          "INT": 30
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "reality_breach",
+      "tags": [
+        "bypass",
+        "tier",
+        "ultimate",
+        "transcendence"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 4
+    },
+    "refiners_touch": {
+      "categories": [
+        "crafting",
+        "refining"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 200,
+        "mana": 70
+      },
+      "description": "Improve your refining mini-game time and material quality output.",
+      "effect": {
+        "additional_effects": [
+          {
+            "category": "refining",
+            "duration": "instant",
+            "magnitude": "minor",
+            "target": "self",
+            "type": "elevate"
+          }
+        ],
+        "category": "refining",
+        "duration": "instant",
+        "effect_type": "quicken",
+        "magnitude": "moderate",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/refiners_touch.png",
+      "name": "Refiner's Touch",
+      "narrative": "Impurities burn away when you know exactly how hot, exactly how long.",
+      "rarity": "uncommon",
+      "requirements": {
+        "character_level": 6,
+        "stats": {
+          "INT": 8
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "refiners_touch",
+      "tags": [
+        "crafting",
+        "refining",
+        "quality"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "regenerative_aura": {
+      "categories": [
+        "combat",
+        "defense"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 400,
+        "mana": 80
+      },
+      "description": "Slowly restore health over time while active.",
+      "effect": {
+        "additional_effects": [],
+        "category": "defense",
+        "duration": "extended",
+        "effect_type": "regenerate",
+        "magnitude": "moderate",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/regenerative_aura.png",
+      "name": "Regenerative Aura",
+      "narrative": "Wounds close. Bones knit. Given enough time, everything heals.",
+      "rarity": "uncommon",
+      "requirements": {
+        "character_level": 7,
+        "stats": {
+          "VIT": 12
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "regenerative_aura",
+      "tags": [
+        "healing",
+        "over_time",
+        "sustain"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "second_wind": {
+      "categories": [
+        "combat",
+        "utility"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 600,
+        "mana": 40
+      },
+      "description": "Restore health and mana simultaneously when you need it most.",
+      "effect": {
+        "additional_effects": [],
+        "category": "defense",
+        "duration": "instant",
+        "effect_type": "restore",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/second_wind.png",
+      "name": "Second Wind",
+      "narrative": "You're not done yet. Get up.",
+      "rarity": "uncommon",
+      "requirements": {
+        "character_level": 8,
+        "stats": {
+          "VIT": 10
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "second_wind",
+      "tags": [
+        "healing",
+        "mana",
+        "recovery",
+        "survival"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "shadow_beam": {
+      "categories": [
+        "combat",
+        "shadow"
+      ],
+      "combat_params": {
+        "baseDamage": 55,
+        "beam_range": 15.0,
+        "beam_width": 2.0,
+        "pierce_count": 10,
+        "weaken_duration": 10.0,
+        "weaken_percent": 0.4
+      },
+      "combat_tags": [
+        "shadow",
+        "beam",
+        "weaken",
+        "pierce"
+      ],
+      "cost": {
+        "cooldown": "long",
+        "mana": "high"
+      },
+      "description": "Piercing beam of darkness that weakens all it touches",
+      "effect": {
+        "additional_effects": [],
+        "category": "damage",
+        "duration": "instant",
+        "effect_type": "empower",
+        "magnitude": "major",
+        "target": "line"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/shadow_beam.png",
+      "name": "Shadow Beam",
+      "narrative": "A lance of pure darkness tears through reality. Those touched by the void find their strength sapped, their attacks feeble.",
+      "rarity": "rare",
+      "requirements": {
+        "character_level": 16,
+        "stats": {
+          "INT": 18
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "shadow_beam",
+      "tags": [
+        "damage",
+        "shadow",
+        "pierce",
+        "debuff"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 3
+    },
+    "smiths_focus": {
+      "categories": [
+        "crafting",
+        "smithing"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 180,
+        "mana": 60
+      },
+      "description": "Extend your smithing mini-game timer, giving more time for perfect strikes.",
+      "effect": {
+        "additional_effects": [],
+        "category": "smithing",
+        "duration": "instant",
+        "effect_type": "quicken",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/smiths_focus.png",
+      "name": "Smith's Focus",
+      "narrative": "Master smiths don't rush. They breathe. They focus. They strike true.",
+      "rarity": "uncommon",
+      "requirements": {
+        "character_level": 2,
+        "stats": {},
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "smiths_focus",
+      "tags": [
+        "crafting",
+        "time",
+        "smithing"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 1
+    },
+    "sprint": {
+      "categories": [
+        "movement"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 20,
+        "mana": 20
+      },
+      "description": "Move significantly faster for a brief period.",
+      "effect": {
+        "additional_effects": [],
+        "category": "movement",
+        "duration": "brief",
+        "effect_type": "quicken",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/sprint.png",
+      "name": "Sprint",
+      "narrative": "Sometimes the best strategy is running away. Fast.",
+      "rarity": "common",
+      "requirements": {
+        "character_level": 1,
+        "stats": {},
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "sprint",
+      "tags": [
+        "movement",
+        "speed",
+        "mobility"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 1
+    },
+    "time_dilation": {
+      "categories": [
+        "crafting"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 500,
+        "mana": 140
+      },
+      "description": "Massively extend all mini-game timers, giving you all the time you need.",
+      "effect": {
+        "additional_effects": [],
+        "category": "smithing",
+        "duration": "instant",
+        "effect_type": "quicken",
+        "magnitude": "extreme",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/time_dilation.png",
+      "name": "Time Dilation",
+      "narrative": "Time is relative. Especially when you're cheating.",
+      "rarity": "epic",
+      "requirements": {
+        "character_level": 19,
+        "stats": {
+          "INT": 22
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "time_dilation",
+      "tags": [
+        "time",
+        "crafting",
+        "universal",
+        "mastery"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 3
+    },
+    "tool_preservation": {
+      "categories": [
+        "gathering",
+        "utility"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 200,
+        "mana": 70
+      },
+      "description": "Your tools consume durability much more slowly.",
+      "effect": {
+        "additional_effects": [],
+        "category": "durability",
+        "duration": "extended",
+        "effect_type": "fortify",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/tool_preservation.png",
+      "name": "Tool Preservation",
+      "narrative": "A well-maintained tool is an investment. A broken tool is an expensive lesson.",
+      "rarity": "uncommon",
+      "requirements": {
+        "character_level": 5,
+        "stats": {},
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "tool_preservation",
+      "tags": [
+        "durability",
+        "efficiency",
+        "gathering"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "treasure_sense": {
+      "categories": [
+        "gathering"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 450,
+        "mana": 100
+      },
+      "description": "Dramatically increase the chance of finding rare materials while gathering.",
+      "effect": {
+        "additional_effects": [],
+        "category": "mining",
+        "duration": "extended",
+        "effect_type": "elevate",
+        "magnitude": "major",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/treasure_sense.png",
+      "name": "Treasure Sense",
+      "narrative": "Some call it luck. Some call it intuition. Mostly it's just knowing where to dig.",
+      "rarity": "rare",
+      "requirements": {
+        "character_level": 10,
+        "stats": {
+          "LCK": 15
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "treasure_sense",
+      "tags": [
+        "rarity",
+        "luck",
+        "gathering"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "vampiric_aura": {
+      "categories": [
+        "combat",
+        "shadow"
+      ],
+      "combat_params": {
+        "baseDamage": 40,
+        "circle_radius": 6.0,
+        "lifesteal_percent": 0.6,
+        "origin": "source"
+      },
+      "combat_tags": [
+        "shadow",
+        "circle",
+        "lifesteal"
+      ],
+      "cost": {
+        "cooldown": "long",
+        "mana": "extreme"
+      },
+      "description": "Aura that drains life from all nearby enemies",
+      "effect": {
+        "additional_effects": [],
+        "category": "damage",
+        "duration": "instant",
+        "effect_type": "devastate",
+        "magnitude": "moderate",
+        "target": "area"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/vampiric_aura.png",
+      "name": "Vampiric Aura",
+      "narrative": "Become the void. An aura of darkness surrounds you, leeching the life force from all who dare come close. Their pain is your healing.",
+      "rarity": "epic",
+      "requirements": {
+        "character_level": 20,
+        "stats": {
+          "INT": 22,
+          "STR": 15
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "vampiric_aura",
+      "tags": [
+        "damage",
+        "shadow",
+        "aoe",
+        "sustain"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 3
+    },
+    "waters_blessing": {
+      "categories": [
+        "gathering",
+        "fishing"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 240,
+        "mana": 70
+      },
+      "description": "The waters bless your efforts, potentially granting bonus catches.",
+      "effect": {
+        "additional_effects": [],
+        "category": "fishing",
+        "duration": "moderate",
+        "effect_type": "enrich",
+        "magnitude": "moderate",
+        "target": "self"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/waters_blessing.png",
+      "name": "Water's Blessing",
+      "narrative": "Those who respect the waters are rewarded with abundance.",
+      "rarity": "uncommon",
+      "requirements": {
+        "character_level": 8,
+        "stats": {},
+        "titles": [
+          "novice_fisher"
+        ]
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "waters_blessing",
+      "tags": [
+        "yield_boost",
+        "gathering",
+        "fishing"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 2
+    },
+    "whirlwind_strike": {
+      "categories": [
+        "combat"
+      ],
+      "combat_params": {},
+      "combat_tags": [],
+      "cost": {
+        "cooldown": 500,
+        "mana": 140
+      },
+      "description": "Attack all enemies in a wide radius around you.",
+      "effect": {
+        "additional_effects": [],
+        "category": "damage",
+        "duration": "instant",
+        "effect_type": "devastate",
+        "magnitude": "moderate",
+        "target": "area"
+      },
+      "evolution": {
+        "can_evolve": false,
+        "next_skill_id": null,
+        "requirement": ""
+      },
+      "icon_path": "skills/whirlwind_strike.png",
+      "name": "Whirlwind Strike",
+      "narrative": "Spin. Strike. Repeat. Simple tactics are often the deadliest.",
+      "rarity": "epic",
+      "requirements": {
+        "character_level": 16,
+        "stats": {
+          "AGI": 15,
+          "STR": 20
+        },
+        "titles": []
+      },
+      "rewarded_by_quest_id": null,
+      "skill_id": "whirlwind_strike",
+      "tags": [
+        "aoe",
+        "combat",
+        "damage"
+      ],
+      "taught_by_npc_id": null,
+      "tier": 3
+    }
+  }
+}
