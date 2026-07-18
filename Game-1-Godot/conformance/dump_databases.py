@@ -689,6 +689,142 @@ def dump_all(dbs: dict) -> None:
         "enchant_applicability": ench_rules,
     })
 
+    # ── Inventory + buffs: behavioral fixtures through the REAL classes ──
+    from entities.components.inventory import Inventory, ItemStack
+    from entities.components.buffs import ActiveBuff, BuffManager
+
+    def slots_state(inv):
+        out = []
+        for s in inv.slots:
+            if s is None:
+                out.append(None)
+            else:
+                out.append({"item_id": s.item_id, "quantity": s.quantity,
+                            "max_stack": s.max_stack, "rarity": s.rarity,
+                            "has_equipment_data": s.equipment_data is not None,
+                            "crafted_stats": s.crafted_stats})
+        return out
+
+    # Real ids from the booted DBs: a stackable material + an equipment item
+    mat_id = "oak_log" if "oak_log" in dbs["materials"].materials else \
+        sorted(dbs["materials"].materials)[0]
+    mat_stack = dbs["materials"].materials[mat_id].max_stack
+    equip_id = sorted(dbs["equipment"].items)[0]
+
+    inv_scenarios = {}
+
+    inv = Inventory(max_slots=6)
+    ok1 = inv.add_item(mat_id, mat_stack * 2 + 5)
+    inv_scenarios["stack_overflow"] = {"ok": ok1, "slots": slots_state(inv),
+                                       "count": inv.get_item_count(mat_id)}
+
+    inv = Inventory(max_slots=6)
+    ok2 = inv.add_item(equip_id, 2)
+    inv_scenarios["equipment_no_stack"] = {"ok": ok2, "slots": slots_state(inv)}
+
+    inv = Inventory(max_slots=6)
+    inv.add_item(mat_id, 10)
+    inv.add_item(mat_id, 10, rarity="rare")
+    inv.add_item(mat_id, 10, crafted_stats={"damage_multiplier": 0.1})
+    inv_scenarios["rarity_and_stats_split"] = {"slots": slots_state(inv),
+                                               "count": inv.get_item_count(mat_id)}
+
+    inv = Inventory(max_slots=2)
+    ok3 = inv.add_item(mat_id, mat_stack * 3)
+    inv_scenarios["full_inventory_fail"] = {"ok": ok3, "slots": slots_state(inv)}
+
+    inv = Inventory(max_slots=6)
+    inv.add_item(mat_id, mat_stack + 10)
+    removed_ok = inv.remove_item(mat_id, mat_stack + 3)
+    removed_fail = inv.remove_item(mat_id, 100)
+    inv_scenarios["remove_across_stacks"] = {
+        "removed_ok": removed_ok, "removed_fail": removed_fail,
+        "slots": slots_state(inv), "count": inv.get_item_count(mat_id),
+        "has_5": inv.has_item(mat_id, 5)}
+
+    inv = Inventory(max_slots=6)
+    inv.add_item(mat_id, 20)
+    inv.add_item(equip_id, 1)
+    inv.start_drag(0)
+    inv.end_drag(1)  # onto equipment -> swap
+    inv_scenarios["drag_swap"] = {"slots": slots_state(inv)}
+
+    inv = Inventory(max_slots=6)
+    inv.add_item(mat_id, 20)
+    inv.slots[2] = ItemStack(mat_id, 30)
+    inv.start_drag(0)
+    inv.end_drag(2)  # onto stackable -> merge
+    inv_scenarios["drag_merge"] = {"slots": slots_state(inv)}
+
+    inv = Inventory(max_slots=6)
+    inv.add_item(mat_id, 20)
+    inv.start_drag(0)
+    inv.end_drag(99)  # out of range -> return to origin
+    inv_scenarios["drag_out_of_range"] = {"slots": slots_state(inv)}
+
+    inv = Inventory(max_slots=6)
+    inv.add_item(mat_id, 20)
+    inv.start_drag(0)
+    inv.cancel_drag()
+    inv_scenarios["drag_cancel"] = {"slots": slots_state(inv)}
+
+    def mk_buff(bid, etype, cat, value, dur=30.0, consume=False):
+        return ActiveBuff(bid, bid, etype, cat, "moderate", value, dur, dur,
+                          consume_on_use=consume)
+
+    bm = BuffManager()
+    bm.add_buff(mk_buff("b1", "empower", "combat", 0.5))
+    bm.add_buff(mk_buff("b2", "empower", "combat", 0.25))
+    bm.add_buff(mk_buff("b3", "empower", "mining", 1.0))
+    bm.add_buff(mk_buff("b4", "quicken", "movement", 0.15))
+    bm.add_buff(mk_buff("b5", "fortify", "defense", 20.0))
+    buff_bonuses = {
+        "empower_combat": bm.get_total_bonus("empower", "combat"),
+        "damage_combat": bm.get_damage_bonus("combat"),
+        "movement": bm.get_movement_speed_bonus(),
+        "defense": bm.get_defense_bonus(),
+        "missing": bm.get_total_bonus("empower", "fishing"),
+    }
+
+    bm2 = BuffManager()
+    short = mk_buff("short", "empower", "combat", 0.5, dur=1.0)
+    longer = mk_buff("long", "empower", "combat", 0.25, dur=10.0)
+    bm2.add_buff(short)
+    bm2.add_buff(longer)
+    bm2.update(0.6)
+    tick1 = {"active": [b.buff_id for b in bm2.active_buffs],
+             "short_progress": short.get_progress_percent()}
+    bm2.update(0.6)
+    tick2 = {"active": [b.buff_id for b in bm2.active_buffs]}
+
+    bm3 = BuffManager()
+    bm3.add_buff(mk_buff("c1", "empower", "combat", 0.5, consume=True))
+    bm3.add_buff(mk_buff("c2", "empower", "mining", 0.5, consume=True))
+    bm3.add_buff(mk_buff("c3", "empower", "smithing", 0.5, consume=True))
+    bm3.add_buff(mk_buff("c4", "empower", "combat", 0.5, consume=False))
+    bm3.consume_buffs_for_action("attack")
+    consume_attack = [b.buff_id for b in bm3.active_buffs]
+    bm3.consume_buffs_for_action("gather")
+    consume_gather = [b.buff_id for b in bm3.active_buffs]
+    bm3.consume_buffs_for_action("craft", category="smithing")
+    consume_craft = [b.buff_id for b in bm3.active_buffs]
+
+    write("inventory_buffs.json", {
+        "_meta": meta("entities/components/inventory.py + buffs.py "
+                      "(scenarios EXECUTED through the real classes with the "
+                      "booted databases)"),
+        "material_id": mat_id,
+        "material_max_stack": mat_stack,
+        "equipment_id": equip_id,
+        "inventory": inv_scenarios,
+        "buff_bonuses": buff_bonuses,
+        "buff_tick1": tick1,
+        "buff_tick2": tick2,
+        "consume_after_attack": consume_attack,
+        "consume_after_gather": consume_gather,
+        "consume_after_craft_smithing": consume_craft,
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,
