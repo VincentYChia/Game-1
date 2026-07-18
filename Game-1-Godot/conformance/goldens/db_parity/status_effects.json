@@ -1,0 +1,187 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-18",
+    "git_sha": "a33f2f6c",
+    "source": "entities/status_effect.py + status_manager.py (scenarios EXECUTED through the real classes)"
+  },
+  "scenarios": {
+    "burn_dot": {
+      "effects_after_expiry": [],
+      "hp_final": 155.0,
+      "hp_ticks": [
+        190.0,
+        180.0,
+        170.0
+      ]
+    },
+    "burn_stacking": {
+      "effects": [
+        {
+          "duration": 4.0,
+          "duration_remaining": 3.0,
+          "stacks": 3,
+          "status_id": "burn"
+        }
+      ],
+      "hp": 170.0
+    },
+    "class_affinity": {
+      "adventurer": {
+        "empty": 0.0,
+        "no_match": 0.0,
+        "one_match": 0.05,
+        "own_tags": 0.2
+      },
+      "artisan": {
+        "empty": 0.0,
+        "no_match": 0.0,
+        "one_match": 0.05,
+        "own_tags": 0.2
+      },
+      "ranger": {
+        "empty": 0.0,
+        "no_match": 0.0,
+        "one_match": 0.05,
+        "own_tags": 0.2
+      },
+      "scavenger": {
+        "empty": 0.0,
+        "no_match": 0.0,
+        "one_match": 0.05,
+        "own_tags": 0.2
+      },
+      "scholar": {
+        "empty": 0.0,
+        "no_match": 0.0,
+        "one_match": 0.05,
+        "own_tags": 0.2
+      },
+      "warrior": {
+        "empty": 0.0,
+        "no_match": 0.0,
+        "one_match": 0.05,
+        "own_tags": 0.2
+      }
+    },
+    "factory_durations": {
+      "effects": [
+        {
+          "duration": 7.0,
+          "duration_remaining": 7.0,
+          "stacks": 1,
+          "status_id": "bleed"
+        },
+        {
+          "duration": 5.0,
+          "duration_remaining": 5.0,
+          "stacks": 1,
+          "status_id": "root"
+        }
+      ],
+      "unknown_ok": false
+    },
+    "freeze_restore": {
+      "flag_after": false,
+      "flag_during": true,
+      "speed_after": 5.0,
+      "speed_during": 0.0
+    },
+    "haste": {
+      "attack_speed": 1.3,
+      "attack_speed_after": 1.0,
+      "speed": 6.5,
+      "speed_after": 5.0
+    },
+    "mutual_exclusion": {
+      "after_freeze": [
+        "freeze"
+      ],
+      "after_reburn": [
+        "burn"
+      ],
+      "speed_after_reburn": 5.0
+    },
+    "poison_superlinear": {
+      "effects": [
+        {
+          "duration": 6.0,
+          "duration_remaining": 5.0,
+          "stacks": 3,
+          "status_id": "poison"
+        }
+      ],
+      "hp": 192.5256143623069
+    },
+    "resistance_halves_duration": {
+      "effects": [
+        {
+          "duration": 4.0,
+          "duration_remaining": 4.0,
+          "stacks": 1,
+          "status_id": "burn"
+        }
+      ]
+    },
+    "shield_and_regen": {
+      "hp_after_regen": 130.0,
+      "hp_capped": 200.0,
+      "shield_after_expiry": 40.0,
+      "shield_amount": 40.0
+    },
+    "shock_cadence": {
+      "hp_after_steps": [
+        200.0,
+        194.0,
+        194.0,
+        188.0,
+        188.0
+      ]
+    },
+    "slow_then_chill_alias": {
+      "effects": [
+        {
+          "duration": 5.0,
+          "duration_remaining": 5.0,
+          "stacks": 1,
+          "status_id": "slow"
+        },
+        {
+          "duration": 5.0,
+          "duration_remaining": 5.0,
+          "stacks": 1,
+          "status_id": "slow"
+        }
+      ],
+      "speed_after_chill": 1.7999999999999998,
+      "speed_after_slow": 3.0
+    },
+    "stat_modifiers": {
+      "after_cleanse": {
+        "damage_mult": 1.0,
+        "damage_taken_mult": 1.0,
+        "remaining": [
+          "empower",
+          "fortify"
+        ]
+      },
+      "damage_mult": 0.75,
+      "damage_taken_mult": 1.25,
+      "empower_mult": 1.25,
+      "fortify_reduction": 0.2
+    },
+    "stun_refresh": {
+      "cc": true,
+      "effects": [
+        {
+          "duration": 2.0,
+          "duration_remaining": 2.0,
+          "stacks": 1,
+          "status_id": "stun"
+        }
+      ],
+      "immobilized": true,
+      "silenced": true
+    }
+  }
+}

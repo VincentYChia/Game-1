@@ -435,6 +435,23 @@ public sealed class ClassDefinition
     public JsonNode PreferredDamageTypes { get; init; } = new JsonArray();
     public string PreferredArmorType { get; init; } = "";
 
+    /// <summary>classes.py:33-46 — +5% per matching tag (case-insensitive
+    /// set intersection), capped at +20%. Sacred class-affinity component of
+    /// the damage pipeline.</summary>
+    public double GetSkillAffinityBonus(IReadOnlyList<string> skillTags)
+    {
+        var ownTags = Tags is JsonArray arr
+            ? arr.OfType<JsonValue>()
+                 .Select(v => v.TryGetValue<string>(out var s) ? s.ToLowerInvariant() : null)
+                 .Where(s => s is not null).Cast<string>().ToHashSet()
+            : new HashSet<string>();
+        if (skillTags.Count == 0 || ownTags.Count == 0)
+            return 0.0;
+        var matching = skillTags.Select(t => t.ToLowerInvariant()).ToHashSet();
+        matching.IntersectWith(ownTags);
+        return Math.Min(matching.Count * 0.05, 0.20);
+    }
+
     public JsonObject ToParityNode() => new()
     {
         ["class_id"] = ClassId,

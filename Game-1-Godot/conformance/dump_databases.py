@@ -825,6 +825,169 @@ def dump_all(dbs: dict) -> None:
         "consume_after_craft_smithing": consume_craft,
     })
 
+    # ── Status effects: behavioral fixtures through the REAL classes ─────
+    from entities.status_manager import (StatusEffectManager,
+                                         add_status_manager_to_entity)
+
+    def target(**overrides):
+        t = SimpleNamespace(current_health=200.0, max_health=200.0,
+                            speed=5.0, attack_speed=1.0, name="stub")
+        for k, v in overrides.items():
+            setattr(t, k, v)
+        add_status_manager_to_entity(t)
+        return t
+
+    def effects_state(mgr):
+        return [{"status_id": e.status_id, "stacks": e.stacks,
+                 "duration": e.duration,
+                 "duration_remaining": e.duration_remaining}
+                for e in mgr.active_effects]
+
+    st = {}
+
+    t = target()
+    m = t.status_manager
+    m.apply_status("burn", {"burn_duration": 4.0, "burn_damage_per_second": 10.0})
+    hp = []
+    for _ in range(3):
+        m.update(1.0)
+        hp.append(t.current_health)
+    m.update(1.5)
+    st["burn_dot"] = {"hp_ticks": hp, "hp_final": t.current_health,
+                      "effects_after_expiry": effects_state(m)}
+
+    t = target()
+    m = t.status_manager
+    for _ in range(5):  # additive, default max 3
+        m.apply_status("burn", {"burn_duration": 4.0, "burn_damage_per_second": 10.0})
+    m.update(1.0)
+    st["burn_stacking"] = {"effects": effects_state(m), "hp": t.current_health}
+
+    t = target()
+    m = t.status_manager
+    for _ in range(3):
+        m.apply_status("poison", {"poison_duration": 6.0})
+    m.update(1.0)
+    st["poison_superlinear"] = {"effects": effects_state(m), "hp": t.current_health}
+
+    t = target()
+    m = t.status_manager
+    m.apply_status("shock", {"shock_duration": 6.0, "shock_damage_per_tick": 6.0,
+                             "shock_tick_rate": 2.0})
+    cadence = []
+    for dt_step in [1.0, 1.0, 0.5, 1.5, 1.0]:
+        m.update(dt_step)
+        cadence.append(t.current_health)
+    st["shock_cadence"] = {"hp_after_steps": cadence}
+
+    t = target()
+    m = t.status_manager
+    m.apply_status("freeze", {"freeze_duration": 2.0})
+    frozen_speed = t.speed
+    frozen_flag = t.is_frozen
+    m.update(2.5)
+    st["freeze_restore"] = {"speed_during": frozen_speed, "flag_during": frozen_flag,
+                            "speed_after": t.speed, "flag_after": t.is_frozen}
+
+    t = target()
+    m = t.status_manager
+    m.apply_status("slow", {"slow_duration": 5.0, "slow_percent": 0.4})
+    slowed = t.speed
+    m.apply_status("chill", {"chill_duration": 5.0, "slow_percent": 0.4})
+    st["slow_then_chill_alias"] = {"speed_after_slow": slowed,
+                                   "speed_after_chill": t.speed,
+                                   "effects": effects_state(m)}
+
+    t = target()
+    m = t.status_manager
+    m.apply_status("burn", {"burn_duration": 5.0})
+    m.apply_status("freeze", {"freeze_duration": 2.0})
+    after_freeze = [e.status_id for e in m.active_effects]
+    m.apply_status("burn", {"burn_duration": 5.0})
+    after_reburn = [e.status_id for e in m.active_effects]
+    st["mutual_exclusion"] = {"after_freeze": after_freeze,
+                              "after_reburn": after_reburn,
+                              "speed_after_reburn": t.speed}
+
+    t = target()
+    m = t.status_manager
+    m.apply_status("haste", {"haste_duration": 3.0, "haste_speed_bonus": 0.3})
+    st["haste"] = {"speed": t.speed, "attack_speed": t.attack_speed}
+    m.remove_status("haste")
+    st["haste"]["speed_after"] = t.speed
+    st["haste"]["attack_speed_after"] = t.attack_speed
+
+    t = target()
+    m = t.status_manager
+    m.apply_status("empower", {"empower_duration": 3.0, "empower_damage_bonus": 0.25})
+    m.apply_status("fortify", {"fortify_duration": 3.0, "fortify_defense_bonus": 0.2})
+    m.apply_status("weaken", {"weaken_duration": 3.0, "weaken_percent": 0.25})
+    m.apply_status("vulnerable", {"vulnerable_duration": 3.0, "vulnerable_percent": 0.25})
+    st["stat_modifiers"] = {
+        "empower_mult": t.empower_damage_multiplier,
+        "fortify_reduction": t.fortify_damage_reduction,
+        "damage_mult": t.damage_multiplier,
+        "damage_taken_mult": t.damage_taken_multiplier,
+    }
+    m.clear_debuffs()
+    st["stat_modifiers"]["after_cleanse"] = {
+        "damage_mult": t.damage_multiplier,
+        "damage_taken_mult": t.damage_taken_multiplier,
+        "remaining": [e.status_id for e in m.active_effects],
+    }
+
+    t = target(current_health=100.0)
+    m = t.status_manager
+    m.apply_status("shield", {"shield_duration": 5.0, "shield_amount": 40.0})
+    m.apply_status("regeneration", {"regen_duration": 5.0,
+                                    "regen_heal_per_second": 30.0})
+    m.update(1.0)
+    st["shield_and_regen"] = {"shield_amount": t.shield_amount,
+                              "hp_after_regen": t.current_health}
+    m.update(4.5)
+    st["shield_and_regen"]["hp_capped"] = t.current_health
+    st["shield_and_regen"]["shield_after_expiry"] = t.shield_amount
+
+    t = target()
+    m = t.status_manager
+    m.apply_status("stun", {"stun_duration": 2.0})
+    m.update(1.5)
+    m.apply_status("stun", {"stun_duration": 2.0})  # REFRESH
+    st["stun_refresh"] = {"effects": effects_state(m),
+                          "cc": m.is_crowd_controlled(),
+                          "immobilized": m.is_immobilized(),
+                          "silenced": m.is_silenced()}
+
+    t = target(get_effect_resistance=lambda tag: 0.5)
+    m = t.status_manager
+    m.apply_status("burn", {"burn_duration": 8.0})
+    st["resistance_halves_duration"] = {"effects": effects_state(m)}
+
+    t = target()
+    ok_unknown = t.status_manager.apply_status("nonsense_status", {"duration": 5.0})
+    t.status_manager.apply_status("bleed", {"duration": 7.0})   # generic duration key
+    t.status_manager.apply_status("root", {})                    # default 5.0
+    st["factory_durations"] = {"unknown_ok": ok_unknown,
+                               "effects": effects_state(t.status_manager)}
+
+    # Class skill-affinity bonus (classes.py:33-46) executed per real class
+    affinity = {}
+    for cid, cdef in sorted(dbs["classes"].classes.items()):
+        affinity[cid] = {
+            "own_tags": cdef.get_skill_affinity_bonus(list(cdef.tags)),
+            "one_match": cdef.get_skill_affinity_bonus([cdef.tags[0].upper()]
+                                                       if cdef.tags else []),
+            "no_match": cdef.get_skill_affinity_bonus(["zzz_not_a_tag"]),
+            "empty": cdef.get_skill_affinity_bonus([]),
+        }
+    st["class_affinity"] = affinity
+
+    write("status_effects.json", {
+        "_meta": meta("entities/status_effect.py + status_manager.py "
+                      "(scenarios EXECUTED through the real classes)"),
+        "scenarios": st,
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,

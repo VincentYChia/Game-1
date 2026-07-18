@@ -2,7 +2,7 @@
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
     "generated": "2026-07-18",
-    "git_sha": "2fcd0e8d",
+    "git_sha": "a33f2f6c",
     "source": "data/databases/skill_db.py (sacred glob + generated overlay + Update-N)"
   },
   "count": 41,
