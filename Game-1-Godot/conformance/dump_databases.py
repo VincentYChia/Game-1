@@ -76,6 +76,11 @@ def boot() -> dict:
     from data.databases.skill_db import SkillDatabase
     from data.databases.update_loader import load_all_updates
 
+    # game_engine.py:135 — resource nodes load FIRST (world gen depends on it)
+    from data.databases.resource_node_db import ResourceNodeDatabase
+    res_db = ResourceNodeDatabase.get_instance()
+    res_db.load_from_files()
+
     mat_db = MaterialDatabase.get_instance()
     mat_db.load_from_files()  # sacred 7-call sequence + generated overlay
 
@@ -108,6 +113,10 @@ def boot() -> dict:
     skill_db = SkillDatabase.get_instance()
     skill_db.load_from_files()
 
+    from data.databases.npc_db import NPCDatabase
+    npc_db = NPCDatabase.get_instance()
+    npc_db.load_from_files()  # boot does NOT merge generated files (reload-only)
+
     # Update-N overlay LAST, exactly like boot (also touches enemy /
     # skill-unlock DBs — harmless here, they just load too).
     load_all_updates(get_resource_path(""))
@@ -116,6 +125,7 @@ def boot() -> dict:
         "materials": mat_db, "translations": trans_db, "recipes": recipe_db,
         "equipment": equip_db, "titles": title_db, "classes": class_db,
         "skills": skill_db, "placements": placement_db,
+        "resource_nodes": res_db, "npcs": npc_db,
     }
 
 
@@ -179,6 +189,48 @@ def dump_all(dbs: dict) -> None:
         "count": len(dbs["placements"].placements),
         "placements": {rid: asdict(p)
                        for rid, p in sorted(dbs["placements"].placements.items())},
+    })
+
+    res = dbs["resource_nodes"]
+    from data.models.resources import ResourceDrop, ResourceNodeDefinition
+    qty_table = {q: list(ResourceDrop("x", q, "guaranteed").get_quantity_range())
+                 for q in ["few", "several", "many", "abundant", "__unknown__"]}
+    chance_table = {c: ResourceDrop("x", "few", c).get_chance_value()
+                    for c in ["guaranteed", "high", "moderate", "low", "rare",
+                              "improbable", "__unknown__"]}
+    respawn_table = {r: ResourceNodeDefinition(
+                        "x", "x", "tree", 1, "axe", 100,
+                        respawn_time=r).get_respawn_seconds()
+                     for r in ["quick", "fast", "normal", "slow", "very_slow",
+                               "__unknown__"]}
+    write("resource_nodes.json", {
+        "_meta": meta("data/databases/resource_node_db.py + models/resources.py "
+                      "(conversion tables EXECUTED from the live model)"),
+        "count": len(res.nodes),
+        "nodes": {rid: asdict(n) for rid, n in sorted(res.nodes.items())},
+        "category_caches": {
+            "trees": [n.resource_id for n in res._trees],
+            "ores": [n.resource_id for n in res._ores],
+            "stones": [n.resource_id for n in res._stones],
+        },
+        "tier_map": dict(sorted(res._tier_map.items())),
+        "quantity_ranges": qty_table,
+        "chance_values": chance_table,
+        "respawn_seconds": respawn_table,
+        "no_respawn_when_null": ResourceNodeDefinition(
+            "x", "x", "tree", 1, "axe", 100).get_respawn_seconds() is None,
+    })
+
+    npcs = dbs["npcs"]
+    write("npcs_quests.json", {
+        "_meta": meta("data/databases/npc_db.py (v3 path; boot state — "
+                      "generated merge is reload-only)"),
+        "npc_count": len(npcs.npcs),
+        "quest_count": len(npcs.quests),
+        "source_version": npcs.source_version,
+        "quest_source_version": npcs.quest_source_version,
+        "npcs": {nid: asdict(n) for nid, n in sorted(npcs.npcs.items())},
+        "quests": {qid: asdict(q) for qid, q in sorted(npcs.quests.items())},
     })
 
     write("translations.json", {

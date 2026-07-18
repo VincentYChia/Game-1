@@ -16,10 +16,15 @@ public static class BootedDatabases
 {
     public static readonly Lazy<(MaterialDatabase Materials, TranslationDatabase Translations,
         RecipeDatabase Recipes, EquipmentDatabase Equipment, TitleDatabase Titles,
-        ClassDatabase Classes, SkillDatabase Skills, PlacementDatabase Placements)> All = new(() =>
+        ClassDatabase Classes, SkillDatabase Skills, PlacementDatabase Placements,
+        ResourceNodeDatabase ResourceNodes, NpcDatabase Npcs)> All = new(() =>
     {
         var root = ContentPaths.TryGetContentRoot()
                    ?? throw new InvalidOperationException("Game-1-modular content root not found");
+
+        // game_engine.py:135 — resource nodes FIRST
+        var resourceNodes = new ResourceNodeDatabase();
+        resourceNodes.LoadFromFiles(root);
 
         // game_engine.py:135-182 boot order (tranche-1 subset)
         var materials = new MaterialDatabase();
@@ -55,9 +60,13 @@ public static class BootedDatabases
         var skills = new SkillDatabase();
         skills.LoadFromFiles(root);
 
+        var npcs = new NpcDatabase();
+        npcs.LoadFromFiles(root);  // boot state: no generated merge
+
         UpdateLoader.LoadAll(root, equipment, skills, materials, recipes, titles);
 
-        return (materials, translations, recipes, equipment, titles, classes, skills, placements);
+        return (materials, translations, recipes, equipment, titles, classes, skills,
+                placements, resourceNodes, npcs);
     });
 }
 
@@ -159,6 +168,112 @@ public class DbParityTests
         foreach (var kv in db.Placements)
             actual[kv.Key] = kv.Value.ToParityNode();
         AssertParity("placements.json", "placements", actual, db.Placements.Count);
+    }
+
+    [Fact]
+    public void ResourceNodes_MatchPythonLoaderState()
+    {
+        var db = BootedDatabases.All.Value.ResourceNodes;
+        var actual = new JsonObject();
+        foreach (var kv in db.Nodes)
+            actual[kv.Key] = kv.Value.ToParityNode();
+        AssertParity("resource_nodes.json", "nodes", actual, db.Nodes.Count);
+    }
+
+    [Fact]
+    public void ResourceNodes_CategoryCachesAndTierMap_MatchPython()
+    {
+        var db = BootedDatabases.All.Value.ResourceNodes;
+        var golden = GoldenFixture.Load("db_parity/resource_nodes.json");
+
+        static JsonArray Ids(List<ResourceNodeDefinition> list)
+        {
+            var arr = new JsonArray();
+            foreach (var n in list) arr.Add(n.ResourceId);
+            return arr;
+        }
+
+        var caches = new JsonObject
+        {
+            ["trees"] = Ids(db.Trees), ["ores"] = Ids(db.Ores), ["stones"] = Ids(db.Stones),
+        };
+        var cacheDiffs = JsonTreeComparer.Diff(golden.GetProperty("category_caches"), caches);
+        Assert.True(cacheDiffs.Count == 0,
+            "category_caches: " + string.Join("; ", cacheDiffs.Take(10)));
+
+        var tierMap = new JsonObject();
+        foreach (var kv in db.TierMap) tierMap[kv.Key] = kv.Value;
+        var tierDiffs = JsonTreeComparer.Diff(golden.GetProperty("tier_map"), tierMap);
+        Assert.True(tierDiffs.Count == 0,
+            "tier_map: " + string.Join("; ", tierDiffs.Take(10)));
+    }
+
+    [Fact]
+    public void ResourceConversionTables_MatchPythonModel()
+    {
+        var golden = GoldenFixture.Load("db_parity/resource_nodes.json");
+
+        foreach (var e in golden.GetProperty("quantity_ranges").EnumerateObject())
+        {
+            var drop = new ResourceDrop { MaterialId = "x", Quantity = e.Name, Chance = "guaranteed" };
+            var (min, max) = drop.GetQuantityRange();
+            Assert.Equal(e.Value[0].GetInt32(), min);
+            Assert.Equal(e.Value[1].GetInt32(), max);
+        }
+        foreach (var e in golden.GetProperty("chance_values").EnumerateObject())
+        {
+            var drop = new ResourceDrop { MaterialId = "x", Quantity = "few", Chance = e.Name };
+            GoldenFixture.AssertClose(e.Value.GetDouble(), drop.GetChanceValue(), $"chance[{e.Name}]");
+        }
+        foreach (var e in golden.GetProperty("respawn_seconds").EnumerateObject())
+        {
+            var def = new ResourceNodeDefinition
+            {
+                ResourceId = "x", Name = "x", Category = "tree", Tier = 1,
+                RequiredTool = "axe", BaseHealth = 100, RespawnTime = e.Name,
+            };
+            GoldenFixture.AssertClose(e.Value.GetDouble(), def.GetRespawnSeconds()!.Value,
+                $"respawn[{e.Name}]");
+        }
+        Assert.True(golden.GetProperty("no_respawn_when_null").GetBoolean());
+        var noRespawn = new ResourceNodeDefinition
+        {
+            ResourceId = "x", Name = "x", Category = "tree", Tier = 1,
+            RequiredTool = "axe", BaseHealth = 100, RespawnTime = null,
+        };
+        Assert.Null(noRespawn.GetRespawnSeconds());
+    }
+
+    [Fact]
+    public void Npcs_MatchPythonLoaderState()
+    {
+        var db = BootedDatabases.All.Value.Npcs;
+        var golden = GoldenFixture.Load("db_parity/npcs_quests.json");
+        Assert.Equal(golden.GetProperty("npc_count").GetInt32(), db.Npcs.Count);
+        Assert.Equal(golden.GetProperty("source_version").GetString(), db.SourceVersion);
+
+        var actual = new JsonObject();
+        foreach (var kv in db.Npcs)
+            actual[kv.Key] = kv.Value.ToParityNode();
+        var diffs = JsonTreeComparer.Diff(golden.GetProperty("npcs"), actual);
+        Assert.True(diffs.Count == 0,
+            $"npcs: {diffs.Count} diffs:\n  " + string.Join("\n  ", diffs.Take(25)));
+    }
+
+    [Fact]
+    public void Quests_MatchPythonLoaderState()
+    {
+        var db = BootedDatabases.All.Value.Npcs;
+        var golden = GoldenFixture.Load("db_parity/npcs_quests.json");
+        Assert.Equal(golden.GetProperty("quest_count").GetInt32(), db.Quests.Count);
+        Assert.Equal(golden.GetProperty("quest_source_version").GetString(), db.QuestSourceVersion);
+
+        var actual = new JsonObject();
+        foreach (var kv in db.Quests)
+            actual[kv.Key] = kv.Value.ToParityNode();
+        var diffs = JsonTreeComparer.Diff(golden.GetProperty("quests"), actual);
+        Assert.True(diffs.Count == 0,
+            $"quests: {diffs.Count} diffs:\n  " + string.Join("\n  ", diffs.Take(25)));
     }
 
     [Fact]

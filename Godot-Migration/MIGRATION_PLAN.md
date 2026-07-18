@@ -141,10 +141,22 @@ Godot once so it generates its solution glue.
   Placement + UpdateLoader overlay. Suite: **33/33**. The parity gate caught a
   real divergence on its first run (four alchemy consumables carry
   `effectParams` as an ARRAY — Python passes raw; a typed helper had coerced
-  to `{}`). Remaining for P1 tranche 2: npc_db, resource_node_db,
-  skill_unlock_db, chunk_template_db, world_generation_db, map_waypoint_db,
-  visual_config_db, quest_archive_db (sidecar-boundary), plus the models in
-  world.py and the UnlockRequirements condition graph (P2).
+  to `{}`).
+- **2026-07-18 (later still) — P1 at 10/16 databases, suite 38/38.**
+  ResourceNodeDatabase (category caches order-gated, tier map, qualitative→
+  numeric conversion tables executed from the live model incl. the "quick"
+  respawn synonym, ICON_NAME_MAP as the Godot asset remap) and NpcDatabase
+  (v3 canonical path: NPCs + quests, speechbank flatten, description
+  long→short fallback, rewards normalization incl. statPoints alias,
+  generated-merge as reload-only exactly like boot) both passed parity on
+  their first run. Documented deviation: the npcs-enhanced.JSON v2 legacy
+  adapter is NOT ported (contract doc 03 flags it candidate dead code; the
+  C# loader fail-loud logs if v3 files are missing). Position model is
+  already 3D (x, y, z) in Python — the (x,y)→(x,0,z) mapping concern from
+  the old Unity plan is moot. Remaining for P1: skill_unlock_db (blocked on
+  the P2 condition graph), chunk_template_db, world_generation_db,
+  map_waypoint_db (decompose), visual_config_db (thin reader),
+  quest_archive_db (sidecar-boundary write API), world.py models.
 
 ## 7a. Parked — DO NOT FORGET
 
