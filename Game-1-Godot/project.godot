@@ -1,0 +1,19 @@
+; Game-1 — Godot 4 (.NET) migration target.
+; See ../Godot-Migration/MIGRATION_PLAN.md for the plan and
+; ../Godot-Migration/ARCHITECTURE_DECISIONS.md for the ADRs.
+
+config_version=5
+
+[application]
+
+config/name="Game-1"
+run/main_scene="res://scenes/Main.tscn"
+config/features=PackedStringArray("4.4", "C#")
+
+[dotnet]
+
+project/assembly_name="Game1.Godot"
+
+[rendering]
+
+renderer/rendering_method="forward_plus"

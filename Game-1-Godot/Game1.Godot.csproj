@@ -1,0 +1,18 @@
+<Project Sdk="Godot.NET.Sdk/4.4.1">
+  <!-- The Godot.NET.Sdk version must match the installed Godot 4.x minor
+       version. If you install a different Godot 4.x, update this one line. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>Game1.Godot</RootNamespace>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Engine glue only: the pure-logic projects compile on their own. -->
+    <Compile Remove="src\**\*.cs" />
+    <Compile Remove="tests\**\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="src\Game1.Core\Game1.Core.csproj" />
+  </ItemGroup>
+</Project>

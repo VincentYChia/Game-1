@@ -1,0 +1,11 @@
+# Godot
+.godot/
+*.translation
+export_presets.cfg
+
+# .NET
+bin/
+obj/
+*.user
+.vs/
+TestResults/
