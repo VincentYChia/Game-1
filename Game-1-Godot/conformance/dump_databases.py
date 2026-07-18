@@ -277,6 +277,54 @@ def dump_all(dbs: dict) -> None:
             for lvl in ["peaceful", "dangerous", "rare", "unknown"]},
     })
 
+    # Quest archive: in-memory runtime store — BEHAVIORAL fixture (synthetic
+    # records through the real class, query results dumped).
+    from data.databases.quest_archive_db import (ArchivedQuestRecord,
+                                                 QuestArchiveDatabase)
+    QuestArchiveDatabase.reset()
+    qa = QuestArchiveDatabase.get_instance()
+    _recs = [
+        ArchivedQuestRecord("q_vendetta_001", {"quest_id": "q_vendetta_001"},
+                            100.0, 400.0, 300.0, "succeeded",
+                            {"experience": 250}, ["captain_vell"],
+                            ["frost_wyrmling"], ["vendetta", "moors"],
+                            "thread_a", 3),
+        ArchivedQuestRecord("q_gather_002", {"quest_id": "q_gather_002"},
+                            50.0, 900.0, 850.0, "failed", {},
+                            ["overseer_halda"], ["glacier_tin"],
+                            ["moors"], None, 5),
+        ArchivedQuestRecord("q_hunt_003", {"quest_id": "q_hunt_003"},
+                            10.0, 600.0, 590.0, "succeeded", {"gold": 40},
+                            ["captain_vell", "overseer_halda"],
+                            ["frost_wyrmling", "icebound_quarry"],
+                            ["vendetta", "hunt"], "thread_a", 4),
+        ArchivedQuestRecord("q_abandon_004", {"quest_id": "q_abandon_004"},
+                            700.0, 750.0, 50.0, "abandoned", {}, [], [],
+                            ["moors", "vendetta"], None, 6),
+    ]
+    for r in _recs:
+        qa.archive(r)
+
+    def ids(records):
+        return [r.quest_id for r in records]
+
+    write("quest_archive_behavior.json", {
+        "_meta": meta("data/databases/quest_archive_db.py (behavioral fixture: "
+                      "synthetic records through the REAL class, queries executed)"),
+        "records_in": [r.to_dict() for r in _recs],
+        "roundtrip": [ArchivedQuestRecord.from_dict(r.to_dict()).to_dict()
+                      for r in _recs],
+        "query_by_tags_all": ids(qa.query_by_tags(["vendetta", "moors"], match_all=True)),
+        "query_by_tags_any": ids(qa.query_by_tags(["vendetta", "moors"], match_all=False)),
+        "query_by_tags_empty": ids(qa.query_by_tags([])),
+        "query_by_tags_limit1": ids(qa.query_by_tags(["moors"], match_all=False, limit=1)),
+        "recent_archived_2": ids(qa.recent_archived(2)),
+        "query_by_npc": ids(qa.query_by_npc("captain_vell")),
+        "query_by_entity": ids(qa.query_by_entity("frost_wyrmling")),
+        "query_by_result_succeeded": ids(qa.query_by_result("succeeded")),
+        "count": qa.count(),
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,

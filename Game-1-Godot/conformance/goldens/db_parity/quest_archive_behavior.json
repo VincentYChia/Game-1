@@ -1,0 +1,229 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-18",
+    "git_sha": "7ec23308",
+    "source": "data/databases/quest_archive_db.py (behavioral fixture: synthetic records through the REAL class, queries executed)"
+  },
+  "count": 4,
+  "query_by_entity": [
+    "q_vendetta_001",
+    "q_hunt_003"
+  ],
+  "query_by_npc": [
+    "q_vendetta_001",
+    "q_hunt_003"
+  ],
+  "query_by_result_succeeded": [
+    "q_vendetta_001",
+    "q_hunt_003"
+  ],
+  "query_by_tags_all": [
+    "q_vendetta_001",
+    "q_abandon_004"
+  ],
+  "query_by_tags_any": [
+    "q_vendetta_001",
+    "q_gather_002",
+    "q_hunt_003",
+    "q_abandon_004"
+  ],
+  "query_by_tags_empty": [],
+  "query_by_tags_limit1": [
+    "q_vendetta_001"
+  ],
+  "recent_archived_2": [
+    "q_gather_002",
+    "q_abandon_004"
+  ],
+  "records_in": [
+    {
+      "actual_result": "succeeded",
+      "actual_rewards_granted": {
+        "experience": 250
+      },
+      "archived_at_game_day": 3,
+      "archived_narrative_tags": [
+        "vendetta",
+        "moors"
+      ],
+      "duration": 300.0,
+      "original_quest_def_json": {
+        "quest_id": "q_vendetta_001"
+      },
+      "participating_entities": [
+        "frost_wyrmling"
+      ],
+      "participating_npcs": [
+        "captain_vell"
+      ],
+      "quest_id": "q_vendetta_001",
+      "time_completed": 400.0,
+      "time_started": 100.0,
+      "wns_thread_id": "thread_a"
+    },
+    {
+      "actual_result": "failed",
+      "actual_rewards_granted": {},
+      "archived_at_game_day": 5,
+      "archived_narrative_tags": [
+        "moors"
+      ],
+      "duration": 850.0,
+      "original_quest_def_json": {
+        "quest_id": "q_gather_002"
+      },
+      "participating_entities": [
+        "glacier_tin"
+      ],
+      "participating_npcs": [
+        "overseer_halda"
+      ],
+      "quest_id": "q_gather_002",
+      "time_completed": 900.0,
+      "time_started": 50.0,
+      "wns_thread_id": null
+    },
+    {
+      "actual_result": "succeeded",
+      "actual_rewards_granted": {
+        "gold": 40
+      },
+      "archived_at_game_day": 4,
+      "archived_narrative_tags": [
+        "vendetta",
+        "hunt"
+      ],
+      "duration": 590.0,
+      "original_quest_def_json": {
+        "quest_id": "q_hunt_003"
+      },
+      "participating_entities": [
+        "frost_wyrmling",
+        "icebound_quarry"
+      ],
+      "participating_npcs": [
+        "captain_vell",
+        "overseer_halda"
+      ],
+      "quest_id": "q_hunt_003",
+      "time_completed": 600.0,
+      "time_started": 10.0,
+      "wns_thread_id": "thread_a"
+    },
+    {
+      "actual_result": "abandoned",
+      "actual_rewards_granted": {},
+      "archived_at_game_day": 6,
+      "archived_narrative_tags": [
+        "moors",
+        "vendetta"
+      ],
+      "duration": 50.0,
+      "original_quest_def_json": {
+        "quest_id": "q_abandon_004"
+      },
+      "participating_entities": [],
+      "participating_npcs": [],
+      "quest_id": "q_abandon_004",
+      "time_completed": 750.0,
+      "time_started": 700.0,
+      "wns_thread_id": null
+    }
+  ],
+  "roundtrip": [
+    {
+      "actual_result": "succeeded",
+      "actual_rewards_granted": {
+        "experience": 250
+      },
+      "archived_at_game_day": 3,
+      "archived_narrative_tags": [
+        "vendetta",
+        "moors"
+      ],
+      "duration": 300.0,
+      "original_quest_def_json": {
+        "quest_id": "q_vendetta_001"
+      },
+      "participating_entities": [
+        "frost_wyrmling"
+      ],
+      "participating_npcs": [
+        "captain_vell"
+      ],
+      "quest_id": "q_vendetta_001",
+      "time_completed": 400.0,
+      "time_started": 100.0,
+      "wns_thread_id": "thread_a"
+    },
+    {
+      "actual_result": "failed",
+      "actual_rewards_granted": {},
+      "archived_at_game_day": 5,
+      "archived_narrative_tags": [
+        "moors"
+      ],
+      "duration": 850.0,
+      "original_quest_def_json": {
+        "quest_id": "q_gather_002"
+      },
+      "participating_entities": [
+        "glacier_tin"
+      ],
+      "participating_npcs": [
+        "overseer_halda"
+      ],
+      "quest_id": "q_gather_002",
+      "time_completed": 900.0,
+      "time_started": 50.0,
+      "wns_thread_id": null
+    },
+    {
+      "actual_result": "succeeded",
+      "actual_rewards_granted": {
+        "gold": 40
+      },
+      "archived_at_game_day": 4,
+      "archived_narrative_tags": [
+        "vendetta",
+        "hunt"
+      ],
+      "duration": 590.0,
+      "original_quest_def_json": {
+        "quest_id": "q_hunt_003"
+      },
+      "participating_entities": [
+        "frost_wyrmling",
+        "icebound_quarry"
+      ],
+      "participating_npcs": [
+        "captain_vell",
+        "overseer_halda"
+      ],
+      "quest_id": "q_hunt_003",
+      "time_completed": 600.0,
+      "time_started": 10.0,
+      "wns_thread_id": "thread_a"
+    },
+    {
+      "actual_result": "abandoned",
+      "actual_rewards_granted": {},
+      "archived_at_game_day": 6,
+      "archived_narrative_tags": [
+        "moors",
+        "vendetta"
+      ],
+      "duration": 50.0,
+      "original_quest_def_json": {
+        "quest_id": "q_abandon_004"
+      },
+      "participating_entities": [],
+      "participating_npcs": [],
+      "quest_id": "q_abandon_004",
+      "time_completed": 750.0,
+      "time_started": 700.0,
+      "wns_thread_id": null
+    }
+  ]
+}

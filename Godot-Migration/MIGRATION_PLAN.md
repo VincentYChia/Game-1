@@ -153,10 +153,20 @@ Godot once so it generates its solution glue.
   adapter is NOT ported (contract doc 03 flags it candidate dead code; the
   C# loader fail-loud logs if v3 files are missing). Position model is
   already 3D (x, y, z) in Python — the (x,y)→(x,0,z) mapping concern from
-  the old Unity plan is moot. Remaining for P1: skill_unlock_db (blocked on
-  the P2 condition graph), chunk_template_db, world_generation_db,
-  map_waypoint_db (decompose), visual_config_db (thin reader),
-  quest_archive_db (sidecar-boundary write API), world.py models.
+  the old Unity plan is moot.
+- **2026-07-18 (cont.) — P1 at 13/16 databases, suite 43/43.** ChunkTemplate
+  (geo dispatch bridge shared with the sidecar, geoTypes auto-register with
+  sacred-wins + Python dict insertion-order semantics, str/int/bool()
+  coercions mirrored incl. truthiness), WorldGenerationConfig (10 sections,
+  dilutive normalization, zone lookups executed), QuestArchive (sidecar-
+  boundary substrate — BEHAVIORAL oracle: synthetic records through the
+  real Python class, its query results replayed in C#: tag match_all/any +
+  limit-break order, stable recency sort, round-trip). All green on first
+  parity runs. Remaining for P1: map_waypoint_db (decompose: rules port /
+  pixel+color config → Godot theme), visual_config_db (thin typed reader),
+  skill_unlock_db (deliberately sequenced into P2 with the
+  UnlockRequirements condition graph / ICharacterQuery), world.py models
+  (port alongside their consumers in P2/P3).
 
 ## 7a. Parked — DO NOT FORGET
 
