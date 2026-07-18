@@ -207,6 +207,38 @@ public sealed class TitleDefinition
     };
 }
 
+public sealed class PlacementData
+{
+    public required string RecipeId { get; init; }
+    public required string Discipline { get; init; }
+    public string GridSize { get; init; } = "";
+    public JsonNode PlacementMap { get; init; } = new JsonObject();
+    public JsonNode CoreInputs { get; init; } = new JsonArray();
+    public JsonNode SurroundingInputs { get; init; } = new JsonArray();
+    public JsonNode Ingredients { get; init; } = new JsonArray();
+    public JsonNode Slots { get; init; } = new JsonArray();
+    public JsonNode Pattern { get; init; } = new JsonArray();
+    public string Narrative { get; init; } = "";
+    public string OutputId { get; init; } = "";
+    public double StationTier { get; init; } = 1;
+
+    public JsonObject ToParityNode() => new()
+    {
+        ["recipe_id"] = RecipeId,
+        ["discipline"] = Discipline,
+        ["grid_size"] = GridSize,
+        ["placement_map"] = PlacementMap.DeepClone(),
+        ["core_inputs"] = CoreInputs.DeepClone(),
+        ["surrounding_inputs"] = SurroundingInputs.DeepClone(),
+        ["ingredients"] = Ingredients.DeepClone(),
+        ["slots"] = Slots.DeepClone(),
+        ["pattern"] = Pattern.DeepClone(),
+        ["narrative"] = Narrative,
+        ["output_id"] = OutputId,
+        ["station_tier"] = StationTier,
+    };
+}
+
 public sealed class ClassDefinition
 {
     public required string ClassId { get; init; }

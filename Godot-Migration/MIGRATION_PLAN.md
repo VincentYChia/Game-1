@@ -132,6 +132,20 @@ Godot once so it generates its solution glue.
   solution builds clean incl. Game1.Godot, Godot boots the project headless.
   PR #83 (crux-foundry → main) merged.
 
+- **2026-07-18 (later) — P1 data layer: 8 of 16 databases at byte-level parity.**
+  New oracle `conformance/dump_databases.py` replays the game_engine.py:135-182
+  boot and dumps normalized DB state; `DbParityTests` loads the same content
+  through the C# loaders and requires an empty deep-diff. Ported green:
+  Material (sacred 7-file sequence + generated overlay), Equipment (raw store),
+  Recipe (3 output dialects + station order), Skill, Title, Class, Translation,
+  Placement + UpdateLoader overlay. Suite: **33/33**. The parity gate caught a
+  real divergence on its first run (four alchemy consumables carry
+  `effectParams` as an ARRAY — Python passes raw; a typed helper had coerced
+  to `{}`). Remaining for P1 tranche 2: npc_db, resource_node_db,
+  skill_unlock_db, chunk_template_db, world_generation_db, map_waypoint_db,
+  visual_config_db, quest_archive_db (sidecar-boundary), plus the models in
+  world.py and the UnlockRequirements condition graph (P2).
+
 ## 7a. Parked — DO NOT FORGET
 
 | Item | Why parked | Unblock |

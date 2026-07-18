@@ -85,6 +85,10 @@ def boot() -> dict:
     recipe_db = RecipeDatabase.get_instance()
     recipe_db.load_from_files()
 
+    from data.databases.placement_db import PlacementDatabase
+    placement_db = PlacementDatabase.get_instance()
+    placement_db.load_from_files()
+
     equip_db = EquipmentDatabase.get_instance()
     for rel in ("items.JSON/items-engineering-1.JSON",
                 "items.JSON/items-smithing-2.JSON",
@@ -111,7 +115,7 @@ def boot() -> dict:
     return {
         "materials": mat_db, "translations": trans_db, "recipes": recipe_db,
         "equipment": equip_db, "titles": title_db, "classes": class_db,
-        "skills": skill_db,
+        "skills": skill_db, "placements": placement_db,
     }
 
 
@@ -168,6 +172,13 @@ def dump_all(dbs: dict) -> None:
         "count": len(dbs["classes"].classes),
         "classes": {cid: asdict(c)
                     for cid, c in sorted(dbs["classes"].classes.items())},
+    })
+
+    write("placements.json", {
+        "_meta": meta("data/databases/placement_db.py (5 discipline parsers)"),
+        "count": len(dbs["placements"].placements),
+        "placements": {rid: asdict(p)
+                       for rid, p in sorted(dbs["placements"].placements.items())},
     })
 
     write("translations.json", {

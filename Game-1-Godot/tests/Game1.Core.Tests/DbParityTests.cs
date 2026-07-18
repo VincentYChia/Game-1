@@ -16,7 +16,7 @@ public static class BootedDatabases
 {
     public static readonly Lazy<(MaterialDatabase Materials, TranslationDatabase Translations,
         RecipeDatabase Recipes, EquipmentDatabase Equipment, TitleDatabase Titles,
-        ClassDatabase Classes, SkillDatabase Skills)> All = new(() =>
+        ClassDatabase Classes, SkillDatabase Skills, PlacementDatabase Placements)> All = new(() =>
     {
         var root = ContentPaths.TryGetContentRoot()
                    ?? throw new InvalidOperationException("Game-1-modular content root not found");
@@ -30,6 +30,9 @@ public static class BootedDatabases
 
         var recipes = new RecipeDatabase();
         recipes.LoadFromFiles(root);
+
+        var placements = new PlacementDatabase();
+        placements.LoadFromFiles(root);
 
         var equipment = new EquipmentDatabase();
         foreach (var f in new[]
@@ -54,7 +57,7 @@ public static class BootedDatabases
 
         UpdateLoader.LoadAll(root, equipment, skills, materials, recipes, titles);
 
-        return (materials, translations, recipes, equipment, titles, classes, skills);
+        return (materials, translations, recipes, equipment, titles, classes, skills, placements);
     });
 }
 
@@ -146,6 +149,16 @@ public class DbParityTests
         foreach (var kv in db.Classes)
             actual[kv.Key] = kv.Value.ToParityNode();
         AssertParity("classes.json", "classes", actual, db.Classes.Count);
+    }
+
+    [Fact]
+    public void Placements_MatchPythonLoaderState()
+    {
+        var db = BootedDatabases.All.Value.Placements;
+        var actual = new JsonObject();
+        foreach (var kv in db.Placements)
+            actual[kv.Key] = kv.Value.ToParityNode();
+        AssertParity("placements.json", "placements", actual, db.Placements.Count);
     }
 
     [Fact]
