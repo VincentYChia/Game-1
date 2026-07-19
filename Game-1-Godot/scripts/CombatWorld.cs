@@ -1,6 +1,8 @@
 using Game1.Core;
 using Game1.Core.Combat;
 using Game1.Core.Data;
+using Game1.Core.Progression;
+using Game1.Core.Tags;
 using Game1.Core.World;
 using Godot;
 
@@ -32,8 +34,9 @@ public partial class CombatWorld : Node3D
     private AttackStateMachine _playerAttack = new("player");
     private AttackDefinition? _unarmed;
     private double _playerFacingDeg;
-    private double _playerHealth = 150;
-    private double _playerMaxHealth = 150;
+    private PlayerCharacter? _pc;
+    private TagAttackOrchestrator? _orch;
+    private readonly List<EnemyRuntime> _runtimes = new();
     private Label? _hud;
     private string _lastEvent = "";
 
@@ -60,6 +63,29 @@ public partial class CombatWorld : Node3D
         var enemyDb = new EnemyDatabase();
         enemyDb.LoadFromFiles(contentRoot);
         UpdateLoader.LoadEnemyUpdates(contentRoot, enemyDb);
+
+        // Certified damage pipeline: real PlayerCharacter + orchestrator
+        var registry = TagRegistry.LoadFrom(contentRoot);
+        var scaling = StatScalingConfig.Load(contentRoot);
+        var matDb = new MaterialDatabase();
+        matDb.LoadFromFiles(contentRoot);
+        var equipDb = new EquipmentDatabase();
+        foreach (var f in new[] { "items-tools-1.JSON", "items-smithing-2.JSON" })
+        {
+            var p = System.IO.Path.Combine(contentRoot, "items.JSON", f);
+            if (File.Exists(p)) equipDb.LoadFromFile(p);
+        }
+        _pc = new PlayerCharacter(new CharacterStats(scaling),
+                                  new Inventory(matDb, equipDb, 30), (8.0, 8.0))
+        { Health = 100, MaxHealthValue = 100 };
+        _pc.Equipment.Slots["axe"] = equipDb.CreateEquipmentFromId("copper_axe");
+        _pc.Equipment.Slots["pickaxe"] = equipDb.CreateEquipmentFromId("copper_pickaxe");
+        _orch = new TagAttackOrchestrator(_pc, registry,
+                                          new PythonRandom(worldSeed ^ 101),
+                                          new PythonRandom(worldSeed ^ 202));
+        _orch.Config.LoadFromFile(System.IO.Path.Combine(
+            contentRoot, "Definitions.JSON", "combat-config.JSON"));
+        _orch.ActiveEnemies = _runtimes;
 
         _unarmed = _combatData.GetWeaponAttack("unarmed", weaponRange: 1.8);
         _hitboxes.RegisterHurtbox("player", 0.4);
@@ -117,6 +143,7 @@ public partial class CombatWorld : Node3D
 
         var live = new LiveEnemy { Runtime = runtime, Node = node, EntityId = entityId };
         _enemies.Add(live);
+        _runtimes.Add(runtime);
         _byId[entityId] = live;
     }
 
@@ -168,26 +195,26 @@ public partial class CombatWorld : Node3D
         foreach (var hit in _hitboxes.Update(dtMs))
         {
             if (hit.AttackerId == "player" && _byId.TryGetValue(hit.TargetId, out var target)
-                && target.Runtime.IsAlive)
+                && target.Runtime.IsAlive && _orch is not null)
             {
-                var damage = 20.0 + _rng.NextDouble() * 10.0;
-                var died = target.Runtime.TakeDamage(damage);
-                _lastEvent = died
-                    ? $"killed {target.Runtime.Definition.Name}!"
-                    : $"hit {target.Runtime.Definition.Name} for {damage:F0}";
-                if (died)
+                // The CERTIFIED path: full composition + defense + loot + EXP
+                var res = _orch.PlayerAttackEnemyWithTags(
+                    target.Runtime, new List<string> { "physical" },
+                    new Dictionary<string, object?> { ["baseDamage"] = 10.0 });
+                var name = target.Runtime.Definition.Name;
+                if (!target.Runtime.IsAlive)
                 {
-                    var loot = target.Runtime.GenerateLoot();
-                    if (loot.Count > 0)
-                        _lastEvent += " loot: " + string.Join(", ",
-                            loot.Select(l => $"{l.Quantity}x {l.MaterialId}"));
+                    _lastEvent = $"killed {name}!" + (res.Loot.Count > 0
+                        ? " loot: " + string.Join(", ",
+                            res.Loot.Select(l => $"{l.Quantity}x {l.MaterialId}"))
+                        : "");
                     _hitboxes.UnregisterHurtbox(target.EntityId);
                 }
-            }
-            else if (hit.TargetId == "player")
-            {
-                _playerHealth = Math.Max(0, _playerHealth - 8);
-                _lastEvent = "you were hit!";
+                else
+                {
+                    _lastEvent = $"hit {name} ({target.Runtime.CurrentHealth:F0} hp)"
+                                 + (res.IsCrit ? " CRIT!" : "");
+                }
             }
         }
 
@@ -217,7 +244,8 @@ public partial class CombatWorld : Node3D
             if (transition == "active_start" && rt.DistanceTo(playerSim) <= rt.AttackRadius + 0.6)
             {
                 var dmg = rt.PerformAttack() * rt.AttackDamageMult;
-                _playerHealth = Math.Max(0, _playerHealth - dmg);
+                if (_pc is not null)
+                    _pc.Health = Math.Max(0, _pc.Health - dmg);
                 _lastEvent = $"{rt.Definition.Name} hits you for {dmg:F0}";
             }
 
@@ -239,10 +267,11 @@ public partial class CombatWorld : Node3D
             }
         }
 
-        if (_hud is not null)
+        if (_hud is not null && _pc is not null)
         {
             var alive = _enemies.Count(x => x.Runtime.IsAlive);
-            _hud.Text = $"HP {(int)_playerHealth}/{(int)_playerMaxHealth}   " +
+            _hud.Text = $"HP {(int)_pc.Health}/{(int)_pc.MaxHealthValue}   " +
+                        $"Lv {_pc.Leveling.Level} ({_pc.Leveling.CurrentExp} exp)   " +
                         $"enemies {alive}/{_enemies.Count}   {_lastEvent}";
         }
     }
