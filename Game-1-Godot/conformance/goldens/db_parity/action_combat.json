@@ -1,0 +1,6256 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-18",
+    "git_sha": "d8f9ca20",
+    "source": "Combat/attack_state_machine.py + hitbox_system.py + projectile_system.py + combat_data_loader.py — scripted scenarios EXECUTED through the real classes"
+  },
+  "enemy_attack_select_seed_991": {
+    "beetle_armored": [
+      "enemy_beetle_armored_insect_mandible",
+      "enemy_beetle_armored_insect_mandible",
+      "enemy_beetle_armored_insect_mandible",
+      null,
+      null
+    ],
+    "beetle_brown": [
+      "enemy_beetle_brown_insect_mandible",
+      "enemy_beetle_brown_insect_mandible",
+      "enemy_beetle_brown_insect_mandible",
+      null,
+      null
+    ],
+    "beetle_titan": [
+      "enemy_beetle_titan_insect_mandible",
+      "enemy_beetle_titan_insect_mandible",
+      "enemy_beetle_titan_insect_mandible",
+      null,
+      null
+    ],
+    "entity_primordial": [
+      "enemy_entity_primordial_aberration_lash",
+      "enemy_entity_primordial_aberration_lash",
+      "enemy_entity_primordial_aberration_lash",
+      "enemy_entity_primordial_aberration_lash",
+      null
+    ]
+  },
+  "enemy_attacks_seed_31337": {
+    "beetle_armored": {
+      "active_ms": 174.79999999999998,
+      "animation_id": "enemy_insect_insect_sting",
+      "attack_id": "enemy_beetle_armored_insect_sting",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 190.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 36,
+        "offset_forward": 0.84,
+        "radius": 1.84,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 266.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "physical"
+      ],
+      "telegraph_color": [
+        230,
+        230,
+        255
+      ],
+      "windup_ms": 418.0
+    },
+    "beetle_brown": {
+      "active_ms": 140.0,
+      "animation_id": "enemy_insect_insect_mandible",
+      "attack_id": "enemy_beetle_brown_insect_mandible",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 200.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 45,
+        "offset_forward": 0.6,
+        "radius": 1.2,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 316.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "physical"
+      ],
+      "telegraph_color": [
+        230,
+        230,
+        255
+      ],
+      "windup_ms": 462.0
+    },
+    "beetle_titan": {
+      "active_ms": 195.5,
+      "animation_id": "enemy_insect_insect_charge",
+      "attack_id": "enemy_beetle_titan_insect_charge",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 170.0,
+      "damage_multiplier": 1.4,
+      "hitbox_params": {
+        "arc_degrees": 62,
+        "offset_forward": 1.7999999999999998,
+        "radius": 3.75,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 289.0,
+      "screen_shake": true,
+      "status_tags": [],
+      "tags": [
+        "physical"
+      ],
+      "telegraph_color": [
+        230,
+        230,
+        255
+      ],
+      "windup_ms": 462.4
+    },
+    "entity_primordial": {
+      "active_ms": 238.0,
+      "animation_id": "enemy_aberration_aberration_lash",
+      "attack_id": "enemy_entity_primordial_aberration_lash",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 170.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 110,
+        "offset_forward": 2.3400000000000003,
+        "radius": 2.4,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 274.55,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "shadow"
+      ],
+      "telegraph_color": [
+        160,
+        60,
+        220
+      ],
+      "windup_ms": 420.75
+    },
+    "golem_crystal": {
+      "active_ms": 391.0,
+      "animation_id": "enemy_construct_construct_sweep",
+      "attack_id": "enemy_golem_crystal_construct_sweep",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 170.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 168,
+        "offset_forward": 2.1599999999999997,
+        "radius": 2.7,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 433.5,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "arcane"
+      ],
+      "telegraph_color": [
+        200,
+        60,
+        255
+      ],
+      "windup_ms": 715.6999999999999
+    },
+    "golem_stone": {
+      "active_ms": 361.8,
+      "animation_id": "enemy_construct_construct_slam",
+      "attack_id": "enemy_golem_stone_construct_slam",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 180.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 120,
+        "offset_forward": 1.44,
+        "radius": 2.08,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 421.2,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "physical"
+      ],
+      "telegraph_color": [
+        230,
+        230,
+        255
+      ],
+      "windup_ms": 668.7
+    },
+    "inferno_drake": {
+      "active_ms": 162.0,
+      "animation_id": "enemy_beast_beast_claw",
+      "attack_id": "enemy_inferno_drake_beast_claw",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 180.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 90,
+        "offset_forward": 1.2,
+        "radius": 1.56,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 243.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "fire"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 306.0
+    },
+    "slime_acid": {
+      "active_ms": 427.5,
+      "animation_id": "enemy_ooze_ooze_dissolve",
+      "attack_id": "enemy_slime_acid_ooze_dissolve",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 190.0,
+      "damage_multiplier": 1.2,
+      "hitbox_params": {
+        "offset_forward": 0.84,
+        "radius": 2.3,
+        "shape": "circle"
+      },
+      "hitbox_shape": "circle",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 538.65,
+      "screen_shake": true,
+      "status_tags": [],
+      "tags": [
+        "poison"
+      ],
+      "telegraph_color": [
+        80,
+        255,
+        60
+      ],
+      "windup_ms": 690.65
+    },
+    "slime_crystal": {
+      "active_ms": 405.0,
+      "animation_id": "enemy_ooze_ooze_dissolve",
+      "attack_id": "enemy_slime_crystal_ooze_dissolve",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 180.0,
+      "damage_multiplier": 1.2,
+      "hitbox_params": {
+        "offset_forward": 1.2,
+        "radius": 2.6,
+        "shape": "circle"
+      },
+      "hitbox_shape": "circle",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 535.5,
+      "screen_shake": true,
+      "status_tags": [],
+      "tags": [
+        "arcane"
+      ],
+      "telegraph_color": [
+        200,
+        60,
+        255
+      ],
+      "windup_ms": 769.5
+    },
+    "slime_green": {
+      "active_ms": 350.0,
+      "animation_id": "enemy_ooze_ooze_engulf",
+      "attack_id": "enemy_slime_green_ooze_engulf",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 200.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "offset_forward": 0.6,
+        "radius": 1.2,
+        "shape": "circle"
+      },
+      "hitbox_shape": "circle",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 660.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "physical"
+      ],
+      "telegraph_color": [
+        230,
+        230,
+        255
+      ],
+      "windup_ms": 1001.0
+    },
+    "storm_titan": {
+      "active_ms": 255.0,
+      "animation_id": "enemy_elemental_elemental_pulse",
+      "attack_id": "enemy_storm_titan_elemental_pulse",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 170.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "offset_forward": 1.98,
+        "radius": 2.25,
+        "shape": "circle"
+      },
+      "hitbox_shape": "circle",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 344.25,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "arcane"
+      ],
+      "telegraph_color": [
+        200,
+        60,
+        255
+      ],
+      "windup_ms": 433.5
+    },
+    "synthetic_dragon": {
+      "active_ms": 450.0,
+      "animation_id": "enemy_dragon_attack",
+      "attack_id": "enemy_synthetic_dragon_2",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 180.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 140,
+        "offset_forward": 1.7999999999999998,
+        "radius": 3.8400000000000007,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 630.0,
+      "screen_shake": true,
+      "status_tags": [],
+      "tags": [
+        "fire"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 900.0
+    },
+    "synthetic_unknown": {
+      "active_ms": 240.0,
+      "animation_id": "enemy_slimeking_attack",
+      "attack_id": "enemy_synthetic_unknown_2",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 200.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 80,
+        "offset_forward": 0.6,
+        "radius": 0.8,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 400.0,
+      "screen_shake": true,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        255,
+        100,
+        100
+      ],
+      "windup_ms": 600.0
+    },
+    "void_archon": {
+      "active_ms": 221.0,
+      "animation_id": "enemy_undead_undead_swipe",
+      "attack_id": "enemy_void_archon_undead_swipe",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 170.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 80,
+        "offset_forward": 1.7999999999999998,
+        "radius": 2.1,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 321.3,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "physical"
+      ],
+      "telegraph_color": [
+        230,
+        230,
+        255
+      ],
+      "windup_ms": 433.5
+    },
+    "void_wraith": {
+      "active_ms": 221.0,
+      "animation_id": "enemy_undead_undead_swipe",
+      "attack_id": "enemy_void_wraith_undead_swipe",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 170.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 80,
+        "offset_forward": 1.7999999999999998,
+        "radius": 2.1,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 321.3,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "physical"
+      ],
+      "telegraph_color": [
+        230,
+        230,
+        255
+      ],
+      "windup_ms": 433.5
+    },
+    "wolf_dire": {
+      "active_ms": 190.0,
+      "animation_id": "enemy_beast_beast_bite",
+      "attack_id": "enemy_wolf_dire_beast_bite",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 190.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 46,
+        "offset_forward": 0.84,
+        "radius": 1.77,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 228.95,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "physical"
+      ],
+      "telegraph_color": [
+        230,
+        230,
+        255
+      ],
+      "windup_ms": 308.75
+    },
+    "wolf_elder": {
+      "active_ms": 162.0,
+      "animation_id": "enemy_beast_beast_claw",
+      "attack_id": "enemy_wolf_elder_beast_claw",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 180.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 90,
+        "offset_forward": 1.2,
+        "radius": 1.56,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 229.5,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "physical"
+      ],
+      "telegraph_color": [
+        230,
+        230,
+        255
+      ],
+      "windup_ms": 324.0
+    },
+    "wolf_grey": {
+      "active_ms": 200.0,
+      "animation_id": "enemy_beast_beast_bite",
+      "attack_id": "enemy_wolf_grey_beast_bite",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 200.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 55,
+        "offset_forward": 0.6,
+        "radius": 1.4,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.5,
+      "projectile_id": null,
+      "recovery_ms": 424.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [
+        "physical"
+      ],
+      "telegraph_color": [
+        230,
+        230,
+        255
+      ],
+      "windup_ms": 632.0
+    }
+  },
+  "hitbox_flow": [
+    {
+      "active": 2,
+      "hits": [
+        {
+          "attacker": "player",
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "proj": false,
+          "target": "p1"
+        },
+        {
+          "attacker": "player",
+          "pos": [
+            2.6,
+            0.9
+          ],
+          "proj": false,
+          "target": "p2"
+        },
+        {
+          "attacker": "player",
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "proj": false,
+          "target": "p1"
+        }
+      ]
+    },
+    {
+      "active": 2,
+      "hits": [
+        {
+          "attacker": "player",
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "proj": false,
+          "target": "p1"
+        }
+      ]
+    },
+    {
+      "active": 0,
+      "hits": []
+    },
+    {
+      "active": 0,
+      "hits": []
+    },
+    {
+      "active": 1,
+      "hits": [
+        {
+          "attacker": "npc",
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "proj": false,
+          "target": "p1"
+        },
+        {
+          "attacker": "npc",
+          "pos": [
+            2.6,
+            0.9
+          ],
+          "proj": false,
+          "target": "p2"
+        },
+        {
+          "attacker": "npc",
+          "pos": [
+            -1.0,
+            0.0
+          ],
+          "proj": false,
+          "target": "p3"
+        },
+        {
+          "attacker": "npc",
+          "pos": [
+            0.0,
+            0.0
+          ],
+          "proj": false,
+          "target": "player"
+        }
+      ]
+    }
+  ],
+  "hitbox_matrix": {
+    "0|-60.0|-0.65,-0.65": true,
+    "0|-60.0|-0.65,-1.85": true,
+    "0|-60.0|-0.65,-3.05": false,
+    "0|-60.0|-0.65,0.55": false,
+    "0|-60.0|-0.65,1.75": false,
+    "0|-60.0|-0.65,2.95": false,
+    "0|-60.0|-1.85,-0.65": false,
+    "0|-60.0|-1.85,-1.85": false,
+    "0|-60.0|-1.85,-3.05": false,
+    "0|-60.0|-1.85,0.55": false,
+    "0|-60.0|-1.85,1.75": false,
+    "0|-60.0|-1.85,2.95": false,
+    "0|-60.0|-3.05,-0.65": false,
+    "0|-60.0|-3.05,-1.85": false,
+    "0|-60.0|-3.05,-3.05": false,
+    "0|-60.0|-3.05,0.55": false,
+    "0|-60.0|-3.05,1.75": false,
+    "0|-60.0|-3.05,2.95": false,
+    "0|-60.0|0.55,-0.65": true,
+    "0|-60.0|0.55,-1.85": true,
+    "0|-60.0|0.55,-3.05": false,
+    "0|-60.0|0.55,0.55": false,
+    "0|-60.0|0.55,1.75": false,
+    "0|-60.0|0.55,2.95": false,
+    "0|-60.0|1.75,-0.65": true,
+    "0|-60.0|1.75,-1.85": false,
+    "0|-60.0|1.75,-3.05": false,
+    "0|-60.0|1.75,0.55": false,
+    "0|-60.0|1.75,1.75": false,
+    "0|-60.0|1.75,2.95": false,
+    "0|-60.0|2.95,-0.65": false,
+    "0|-60.0|2.95,-1.85": false,
+    "0|-60.0|2.95,-3.05": false,
+    "0|-60.0|2.95,0.55": false,
+    "0|-60.0|2.95,1.75": false,
+    "0|-60.0|2.95,2.95": false,
+    "0|0.0|-0.65,-0.65": false,
+    "0|0.0|-0.65,-1.85": false,
+    "0|0.0|-0.65,-3.05": false,
+    "0|0.0|-0.65,0.55": false,
+    "0|0.0|-0.65,1.75": false,
+    "0|0.0|-0.65,2.95": false,
+    "0|0.0|-1.85,-0.65": false,
+    "0|0.0|-1.85,-1.85": false,
+    "0|0.0|-1.85,-3.05": false,
+    "0|0.0|-1.85,0.55": false,
+    "0|0.0|-1.85,1.75": false,
+    "0|0.0|-1.85,2.95": false,
+    "0|0.0|-3.05,-0.65": false,
+    "0|0.0|-3.05,-1.85": false,
+    "0|0.0|-3.05,-3.05": false,
+    "0|0.0|-3.05,0.55": false,
+    "0|0.0|-3.05,1.75": false,
+    "0|0.0|-3.05,2.95": false,
+    "0|0.0|0.55,-0.65": true,
+    "0|0.0|0.55,-1.85": false,
+    "0|0.0|0.55,-3.05": false,
+    "0|0.0|0.55,0.55": true,
+    "0|0.0|0.55,1.75": false,
+    "0|0.0|0.55,2.95": false,
+    "0|0.0|1.75,-0.65": true,
+    "0|0.0|1.75,-1.85": false,
+    "0|0.0|1.75,-3.05": false,
+    "0|0.0|1.75,0.55": true,
+    "0|0.0|1.75,1.75": true,
+    "0|0.0|1.75,2.95": false,
+    "0|0.0|2.95,-0.65": false,
+    "0|0.0|2.95,-1.85": false,
+    "0|0.0|2.95,-3.05": false,
+    "0|0.0|2.95,0.55": false,
+    "0|0.0|2.95,1.75": false,
+    "0|0.0|2.95,2.95": false,
+    "0|217.0|-0.65,-0.65": true,
+    "0|217.0|-0.65,-1.85": true,
+    "0|217.0|-0.65,-3.05": false,
+    "0|217.0|-0.65,0.55": true,
+    "0|217.0|-0.65,1.75": false,
+    "0|217.0|-0.65,2.95": false,
+    "0|217.0|-1.85,-0.65": true,
+    "0|217.0|-1.85,-1.85": false,
+    "0|217.0|-1.85,-3.05": false,
+    "0|217.0|-1.85,0.55": true,
+    "0|217.0|-1.85,1.75": false,
+    "0|217.0|-1.85,2.95": false,
+    "0|217.0|-3.05,-0.65": false,
+    "0|217.0|-3.05,-1.85": false,
+    "0|217.0|-3.05,-3.05": false,
+    "0|217.0|-3.05,0.55": false,
+    "0|217.0|-3.05,1.75": false,
+    "0|217.0|-3.05,2.95": false,
+    "0|217.0|0.55,-0.65": false,
+    "0|217.0|0.55,-1.85": false,
+    "0|217.0|0.55,-3.05": false,
+    "0|217.0|0.55,0.55": false,
+    "0|217.0|0.55,1.75": false,
+    "0|217.0|0.55,2.95": false,
+    "0|217.0|1.75,-0.65": false,
+    "0|217.0|1.75,-1.85": false,
+    "0|217.0|1.75,-3.05": false,
+    "0|217.0|1.75,0.55": false,
+    "0|217.0|1.75,1.75": false,
+    "0|217.0|1.75,2.95": false,
+    "0|217.0|2.95,-0.65": false,
+    "0|217.0|2.95,-1.85": false,
+    "0|217.0|2.95,-3.05": false,
+    "0|217.0|2.95,0.55": false,
+    "0|217.0|2.95,1.75": false,
+    "0|217.0|2.95,2.95": false,
+    "0|37.0|-0.65,-0.65": false,
+    "0|37.0|-0.65,-1.85": false,
+    "0|37.0|-0.65,-3.05": false,
+    "0|37.0|-0.65,0.55": false,
+    "0|37.0|-0.65,1.75": false,
+    "0|37.0|-0.65,2.95": false,
+    "0|37.0|-1.85,-0.65": false,
+    "0|37.0|-1.85,-1.85": false,
+    "0|37.0|-1.85,-3.05": false,
+    "0|37.0|-1.85,0.55": false,
+    "0|37.0|-1.85,1.75": false,
+    "0|37.0|-1.85,2.95": false,
+    "0|37.0|-3.05,-0.65": false,
+    "0|37.0|-3.05,-1.85": false,
+    "0|37.0|-3.05,-3.05": false,
+    "0|37.0|-3.05,0.55": false,
+    "0|37.0|-3.05,1.75": false,
+    "0|37.0|-3.05,2.95": false,
+    "0|37.0|0.55,-0.65": false,
+    "0|37.0|0.55,-1.85": false,
+    "0|37.0|0.55,-3.05": false,
+    "0|37.0|0.55,0.55": true,
+    "0|37.0|0.55,1.75": true,
+    "0|37.0|0.55,2.95": false,
+    "0|37.0|1.75,-0.65": true,
+    "0|37.0|1.75,-1.85": false,
+    "0|37.0|1.75,-3.05": false,
+    "0|37.0|1.75,0.55": true,
+    "0|37.0|1.75,1.75": true,
+    "0|37.0|1.75,2.95": false,
+    "0|37.0|2.95,-0.65": false,
+    "0|37.0|2.95,-1.85": false,
+    "0|37.0|2.95,-3.05": false,
+    "0|37.0|2.95,0.55": false,
+    "0|37.0|2.95,1.75": false,
+    "0|37.0|2.95,2.95": false,
+    "1|-60.0|-0.65,-0.65": false,
+    "1|-60.0|-0.65,-1.85": false,
+    "1|-60.0|-0.65,-3.05": false,
+    "1|-60.0|-0.65,0.55": false,
+    "1|-60.0|-0.65,1.75": false,
+    "1|-60.0|-0.65,2.95": false,
+    "1|-60.0|-1.85,-0.65": false,
+    "1|-60.0|-1.85,-1.85": false,
+    "1|-60.0|-1.85,-3.05": false,
+    "1|-60.0|-1.85,0.55": false,
+    "1|-60.0|-1.85,1.75": false,
+    "1|-60.0|-1.85,2.95": false,
+    "1|-60.0|-3.05,-0.65": false,
+    "1|-60.0|-3.05,-1.85": false,
+    "1|-60.0|-3.05,-3.05": false,
+    "1|-60.0|-3.05,0.55": false,
+    "1|-60.0|-3.05,1.75": false,
+    "1|-60.0|-3.05,2.95": false,
+    "1|-60.0|0.55,-0.65": true,
+    "1|-60.0|0.55,-1.85": true,
+    "1|-60.0|0.55,-3.05": true,
+    "1|-60.0|0.55,0.55": false,
+    "1|-60.0|0.55,1.75": false,
+    "1|-60.0|0.55,2.95": false,
+    "1|-60.0|1.75,-0.65": true,
+    "1|-60.0|1.75,-1.85": true,
+    "1|-60.0|1.75,-3.05": false,
+    "1|-60.0|1.75,0.55": false,
+    "1|-60.0|1.75,1.75": false,
+    "1|-60.0|1.75,2.95": false,
+    "1|-60.0|2.95,-0.65": false,
+    "1|-60.0|2.95,-1.85": false,
+    "1|-60.0|2.95,-3.05": false,
+    "1|-60.0|2.95,0.55": false,
+    "1|-60.0|2.95,1.75": false,
+    "1|-60.0|2.95,2.95": false,
+    "1|0.0|-0.65,-0.65": false,
+    "1|0.0|-0.65,-1.85": false,
+    "1|0.0|-0.65,-3.05": false,
+    "1|0.0|-0.65,0.55": false,
+    "1|0.0|-0.65,1.75": false,
+    "1|0.0|-0.65,2.95": false,
+    "1|0.0|-1.85,-0.65": false,
+    "1|0.0|-1.85,-1.85": false,
+    "1|0.0|-1.85,-3.05": false,
+    "1|0.0|-1.85,0.55": false,
+    "1|0.0|-1.85,1.75": false,
+    "1|0.0|-1.85,2.95": false,
+    "1|0.0|-3.05,-0.65": false,
+    "1|0.0|-3.05,-1.85": false,
+    "1|0.0|-3.05,-3.05": false,
+    "1|0.0|-3.05,0.55": false,
+    "1|0.0|-3.05,1.75": false,
+    "1|0.0|-3.05,2.95": false,
+    "1|0.0|0.55,-0.65": true,
+    "1|0.0|0.55,-1.85": false,
+    "1|0.0|0.55,-3.05": false,
+    "1|0.0|0.55,0.55": true,
+    "1|0.0|0.55,1.75": false,
+    "1|0.0|0.55,2.95": false,
+    "1|0.0|1.75,-0.65": true,
+    "1|0.0|1.75,-1.85": false,
+    "1|0.0|1.75,-3.05": false,
+    "1|0.0|1.75,0.55": true,
+    "1|0.0|1.75,1.75": false,
+    "1|0.0|1.75,2.95": false,
+    "1|0.0|2.95,-0.65": true,
+    "1|0.0|2.95,-1.85": false,
+    "1|0.0|2.95,-3.05": false,
+    "1|0.0|2.95,0.55": true,
+    "1|0.0|2.95,1.75": false,
+    "1|0.0|2.95,2.95": false,
+    "1|217.0|-0.65,-0.65": true,
+    "1|217.0|-0.65,-1.85": true,
+    "1|217.0|-0.65,-3.05": false,
+    "1|217.0|-0.65,0.55": false,
+    "1|217.0|-0.65,1.75": false,
+    "1|217.0|-0.65,2.95": false,
+    "1|217.0|-1.85,-0.65": true,
+    "1|217.0|-1.85,-1.85": true,
+    "1|217.0|-1.85,-3.05": false,
+    "1|217.0|-1.85,0.55": false,
+    "1|217.0|-1.85,1.75": false,
+    "1|217.0|-1.85,2.95": false,
+    "1|217.0|-3.05,-0.65": false,
+    "1|217.0|-3.05,-1.85": false,
+    "1|217.0|-3.05,-3.05": false,
+    "1|217.0|-3.05,0.55": false,
+    "1|217.0|-3.05,1.75": false,
+    "1|217.0|-3.05,2.95": false,
+    "1|217.0|0.55,-0.65": false,
+    "1|217.0|0.55,-1.85": false,
+    "1|217.0|0.55,-3.05": false,
+    "1|217.0|0.55,0.55": false,
+    "1|217.0|0.55,1.75": false,
+    "1|217.0|0.55,2.95": false,
+    "1|217.0|1.75,-0.65": false,
+    "1|217.0|1.75,-1.85": false,
+    "1|217.0|1.75,-3.05": false,
+    "1|217.0|1.75,0.55": false,
+    "1|217.0|1.75,1.75": false,
+    "1|217.0|1.75,2.95": false,
+    "1|217.0|2.95,-0.65": false,
+    "1|217.0|2.95,-1.85": false,
+    "1|217.0|2.95,-3.05": false,
+    "1|217.0|2.95,0.55": false,
+    "1|217.0|2.95,1.75": false,
+    "1|217.0|2.95,2.95": false,
+    "1|37.0|-0.65,-0.65": false,
+    "1|37.0|-0.65,-1.85": false,
+    "1|37.0|-0.65,-3.05": false,
+    "1|37.0|-0.65,0.55": false,
+    "1|37.0|-0.65,1.75": false,
+    "1|37.0|-0.65,2.95": false,
+    "1|37.0|-1.85,-0.65": false,
+    "1|37.0|-1.85,-1.85": false,
+    "1|37.0|-1.85,-3.05": false,
+    "1|37.0|-1.85,0.55": false,
+    "1|37.0|-1.85,1.75": false,
+    "1|37.0|-1.85,2.95": false,
+    "1|37.0|-3.05,-0.65": false,
+    "1|37.0|-3.05,-1.85": false,
+    "1|37.0|-3.05,-3.05": false,
+    "1|37.0|-3.05,0.55": false,
+    "1|37.0|-3.05,1.75": false,
+    "1|37.0|-3.05,2.95": false,
+    "1|37.0|0.55,-0.65": false,
+    "1|37.0|0.55,-1.85": false,
+    "1|37.0|0.55,-3.05": false,
+    "1|37.0|0.55,0.55": true,
+    "1|37.0|0.55,1.75": true,
+    "1|37.0|0.55,2.95": false,
+    "1|37.0|1.75,-0.65": false,
+    "1|37.0|1.75,-1.85": false,
+    "1|37.0|1.75,-3.05": false,
+    "1|37.0|1.75,0.55": true,
+    "1|37.0|1.75,1.75": true,
+    "1|37.0|1.75,2.95": false,
+    "1|37.0|2.95,-0.65": false,
+    "1|37.0|2.95,-1.85": false,
+    "1|37.0|2.95,-3.05": false,
+    "1|37.0|2.95,0.55": true,
+    "1|37.0|2.95,1.75": false,
+    "1|37.0|2.95,2.95": false,
+    "2|-60.0|-0.65,-0.65": true,
+    "2|-60.0|-0.65,-1.85": false,
+    "2|-60.0|-0.65,-3.05": false,
+    "2|-60.0|-0.65,0.55": true,
+    "2|-60.0|-0.65,1.75": false,
+    "2|-60.0|-0.65,2.95": false,
+    "2|-60.0|-1.85,-0.65": false,
+    "2|-60.0|-1.85,-1.85": false,
+    "2|-60.0|-1.85,-3.05": false,
+    "2|-60.0|-1.85,0.55": false,
+    "2|-60.0|-1.85,1.75": false,
+    "2|-60.0|-1.85,2.95": false,
+    "2|-60.0|-3.05,-0.65": false,
+    "2|-60.0|-3.05,-1.85": false,
+    "2|-60.0|-3.05,-3.05": false,
+    "2|-60.0|-3.05,0.55": false,
+    "2|-60.0|-3.05,1.75": false,
+    "2|-60.0|-3.05,2.95": false,
+    "2|-60.0|0.55,-0.65": true,
+    "2|-60.0|0.55,-1.85": false,
+    "2|-60.0|0.55,-3.05": false,
+    "2|-60.0|0.55,0.55": true,
+    "2|-60.0|0.55,1.75": false,
+    "2|-60.0|0.55,2.95": false,
+    "2|-60.0|1.75,-0.65": false,
+    "2|-60.0|1.75,-1.85": false,
+    "2|-60.0|1.75,-3.05": false,
+    "2|-60.0|1.75,0.55": false,
+    "2|-60.0|1.75,1.75": false,
+    "2|-60.0|1.75,2.95": false,
+    "2|-60.0|2.95,-0.65": false,
+    "2|-60.0|2.95,-1.85": false,
+    "2|-60.0|2.95,-3.05": false,
+    "2|-60.0|2.95,0.55": false,
+    "2|-60.0|2.95,1.75": false,
+    "2|-60.0|2.95,2.95": false,
+    "2|0.0|-0.65,-0.65": true,
+    "2|0.0|-0.65,-1.85": false,
+    "2|0.0|-0.65,-3.05": false,
+    "2|0.0|-0.65,0.55": true,
+    "2|0.0|-0.65,1.75": false,
+    "2|0.0|-0.65,2.95": false,
+    "2|0.0|-1.85,-0.65": false,
+    "2|0.0|-1.85,-1.85": false,
+    "2|0.0|-1.85,-3.05": false,
+    "2|0.0|-1.85,0.55": false,
+    "2|0.0|-1.85,1.75": false,
+    "2|0.0|-1.85,2.95": false,
+    "2|0.0|-3.05,-0.65": false,
+    "2|0.0|-3.05,-1.85": false,
+    "2|0.0|-3.05,-3.05": false,
+    "2|0.0|-3.05,0.55": false,
+    "2|0.0|-3.05,1.75": false,
+    "2|0.0|-3.05,2.95": false,
+    "2|0.0|0.55,-0.65": true,
+    "2|0.0|0.55,-1.85": false,
+    "2|0.0|0.55,-3.05": false,
+    "2|0.0|0.55,0.55": true,
+    "2|0.0|0.55,1.75": false,
+    "2|0.0|0.55,2.95": false,
+    "2|0.0|1.75,-0.65": false,
+    "2|0.0|1.75,-1.85": false,
+    "2|0.0|1.75,-3.05": false,
+    "2|0.0|1.75,0.55": false,
+    "2|0.0|1.75,1.75": false,
+    "2|0.0|1.75,2.95": false,
+    "2|0.0|2.95,-0.65": false,
+    "2|0.0|2.95,-1.85": false,
+    "2|0.0|2.95,-3.05": false,
+    "2|0.0|2.95,0.55": false,
+    "2|0.0|2.95,1.75": false,
+    "2|0.0|2.95,2.95": false,
+    "2|217.0|-0.65,-0.65": true,
+    "2|217.0|-0.65,-1.85": false,
+    "2|217.0|-0.65,-3.05": false,
+    "2|217.0|-0.65,0.55": true,
+    "2|217.0|-0.65,1.75": false,
+    "2|217.0|-0.65,2.95": false,
+    "2|217.0|-1.85,-0.65": false,
+    "2|217.0|-1.85,-1.85": false,
+    "2|217.0|-1.85,-3.05": false,
+    "2|217.0|-1.85,0.55": false,
+    "2|217.0|-1.85,1.75": false,
+    "2|217.0|-1.85,2.95": false,
+    "2|217.0|-3.05,-0.65": false,
+    "2|217.0|-3.05,-1.85": false,
+    "2|217.0|-3.05,-3.05": false,
+    "2|217.0|-3.05,0.55": false,
+    "2|217.0|-3.05,1.75": false,
+    "2|217.0|-3.05,2.95": false,
+    "2|217.0|0.55,-0.65": true,
+    "2|217.0|0.55,-1.85": false,
+    "2|217.0|0.55,-3.05": false,
+    "2|217.0|0.55,0.55": true,
+    "2|217.0|0.55,1.75": false,
+    "2|217.0|0.55,2.95": false,
+    "2|217.0|1.75,-0.65": false,
+    "2|217.0|1.75,-1.85": false,
+    "2|217.0|1.75,-3.05": false,
+    "2|217.0|1.75,0.55": false,
+    "2|217.0|1.75,1.75": false,
+    "2|217.0|1.75,2.95": false,
+    "2|217.0|2.95,-0.65": false,
+    "2|217.0|2.95,-1.85": false,
+    "2|217.0|2.95,-3.05": false,
+    "2|217.0|2.95,0.55": false,
+    "2|217.0|2.95,1.75": false,
+    "2|217.0|2.95,2.95": false,
+    "2|37.0|-0.65,-0.65": true,
+    "2|37.0|-0.65,-1.85": false,
+    "2|37.0|-0.65,-3.05": false,
+    "2|37.0|-0.65,0.55": true,
+    "2|37.0|-0.65,1.75": false,
+    "2|37.0|-0.65,2.95": false,
+    "2|37.0|-1.85,-0.65": false,
+    "2|37.0|-1.85,-1.85": false,
+    "2|37.0|-1.85,-3.05": false,
+    "2|37.0|-1.85,0.55": false,
+    "2|37.0|-1.85,1.75": false,
+    "2|37.0|-1.85,2.95": false,
+    "2|37.0|-3.05,-0.65": false,
+    "2|37.0|-3.05,-1.85": false,
+    "2|37.0|-3.05,-3.05": false,
+    "2|37.0|-3.05,0.55": false,
+    "2|37.0|-3.05,1.75": false,
+    "2|37.0|-3.05,2.95": false,
+    "2|37.0|0.55,-0.65": true,
+    "2|37.0|0.55,-1.85": false,
+    "2|37.0|0.55,-3.05": false,
+    "2|37.0|0.55,0.55": true,
+    "2|37.0|0.55,1.75": false,
+    "2|37.0|0.55,2.95": false,
+    "2|37.0|1.75,-0.65": false,
+    "2|37.0|1.75,-1.85": false,
+    "2|37.0|1.75,-3.05": false,
+    "2|37.0|1.75,0.55": false,
+    "2|37.0|1.75,1.75": false,
+    "2|37.0|1.75,2.95": false,
+    "2|37.0|2.95,-0.65": false,
+    "2|37.0|2.95,-1.85": false,
+    "2|37.0|2.95,-3.05": false,
+    "2|37.0|2.95,0.55": false,
+    "2|37.0|2.95,1.75": false,
+    "2|37.0|2.95,2.95": false,
+    "3|-60.0|-0.65,-0.65": true,
+    "3|-60.0|-0.65,-1.85": false,
+    "3|-60.0|-0.65,-3.05": false,
+    "3|-60.0|-0.65,0.55": true,
+    "3|-60.0|-0.65,1.75": false,
+    "3|-60.0|-0.65,2.95": false,
+    "3|-60.0|-1.85,-0.65": true,
+    "3|-60.0|-1.85,-1.85": false,
+    "3|-60.0|-1.85,-3.05": false,
+    "3|-60.0|-1.85,0.55": false,
+    "3|-60.0|-1.85,1.75": false,
+    "3|-60.0|-1.85,2.95": false,
+    "3|-60.0|-3.05,-0.65": false,
+    "3|-60.0|-3.05,-1.85": false,
+    "3|-60.0|-3.05,-3.05": false,
+    "3|-60.0|-3.05,0.55": false,
+    "3|-60.0|-3.05,1.75": false,
+    "3|-60.0|-3.05,2.95": false,
+    "3|-60.0|0.55,-0.65": true,
+    "3|-60.0|0.55,-1.85": false,
+    "3|-60.0|0.55,-3.05": false,
+    "3|-60.0|0.55,0.55": true,
+    "3|-60.0|0.55,1.75": false,
+    "3|-60.0|0.55,2.95": false,
+    "3|-60.0|1.75,-0.65": false,
+    "3|-60.0|1.75,-1.85": false,
+    "3|-60.0|1.75,-3.05": false,
+    "3|-60.0|1.75,0.55": true,
+    "3|-60.0|1.75,1.75": false,
+    "3|-60.0|1.75,2.95": false,
+    "3|-60.0|2.95,-0.65": false,
+    "3|-60.0|2.95,-1.85": false,
+    "3|-60.0|2.95,-3.05": false,
+    "3|-60.0|2.95,0.55": false,
+    "3|-60.0|2.95,1.75": false,
+    "3|-60.0|2.95,2.95": false,
+    "3|0.0|-0.65,-0.65": true,
+    "3|0.0|-0.65,-1.85": true,
+    "3|0.0|-0.65,-3.05": false,
+    "3|0.0|-0.65,0.55": true,
+    "3|0.0|-0.65,1.75": true,
+    "3|0.0|-0.65,2.95": false,
+    "3|0.0|-1.85,-0.65": false,
+    "3|0.0|-1.85,-1.85": false,
+    "3|0.0|-1.85,-3.05": false,
+    "3|0.0|-1.85,0.55": false,
+    "3|0.0|-1.85,1.75": false,
+    "3|0.0|-1.85,2.95": false,
+    "3|0.0|-3.05,-0.65": false,
+    "3|0.0|-3.05,-1.85": false,
+    "3|0.0|-3.05,-3.05": false,
+    "3|0.0|-3.05,0.55": false,
+    "3|0.0|-3.05,1.75": false,
+    "3|0.0|-3.05,2.95": false,
+    "3|0.0|0.55,-0.65": true,
+    "3|0.0|0.55,-1.85": true,
+    "3|0.0|0.55,-3.05": false,
+    "3|0.0|0.55,0.55": true,
+    "3|0.0|0.55,1.75": true,
+    "3|0.0|0.55,2.95": false,
+    "3|0.0|1.75,-0.65": false,
+    "3|0.0|1.75,-1.85": false,
+    "3|0.0|1.75,-3.05": false,
+    "3|0.0|1.75,0.55": false,
+    "3|0.0|1.75,1.75": false,
+    "3|0.0|1.75,2.95": false,
+    "3|0.0|2.95,-0.65": false,
+    "3|0.0|2.95,-1.85": false,
+    "3|0.0|2.95,-3.05": false,
+    "3|0.0|2.95,0.55": false,
+    "3|0.0|2.95,1.75": false,
+    "3|0.0|2.95,2.95": false,
+    "3|217.0|-0.65,-0.65": true,
+    "3|217.0|-0.65,-1.85": false,
+    "3|217.0|-0.65,-3.05": false,
+    "3|217.0|-0.65,0.55": true,
+    "3|217.0|-0.65,1.75": true,
+    "3|217.0|-0.65,2.95": false,
+    "3|217.0|-1.85,-0.65": false,
+    "3|217.0|-1.85,-1.85": false,
+    "3|217.0|-1.85,-3.05": false,
+    "3|217.0|-1.85,0.55": false,
+    "3|217.0|-1.85,1.75": false,
+    "3|217.0|-1.85,2.95": false,
+    "3|217.0|-3.05,-0.65": false,
+    "3|217.0|-3.05,-1.85": false,
+    "3|217.0|-3.05,-3.05": false,
+    "3|217.0|-3.05,0.55": false,
+    "3|217.0|-3.05,1.75": false,
+    "3|217.0|-3.05,2.95": false,
+    "3|217.0|0.55,-0.65": true,
+    "3|217.0|0.55,-1.85": true,
+    "3|217.0|0.55,-3.05": false,
+    "3|217.0|0.55,0.55": true,
+    "3|217.0|0.55,1.75": false,
+    "3|217.0|0.55,2.95": false,
+    "3|217.0|1.75,-0.65": false,
+    "3|217.0|1.75,-1.85": false,
+    "3|217.0|1.75,-3.05": false,
+    "3|217.0|1.75,0.55": false,
+    "3|217.0|1.75,1.75": false,
+    "3|217.0|1.75,2.95": false,
+    "3|217.0|2.95,-0.65": false,
+    "3|217.0|2.95,-1.85": false,
+    "3|217.0|2.95,-3.05": false,
+    "3|217.0|2.95,0.55": false,
+    "3|217.0|2.95,1.75": false,
+    "3|217.0|2.95,2.95": false,
+    "3|37.0|-0.65,-0.65": true,
+    "3|37.0|-0.65,-1.85": false,
+    "3|37.0|-0.65,-3.05": false,
+    "3|37.0|-0.65,0.55": true,
+    "3|37.0|-0.65,1.75": true,
+    "3|37.0|-0.65,2.95": false,
+    "3|37.0|-1.85,-0.65": false,
+    "3|37.0|-1.85,-1.85": false,
+    "3|37.0|-1.85,-3.05": false,
+    "3|37.0|-1.85,0.55": false,
+    "3|37.0|-1.85,1.75": false,
+    "3|37.0|-1.85,2.95": false,
+    "3|37.0|-3.05,-0.65": false,
+    "3|37.0|-3.05,-1.85": false,
+    "3|37.0|-3.05,-3.05": false,
+    "3|37.0|-3.05,0.55": false,
+    "3|37.0|-3.05,1.75": false,
+    "3|37.0|-3.05,2.95": false,
+    "3|37.0|0.55,-0.65": true,
+    "3|37.0|0.55,-1.85": true,
+    "3|37.0|0.55,-3.05": false,
+    "3|37.0|0.55,0.55": true,
+    "3|37.0|0.55,1.75": false,
+    "3|37.0|0.55,2.95": false,
+    "3|37.0|1.75,-0.65": false,
+    "3|37.0|1.75,-1.85": false,
+    "3|37.0|1.75,-3.05": false,
+    "3|37.0|1.75,0.55": false,
+    "3|37.0|1.75,1.75": false,
+    "3|37.0|1.75,2.95": false,
+    "3|37.0|2.95,-0.65": false,
+    "3|37.0|2.95,-1.85": false,
+    "3|37.0|2.95,-3.05": false,
+    "3|37.0|2.95,0.55": false,
+    "3|37.0|2.95,1.75": false,
+    "3|37.0|2.95,2.95": false,
+    "4|-60.0|-0.65,-0.65": false,
+    "4|-60.0|-0.65,-1.85": false,
+    "4|-60.0|-0.65,-3.05": false,
+    "4|-60.0|-0.65,0.55": false,
+    "4|-60.0|-0.65,1.75": false,
+    "4|-60.0|-0.65,2.95": false,
+    "4|-60.0|-1.85,-0.65": false,
+    "4|-60.0|-1.85,-1.85": false,
+    "4|-60.0|-1.85,-3.05": false,
+    "4|-60.0|-1.85,0.55": false,
+    "4|-60.0|-1.85,1.75": false,
+    "4|-60.0|-1.85,2.95": false,
+    "4|-60.0|-3.05,-0.65": false,
+    "4|-60.0|-3.05,-1.85": false,
+    "4|-60.0|-3.05,-3.05": false,
+    "4|-60.0|-3.05,0.55": false,
+    "4|-60.0|-3.05,1.75": false,
+    "4|-60.0|-3.05,2.95": false,
+    "4|-60.0|0.55,-0.65": true,
+    "4|-60.0|0.55,-1.85": true,
+    "4|-60.0|0.55,-3.05": false,
+    "4|-60.0|0.55,0.55": false,
+    "4|-60.0|0.55,1.75": false,
+    "4|-60.0|0.55,2.95": false,
+    "4|-60.0|1.75,-0.65": false,
+    "4|-60.0|1.75,-1.85": false,
+    "4|-60.0|1.75,-3.05": true,
+    "4|-60.0|1.75,0.55": false,
+    "4|-60.0|1.75,1.75": false,
+    "4|-60.0|1.75,2.95": false,
+    "4|-60.0|2.95,-0.65": false,
+    "4|-60.0|2.95,-1.85": false,
+    "4|-60.0|2.95,-3.05": false,
+    "4|-60.0|2.95,0.55": false,
+    "4|-60.0|2.95,1.75": false,
+    "4|-60.0|2.95,2.95": false,
+    "4|0.0|-0.65,-0.65": false,
+    "4|0.0|-0.65,-1.85": false,
+    "4|0.0|-0.65,-3.05": false,
+    "4|0.0|-0.65,0.55": false,
+    "4|0.0|-0.65,1.75": false,
+    "4|0.0|-0.65,2.95": false,
+    "4|0.0|-1.85,-0.65": false,
+    "4|0.0|-1.85,-1.85": false,
+    "4|0.0|-1.85,-3.05": false,
+    "4|0.0|-1.85,0.55": false,
+    "4|0.0|-1.85,1.75": false,
+    "4|0.0|-1.85,2.95": false,
+    "4|0.0|-3.05,-0.65": false,
+    "4|0.0|-3.05,-1.85": false,
+    "4|0.0|-3.05,-3.05": false,
+    "4|0.0|-3.05,0.55": false,
+    "4|0.0|-3.05,1.75": false,
+    "4|0.0|-3.05,2.95": false,
+    "4|0.0|0.55,-0.65": false,
+    "4|0.0|0.55,-1.85": false,
+    "4|0.0|0.55,-3.05": false,
+    "4|0.0|0.55,0.55": false,
+    "4|0.0|0.55,1.75": false,
+    "4|0.0|0.55,2.95": false,
+    "4|0.0|1.75,-0.65": false,
+    "4|0.0|1.75,-1.85": false,
+    "4|0.0|1.75,-3.05": false,
+    "4|0.0|1.75,0.55": false,
+    "4|0.0|1.75,1.75": false,
+    "4|0.0|1.75,2.95": false,
+    "4|0.0|2.95,-0.65": false,
+    "4|0.0|2.95,-1.85": false,
+    "4|0.0|2.95,-3.05": false,
+    "4|0.0|2.95,0.55": false,
+    "4|0.0|2.95,1.75": false,
+    "4|0.0|2.95,2.95": false,
+    "4|217.0|-0.65,-0.65": true,
+    "4|217.0|-0.65,-1.85": false,
+    "4|217.0|-0.65,-3.05": false,
+    "4|217.0|-0.65,0.55": false,
+    "4|217.0|-0.65,1.75": false,
+    "4|217.0|-0.65,2.95": false,
+    "4|217.0|-1.85,-0.65": false,
+    "4|217.0|-1.85,-1.85": true,
+    "4|217.0|-1.85,-3.05": false,
+    "4|217.0|-1.85,0.55": false,
+    "4|217.0|-1.85,1.75": false,
+    "4|217.0|-1.85,2.95": false,
+    "4|217.0|-3.05,-0.65": false,
+    "4|217.0|-3.05,-1.85": true,
+    "4|217.0|-3.05,-3.05": false,
+    "4|217.0|-3.05,0.55": false,
+    "4|217.0|-3.05,1.75": false,
+    "4|217.0|-3.05,2.95": false,
+    "4|217.0|0.55,-0.65": false,
+    "4|217.0|0.55,-1.85": false,
+    "4|217.0|0.55,-3.05": false,
+    "4|217.0|0.55,0.55": false,
+    "4|217.0|0.55,1.75": false,
+    "4|217.0|0.55,2.95": false,
+    "4|217.0|1.75,-0.65": false,
+    "4|217.0|1.75,-1.85": false,
+    "4|217.0|1.75,-3.05": false,
+    "4|217.0|1.75,0.55": false,
+    "4|217.0|1.75,1.75": false,
+    "4|217.0|1.75,2.95": false,
+    "4|217.0|2.95,-0.65": false,
+    "4|217.0|2.95,-1.85": false,
+    "4|217.0|2.95,-3.05": false,
+    "4|217.0|2.95,0.55": false,
+    "4|217.0|2.95,1.75": false,
+    "4|217.0|2.95,2.95": false,
+    "4|37.0|-0.65,-0.65": false,
+    "4|37.0|-0.65,-1.85": false,
+    "4|37.0|-0.65,-3.05": false,
+    "4|37.0|-0.65,0.55": false,
+    "4|37.0|-0.65,1.75": false,
+    "4|37.0|-0.65,2.95": false,
+    "4|37.0|-1.85,-0.65": false,
+    "4|37.0|-1.85,-1.85": false,
+    "4|37.0|-1.85,-3.05": false,
+    "4|37.0|-1.85,0.55": false,
+    "4|37.0|-1.85,1.75": false,
+    "4|37.0|-1.85,2.95": false,
+    "4|37.0|-3.05,-0.65": false,
+    "4|37.0|-3.05,-1.85": false,
+    "4|37.0|-3.05,-3.05": false,
+    "4|37.0|-3.05,0.55": false,
+    "4|37.0|-3.05,1.75": false,
+    "4|37.0|-3.05,2.95": false,
+    "4|37.0|0.55,-0.65": false,
+    "4|37.0|0.55,-1.85": false,
+    "4|37.0|0.55,-3.05": false,
+    "4|37.0|0.55,0.55": true,
+    "4|37.0|0.55,1.75": false,
+    "4|37.0|0.55,2.95": false,
+    "4|37.0|1.75,-0.65": false,
+    "4|37.0|1.75,-1.85": false,
+    "4|37.0|1.75,-3.05": false,
+    "4|37.0|1.75,0.55": false,
+    "4|37.0|1.75,1.75": true,
+    "4|37.0|1.75,2.95": false,
+    "4|37.0|2.95,-0.65": false,
+    "4|37.0|2.95,-1.85": false,
+    "4|37.0|2.95,-3.05": false,
+    "4|37.0|2.95,0.55": false,
+    "4|37.0|2.95,1.75": true,
+    "4|37.0|2.95,2.95": false
+  },
+  "hitbox_world_pos": {
+    "0.0,-1.2|-60.0": [
+      1.9607695154586737,
+      -2.6
+    ],
+    "0.0,-1.2|0.0": [
+      3.0,
+      -3.2
+    ],
+    "0.0,-1.2|217.0": [
+      2.2778219722175415,
+      -1.0416373879432488
+    ],
+    "0.0,-1.2|37.0": [
+      3.7221780277824577,
+      -2.9583626120567517
+    ],
+    "0.8,0.0|-60.0": [
+      3.4000000000000004,
+      -2.6928203230275507
+    ],
+    "0.8,0.0|0.0": [
+      3.8,
+      -2.0
+    ],
+    "0.8,0.0|217.0": [
+      2.3610915919621656,
+      -2.481452018521639
+    ],
+    "0.8,0.0|37.0": [
+      3.6389084080378344,
+      -1.5185479814783613
+    ],
+    "1.5,0.7|-60.0": [
+      4.356217782649107,
+      -2.949038105676658
+    ],
+    "1.5,0.7|0.0": [
+      4.5,
+      -1.3
+    ],
+    "1.5,0.7|217.0": [
+      2.223317251135495,
+      -3.4617673917611773
+    ],
+    "1.5,0.7|37.0": [
+      3.7766827488645056,
+      -0.5382326082388226
+    ]
+  },
+  "projectile_defs": {
+    "0": {
+      "gravity": 0.0,
+      "hitbox_radius": 0.3,
+      "homing": 0.0,
+      "max_range": 10.0,
+      "piercing": false,
+      "projectile_id": "dynamic_bow_proj",
+      "speed": 12.0,
+      "sprite_id": "orb",
+      "tags": [
+        "physical"
+      ],
+      "trail_type": null,
+      "visual": {
+        "color": [
+          230,
+          230,
+          255
+        ],
+        "glow": false,
+        "glow_color": [
+          255,
+          255,
+          255
+        ],
+        "length_px": 8,
+        "shape": "orb",
+        "width_px": 8
+      }
+    },
+    "1": {
+      "gravity": 0.0,
+      "hitbox_radius": 0.3,
+      "homing": 0.0,
+      "max_range": 10.0,
+      "piercing": false,
+      "projectile_id": "dynamic_bow_proj",
+      "speed": 12.0,
+      "sprite_id": "elongated",
+      "tags": [
+        "bow",
+        "arrow"
+      ],
+      "trail_type": null,
+      "visual": {
+        "color": [
+          220,
+          220,
+          240
+        ],
+        "glow": false,
+        "glow_color": [
+          255,
+          255,
+          255
+        ],
+        "length_px": 8,
+        "shape": "elongated",
+        "width_px": 3
+      }
+    },
+    "2": {
+      "gravity": 0.0,
+      "hitbox_radius": 0.3,
+      "homing": 0.0,
+      "max_range": 10.0,
+      "piercing": false,
+      "projectile_id": "dynamic_bow_proj",
+      "speed": 12.0,
+      "sprite_id": "orb",
+      "tags": [
+        "fire"
+      ],
+      "trail_type": "fire_trail",
+      "visual": {
+        "color": [
+          255,
+          100,
+          20
+        ],
+        "glow": true,
+        "glow_color": [
+          255,
+          160,
+          80
+        ],
+        "length_px": 8,
+        "shape": "orb",
+        "width_px": 8
+      }
+    },
+    "3": {
+      "gravity": 0.0,
+      "hitbox_radius": 0.3,
+      "homing": 0.0,
+      "max_range": 10.0,
+      "piercing": true,
+      "projectile_id": "dynamic_bow_proj",
+      "speed": 12.0,
+      "sprite_id": "elongated",
+      "tags": [
+        "ice",
+        "pierce"
+      ],
+      "trail_type": "ice_trail",
+      "visual": {
+        "color": [
+          80,
+          200,
+          255
+        ],
+        "glow": true,
+        "glow_color": [
+          140,
+          255,
+          255
+        ],
+        "length_px": 8,
+        "shape": "elongated",
+        "width_px": 5
+      }
+    },
+    "4": {
+      "gravity": 0.0,
+      "hitbox_radius": 0.3,
+      "homing": 0.0,
+      "max_range": 10.0,
+      "piercing": false,
+      "projectile_id": "dynamic_bow_proj",
+      "speed": 12.0,
+      "sprite_id": "beam",
+      "tags": [
+        "lightning",
+        "beam"
+      ],
+      "trail_type": "lightning_trail",
+      "visual": {
+        "color": [
+          255,
+          255,
+          60
+        ],
+        "glow": true,
+        "glow_color": [
+          255,
+          255,
+          120
+        ],
+        "length_px": 24,
+        "shape": "beam",
+        "width_px": 8
+      }
+    },
+    "5": {
+      "gravity": 0.0,
+      "hitbox_radius": 0.3,
+      "homing": 0.5,
+      "max_range": 10.0,
+      "piercing": false,
+      "projectile_id": "dynamic_bow_proj",
+      "speed": 12.0,
+      "sprite_id": "orb",
+      "tags": [
+        "homing",
+        "arcane"
+      ],
+      "trail_type": "arcane_trail",
+      "visual": {
+        "color": [
+          200,
+          60,
+          255
+        ],
+        "glow": true,
+        "glow_color": [
+          255,
+          120,
+          255
+        ],
+        "length_px": 8,
+        "shape": "orb",
+        "width_px": 8
+      }
+    },
+    "6": {
+      "gravity": 0.0,
+      "hitbox_radius": 0.3,
+      "homing": 0.5,
+      "max_range": 10.0,
+      "piercing": false,
+      "projectile_id": "dynamic_bow_proj",
+      "speed": 12.0,
+      "sprite_id": "orb",
+      "tags": [
+        "seeking"
+      ],
+      "trail_type": null,
+      "visual": {
+        "color": [
+          220,
+          220,
+          240
+        ],
+        "glow": false,
+        "glow_color": [
+          255,
+          255,
+          255
+        ],
+        "length_px": 8,
+        "shape": "orb",
+        "width_px": 8
+      }
+    },
+    "7": {
+      "gravity": 0.0,
+      "hitbox_radius": 0.3,
+      "homing": 0.0,
+      "max_range": 10.0,
+      "piercing": false,
+      "projectile_id": "dynamic_bow_proj",
+      "speed": 12.0,
+      "sprite_id": "elongated",
+      "tags": [
+        "crystal",
+        "frost"
+      ],
+      "trail_type": "frost_trail",
+      "visual": {
+        "color": [
+          80,
+          200,
+          255
+        ],
+        "glow": true,
+        "glow_color": [
+          140,
+          255,
+          255
+        ],
+        "length_px": 8,
+        "shape": "elongated",
+        "width_px": 5
+      }
+    }
+  },
+  "projectiles": {
+    "aoe": [
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 1.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 1.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 2.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 2.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 3.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 3.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 4.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 4.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 1,
+        "aoe_hits": [
+          {
+            "attacker": "player",
+            "pos": [
+              5.0,
+              0.0
+            ],
+            "proj": false,
+            "target": "t1"
+          },
+          {
+            "attacker": "player",
+            "pos": [
+              6.2,
+              1.1
+            ],
+            "proj": false,
+            "target": "t2"
+          }
+        ],
+        "count": 0,
+        "hits": [
+          {
+            "attacker": "player",
+            "pos": [
+              5.0,
+              0.0
+            ],
+            "proj": true,
+            "target": "t1"
+          }
+        ],
+        "proj": {
+          "alive": false,
+          "facing": 0.0,
+          "traveled": 5.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 5.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 1,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 0.0,
+          "traveled": 5.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 5.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 0.0,
+          "traveled": 5.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 5.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 0.0,
+          "traveled": 5.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 5.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 0.0,
+          "traveled": 5.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 5.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 0.0,
+          "traveled": 5.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 5.0,
+          "y": 0.0
+        }
+      }
+    ],
+    "gravity": [
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -26.139390777170732,
+          "traveled": 1.1576268828944842,
+          "vx": 10.392304845413264,
+          "vy": -5.099999999999999,
+          "x": 1.0392304845413265,
+          "y": -0.5099999999999999
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -22.005859314993675,
+          "traveled": 2.2785193844306484,
+          "vx": 10.392304845413264,
+          "vy": -4.199999999999998,
+          "x": 2.078460969082653,
+          "y": -0.9299999999999997
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -17.61686305798631,
+          "traveled": 3.3688862951538234,
+          "vx": 10.392304845413264,
+          "vy": -3.2999999999999985,
+          "x": 3.1176914536239795,
+          "y": -1.2599999999999996
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -13.003911942822809,
+          "traveled": 4.435469625231694,
+          "vx": 10.392304845413264,
+          "vy": -2.3999999999999986,
+          "x": 4.156921938165306,
+          "y": -1.4999999999999996
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -8.213210701738182,
+          "traveled": 5.485469625231694,
+          "vx": 10.392304845413264,
+          "vy": -1.4999999999999987,
+          "x": 5.196152422706632,
+          "y": -1.6499999999999995
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -3.304305180155954,
+          "traveled": 6.526430719605543,
+          "vx": 10.392304845413264,
+          "vy": -0.5999999999999986,
+          "x": 6.235382907247958,
+          "y": -1.7099999999999993
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 1.6535274751029223,
+          "traveled": 7.56609412667535,
+          "vx": 10.392304845413264,
+          "vy": 0.3000000000000014,
+          "x": 7.274613391789284,
+          "y": -1.6799999999999993
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [
+          {
+            "attacker": "player",
+            "pos": [
+              8.31384387633061,
+              -1.5599999999999992
+            ],
+            "proj": true,
+            "target": "t1"
+          }
+        ],
+        "proj": {
+          "alive": false,
+          "facing": 6.5867755536294705,
+          "traveled": 8.612229873125111,
+          "vx": 10.392304845413264,
+          "vy": 1.2000000000000015,
+          "x": 8.31384387633061,
+          "y": -1.5599999999999992
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 6.5867755536294705,
+          "traveled": 8.612229873125111,
+          "vx": 10.392304845413264,
+          "vy": 1.2000000000000015,
+          "x": 8.31384387633061,
+          "y": -1.5599999999999992
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 6.5867755536294705,
+          "traveled": 8.612229873125111,
+          "vx": 10.392304845413264,
+          "vy": 1.2000000000000015,
+          "x": 8.31384387633061,
+          "y": -1.5599999999999992
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 6.5867755536294705,
+          "traveled": 8.612229873125111,
+          "vx": 10.392304845413264,
+          "vy": 1.2000000000000015,
+          "x": 8.31384387633061,
+          "y": -1.5599999999999992
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 6.5867755536294705,
+          "traveled": 8.612229873125111,
+          "vx": 10.392304845413264,
+          "vy": 1.2000000000000015,
+          "x": 8.31384387633061,
+          "y": -1.5599999999999992
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 6.5867755536294705,
+          "traveled": 8.612229873125111,
+          "vx": 10.392304845413264,
+          "vy": 1.2000000000000015,
+          "x": 8.31384387633061,
+          "y": -1.5599999999999992
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 6.5867755536294705,
+          "traveled": 8.612229873125111,
+          "vx": 10.392304845413264,
+          "vy": 1.2000000000000015,
+          "x": 8.31384387633061,
+          "y": -1.5599999999999992
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 6.5867755536294705,
+          "traveled": 8.612229873125111,
+          "vx": 10.392304845413264,
+          "vy": 1.2000000000000015,
+          "x": 8.31384387633061,
+          "y": -1.5599999999999992
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 6.5867755536294705,
+          "traveled": 8.612229873125111,
+          "vx": 10.392304845413264,
+          "vy": 1.2000000000000015,
+          "x": 8.31384387633061,
+          "y": -1.5599999999999992
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 6.5867755536294705,
+          "traveled": 8.612229873125111,
+          "vx": 10.392304845413264,
+          "vy": 1.2000000000000015,
+          "x": 8.31384387633061,
+          "y": -1.5599999999999992
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 6.5867755536294705,
+          "traveled": 8.612229873125111,
+          "vx": 10.392304845413264,
+          "vy": 1.2000000000000015,
+          "x": 8.31384387633061,
+          "y": -1.5599999999999992
+        }
+      }
+    ],
+    "homing": [
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 51.402057523772974,
+          "traveled": 0.8,
+          "vx": 4.99081225172773,
+          "vy": 6.252343006266082,
+          "x": 0.49908122517277304,
+          "y": 0.6252343006266082
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 22.247311568945854,
+          "traveled": 1.6,
+          "vx": 7.404466159512974,
+          "vy": 3.0288415099881325,
+          "x": 1.2395278411240704,
+          "y": 0.9281184516254215
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -0.2230919066356812,
+          "traveled": 2.4,
+          "vx": 7.999939356842139,
+          "vy": -0.031149427734197415,
+          "x": 2.0395217768082845,
+          "y": 0.9250035088520018
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -17.852991197998836,
+          "traveled": 3.2,
+          "vx": 7.614770055021775,
+          "vy": -2.4526061667425667,
+          "x": 2.800998782310462,
+          "y": 0.6797428921777451
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -31.94647439797499,
+          "traveled": 4.0,
+          "vx": 6.788342204311204,
+          "vy": -4.233014306279544,
+          "x": 3.4798330027415822,
+          "y": 0.2564414615497907
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -43.46635143743322,
+          "traveled": 4.8,
+          "vx": 5.806228012317333,
+          "vy": -5.503427683633309,
+          "x": 4.060455803973316,
+          "y": -0.29390130681354026
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -53.158788098179635,
+          "traveled": 5.6,
+          "vx": 4.7967951701849705,
+          "vy": -6.402402369055706,
+          "x": 4.540135320991813,
+          "y": -0.934141543719111
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -61.65199923997837,
+          "traveled": 6.3999999999999995,
+          "vx": 3.7986054500087456,
+          "vy": -7.0406389365713,
+          "x": 4.9199958659926875,
+          "y": -1.6382054373762411
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -69.57436572023936,
+          "traveled": 7.199999999999999,
+          "vx": 2.7919308384355226,
+          "vy": -7.497007549242078,
+          "x": 5.199188949836239,
+          "y": -2.387906192300449
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": -77.81517133122236,
+          "traveled": 7.999999999999999,
+          "vx": 1.6885278352517445,
+          "vy": -7.819774533167823,
+          "x": 5.368041733361414,
+          "y": -3.1698836456172312
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [
+          {
+            "attacker": "player",
+            "pos": [
+              5.386975836605849,
+              -3.9696595515648467
+            ],
+            "proj": true,
+            "target": "t1"
+          }
+        ],
+        "proj": {
+          "alive": false,
+          "facing": -88.64381811154827,
+          "traveled": 8.799999999999999,
+          "vx": 0.18934103244434683,
+          "vy": -7.997759059476154,
+          "x": 5.386975836605849,
+          "y": -3.9696595515648467
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": -88.64381811154827,
+          "traveled": 8.799999999999999,
+          "vx": 0.18934103244434683,
+          "vy": -7.997759059476154,
+          "x": 5.386975836605849,
+          "y": -3.9696595515648467
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": -88.64381811154827,
+          "traveled": 8.799999999999999,
+          "vx": 0.18934103244434683,
+          "vy": -7.997759059476154,
+          "x": 5.386975836605849,
+          "y": -3.9696595515648467
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": -88.64381811154827,
+          "traveled": 8.799999999999999,
+          "vx": 0.18934103244434683,
+          "vy": -7.997759059476154,
+          "x": 5.386975836605849,
+          "y": -3.9696595515648467
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": -88.64381811154827,
+          "traveled": 8.799999999999999,
+          "vx": 0.18934103244434683,
+          "vy": -7.997759059476154,
+          "x": 5.386975836605849,
+          "y": -3.9696595515648467
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": -88.64381811154827,
+          "traveled": 8.799999999999999,
+          "vx": 0.18934103244434683,
+          "vy": -7.997759059476154,
+          "x": 5.386975836605849,
+          "y": -3.9696595515648467
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": -88.64381811154827,
+          "traveled": 8.799999999999999,
+          "vx": 0.18934103244434683,
+          "vy": -7.997759059476154,
+          "x": 5.386975836605849,
+          "y": -3.9696595515648467
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": -88.64381811154827,
+          "traveled": 8.799999999999999,
+          "vx": 0.18934103244434683,
+          "vy": -7.997759059476154,
+          "x": 5.386975836605849,
+          "y": -3.9696595515648467
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": -88.64381811154827,
+          "traveled": 8.799999999999999,
+          "vx": 0.18934103244434683,
+          "vy": -7.997759059476154,
+          "x": 5.386975836605849,
+          "y": -3.9696595515648467
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": -88.64381811154827,
+          "traveled": 8.799999999999999,
+          "vx": 0.18934103244434683,
+          "vy": -7.997759059476154,
+          "x": 5.386975836605849,
+          "y": -3.9696595515648467
+        }
+      }
+    ],
+    "piercing": [
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 1.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 1.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 2.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 2.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 3.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 3.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [
+          {
+            "attacker": "player",
+            "pos": [
+              4.0,
+              0.0
+            ],
+            "proj": true,
+            "target": "t1"
+          }
+        ],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 4.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 4.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 5.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 5.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 6.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 6.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 7.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 7.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [
+          {
+            "attacker": "player",
+            "pos": [
+              8.0,
+              0.0
+            ],
+            "proj": true,
+            "target": "t2"
+          }
+        ],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 8.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 8.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 9.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 9.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 10.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 10.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 11.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 11.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 12.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 12.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 0.0,
+          "traveled": 13.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 13.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 0.0,
+          "traveled": 14.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 14.0,
+          "y": 0.0
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 0.0,
+          "traveled": 14.0,
+          "vx": 10.0,
+          "vy": 0.0,
+          "x": 14.0,
+          "y": 0.0
+        }
+      }
+    ],
+    "straight": [
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 29.999999999999993,
+          "traveled": 1.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 0.8660254037844388,
+          "y": 0.49999999999999994
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 29.999999999999993,
+          "traveled": 2.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 1.7320508075688776,
+          "y": 0.9999999999999999
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 29.999999999999993,
+          "traveled": 3.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 2.5980762113533165,
+          "y": 1.4999999999999998
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 29.999999999999993,
+          "traveled": 4.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 3.4641016151377553,
+          "y": 1.9999999999999998
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 29.999999999999993,
+          "traveled": 5.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 4.3301270189221945,
+          "y": 2.4999999999999996
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 1,
+        "hits": [],
+        "proj": {
+          "alive": true,
+          "facing": 29.999999999999993,
+          "traveled": 6.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 5.196152422706634,
+          "y": 2.9999999999999996
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [
+          {
+            "attacker": "player",
+            "pos": [
+              6.062177826491073,
+              3.4999999999999996
+            ],
+            "proj": true,
+            "target": "t1"
+          }
+        ],
+        "proj": {
+          "alive": false,
+          "facing": 29.999999999999993,
+          "traveled": 7.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 6.062177826491073,
+          "y": 3.4999999999999996
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 29.999999999999993,
+          "traveled": 7.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 6.062177826491073,
+          "y": 3.4999999999999996
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 29.999999999999993,
+          "traveled": 7.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 6.062177826491073,
+          "y": 3.4999999999999996
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 29.999999999999993,
+          "traveled": 7.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 6.062177826491073,
+          "y": 3.4999999999999996
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 29.999999999999993,
+          "traveled": 7.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 6.062177826491073,
+          "y": 3.4999999999999996
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 29.999999999999993,
+          "traveled": 7.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 6.062177826491073,
+          "y": 3.4999999999999996
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 29.999999999999993,
+          "traveled": 7.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 6.062177826491073,
+          "y": 3.4999999999999996
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 29.999999999999993,
+          "traveled": 7.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 6.062177826491073,
+          "y": 3.4999999999999996
+        }
+      },
+      {
+        "active_hitboxes": 0,
+        "aoe_hits": [],
+        "count": 0,
+        "hits": [],
+        "proj": {
+          "alive": false,
+          "facing": 29.999999999999993,
+          "traveled": 7.0,
+          "vx": 8.660254037844387,
+          "vy": 4.999999999999999,
+          "x": 6.062177826491073,
+          "y": 3.4999999999999996
+        }
+      }
+    ]
+  },
+  "state_machine": [
+    {
+      "combo_count": 0,
+      "combo_timer": 0.0,
+      "current_attack": "combo_a",
+      "events": [],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": true,
+      "is_vulnerable": false,
+      "movement_multiplier": 0.6,
+      "phase": "windup",
+      "results": [
+        true
+      ],
+      "timer": 300,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 0,
+      "combo_timer": 0.0,
+      "current_attack": "combo_a",
+      "events": [],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": true,
+      "is_vulnerable": false,
+      "movement_multiplier": 0.6,
+      "phase": "windup",
+      "results": [],
+      "timer": 200,
+      "windup_progress": 0.3333333333333333
+    },
+    {
+      "combo_count": 0,
+      "combo_timer": 0.0,
+      "current_attack": "combo_a",
+      "events": [
+        {
+          "attack": "combo_a",
+          "phase": "active",
+          "source": "player",
+          "type": "phase_change"
+        }
+      ],
+      "hits": [],
+      "is_active": true,
+      "is_attacking": true,
+      "is_vulnerable": false,
+      "movement_multiplier": 0.6,
+      "phase": "active",
+      "results": [],
+      "timer": 200,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 0,
+      "combo_timer": 0.0,
+      "current_attack": "combo_a",
+      "events": [],
+      "hits": [
+        "e1",
+        "e2"
+      ],
+      "is_active": true,
+      "is_attacking": true,
+      "is_vulnerable": false,
+      "movement_multiplier": 0.6,
+      "phase": "active",
+      "results": [
+        true,
+        false,
+        true
+      ],
+      "timer": 200,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 0,
+      "combo_timer": 0.0,
+      "current_attack": "combo_a",
+      "events": [
+        {
+          "attack": null,
+          "phase": "recovery",
+          "source": "player",
+          "type": "phase_change"
+        }
+      ],
+      "hits": [
+        "e1",
+        "e2"
+      ],
+      "is_active": false,
+      "is_attacking": true,
+      "is_vulnerable": true,
+      "movement_multiplier": 0.6,
+      "phase": "recovery",
+      "results": [],
+      "timer": 240,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 0,
+      "combo_timer": 250,
+      "current_attack": "combo_a",
+      "events": [
+        {
+          "attack": null,
+          "phase": "cooldown",
+          "source": "player",
+          "type": "phase_change"
+        }
+      ],
+      "hits": [
+        "e1",
+        "e2"
+      ],
+      "is_active": false,
+      "is_attacking": true,
+      "is_vulnerable": false,
+      "movement_multiplier": 1.0,
+      "phase": "cooldown",
+      "results": [],
+      "timer": 400,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 1,
+      "combo_timer": 250,
+      "current_attack": "combo_a",
+      "events": [],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": true,
+      "is_vulnerable": false,
+      "movement_multiplier": 0.6,
+      "phase": "windup",
+      "results": [
+        true
+      ],
+      "timer": 300,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 1,
+      "combo_timer": 250,
+      "current_attack": "combo_a",
+      "events": [
+        {
+          "attack": "combo_a",
+          "phase": "active",
+          "source": "player",
+          "type": "phase_change"
+        }
+      ],
+      "hits": [],
+      "is_active": true,
+      "is_attacking": true,
+      "is_vulnerable": false,
+      "movement_multiplier": 0.6,
+      "phase": "active",
+      "results": [],
+      "timer": 200,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 1,
+      "combo_timer": 250,
+      "current_attack": "combo_a",
+      "events": [
+        {
+          "attack": null,
+          "phase": "recovery",
+          "source": "player",
+          "type": "phase_change"
+        }
+      ],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": true,
+      "is_vulnerable": true,
+      "movement_multiplier": 0.6,
+      "phase": "recovery",
+      "results": [],
+      "timer": 240,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 1,
+      "combo_timer": 250,
+      "current_attack": "combo_a",
+      "events": [
+        {
+          "attack": null,
+          "phase": "cooldown",
+          "source": "player",
+          "type": "phase_change"
+        }
+      ],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": true,
+      "is_vulnerable": false,
+      "movement_multiplier": 1.0,
+      "phase": "cooldown",
+      "results": [],
+      "timer": 400,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 1,
+      "combo_timer": 250,
+      "current_attack": null,
+      "events": [
+        {
+          "attack": null,
+          "phase": "idle",
+          "source": "player",
+          "type": "phase_change"
+        }
+      ],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": false,
+      "is_vulnerable": false,
+      "movement_multiplier": 1.0,
+      "phase": "idle",
+      "results": [],
+      "timer": -4600,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 1,
+      "combo_timer": 150,
+      "current_attack": null,
+      "events": [],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": false,
+      "is_vulnerable": false,
+      "movement_multiplier": 1.0,
+      "phase": "idle",
+      "results": [],
+      "timer": -4600,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 0,
+      "combo_timer": 0,
+      "current_attack": null,
+      "events": [],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": false,
+      "is_vulnerable": false,
+      "movement_multiplier": 1.0,
+      "phase": "idle",
+      "results": [],
+      "timer": -4600,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 0,
+      "combo_timer": 0,
+      "current_attack": "locked_b",
+      "events": [],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": true,
+      "is_vulnerable": false,
+      "movement_multiplier": 0.7,
+      "phase": "windup",
+      "results": [
+        true,
+        false
+      ],
+      "timer": 200,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 0,
+      "combo_timer": 0,
+      "current_attack": null,
+      "events": [],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": false,
+      "is_vulnerable": false,
+      "movement_multiplier": 1.0,
+      "phase": "idle",
+      "results": [],
+      "timer": 0,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 0,
+      "combo_timer": 0,
+      "current_attack": "soft_c",
+      "events": [],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": true,
+      "is_vulnerable": false,
+      "movement_multiplier": 0.7,
+      "phase": "windup",
+      "results": [
+        true
+      ],
+      "timer": 500,
+      "windup_progress": 0.0
+    },
+    {
+      "combo_count": 0,
+      "combo_timer": 0,
+      "current_attack": "soft_c",
+      "events": [],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": true,
+      "is_vulnerable": false,
+      "movement_multiplier": 0.7,
+      "phase": "windup",
+      "results": [],
+      "timer": 450,
+      "windup_progress": 0.1
+    },
+    {
+      "combo_count": 0,
+      "combo_timer": 0,
+      "current_attack": null,
+      "events": [],
+      "hits": [],
+      "is_active": false,
+      "is_attacking": false,
+      "is_vulnerable": false,
+      "movement_multiplier": 1.0,
+      "phase": "idle",
+      "results": [
+        true
+      ],
+      "timer": 0,
+      "windup_progress": 0.0
+    }
+  ],
+  "weapon_attacks": {
+    "axe|1.5|1.0|0": {
+      "active_ms": 240.0,
+      "animation_id": "swing_axe",
+      "attack_id": "dynamic_axe",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 65,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 360.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 400.0
+    },
+    "axe|1.5|1.0|1": {
+      "active_ms": 240.0,
+      "animation_id": "swing_axe",
+      "attack_id": "dynamic_axe",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 65,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 360.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 400.0
+    },
+    "axe|1.5|1.0|2": {
+      "active_ms": 240.0,
+      "animation_id": "swing_axe",
+      "attack_id": "dynamic_axe",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 65,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 360.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 400.0
+    },
+    "axe|2.0|0.25|0": {
+      "active_ms": 800.0,
+      "animation_id": "swing_axe",
+      "attack_id": "dynamic_axe",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 65,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1200.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 1333.3333333333335
+    },
+    "axe|2.0|0.25|1": {
+      "active_ms": 800.0,
+      "animation_id": "swing_axe",
+      "attack_id": "dynamic_axe",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 65,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1200.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 1333.3333333333335
+    },
+    "axe|2.0|0.25|2": {
+      "active_ms": 800.0,
+      "animation_id": "swing_axe",
+      "attack_id": "dynamic_axe",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 65,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1200.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 1333.3333333333335
+    },
+    "axe|3.25|1.6|0": {
+      "active_ms": 150.0,
+      "animation_id": "swing_axe",
+      "attack_id": "dynamic_axe",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 65,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 225.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 250.0
+    },
+    "axe|3.25|1.6|1": {
+      "active_ms": 150.0,
+      "animation_id": "swing_axe",
+      "attack_id": "dynamic_axe",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 65,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 225.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 250.0
+    },
+    "axe|3.25|1.6|2": {
+      "active_ms": 150.0,
+      "animation_id": "swing_axe",
+      "attack_id": "dynamic_axe",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 65,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 225.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 250.0
+    },
+    "bow|1.5|1.0|0": {
+      "active_ms": 100.0,
+      "animation_id": "swing_bow",
+      "attack_id": "dynamic_bow",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 0.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": "dynamic_bow_proj",
+      "recovery_ms": 400.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 600.0
+    },
+    "bow|1.5|1.0|1": {
+      "active_ms": 100.0,
+      "animation_id": "swing_bow",
+      "attack_id": "dynamic_bow",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 0.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": "dynamic_bow_proj",
+      "recovery_ms": 400.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 600.0
+    },
+    "bow|1.5|1.0|2": {
+      "active_ms": 100.0,
+      "animation_id": "swing_bow",
+      "attack_id": "dynamic_bow",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 0.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": "dynamic_bow_proj",
+      "recovery_ms": 400.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 600.0
+    },
+    "bow|2.0|0.25|0": {
+      "active_ms": 333.33333333333337,
+      "animation_id": "swing_bow",
+      "attack_id": "dynamic_bow",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 0.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": "dynamic_bow_proj",
+      "recovery_ms": 1333.3333333333335,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 2000.0
+    },
+    "bow|2.0|0.25|1": {
+      "active_ms": 333.33333333333337,
+      "animation_id": "swing_bow",
+      "attack_id": "dynamic_bow",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 0.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": "dynamic_bow_proj",
+      "recovery_ms": 1333.3333333333335,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 2000.0
+    },
+    "bow|2.0|0.25|2": {
+      "active_ms": 333.33333333333337,
+      "animation_id": "swing_bow",
+      "attack_id": "dynamic_bow",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 0.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": "dynamic_bow_proj",
+      "recovery_ms": 1333.3333333333335,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 2000.0
+    },
+    "bow|3.25|1.6|0": {
+      "active_ms": 62.5,
+      "animation_id": "swing_bow",
+      "attack_id": "dynamic_bow",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 0.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": "dynamic_bow_proj",
+      "recovery_ms": 250.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 375.0
+    },
+    "bow|3.25|1.6|1": {
+      "active_ms": 62.5,
+      "animation_id": "swing_bow",
+      "attack_id": "dynamic_bow",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 0.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": "dynamic_bow_proj",
+      "recovery_ms": 250.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 375.0
+    },
+    "bow|3.25|1.6|2": {
+      "active_ms": 62.5,
+      "animation_id": "swing_bow",
+      "attack_id": "dynamic_bow",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 0.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": "dynamic_bow_proj",
+      "recovery_ms": 250.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 375.0
+    },
+    "dagger|1.5|1.0|0": {
+      "active_ms": 120.0,
+      "animation_id": "swing_dagger",
+      "attack_id": "dynamic_dagger",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 25,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 160.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 160.0
+    },
+    "dagger|1.5|1.0|1": {
+      "active_ms": 120.0,
+      "animation_id": "swing_dagger",
+      "attack_id": "dynamic_dagger",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 25,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 160.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 160.0
+    },
+    "dagger|1.5|1.0|2": {
+      "active_ms": 120.0,
+      "animation_id": "swing_dagger",
+      "attack_id": "dynamic_dagger",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 25,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 160.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 160.0
+    },
+    "dagger|2.0|0.25|0": {
+      "active_ms": 400.0,
+      "animation_id": "swing_dagger",
+      "attack_id": "dynamic_dagger",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 25,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 533.3333333333334,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 533.3333333333334
+    },
+    "dagger|2.0|0.25|1": {
+      "active_ms": 400.0,
+      "animation_id": "swing_dagger",
+      "attack_id": "dynamic_dagger",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 25,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 533.3333333333334,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 533.3333333333334
+    },
+    "dagger|2.0|0.25|2": {
+      "active_ms": 400.0,
+      "animation_id": "swing_dagger",
+      "attack_id": "dynamic_dagger",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 25,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 533.3333333333334,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 533.3333333333334
+    },
+    "dagger|3.25|1.6|0": {
+      "active_ms": 75.0,
+      "animation_id": "swing_dagger",
+      "attack_id": "dynamic_dagger",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 25,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 100.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 100.0
+    },
+    "dagger|3.25|1.6|1": {
+      "active_ms": 75.0,
+      "animation_id": "swing_dagger",
+      "attack_id": "dynamic_dagger",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 25,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 100.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 100.0
+    },
+    "dagger|3.25|1.6|2": {
+      "active_ms": 75.0,
+      "animation_id": "swing_dagger",
+      "attack_id": "dynamic_dagger",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 25,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 100.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 100.0
+    },
+    "hammer_2h|1.5|1.0|0": {
+      "active_ms": 360.0,
+      "animation_id": "swing_hammer_2h",
+      "attack_id": "dynamic_hammer_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 500.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 600.0
+    },
+    "hammer_2h|1.5|1.0|1": {
+      "active_ms": 360.0,
+      "animation_id": "swing_hammer_2h",
+      "attack_id": "dynamic_hammer_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 500.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 600.0
+    },
+    "hammer_2h|1.5|1.0|2": {
+      "active_ms": 360.0,
+      "animation_id": "swing_hammer_2h",
+      "attack_id": "dynamic_hammer_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 500.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 600.0
+    },
+    "hammer_2h|2.0|0.25|0": {
+      "active_ms": 1200.0,
+      "animation_id": "swing_hammer_2h",
+      "attack_id": "dynamic_hammer_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1666.6666666666667,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 2000.0
+    },
+    "hammer_2h|2.0|0.25|1": {
+      "active_ms": 1200.0,
+      "animation_id": "swing_hammer_2h",
+      "attack_id": "dynamic_hammer_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1666.6666666666667,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 2000.0
+    },
+    "hammer_2h|2.0|0.25|2": {
+      "active_ms": 1200.0,
+      "animation_id": "swing_hammer_2h",
+      "attack_id": "dynamic_hammer_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1666.6666666666667,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 2000.0
+    },
+    "hammer_2h|3.25|1.6|0": {
+      "active_ms": 225.0,
+      "animation_id": "swing_hammer_2h",
+      "attack_id": "dynamic_hammer_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 312.5,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 375.0
+    },
+    "hammer_2h|3.25|1.6|1": {
+      "active_ms": 225.0,
+      "animation_id": "swing_hammer_2h",
+      "attack_id": "dynamic_hammer_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 312.5,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 375.0
+    },
+    "hammer_2h|3.25|1.6|2": {
+      "active_ms": 225.0,
+      "animation_id": "swing_hammer_2h",
+      "attack_id": "dynamic_hammer_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 312.5,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 375.0
+    },
+    "mace|1.5|1.0|0": {
+      "active_ms": 260.0,
+      "animation_id": "swing_mace",
+      "attack_id": "dynamic_mace",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 400.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 440.0
+    },
+    "mace|1.5|1.0|1": {
+      "active_ms": 260.0,
+      "animation_id": "swing_mace",
+      "attack_id": "dynamic_mace",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 400.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 440.0
+    },
+    "mace|1.5|1.0|2": {
+      "active_ms": 260.0,
+      "animation_id": "swing_mace",
+      "attack_id": "dynamic_mace",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 400.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 440.0
+    },
+    "mace|2.0|0.25|0": {
+      "active_ms": 866.6666666666667,
+      "animation_id": "swing_mace",
+      "attack_id": "dynamic_mace",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1333.3333333333335,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 1466.6666666666667
+    },
+    "mace|2.0|0.25|1": {
+      "active_ms": 866.6666666666667,
+      "animation_id": "swing_mace",
+      "attack_id": "dynamic_mace",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1333.3333333333335,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 1466.6666666666667
+    },
+    "mace|2.0|0.25|2": {
+      "active_ms": 866.6666666666667,
+      "animation_id": "swing_mace",
+      "attack_id": "dynamic_mace",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1333.3333333333335,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 1466.6666666666667
+    },
+    "mace|3.25|1.6|0": {
+      "active_ms": 162.5,
+      "animation_id": "swing_mace",
+      "attack_id": "dynamic_mace",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 250.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 275.0
+    },
+    "mace|3.25|1.6|1": {
+      "active_ms": 162.5,
+      "animation_id": "swing_mace",
+      "attack_id": "dynamic_mace",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 250.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 275.0
+    },
+    "mace|3.25|1.6|2": {
+      "active_ms": 162.5,
+      "animation_id": "swing_mace",
+      "attack_id": "dynamic_mace",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 250.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 275.0
+    },
+    "spear|1.5|1.0|0": {
+      "active_ms": 200.0,
+      "animation_id": "swing_spear",
+      "attack_id": "dynamic_spear",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 15,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 300.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 360.0
+    },
+    "spear|1.5|1.0|1": {
+      "active_ms": 200.0,
+      "animation_id": "swing_spear",
+      "attack_id": "dynamic_spear",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 15,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 300.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 360.0
+    },
+    "spear|1.5|1.0|2": {
+      "active_ms": 200.0,
+      "animation_id": "swing_spear",
+      "attack_id": "dynamic_spear",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 15,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 300.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 360.0
+    },
+    "spear|2.0|0.25|0": {
+      "active_ms": 666.6666666666667,
+      "animation_id": "swing_spear",
+      "attack_id": "dynamic_spear",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 15,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1000.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 1200.0
+    },
+    "spear|2.0|0.25|1": {
+      "active_ms": 666.6666666666667,
+      "animation_id": "swing_spear",
+      "attack_id": "dynamic_spear",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 15,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1000.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 1200.0
+    },
+    "spear|2.0|0.25|2": {
+      "active_ms": 666.6666666666667,
+      "animation_id": "swing_spear",
+      "attack_id": "dynamic_spear",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 15,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1000.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 1200.0
+    },
+    "spear|3.25|1.6|0": {
+      "active_ms": 125.0,
+      "animation_id": "swing_spear",
+      "attack_id": "dynamic_spear",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 15,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 187.5,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 225.0
+    },
+    "spear|3.25|1.6|1": {
+      "active_ms": 125.0,
+      "animation_id": "swing_spear",
+      "attack_id": "dynamic_spear",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 15,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 187.5,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 225.0
+    },
+    "spear|3.25|1.6|2": {
+      "active_ms": 125.0,
+      "animation_id": "swing_spear",
+      "attack_id": "dynamic_spear",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 15,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 187.5,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 225.0
+    },
+    "staff|1.5|1.0|0": {
+      "active_ms": 240.0,
+      "animation_id": "swing_staff",
+      "attack_id": "dynamic_staff",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 320.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 400.0
+    },
+    "staff|1.5|1.0|1": {
+      "active_ms": 240.0,
+      "animation_id": "swing_staff",
+      "attack_id": "dynamic_staff",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 320.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 400.0
+    },
+    "staff|1.5|1.0|2": {
+      "active_ms": 240.0,
+      "animation_id": "swing_staff",
+      "attack_id": "dynamic_staff",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 320.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 400.0
+    },
+    "staff|2.0|0.25|0": {
+      "active_ms": 800.0,
+      "animation_id": "swing_staff",
+      "attack_id": "dynamic_staff",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1066.6666666666667,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 1333.3333333333335
+    },
+    "staff|2.0|0.25|1": {
+      "active_ms": 800.0,
+      "animation_id": "swing_staff",
+      "attack_id": "dynamic_staff",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1066.6666666666667,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 1333.3333333333335
+    },
+    "staff|2.0|0.25|2": {
+      "active_ms": 800.0,
+      "animation_id": "swing_staff",
+      "attack_id": "dynamic_staff",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1066.6666666666667,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 1333.3333333333335
+    },
+    "staff|3.25|1.6|0": {
+      "active_ms": 150.0,
+      "animation_id": "swing_staff",
+      "attack_id": "dynamic_staff",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 200.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 250.0
+    },
+    "staff|3.25|1.6|1": {
+      "active_ms": 150.0,
+      "animation_id": "swing_staff",
+      "attack_id": "dynamic_staff",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 200.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 250.0
+    },
+    "staff|3.25|1.6|2": {
+      "active_ms": 150.0,
+      "animation_id": "swing_staff",
+      "attack_id": "dynamic_staff",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 30,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 200.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 250.0
+    },
+    "sword_1h|1.5|1.0|0": {
+      "active_ms": 200.0,
+      "animation_id": "swing_sword_1h",
+      "attack_id": "dynamic_sword_1h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 55,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 240.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 300.0
+    },
+    "sword_1h|1.5|1.0|1": {
+      "active_ms": 200.0,
+      "animation_id": "swing_sword_1h",
+      "attack_id": "dynamic_sword_1h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 55,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 240.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 300.0
+    },
+    "sword_1h|1.5|1.0|2": {
+      "active_ms": 200.0,
+      "animation_id": "swing_sword_1h",
+      "attack_id": "dynamic_sword_1h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 55,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 240.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 300.0
+    },
+    "sword_1h|2.0|0.25|0": {
+      "active_ms": 666.6666666666667,
+      "animation_id": "swing_sword_1h",
+      "attack_id": "dynamic_sword_1h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 55,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 800.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 1000.0
+    },
+    "sword_1h|2.0|0.25|1": {
+      "active_ms": 666.6666666666667,
+      "animation_id": "swing_sword_1h",
+      "attack_id": "dynamic_sword_1h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 55,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 800.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 1000.0
+    },
+    "sword_1h|2.0|0.25|2": {
+      "active_ms": 666.6666666666667,
+      "animation_id": "swing_sword_1h",
+      "attack_id": "dynamic_sword_1h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 55,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 800.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 1000.0
+    },
+    "sword_1h|3.25|1.6|0": {
+      "active_ms": 125.0,
+      "animation_id": "swing_sword_1h",
+      "attack_id": "dynamic_sword_1h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 55,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 150.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 187.5
+    },
+    "sword_1h|3.25|1.6|1": {
+      "active_ms": 125.0,
+      "animation_id": "swing_sword_1h",
+      "attack_id": "dynamic_sword_1h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 55,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 150.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 187.5
+    },
+    "sword_1h|3.25|1.6|2": {
+      "active_ms": 125.0,
+      "animation_id": "swing_sword_1h",
+      "attack_id": "dynamic_sword_1h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 55,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 150.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 187.5
+    },
+    "sword_2h|1.5|1.0|0": {
+      "active_ms": 300.0,
+      "animation_id": "swing_sword_2h",
+      "attack_id": "dynamic_sword_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 400.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 500.0
+    },
+    "sword_2h|1.5|1.0|1": {
+      "active_ms": 300.0,
+      "animation_id": "swing_sword_2h",
+      "attack_id": "dynamic_sword_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 400.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 500.0
+    },
+    "sword_2h|1.5|1.0|2": {
+      "active_ms": 300.0,
+      "animation_id": "swing_sword_2h",
+      "attack_id": "dynamic_sword_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 400.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 500.0
+    },
+    "sword_2h|2.0|0.25|0": {
+      "active_ms": 1000.0,
+      "animation_id": "swing_sword_2h",
+      "attack_id": "dynamic_sword_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1333.3333333333335,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 1666.6666666666667
+    },
+    "sword_2h|2.0|0.25|1": {
+      "active_ms": 1000.0,
+      "animation_id": "swing_sword_2h",
+      "attack_id": "dynamic_sword_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1333.3333333333335,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 1666.6666666666667
+    },
+    "sword_2h|2.0|0.25|2": {
+      "active_ms": 1000.0,
+      "animation_id": "swing_sword_2h",
+      "attack_id": "dynamic_sword_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 1333.3333333333335,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 1666.6666666666667
+    },
+    "sword_2h|3.25|1.6|0": {
+      "active_ms": 187.5,
+      "animation_id": "swing_sword_2h",
+      "attack_id": "dynamic_sword_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 250.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 312.5
+    },
+    "sword_2h|3.25|1.6|1": {
+      "active_ms": 187.5,
+      "animation_id": "swing_sword_2h",
+      "attack_id": "dynamic_sword_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 250.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 312.5
+    },
+    "sword_2h|3.25|1.6|2": {
+      "active_ms": 187.5,
+      "animation_id": "swing_sword_2h",
+      "attack_id": "dynamic_sword_2h",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 75,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 250.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 312.5
+    },
+    "unarmed|1.5|1.0|0": {
+      "active_ms": 160.0,
+      "animation_id": "swing_unarmed",
+      "attack_id": "dynamic_unarmed",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 200.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 200.0
+    },
+    "unarmed|1.5|1.0|1": {
+      "active_ms": 160.0,
+      "animation_id": "swing_unarmed",
+      "attack_id": "dynamic_unarmed",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 200.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 200.0
+    },
+    "unarmed|1.5|1.0|2": {
+      "active_ms": 160.0,
+      "animation_id": "swing_unarmed",
+      "attack_id": "dynamic_unarmed",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 100.0,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 1.5,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 200.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 200.0
+    },
+    "unarmed|2.0|0.25|0": {
+      "active_ms": 533.3333333333334,
+      "animation_id": "swing_unarmed",
+      "attack_id": "dynamic_unarmed",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 666.6666666666667,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 666.6666666666667
+    },
+    "unarmed|2.0|0.25|1": {
+      "active_ms": 533.3333333333334,
+      "animation_id": "swing_unarmed",
+      "attack_id": "dynamic_unarmed",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 666.6666666666667,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 666.6666666666667
+    },
+    "unarmed|2.0|0.25|2": {
+      "active_ms": 533.3333333333334,
+      "animation_id": "swing_unarmed",
+      "attack_id": "dynamic_unarmed",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 333.33333333333337,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 2.0,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 666.6666666666667,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 666.6666666666667
+    },
+    "unarmed|3.25|1.6|0": {
+      "active_ms": 100.0,
+      "animation_id": "swing_unarmed",
+      "attack_id": "dynamic_unarmed",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 125.0,
+      "screen_shake": false,
+      "status_tags": [],
+      "tags": [],
+      "telegraph_color": [
+        220,
+        220,
+        240
+      ],
+      "windup_ms": 125.0
+    },
+    "unarmed|3.25|1.6|1": {
+      "active_ms": 100.0,
+      "animation_id": "swing_unarmed",
+      "attack_id": "dynamic_unarmed",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 125.0,
+      "screen_shake": false,
+      "status_tags": [
+        "burn"
+      ],
+      "tags": [
+        "fire",
+        "burn"
+      ],
+      "telegraph_color": [
+        255,
+        100,
+        20
+      ],
+      "windup_ms": 125.0
+    },
+    "unarmed|3.25|1.6|2": {
+      "active_ms": 100.0,
+      "animation_id": "swing_unarmed",
+      "attack_id": "dynamic_unarmed",
+      "can_be_interrupted": true,
+      "combo_next": null,
+      "combo_window_ms": 0.0,
+      "cooldown_ms": 62.5,
+      "damage_multiplier": 1.0,
+      "hitbox_params": {
+        "arc_degrees": 50,
+        "offset_forward": 0.8,
+        "radius": 3.25,
+        "shape": "arc"
+      },
+      "hitbox_shape": "arc",
+      "movement_multiplier": 0.7,
+      "projectile_id": null,
+      "recovery_ms": 125.0,
+      "screen_shake": false,
+      "status_tags": [
+        "slow"
+      ],
+      "tags": [
+        "ice",
+        "slow",
+        "pierce"
+      ],
+      "telegraph_color": [
+        80,
+        200,
+        255
+      ],
+      "windup_ms": 125.0
+    }
+  }
+}

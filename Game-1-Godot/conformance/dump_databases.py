@@ -1253,6 +1253,269 @@ def dump_all(dbs: dict) -> None:
         "loot_streams": loot_streams,
     })
 
+    # ── P4t2a: action combat core — state machine / hitboxes / projectiles /
+    #    combat data loader. Scenarios EXECUTED through the real classes; the
+    #    C# tests replay the same scripts and must land on identical state.
+    from Combat.attack_state_machine import (AttackDefinition,
+                                             AttackStateMachine)
+    from Combat.hitbox_system import (ActiveHitbox, HitboxDefinition,
+                                      HitboxSystem)
+    from Combat.projectile_system import ProjectileDefinition, ProjectileSystem
+    from Combat import combat_data_loader as cdl
+
+    def attack_def_row(a):
+        return {"attack_id": a.attack_id, "windup_ms": a.windup_ms,
+                "active_ms": a.active_ms, "recovery_ms": a.recovery_ms,
+                "cooldown_ms": a.cooldown_ms, "hitbox_shape": a.hitbox_shape,
+                "hitbox_params": a.hitbox_params,
+                "damage_multiplier": a.damage_multiplier,
+                "movement_multiplier": a.movement_multiplier,
+                "can_be_interrupted": a.can_be_interrupted,
+                "animation_id": a.animation_id,
+                "projectile_id": a.projectile_id,
+                "status_tags": a.status_tags, "screen_shake": a.screen_shake,
+                "telegraph_color": a.telegraph_color,
+                "combo_next": a.combo_next,
+                "combo_window_ms": a.combo_window_ms, "tags": a.tags}
+
+    # 1) Attack state machine — scripted timeline (same script hardcoded in
+    #    the C# test; every snapshot must match).
+    atk_a = AttackDefinition(
+        attack_id="combo_a", windup_ms=300, active_ms=200, recovery_ms=240,
+        cooldown_ms=400, movement_multiplier=0.6, combo_next="combo_a2",
+        combo_window_ms=250)
+    atk_b = AttackDefinition(
+        attack_id="locked_b", windup_ms=200, active_ms=150, recovery_ms=100,
+        cooldown_ms=300, can_be_interrupted=False)
+    atk_c = AttackDefinition(
+        attack_id="soft_c", windup_ms=500, active_ms=100, recovery_ms=100,
+        cooldown_ms=100)
+
+    def asm_snapshot(sm, events, results=None):
+        return {
+            "phase": sm.phase.value, "timer": sm.phase_timer,
+            "combo_count": sm.combo_count, "combo_timer": sm.combo_timer,
+            "movement_multiplier": sm.movement_multiplier,
+            "windup_progress": sm.windup_progress,
+            "is_attacking": sm.is_attacking,
+            "is_active": sm.is_in_active_phase,
+            "is_vulnerable": sm.is_vulnerable,
+            "current_attack": (sm.current_attack.attack_id
+                               if sm.current_attack else None),
+            "hits": sorted(sm.hits_this_swing),
+            "events": [{"type": ev.event_type, "source": ev.source_id,
+                        "phase": ev.data.get("phase"),
+                        "attack": (ev.data["attack"].attack_id
+                                   if "attack" in ev.data else None)}
+                       for ev in events],
+            "results": results if results is not None else [],
+        }
+
+    sm = AttackStateMachine("player")
+    asm_steps = []
+    asm_steps.append(asm_snapshot(sm, [], [sm.start_attack(atk_a, {})]))
+    asm_steps.append(asm_snapshot(sm, sm.update(100)))
+    asm_steps.append(asm_snapshot(sm, sm.update(250)))       # windup -> active
+    asm_steps.append(asm_snapshot(sm, [], [sm.record_hit("e1"),
+                                           sm.record_hit("e1"),
+                                           sm.record_hit("e2")]))
+    asm_steps.append(asm_snapshot(sm, sm.update(200)))       # -> recovery
+    asm_steps.append(asm_snapshot(sm, sm.update(240)))       # -> cooldown
+    asm_steps.append(asm_snapshot(sm, [], [sm.start_attack(atk_a, {})]))  # combo
+    for big in (5000, 5000, 5000, 5000):
+        asm_steps.append(asm_snapshot(sm, sm.update(big)))
+    asm_steps.append(asm_snapshot(sm, sm.update(100)))       # idle combo decay
+    asm_steps.append(asm_snapshot(sm, sm.update(200)))       # decay to zero
+    asm_steps.append(asm_snapshot(sm, [], [sm.start_attack(atk_b, {}),
+                                           sm.interrupt()]))  # not interruptible
+    sm.force_reset()
+    asm_steps.append(asm_snapshot(sm, []))
+    asm_steps.append(asm_snapshot(sm, [], [sm.start_attack(atk_c, {})]))
+    asm_steps.append(asm_snapshot(sm, sm.update(50)))
+    asm_steps.append(asm_snapshot(sm, [], [sm.interrupt()]))  # interruptible
+
+    # 2) Hitbox system — collision matrix + event-flow scripts.
+    hb_shapes = [
+        HitboxDefinition(shape="arc", radius=2.0, arc_degrees=90.0),
+        HitboxDefinition(shape="arc", radius=2.6, arc_degrees=55.0),
+        HitboxDefinition(shape="circle", radius=1.2),
+        HitboxDefinition(shape="rect", width=1.0, height=3.0),
+        HitboxDefinition(shape="line", length=4.0),
+    ]
+    hb_facings = [0.0, 37.0, 217.0, -60.0]
+    hsys_probe = HitboxSystem()
+    matrix = {}
+    coords = [-3.05, -1.85, -0.65, 0.55, 1.75, 2.95]
+    for si, hd in enumerate(hb_shapes):
+        for facing in hb_facings:
+            live = ActiveHitbox(hd, 0.0, 0.0, facing, "probe", 1000.0, {})
+            for hx in coords:
+                for hy in coords:
+                    hb = hsys_probe.register_hurtbox("m", 0.5)
+                    hb.world_x, hb.world_y = hx, hy
+                    matrix[f"{si}|{facing}|{hx},{hy}"] = \
+                        hsys_probe._check_collision(live, hb)
+    world_pos = {}
+    for od in [HitboxDefinition(offset_forward=0.8),
+               HitboxDefinition(offset_forward=1.5, offset_lateral=0.7),
+               HitboxDefinition(offset_forward=0.0, offset_lateral=-1.2)]:
+        for facing in hb_facings:
+            world_pos[f"{od.offset_forward},{od.offset_lateral}|{facing}"] = \
+                list(od.compute_world_position(3.0, -2.0, facing))
+
+    def hit_rows(hits):
+        return [{"attacker": h.attacker_id, "target": h.target_id,
+                 "pos": list(h.hit_position), "proj": h.is_projectile}
+                for h in hits]
+
+    hsys = HitboxSystem()
+    hsys.register_hurtbox("p1", 0.5)
+    hsys.register_hurtbox("p2", 0.4)
+    hsys.register_hurtbox("p3", 0.3)
+    hsys.register_hurtbox("p2", 0.45)   # overwrite keeps insertion slot
+    hsys.register_hurtbox("player", 0.5)
+    hsys.update_hurtbox_positions({"p1": (2.0, 0.0), "p2": (2.6, 0.9),
+                                   "p3": (-1.0, 0.0), "player": (0.0, 0.0)})
+    hsys.get_hurtbox("p3").invulnerable = True
+    hsys.spawn_hitbox(HitboxDefinition(shape="arc", radius=2.4,
+                                       arc_degrees=100.0),
+                      (0.75, 0.27), 20.0, "player", 300.0, {"kind": "swing"})
+    hsys.spawn_hitbox(HitboxDefinition(shape="line", length=3.0,
+                                       piercing=True),
+                      (0.0, 0.0), 0.0, "player", 250.0, {"kind": "pierce"})
+    hb_flow = []
+    for _ in range(4):
+        hits = hsys.update(100.0)
+        hb_flow.append({"hits": hit_rows(hits),
+                        "active": len(hsys.active_hitboxes)})
+    hsys.get_hurtbox("p3").invulnerable = False
+    hsys.spawn_hitbox(HitboxDefinition(shape="circle", radius=5.0),
+                      (0.0, 0.0), 0.0, "npc", 150.0, {})
+    hb_flow.append({"hits": hit_rows(hsys.update(100.0)),
+                    "active": len(hsys.active_hitboxes)})
+
+    # 3) Projectiles — straight / homing / gravity / piercing / AoE-on-hit.
+    def proj_row(p):
+        return {"x": p.x, "y": p.y, "vx": p.vx, "vy": p.vy,
+                "facing": p.facing_angle, "traveled": p.distance_traveled,
+                "alive": p.alive}
+
+    proj_cases = {}
+
+    def run_proj(name, pdef, start, angle, hurts, steps, target=None):
+        hs = HitboxSystem()
+        for hid, r, (hx, hy) in hurts:
+            hb = hs.register_hurtbox(hid, r)
+            hb.world_x, hb.world_y = hx, hy
+        ps = ProjectileSystem(hs)
+        proj = ps.spawn(pdef, start, angle, "player", {"kind": name},
+                        target_pos=target)
+        rows = []
+        for _ in range(steps):
+            hits = ps.update(100.0)
+            aoe_hits = hs.update(100.0)
+            rows.append({"proj": proj_row(proj), "hits": hit_rows(hits),
+                         "aoe_hits": hit_rows(aoe_hits),
+                         "count": ps.count,
+                         "active_hitboxes": len(hs.active_hitboxes)})
+        proj_cases[name] = rows
+
+    run_proj("straight",
+             ProjectileDefinition(projectile_id="s", speed=10.0,
+                                  max_range=12.0, hitbox_radius=0.3),
+             (0.0, 0.0), 30.0,
+             [("t1", 0.5, (6.0, 3.5)), ("t2", 0.5, (9.0, 5.4))], 15)
+    run_proj("homing",
+             ProjectileDefinition(projectile_id="h", speed=8.0,
+                                  max_range=25.0, homing=0.6),
+             (0.0, 0.0), 90.0, [("t1", 0.6, (5.0, -4.0))], 20,
+             target=(5.0, -4.0))
+    run_proj("gravity",
+             ProjectileDefinition(projectile_id="g", speed=12.0,
+                                  max_range=20.0, gravity=9.0),
+             (0.0, 0.0), -30.0, [("t1", 0.5, (8.0, -1.0))], 18)
+    run_proj("piercing",
+             ProjectileDefinition(projectile_id="p", speed=10.0,
+                                  max_range=14.0, piercing=True),
+             (0.0, 0.0), 0.0,
+             [("t1", 0.5, (4.0, 0.1)), ("t2", 0.5, (8.0, -0.2))], 15)
+    run_proj("aoe",
+             ProjectileDefinition(projectile_id="a", speed=10.0,
+                                  max_range=14.0,
+                                  aoe_on_hit={"shape": "circle",
+                                              "radius": 2.0},
+                                  aoe_duration_ms=250.0),
+             (0.0, 0.0), 0.0,
+             [("t1", 0.5, (5.0, 0.0)), ("t2", 0.5, (6.2, 1.1))], 10)
+
+    # 4) Combat data loader — dynamic generation (pure fns + seeded rng).
+    weapon_rows = {}
+    for wtype in sorted(cdl._WEAPON_PROFILES):
+        for wrange, wspeed in [(1.5, 1.0), (3.25, 1.6), (2.0, 0.25)]:
+            for ti, wtags in enumerate([[], ["fire", "burn"],
+                                        ["ice", "slow", "pierce"]]):
+                key = f"{wtype}|{wrange}|{wspeed}|{ti}"
+                weapon_rows[key] = attack_def_row(
+                    cdl.generate_weapon_attack(wtype, wrange, wspeed, wtags))
+
+    _pyrandom.seed(31337)
+    enemy_attack_rows = {}
+    for eid in sorted(enemy_db.enemies):
+        enemy_attack_rows[eid] = attack_def_row(
+            cdl.generate_enemy_attack(enemy_db.enemies[eid], 0))
+    fallback_defs = [
+        SimpleNamespace(category="dragon", tier=3, tags=["fire"],
+                        visual_size=3.0, enemy_id="synthetic_dragon",
+                        attacks=[]),
+        # visual_size must equal the C# computed value (unknown cat/tier -> 1.0)
+        SimpleNamespace(category="slimeking", tier=9, tags=[],
+                        visual_size=1.0, enemy_id="synthetic_unknown",
+                        attacks=[]),
+    ]
+    for fd in fallback_defs:
+        enemy_attack_rows[fd.enemy_id] = attack_def_row(
+            cdl.generate_enemy_attack(fd, 2))
+
+    _pyrandom.seed(991)
+    select_rows = {}
+    for eid in sorted(enemy_db.enemies)[:4]:
+        loader = cdl.CombatDataLoader()
+        picks = []
+        for dist in [0.5, 1.4, 2.2, 5.0, 999.0]:
+            sel = loader.select_enemy_attack(
+                eid, dist, enemy_def=enemy_db.enemies[eid])
+            picks.append(sel.attack_id if sel else None)
+        select_rows[eid] = picks
+
+    proj_def_rows = {}
+    for ti, ptags in enumerate([["physical"], ["bow", "arrow"], ["fire"],
+                                ["ice", "pierce"], ["lightning", "beam"],
+                                ["homing", "arcane"], ["seeking"],
+                                ["crystal", "frost"]]):
+        p = cdl.generate_projectile_from_tags("bow", ptags)
+        proj_def_rows[str(ti)] = {
+            "projectile_id": p.projectile_id, "speed": p.speed,
+            "max_range": p.max_range, "hitbox_radius": p.hitbox_radius,
+            "sprite_id": p.sprite_id, "trail_type": p.trail_type,
+            "homing": p.homing, "gravity": p.gravity,
+            "piercing": p.piercing, "visual": p.visual, "tags": p.tags,
+        }
+
+    write("action_combat.json", {
+        "_meta": meta("Combat/attack_state_machine.py + hitbox_system.py + "
+                      "projectile_system.py + combat_data_loader.py — "
+                      "scripted scenarios EXECUTED through the real classes"),
+        "state_machine": asm_steps,
+        "hitbox_matrix": matrix,
+        "hitbox_world_pos": world_pos,
+        "hitbox_flow": hb_flow,
+        "projectiles": proj_cases,
+        "weapon_attacks": weapon_rows,
+        "enemy_attacks_seed_31337": enemy_attack_rows,
+        "enemy_attack_select_seed_991": select_rows,
+        "projectile_defs": proj_def_rows,
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,
