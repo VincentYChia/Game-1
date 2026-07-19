@@ -113,6 +113,10 @@ def boot() -> dict:
     skill_db = SkillDatabase.get_instance()
     skill_db.load_from_files()
 
+    # CombatManager.load_config loads sacred hostiles BEFORE Update-N overlay
+    from Combat.enemy import EnemyDatabase
+    EnemyDatabase.get_instance().load_from_files()
+
     # game_engine.py:177 — sacred skill-unlocks BEFORE Update-N overlay
     from data.databases.skill_unlock_db import SkillUnlockDatabase
     su_db = SkillUnlockDatabase.get_instance()
@@ -1180,6 +1184,73 @@ def dump_all(dbs: dict) -> None:
                                  for r in regions_plain]),
         "voronoi_noisy": sorted([sorted([list(p) for p in r])
                                  for r in regions_noisy]),
+    })
+
+    # ── P4: EnemyDatabase + attack profiles + loot streams ───────────────
+    from Combat.enemy import Enemy, EnemyDatabase
+
+    enemy_db = EnemyDatabase.get_instance()  # sacred loaded in boot(), updates last
+
+    def attack_row(a):
+        return {"attack_id": a.attack_id, "shape": a.shape, "arc": a.arc,
+                "range": a.range, "windup": a.windup, "active": a.active,
+                "recovery": a.recovery, "weight": a.weight, "tags": a.tags,
+                "screen_shake": a.screen_shake,
+                "damage_multiplier": a.damage_multiplier,
+                "status_tags": a.status_tags}
+
+    def enemy_row(e):
+        return {
+            "enemy_id": e.enemy_id, "name": e.name, "tier": e.tier,
+            "category": e.category, "behavior": e.behavior,
+            "max_health": e.max_health, "damage_min": e.damage_min,
+            "damage_max": e.damage_max, "defense": e.defense, "speed": e.speed,
+            "aggro_range": e.aggro_range, "attack_speed": e.attack_speed,
+            "drops": [{"material_id": d.material_id,
+                       "quantity_min": d.quantity_min,
+                       "quantity_max": d.quantity_max, "chance": d.chance}
+                      for d in e.drops],
+            "ai_pattern": {
+                "default_state": e.ai_pattern.default_state,
+                "aggro_on_damage": e.ai_pattern.aggro_on_damage,
+                "aggro_on_proximity": e.ai_pattern.aggro_on_proximity,
+                "flee_at_health": e.ai_pattern.flee_at_health,
+                "call_for_help_radius": e.ai_pattern.call_for_help_radius,
+                "pack_coordination": e.ai_pattern.pack_coordination,
+                "special_abilities": e.ai_pattern.special_abilities,
+            },
+            "special_ability_ids": [a.ability_id for a in e.special_abilities],
+            "narrative": e.narrative, "tags": e.tags, "icon_path": e.icon_path,
+            "visual_size": e.visual_size, "hurtbox_radius": e.hurtbox_radius,
+            "attacks": [attack_row(a) for a in e.attacks],
+        }
+
+    # Loot: execute the REAL Enemy.generate_loot (it reads only
+    # self.definition.drops) against the seeded GLOBAL random module.
+    loot_streams = {}
+    loot_enemies = sorted(enemy_db.enemies)[:6]
+    for lseed in [7, 4242]:
+        _pyrandom.seed(lseed)
+        rolls = []
+        for eid in loot_enemies:
+            shim = SimpleNamespace(definition=enemy_db.enemies[eid])
+            for _ in range(4):
+                rolls.append({"enemy": eid,
+                              "loot": [list(t) for t in
+                                       Enemy.generate_loot(shim)]})
+        loot_streams[str(lseed)] = rolls
+
+    write("enemies.json", {
+        "_meta": meta("Combat/enemy.py EnemyDatabase + attack_profile_generator "
+                      "(deterministic profiles) + REAL generate_loot on seeded "
+                      "global random"),
+        "count": len(enemy_db.enemies),
+        "enemies": {eid: enemy_row(e)
+                    for eid, e in sorted(enemy_db.enemies.items())},
+        "by_tier": {str(t): [e.enemy_id for e in lst]
+                    for t, lst in enemy_db.enemies_by_tier.items()},
+        "loot_enemies": loot_enemies,
+        "loot_streams": loot_streams,
     })
 
     write("translations.json", {

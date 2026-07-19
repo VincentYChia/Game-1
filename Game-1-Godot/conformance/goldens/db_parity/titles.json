@@ -2,7 +2,7 @@
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
     "generated": "2026-07-18",
-    "git_sha": "ea8d8206",
+    "git_sha": "99ce91c3",
     "note": "'requirements' (UnlockRequirements object graph) is EXCLUDED from Phase-1 parity — typed in Phase 2 with ICharacterQuery; every other field is gated here",
     "source": "data/databases/title_db.py"
   },

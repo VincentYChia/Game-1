@@ -102,6 +102,19 @@ public sealed class UpdateLoader
         }
     }
 
+    /// <summary>update_loader.py:130-155 — enemy update routing (appends via
+    /// the same parser; Python's load_additional_file).</summary>
+    public static void LoadEnemyUpdates(string projectRoot, Combat.EnemyDatabase db)
+    {
+        foreach (var update in GetInstalledUpdates(projectRoot))
+        {
+            var dir = Path.Combine(projectRoot, update);
+            if (!Directory.Exists(dir)) continue;
+            foreach (var f in J.GlobSorted(dir, "*hostiles*.JSON", "*enemies*.JSON"))
+                Try(() => db.LoadFromFile(f), f);
+        }
+    }
+
     /// <summary>update_loader.py:215-238 — skill-unlock update routing.</summary>
     public static void LoadSkillUnlockUpdates(string projectRoot, SkillUnlockDatabase db)
     {
