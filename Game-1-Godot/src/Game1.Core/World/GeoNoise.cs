@@ -164,7 +164,9 @@ public static class GeoNoise
                 ? new List<HashSet<(int, int)>> { new(territory) }
                 : new List<HashSet<(int, int)>>();
         if (numRegions >= territory.Count)
-            return territory.Select(c => new HashSet<(int, int)> { c }).ToList();
+            // noise.py 2026-07-19 follow-up: sorted singleton order
+            return territory.OrderBy(c => c)
+                .Select(c => new HashSet<(int, int)> { c }).ToList();
 
         var seedPoints = PlaceSpreadSeeds(territory, numRegions, seed);
         var useNoise = noiseAmplitude > 0;
