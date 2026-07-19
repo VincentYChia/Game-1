@@ -203,7 +203,10 @@ def generate_ecosystems(
     """
     group_size = config.ecosystem.group_size
     gradient_max = DANGER_GRADIENT_MAX
-    all_chunks = set(chunk_type_map.keys())
+    # Determinism (2026-07-19, Godot port): dict insertion order instead of
+    # set order — eco-cell first-seen order (IDs + smoothing order) becomes
+    # portable. Values unchanged for a given order.
+    all_chunks = list(chunk_type_map.keys())
 
     # Step 1: Identify all ecosystem grid cells
     eco_cells: Dict[Tuple[int, int], Set[Tuple[int, int]]] = {}

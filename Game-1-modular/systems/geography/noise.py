@@ -106,7 +106,10 @@ def find_components(territory: Set[Tuple[int, int]]) -> List[Set[Tuple[int, int]
     remaining = set(territory)
     components = []
     while remaining:
-        start = next(iter(remaining))
+        # Determinism (2026-07-19, Godot port): min() instead of set-iteration
+        # order so component discovery order is stable across interpreters
+        # and portable to C#. Component CONTENTS are unchanged.
+        start = min(remaining)
         component = set()
         stack = [start]
         while stack:

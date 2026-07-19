@@ -90,7 +90,7 @@ def _find_adjacent_region(
 ) -> int:
     """Find the index of an adjacent region to merge into."""
     neighbor_counts: Dict[int, int] = {}
-    for cx, cy in region:
+    for cx, cy in sorted(region):  # determinism: stable adjacency tie-breaks
         for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             neighbor = (cx + dx, cy + dy)
             for idx, other_region in enumerate(all_regions):
@@ -213,7 +213,7 @@ def generate_regions(
 
             nation_data.region_ids.append(rid)
 
-            for pos in region_chunks:
+            for pos in sorted(region_chunks):  # determinism: region_map order feeds biome IDs
                 region_map[pos] = rid
 
     return region_map, region_metadata
