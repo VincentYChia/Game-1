@@ -55,7 +55,8 @@ public partial class CombatWorld : Node3D
 
     public void Build(string contentRoot, long worldSeed, BiomeGenerator biomes,
                       ChunkGenerator chunkGen, PlayerController player,
-                      int enemyChunkRadius)
+                      int enemyChunkRadius,
+                      Game1.Core.World.Geography.WorldMap? worldMap = null)
     {
         _player = player;
         _rng = new PythonRandom(worldSeed ^ 0x5DEECE66D);
@@ -95,11 +96,21 @@ public partial class CombatWorld : Node3D
         {
             for (var cx = -enemyChunkRadius; cx <= enemyChunkRadius; cx++)
             {
-                var chunkType = biomes.GetChunkType(cx, cy);
-                if (!chunkType.Contains("dangerous") && !chunkType.Contains("rare"))
-                    continue;
-
-                var tier = chunkType.Contains("rare") ? 2 : 1;
+                int tier;
+                if (worldMap?.GetChunkData(cx, cy) is { } geo)
+                {
+                    // Geographic danger drives spawns (Tranquil/Peaceful skip)
+                    var danger = (int)geo.DangerLevel;
+                    if (danger <= 2) continue;
+                    tier = danger <= 4 ? 1 : 2;
+                }
+                else
+                {
+                    var chunkType = biomes.GetChunkType(cx, cy);
+                    if (!chunkType.Contains("dangerous") && !chunkType.Contains("rare"))
+                        continue;
+                    tier = chunkType.Contains("rare") ? 2 : 1;
+                }
                 var pool = enemyDb.EnemiesByTier.GetValueOrDefault(tier)
                            ?? enemyDb.EnemiesByTier.GetValueOrDefault(1);
                 if (pool is null || pool.Count == 0) continue;

@@ -1,6 +1,7 @@
 using Game1.Core.Content;
 using Game1.Core.Data;
 using Game1.Core.World;
+using Game1.Core.World.Geography;
 using Godot;
 
 namespace Game1.Godot;
@@ -17,6 +18,34 @@ public partial class WorldBootstrap : Node3D
     [Export] public long WorldSeed { get; set; } = 12345;
     [Export] public int ChunkRadius { get; set; } = 8;
     [Export] public int ChunkSize { get; set; } = 16;
+
+    /// <summary>Generate the full certified geographic world (nations,
+    /// regions, biomes, danger, villages) and drive terrain/resources/
+    /// enemies from it. Off = legacy biome-generator world.</summary>
+    [Export] public bool UseGeographic { get; set; } = true;
+
+    private WorldMap? _worldMap;
+    private List<VillageRecord> _villages = new();
+
+    // The 15 geographic chunk types → terrain colors (glue-only palette)
+    private static readonly Dictionary<string, Color> GeoColors = new()
+    {
+        ["forest"] = new Color(0.24f, 0.47f, 0.24f),
+        ["dense_thicket"] = new Color(0.16f, 0.35f, 0.18f),
+        ["cave"] = new Color(0.41f, 0.41f, 0.43f),
+        ["deep_cave"] = new Color(0.27f, 0.27f, 0.31f),
+        ["quarry"] = new Color(0.59f, 0.55f, 0.49f),
+        ["rocky_highlands"] = new Color(0.51f, 0.49f, 0.45f),
+        ["wetland"] = new Color(0.35f, 0.51f, 0.43f),
+        ["lake"] = new Color(0.27f, 0.43f, 0.71f),
+        ["river"] = new Color(0.31f, 0.51f, 0.75f),
+        ["flooded_cave"] = new Color(0.29f, 0.37f, 0.51f),
+        ["rocky_forest"] = new Color(0.39f, 0.47f, 0.35f),
+        ["crystal_cavern"] = new Color(0.55f, 0.43f, 0.71f),
+        ["overgrown_ruins"] = new Color(0.47f, 0.51f, 0.39f),
+        ["barren_waste"] = new Color(0.67f, 0.59f, 0.43f),
+        ["cursed_marsh"] = new Color(0.39f, 0.35f, 0.47f),
+    };
 
     public override void _Ready()
     {
@@ -39,16 +68,77 @@ public partial class WorldBootstrap : Node3D
         templateDb.LoadFromFiles(root);
         var chunkGen = new ChunkGenerator(resourceDb, worldGen, templateDb);
 
+        if (UseGeographic)
+        {
+            // The certified geographic pipeline — full 512x512 world in a
+            // few seconds; same seed = same world as the Python game.
+            var geoCfg = GeographicConfig.Load(root);
+            var pipe = new WorldGeneratorPipeline(WorldSeed, geoCfg, root);
+            _worldMap = pipe.Generate();
+            _villages = pipe.Villages;
+            GD.Print($"Geography: {_worldMap.Nations.Count} nations, " +
+                     $"{_worldMap.Regions.Count} regions, {_villages.Count} villages — " +
+                     string.Join(", ", _worldMap.Nations.Values.Select(n => n.Name)));
+        }
+
         BuildTerrain(biomes, mapConfig);
         BuildResources(biomes, chunkGen);
+        BuildVillages();
         AddSun();
         var player = AddPlayer();
 
         var combat = new CombatWorld { Name = "CombatWorld" };
         AddChild(combat);
-        combat.Build(root, WorldSeed, biomes, chunkGen, player, enemyChunkRadius: 4);
+        combat.Build(root, WorldSeed, biomes, chunkGen, player,
+                     enemyChunkRadius: 4, worldMap: _worldMap);
 
         GD.Print($"World built: seed {WorldSeed}, {(ChunkRadius * 2 + 1) * (ChunkRadius * 2 + 1)} chunks");
+    }
+
+    /// <summary>Village walls + buildings from the certified layouts, for
+    /// villages whose footprint intersects the rendered radius.</summary>
+    private void BuildVillages()
+    {
+        if (_worldMap is null || _villages.Count == 0) return;
+        var parent = new Node3D { Name = "Villages" };
+        AddChild(parent);
+
+        var wallMat = new StandardMaterial3D { AlbedoColor = new Color(0.55f, 0.53f, 0.5f) };
+        var buildingMat = new StandardMaterial3D { AlbedoColor = new Color(0.45f, 0.33f, 0.24f) };
+        var rendered = 0;
+
+        foreach (var v in _villages)
+        {
+            var inRange = v.Chunks.Any(c =>
+                Math.Abs(c.X) <= ChunkRadius && Math.Abs(c.Y) <= ChunkRadius);
+            if (!inRange) continue;
+            rendered++;
+
+            foreach (var (tx, ty) in VillageGenerator.GetVillageWallTiles(v))
+            {
+                parent.AddChild(new MeshInstance3D
+                {
+                    Mesh = new BoxMesh { Size = new Vector3(1f, 1.6f, 1f) },
+                    MaterialOverride = wallMat,
+                    Position = new Vector3(tx + 0.5f, 0.8f, ty + 0.5f),
+                });
+            }
+
+            foreach (var building in VillageGenerator.GetVillageBuildingTiles(v, WorldSeed))
+            {
+                foreach (var (tx, ty) in building)
+                {
+                    parent.AddChild(new MeshInstance3D
+                    {
+                        Mesh = new BoxMesh { Size = new Vector3(1f, 1.2f, 1f) },
+                        MaterialOverride = buildingMat,
+                        Position = new Vector3(tx + 0.5f, 0.6f, ty + 0.5f),
+                    });
+                }
+            }
+        }
+        if (rendered > 0)
+            GD.Print($"Villages in view: {rendered}");
     }
 
     /// <summary>Certified per-chunk resource spawns rendered as simple 3D
@@ -68,7 +158,13 @@ public partial class WorldBootstrap : Node3D
         {
             for (var cx = -radius; cx <= radius; cx++)
             {
-                var chunk = chunkGen.Generate(cx, cy, biomeGenerator: biomes);
+                // Geographic mode: chunk content from the certified geo
+                // dispatch (same as the Python game's live path)
+                var chunk = _worldMap?.GetChunkData(cx, cy) is { } geo
+                    ? chunkGen.Generate(cx, cy, seed: biomes.GetChunkSeed(cx, cy),
+                                        geoChunkType: geo.ChunkType,
+                                        geoDangerLevel: (int)geo.DangerLevel)
+                    : chunkGen.Generate(cx, cy, biomeGenerator: biomes);
                 foreach (var res in chunk.Resources)
                 {
                     var isTree = res.ResourceType.Contains("tree")
@@ -106,14 +202,25 @@ public partial class WorldBootstrap : Node3D
         {
             for (var cx = -ChunkRadius; cx <= ChunkRadius; cx++)
             {
-                var chunkType = biomes.GetChunkType(cx, cy);
+                string chunkType;
+                if (_worldMap?.GetChunkData(cx, cy) is { } geo)
+                    chunkType = geo.ChunkType;   // certified geographic type
+                else
+                    chunkType = biomes.GetChunkType(cx, cy);
+
                 if (!materials.TryGetValue(chunkType, out var material))
                 {
-                    var (r, g, b) = mapConfig.GetBiomeColor(chunkType);
-                    material = new StandardMaterial3D
+                    Color color;
+                    if (GeoColors.TryGetValue(chunkType, out var geoColor))
                     {
-                        AlbedoColor = new Color(r / 255f, g / 255f, b / 255f),
-                    };
+                        color = geoColor;
+                    }
+                    else
+                    {
+                        var (r, g, b) = mapConfig.GetBiomeColor(chunkType);
+                        color = new Color(r / 255f, g / 255f, b / 255f);
+                    }
+                    material = new StandardMaterial3D { AlbedoColor = color };
                     materials[chunkType] = material;
                 }
 
