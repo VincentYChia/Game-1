@@ -330,6 +330,44 @@ Godot once so it generates its solution glue.
   - NEXT: P3 geography generators (~3k lines, last P3 item) + first
     visual editor run; then P5 gathering; crux scenario gate after 3D.
 
+- **2026-07-19 #2 (GEOGRAPHY PORT — P3 COMPLETE) — suite 87/87, commits
+  06c74c3a (Python) + 74803afe (port) + 89d2ef2c (3D wiring) + 2a5b1c16
+  (follow-up).** Ultracode orchestration: 12-agent contract workflow →
+  inline port → 11-agent adversarial verify.
+  - **Product fix first (06c74c3a):** nine CPython set-iteration sites
+    changed the GENERATED WORLD (fragment reassignment order, merge
+    tie-breaks, eco IDs/smoothing order) — patched to sorted()/dict-order.
+    Same seed now yields the same world across interpreters/languages.
+    Pre-playtest, no worlds preserved; caches regenerate.
+  - **Full pipeline ported** (11 files → 10 C#): models/config/nations/
+    regions/provinces/districts/biomes/ecosystems/names/villages/
+    pipeline/setting-resolver. Quirks preserved: banker's rounding in
+    deform, negative floor-div cell bucketing (biome + eco), first-max
+    tie-breaks, stale-read gradient smoothing, IMPERIAL "ium" duplicate,
+    first-inserted-nation locality naming, MT19937 draw-count traps
+    (constant-range randint, second-uniform fallback, dropped-building
+    draws), perimeter-minus-door occupancy.
+  - **Oracle:** TWO full 512×512 worlds from the REAL patched
+    WorldGenerator — sha256 canons over all 262,144 chunks + ecosystems +
+    biomes + villages per seed, full tier metadata + names, 4 windows w/
+    setting resolution, 2,500 villages + wall/building layouts.
+    **FIRST-RUN GREEN.**
+  - **Adversarial verify (11 agents): 0 critical.** 10/11 equivalent;
+    all config-pair findings sit on unreachable override/error paths
+    (several where PYTHON crashes and C# degrades cleanly). Actioned: the
+    voronoi singleton branch (last set-iteration site) sorted on both
+    sides (2a5b1c16; world sha unchanged — branch unreachable).
+  - **3D build runs the geographic world (89d2ef2c):** full world at
+    startup (same seed = same world as Python), terrain by 15 geo chunk
+    types, resources through geo dispatch, village walls/buildings
+    rendered, enemies by danger level. Boot prints nation names.
+  - Designer notes from verify (non-blocking): UTF-8 BOM config files are
+    silently IGNORED by Python but APPLIED by C# (PowerShell writes BOM
+    by default — author configs BOM-less); `get_full_address` still
+    unported (renderer consumer — port with UI layer).
+  - REMAINING: P5 gathering; enemy→player Character.take_damage pipeline;
+    crux scenario gate after 3D; P11 True 3D final.
+
 ## 7a. Parked — DO NOT FORGET
 
 | Item | Why parked | Unblock |
