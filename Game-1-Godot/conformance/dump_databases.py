@@ -1969,6 +1969,245 @@ def dump_all(dbs: dict) -> None:
         "cases": chunk_cases,
     })
 
+    # ── P4t2d: player_attack_enemy_with_tags — REAL Character + REAL
+    #    CombatManager, spec-built loadouts. Two rng streams exactly as in
+    #    game: the manager's injected rng (crit roll) and the global random
+    #    module (executor rolls + Enemy ctor + generate_loot).
+    from entities.character import Character as _Character
+    from entities.components.buffs import ActiveBuff as _ActiveBuff
+    from data.models.equipment import EquipmentItem as _EquipItem
+    from data.models.world import Position as _Pos
+    from Combat.combat_manager import CombatManager as _CM
+
+    def build_attack_char(spec):
+        ch = _Character(_Pos(0.0, 0.0, 0.0))
+        # hasattr gate: the attack path skips stat tracking cleanly
+        if hasattr(ch, 'stat_tracker'):
+            del ch.stat_tracker
+        for k, v in spec.get("stats", {}).items():
+            setattr(ch.stats, k, v)
+        if "health" in spec:
+            ch.health = spec["health"]
+        if "exp" in spec:
+            ch.leveling.current_exp = spec["exp"]
+        if "selected_slot" in spec:
+            ch._selected_slot = spec["selected_slot"]
+        for tspec in spec.get("titles", []):
+            ch.titles.earned_titles.append(SimpleNamespace(
+                title_id=tspec["title_id"], bonuses=tspec["bonuses"]))
+        for bspec in spec.get("buffs", []):
+            ch.buffs.active_buffs.append(_ActiveBuff(
+                buff_id=bspec["buff_id"], name=bspec["buff_id"],
+                effect_type=bspec["effect_type"], category=bspec["category"],
+                magnitude="moderate", bonus_value=bspec["bonus_value"],
+                duration=bspec.get("duration", 30.0),
+                duration_remaining=bspec.get("duration", 30.0),
+                consume_on_use=bspec.get("consume_on_use", False)))
+        for slot, wspec in spec.get("weapons", {}).items():
+            item = _EquipItem(
+                item_id=wspec["item_id"], name=wspec["item_id"],
+                tier=wspec.get("tier", 1), rarity="common", slot=slot,
+                damage=tuple(wspec.get("damage", [0, 0])),
+                attack_speed=wspec.get("attack_speed", 1.0),
+                range=wspec.get("range", 1.5),
+                hand_type=wspec.get("hand_type", "default"),
+                tags=list(wspec.get("tags", [])))
+            for ench in wspec.get("enchantments", []):
+                item.enchantments.append(ench)
+            ch.equipment.slots[slot] = item
+        return ch
+
+    def attack_char_row(ch):
+        return {
+            "health": ch.health, "max_health": ch.max_health,
+            "level": ch.leveling.level, "exp": ch.leveling.current_exp,
+            "stat_points": ch.leveling.unallocated_stat_points,
+            "inventory": [([s.item_id, s.quantity] if s else None)
+                          for s in ch.inventory.slots],
+            "durability": {slot: [it.durability_current, it.durability_max]
+                           for slot, it in sorted(ch.equipment.slots.items())
+                           if it is not None},
+        }
+
+    def attack_enemy_row(e):
+        return {
+            "health": e.current_health, "alive": e.is_alive,
+            "state": e.ai_state.value, "in_combat": e.in_combat,
+            "pos": [e.position[0], e.position[1]],
+            "knockback": [e.knockback_velocity_x, e.knockback_velocity_y,
+                          e.knockback_duration_remaining],
+            "statuses": [{"id": s.status_id, "stacks": s.stacks,
+                          "remaining": s.duration_remaining}
+                         for s in e.status_manager.active_effects],
+        }
+
+    _SYNTH_TITLE = {"title_id": "synthetic_warlord",
+                    "bonuses": {"melee_damage": 0.10, "crit_chance": 0.05,
+                                "luck_stat": 3, "beast_damage": 0.25}}
+
+    ATTACK_CASES = [
+        {"id": "unarmed_basic", "char": {},
+         "enemies": [{"enemy_id": "beetle_brown", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical"],
+                    "params": {"baseDamage": 10.0}}},
+        {"id": "sword_str_titles",
+         "char": {"stats": {"strength": 10, "luck": 5},
+                  "titles": [_SYNTH_TITLE],
+                  "weapons": {"mainHand": {
+                      "item_id": "test_sword", "damage": [10, 14],
+                      "tags": ["melee", "sword", "1H"]}}},
+         "enemies": [{"enemy_id": "beetle_brown", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical"],
+                    "params": {"baseDamage": 12.0}}},
+        {"id": "twohand_crushing_vs_armored",
+         "char": {"stats": {"strength": 6},
+                  "weapons": {"mainHand": {
+                      "item_id": "test_maul", "damage": [18, 26],
+                      "tags": ["melee", "hammer", "2H", "crushing"],
+                      "hand_type": "2H"}}},
+         "enemies": [{"enemy_id": "beetle_armored", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical", "crushing"],
+                    "params": {"baseDamage": 15.0}}},
+        {"id": "armor_breaker_pen",
+         "char": {"weapons": {"mainHand": {
+             "item_id": "test_pick", "damage": [12, 16],
+             "tags": ["melee", "armor_breaker"]}}},
+         "enemies": [{"enemy_id": "golem_stone", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical"],
+                    "params": {"baseDamage": 20.0}}},
+        {"id": "precision_crit",
+         "char": {"stats": {"luck": 20},
+                  "weapons": {"mainHand": {
+                      "item_id": "test_rapier", "damage": [8, 12],
+                      "tags": ["melee", "sword", "precision"]}}},
+         "enemies": [{"enemy_id": "beetle_brown", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical"],
+                    "params": {"baseDamage": 10.0}}},
+        {"id": "int_elemental_burn",
+         "char": {"stats": {"intelligence": 12},
+                  "weapons": {"mainHand": {
+                      "item_id": "test_staff", "damage": [6, 9],
+                      "tags": ["melee", "staff"]}}},
+         "enemies": [{"enemy_id": "beetle_brown", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["fire", "burn"],
+                    "params": {"baseDamage": 14.0, "burn_duration": 4.0}}},
+        {"id": "empower_buff",
+         "char": {"buffs": [{"buff_id": "power_surge",
+                             "effect_type": "empower", "category": "damage",
+                             "bonus_value": 0.5}]},
+         "enemies": [{"enemy_id": "beetle_brown", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical"],
+                    "params": {"baseDamage": 10.0}}},
+        {"id": "pierce_buff_crit",
+         "char": {"buffs": [{"buff_id": "keen_eye", "effect_type": "pierce",
+                             "category": "damage", "bonus_value": 0.30}]},
+         "enemies": [{"enemy_id": "beetle_brown", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical"],
+                    "params": {"baseDamage": 10.0}}},
+        {"id": "devastate_whirlwind",
+         "char": {"stats": {"strength": 8},
+                  "buffs": [{"buff_id": "whirlwind", "effect_type": "devastate",
+                             "category": "combat", "bonus_value": 4.0,
+                             "consume_on_use": True}],
+                  "weapons": {"mainHand": {
+                      "item_id": "test_greataxe", "damage": [400, 500],
+                      "tags": ["melee", "axe", "2H"], "hand_type": "2H"}}},
+         "enemies": [{"enemy_id": "beetle_brown", "pos": [2.0, 0.0]},
+                     {"enemy_id": "beetle_brown", "pos": [4.0, 1.0]},
+                     {"enemy_id": "slime_acid", "pos": [3.0, -2.0]},
+                     {"enemy_id": "beetle_titan", "pos": [15.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical"],
+                    "params": {"baseDamage": 30.0}}},
+        {"id": "lifesteal_enchant",
+         "char": {"health": 40.0,
+                  "weapons": {"mainHand": {
+                      "item_id": "test_leech", "damage": [10, 12],
+                      "tags": ["melee", "sword"],
+                      "enchantments": [{"name": "Lifesteal I",
+                                        "effect": {"type": "lifesteal",
+                                                   "value": 0.2}}]}}},
+         "enemies": [{"enemy_id": "beetle_brown", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical"],
+                    "params": {"baseDamage": 25.0}}},
+        {"id": "onhit_enchants",
+         "char": {"weapons": {"mainHand": {
+             "item_id": "test_flame", "damage": [9, 13],
+             "tags": ["melee", "sword"],
+             "enchantments": [
+                 {"name": "Fire Aspect",
+                  "effect": {"type": "damage_over_time", "element": "fire",
+                             "duration": 4.0, "damagePerSecond": 6.0}},
+                 {"name": "Knockback I",
+                  "effect": {"type": "knockback", "value": 2.5}},
+                 {"name": "Frost Touch",
+                  "effect": {"type": "slow", "duration": 2.0,
+                             "value": 0.4}}]}}},
+         "enemies": [{"enemy_id": "beetle_brown", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical"],
+                    "params": {"baseDamage": 5.0}}},
+        {"id": "kill_loot_exp_cascade",
+         "char": {"exp": 340,
+                  "weapons": {"mainHand": {
+                      "item_id": "test_slayer", "damage": [300, 340],
+                      "tags": ["melee", "sword"]}}},
+         "enemies": [{"enemy_id": "inferno_drake", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical"],
+                    "params": {"baseDamage": 800.0}}},
+        {"id": "improper_tool_axe",
+         "char": {"selected_slot": "axe"},
+         "enemies": [{"enemy_id": "beetle_brown", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical"],
+                    "params": {"baseDamage": 8.0}}},
+        {"id": "skill_lifesteal_tag",
+         "char": {"health": 50.0},
+         "enemies": [{"enemy_id": "beetle_brown", "pos": [2.0, 0.0]}],
+         "attack": {"target": 0, "tags": ["physical", "lifesteal"],
+                    "params": {"baseDamage": 20.0,
+                               "lifesteal_percent": 0.3}}},
+        {"id": "chain_defense_per_target",
+         "char": {"stats": {"strength": 5}},
+         "enemies": [{"enemy_id": "beetle_brown", "pos": [2.0, 0.0]},
+                     {"enemy_id": "beetle_armored", "pos": [4.0, 0.5]},
+                     {"enemy_id": "golem_stone", "pos": [6.0, 1.0]}],
+         "attack": {"target": 0, "tags": ["lightning", "chain"],
+                    "params": {"baseDamage": 30.0, "chain_count": 2,
+                               "chain_range": 8.0}}},
+    ]
+
+    attack_rows = []
+    for i, case in enumerate(ATTACK_CASES):
+        ch = build_attack_char(case.get("char", {}))
+        cm = _CM(None, ch, rng=_pyrandom.Random(9000 + i))
+        cm.config.load_from_file(
+            str(SRC / "Definitions.JSON" / "combat-config.JSON"))
+        _pyrandom.seed(13000 + i)
+        enemies = [Enemy(enemy_db.enemies[es["enemy_id"]],
+                         tuple(es["pos"]), (0, 0))
+                   for es in case["enemies"]]
+        cm.enemies = {(0, 0): enemies}
+        target = enemies[case["attack"]["target"]]
+        dmg, crit, loot = cm.player_attack_enemy_with_tags(
+            target, list(case["attack"]["tags"]),
+            dict(case["attack"]["params"]),
+            skip_visual=True, skip_los=True)
+        attack_rows.append({
+            "id": case["id"],
+            "damage": dmg, "crit": crit,
+            "loot": [list(t) for t in loot],
+            "char": attack_char_row(ch),
+            "enemies": [attack_enemy_row(e) for e in enemies],
+            "rng_manager": cm._rng.random(),
+            "rng_global": _pyrandom.random(),
+        })
+
+    write("tag_attack.json", {
+        "_meta": meta("Combat/combat_manager.py player_attack_enemy_with_tags"
+                      " — REAL Character + CombatManager, spec-built loadouts"
+                      " (specs in fixture), skip_visual/skip_los, dual rng"),
+        "cases": ATTACK_CASES,
+        "results": attack_rows,
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,

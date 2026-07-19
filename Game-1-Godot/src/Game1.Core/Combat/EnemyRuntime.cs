@@ -1,3 +1,4 @@
+using Game1.Core.Progression;
 using Game1.Core.World;
 
 namespace Game1.Core.Combat;
@@ -12,11 +13,13 @@ public enum AiState
 /// patrol/guard/chase/attack/flee), movement with chunk clamping + collision
 /// sliding + safe-zone exclusion, knockback, phased attacks (windup/active/
 /// recovery), damage/flee/death, loot, and special-ability gating.
-/// RNG injected (Python uses the global random module). Status-manager
-/// interplay (immobilize/silence) enters via injected hooks; the status
-/// system itself was certified in P2.
+/// RNG injected (Python uses the global random module). Carries the
+/// P2-certified StatusEffectManager exactly like Python's
+/// add_status_manager_to_entity, and implements ICombatEntity/IStatusTarget
+/// so the effect executor and status effects see the same duck-type surface
+/// the Python Enemy presents.
 /// </summary>
-public sealed class EnemyRuntime
+public sealed class EnemyRuntime : ICombatEntity, IStatusTarget
 {
     public const double ChunkSize = 16.0;   // core/config.py Config.CHUNK_SIZE
 
@@ -25,8 +28,8 @@ public sealed class EnemyRuntime
     public double[] SpawnPosition;
     public (long X, long Y) ChunkCoords;
 
-    public double CurrentHealth;
-    public double MaxHealth;
+    public double CurrentHealth { get; set; }
+    public double MaxHealth { get; set; }
     public bool IsBoss;
 
     public AiState State;
@@ -47,7 +50,6 @@ public sealed class EnemyRuntime
     public double TimeSinceDeath;
     public double CorpseLifetime = 30.0;
 
-    public string? Category;
     public double FacingAngle;
     public double HurtboxRadius;
 
@@ -77,8 +79,12 @@ public sealed class EnemyRuntime
 
     private readonly PythonRandom _rng;
     public Func<Position, bool>? IsWalkable;      // world_system.is_walkable
-    public Func<bool> IsImmobilized = () => false;
-    public Func<bool> IsSilenced = () => false;
+    public Func<bool> IsImmobilized;
+    public Func<bool> IsSilenced;
+
+    /// <summary>Python add_status_manager_to_entity — every enemy carries a
+    /// live status manager targeting itself.</summary>
+    public StatusEffectManager StatusManager { get; }
 
     private double _aggroMultiplier = 1.0;
     private double _speedMultiplier = 1.0;
@@ -103,6 +109,10 @@ public sealed class EnemyRuntime
 
         Category = definition.Category;
         HurtboxRadius = definition.HurtboxRadius;
+
+        StatusManager = new StatusEffectManager(this);
+        IsImmobilized = () => StatusManager.IsImmobilized();
+        IsSilenced = () => StatusManager.IsSilenced();
 
         foreach (var ability in definition.SpecialAbilities)
         {
@@ -199,9 +209,7 @@ public sealed class EnemyRuntime
 
         UpdateKnockback(dt);
 
-        // (status_manager.update(dt) runs here in Python — the status system
-        // lives in Progression.StatusEffects; integration lands with the
-        // Character composition root)
+        StatusManager.Update(dt);   // Python: self.status_manager.update(dt)
 
         if (AttackCooldown > 0)
             AttackCooldown -= dt;
@@ -602,4 +610,101 @@ public sealed class EnemyRuntime
         }
         return null;
     }
+
+    // ── ICombatEntity (effect-executor target surface) ───────────────────
+    // Mirrors the Python Enemy duck-type exactly: definition + is_alive
+    // (enemy-like), current_health/max_health, ENHANCED take_damage (its
+    // signature has source/tags/context so the executor uses the kwarg
+    // branch; from_player stays default True — DoT/executor damage aggros),
+    // real status_manager, knockback velocity fields, no heal method.
+
+    public string Name => Definition.Name;
+    public string TypeNameLower => "enemy";
+    public string? Category { get; set; }
+    public bool IsEnemyLike => true;
+    public Position GetPosition() => new(Position[0], Position[1], 0.0);
+
+    public void SetPositionXY(double x, double y)
+    {
+        Position[0] = x;
+        Position[1] = y;
+    }
+
+    public (double Dx, double Dy)? LastMoveDirection => null;
+
+    public bool HasCurrentHealth => true;
+    public bool HasMaxHealth => true;
+    public bool HasIsAlive => true;
+
+    bool ICombatEntity.Alive
+    {
+        get => IsAlive;
+        set => IsAlive = value;
+    }
+
+    public bool HasHealthField => false;
+
+    double ICombatEntity.Health { get; set; }
+
+    public double DefinitionDefense => Definition.Defense;
+
+    public bool SupportsTakeDamage => true;
+
+    void ICombatEntity.TakeDamage(double damage, string damageType,
+                                  ICombatEntity? source, IReadOnlyList<string> tags)
+        => TakeDamage(damage, damageType);   // from_player default True
+
+    public bool SupportsHeal => false;
+    public void Heal(double amount) { }      // never called: SupportsHeal false
+
+    public bool HasStatusManager => true;
+
+    public void ApplyStatus(string statusTag, Dictionary<string, object?> statusParams,
+                            ICombatEntity? source = null)
+        => StatusManager.ApplyStatus(statusTag, PlainJson.ToObject(statusParams));
+
+    public bool HasKnockbackFields => true;
+
+    public void SetKnockback(double vx, double vy, double durationRemaining)
+    {
+        KnockbackVelocityX = vx;
+        KnockbackVelocityY = vy;
+        KnockbackDurationRemaining = durationRemaining;
+    }
+
+    // ── IStatusTarget (P2 status system) ─────────────────────────────────
+    // Python Enemy instances have NO speed/movement_speed/attack_speed attrs
+    // (movement reads definition.speed), so slow/haste hooks are absent.
+
+    public bool HasSpeed => false;
+    public double Speed { get; set; }
+    public bool HasMovementSpeed => false;
+    public double MovementSpeed { get; set; }
+    public bool HasAttackSpeed => false;
+    double IStatusTarget.AttackSpeed { get; set; }
+
+    public bool HasTakeDamage => true;
+
+    void IStatusTarget.TakeDamage(double amount, string damageType,
+                                  IReadOnlyList<string> tags)
+        => TakeDamage(amount, damageType);   // from_player default True: DoT aggros
+
+    public bool HasHeal => false;
+
+    public double ShieldAmount { get; set; }
+    public double ShieldHealth => ShieldAmount;
+
+    public bool IsFrozen { get; set; }
+    public bool IsStunned { get; set; }
+    public bool IsRooted { get; set; }
+    public bool IsPhased { get; set; }
+    public bool IgnoreCollisions { get; set; }
+    public bool IsInvisible { get; set; }
+
+    public double EmpowerDamageMultiplier { get; set; } = 1.0;
+    public double FortifyDamageReduction { get; set; }
+    public double DamageMultiplier { get; set; } = 1.0;
+    public double DamageTakenMultiplier { get; set; } = 1.0;
+
+    public ISet<string> VisualEffects { get; } = new HashSet<string>();
 }

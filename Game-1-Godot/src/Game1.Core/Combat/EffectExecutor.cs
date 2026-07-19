@@ -249,6 +249,12 @@ public sealed class EffectExecutor
         return entity.GetPosition();
     }
 
+    /// <summary>combat_manager.py _apply_weapon_enchantment_effects calls the
+    /// executor's private _apply_knockback directly for knockback enchants.</summary>
+    public void ApplyKnockbackDirect(ICombatEntity? source, ICombatEntity target,
+                                     Dictionary<string, object?> params_)
+        => ApplyKnockback(source, target, params_);
+
     private void ApplyKnockback(ICombatEntity? source, ICombatEntity target,
                                 Dictionary<string, object?> params_)
     {
