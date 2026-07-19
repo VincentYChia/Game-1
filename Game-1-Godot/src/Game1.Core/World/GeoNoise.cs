@@ -99,7 +99,8 @@ public static class GeoNoise
         {
             var component = new HashSet<(int, int)>();
             var stack = new Stack<(int, int)>();
-            stack.Push(remaining.First());
+            // noise.py 2026-07-19 determinism patch: start = min(remaining)
+            stack.Push(remaining.Min());
             while (stack.Count > 0)
             {
                 var (x, y) = stack.Pop();

@@ -2208,6 +2208,126 @@ def dump_all(dbs: dict) -> None:
         "results": attack_rows,
     })
 
+    # ── P3t3: geography generators — REAL WorldGenerator (post determinism
+    #    patch), full metadata + sha canons + dense windows + villages
+    from systems.geography.world_generator import WorldGenerator as _WG
+    from systems.geography.village_generator import (
+        get_village_building_tiles, get_village_wall_tiles)
+    from systems.geography.setting_resolver import resolve_setting
+
+    def geo_row(wm, cx, cy):
+        g = wm.chunk_data[(cx, cy)]
+        return [cx, cy, g.nation_id, g.region_id, g.province_id,
+                g.district_id, g.chunk_type.value, g.biome_id,
+                g.ecosystem_id, g.danger_level.value, g.locality_id,
+                resolve_setting(g, wm)]
+
+    def geo_world(seed):
+        gen = _WG(seed=seed)
+        wm = gen.generate()
+        villages = getattr(gen, "_villages", [])
+
+        chunk_canon = ";".join(
+            ",".join(str(v) for v in geo_row(wm, cx, cy)[:11])
+            for (cx, cy) in sorted(wm.chunk_data))
+        eco_canon = ";".join(
+            f"{k},{wm.ecosystems[k].danger_level.value},"
+            f"{wm.ecosystems[k].eco_x},{wm.ecosystems[k].eco_y}"
+            for k in sorted(wm.ecosystems))
+        biome_canon = ";".join(
+            f"{k},{wm.biomes[k].dominant_chunk_type.value},"
+            f"{wm.biomes[k].region_identity.value},{wm.biomes[k].chunk_count},"
+            f"{','.join(str(b) for b in wm.biomes[k].bounds)}"
+            for k in sorted(wm.biomes))
+        village_canon = ";".join(
+            f"{v['locality_id']},{v['name']},{v['center_chunk'][0]},"
+            f"{v['center_chunk'][1]},{v['size']},{v['tier']},{v['nation']},"
+            f"{len(v['npc_positions'])}"
+            for v in villages)
+
+        windows = {}
+        for wx, wy, half_w in [(0, 0, 12), (-250, -250, 8), (100, -80, 8),
+                               (200, 200, 8)]:
+            rows = []
+            for cy in range(wy - half_w, wy + half_w):
+                for cx in range(wx - half_w, wx + half_w):
+                    if (cx, cy) in wm.chunk_data:
+                        rows.append(geo_row(wm, cx, cy))
+            windows[f"{wx},{wy}"] = rows
+
+        village_rows = []
+        for v in villages[:30]:
+            village_rows.append({
+                "locality_id": v["locality_id"], "name": v["name"],
+                "center": list(v["center_chunk"]), "size": v["size"],
+                "tier": v["tier"], "nation": v["nation"],
+                "chunks": [list(c) for c in v["chunks"]],
+                "npc_positions": [list(p) for p in v["npc_positions"]],
+                "npc_prefixes": [t.get("npc_id_prefix")
+                                 for t in v["npc_templates"]],
+            })
+
+        village_tiles = []
+        for v in villages[:5]:
+            village_tiles.append({
+                "locality_id": v["locality_id"],
+                "walls": [list(t) for t in get_village_wall_tiles(v)],
+                "buildings": [[list(t) for t in b]
+                              for b in get_village_building_tiles(v, seed)],
+            })
+
+        return {
+            "seed": seed,
+            "world_size": wm.world_size,
+            "chunk_sha": hashlib.sha256(chunk_canon.encode()).hexdigest(),
+            "eco_sha": hashlib.sha256(eco_canon.encode()).hexdigest(),
+            "biome_sha": hashlib.sha256(biome_canon.encode()).hexdigest(),
+            "village_sha": hashlib.sha256(village_canon.encode()).hexdigest(),
+            "counts": {
+                "chunks": len(wm.chunk_data),
+                "nations": len(wm.nations),
+                "regions": len(wm.regions),
+                "provinces": len(wm.provinces),
+                "districts": len(wm.districts),
+                "biomes": len(wm.biomes),
+                "ecosystems": len(wm.ecosystems),
+                "localities": len(wm.localities),
+                "villages": len(villages),
+            },
+            "nations": {str(k): {
+                "name": n.name, "flavor": n.naming_flavor.value,
+                "chunk_count": n.chunk_count, "region_ids": n.region_ids,
+                "color": list(n.color),
+            } for k, n in sorted(wm.nations.items())},
+            "regions": {str(k): {
+                "name": r.name, "nation": r.nation_id,
+                "identity": r.identity.value, "chunk_count": r.chunk_count,
+                "province_ids": r.province_ids, "bounds": list(r.bounds),
+            } for k, r in sorted(wm.regions.items())},
+            "provinces": {str(k): {
+                "name": p.name, "region": p.region_id, "nation": p.nation_id,
+                "chunk_count": p.chunk_count, "district_ids": p.district_ids,
+                "bounds": list(p.bounds),
+            } for k, p in sorted(wm.provinces.items())},
+            "districts": {str(k): {
+                "name": d.name, "province": d.province_id,
+                "region": d.region_id, "nation": d.nation_id,
+                "chunk_count": d.chunk_count, "bounds": list(d.bounds),
+            } for k, d in sorted(wm.districts.items())},
+            "windows": windows,
+            "villages_head": village_rows,
+            "village_tiles": village_tiles,
+        }
+
+    write("geography.json", {
+        "_meta": meta("systems/geography/* — REAL WorldGenerator executed "
+                      "per seed (post 2026-07-19 determinism patch): full "
+                      "tier metadata, sha256 canons over all 262k chunks / "
+                      "ecosystems / biomes / villages, dense windows, "
+                      "village wall+building layouts"),
+        "worlds": [geo_world(777), geo_world(20260719)],
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,
