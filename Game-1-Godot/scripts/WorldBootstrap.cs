@@ -33,10 +33,65 @@ public partial class WorldBootstrap : Node3D
         mapConfig.Load(root);
         var biomes = new BiomeGenerator(WorldSeed, worldGen);
 
+        var resourceDb = new ResourceNodeDatabase();
+        resourceDb.LoadFromFiles(root);
+        var templateDb = new ChunkTemplateDatabase();
+        templateDb.LoadFromFiles(root);
+        var chunkGen = new ChunkGenerator(resourceDb, worldGen, templateDb);
+
         BuildTerrain(biomes, mapConfig);
+        BuildResources(biomes, chunkGen);
         AddSun();
-        AddPlayer();
+        var player = AddPlayer();
+
+        var combat = new CombatWorld { Name = "CombatWorld" };
+        AddChild(combat);
+        combat.Build(root, WorldSeed, biomes, chunkGen, player, enemyChunkRadius: 4);
+
         GD.Print($"World built: seed {WorldSeed}, {(ChunkRadius * 2 + 1) * (ChunkRadius * 2 + 1)} chunks");
+    }
+
+    /// <summary>Certified per-chunk resource spawns rendered as simple 3D
+    /// markers: trees = green cylinders, stones/ores = gray boxes, fishing
+    /// spots = blue discs. Same placements the conformance suite pins.</summary>
+    private void BuildResources(BiomeGenerator biomes, ChunkGenerator chunkGen)
+    {
+        var parent = new Node3D { Name = "Resources" };
+        AddChild(parent);
+
+        var treeMat = new StandardMaterial3D { AlbedoColor = new Color(0.15f, 0.5f, 0.15f) };
+        var rockMat = new StandardMaterial3D { AlbedoColor = new Color(0.45f, 0.45f, 0.48f) };
+        var fishMat = new StandardMaterial3D { AlbedoColor = new Color(0.2f, 0.5f, 0.9f) };
+
+        var radius = Math.Min(ChunkRadius, 5);
+        for (var cy = -radius; cy <= radius; cy++)
+        {
+            for (var cx = -radius; cx <= radius; cx++)
+            {
+                var chunk = chunkGen.Generate(cx, cy, biomeGenerator: biomes);
+                foreach (var res in chunk.Resources)
+                {
+                    var isTree = res.ResourceType.Contains("tree")
+                                 || res.ResourceType.Contains("sapling");
+                    var isFish = res.ResourceType.Contains("fishing");
+                    var scale = 0.6f + 0.25f * res.Tier;
+
+                    var mesh = new MeshInstance3D
+                    {
+                        Mesh = isTree
+                            ? new CylinderMesh { TopRadius = 0.12f, BottomRadius = 0.3f, Height = 2.2f * scale }
+                            : isFish
+                                ? new CylinderMesh { TopRadius = 0.5f, BottomRadius = 0.5f, Height = 0.08f }
+                                : new BoxMesh { Size = new Vector3(0.8f * scale, 0.6f * scale, 0.8f * scale) },
+                        MaterialOverride = isTree ? treeMat : isFish ? fishMat : rockMat,
+                        Position = new Vector3(res.X + 0.5f,
+                            isTree ? 1.1f * scale : isFish ? 0.05f : 0.3f * scale,
+                            res.Y + 0.5f),
+                    };
+                    parent.AddChild(mesh);
+                }
+            }
+        }
     }
 
     private void BuildTerrain(BiomeGenerator biomes, MapWaypointConfig mapConfig)
@@ -106,7 +161,7 @@ public partial class WorldBootstrap : Node3D
         AddChild(env);
     }
 
-    private void AddPlayer()
+    private PlayerController AddPlayer()
     {
         var player = new PlayerController { Name = "Player", Position = new Vector3(8, 2, 8) };
 
@@ -133,5 +188,6 @@ public partial class WorldBootstrap : Node3D
         player.AddChild(camera);
 
         AddChild(player);
+        return player;
     }
 }
