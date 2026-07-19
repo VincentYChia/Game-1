@@ -229,6 +229,21 @@ Godot once so it generates its solution glue.
   ecosystem/names → 512×512 finite world), chunk.py per-chunk tile+resource
   placement parity, then first VISUAL run in the editor (user-facing milestone).
 
+- **2026-07-18 (P4 FOUNDATION LANDED) — suite 74/74.** EnemyDatabase: all 16
+  definitions (sacred + Update-1 in true boot order) byte-match incl. computed
+  visual-size/hurtbox tables; the full attack_profile_generator port
+  (category archetypes × tier × behavior tempo × tanky/agile feel ×
+  ability-tag inference; banker's rounding compatible); loot streams
+  bit-exact via PythonRandom against the real generate_loot. CONTENT FINDING
+  for the dev: `Definitions.JSON/hostiles-testing-integration.JSON` duplicates
+  Update-1's file with a mismatched schema (ai/loot keys the parser ignores) —
+  3 enemies carry defaults until the update overlay reloads them; recommend
+  deleting the Definitions.JSON copy. REMAINING P4 (tranche 2): combat
+  orchestration (player_attack_enemy_with_tags full path + effect executor
+  targeting/geometry), attack state machine + hitbox/projectile logic
+  (headless-testable), enemy AI tick, then the phase gate: crux-foundry
+  scenario parity on seeded runs (PythonRandom makes exact traces feasible).
+
 ## 7a. Parked — DO NOT FORGET
 
 | Item | Why parked | Unblock |
