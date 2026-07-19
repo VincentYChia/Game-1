@@ -1516,6 +1516,297 @@ def dump_all(dbs: dict) -> None:
         "projectile_defs": proj_def_rows,
     })
 
+    # ── P4t2b: tag registry / parser / target finder / effect executor ───
+    from core.tag_system import get_tag_registry
+    from core.tag_parser import get_tag_parser
+    from core.effect_executor import EffectExecutor
+    from data.databases.skill_db import SkillDatabase
+
+    reg = get_tag_registry()
+    reg_defs = {}
+    for name in sorted(reg.definitions):
+        d = reg.definitions[name]
+        reg_defs[name] = {
+            "category": d.category, "description": d.description,
+            "priority": d.priority, "requires_params": d.requires_params,
+            "default_params": d.default_params,
+            "conflicts_with": d.conflicts_with, "aliases": d.aliases,
+            "alias_of": d.alias_of, "stacking": d.stacking,
+            "immunity": d.immunity, "synergies": d.synergies,
+            "context_behavior": d.context_behavior,
+            "auto_apply_chance": d.auto_apply_chance,
+            "auto_apply_status": d.auto_apply_status, "parent": d.parent,
+        }
+
+    parser = get_tag_parser()
+
+    def config_row(cfg):
+        return {"raw_tags": cfg.raw_tags, "geometry": cfg.geometry_tag,
+                "damage_tags": cfg.damage_tags, "status_tags": cfg.status_tags,
+                "context_tags": cfg.context_tags,
+                "special_tags": cfg.special_tags,
+                "trigger_tags": cfg.trigger_tags, "context": cfg.context,
+                "base_damage": cfg.base_damage,
+                "base_healing": cfg.base_healing, "params": cfg.params,
+                "warnings": cfg.warnings,
+                "conflicts": cfg.conflicts_resolved}
+
+    sk_db = SkillDatabase.get_instance()
+    parse_cases = []
+    for sid in sorted(sk_db.skills):
+        sk = sk_db.skills[sid]
+        if not sk.combat_tags:
+            continue
+        cfg = parser.parse(list(sk.combat_tags), dict(sk.combat_params))
+        parse_cases.append({"id": sid, "tags": list(sk.combat_tags),
+                            "params": sk.combat_params,
+                            "config": config_row(cfg)})
+
+    # Executor scenarios: stub battlefield built FROM SPEC (the C# test
+    # constructs its stubs from the same spec, killing transcription drift).
+    # Stub behavior (damage/heal/status recording) is part of the fixture
+    # contract — identical by construction on both sides.
+    BATTLEFIELD = [
+        {"name": "hero", "kind": "character", "position": [0.0, 0.0],
+         "health": 100.0, "max_health": 120.0, "take_damage": "simple",
+         "has_status_manager": True, "has_knockback": True,
+         "last_move_direction": [1.0, 0.0]},
+        {"name": "e1", "kind": "enemy", "position": [3.0, 0.0],
+         "category": "beast", "current_health": 80.0, "max_health": 80.0,
+         "defense": 0.0, "take_damage": "simple",
+         "has_status_manager": True, "has_knockback": True},
+        {"name": "e2", "kind": "enemy", "position": [5.5, 1.0],
+         "category": "undead", "current_health": 60.0, "max_health": 60.0,
+         "defense": 20.0, "take_damage": "none",
+         "has_status_manager": True, "has_knockback": False},
+        {"name": "e3", "kind": "enemy", "position": [7.0, 2.5],
+         "category": "construct", "current_health": 150.0,
+         "max_health": 150.0, "defense": 40.0, "take_damage": "enhanced",
+         "has_status_manager": False, "has_knockback": True},
+        {"name": "e4", "kind": "enemy", "position": [4.0, -3.0],
+         "category": "elemental", "current_health": 40.0, "max_health": 40.0,
+         "defense": 5.0, "take_damage": "none",
+         "has_status_manager": True, "has_knockback": False},
+        {"name": "e5", "kind": "enemy", "position": [12.0, 0.0],
+         "category": "beast", "current_health": 5.0, "max_health": 30.0,
+         "defense": 0.0, "take_damage": "simple",
+         "has_status_manager": True, "has_knockback": False},
+        {"name": "e6", "kind": "enemy", "position": [2.0, 2.0],
+         "category": "ooze", "current_health": 50.0, "max_health": 50.0,
+         "defense": 80.0, "take_damage": "simple",
+         "has_status_manager": True, "has_knockback": False},
+    ]
+
+    class _StatusRec:
+        def __init__(self):
+            self.applied = []
+
+        def apply_status(self, tag, params, source=None):
+            self.applied.append({
+                "tag": tag,
+                "params": {k: params[k] for k in sorted(params)},
+                "with_source": source is not None})
+
+    def build_entities(specs):
+        out = {}
+        order = []
+        for spec in specs:
+            if spec["kind"] == "character":
+                class Character:
+                    pass
+                ent = Character()
+                ent.health = spec["health"]
+                ent.max_health = spec["max_health"]
+                ent.heal_log = []
+
+                def heal(amount, _e=ent):
+                    _e.health = min(_e.max_health, _e.health + amount)
+                    _e.heal_log.append(amount)
+                ent.heal = heal
+            else:
+                class Enemy:
+                    pass
+                ent = Enemy()
+                ent.definition = SimpleNamespace(
+                    defense=spec.get("defense", 0.0))
+                ent.current_health = spec["current_health"]
+                ent.max_health = spec["max_health"]
+                ent.is_alive = True
+            ent.name = spec["name"]
+            ent.position = [spec["position"][0], spec["position"][1], 0.0]
+            if spec.get("category"):
+                ent.category = spec["category"]
+            if spec.get("last_move_direction"):
+                ent.last_move_direction = tuple(spec["last_move_direction"])
+            ent.damage_log = []
+            td_kind = spec.get("take_damage", "none")
+            if td_kind == "simple":
+                if spec["kind"] == "character":
+                    def td(damage, damage_type, _e=ent):
+                        _e.damage_log.append([damage, damage_type])
+                        _e.health = max(0.0, _e.health - damage)
+                else:
+                    def td(damage, damage_type, _e=ent):
+                        _e.damage_log.append([damage, damage_type])
+                        _e.current_health -= damage
+                        if _e.current_health <= 0:
+                            _e.current_health = 0.0
+                            _e.is_alive = False
+                ent.take_damage = td
+            elif td_kind == "enhanced":
+                def td(damage, damage_type, source=None, tags=None,
+                       context=None, _e=ent):
+                    _e.damage_log.append([damage, damage_type,
+                                          list(tags or []),
+                                          getattr(source, "name", None)])
+                    _e.current_health -= damage
+                    if _e.current_health <= 0:
+                        _e.current_health = 0.0
+                        _e.is_alive = False
+                ent.take_damage = td
+            if spec.get("has_status_manager"):
+                ent.status_manager = _StatusRec()
+            if spec.get("has_knockback"):
+                ent.knockback_velocity_x = 0.0
+                ent.knockback_velocity_y = 0.0
+                ent.knockback_duration_remaining = 0.0
+            out[spec["name"]] = ent
+            order.append(ent)
+        return out, order
+
+    def entity_row(e):
+        return {
+            "name": e.name,
+            "position": [e.position[0], e.position[1]],
+            "alive": getattr(e, "is_alive", None),
+            "current_health": getattr(e, "current_health", None),
+            "health": getattr(e, "health", None),
+            "damage_log": e.damage_log,
+            "heal_log": getattr(e, "heal_log", []),
+            "statuses": (e.status_manager.applied
+                         if hasattr(e, "status_manager") else []),
+            "knockback": ([e.knockback_velocity_x, e.knockback_velocity_y,
+                           e.knockback_duration_remaining]
+                          if hasattr(e, "knockback_velocity_x") else None),
+        }
+
+    EXEC_CASES = [
+        {"id": "single_physical", "source": "hero", "primary": "e1",
+         "tags": ["physical"], "params": {"baseDamage": 50.0}},
+        {"id": "defense_armor_pen", "source": "hero", "primary": "e3",
+         "tags": ["physical"],
+         "params": {"baseDamage": 100.0, "_apply_enemy_defense": True,
+                    "_armor_penetration": 0.3}},
+        {"id": "defense_cap", "source": "hero", "primary": "e6",
+         "tags": ["physical"],
+         "params": {"baseDamage": 60.0, "_apply_enemy_defense": True}},
+        {"id": "chain_lightning", "source": "hero", "primary": "e1",
+         "tags": ["lightning", "chain"],
+         "params": {"baseDamage": 40.0, "chain_count": 3,
+                    "chain_range": 6.0}},
+        {"id": "circle_burn", "source": "hero", "primary": "e1",
+         "tags": ["fire", "circle", "burn"],
+         "params": {"baseDamage": 30.0, "circle_radius": 5.0}},
+        {"id": "circle_origin_source", "source": "hero", "primary": "e1",
+         "tags": ["frost", "circle", "chill"],
+         "params": {"baseDamage": 20.0, "circle_radius": 4.0,
+                    "origin": "source"}},
+        {"id": "circle_max_targets", "source": "hero", "primary": "e1",
+         "tags": ["physical", "circle"],
+         "params": {"baseDamage": 8.0, "circle_radius": 20.0,
+                    "max_targets": 3}},
+        {"id": "cone_frost", "source": "hero", "primary": "e1",
+         "tags": ["frost", "cone"],
+         "params": {"baseDamage": 25.0, "cone_angle": 90.0,
+                    "cone_range": 8.0}},
+        {"id": "beam_arcane", "source": "hero", "primary": "e3",
+         "tags": ["arcane", "beam"],
+         "params": {"baseDamage": 35.0, "beam_range": 12.0,
+                    "beam_width": 1.0, "pierce_count": 2}},
+        {"id": "critical", "source": "hero", "primary": "e1",
+         "tags": ["physical", "critical"],
+         "params": {"baseDamage": 40.0, "crit_chance": 0.6}},
+        {"id": "lifesteal", "source": "hero", "primary": "e1",
+         "tags": ["physical", "lifesteal"],
+         "params": {"baseDamage": 60.0, "lifesteal_percent": 0.25}},
+        {"id": "knockback", "source": "hero", "primary": "e1",
+         "tags": ["physical", "knockback"],
+         "params": {"baseDamage": 10.0, "knockback_distance": 3.0,
+                    "knockback_duration": 0.5}},
+        {"id": "knockback_no_fields", "source": "hero", "primary": "e2",
+         "tags": ["physical", "knockback"], "params": {"baseDamage": 10.0}},
+        {"id": "pull", "source": "hero", "primary": "e3",
+         "tags": ["physical", "pull"],
+         "params": {"baseDamage": 5.0, "pull_distance": 2.0}},
+        {"id": "execute", "source": "hero", "primary": "e5",
+         "tags": ["physical", "execute"],
+         "params": {"baseDamage": 10.0, "threshold_hp": 0.5,
+                    "bonus_damage": 3.0}},
+        {"id": "heal_ally", "source": "hero", "primary": "hero",
+         "tags": ["ally"], "params": {"baseHealing": 30.0}},
+        {"id": "enemy_source_flip", "source": "e1", "primary": "hero",
+         "tags": ["physical"], "params": {"baseDamage": 25.0}},
+        {"id": "teleport", "source": "hero", "primary": "e2",
+         "tags": ["arcane", "teleport"], "params": {"teleport_range": 10.0}},
+        {"id": "teleport_out_of_range", "source": "hero", "primary": "e5",
+         "tags": ["arcane", "teleport"], "params": {"teleport_range": 3.0}},
+        {"id": "dash", "source": "hero", "primary": "e3",
+         "tags": ["physical", "dash"],
+         "params": {"baseDamage": 15.0, "dash_distance": 5.0,
+                    "dash_speed": 20.0}},
+        {"id": "phase", "source": "hero", "primary": "e1",
+         "tags": ["phase"],
+         "params": {"phase_duration": 3.0, "can_pass_walls": True}},
+        {"id": "multi_damage_tags", "source": "hero", "primary": "e1",
+         "tags": ["fire", "physical"], "params": {"baseDamage": 20.0}},
+        {"id": "status_override", "source": "hero", "primary": "e1",
+         "tags": ["physical", "burn"],
+         "params": {"baseDamage": 5.0, "burn_duration": 9.9,
+                    "duration": 4.2}},
+        {"id": "geometry_conflict", "source": "hero", "primary": "e1",
+         "tags": ["fire", "chain", "circle"],
+         "params": {"baseDamage": 10.0, "chain_count": 1, "chain_range": 9.0,
+                    "circle_radius": 3.0}},
+        {"id": "alias_or_unknown_ice", "source": "hero", "primary": "e1",
+         "tags": ["ice", "single_target"], "params": {"baseDamage": 12.0}},
+    ]
+
+    exec_rows = []
+    for i, case in enumerate(EXEC_CASES):
+        ents, order = build_entities(BATTLEFIELD)
+        _pyrandom.seed(5000 + i)
+        executor = EffectExecutor()
+        ctx = executor.execute_effect(
+            source=ents[case["source"]], primary_target=ents[case["primary"]],
+            tags=list(case["tags"]), params=dict(case["params"]),
+            available_entities=order)
+        exec_rows.append({
+            "id": case["id"],
+            "targets": [t.name for t in ctx.targets],
+            "config": config_row(ctx.config),
+            "entities": [entity_row(e) for e in order],
+            "rng_check": _pyrandom.random(),
+        })
+
+    write("effect_stack.json", {
+        "_meta": meta("core/tag_system.py + tag_parser.py + geometry/ + "
+                      "effect_executor.py — registry dumped, every skill's "
+                      "combat tags parsed, executor scenarios EXECUTED on a "
+                      "spec-built stub battlefield with seeded global rng"),
+        "registry": {
+            "definitions": reg_defs,
+            "aliases": {k: reg.aliases[k] for k in sorted(reg.aliases)},
+            "categories": reg.categories,
+            "geometry_priority": reg.geometry_priority,
+            "mutually_exclusive": reg.mutually_exclusive,
+            "context_inference": reg.context_inference,
+        },
+        "parse_skills": parse_cases,
+        "battlefield": BATTLEFIELD,
+        "cases": EXEC_CASES,
+        "results": exec_rows,
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,
