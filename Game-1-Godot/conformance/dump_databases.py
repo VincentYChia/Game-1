@@ -1807,6 +1807,107 @@ def dump_all(dbs: dict) -> None:
         "results": exec_rows,
     })
 
+    # ── P4t2c: Enemy runtime AI — scripted scenarios on REAL Enemy objects
+    def enemy_state_row(e):
+        return {
+            "pos": [e.position[0], e.position[1]],
+            "state": e.ai_state.value,
+            "health": e.current_health, "alive": e.is_alive,
+            "facing": e.facing_angle,
+            "attack_cooldown": e.attack_cooldown,
+            "in_combat": e.in_combat,
+            "wander_timer": e.wander_timer,
+            "wander_cooldown": e.wander_cooldown,
+            "target": list(e.target_position) if e.target_position else None,
+            "phase": e.attack_phase,
+            "phase_timer": e.attack_phase_timer,
+            "windup_ms": e._attack_windup_ms,
+            "active_ms": e._attack_active_ms,
+            "recovery_ms": e._attack_recovery_ms,
+            "arc": e._attack_arc_degrees, "radius": e._attack_radius,
+            "shape": getattr(e, "_attack_shape", "arc"),
+            "anim_timer": e.attack_anim_timer,
+            "anim_tags": list(e.attack_anim_tags),
+            "anim_lunge": e.attack_anim_lunge,
+            "attack_target": (list(e.attack_target_pos)
+                              if e.attack_target_pos else None),
+            "knockback": [e.knockback_velocity_x, e.knockback_velocity_y,
+                          e.knockback_duration_remaining],
+            "time_since_death": e.time_since_death,
+            "windup_progress": e.windup_progress,
+        }
+
+    def run_enemy_ai(edef):
+        _pyrandom.seed(20240)
+        e = Enemy(edef, (10.0, 10.0), (0, 0))
+        rows = [enemy_state_row(e)]
+        player = [30.0, 10.0]
+        for _ in range(40):
+            if player[0] > 11.0:
+                player[0] -= 1.0
+            e.update_ai(0.1, tuple(player))
+            rows.append(enemy_state_row(e))
+        d1 = e.take_damage(e.max_health * 0.4)
+        rows.append({**{"event": "damaged", "died": d1},
+                     **enemy_state_row(e)})
+        e.knockback_velocity_x = 4.0
+        e.knockback_velocity_y = -2.0
+        e.knockback_duration_remaining = 0.5
+        for _ in range(6):
+            e.update_ai(0.1, tuple(player))
+            rows.append(enemy_state_row(e))
+        can1 = e.can_attack()
+        started = e.start_phased_attack(tuple(player))
+        transitions = [e.update_attack_phase(100.0) for _ in range(30)]
+        dmg = e.perform_attack()
+        rows.append({**{"event": "attack", "can_before": can1,
+                        "started": started, "transitions": transitions,
+                        "damage": dmg}, **enemy_state_row(e)})
+        abil0 = e.can_use_special_ability(2.0)
+        e.current_health = e.max_health * 0.15
+        abil_by_dist = {}
+        for dist in [0.5, 2.0, 10.0, 100.0]:
+            a = e.can_use_special_ability(dist)
+            abil_by_dist[str(dist)] = a.ability_id if a else None
+        d2 = e.take_damage(999999.0)
+        e.update_ai(0.5, tuple(player))
+        e.update_ai(0.5, tuple(player))
+        rows.append({**{"event": "death", "died": d2,
+                        "abil_full_hp": (abil0.ability_id if abil0 else None),
+                        "abil_by_dist": abil_by_dist},
+                     **enemy_state_row(e)})
+        return rows
+
+    def run_enemy_night(edef):
+        # night multipliers + safe-zone exclusion on the approach path
+        _pyrandom.seed(555)
+        e = Enemy(edef, (5.0, 5.0), (0, 0))
+        rows = []
+        for _ in range(25):
+            e.update_ai(0.1, (12.0, 5.0), aggro_multiplier=1.3,
+                        speed_multiplier=1.15,
+                        safe_zone_center=(10.0, 5.0), safe_zone_radius=2.0)
+            rows.append(enemy_state_row(e))
+        return rows
+
+    ai_ids = sorted(enemy_db.enemies)[:5]
+    for eid in sorted(enemy_db.enemies):
+        if len(ai_ids) >= 8:
+            break
+        if enemy_db.enemies[eid].special_abilities and eid not in ai_ids:
+            ai_ids.append(eid)
+    write("enemy_ai.json", {
+        "_meta": meta("Combat/enemy.py Enemy runtime — scripted AI scenarios "
+                      "EXECUTED on real Enemy objects (seeded global rng; "
+                      "no world_system / statuses — those are separate "
+                      "certified systems)"),
+        "ai_ids": ai_ids,
+        "scenarios": {eid: run_enemy_ai(enemy_db.enemies[eid])
+                      for eid in ai_ids},
+        "night": {eid: run_enemy_night(enemy_db.enemies[eid])
+                  for eid in ai_ids[:3]},
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,
