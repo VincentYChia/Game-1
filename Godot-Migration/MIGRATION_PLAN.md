@@ -291,6 +291,45 @@ Godot once so it generates its solution glue.
     buffs/equipment wiring), then the crux scenario gate (after 3D, per
     user directive).
 
+- **2026-07-19 (CHARACTER COMPOSITION ROOT + FULL TAG-ATTACK PIPELINE) —
+  suite 86/86, commits 425165f5 + cc65de33.** The P4 orchestration gap is
+  CLOSED:
+  - **Composition root:** PlayerCharacter (health/equipment/inventory/
+    selected-slot incl. the damage-tuple-truthiness branch), CharacterStats
+    (JSON-driven scaling from stats-calculations.JSON with Python's exact
+    fallbacks), TitleSystem (bonus-key resolution chain: literal → snake →
+    renames → typo tolerance; Python bool-is-int quirk preserved),
+    LevelingSystem (cascade + 350-EXP first level).
+  - **EnemyRuntime status integration:** carries the P2-certified
+    StatusEffectManager (Update in the AI tick, immobilize/silence hooks);
+    implements ICombatEntity + IStatusTarget matching the Python Enemy
+    duck-type — enhanced take_damage kwargs branch, DoT ticks aggro
+    (from_player=True), no heal method, real knockback fields.
+  - **TagAttackOrchestrator:** the complete crux-conformant composition
+    (F3-F9): hand mult on the weapon component, STR 0.05/pt, title melee +
+    enemy-specific titles, INT elemental, crushing-vs-armored, empower,
+    crit LAST via LCK 0.12/pt + pierce buffs + Precision + title crit,
+    executor-side per-target enemy defense + armor penetration, lifesteal
+    enchant (50% cap), on-hit enchants (DoT element map/knockback/slow),
+    devastate AoE (its loot-extend duplication bug preserved), kill → EXP
+    cascade + loot into the real Inventory + weapon durability
+    (improper-tool 2×). Dual rng streams mirror Python exactly: manager-
+    injected rng (crit) vs global random (executor rolls, enemy ctor,
+    loot).
+  - **Oracle `tag_attack.json`:** 15 scenarios EXECUTED through the REAL
+    Python Character + CombatManager with spec-built loadouts (specs live
+    in the fixture; C# builds from them). Covers unarmed, 1H/2H, armored
+    targets, armor_breaker, precision crits, INT+burn, empower/pierce/
+    devastate buffs, lifesteal + on-hit enchants, one-shot kill with the
+    exact level-3 cascade, improper-tool durability, skill lifesteal,
+    chain with per-target defense. FIRST-RUN GREEN.
+  - **3D slice upgraded (cc65de33):** CombatWorld's placeholder damage
+    replaced by the certified orchestrator — real crits/defense/loot/EXP
+    in the Godot build; HUD shows level/EXP; DoTs tick via the status
+    system. Build 0 warnings, headless import 0.
+  - NEXT: P3 geography generators (~3k lines, last P3 item) + first
+    visual editor run; then P5 gathering; crux scenario gate after 3D.
+
 ## 7a. Parked — DO NOT FORGET
 
 | Item | Why parked | Unblock |
