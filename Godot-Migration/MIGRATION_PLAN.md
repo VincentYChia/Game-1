@@ -244,6 +244,53 @@ Godot once so it generates its solution glue.
   (headless-testable), enemy AI tick, then the phase gate: crux-foundry
   scenario parity on seeded runs (PythonRandom makes exact traces feasible).
 
+- **2026-07-18 (BIG SWEEP: action combat + effect stack + enemy AI + chunks
+  + playable 3D combat slice) — suite 85/85, five commits (c02dd8de,
+  4c1c7e6a, 1965fdf6, f6b50d32, 063f83ee).** Per user directive, crux
+  scenario-parity gate deferred until these systems run in 3D.
+  - **Action combat core (80/80):** AttackStateMachine (phases/combos/
+    interrupts), HitboxSystem (arc/circle/rect/line incl. edge-ray overlap;
+    Python float-% via `PyMath.Mod`), ProjectileSystem (gravity/homing/
+    piercing/AoE-on-hit), CombatDataLoader (dynamic weapon/enemy attack +
+    projectile generation; CPython `random.choices` cumulative-bisect
+    ported). Oracle: scripted scenarios EXECUTED through the real Python
+    classes (`action_combat.json`: 18-step ASM timeline, 720-cell collision
+    matrix, 5 projectile trajectories, 90 weapon rows, seeded streams).
+  - **Tag/effect stack (83/83):** TagRegistry (95 defs, 68 aliases),
+    TagParser (Python-exact warning strings), TargetFinder (chain/cone/
+    circle/beam + enemy-source context flip), EffectExecutor (crit,
+    context behavior, F5 enemy defense + armor pen, auto-apply, immunity,
+    all special mechanics). `ICombatEntity` turns every Python hasattr
+    branch into a capability flag. Oracle: `effect_stack.json` — 25
+    executor scenarios run through the REAL Python executor on a
+    spec-built stub battlefield; the C# test builds its stubs FROM THE
+    FIXTURE SPECS (no transcription drift).
+  - **Enemy AI runtime (84/84):** EnemyRuntime — full AI state machine,
+    chunk-clamped movement + safe zones + collision-sliding hooks,
+    knockback, phased attacks, flee/death, ability gating, night
+    multipliers. Oracle: `enemy_ai.json` — 50-step scripted encounters on
+    real Python Enemy objects × 8 enemies + 3 night runs.
+  - **P3 chunk parity (85/85):** ChunkGenerator — chunk-type dispatch
+    (geo/biome/legacy), land + lake/river/swamp tile grids (river rng
+    short-circuit preserved), template resourceDensity weighted spawns →
+    substring db fallback, fishing spots. `PythonRandom.Sample` added
+    (CPython pool/set crossover exact). Oracle: `chunks.json` — 34 real
+    Chunk objects across all three modes, every tile + placement equal.
+    P3's remaining tranche is now ONLY the geography generators (~3k
+    lines) + the first visual editor run.
+  - **Playable 3D combat slice (engine glue, build 0 warnings + headless
+    import 0):** `CombatWorld` node — enemies spawn in dangerous/rare
+    chunks, certified AI ticks them (windup telegraphs flash red), player
+    left-click melee flows AttackStateMachine → HitboxSystem → certified
+    damage/loot; HUD line. WorldBootstrap renders ChunkGenerator resource
+    spawns at conformance-pinned positions. Combat damage numbers in the
+    slice are placeholder (flat 20-30) until the Character composition
+    root lands — the pipeline plumbing is the certified one.
+  - REMAINING P4: combat orchestration (`player_attack_enemy_with_tags`
+    bonus composition — needs Character composition root: stats/titles/
+    buffs/equipment wiring), then the crux scenario gate (after 3D, per
+    user directive).
+
 ## 7a. Parked — DO NOT FORGET
 
 | Item | Why parked | Unblock |
