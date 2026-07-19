@@ -1908,6 +1908,67 @@ def dump_all(dbs: dict) -> None:
                   for eid in ai_ids[:3]},
     })
 
+    # ── P3t2: chunk.py per-chunk tile + resource parity ──────────────────
+    from systems.chunk import Chunk
+    from systems.biome_generator import BiomeGenerator as _BG
+    from data.databases.chunk_template_db import ChunkTemplateDatabase
+
+    def chunk_row(c):
+        return {
+            "chunk_type": c.chunk_type,
+            "seed": c.seed,
+            "tiles": [[t.position.x, t.position.y, t.tile_type.value,
+                       t.walkable] for t in c.tiles.values()],
+            "resources": [[r.position.x, r.position.y, r.resource_type,
+                           r.tier] for r in c.resources],
+        }
+
+    chunk_cases = []
+
+    bg = _BG(world_seed=12345)
+    biome_coords = [(0, 0), (3, -2), (-5, 7), (12, 4), (-9, -9)]
+    found_water = {}
+    for cy in range(-15, 16):
+        for cx in range(-15, 16):
+            ct = bg.get_chunk_type(cx, cy)
+            if (ct in ("water_lake", "water_river", "water_cursed_swamp")
+                    and ct not in found_water):
+                found_water[ct] = (cx, cy)
+    for ct in sorted(found_water):
+        biome_coords.append(found_water[ct])
+    for cx, cy in biome_coords:
+        c = Chunk(cx, cy, biome_generator=bg)
+        chunk_cases.append({"mode": "biome", "world_seed": 12345,
+                            "cx": cx, "cy": cy, "row": chunk_row(c)})
+
+    for cx, cy, s in [(0, 0, 777001), (1, -1, 777002), (4, 5, 777003),
+                      (9, -9, 777004), (-7, 3, 777005), (2, 8, 777006),
+                      (5, 5, 777007), (-3, -6, 777008)]:
+        c = Chunk(cx, cy, seed=s)
+        chunk_cases.append({"mode": "legacy", "seed": s,
+                            "cx": cx, "cy": cy, "row": chunk_row(c)})
+
+    template_db = ChunkTemplateDatabase.get_instance()
+    geo_keys = sorted(template_db._geo_dispatch)[:6]
+    geo_seed = 424242
+    for geo in geo_keys:
+        for dl in (1, 3, 5):
+            geo_seed += 1
+            c = Chunk(2, 2, seed=geo_seed,
+                      geographic_data=SimpleNamespace(chunk_type=geo,
+                                                      danger_level=dl))
+            chunk_cases.append({"mode": "geo", "seed": geo_seed,
+                                "cx": 2, "cy": 2, "geo_type": geo,
+                                "danger": dl, "row": chunk_row(c)})
+
+    write("chunks.json", {
+        "_meta": meta("systems/chunk.py — REAL Chunk objects generated in "
+                      "all three modes (biome-generator, legacy explicit "
+                      "seed, geographic dispatch): full tile grids + "
+                      "seeded resource/fishing-spot spawns"),
+        "cases": chunk_cases,
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,

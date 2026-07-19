@@ -150,4 +150,43 @@ public sealed class PythonRandom
     }
 
     public double Uniform(double a, double b) => a + (b - a) * NextDouble();
+
+    /// <summary>CPython random.sample: pool partial-shuffle for small n,
+    /// rejection set for large n. The setsize crossover (21 + 4^ceil(log4(3k))
+    /// for k>5) must match exactly — it changes which draws occur. Powers of
+    /// 4 are never multiples of 3, so the ceil never sits on an exact-power
+    /// float boundary.</summary>
+    public List<T> Sample<T>(IReadOnlyList<T> population, int k)
+    {
+        var n = population.Count;
+        if (k < 0 || k > n)
+            throw new ArgumentException("Sample larger than population or is negative");
+        var result = new T[k];
+        var setsize = 21.0;
+        if (k > 5)
+            setsize += Math.Pow(4, Math.Ceiling(Math.Log(k * 3) / Math.Log(4)));
+        if (n <= setsize)
+        {
+            var pool = population.ToList();
+            for (var i = 0; i < k; i++)
+            {
+                var j = (int)RandBelow(n - i);
+                result[i] = pool[j];
+                pool[j] = pool[n - i - 1];
+            }
+        }
+        else
+        {
+            var selected = new HashSet<long>();
+            for (var i = 0; i < k; i++)
+            {
+                var j = RandBelow(n);
+                while (selected.Contains(j))
+                    j = RandBelow(n);
+                selected.Add(j);
+                result[i] = population[(int)j];
+            }
+        }
+        return result.ToList();
+    }
 }
