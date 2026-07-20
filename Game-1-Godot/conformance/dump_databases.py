@@ -2008,13 +2008,19 @@ def dump_all(dbs: dict) -> None:
                 item_id=wspec["item_id"], name=wspec["item_id"],
                 tier=wspec.get("tier", 1), rarity="common", slot=slot,
                 damage=tuple(wspec.get("damage", [0, 0])),
+                defense=wspec.get("defense", 0),
                 attack_speed=wspec.get("attack_speed", 1.0),
                 range=wspec.get("range", 1.5),
                 hand_type=wspec.get("hand_type", "default"),
+                item_type=wspec.get("item_type", "weapon"),
+                stat_multipliers=dict(wspec.get("stat_multipliers", {})),
                 tags=list(wspec.get("tags", [])))
+            item.bonuses.update(wspec.get("bonuses", {}))
             for ench in wspec.get("enchantments", []):
                 item.enchantments.append(ench)
             ch.equipment.slots[slot] = item
+        for k, v in spec.get("activities", {}).items():
+            ch.activities.activity_counts[k] = v
         return ch
 
     def attack_char_row(ch):
@@ -2326,6 +2332,206 @@ def dump_all(dbs: dict) -> None:
                       "ecosystems / biomes / villages, dense windows, "
                       "village wall+building layouts"),
         "worlds": [geo_world(777), geo_world(20260719)],
+    })
+
+    # ── P5: gathering + enemy→player damage — REAL Character +
+    #    NaturalResource + CombatManager._enemy_attack_player
+    from systems.natural_resource import NaturalResource as _NatRes
+
+    def gather_char_row(ch):
+        return {
+            "health": ch.health,
+            "exp": ch.leveling.current_exp, "level": ch.leveling.level,
+            "shield_amount": ch.shield_amount,
+            "activities": {k: v for k, v in
+                           sorted(ch.activities.activity_counts.items())},
+            "titles": [t.title_id for t in ch.titles.earned_titles],
+            "inventory": [([s.item_id, s.quantity] if s else None)
+                          for s in ch.inventory.slots],
+            "durability": {slot: [it.durability_current, it.durability_max]
+                           for slot, it in sorted(ch.equipment.slots.items())
+                           if it is not None},
+        }
+
+    def resource_row(r):
+        return {"hp": r.current_hp, "max_hp": r.max_hp,
+                "depleted": r.depleted, "respawns": r.respawns,
+                "respawn_timer": r.respawn_timer,
+                "time_until_respawn": r.time_until_respawn,
+                "required_tool": r.required_tool,
+                "loot_table": [[ld.item_id, ld.min_quantity, ld.max_quantity,
+                                ld.chance] for ld in r.loot_table]}
+
+    GATHER_CASES = [
+        {"id": "axe_oak", "char": {},
+         "resources": [{"type": "oak_tree", "tier": 1, "pos": [1.0, 0.0]}],
+         "target": 0, "swings": 30},
+        {"id": "pickaxe_copper_luck",
+         "char": {"stats": {"luck": 10}, "selected_slot": "pickaxe"},
+         "resources": [{"type": "copper_vein", "tier": 1, "pos": [1.0, 0.5]}],
+         "target": 0, "swings": 30},
+        {"id": "wrong_tool_pickaxe_on_tree",
+         "char": {"selected_slot": "pickaxe"},
+         "resources": [{"type": "oak_tree", "tier": 1, "pos": [0.5, 1.0]}],
+         "target": 0, "swings": 12},
+        {"id": "def_fractional_durability",
+         "char": {"stats": {"defense": 7}, "selected_slot": "axe"},
+         "resources": [{"type": "pine_tree", "tier": 1, "pos": [1.5, 0.0]}],
+         "target": 0, "swings": 10},
+        {"id": "enchanted_agi_titles",
+         "char": {"stats": {"agility": 10, "luck": 6},
+                  "titles": [{"title_id": "synthetic_lumberjack",
+                              "bonuses": {"forestry_damage": 0.15,
+                                          "forestrySpeed": 0.10,
+                                          "luck_stat": 2}}],
+                  "weapons": {"axe": {"item_id": "test_fine_axe", "tier": 2,
+                                      "damage": [8, 12],
+                                      "enchantments": [
+                                          {"name": "Efficiency I",
+                                           "effect": {"type": "gathering_speed_multiplier",
+                                                      "value": 0.2}},
+                                          {"name": "Unbreaking I",
+                                           "effect": {"type": "durability_multiplier",
+                                                      "value": 0.3}},
+                                          {"name": "Fortune I",
+                                           "effect": {"type": "bonus_yield_chance",
+                                                      "value": 0.5}}]}},
+                  "selected_slot": "axe"},
+         "resources": [{"type": "ash_tree", "tier": 2, "pos": [1.0, 1.0]}],
+         "target": 0, "swings": 30},
+        {"id": "fishing_activity_dropped",
+         "char": {"weapons": {"fishing_rod": {"item_id": "test_rod", "tier": 2,
+                                              "damage": [6, 10]}},
+                  "selected_slot": "fishing_rod"},
+         "resources": [{"type": "fishing_spot_carp", "tier": 1,
+                        "pos": [1.0, -1.0]}],
+         "target": 0, "swings": 30},
+        {"id": "devastate_chain_harvest",
+         "char": {"stats": {"agility": 5},
+                  "buffs": [{"buff_id": "chain_harvest",
+                             "effect_type": "devastate",
+                             "category": "forestry", "bonus_value": 5.0,
+                             "consume_on_use": True}],
+                  "selected_slot": "axe"},
+         "resources": [{"type": "oak_tree", "tier": 1, "pos": [1.0, 0.0]},
+                       {"type": "birch_tree", "tier": 1, "pos": [2.0, 1.0]},
+                       {"type": "pine_tree", "tier": 1, "pos": [-1.0, 2.0]},
+                       {"type": "copper_vein", "tier": 1, "pos": [2.0, -1.0]}],
+         "target": 0, "swings": 1},
+        {"id": "title_award_churn",
+         "char": {"activities": {"mining": 9999, "forestry": 9999,
+                                 "combat": 9999},
+                  "stats": {"strength": 12},
+                  "selected_slot": "pickaxe"},
+         "resources": [{"type": "iron_deposit", "tier": 1, "pos": [1.0, 0.0]}],
+         "target": 0, "swings": 8},
+    ]
+
+    gather_rows = []
+    for i, case in enumerate(GATHER_CASES):
+        ch = build_attack_char(case.get("char", {}))
+        _pyrandom.seed(31000 + i)
+        resources = [_NatRes(_Pos(rs["pos"][0], rs["pos"][1], 0.0),
+                             rs["type"], rs["tier"])
+                     for rs in case["resources"]]
+        target = resources[case["target"]]
+        nearby = resources if len(resources) > 1 else None
+        harvests = []
+        for _ in range(case["swings"]):
+            if target.depleted:
+                break
+            result = ch.harvest_resource(target, nearby_resources=nearby)
+            harvests.append(
+                None if result is None
+                else {"loot": [[m, q] for m, q in result[0]],
+                      "damage": result[1], "crit": result[2]})
+        # respawn tick check
+        target.update(20.0)
+        gather_rows.append({
+            "id": case["id"],
+            "harvests": harvests,
+            "char": gather_char_row(ch),
+            "resources": [resource_row(r) for r in resources],
+            "rng_global": _pyrandom.random(),
+        })
+
+    ENEMY_HIT_CASES = [
+        {"id": "basic_def_armor",
+         "char": {"stats": {"defense": 5},
+                  "weapons": {"chestplate": {"item_id": "test_chest",
+                                             "defense": 12},
+                              "helmet": {"item_id": "test_helm",
+                                         "defense": 6}}},
+         "enemy": "beetle_brown", "shield_blocking": False, "attacks": 3},
+        {"id": "shield_block",
+         "char": {"weapons": {"offHand": {"item_id": "test_shield",
+                                          "item_type": "shield",
+                                          "stat_multipliers": {"damage": 0.6},
+                                          "bonuses": {"defense_multiplier": 0.25}}}},
+         "enemy": "beetle_armored", "shield_blocking": True, "attacks": 3},
+        {"id": "protection_thorns",
+         "char": {"stats": {"defense": 3},
+                  "weapons": {"chestplate": {"item_id": "test_thorn_chest",
+                                             "defense": 10,
+                                             "enchantments": [
+                                                 {"name": "Protection I",
+                                                  "effect": {"type": "damage_reduction",
+                                                             "value": 0.10}},
+                                                 {"name": "Thorns II",
+                                                  "effect": {"type": "reflect_damage",
+                                                             "value": 0.5}}]},
+                              "leggings": {"item_id": "test_thorn_legs",
+                                           "defense": 8,
+                                           "enchantments": [
+                                               {"name": "Thorns II",
+                                                "effect": {"type": "reflect_damage",
+                                                           "value": 0.5}}]}}},
+         "enemy": "slime_acid", "shield_blocking": False, "attacks": 6},
+        {"id": "fortify_min_damage",
+         "char": {"stats": {"defense": 20},
+                  "buffs": [{"buff_id": "stone_skin", "effect_type": "fortify",
+                             "category": "defense", "bonus_value": 25.0}],
+                  "weapons": {"chestplate": {"item_id": "test_plate",
+                                             "defense": 30}}},
+         "enemy": "beetle_brown", "shield_blocking": False, "attacks": 2},
+        {"id": "lethal_respawn",
+         "char": {"health": 2.0},
+         "enemy": "beetle_titan", "shield_blocking": False, "attacks": 1},
+    ]
+
+    enemy_hit_rows = []
+    for i, case in enumerate(ENEMY_HIT_CASES):
+        ch = build_attack_char(case.get("char", {}))
+        cm = _CM(None, ch, rng=_pyrandom.Random(41000 + i))
+        cm.config.load_from_file(
+            str(SRC / "Definitions.JSON" / "combat-config.JSON"))
+        _pyrandom.seed(51000 + i)
+        enemy = Enemy(enemy_db.enemies[case["enemy"]], (2.0, 0.0), (0, 0))
+        hits = []
+        for _ in range(case["attacks"]):
+            enemy.attack_phase = 'idle'   # allow re-telegraphing each hit
+            enemy.start_phased_attack(
+                (ch.position.x, ch.position.y))
+            cm._enemy_attack_player(enemy, shield_blocking=case["shield_blocking"])
+            hits.append({"player_health": ch.health,
+                         "enemy_health": enemy.current_health,
+                         "enemy_alive": enemy.is_alive})
+        enemy_hit_rows.append({
+            "id": case["id"],
+            "hits": hits,
+            "char": gather_char_row(ch),
+            "rng_global": _pyrandom.random(),
+        })
+
+    write("gathering_damage.json", {
+        "_meta": meta("entities/character.py harvest path + "
+                      "systems/natural_resource.py + combat_manager.py "
+                      "_enemy_attack_player — REAL objects, spec-built "
+                      "loadouts (specs in fixture), seeded global rng"),
+        "gather_cases": GATHER_CASES,
+        "gather_results": gather_rows,
+        "enemy_hit_cases": ENEMY_HIT_CASES,
+        "enemy_hit_results": enemy_hit_rows,
     })
 
     write("translations.json", {

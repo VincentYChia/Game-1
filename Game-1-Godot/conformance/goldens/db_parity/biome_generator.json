@@ -1,8 +1,8 @@
 {
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
-    "generated": "2026-07-18",
-    "git_sha": "99ce91c3",
+    "generated": "2026-07-20",
+    "git_sha": "66794a30",
     "source": "systems/biome_generator.py (legacy fallback — still the oracle for pre-geographic saves): 25x25 chunk grid + water/dungeon flags EXECUTED per seed; sha256 canon"
   },
   "cases": {

@@ -1,8 +1,8 @@
 {
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
-    "generated": "2026-07-19",
-    "git_sha": "06c74c3a",
+    "generated": "2026-07-20",
+    "git_sha": "66794a30",
     "source": "systems/geography/* — REAL WorldGenerator executed per seed (post 2026-07-19 determinism patch): full tier metadata, sha256 canons over all 262k chunks / ecosystems / biomes / villages, dense windows, village wall+building layouts"
   },
   "worlds": [

@@ -1,8 +1,8 @@
 {
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
-    "generated": "2026-07-18",
-    "git_sha": "1965fdf6",
+    "generated": "2026-07-20",
+    "git_sha": "66794a30",
     "source": "systems/chunk.py — REAL Chunk objects generated in all three modes (biome-generator, legacy explicit seed, geographic dispatch): full tile grids + seeded resource/fishing-spot spawns"
   },
   "cases": [

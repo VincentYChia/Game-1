@@ -13,6 +13,11 @@ namespace Game1.Core.Data;
 public sealed class TitleDatabase
 {
     public Dictionary<string, TitleDefinition> Titles { get; } = new();
+
+    /// <summary>Insertion order of Titles (Python dict order) — load-bearing
+    /// for check_for_title's award order and rng draw sequence.</summary>
+    public List<string> TitleOrder { get; } = new();
+
     public bool Loaded { get; private set; }
 
     public const string SacredDir = "progression";
@@ -72,6 +77,8 @@ public sealed class TitleDatabase
         {
             if (node is not JsonObject t) continue;
             var title = ParseTitle(t);
+            if (!Titles.ContainsKey(title.TitleId))
+                TitleOrder.Add(title.TitleId);   // dict overwrite keeps slot
             Titles[title.TitleId] = title;
         }
         Loaded = true;

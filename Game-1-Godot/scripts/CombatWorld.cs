@@ -36,7 +36,9 @@ public partial class CombatWorld : Node3D
     private double _playerFacingDeg;
     private PlayerCharacter? _pc;
     private TagAttackOrchestrator? _orch;
+    private GatheringSystem? _gathering;
     private readonly List<EnemyRuntime> _runtimes = new();
+    private readonly List<(NaturalResourceRuntime Node, Node3D Visual)> _resources = new();
     private Label? _hud;
     private string _lastEvent = "";
 
@@ -87,6 +89,14 @@ public partial class CombatWorld : Node3D
         _orch.Config.LoadFromFile(System.IO.Path.Combine(
             contentRoot, "Definitions.JSON", "combat-config.JSON"));
         _orch.ActiveEnemies = _runtimes;
+
+        // Certified gathering path (titles DB for award churn)
+        var titleDb = new TitleDatabase();
+        titleDb.LoadFromFiles(contentRoot);
+        UpdateLoader.LoadAll(contentRoot, equipDb, new SkillDatabase(),
+                             matDb, new RecipeDatabase(), titleDb);
+        _gathering = new GatheringSystem(_pc, titleDb,
+                                         new PythonRandom(worldSeed ^ 303));
 
         _unarmed = _combatData.GetWeaponAttack("unarmed", weaponRange: 1.8);
         _hitboxes.RegisterHurtbox("player", 0.4);
@@ -158,10 +168,58 @@ public partial class CombatWorld : Node3D
         _byId[entityId] = live;
     }
 
+    /// <summary>WorldBootstrap registers each certified chunk resource with
+    /// its visual so gathering can deplete/respawn it live.</summary>
+    public void RegisterResource(NaturalResourceRuntime node, Node3D visual) =>
+        _resources.Add((node, visual));
+
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
             TryPlayerAttack();
+        if (@event is InputEventKey { PhysicalKeycode: Key.E, Pressed: true, Echo: false })
+            TryHarvest();
+    }
+
+    private void TryHarvest()
+    {
+        if (_pc is null || _gathering is null || _player is null) return;
+        var playerSim = (X: (double)_player.Position.X, Y: (double)_player.Position.Z);
+        _pc.SetPositionXY(playerSim.X, playerSim.Y);
+
+        NaturalResourceRuntime? nearest = null;
+        var nearestDist = double.PositiveInfinity;
+        foreach (var (node, _) in _resources)
+        {
+            if (node.Depleted) continue;
+            var d = node.Position.DistanceTo(new Game1.Core.World.Position(
+                playerSim.X, playerSim.Y, 0));
+            if (d < nearestDist)
+            {
+                nearestDist = d;
+                nearest = node;
+            }
+        }
+        if (nearest is null || nearestDist > _pc.InteractionRange)
+        {
+            _lastEvent = "no resource in range";
+            return;
+        }
+
+        var allNodes = _resources.Select(r => r.Node).ToList();
+        var result = _gathering.HarvestResource(nearest, allNodes);
+        if (result is { } r)
+        {
+            _lastEvent = $"harvested {nearest.ResourceType}: " + string.Join(", ",
+                r.Loot.Select(l => $"{l.Qty}x {l.ItemId}")) + (r.Crit ? " CRIT!" : "");
+        }
+        else
+        {
+            var (ok, reason) = _gathering.CanHarvestResource(nearest);
+            _lastEvent = ok
+                ? $"chopping {nearest.ResourceType} ({nearest.CurrentHp:F0}/{nearest.MaxHp:F0})"
+                : reason;
+        }
     }
 
     private void TryPlayerAttack()
@@ -254,10 +312,13 @@ public partial class CombatWorld : Node3D
             var transition = rt.UpdateAttackPhase(dtMs);
             if (transition == "active_start" && rt.DistanceTo(playerSim) <= rt.AttackRadius + 0.6)
             {
-                var dmg = rt.PerformAttack() * rt.AttackDamageMult;
+                // Certified defense pipeline: DEF + armor eff + Protection +
+                // shield + fortify + min-1 + Thorns
                 if (_pc is not null)
-                    _pc.Health = Math.Max(0, _pc.Health - dmg);
-                _lastEvent = $"{rt.Definition.Name} hits you for {dmg:F0}";
+                {
+                    var dmg = EnemyAttackResolver.Resolve(rt, _pc);
+                    _lastEvent = $"{rt.Definition.Name} hits you for {dmg:F0}";
+                }
             }
 
             _hitboxes.UpdateHurtboxPosition(e.EntityId,
@@ -278,12 +339,25 @@ public partial class CombatWorld : Node3D
             }
         }
 
+        // Resource respawn ticking + depleted visuals (certified runtime)
+        foreach (var (node, visual) in _resources)
+        {
+            var wasDepleted = node.Depleted;
+            node.Update(delta);
+            if (node.Depleted && visual.Visible)
+                visual.Visible = false;
+            else if (!node.Depleted && wasDepleted && !visual.Visible)
+                visual.Visible = true;
+            else if (!node.Depleted && !visual.Visible)
+                visual.Visible = true;   // respawned this frame
+        }
+
         if (_hud is not null && _pc is not null)
         {
             var alive = _enemies.Count(x => x.Runtime.IsAlive);
             _hud.Text = $"HP {(int)_pc.Health}/{(int)_pc.MaxHealthValue}   " +
                         $"Lv {_pc.Leveling.Level} ({_pc.Leveling.CurrentExp} exp)   " +
-                        $"enemies {alive}/{_enemies.Count}   {_lastEvent}";
+                        $"enemies {alive}/{_enemies.Count}   [E] gather   {_lastEvent}";
         }
     }
 

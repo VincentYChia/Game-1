@@ -1,8 +1,8 @@
 {
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
-    "generated": "2026-07-18",
-    "git_sha": "99ce91c3",
+    "generated": "2026-07-20",
+    "git_sha": "66794a30",
     "source": "data/databases/world_generation_db.py (resolved config incl. dilutive normalization; zone lookups executed)"
   },
   "biome_clustering": {

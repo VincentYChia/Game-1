@@ -1,8 +1,8 @@
 {
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
-    "generated": "2026-07-18",
-    "git_sha": "99ce91c3",
+    "generated": "2026-07-20",
+    "git_sha": "66794a30",
     "source": "data/databases/npc_db.py (v3 path; boot state — generated merge is reload-only)"
   },
   "npc_count": 3,

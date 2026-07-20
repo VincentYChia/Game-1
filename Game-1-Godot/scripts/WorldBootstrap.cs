@@ -82,7 +82,6 @@ public partial class WorldBootstrap : Node3D
         }
 
         BuildTerrain(biomes, mapConfig);
-        BuildResources(biomes, chunkGen);
         BuildVillages();
         AddSun();
         var player = AddPlayer();
@@ -91,6 +90,7 @@ public partial class WorldBootstrap : Node3D
         AddChild(combat);
         combat.Build(root, WorldSeed, biomes, chunkGen, player,
                      enemyChunkRadius: 4, worldMap: _worldMap);
+        BuildResources(biomes, chunkGen, resourceDb, combat);
 
         GD.Print($"World built: seed {WorldSeed}, {(ChunkRadius * 2 + 1) * (ChunkRadius * 2 + 1)} chunks");
     }
@@ -143,8 +143,11 @@ public partial class WorldBootstrap : Node3D
 
     /// <summary>Certified per-chunk resource spawns rendered as simple 3D
     /// markers: trees = green cylinders, stones/ores = gray boxes, fishing
-    /// spots = blue discs. Same placements the conformance suite pins.</summary>
-    private void BuildResources(BiomeGenerator biomes, ChunkGenerator chunkGen)
+    /// spots = blue discs. Same placements the conformance suite pins.
+    /// Each spawn also gets a certified NaturalResourceRuntime registered
+    /// with CombatWorld so [E] harvesting works live.</summary>
+    private void BuildResources(BiomeGenerator biomes, ChunkGenerator chunkGen,
+                                ResourceNodeDatabase resourceDb, CombatWorld combat)
     {
         var parent = new Node3D { Name = "Resources" };
         AddChild(parent);
@@ -185,6 +188,10 @@ public partial class WorldBootstrap : Node3D
                             res.Y + 0.5f),
                     };
                     parent.AddChild(mesh);
+
+                    combat.RegisterResource(new NaturalResourceRuntime(
+                        new Game1.Core.World.Position(res.X + 0.5, res.Y + 0.5, 0),
+                        res.ResourceType, (int)res.Tier, resourceDb), mesh);
                 }
             }
         }
