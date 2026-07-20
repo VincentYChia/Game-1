@@ -25,8 +25,9 @@ public sealed class PlayerCharacter : ICombatEntity, ICharacterQuery
     public double Health;
     public double MaxHealthValue;
 
-    /// <summary>character.py:88 Config.INTERACTION_RANGE default.</summary>
-    public double InteractionRange = 3.0;
+    /// <summary>core/config.py:184 Config.INTERACTION_RANGE (verifier fix:
+    /// was wrongly 3.0).</summary>
+    public double InteractionRange = 3.5;
 
     /// <summary>character.py:119 — shield/barrier buff absorption pool.</summary>
     public double ShieldAmount;
@@ -46,6 +47,13 @@ public sealed class PlayerCharacter : ICombatEntity, ICharacterQuery
     /// <summary>hasattr(character, 'stat_tracker') seam — the oracle Python
     /// character deletes its tracker, so conditions resolve unavailable.</summary>
     public Func<string, double?> StatTrackerLookup = _ => null;
+
+    /// <summary>Regen gates (character.py:154-157): harvesting/attacking
+    /// reset dealt; being hit resets taken. Consumed by the VIT regen tick
+    /// when the character update loop is ported.</summary>
+    public double TimeSinceLastDamageTaken;
+    public double TimeSinceLastDamageDealt;
+    public bool PlayerInCombat;
 
     /// <summary>Python _selected_slot — defaults to 'mainHand' (character.py
     /// :125), not None; TAB cycling changes it.</summary>
@@ -207,10 +215,8 @@ public sealed class PlayerCharacter : ICombatEntity, ICharacterQuery
                     if (effect?["type"]?.GetValue<string>() == "durability_multiplier")
                         pieceLoss *= 1.0 - (Data.J.AsNum(effect["value"]) ?? 0.0);
                 }
-                // Python durability is float-decremented then max(0, ...);
-                // C# DurabilityCurrent is int — Python keeps fractional loss.
-                // Track fractions exactly via the per-item remainder map.
-                ApplyFractionalDurabilityLoss(armorPiece, pieceLoss);
+                armorPiece.DurabilityCurrent =
+                    Math.Max(0, armorPiece.DurabilityCurrent - pieceLoss);
             }
         }
 
@@ -223,32 +229,9 @@ public sealed class PlayerCharacter : ICombatEntity, ICharacterQuery
         }
     }
 
-    /// <summary>Python stores durability as float (1.0 * DEF multiplier can
-    /// be fractional); C# EquipmentItem.DurabilityCurrent is int. Exact
-    /// fractional tracking so repeated hits match Python's running float.</summary>
-    private readonly Dictionary<EquipmentItem, double> _durabilityExact = new();
-
-    public double ExactDurability(EquipmentItem item) =>
-        _durabilityExact.TryGetValue(item, out var v) ? v : item.DurabilityCurrent;
-
-    public void ApplyFractionalDurabilityLoss(EquipmentItem item, double loss)
-    {
-        var current = ExactDurability(item);
-        current = Math.Max(0, current - loss);
-        _durabilityExact[item] = current;
-        item.DurabilityCurrent = (int)current;   // int view floors like print
-    }
-
-    /// <summary>equipment.py get_effectiveness computed from the EXACT
-    /// (possibly fractional) durability — Python's durability_current is a
-    /// float after DEF-scaled losses and the curve reads that float.</summary>
-    public double GetEffectivenessExact(EquipmentItem item)
-    {
-        var current = ExactDurability(item);
-        if (current <= 0) return 0.5;
-        var durPct = current / item.DurabilityMax;
-        return durPct >= 0.5 ? 1.0 : 1.0 - (0.5 - durPct) * 0.5;
-    }
+    // (Fractional durability lives directly on EquipmentItem.DurabilityCurrent
+    // — a double matching Python's float field — after the verifier found the
+    // per-character exactness map desynced against Repair/combat writers.)
 
     /// <summary>character.py get_effective_max_durability — VIT ×1%/pt +
     /// title durabilityBonus, int-truncated.</summary>

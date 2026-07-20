@@ -164,7 +164,7 @@ public class GatheringTests
         foreach (var kv in ch.Equipment.Slots.OrderBy(kv => kv.Key, StringComparer.Ordinal))
             if (kv.Value is { } item)
                 durability[kv.Key] = new JsonArray
-                { ch.ExactDurability(item), item.DurabilityMax };
+                { item.DurabilityCurrent, item.DurabilityMax };
 
         return new JsonObject
         {

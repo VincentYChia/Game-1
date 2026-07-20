@@ -99,6 +99,10 @@ public static class EnemyAttackResolver
             }
         }
 
+        // combat_manager.py:2194-2198 post-hit state
+        character.TimeSinceLastDamageTaken = 0.0;
+        character.PlayerInCombat = true;
+
         return finalDamage;
     }
 }

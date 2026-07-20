@@ -21,7 +21,9 @@ public sealed class EquipmentItem
     public required string Slot { get; init; }
     public (int Min, int Max) Damage { get; init; }
     public int Defense { get; init; }
-    public int DurabilityCurrent { get; set; } = 100;
+    // Python durability_current is a FLOAT (DEF-scaled fractional losses);
+    // double here keeps every read (effectiveness, repair, gates) exact.
+    public double DurabilityCurrent { get; set; } = 100;
     public int DurabilityMax { get; init; } = 100;
     public double AttackSpeed { get; init; } = 1.0;
     public double Efficiency { get; set; } = 1.0;
@@ -45,12 +47,12 @@ public sealed class EquipmentItem
     {
         if (DurabilityCurrent <= 0)
             return 0.5;
-        var durPct = (double)DurabilityCurrent / DurabilityMax;
+        var durPct = DurabilityCurrent / DurabilityMax;
         return durPct >= 0.5 ? 1.0 : 1.0 - (0.5 - durPct) * 0.5;
     }
 
     // :57-80
-    public int Repair(int? amount = null, double? percent = null)
+    public double Repair(int? amount = null, double? percent = null)
     {
         var old = DurabilityCurrent;
         if (amount is not null)
@@ -67,7 +69,7 @@ public sealed class EquipmentItem
     public string GetRepairUrgency()
     {
         if (DurabilityCurrent >= DurabilityMax) return "none";
-        var percent = (double)DurabilityCurrent / DurabilityMax;
+        var percent = DurabilityCurrent / DurabilityMax;
         if (percent >= 0.5) return "low";
         if (percent >= 0.2) return "medium";
         return percent > 0 ? "high" : "critical";

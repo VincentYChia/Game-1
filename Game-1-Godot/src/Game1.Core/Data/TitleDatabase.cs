@@ -57,6 +57,7 @@ public sealed class TitleDatabase
     public void LoadFromFiles(string contentRoot)
     {
         Titles.Clear();
+        TitleOrder.Clear();   // keep order list in lockstep (reload path)
         var dir = Path.Combine(contentRoot, SacredDir);
         foreach (var path in J.GlobSorted(dir, SacredGlob))
         {

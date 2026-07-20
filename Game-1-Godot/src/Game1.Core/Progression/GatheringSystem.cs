@@ -67,7 +67,7 @@ public sealed class GatheringSystem
             return (false, "Too far away");
         if (equippedTool.Tier < resource.Tier)
             return (false, $"Tool tier too low (need T{resource.Tier})");
-        if (_ch.ExactDurability(equippedTool) <= 0)   // debug-infinite is engine seam
+        if (equippedTool.DurabilityCurrent <= 0)   // debug-infinite is engine seam
             return (false, "Tool broken");
         return (true, "OK");
     }
@@ -81,7 +81,7 @@ public sealed class GatheringSystem
         // tuple damage average with // 2 floor (both components non-negative)
         var baseDamage = (tool.Damage.Min + tool.Damage.Max) / 2;
 
-        var durabilityEffectiveness = _ch.GetEffectivenessExact(tool);
+        var durabilityEffectiveness = tool.GetEffectiveness();
         var toolTypeEffectiveness = _ch.GetToolEffectivenessForAction(tool, activity);
         var totalEffectiveness = durabilityEffectiveness * toolTypeEffectiveness;
 
@@ -102,7 +102,10 @@ public sealed class GatheringSystem
             }
         }
         var titleSpeedBonus = _ch.Titles.GetTotalBonus($"{activity}Speed");
-        var efficiencyMult = 1.0 + enchantmentSpeedBonus + titleSpeedBonus;
+        // Python sums the bonuses FIRST, then adds 1.0 — associativity
+        // changes the double for e.g. 0.2 + 0.15 (verifier finding)
+        var totalSpeedBonus = enchantmentSpeedBonus + titleSpeedBonus;
+        var efficiencyMult = 1.0 + totalSpeedBonus;
 
         // Crit: LCK 0.02/pt + class + pierce-per-activity buffs
         var effectiveLuck = _ch.GetEffectiveLuck();
@@ -122,7 +125,7 @@ public sealed class GatheringSystem
             if (effect?["type"]?.GetValue<string>() == "durability_multiplier")
                 durabilityLoss *= 1.0 - (J.AsNum(effect["value"]) ?? 0.0);
         }
-        _ch.ApplyFractionalDurabilityLoss(tool, durabilityLoss);
+        tool.DurabilityCurrent = Math.Max(0, tool.DurabilityCurrent - durabilityLoss);
 
         if (!depleted)
             return null;
@@ -144,7 +147,9 @@ public sealed class GatheringSystem
             if (enrichBonus > 0)
                 qty += enrichBonus;
 
-            // Fortune — one proc max per item
+            // Fortune — Python breaks ONLY on a successful roll; a failed
+            // roll keeps scanning further bonus_yield_chance enchants
+            // (each consuming a draw). One proc max, multiple attempts.
             foreach (var ench in tool.Enchantments)
             {
                 var effect = ench["effect"] as JsonObject;
@@ -152,8 +157,10 @@ public sealed class GatheringSystem
                 {
                     var bonusChance = J.AsNum(effect["value"]) ?? 0.0;
                     if (_rng.NextDouble() < bonusChance)
+                    {
                         qty += 1;
-                    break;
+                        break;
+                    }
                 }
             }
 
@@ -278,6 +285,7 @@ public sealed class GatheringSystem
                     _ch.Activities.RecordActivity(activityForBuff, 1);
                     CheckForTitle();   // skill-unlock notify = engine seam
                     _ch.Leveling.AddExp(GatherExp.GetValueOrDefault(resource.Tier, 10));
+                    _ch.TimeSinceLastDamageDealt = 0.0;
                     return result0;
                 }
             }
@@ -289,6 +297,7 @@ public sealed class GatheringSystem
         _ch.Activities.RecordActivity(activity, 1);
         CheckForTitle();
         _ch.Leveling.AddExp(GatherExp.GetValueOrDefault(resource.Tier, 10));
+        _ch.TimeSinceLastDamageDealt = 0.0;   // harvesting counts as dealing damage
 
         return result;
     }
