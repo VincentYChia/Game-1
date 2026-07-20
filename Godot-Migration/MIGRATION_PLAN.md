@@ -368,6 +368,25 @@ Godot once so it generates its solution glue.
   - REMAINING: P5 gathering; enemy→player Character.take_damage pipeline;
     crux scenario gate after 3D; P11 True 3D final.
 
+- **2026-07-20 (P5 GATHERING + ENEMY→PLAYER DAMAGE) — suite 89/89,
+  commits 27b6f94c + 6d5bd660.** NaturalResourceRuntime (fallback loot =
+  Python's EFFECTIVE dict after alias-key collisions), GatheringSystem
+  (full harvest path incl. fractional DEF-scaled durability, LCK/Fortune/
+  enrich loot, Chain Harvest, the fishing-activity drop bug, title-award
+  churn via certified UnlockRequirements + acquisition rolls),
+  ActivityTracker, real Character.take_damage + shield helpers +
+  ICharacterQuery, EnemyAttackResolver (full crux-F7 defense pipeline
+  incl. Thorns 80% cap). Oracle: 8+5 scenarios via REAL Python objects,
+  FIRST-RUN GREEN. **Adversarial verify (5 agents) caught 3 REACHABLE
+  criticals the fixtures missed** — InteractionRange 3.0→3.5, efficiency
+  bonus association, and the durability-exactness map desyncing against
+  Repair/combat writers → root-fixed by making
+  EquipmentItem.DurabilityCurrent a DOUBLE (Python's float field),
+  map deleted. 3D slice: [E] harvests certified nodes with live deplete/
+  respawn; enemy hits through the certified defense pipeline.
+  NEXT: crux scenario gate (all combat systems now bilingual), P6
+  crafting, P11 True 3D.
+
 ## 7a. Parked — DO NOT FORGET
 
 | Item | Why parked | Unblock |
