@@ -302,6 +302,7 @@ public partial class WorldBootstrap : Node3D
 
         var capsule = new MeshInstance3D
         {
+            Name = "Body",
             Mesh = new CapsuleMesh { Radius = 0.33f, Height = 1.7f },
             MaterialOverride = new StandardMaterial3D
             {
