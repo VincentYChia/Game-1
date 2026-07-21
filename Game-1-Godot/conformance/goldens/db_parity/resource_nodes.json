@@ -2,7 +2,7 @@
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
     "generated": "2026-07-20",
-    "git_sha": "66794a30",
+    "git_sha": "8b0965dc",
     "source": "data/databases/resource_node_db.py + models/resources.py (conversion tables EXECUTED from the live model)"
   },
   "category_caches": {

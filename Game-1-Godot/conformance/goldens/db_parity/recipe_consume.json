@@ -1,0 +1,251 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-20",
+    "git_sha": "8b0965dc",
+    "source": "data/databases/recipe_db.py can_craft + consume_materials(+partial) — REAL recipe + real Inventory mutation semantics"
+  },
+  "cases": [
+    {
+      "can": true,
+      "id": "simple",
+      "inventory": [
+        [
+          "limestone",
+          1
+        ],
+        [
+          "light_gem",
+          1
+        ],
+        [
+          "slime_gel",
+          1
+        ],
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "ok": true,
+      "recipe": "alchemy_armor_polish"
+    },
+    {
+      "can": true,
+      "id": "split_slots",
+      "inventory": [
+        [
+          "limestone",
+          1
+        ],
+        [
+          "light_gem",
+          1
+        ],
+        [
+          "slime_gel",
+          1
+        ],
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "ok": true,
+      "recipe": "alchemy_armor_polish"
+    },
+    {
+      "can": false,
+      "id": "insufficient",
+      "inventory": [
+        [
+          "limestone",
+          3
+        ],
+        [
+          "light_gem",
+          2
+        ],
+        [
+          "slime_gel",
+          3
+        ],
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "ok": false,
+      "recipe": "alchemy_armor_polish"
+    },
+    {
+      "can": true,
+      "consumed": {
+        "limestone": 2,
+        "slime_gel": 1
+      },
+      "id": "partial_loss_060",
+      "inventory": [
+        [
+          "limestone",
+          3
+        ],
+        [
+          "light_gem",
+          2
+        ],
+        [
+          "slime_gel",
+          2
+        ],
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "recipe": "alchemy_armor_polish"
+    },
+    {
+      "can": true,
+      "consumed": {
+        "limestone": 1
+      },
+      "id": "partial_loss_030",
+      "inventory": [
+        [
+          "limestone",
+          4
+        ],
+        [
+          "light_gem",
+          2
+        ],
+        [
+          "slime_gel",
+          3
+        ],
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "recipe": "alchemy_armor_polish"
+    }
+  ],
+  "recipe": "alchemy_armor_polish"
+}

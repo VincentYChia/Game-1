@@ -2,7 +2,7 @@
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
     "generated": "2026-07-20",
-    "git_sha": "66794a30",
+    "git_sha": "8b0965dc",
     "source": "Combat/enemy.py Enemy runtime — scripted AI scenarios EXECUTED on real Enemy objects (seeded global rng; no world_system / statuses — those are separate certified systems)"
   },
   "ai_ids": [

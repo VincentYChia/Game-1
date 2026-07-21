@@ -37,6 +37,11 @@ public partial class CombatWorld : Node3D
     private PlayerCharacter? _pc;
     private TagAttackOrchestrator? _orch;
     private GatheringSystem? _gathering;
+    private CraftingSystem? _crafting;
+    private PythonRandom _craftRng = new(0);
+
+    /// <summary>P11: combat connects only within this height difference.</summary>
+    public const double CombatHeightGate = 2.0;
     private readonly List<EnemyRuntime> _runtimes = new();
     private readonly List<(NaturalResourceRuntime Node, Node3D Visual)> _resources = new();
     private Label? _hud;
@@ -93,10 +98,24 @@ public partial class CombatWorld : Node3D
         // Certified gathering path (titles DB for award churn)
         var titleDb = new TitleDatabase();
         titleDb.LoadFromFiles(contentRoot);
+        var recipeDb = new RecipeDatabase();
+        recipeDb.LoadFromFiles(contentRoot);
         UpdateLoader.LoadAll(contentRoot, equipDb, new SkillDatabase(),
-                             matDb, new RecipeDatabase(), titleDb);
+                             matDb, recipeDb, titleDb);
         _gathering = new GatheringSystem(_pc, titleDb,
                                          new PythonRandom(worldSeed ^ 303));
+
+        // P6 core craft loop ([C] key; performance roll = minigame seam)
+        _crafting = new CraftingSystem(_pc, recipeDb, equipDb, _gathering);
+        _craftRng = new PythonRandom(worldSeed ^ 404);
+
+        // P11 fall damage through the real take_damage
+        player.OnHardLanding = excess =>
+        {
+            var dmg = excess * 8.0;
+            _pc.TakeDamageFull(dmg, fromAttack: false);
+            _lastEvent = $"hard landing! -{dmg:F0} hp";
+        };
 
         _unarmed = _combatData.GetWeaponAttack("unarmed", weaponRange: 1.8);
         _hitboxes.RegisterHurtbox("player", 0.4);
@@ -179,6 +198,27 @@ public partial class CombatWorld : Node3D
             TryPlayerAttack();
         if (@event is InputEventKey { PhysicalKeycode: Key.E, Pressed: true, Echo: false })
             TryHarvest();
+        if (@event is InputEventKey { PhysicalKeycode: Key.C, Pressed: true, Echo: false })
+            TryCraft();
+    }
+
+    private void TryCraft()
+    {
+        if (_crafting is null) return;
+        var recipe = _crafting.CraftableRecipes()
+            .OrderBy(r => r.RecipeId, StringComparer.Ordinal).FirstOrDefault();
+        if (recipe is null)
+        {
+            _lastEvent = "nothing craftable (gather materials with [E])";
+            return;
+        }
+        // Minigame seam: performance rolled 0.4-1.0 until the 2D Control
+        // overlay minigames arrive (ADR-7)
+        var performance = 0.4 + _craftRng.NextDouble() * 0.6;
+        var result = _crafting.Craft(recipe, performance);
+        _lastEvent = result.Success
+            ? $"{result.Message} [perf {performance:F2}]"
+            : result.Message;
     }
 
     private void TryHarvest()
@@ -263,7 +303,18 @@ public partial class CombatWorld : Node3D
         // Hitbox collisions → certified enemy damage path
         foreach (var hit in _hitboxes.Update(dtMs))
         {
-            if (hit.AttackerId == "player" && _byId.TryGetValue(hit.TargetId, out var target)
+            // P11 height gate: swings can't connect across cliffs
+            var heightOk = true;
+            if (hit.AttackerId == "player" && _byId.TryGetValue(hit.TargetId, out var hTarget))
+            {
+                var enemyH = TerrainHeightField.H(hTarget.Runtime.Position[0],
+                                                  hTarget.Runtime.Position[1]);
+                heightOk = Math.Abs(_player.Position.Y - enemyH) <= CombatHeightGate;
+                if (!heightOk) _lastEvent = "too high/low to hit!";
+            }
+
+            if (heightOk && hit.AttackerId == "player"
+                && _byId.TryGetValue(hit.TargetId, out var target)
                 && target.Runtime.IsAlive && _orch is not null)
             {
                 // The CERTIFIED path: full composition + defense + loot + EXP
@@ -313,8 +364,10 @@ public partial class CombatWorld : Node3D
             if (transition == "active_start" && rt.DistanceTo(playerSim) <= rt.AttackRadius + 0.6)
             {
                 // Certified defense pipeline: DEF + armor eff + Protection +
-                // shield + fortify + min-1 + Thorns
-                if (_pc is not null)
+                // shield + fortify + min-1 + Thorns. P11: height-gated.
+                var enemyH = TerrainHeightField.H(rt.Position[0], rt.Position[1]);
+                if (_pc is not null
+                    && Math.Abs(_player.Position.Y - enemyH) <= CombatHeightGate)
                 {
                     var dmg = EnemyAttackResolver.Resolve(rt, _pc);
                     _lastEvent = $"{rt.Definition.Name} hits you for {dmg:F0}";
@@ -323,8 +376,11 @@ public partial class CombatWorld : Node3D
 
             _hitboxes.UpdateHurtboxPosition(e.EntityId,
                 rt.Position[0], rt.Position[1]);
+            // P11: enemies stand on the terrain
             e.Node.Position = new Vector3(
-                (float)rt.Position[0], 0, (float)rt.Position[1]);
+                (float)rt.Position[0],
+                TerrainHeightField.H(rt.Position[0], rt.Position[1]),
+                (float)rt.Position[1]);
 
             // Telegraph: flash red during windup
             if (e.Node.GetChild(0) is MeshInstance3D mesh

@@ -2,7 +2,7 @@
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
     "generated": "2026-07-20",
-    "git_sha": "66794a30",
+    "git_sha": "8b0965dc",
     "source": "entities/character.py harvest path + systems/natural_resource.py + combat_manager.py _enemy_attack_player — REAL objects, spec-built loadouts (specs in fixture), seeded global rng"
   },
   "enemy_hit_cases": [

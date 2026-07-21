@@ -81,6 +81,9 @@ public partial class WorldBootstrap : Node3D
                      string.Join(", ", _worldMap.Nations.Values.Select(n => n.Name)));
         }
 
+        // P11 True 3D: elevation field over the certified world
+        TerrainHeightField.Init(_worldMap, WorldSeed);
+
         BuildTerrain(biomes, mapConfig);
         BuildVillages();
         AddSun();
@@ -116,11 +119,12 @@ public partial class WorldBootstrap : Node3D
 
             foreach (var (tx, ty) in VillageGenerator.GetVillageWallTiles(v))
             {
+                var h = TerrainHeightField.H(tx + 0.5, ty + 0.5);
                 parent.AddChild(new MeshInstance3D
                 {
                     Mesh = new BoxMesh { Size = new Vector3(1f, 1.6f, 1f) },
                     MaterialOverride = wallMat,
-                    Position = new Vector3(tx + 0.5f, 0.8f, ty + 0.5f),
+                    Position = new Vector3(tx + 0.5f, h + 0.8f, ty + 0.5f),
                 });
             }
 
@@ -128,11 +132,12 @@ public partial class WorldBootstrap : Node3D
             {
                 foreach (var (tx, ty) in building)
                 {
+                    var h = TerrainHeightField.H(tx + 0.5, ty + 0.5);
                     parent.AddChild(new MeshInstance3D
                     {
                         Mesh = new BoxMesh { Size = new Vector3(1f, 1.2f, 1f) },
                         MaterialOverride = buildingMat,
-                        Position = new Vector3(tx + 0.5f, 0.6f, ty + 0.5f),
+                        Position = new Vector3(tx + 0.5f, h + 0.6f, ty + 0.5f),
                     });
                 }
             }
@@ -184,7 +189,8 @@ public partial class WorldBootstrap : Node3D
                                 : new BoxMesh { Size = new Vector3(0.8f * scale, 0.6f * scale, 0.8f * scale) },
                         MaterialOverride = isTree ? treeMat : isFish ? fishMat : rockMat,
                         Position = new Vector3(res.X + 0.5f,
-                            isTree ? 1.1f * scale : isFish ? 0.05f : 0.3f * scale,
+                            TerrainHeightField.H(res.X + 0.5, res.Y + 0.5)
+                            + (isTree ? 1.1f * scale : isFish ? 0.05f : 0.3f * scale),
                             res.Y + 0.5f),
                     };
                     parent.AddChild(mesh);
@@ -231,24 +237,35 @@ public partial class WorldBootstrap : Node3D
                     materials[chunkType] = material;
                 }
 
-                var mesh = new MeshInstance3D
+                // P11 True 3D: each chunk = 4x4 elevation quads sampled from
+                // the deterministic height field; chunk-type base steps form
+                // natural cliffs, jumpable ledges within chunks.
+                const int quad = 4;
+                for (var qy = 0; qy < ChunkSize / quad; qy++)
                 {
-                    Name = $"Chunk_{cx}_{cy}",
-                    Mesh = new BoxMesh { Size = new Vector3(ChunkSize, 1f, ChunkSize) },
-                    MaterialOverride = material,
-                    Position = new Vector3(
-                        cx * ChunkSize + ChunkSize / 2f, -0.5f,
-                        cy * ChunkSize + ChunkSize / 2f),
-                };
-                terrain.AddChild(mesh);
+                    for (var qx = 0; qx < ChunkSize / quad; qx++)
+                    {
+                        var wx = cx * ChunkSize + qx * quad + quad / 2f;
+                        var wz = cy * ChunkSize + qy * quad + quad / 2f;
+                        var h = TerrainHeightField.H(wx, wz);
+                        var boxH = h + 3f;   // solid down to y=-3
 
-                var body = new StaticBody3D();
-                var shape = new CollisionShape3D
-                {
-                    Shape = new BoxShape3D { Size = new Vector3(ChunkSize, 1f, ChunkSize) },
-                };
-                body.AddChild(shape);
-                mesh.AddChild(body);
+                        var mesh = new MeshInstance3D
+                        {
+                            Mesh = new BoxMesh { Size = new Vector3(quad, boxH, quad) },
+                            MaterialOverride = material,
+                            Position = new Vector3(wx, h - boxH / 2f, wz),
+                        };
+                        terrain.AddChild(mesh);
+
+                        var body = new StaticBody3D();
+                        body.AddChild(new CollisionShape3D
+                        {
+                            Shape = new BoxShape3D { Size = new Vector3(quad, boxH, quad) },
+                        });
+                        mesh.AddChild(body);
+                    }
+                }
             }
         }
     }
@@ -277,7 +294,11 @@ public partial class WorldBootstrap : Node3D
 
     private PlayerController AddPlayer()
     {
-        var player = new PlayerController { Name = "Player", Position = new Vector3(8, 2, 8) };
+        var player = new PlayerController
+        {
+            Name = "Player",
+            Position = new Vector3(8, TerrainHeightField.H(8, 8) + 2f, 8),
+        };
 
         var capsule = new MeshInstance3D
         {

@@ -2,7 +2,7 @@
   "_meta": {
     "doctrine": "dumped from the live Python loaders after the boot sequence",
     "generated": "2026-07-20",
-    "git_sha": "66794a30",
+    "git_sha": "8b0965dc",
     "source": "Combat/attack_state_machine.py + hitbox_system.py + projectile_system.py + combat_data_loader.py — scripted scenarios EXECUTED through the real classes"
   },
   "enemy_attack_select_seed_991": {

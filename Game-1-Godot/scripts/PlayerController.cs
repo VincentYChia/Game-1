@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 namespace Game1.Godot;
@@ -11,6 +12,17 @@ public partial class PlayerController : CharacterBody3D
 {
     [Export] public float MoveSpeed { get; set; } = 6.0f;
     [Export] public float SprintMultiplier { get; set; } = 1.6f;
+
+    /// <summary>P11: jump velocity (~2.2-tile apex under gravity 24).</summary>
+    [Export] public float JumpVelocity { get; set; } = 10.0f;
+
+    /// <summary>P11 fall damage: called with the fall distance in tiles when
+    /// landing from higher than the safe threshold.</summary>
+    public Action<float>? OnHardLanding;
+    public const float SafeFallTiles = 3.0f;
+
+    private bool _wasAirborne;
+    private float _peakY;
 
     public override void _PhysicsProcess(double delta)
     {
@@ -43,7 +55,30 @@ public partial class PlayerController : CharacterBody3D
         var velocity = Velocity;
         velocity.X = direction.X * speed;
         velocity.Z = direction.Z * speed;
-        velocity.Y = IsOnFloor() ? 0 : velocity.Y - 24f * (float)delta;
+
+        // P11: jump + gravity + fall tracking
+        if (IsOnFloor())
+        {
+            if (_wasAirborne)
+            {
+                var drop = _peakY - Position.Y;
+                if (drop > SafeFallTiles)
+                    OnHardLanding?.Invoke(drop - SafeFallTiles);
+                _wasAirborne = false;
+            }
+            velocity.Y = Input.IsPhysicalKeyPressed(Key.Space) ? JumpVelocity : 0;
+        }
+        else
+        {
+            if (!_wasAirborne)
+            {
+                _wasAirborne = true;
+                _peakY = Position.Y;
+            }
+            _peakY = Math.Max(_peakY, Position.Y);
+            velocity.Y -= 24f * (float)delta;
+        }
+
         Velocity = velocity;
         MoveAndSlide();
     }

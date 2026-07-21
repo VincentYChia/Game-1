@@ -2534,6 +2534,64 @@ def dump_all(dbs: dict) -> None:
         "enemy_hit_results": enemy_hit_rows,
     })
 
+    # ── P6: recipe consume semantics — REAL recipe_db against real Inventory
+    from data.databases.recipe_db import RecipeDatabase as _RecipeDb
+    recipe_db = _RecipeDb.get_instance()
+
+    def inv_rows(inv):
+        return [([s.item_id, s.quantity] if s else None) for s in inv.slots]
+
+    CONSUME_CASES = [
+        {"id": "simple"},
+        {"id": "split_slots"},
+        {"id": "insufficient"},
+        {"id": "partial_loss_060", "partial": 0.6},
+        {"id": "partial_loss_030", "partial": 0.3},
+    ]
+
+    # pick a real recipe deterministically (first sorted with >=2 inputs)
+    real_rid = next(rid for rid in sorted(recipe_db.recipes)
+                    if len(recipe_db.recipes[rid].inputs) >= 2)
+    consume_rows = []
+    for case in CONSUME_CASES:
+        recipe = recipe_db.recipes[real_rid]
+        # give the inventory the recipe's ACTUAL inputs (case items are
+        # placeholders; use real input ids at the case quantities pattern)
+        inv2 = build_attack_char({}).inventory
+        for idx, inp in enumerate(recipe.inputs):
+            mat = inp.get('materialId') or inp.get('itemId') or ''
+            need = inp.get('quantity', 0)
+            if case["id"] == "insufficient" and idx == 0:
+                if need > 1:
+                    inv2.add_item(mat, need - 1)
+            elif case["id"] == "split_slots":
+                # split across two adds forcing separate stacks via loop
+                half = max(1, need // 2)
+                inv2.add_item(mat, half)
+                inv2.add_item(mat, need - half + 1)   # +1 leftover
+            else:
+                inv2.add_item(mat, need + 1)          # +1 leftover
+        can = recipe_db.can_craft(recipe, inv2)
+        if "partial" in case:
+            consumed = recipe_db.consume_materials_partial(
+                recipe, inv2, case["partial"])
+            consume_rows.append({"id": case["id"], "recipe": real_rid,
+                                 "can": can, "consumed": consumed,
+                                 "inventory": inv_rows(inv2)})
+        else:
+            ok = recipe_db.consume_materials(recipe, inv2)
+            consume_rows.append({"id": case["id"], "recipe": real_rid,
+                                 "can": can, "ok": ok,
+                                 "inventory": inv_rows(inv2)})
+
+    write("recipe_consume.json", {
+        "_meta": meta("data/databases/recipe_db.py can_craft + "
+                      "consume_materials(+partial) — REAL recipe + real "
+                      "Inventory mutation semantics"),
+        "recipe": real_rid,
+        "cases": consume_rows,
+    })
+
     write("translations.json", {
         "_meta": meta("data/databases/translation_db.py"),
         "mana_costs": dbs["translations"].mana_costs,
