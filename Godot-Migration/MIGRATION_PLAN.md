@@ -387,6 +387,23 @@ Godot once so it generates its solution glue.
   NEXT: crux scenario gate (all combat systems now bilingual), P6
   crafting, P11 True 3D.
 
+- **2026-07-20 #2 (P6 CORE + P11 TRUE 3D — PLAYTEST BUILD) — suite 90/90,
+  commit ce716eef.** P6: RecipeCrafting consume semantics exact (oracle
+  first-run green; duplicate-input overwrite quirk, slot sweeps,
+  int-truncated partial failure loss) + CraftingSystem running the
+  _complete_minigame success path on certified calculators/materialization.
+  DECLARED BOUNDARY: per-discipline crafter stat-rolls + the six 2D
+  minigame overlays = next parity tranche ([C] uses a rolled performance
+  0.4-1.0 as the minigame seam). P11 (the required final scope) SHIPPED:
+  deterministic TerrainHeightField over the certified world, quad-based
+  height terrain with real colliders (chunk-border cliffs), SPACE jump,
+  fall damage through the real take_damage, enemies/villages/resources on
+  the terrain, combat height-gated both directions. Sim stays planar per
+  ADR-6; verticality is presentation + 3D-necessitated rules with no
+  Python oracle by design. CONTROLS: WASD+Shift move, SPACE jump,
+  right-drag orbit, wheel zoom, LMB attack, [E] gather, [C] craft.
+  AWAITING USER PLAYTEST NOTES.
+
 ## 7a. Parked — DO NOT FORGET
 
 | Item | Why parked | Unblock |
