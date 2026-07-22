@@ -6,16 +6,19 @@ namespace Game1.Godot;
 /// <summary>
 /// Inventory + equipment popup ([I] or [Tab]; [Esc] closes). Renders the
 /// CERTIFIED Inventory (30 slots) and EquipmentManager — presentation only.
-/// Click a slot to pick its stack up, click another to place/merge/swap:
-/// all semantics are the Core StartDrag/EndDrag port, not UI logic.
+/// Left-click a slot to pick up / place / merge / swap (Core StartDrag/
+/// EndDrag semantics). Right-click an equipment item to EQUIP it through the
+/// certified Equip path (requirement checks, hand-type matrix). Click an
+/// equipped row to unequip back to the inventory.
 /// </summary>
 public partial class InventoryScreen : CanvasLayer
 {
     private readonly CombatWorld _combat;
     private Control _root = null!;
     private readonly List<Button> _slotButtons = new();
-    private Label _equipList = null!;
+    private readonly Dictionary<string, Button> _equipButtons = new();
     private Label _dragLabel = null!;
+    private Label _status = null!;
     private double _refresh;
     private bool _open;
 
@@ -52,9 +55,13 @@ public partial class InventoryScreen : CanvasLayer
             margin.AddThemeConstantOverride($"margin_{side}", 18);
         panel.AddChild(margin);
 
+        var outer = new VBoxContainer();
+        outer.AddThemeConstantOverride("separation", 8);
+        margin.AddChild(outer);
+
         var columns = new HBoxContainer();
         columns.AddThemeConstantOverride("separation", 24);
-        margin.AddChild(columns);
+        outer.AddChild(columns);
 
         // -- inventory grid --
         var invBox = new VBoxContainer();
@@ -78,25 +85,54 @@ public partial class InventoryScreen : CanvasLayer
             };
             btn.AddThemeFontSizeOverride("font_size", 14);
             btn.Pressed += () => OnSlotClicked(idx);
+            btn.GuiInput += ev =>
+            {
+                if (ev is InputEventMouseButton
+                    { ButtonIndex: MouseButton.Right, Pressed: true })
+                    OnSlotRightClicked(idx);
+            };
             grid.AddChild(btn);
             _slotButtons.Add(btn);
         }
 
         var hint = new Label
-        { Text = "click: pick up / place / merge / swap   ·   [I] close" };
+        {
+            Text = "left-click: pick up / place / merge / swap   ·   "
+                   + "right-click: equip   ·   [I] close",
+        };
         hint.AddThemeFontSizeOverride("font_size", 14);
         hint.Modulate = new Color(1, 1, 1, 0.6f);
         invBox.AddChild(hint);
 
-        // -- equipment column --
-        var eqBox = new VBoxContainer { CustomMinimumSize = new Vector2(280, 0) };
+        // -- equipment column: one button per certified slot --
+        var eqBox = new VBoxContainer { CustomMinimumSize = new Vector2(320, 0) };
         columns.AddChild(eqBox);
-        var eqTitle = new Label { Text = "Equipment" };
+        var eqTitle = new Label { Text = "Equipment  (click to unequip)" };
         eqTitle.AddThemeFontSizeOverride("font_size", 26);
         eqBox.AddChild(eqTitle);
-        _equipList = new Label { Text = "" };
-        _equipList.AddThemeFontSizeOverride("font_size", 16);
-        eqBox.AddChild(_equipList);
+
+        if (_combat.Pc is { } pc)
+        {
+            foreach (var slot in pc.Equipment.Slots.Keys)
+            {
+                var captured = slot;
+                var btn = new Button
+                {
+                    Text = $"{slot}: —",
+                    Alignment = HorizontalAlignment.Left,
+                    ClipText = true,
+                };
+                btn.AddThemeFontSizeOverride("font_size", 15);
+                btn.Pressed += () => OnUnequip(captured);
+                eqBox.AddChild(btn);
+                _equipButtons[slot] = btn;
+            }
+        }
+
+        _status = new Label { Text = "" };
+        _status.AddThemeFontSizeOverride("font_size", 15);
+        _status.Modulate = new Color(1f, 0.9f, 0.6f);
+        outer.AddChild(_status);
 
         // stack-in-hand follows the mouse
         _dragLabel = new Label { Visible = false, ZIndex = 100 };
@@ -120,6 +156,7 @@ public partial class InventoryScreen : CanvasLayer
         _open = !_open;
         _root.Visible = _open;
         UiHub.OpenScreens += _open ? 1 : -1;
+        _status.Text = "";
         if (_open) Refresh();
         else _combat.Pc?.Inventory.CancelDrag();
     }
@@ -153,6 +190,47 @@ public partial class InventoryScreen : CanvasLayer
         Refresh();
     }
 
+    private void OnSlotRightClicked(int index)
+    {
+        var pc = _combat.Pc;
+        if (pc is null || pc.Inventory.DraggingStack is not null) return;
+        var stack = pc.Inventory.Slots[index];
+        if (stack?.EquipmentData is not { } item)
+        {
+            if (stack is not null) _status.Text = $"{DisplayName(stack)}: not equippable";
+            return;
+        }
+
+        // The certified path: requirement checks + hand-type matrix
+        var (oldItem, reason) = pc.Equipment.Equip(item, pc);
+        if (reason != "OK")
+        {
+            _status.Text = reason;
+            return;
+        }
+        pc.Inventory.Slots[index] = null;
+        if (oldItem is not null)
+            pc.Inventory.AddItem(oldItem.ItemId, 1, equipmentInstance: oldItem);
+        _status.Text = $"equipped {item.Name} → {item.Slot}";
+        Refresh();
+    }
+
+    private void OnUnequip(string slot)
+    {
+        var pc = _combat.Pc;
+        if (pc is null) return;
+        var item = pc.Equipment.Unequip(slot);
+        if (item is null) return;
+        if (!pc.Inventory.AddItem(item.ItemId, 1, equipmentInstance: item))
+        {
+            pc.Equipment.Equip(item, pc);   // inventory full → revert
+            _status.Text = "inventory full";
+            return;
+        }
+        _status.Text = $"unequipped {item.Name}";
+        Refresh();
+    }
+
     private void Refresh()
     {
         var pc = _combat.Pc;
@@ -176,13 +254,13 @@ public partial class InventoryScreen : CanvasLayer
                 RarityColors.GetValueOrDefault(stack.Rarity, RarityColors["common"]));
         }
 
-        var lines = pc.Equipment.Slots
-            .Select(kv => kv.Value is { } item
-                ? $"{kv.Key,-10}  {item.Name}  ({item.DurabilityCurrent:F0}/{item.DurabilityMax})"
-                : $"{kv.Key,-10}  —");
-        _equipList.Text = string.Join("\n", lines)
-            + $"\n\nHP {pc.Health:F0}/{pc.MaxHealthValue:F0}"
-            + $"\nLevel {pc.Leveling.Level}  ·  {pc.Leveling.CurrentExp} exp";
+        foreach (var (slot, btn) in _equipButtons)
+        {
+            var item = pc.Equipment.Slots.GetValueOrDefault(slot);
+            btn.Text = item is null
+                ? $"{slot}: —"
+                : $"{slot}: {item.Name}  ({item.DurabilityCurrent:F0}/{item.DurabilityMax})";
+        }
     }
 
     private string DisplayName(ItemStack stack) =>

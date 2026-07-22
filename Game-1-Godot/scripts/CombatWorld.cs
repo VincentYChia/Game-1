@@ -14,6 +14,16 @@ namespace Game1.Godot;
 /// This node is glue only — every rule it executes is covered by the
 /// conformance suite; presentation maps sim (x, y) → world (x, 0, z).
 /// </summary>
+/// <summary>A clickable villager placed from the certified village layouts.</summary>
+public sealed class LiveNpc
+{
+    public required Node3D Node;
+    public required string Name;
+    public required string Role;
+    public required string VillageName;
+    public required string NationName;
+}
+
 public partial class CombatWorld : Node3D
 {
     private sealed class LiveEnemy
@@ -21,6 +31,7 @@ public partial class CombatWorld : Node3D
         public required EnemyRuntime Runtime;
         public required Node3D Node;
         public required string EntityId;
+        public required Label3D Label;
         public bool CorpseShown;
         public double FlashUntil;   // white hit-flash window (FxManager era)
     }
@@ -42,11 +53,20 @@ public partial class CombatWorld : Node3D
     private PythonRandom _craftRng = new(0);
     private FxManager? _fx;
     private MaterialDatabase? _matDb;
+    private RecipeDatabase? _recipeDb;
     private double _now;
+    private readonly List<LiveNpc> _npcs = new();
+    private Label3D? _prompt;   // single shared "what would I interact with" label
+    private const double MeleeReach = 1.8;   // matches the unarmed weaponRange
 
     /// <summary>UI screens read the certified character (inventory/equipment).</summary>
     public PlayerCharacter? Pc => _pc;
     public MaterialDatabase? MaterialDb => _matDb;
+    public CraftingSystem? Crafting => _crafting;
+    public RecipeDatabase? RecipeDb => _recipeDb;
+    public DialogueScreen? Dialogue { get; set; }
+
+    public void RegisterNpc(LiveNpc npc) => _npcs.Add(npc);
 
     /// <summary>P11: combat connects only within this height difference.</summary>
     public const double CombatHeightGate = 2.0;
@@ -111,6 +131,7 @@ public partial class CombatWorld : Node3D
         titleDb.LoadFromFiles(contentRoot);
         var recipeDb = new RecipeDatabase();
         recipeDb.LoadFromFiles(contentRoot);
+        _recipeDb = recipeDb;
         UpdateLoader.LoadAll(contentRoot, equipDb, new SkillDatabase(),
                              matDb, recipeDb, titleDb);
         _gathering = new GatheringSystem(_pc, titleDb,
@@ -158,7 +179,7 @@ public partial class CombatWorld : Node3D
                 if (pool is null || pool.Count == 0) continue;
 
                 var count = _rng.RandInt(1, 3);
-                for (var i = 0; i < count && spawned < 60; i++)
+                for (var i = 0; i < count && spawned < 150; i++)
                 {
                     var def = _rng.Choice(pool);
                     var ex = cx * 16 + (double)_rng.RandInt(2, 13);
@@ -190,11 +211,24 @@ public partial class CombatWorld : Node3D
             Position = new Vector3(0, 0.6f * size, 0),
         });
         node.Position = new Vector3((float)pos.X, 0, (float)pos.Y);
+
+        // Name + HP readout above the head (the game's enemy nameplates)
+        var label = new Label3D
+        {
+            Text = def.Name,
+            FontSize = 40,
+            OutlineSize = 12,
+            Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+            NoDepthTest = true,
+            Position = new Vector3(0, 1.2f * size + 0.55f, 0),
+        };
+        node.AddChild(label);
         AddChild(node);
 
         _hitboxes.RegisterHurtbox(entityId, runtime.HurtboxRadius);
 
-        var live = new LiveEnemy { Runtime = runtime, Node = node, EntityId = entityId };
+        var live = new LiveEnemy
+        { Runtime = runtime, Node = node, EntityId = entityId, Label = label };
         _enemies.Add(live);
         _runtimes.Add(runtime);
         _byId[entityId] = live;
@@ -208,26 +242,18 @@ public partial class CombatWorld : Node3D
     public override void _UnhandledInput(InputEvent @event)
     {
         if (UiHub.ScreenOpen) return;   // popup screens swallow world input
-        if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
-            TryPlayerAttack();
+        if (@event is InputEventMouseButton
+            { ButtonIndex: MouseButton.Left, Pressed: true } click)
+            TryClickAction(click.Position);
         if (@event is InputEventKey { PhysicalKeycode: Key.E, Pressed: true, Echo: false })
             TryHarvest();
-        if (@event is InputEventKey { PhysicalKeycode: Key.C, Pressed: true, Echo: false })
-            TryCraft();
     }
 
-    private void TryCraft()
+    /// <summary>CraftingScreen entry: certified craft with the rolled
+    /// performance (minigame seam per ADR-7, until the overlays land).</summary>
+    public CraftResult? CraftRecipe(Recipe recipe)
     {
-        if (_crafting is null) return;
-        var recipe = _crafting.CraftableRecipes()
-            .OrderBy(r => r.RecipeId, StringComparer.Ordinal).FirstOrDefault();
-        if (recipe is null)
-        {
-            _lastEvent = "nothing craftable (gather materials with [E])";
-            return;
-        }
-        // Minigame seam: performance rolled 0.4-1.0 until the 2D Control
-        // overlay minigames arrive (ADR-7)
+        if (_crafting is null) return null;
         var performance = 0.4 + _craftRng.NextDouble() * 0.6;
         var result = _crafting.Craft(recipe, performance);
         _lastEvent = result.Success
@@ -236,13 +262,92 @@ public partial class CombatWorld : Node3D
         if (result.Success && _player is not null)
             _fx?.FloatText(_player.GlobalPosition, result.Message,
                 new Color(0.5f, 1f, 0.55f), 0.8f);
+        return result;
+    }
+
+    /// <summary>Unified LMB: ray-picks NPCs / resources / enemies (nearest
+    /// along the ray) — talk, gather, or attack. Empty click swings at air.</summary>
+    private void TryClickAction(Vector2 mousePos)
+    {
+        if (_player is null || _unarmed is null || _pc is null) return;
+        var camera = GetViewport().GetCamera3D();
+        if (camera is null) return;
+
+        var origin = camera.ProjectRayOrigin(mousePos);
+        var dir = camera.ProjectRayNormal(mousePos);
+
+        LiveEnemy? hitEnemy = null;
+        (NaturalResourceRuntime Node, Node3D Visual)? hitRes = null;
+        LiveNpc? hitNpc = null;
+        var bestT = 80f;
+
+        foreach (var e in _enemies)
+        {
+            if (!e.Runtime.IsAlive) continue;
+            var size = (float)e.Runtime.Definition.VisualSize;
+            var center = e.Node.GlobalPosition + new Vector3(0, 0.6f * size, 0);
+            if (RayHit(origin, dir, center, 0.45f * size + 0.35f) is { } t && t < bestT)
+            { bestT = t; hitEnemy = e; hitRes = null; hitNpc = null; }
+        }
+        foreach (var r in _resources)
+        {
+            if (r.Node.Depleted) continue;
+            if (RayHit(origin, dir, r.Visual.GlobalPosition, 1.0f) is { } t && t < bestT)
+            { bestT = t; hitRes = r; hitEnemy = null; hitNpc = null; }
+        }
+        foreach (var n in _npcs)
+        {
+            var center = n.Node.GlobalPosition + new Vector3(0, 0.9f, 0);
+            if (RayHit(origin, dir, center, 0.8f) is { } t && t < bestT)
+            { bestT = t; hitNpc = n; hitEnemy = null; hitRes = null; }
+        }
+
+        if (hitNpc is not null)
+        {
+            var d = hitNpc.Node.GlobalPosition.DistanceTo(_player.GlobalPosition);
+            if (d <= _pc.InteractionRange + 1.0) Dialogue?.Open(hitNpc);
+            else _lastEvent = $"too far to talk to {hitNpc.Name}";
+            return;
+        }
+        if (hitRes is { } res)
+        {
+            HarvestNode(res.Node, res.Visual);
+            return;
+        }
+
+        // Enemy or air: face the click, then the certified swing/hitbox path
+        var playerSim = (X: (double)_player.Position.X, Y: (double)_player.Position.Z);
+        var aim = hitEnemy is not null
+            ? hitEnemy.Node.GlobalPosition - _player.GlobalPosition
+            : dir;
+        _playerFacingDeg = PyMath.Degrees(Math.Atan2(aim.Z, aim.X));
+
+        if (hitEnemy is not null)
+        {
+            var reach = MeleeReach + hitEnemy.Runtime.HurtboxRadius + 0.5;
+            if (hitEnemy.Runtime.DistanceTo(playerSim) > reach)
+            {
+                _lastEvent = $"{hitEnemy.Runtime.Definition.Name}: out of reach";
+                return;
+            }
+        }
+        if (_playerAttack.StartAttack(_unarmed, new Dictionary<string, object?>()))
+            _lastEvent = "swing!";
+    }
+
+    private static float? RayHit(Vector3 origin, Vector3 dir, Vector3 center,
+                                 float radius)
+    {
+        var to = center - origin;
+        var t = to.Dot(dir);
+        if (t < 0.5f || t > 80f) return null;
+        return (to - dir * t).Length() <= radius ? t : null;
     }
 
     private void TryHarvest()
     {
-        if (_pc is null || _gathering is null || _player is null) return;
+        if (_pc is null || _player is null) return;
         var playerSim = (X: (double)_player.Position.X, Y: (double)_player.Position.Z);
-        _pc.SetPositionXY(playerSim.X, playerSim.Y);
 
         NaturalResourceRuntime? nearest = null;
         Node3D? nearestVis = null;
@@ -259,56 +364,57 @@ public partial class CombatWorld : Node3D
                 nearestVis = visual;
             }
         }
-        if (nearest is null || nearestDist > _pc.InteractionRange)
+        if (nearest is null || nearestVis is null
+            || nearestDist > _pc.InteractionRange)
         {
             _lastEvent = "no resource in range";
             return;
         }
+        HarvestNode(nearest, nearestVis);
+    }
+
+    private void HarvestNode(NaturalResourceRuntime node, Node3D visual)
+    {
+        if (_pc is null || _gathering is null || _player is null) return;
+        var playerSim = (X: (double)_player.Position.X, Y: (double)_player.Position.Z);
+        _pc.SetPositionXY(playerSim.X, playerSim.Y);
+
+        var dist = node.Position.DistanceTo(new Game1.Core.World.Position(
+            playerSim.X, playerSim.Y, 0));
+        if (dist > _pc.InteractionRange)
+        {
+            _lastEvent = $"{Prettify(node.ResourceType)}: too far away";
+            return;
+        }
 
         var allNodes = _resources.Select(r => r.Node).ToList();
-        var result = _gathering.HarvestResource(nearest, allNodes);
-        if (nearestVis is not null) _fx?.PunchScale(nearestVis, 1.12f);
+        var result = _gathering.HarvestResource(node, allNodes);
+        _fx?.PunchScale(visual, 1.12f);
         if (result is { } r)
         {
-            _lastEvent = $"harvested {nearest.ResourceType}: " + string.Join(", ",
+            _lastEvent = $"harvested {node.ResourceType}: " + string.Join(", ",
                 r.Loot.Select(l => $"{l.Qty}x {l.ItemId}")) + (r.Crit ? " CRIT!" : "");
-            if (nearestVis is not null)
-                _fx?.FloatText(nearestVis.GlobalPosition,
-                    string.Join("\n", r.Loot.Select(l => $"+{l.Qty} {l.ItemId}")),
-                    new Color(0.5f, 1f, 0.55f), r.Crit ? FxManager.CritScale * 0.6f : 0.8f);
+            _fx?.FloatText(visual.GlobalPosition,
+                string.Join("\n", r.Loot.Select(l => $"+{l.Qty} {Prettify(l.ItemId)}")),
+                new Color(0.5f, 1f, 0.55f), r.Crit ? FxManager.CritScale * 0.6f : 0.8f);
         }
         else
         {
-            var (ok, reason) = _gathering.CanHarvestResource(nearest);
+            var (ok, reason) = _gathering.CanHarvestResource(node);
             _lastEvent = ok
-                ? $"chopping {nearest.ResourceType} ({nearest.CurrentHp:F0}/{nearest.MaxHp:F0})"
+                ? $"chopping {node.ResourceType} ({node.CurrentHp:F0}/{node.MaxHp:F0})"
                 : reason;
-            if (ok && nearestVis is not null)
-                _fx?.FloatText(nearestVis.GlobalPosition,
-                    $"{nearest.CurrentHp:F0}/{nearest.MaxHp:F0}",
+            if (ok)
+                _fx?.FloatText(visual.GlobalPosition,
+                    $"{node.CurrentHp:F0}/{node.MaxHp:F0}",
                     new Color(1f, 1f, 1f, 0.85f), 0.6f);
         }
     }
 
-    private void TryPlayerAttack()
-    {
-        if (_player is null || _unarmed is null) return;
-
-        // Facing from the camera's flattened forward, mapped to sim angle
-        var camera = GetViewport().GetCamera3D();
-        if (camera is not null)
-        {
-            var fwd = -camera.GlobalTransform.Basis.Z;
-            _playerFacingDeg = PyMath.Degrees(Math.Atan2(fwd.Z, fwd.X));
-        }
-
-        if (_playerAttack.StartAttack(_unarmed, new Dictionary<string, object?>()))
-        {
-            _lastEvent = "swing!";
-            if (_player is not null)
-                _fx?.SwingArc(_player.GlobalPosition, _playerFacingDeg);
-        }
-    }
+    /// <summary>"iron_deposit" → "Iron Deposit" for player-facing text.</summary>
+    public static string Prettify(string id) =>
+        string.Join(" ", id.Split('_', StringSplitOptions.RemoveEmptyEntries)
+            .Select(w => char.ToUpperInvariant(w[0]) + w[1..]));
 
     public override void _PhysicsProcess(double delta)
     {
@@ -396,6 +502,7 @@ public partial class CombatWorld : Node3D
                 if (!e.CorpseShown)
                 {
                     e.CorpseShown = true;
+                    e.Label.Visible = false;
                     if (e.Node.GetChild(0) is MeshInstance3D m)
                         m.MaterialOverride = new StandardMaterial3D
                         { AlbedoColor = new Color(0.3f, 0.3f, 0.3f) };
@@ -403,6 +510,11 @@ public partial class CombatWorld : Node3D
                 }
                 continue;
             }
+
+            // Nameplate: name + HP, whitening → red as health drops
+            var hpFrac = (float)Math.Clamp(rt.CurrentHealth / rt.MaxHealth, 0, 1);
+            e.Label.Text = $"{rt.Definition.Name}\n{rt.CurrentHealth:F0}/{rt.MaxHealth:F0}";
+            e.Label.Modulate = new Color(1f, 0.35f + 0.65f * hpFrac, 0.3f + 0.7f * hpFrac);
 
             if (rt.CanAttack() && rt.DistanceTo(playerSim) <= 1.5)
                 rt.StartPhasedAttack(playerSim);
@@ -460,14 +572,74 @@ public partial class CombatWorld : Node3D
                 visual.Visible = true;   // respawned this frame
         }
 
+        UpdateInteractionPrompt();
+
         if (_hud is not null && _pc is not null)
         {
             var alive = _enemies.Count(x => x.Runtime.IsAlive);
             _hud.Text = $"HP {(int)_pc.Health}/{(int)_pc.MaxHealthValue}   " +
                         $"Lv {_pc.Leveling.Level} ({_pc.Leveling.CurrentExp} exp)   " +
                         $"enemies {alive}/{_enemies.Count}   " +
-                        $"[E] gather  [C] craft  [I] inventory  [M] map   {_lastEvent}";
+                        $"click: attack/gather/talk  [C] craft  [I] inventory  [M] map   " +
+                        $"{_lastEvent}";
         }
+    }
+
+    /// <summary>One shared floating hint over whatever is in interaction
+    /// range — tells the player the world is clickable.</summary>
+    private void UpdateInteractionPrompt()
+    {
+        if (_player is null || _pc is null) return;
+        _prompt ??= CreatePrompt();
+
+        var pos = _player.GlobalPosition;
+        string? text = null;
+        Vector3 at = default;
+        var best = _pc.InteractionRange;
+
+        foreach (var (node, visual) in _resources)
+        {
+            if (node.Depleted) continue;
+            var d = visual.GlobalPosition.DistanceTo(pos);
+            if (d < best)
+            {
+                best = d;
+                text = $"{Prettify(node.ResourceType)} (T{node.Tier})\nclick to gather";
+                at = visual.GlobalPosition + new Vector3(0, 1.6f, 0);
+            }
+        }
+        foreach (var n in _npcs)
+        {
+            var d = n.Node.GlobalPosition.DistanceTo(pos);
+            if (d < best)
+            {
+                best = d;
+                text = $"{n.Name}\nclick to talk";
+                at = n.Node.GlobalPosition + new Vector3(0, 2.2f, 0);
+            }
+        }
+
+        _prompt.Visible = text is not null;
+        if (text is not null)
+        {
+            _prompt.Text = text;
+            _prompt.GlobalPosition = at;
+        }
+    }
+
+    private Label3D CreatePrompt()
+    {
+        var prompt = new Label3D
+        {
+            FontSize = 34,
+            OutlineSize = 10,
+            Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+            NoDepthTest = true,
+            Modulate = new Color(1f, 1f, 0.75f),
+            Visible = false,
+        };
+        AddChild(prompt);
+        return prompt;
     }
 
     private void BuildHud()

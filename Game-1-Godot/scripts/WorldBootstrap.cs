@@ -93,12 +93,17 @@ public partial class WorldBootstrap : Node3D
         var combat = new CombatWorld { Name = "CombatWorld" };
         AddChild(combat);
         combat.Build(root, WorldSeed, biomes, chunkGen, player,
-                     enemyChunkRadius: 4, worldMap: _worldMap);
+                     enemyChunkRadius: 8, worldMap: _worldMap);
         BuildResources(biomes, chunkGen, resourceDb, combat);
+        BuildNpcs(combat);
 
-        // Popup screens ([I] inventory, [M] map) over the certified state
+        // Popup screens over the certified state
         AddChild(new InventoryScreen(combat) { Name = "InventoryScreen" });
         AddChild(new MapScreen(_worldMap, _villages, player) { Name = "MapScreen" });
+        AddChild(new CraftingScreen(combat) { Name = "CraftingScreen" });
+        var dialogue = new DialogueScreen { Name = "DialogueScreen" };
+        AddChild(dialogue);
+        combat.Dialogue = dialogue;
 
         GD.Print($"World built: seed {WorldSeed}, {(ChunkRadius * 2 + 1) * (ChunkRadius * 2 + 1)} chunks");
     }
@@ -149,6 +154,63 @@ public partial class WorldBootstrap : Node3D
         }
         if (rendered > 0)
             GD.Print($"Villages in view: {rendered}");
+    }
+
+    /// <summary>Clickable villagers at the certified NPC positions of every
+    /// in-range village (name labels; dialogue via CombatWorld click-pick).</summary>
+    private void BuildNpcs(CombatWorld combat)
+    {
+        if (_villages.Count == 0) return;
+        var parent = new Node3D { Name = "Npcs" };
+        AddChild(parent);
+        var npcMat = new StandardMaterial3D
+        { AlbedoColor = new Color(0.9f, 0.75f, 0.55f) };
+        var placed = 0;
+
+        foreach (var v in _villages)
+        {
+            var inRange = v.Chunks.Any(c =>
+                Math.Abs(c.X) <= ChunkRadius && Math.Abs(c.Y) <= ChunkRadius);
+            if (!inRange) continue;
+
+            for (var i = 0; i < v.NpcPositions.Count; i++)
+            {
+                var (nx, ny) = v.NpcPositions[i];
+                var tmpl = i < v.NpcTemplates.Count ? v.NpcTemplates[i] : null;
+                var npcName = tmpl?["name"]?.GetValue<string>() ?? "Villager";
+                var h = TerrainHeightField.H(nx + 0.5, ny + 0.5);
+
+                var node = new Node3D
+                { Position = new Vector3(nx + 0.5f, h, ny + 0.5f) };
+                node.AddChild(new MeshInstance3D
+                {
+                    Mesh = new CapsuleMesh { Radius = 0.3f, Height = 1.6f },
+                    MaterialOverride = npcMat,
+                    Position = new Vector3(0, 0.8f, 0),
+                });
+                node.AddChild(new Label3D
+                {
+                    Text = npcName,
+                    FontSize = 36,
+                    OutlineSize = 10,
+                    Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+                    Position = new Vector3(0, 2.0f, 0),
+                });
+                parent.AddChild(node);
+
+                combat.RegisterNpc(new LiveNpc
+                {
+                    Node = node,
+                    Name = npcName,
+                    Role = npcName,
+                    VillageName = v.Name,
+                    NationName = string.IsNullOrEmpty(v.Nation)
+                        ? "frontier" : v.Nation,
+                });
+                placed++;
+            }
+        }
+        if (placed > 0) GD.Print($"NPCs placed: {placed}");
     }
 
     /// <summary>Certified per-chunk resource spawns rendered as simple 3D
