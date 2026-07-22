@@ -22,6 +22,7 @@ public partial class CombatWorld : Node3D
         public required Node3D Node;
         public required string EntityId;
         public bool CorpseShown;
+        public double FlashUntil;   // white hit-flash window (FxManager era)
     }
 
     private readonly HitboxSystem _hitboxes = new();
@@ -39,6 +40,13 @@ public partial class CombatWorld : Node3D
     private GatheringSystem? _gathering;
     private CraftingSystem? _crafting;
     private PythonRandom _craftRng = new(0);
+    private FxManager? _fx;
+    private MaterialDatabase? _matDb;
+    private double _now;
+
+    /// <summary>UI screens read the certified character (inventory/equipment).</summary>
+    public PlayerCharacter? Pc => _pc;
+    public MaterialDatabase? MaterialDb => _matDb;
 
     /// <summary>P11: combat connects only within this height difference.</summary>
     public const double CombatHeightGate = 2.0;
@@ -67,6 +75,8 @@ public partial class CombatWorld : Node3D
     {
         _player = player;
         _rng = new PythonRandom(worldSeed ^ 0x5DEECE66D);
+        _fx = new FxManager { Name = "Fx" };
+        AddChild(_fx);
 
         var enemyDb = new EnemyDatabase();
         enemyDb.LoadFromFiles(contentRoot);
@@ -83,6 +93,7 @@ public partial class CombatWorld : Node3D
             var p = System.IO.Path.Combine(contentRoot, "items.JSON", f);
             if (File.Exists(p)) equipDb.LoadFromFile(p);
         }
+        _matDb = matDb;
         _pc = new PlayerCharacter(new CharacterStats(scaling),
                                   new Inventory(matDb, equipDb, 30), (8.0, 8.0))
         { Health = 100, MaxHealthValue = 100 };
@@ -115,6 +126,8 @@ public partial class CombatWorld : Node3D
             var dmg = excess * 8.0;
             _pc.TakeDamageFull(dmg, fromAttack: false);
             _lastEvent = $"hard landing! -{dmg:F0} hp";
+            _fx?.FloatText(player.GlobalPosition, $"-{dmg:F0}",
+                new Color(1f, 0.25f, 0.2f));
         };
 
         _unarmed = _combatData.GetWeaponAttack("unarmed", weaponRange: 1.8);
@@ -194,6 +207,7 @@ public partial class CombatWorld : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (UiHub.ScreenOpen) return;   // popup screens swallow world input
         if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
             TryPlayerAttack();
         if (@event is InputEventKey { PhysicalKeycode: Key.E, Pressed: true, Echo: false })
@@ -219,6 +233,9 @@ public partial class CombatWorld : Node3D
         _lastEvent = result.Success
             ? $"{result.Message} [perf {performance:F2}]"
             : result.Message;
+        if (result.Success && _player is not null)
+            _fx?.FloatText(_player.GlobalPosition, result.Message,
+                new Color(0.5f, 1f, 0.55f), 0.8f);
     }
 
     private void TryHarvest()
@@ -228,8 +245,9 @@ public partial class CombatWorld : Node3D
         _pc.SetPositionXY(playerSim.X, playerSim.Y);
 
         NaturalResourceRuntime? nearest = null;
+        Node3D? nearestVis = null;
         var nearestDist = double.PositiveInfinity;
-        foreach (var (node, _) in _resources)
+        foreach (var (node, visual) in _resources)
         {
             if (node.Depleted) continue;
             var d = node.Position.DistanceTo(new Game1.Core.World.Position(
@@ -238,6 +256,7 @@ public partial class CombatWorld : Node3D
             {
                 nearestDist = d;
                 nearest = node;
+                nearestVis = visual;
             }
         }
         if (nearest is null || nearestDist > _pc.InteractionRange)
@@ -248,10 +267,15 @@ public partial class CombatWorld : Node3D
 
         var allNodes = _resources.Select(r => r.Node).ToList();
         var result = _gathering.HarvestResource(nearest, allNodes);
+        if (nearestVis is not null) _fx?.PunchScale(nearestVis, 1.12f);
         if (result is { } r)
         {
             _lastEvent = $"harvested {nearest.ResourceType}: " + string.Join(", ",
                 r.Loot.Select(l => $"{l.Qty}x {l.ItemId}")) + (r.Crit ? " CRIT!" : "");
+            if (nearestVis is not null)
+                _fx?.FloatText(nearestVis.GlobalPosition,
+                    string.Join("\n", r.Loot.Select(l => $"+{l.Qty} {l.ItemId}")),
+                    new Color(0.5f, 1f, 0.55f), r.Crit ? FxManager.CritScale * 0.6f : 0.8f);
         }
         else
         {
@@ -259,6 +283,10 @@ public partial class CombatWorld : Node3D
             _lastEvent = ok
                 ? $"chopping {nearest.ResourceType} ({nearest.CurrentHp:F0}/{nearest.MaxHp:F0})"
                 : reason;
+            if (ok && nearestVis is not null)
+                _fx?.FloatText(nearestVis.GlobalPosition,
+                    $"{nearest.CurrentHp:F0}/{nearest.MaxHp:F0}",
+                    new Color(1f, 1f, 1f, 0.85f), 0.6f);
         }
     }
 
@@ -275,12 +303,17 @@ public partial class CombatWorld : Node3D
         }
 
         if (_playerAttack.StartAttack(_unarmed, new Dictionary<string, object?>()))
+        {
             _lastEvent = "swing!";
+            if (_player is not null)
+                _fx?.SwingArc(_player.GlobalPosition, _playerFacingDeg);
+        }
     }
 
     public override void _PhysicsProcess(double delta)
     {
         if (_player is null) return;
+        _now += delta;
         var dtMs = delta * 1000.0;
         var playerSim = (X: (double)_player.Position.X, Y: (double)_player.Position.Z);
 
@@ -322,6 +355,15 @@ public partial class CombatWorld : Node3D
                     target.Runtime, new List<string> { "physical" },
                     new Dictionary<string, object?> { ["baseDamage"] = 10.0 });
                 var name = target.Runtime.Definition.Name;
+
+                // Impact feedback: white flash + punch + damage number
+                target.FlashUntil = _now + 0.13;
+                _fx?.PunchScale(target.Node);
+                _fx?.FloatText(target.Node.GlobalPosition,
+                    $"{res.TotalDamage:F0}" + (res.IsCrit ? "!" : ""),
+                    res.IsCrit ? new Color(1f, 0.85f, 0.2f) : new Color(1f, 1f, 1f),
+                    res.IsCrit ? FxManager.CritScale : 1f);
+
                 if (!target.Runtime.IsAlive)
                 {
                     _lastEvent = $"killed {name}!" + (res.Loot.Count > 0
@@ -329,6 +371,11 @@ public partial class CombatWorld : Node3D
                             res.Loot.Select(l => $"{l.Quantity}x {l.MaterialId}"))
                         : "");
                     _hitboxes.UnregisterHurtbox(target.EntityId);
+                    if (res.Loot.Count > 0)
+                        _fx?.FloatText(target.Node.GlobalPosition + new Vector3(0, 0.6f, 0),
+                            string.Join("\n", res.Loot.Select(
+                                l => $"+{l.Quantity} {l.MaterialId}")),
+                            new Color(0.5f, 1f, 0.55f), 0.8f);
                 }
                 else
                 {
@@ -371,6 +418,8 @@ public partial class CombatWorld : Node3D
                 {
                     var dmg = EnemyAttackResolver.Resolve(rt, _pc);
                     _lastEvent = $"{rt.Definition.Name} hits you for {dmg:F0}";
+                    _fx?.FloatText(_player.GlobalPosition, $"-{dmg:F0}",
+                        new Color(1f, 0.25f, 0.2f));
                 }
             }
 
@@ -382,16 +431,19 @@ public partial class CombatWorld : Node3D
                 TerrainHeightField.H(rt.Position[0], rt.Position[1]),
                 (float)rt.Position[1]);
 
-            // Telegraph: flash red during windup
+            // Telegraph: flash red during windup; hit flash overrides in white
             if (e.Node.GetChild(0) is MeshInstance3D mesh
                 && mesh.MaterialOverride is StandardMaterial3D mat)
             {
                 var baseColor = CategoryColors.GetValueOrDefault(
                     rt.Definition.Category, new Color(0.8f, 0.3f, 0.3f));
-                mat.AlbedoColor = rt.IsInWindup
-                    ? baseColor.Lerp(new Color(1, 0.1f, 0.1f),
-                        (float)rt.WindupProgress)
-                    : baseColor;
+                if (_now < e.FlashUntil)
+                    mat.AlbedoColor = new Color(1f, 1f, 1f);
+                else
+                    mat.AlbedoColor = rt.IsInWindup
+                        ? baseColor.Lerp(new Color(1, 0.1f, 0.1f),
+                            (float)rt.WindupProgress)
+                        : baseColor;
             }
         }
 
@@ -413,7 +465,8 @@ public partial class CombatWorld : Node3D
             var alive = _enemies.Count(x => x.Runtime.IsAlive);
             _hud.Text = $"HP {(int)_pc.Health}/{(int)_pc.MaxHealthValue}   " +
                         $"Lv {_pc.Leveling.Level} ({_pc.Leveling.CurrentExp} exp)   " +
-                        $"enemies {alive}/{_enemies.Count}   [E] gather   {_lastEvent}";
+                        $"enemies {alive}/{_enemies.Count}   " +
+                        $"[E] gather  [C] craft  [I] inventory  [M] map   {_lastEvent}";
         }
     }
 

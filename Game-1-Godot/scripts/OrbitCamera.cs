@@ -26,9 +26,9 @@ public partial class OrbitCamera : Node3D
     [Export] public float FovFirstSprint { get; set; } = 84f;
     /// <summary>Extra mid-transition FOV widening (peaks at half-blend).</summary>
     [Export] public float FovBulge { get; set; } = 9f;
-    [Export] public float BlendInTime { get; set; } = 0.55f;
+    [Export] public float BlendInTime { get; set; } = 1.4f;
     /// <summary>Slower than blend-in: pulling out should feel calm.</summary>
-    [Export] public float BlendOutTime { get; set; } = 0.85f;
+    [Export] public float BlendOutTime { get; set; } = 2.0f;
     /// <summary>Sustained movement required before committing to first person
     /// (kills the tap-tap yo-yo).</summary>
     [Export] public float MoveCommitDelay { get; set; } = 0.18f;
@@ -45,6 +45,7 @@ public partial class OrbitCamera : Node3D
     private float _blend;        // 0 = third person, 1 = first person
     private float _blendTarget;
     private float _movingFor, _stillFor;
+    private bool _manualFp;      // shift+wheel-up while standing
 
     private SpringArm3D _arm = null!;
     private Camera3D _cam = null!;
@@ -81,9 +82,14 @@ public partial class OrbitCamera : Node3D
     {
         var dt = (float)delta;
 
+        // Real (post-collision) velocity, not commanded velocity — pushing
+        // against a wall reads as standing still, so it never zooms you in.
         var hSpeed = 0f;
         if (_player is not null)
-            hSpeed = new Vector2(_player.Velocity.X, _player.Velocity.Z).Length();
+        {
+            var real = _player.GetRealVelocity();
+            hSpeed = new Vector2(real.X, real.Z).Length();
+        }
 
         // Hysteresis: the target only flips after sustained motion/stillness;
         // between the commit windows it holds, so direction changes and brief
@@ -92,7 +98,7 @@ public partial class OrbitCamera : Node3D
         _movingFor = moving ? _movingFor + dt : 0f;
         _stillFor = moving ? 0f : _stillFor + dt;
         if (_movingFor >= MoveCommitDelay) _blendTarget = 1f;
-        else if (_stillFor >= StopCommitDelay) _blendTarget = 0f;
+        else if (_stillFor >= StopCommitDelay) _blendTarget = _manualFp ? 1f : 0f;
 
         // Rate-limited master blend. Zoom-in rate scales with actual speed
         // (slow drift at low speed, brisk at sprint); zoom-out is constant
@@ -107,6 +113,7 @@ public partial class OrbitCamera : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (UiHub.ScreenOpen) return;   // don't orbit/zoom behind popups
         switch (@event)
         {
             case InputEventMouseMotion motion
@@ -120,10 +127,19 @@ public partial class OrbitCamera : Node3D
                 _pitchFirst = Mathf.Clamp(_pitchFirst + dp, -1.2f, 1.2f);
                 break;
             case InputEventMouseButton { Pressed: true } button:
+                var shift = Input.IsKeyPressed(Key.Shift);
                 if (button.ButtonIndex == MouseButton.WheelUp)
-                    Distance = Mathf.Max(MinDistance, Distance - 1.5f);
+                {
+                    // Shift+wheel-up: glide into first person while standing.
+                    if (shift) _manualFp = true;
+                    else Distance = Mathf.Max(MinDistance, Distance - 1.5f);
+                }
                 else if (button.ButtonIndex == MouseButton.WheelDown)
-                    Distance = Mathf.Min(MaxDistance, Distance + 1.5f);
+                {
+                    // Any wheel-down releases a manual first person.
+                    if (_manualFp) _manualFp = false;
+                    else if (!shift) Distance = Mathf.Min(MaxDistance, Distance + 1.5f);
+                }
                 break;
         }
     }

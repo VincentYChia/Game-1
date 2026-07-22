@@ -27,8 +27,9 @@ public partial class WorldBootstrap : Node3D
     private WorldMap? _worldMap;
     private List<VillageRecord> _villages = new();
 
-    // The 15 geographic chunk types → terrain colors (glue-only palette)
-    private static readonly Dictionary<string, Color> GeoColors = new()
+    // The 15 geographic chunk types → terrain colors (glue-only palette;
+    // internal so MapScreen paints the world map from the same table)
+    internal static readonly Dictionary<string, Color> GeoColors = new()
     {
         ["forest"] = new Color(0.24f, 0.47f, 0.24f),
         ["dense_thicket"] = new Color(0.16f, 0.35f, 0.18f),
@@ -94,6 +95,10 @@ public partial class WorldBootstrap : Node3D
         combat.Build(root, WorldSeed, biomes, chunkGen, player,
                      enemyChunkRadius: 4, worldMap: _worldMap);
         BuildResources(biomes, chunkGen, resourceDb, combat);
+
+        // Popup screens ([I] inventory, [M] map) over the certified state
+        AddChild(new InventoryScreen(combat) { Name = "InventoryScreen" });
+        AddChild(new MapScreen(_worldMap, _villages, player) { Name = "MapScreen" });
 
         GD.Print($"World built: seed {WorldSeed}, {(ChunkRadius * 2 + 1) * (ChunkRadius * 2 + 1)} chunks");
     }
