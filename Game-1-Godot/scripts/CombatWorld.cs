@@ -14,7 +14,8 @@ namespace Game1.Godot;
 /// This node is glue only — every rule it executes is covered by the
 /// conformance suite; presentation maps sim (x, y) → world (x, 0, z).
 /// </summary>
-/// <summary>A clickable villager placed from the certified village layouts.</summary>
+/// <summary>A clickable NPC: canonical (npcs-3.JSON, with speechbank +
+/// quests) or a village-template flavor villager.</summary>
 public sealed class LiveNpc
 {
     public required Node3D Node;
@@ -22,6 +23,9 @@ public sealed class LiveNpc
     public required string Role;
     public required string VillageName;
     public required string NationName;
+    /// <summary>Set for canonical NPCs only.</summary>
+    public NpcDefinition? Def;
+    public NpcDialogueState Dialogue { get; } = new();
 }
 
 public partial class CombatWorld : Node3D
@@ -71,7 +75,10 @@ public partial class CombatWorld : Node3D
     public SkillDatabase? SkillDb { get; private set; }
     public EquipmentDatabase? EquipDb { get; private set; }
     public SkillManager? SkillMgr { get; private set; }
+    public NpcDatabase? NpcDb { get; private set; }
+    public QuestManager? QuestMgr { get; private set; }
     public DialogueScreen? Dialogue { get; set; }
+    public IReadOnlyList<LiveNpc> Npcs => _npcs;
 
     public void RegisterNpc(LiveNpc npc) => _npcs.Add(npc);
     public void RegisterStation(string type, int tier, Node3D node) =>
@@ -165,6 +172,12 @@ public partial class CombatWorld : Node3D
                                          .Cast<ICombatEntity>().ToList(),
             OnSkillKill = t => { if (t is EnemyRuntime rt) HandleSkillKill(rt); },
         };
+        // NPC/quest runtime over the certified v3 database
+        var npcDb = new NpcDatabase();
+        npcDb.LoadFromFiles(contentRoot);
+        NpcDb = npcDb;
+        QuestMgr = new QuestManager(_pc, titleDb, SkillMgr);
+
         SkillMgr.InstantAoe = radius =>
         {
             if (_player is null || _orch is null) return 0;
@@ -299,6 +312,28 @@ public partial class CombatWorld : Node3D
         if (@event is InputEventKey { Pressed: true, Echo: false } sk
             && sk.PhysicalKeycode is >= Key.Key1 and <= Key.Key5)
             UseSkillSlot((int)sk.PhysicalKeycode - (int)Key.Key1);
+        if (@event is InputEventKey { PhysicalKeycode: Key.F, Pressed: true, Echo: false })
+            TalkToNearestNpc();
+    }
+
+    /// <summary>[F] talks to the nearest NPC within its interaction radius
+    /// (game_engine.py:916-929; Euclidean, default 3.0).</summary>
+    private void TalkToNearestNpc()
+    {
+        if (_player is null) return;
+        LiveNpc? nearest = null;
+        var best = double.PositiveInfinity;
+        foreach (var n in _npcs)
+        {
+            var d = n.Node.GlobalPosition.DistanceTo(_player.GlobalPosition);
+            var radius = n.Def?.InteractionRadius ?? 3.0;
+            if (d <= radius && d < best)
+            {
+                best = d;
+                nearest = n;
+            }
+        }
+        if (nearest is not null) Dialogue?.Open(nearest);
     }
 
     /// <summary>Keys 1-5: activate hotbar slot, aiming at the mouse's world
@@ -619,6 +654,9 @@ public partial class CombatWorld : Node3D
                 if (!e.CorpseShown)
                 {
                     e.CorpseShown = true;
+                    // Single kill-count site for ALL kill paths (weapon,
+                    // skill, AoE, DoT) — feeds combat-quest baselines
+                    _pc?.Activities.RecordActivity("combat", 1);
                     e.Label.Visible = false;
                     if (e.Node.GetChild(0) is MeshInstance3D m)
                         m.MaterialOverride = new StandardMaterial3D

@@ -104,12 +104,13 @@ public partial class WorldBootstrap : Node3D
         book.AddPage(new InventoryPage(combat));
         book.AddPage(new StatsPage(combat));
         book.AddPage(new SkillsPage(combat));
+        book.AddPage(new QuestsPage(combat));
         book.AddPage(new MapPage(_worldMap, _villages, player));
         AddChild(book);
         var crafting = new CraftingScreen(combat) { Name = "CraftingScreen" };
         AddChild(crafting);
         combat.CraftingUi = crafting;
-        var dialogue = new DialogueScreen { Name = "DialogueScreen" };
+        var dialogue = new DialogueScreen(combat) { Name = "DialogueScreen" };
         AddChild(dialogue);
         combat.Dialogue = dialogue;
 
@@ -225,6 +226,53 @@ public partial class WorldBootstrap : Node3D
         var npcMat = new StandardMaterial3D
         { AlbedoColor = new Color(0.9f, 0.75f, 0.55f) };
         var placed = 0;
+
+        // Canonical NPCs (npcs-3.JSON) at their JSON positions — the quest
+        // givers with real speechbanks
+        if (combat.NpcDb is { } npcDb)
+        {
+            foreach (var def in npcDb.Npcs.Values)
+            {
+                var (nx, ny) = ((float)def.PosX, (float)def.PosY);
+                var color = new Color(0.78f, 0.59f, 1f);
+                if (def.SpriteColor is System.Text.Json.Nodes.JsonArray
+                    { Count: >= 3 } c)
+                    color = new Color(
+                        (float)(c[0]?.GetValue<double>() ?? 200) / 255f,
+                        (float)(c[1]?.GetValue<double>() ?? 150) / 255f,
+                        (float)(c[2]?.GetValue<double>() ?? 255) / 255f);
+                var h = TerrainHeightField.H(nx + 0.5, ny + 0.5);
+                var node = new Node3D
+                { Position = new Vector3(nx + 0.5f, h, ny + 0.5f) };
+                node.AddChild(new MeshInstance3D
+                {
+                    Mesh = new CapsuleMesh { Radius = 0.32f, Height = 1.7f },
+                    MaterialOverride = new StandardMaterial3D { AlbedoColor = color },
+                    Position = new Vector3(0, 0.85f, 0),
+                });
+                node.AddChild(new Label3D
+                {
+                    Text = def.Title.Length > 0
+                        ? $"{def.Name}\n{def.Title}" : def.Name,
+                    FontSize = 38,
+                    OutlineSize = 10,
+                    Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+                    Modulate = new Color(1f, 0.95f, 0.7f),
+                    Position = new Vector3(0, 2.2f, 0),
+                });
+                parent.AddChild(node);
+                combat.RegisterNpc(new LiveNpc
+                {
+                    Node = node,
+                    Name = def.Name,
+                    Role = def.Title,
+                    VillageName = "",
+                    NationName = "",
+                    Def = def,
+                });
+                placed++;
+            }
+        }
 
         foreach (var v in _villages)
         {
