@@ -4,25 +4,26 @@ using Godot;
 namespace Game1.Godot;
 
 /// <summary>
-/// Inventory + equipment popup ([I] or [Tab]; [Esc] closes). Renders the
-/// CERTIFIED Inventory (30 slots) and EquipmentManager — presentation only.
+/// Inventory + equipment book page ([I]/[Tab]). Renders the CERTIFIED
+/// Inventory (30 slots) and EquipmentManager — presentation only.
 /// Left-click a slot to pick up / place / merge / swap (Core StartDrag/
-/// EndDrag semantics). Right-click an equipment item to EQUIP it through the
-/// certified Equip path (requirement checks, hand-type matrix). Click an
-/// equipped row to unequip back to the inventory.
+/// EndDrag semantics). Right-click an equipment item to EQUIP it through
+/// the certified Equip path (requirement checks, hand-type matrix). Click
+/// an equipped row to unequip.
 /// </summary>
-public partial class InventoryScreen : CanvasLayer
+public partial class InventoryPage : MenuPage
 {
+    public override string Title => "Inventory";
+    public override Key Keybind => Key.I;
+
     private readonly CombatWorld _combat;
-    private Control _root = null!;
     private readonly List<Button> _slotButtons = new();
     private readonly Dictionary<string, Button> _equipButtons = new();
     private Label _dragLabel = null!;
     private Label _status = null!;
     private double _refresh;
-    private bool _open;
 
-    private static readonly Dictionary<string, Color> RarityColors = new()
+    internal static readonly Dictionary<string, Color> RarityColors = new()
     {
         ["common"] = new Color(0.92f, 0.92f, 0.92f),
         ["uncommon"] = new Color(0.45f, 0.9f, 0.45f),
@@ -31,33 +32,14 @@ public partial class InventoryScreen : CanvasLayer
         ["legendary"] = new Color(1f, 0.65f, 0.25f),
     };
 
-    public InventoryScreen(CombatWorld combat) => _combat = combat;
+    public InventoryPage(CombatWorld combat) => _combat = combat;
 
     public override void _Ready()
     {
-        Layer = 10;
-        _root = new Control { Visible = false };
-        _root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        AddChild(_root);
-
-        var dim = new ColorRect { Color = new Color(0, 0, 0, 0.45f) };
-        dim.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        _root.AddChild(dim);
-
-        var center = new CenterContainer();
-        center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        _root.AddChild(center);
-
-        var panel = new PanelContainer();
-        center.AddChild(panel);
-        var margin = new MarginContainer();
-        foreach (var side in new[] { "left", "right", "top", "bottom" })
-            margin.AddThemeConstantOverride($"margin_{side}", 18);
-        panel.AddChild(margin);
-
         var outer = new VBoxContainer();
         outer.AddThemeConstantOverride("separation", 8);
-        margin.AddChild(outer);
+        outer.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        AddChild(outer);
 
         var columns = new HBoxContainer();
         columns.AddThemeConstantOverride("separation", 24);
@@ -79,11 +61,11 @@ public partial class InventoryScreen : CanvasLayer
             var idx = i;
             var btn = new Button
             {
-                CustomMinimumSize = new Vector2(118, 58),
+                CustomMinimumSize = new Vector2(112, 56),
                 ClipText = true,
                 Text = "",
             };
-            btn.AddThemeFontSizeOverride("font_size", 14);
+            btn.AddThemeFontSizeOverride("font_size", 13);
             btn.Pressed += () => OnSlotClicked(idx);
             btn.GuiInput += ev =>
             {
@@ -98,17 +80,17 @@ public partial class InventoryScreen : CanvasLayer
         var hint = new Label
         {
             Text = "left-click: pick up / place / merge / swap   ·   "
-                   + "right-click: equip   ·   [I] close",
+                   + "right-click: equip",
         };
         hint.AddThemeFontSizeOverride("font_size", 14);
         hint.Modulate = new Color(1, 1, 1, 0.6f);
         invBox.AddChild(hint);
 
         // -- equipment column: one button per certified slot --
-        var eqBox = new VBoxContainer { CustomMinimumSize = new Vector2(320, 0) };
+        var eqBox = new VBoxContainer { CustomMinimumSize = new Vector2(300, 0) };
         columns.AddChild(eqBox);
         var eqTitle = new Label { Text = "Equipment  (click to unequip)" };
-        eqTitle.AddThemeFontSizeOverride("font_size", 26);
+        eqTitle.AddThemeFontSizeOverride("font_size", 22);
         eqBox.AddChild(eqTitle);
 
         if (_combat.Pc is { } pc)
@@ -137,33 +119,17 @@ public partial class InventoryScreen : CanvasLayer
         // stack-in-hand follows the mouse
         _dragLabel = new Label { Visible = false, ZIndex = 100 };
         _dragLabel.AddThemeFontSizeOverride("font_size", 16);
-        _root.AddChild(_dragLabel);
+        AddChild(_dragLabel);
     }
 
-    public override void _UnhandledInput(InputEvent @event)
+    public override void OnOpened()
     {
-        if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
-        // Open only if no other popup is up; closing always allowed
-        if (key.PhysicalKeycode is Key.I or Key.Tab)
-        {
-            if (_open || !UiHub.ScreenOpen) Toggle();
-        }
-        else if (key.PhysicalKeycode is Key.Escape && _open) Toggle();
-    }
-
-    private void Toggle()
-    {
-        _open = !_open;
-        _root.Visible = _open;
-        UiHub.OpenScreens += _open ? 1 : -1;
         _status.Text = "";
-        if (_open) Refresh();
-        else _combat.Pc?.Inventory.CancelDrag();
+        Refresh();
     }
 
-    public override void _Process(double delta)
+    public override void Tick(double delta)
     {
-        if (!_open) return;
         _refresh += delta;
         if (_refresh >= 0.25)
         {
@@ -176,7 +142,7 @@ public partial class InventoryScreen : CanvasLayer
         if (dragging is not null)
         {
             _dragLabel.Text = $"{DisplayName(dragging)} ×{dragging.Quantity}";
-            _dragLabel.Position = _root.GetLocalMousePosition() + new Vector2(14, -8);
+            _dragLabel.Position = GetLocalMousePosition() + new Vector2(14, -8);
         }
     }
 
@@ -184,7 +150,6 @@ public partial class InventoryScreen : CanvasLayer
     {
         var inv = _combat.Pc?.Inventory;
         if (inv is null) return;
-        // Core drag semantics: pick up, then place/merge/swap on next click
         if (inv.DraggingStack is null) inv.StartDrag(index);
         else inv.EndDrag(index);
         Refresh();

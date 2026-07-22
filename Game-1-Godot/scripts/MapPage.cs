@@ -4,29 +4,29 @@ using Godot;
 namespace Game1.Godot;
 
 /// <summary>
-/// World map popup ([M]; [Esc] closes). Renders the CERTIFIED WorldMap —
-/// 1 pixel per chunk, biome palette tinted 30% by nation color, village
-/// dots, live player marker — plus a where-am-I readout (chunk type, danger,
-/// district/province/region/nation) from the same geographic data the
-/// Python game uses. Presentation only.
+/// World map book page ([M]). Renders the CERTIFIED WorldMap — 1 pixel per
+/// chunk, biome palette tinted 30% by nation color, village dots, live
+/// player marker — plus a where-am-I readout from the same geographic data
+/// the Python game uses. Presentation only.
 /// </summary>
-public partial class MapScreen : CanvasLayer
+public partial class MapPage : MenuPage
 {
-    private const int MapPx = 640;
+    public override string Title => "Map";
+    public override Key Keybind => Key.M;
+
+    private const int MapPx = 560;
 
     private readonly WorldMap? _map;
     private readonly List<VillageRecord> _villages;
     private readonly PlayerController _player;
 
-    private Control _root = null!;
     private Control _mapHolder = null!;
     private ColorRect _marker = null!;
     private Label _info = null!;
-    private bool _open;
     private bool _built;
 
-    public MapScreen(WorldMap? map, List<VillageRecord> villages,
-                     PlayerController player)
+    public MapPage(WorldMap? map, List<VillageRecord> villages,
+                   PlayerController player)
     {
         _map = map;
         _villages = villages;
@@ -35,64 +35,34 @@ public partial class MapScreen : CanvasLayer
 
     public override void _Ready()
     {
-        Layer = 10;
-        _root = new Control { Visible = false };
-        _root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        AddChild(_root);
-
-        var dim = new ColorRect { Color = new Color(0, 0, 0, 0.55f) };
-        dim.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        _root.AddChild(dim);
-
-        var center = new CenterContainer();
-        center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        _root.AddChild(center);
-
-        var panel = new PanelContainer();
-        center.AddChild(panel);
-        var margin = new MarginContainer();
-        foreach (var side in new[] { "left", "right", "top", "bottom" })
-            margin.AddThemeConstantOverride($"margin_{side}", 16);
-        panel.AddChild(margin);
-
         var box = new VBoxContainer();
         box.AddThemeConstantOverride("separation", 8);
-        margin.AddChild(box);
+        box.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        AddChild(box);
 
         var title = new Label { Text = "World Map" };
         title.AddThemeFontSizeOverride("font_size", 26);
         box.AddChild(title);
 
+        var centerRow = new CenterContainer
+        { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+        box.AddChild(centerRow);
         _mapHolder = new Control { CustomMinimumSize = new Vector2(MapPx, MapPx) };
-        box.AddChild(_mapHolder);
+        centerRow.AddChild(_mapHolder);
 
         _info = new Label { Text = "" };
         _info.AddThemeFontSizeOverride("font_size", 15);
         box.AddChild(_info);
     }
 
-    public override void _UnhandledInput(InputEvent @event)
+    public override void OnOpened()
     {
-        if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
-        // Open only if no other popup is up; closing always allowed
-        if (key.PhysicalKeycode is Key.M)
-        {
-            if (_open || !UiHub.ScreenOpen) Toggle();
-        }
-        else if (key.PhysicalKeycode is Key.Escape && _open) Toggle();
+        if (!_built) BuildMapTexture();
     }
 
-    private void Toggle()
+    public override void Tick(double delta)
     {
-        _open = !_open;
-        _root.Visible = _open;
-        UiHub.OpenScreens += _open ? 1 : -1;
-        if (_open && !_built) BuildMapTexture();
-    }
-
-    public override void _Process(double delta)
-    {
-        if (!_open || _map is null) return;
+        if (_map is null) return;
 
         var tileX = _player.Position.X;
         var tileZ = _player.Position.Z;
@@ -100,9 +70,10 @@ public partial class MapScreen : CanvasLayer
         var cy = (int)Math.Floor(tileZ / 16.0);
 
         var half = _map.WorldSize / 2;
-        _marker.Position = new Vector2(
-            (cx + half + 0.5f) / _map.WorldSize * MapPx - 4,
-            (cy + half + 0.5f) / _map.WorldSize * MapPx - 4);
+        if (_marker is not null)
+            _marker.Position = new Vector2(
+                (cx + half + 0.5f) / _map.WorldSize * MapPx - 4,
+                (cy + half + 0.5f) / _map.WorldSize * MapPx - 4);
 
         if (_map.ChunkData.TryGetValue((cx, cy), out var geo))
         {

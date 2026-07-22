@@ -97,9 +97,12 @@ public partial class WorldBootstrap : Node3D
         BuildResources(biomes, chunkGen, resourceDb, combat);
         BuildNpcs(combat);
 
-        // Popup screens over the certified state
-        AddChild(new InventoryScreen(combat) { Name = "InventoryScreen" });
-        AddChild(new MapScreen(_worldMap, _villages, player) { Name = "MapScreen" });
+        // The tabbed menu book (each page keeps its own keybind) + the
+        // standalone popups (crafting is deliberately not a book page)
+        var book = new MenuBook { Name = "MenuBook" };
+        book.AddPage(new InventoryPage(combat));
+        book.AddPage(new MapPage(_worldMap, _villages, player));
+        AddChild(book);
         AddChild(new CraftingScreen(combat) { Name = "CraftingScreen" });
         var dialogue = new DialogueScreen { Name = "DialogueScreen" };
         AddChild(dialogue);
