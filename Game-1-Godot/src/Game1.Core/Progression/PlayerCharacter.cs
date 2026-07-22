@@ -36,6 +36,39 @@ public sealed class PlayerCharacter : ICombatEntity, ICharacterQuery
         + ClassBonus("max_mana")
         + Equipment.GetStatBonuses().GetValueOrDefault("max_mana", 0);
 
+    /// <summary>character.py:733-741 allocate_stat_point + :703-731
+    /// recalculate_stats. Permanent (no respec). Max HP = 100 + VIT*15 +
+    /// class + equipment; HP/mana rescale proportionally with int()
+    /// truncation (allocating while damaged does not heal for free).</summary>
+    public bool AllocateStatPoint(string statName)
+    {
+        if (Leveling.UnallocatedStatPoints <= 0) return false;
+        var oldMaxHp = MaxHealthValue;
+        var oldHp = Health;
+        var oldMaxMana = MaxMana;
+        var oldMana = Mana;
+        switch (statName.ToLowerInvariant())
+        {
+            case "strength": Stats.Strength++; break;
+            case "defense": Stats.Defense++; break;
+            case "vitality": Stats.Vitality++; break;
+            case "luck": Stats.Luck++; break;
+            case "agility": Stats.Agility++; break;
+            case "intelligence": Stats.Intelligence++; break;
+            default: return false;
+        }
+        Leveling.UnallocatedStatPoints--;
+
+        MaxHealthValue = 100 + Stats.Vitality * 15
+            + ClassBonus("max_health")
+            + Equipment.GetStatBonuses().GetValueOrDefault("max_health", 0);
+        if (oldMaxHp > 0)
+            Health = Math.Min(MaxHealthValue, (int)(MaxHealthValue * oldHp / oldMaxHp));
+        if (oldMaxMana > 0)
+            Mana = Math.Min(MaxMana, (int)(MaxMana * oldMana / oldMaxMana));
+        return true;
+    }
+
     /// <summary>Per-frame regen + buff ticks: mana 1%/s; buff durations;
     /// regenerate-buff HoT side effects (health/mana per second).</summary>
     public void TickManaAndBuffs(double dt)

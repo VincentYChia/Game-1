@@ -56,6 +56,9 @@ public partial class CombatWorld : Node3D
     private RecipeDatabase? _recipeDb;
     private double _now;
     private readonly List<LiveNpc> _npcs = new();
+    /// <summary>(type, tier, node) — the 20 starter stations (world_system
+    /// .py:671-692). Native stations are indestructible fixtures.</summary>
+    private readonly List<(string Type, int Tier, Node3D Node)> _stations = new();
     private Label3D? _prompt;   // single shared "what would I interact with" label
     private const double MeleeReach = 1.8;   // matches the unarmed weaponRange
 
@@ -71,6 +74,15 @@ public partial class CombatWorld : Node3D
     public DialogueScreen? Dialogue { get; set; }
 
     public void RegisterNpc(LiveNpc npc) => _npcs.Add(npc);
+    public void RegisterStation(string type, int tier, Node3D node) =>
+        _stations.Add((type, tier, node));
+
+    /// <summary>Station-click gate → CraftingScreen (the ONLY way to open
+    /// crafting, character.py:1412-1419).</summary>
+    public CraftingScreen? CraftingUi { get; set; }
+
+    /// <summary>Discipline → minigame overlay ('adornments' = enchanting).</summary>
+    public Dictionary<string, MinigameOverlay> Minigames { get; } = new();
 
     /// <summary>P11: combat connects only within this height difference.</summary>
     public const double CombatHeightGate = 2.0;
@@ -332,12 +344,15 @@ public partial class CombatWorld : Node3D
         _lastEvent = $"killed {rt.Definition.Name} by skill! +{exp} exp";
     }
 
-    /// <summary>CraftingScreen entry: certified craft with the rolled
-    /// performance (minigame seam per ADR-7, until the overlays land).</summary>
-    public CraftResult? CraftRecipe(Recipe recipe)
+    /// <summary>Rolled-performance fallback for disciplines with no
+    /// minigame overlay registered.</summary>
+    public CraftResult? CraftRecipe(Recipe recipe) =>
+        CraftRecipe(recipe, 0.4 + _craftRng.NextDouble() * 0.6);
+
+    /// <summary>Certified craft with an explicit minigame performance.</summary>
+    public CraftResult? CraftRecipe(Recipe recipe, double performance)
     {
         if (_crafting is null) return null;
-        var performance = 0.4 + _craftRng.NextDouble() * 0.6;
         var result = _crafting.Craft(recipe, performance);
         _lastEvent = result.Success
             ? $"{result.Message} [perf {performance:F2}]"
@@ -384,7 +399,22 @@ public partial class CombatWorld : Node3D
             if (RayHit(origin, dir, center, 0.8f) is { } t && t < bestT)
             { bestT = t; hitNpc = n; hitEnemy = null; hitRes = null; }
         }
+        (string Type, int Tier, Node3D Node)? hitStation = null;
+        foreach (var s in _stations)
+        {
+            var center = s.Node.GlobalPosition + new Vector3(0, 0.7f, 0);
+            if (RayHit(origin, dir, center, 1.0f) is { } t && t < bestT)
+            { bestT = t; hitStation = s; hitNpc = null; hitEnemy = null; hitRes = null; }
+        }
 
+        if (hitStation is { } st)
+        {
+            // Out-of-range station clicks are SILENT (character.py:1412-1415)
+            var d = st.Node.GlobalPosition.DistanceTo(_player.GlobalPosition);
+            if (d <= _pc.InteractionRange)
+                CraftingUi?.OpenAtStation(st.Type, st.Tier);
+            return;
+        }
         if (hitNpc is not null)
         {
             var d = hitNpc.Node.GlobalPosition.DistanceTo(_player.GlobalPosition);
@@ -738,6 +768,16 @@ public partial class CombatWorld : Node3D
                 best = d;
                 text = $"{n.Name}\nclick to talk";
                 at = n.Node.GlobalPosition + new Vector3(0, 2.2f, 0);
+            }
+        }
+        foreach (var s in _stations)
+        {
+            var d = s.Node.GlobalPosition.DistanceTo(pos);
+            if (d < best)
+            {
+                best = d;
+                text = $"{Prettify(s.Type)} Station (T{s.Tier})\nclick to craft";
+                at = s.Node.GlobalPosition + new Vector3(0, 1.9f, 0);
             }
         }
 

@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Game1.Core.Crafting;
 using Game1.Core.Data;
 using Godot;
 
@@ -73,13 +74,24 @@ public partial class CraftingScreen : CanvasLayer
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
-        if (key.PhysicalKeycode is Key.C)
-        {
-            if (_open || !UiHub.ScreenOpen) Toggle();
-        }
-        else if (key.PhysicalKeycode is Key.Escape && _open) Toggle();
+        // No keybind: like the Python game, crafting opens by CLICKING a
+        // station in range (game_engine.py:3032); [Esc] closes.
+        if (@event is InputEventKey
+            { Pressed: true, Echo: false, PhysicalKeycode: Key.Escape } && _open)
+            Toggle();
     }
+
+    /// <summary>Station-click entry (CombatWorld ray-pick).</summary>
+    public void OpenAtStation(string stationType, int stationTier)
+    {
+        _stationType = stationType;
+        _stationTier = stationTier;
+        if (!_open) Toggle();
+        else Refresh();
+    }
+
+    private string? _stationType;
+    private int _stationTier;
 
     private void Toggle()
     {
@@ -97,16 +109,25 @@ public partial class CraftingScreen : CanvasLayer
         var pc = _combat.Pc;
         if (recipeDb is null || pc is null) return;
 
+        // Station gating (recipe_db.py:149-150): exact type match, recipe
+        // tier <= station tier. No station = no recipes (crafting is 100%
+        // station-gated in the Python game).
         var rows = recipeDb.Recipes.Values
+            .Where(r => _stationType is null
+                        || (r.StationType == _stationType
+                            && r.StationTier <= _stationTier))
             .Select(r => (Recipe: r, Craftable: RecipeCrafting.CanCraft(r, pc.Inventory)))
             .OrderByDescending(x => x.Craftable)
-            .ThenBy(x => x.Recipe.StationType, StringComparer.Ordinal)
+            .ThenBy(x => x.Recipe.StationTier)
             .ThenBy(x => x.Recipe.RecipeId, StringComparer.Ordinal)
             .ToList();
 
         var craftableCount = rows.Count(x => x.Craftable);
-        _status.Text = $"{craftableCount} of {rows.Count} recipes craftable "
-                       + "with your materials";
+        _status.Text =
+            (_stationType is not null
+                ? $"{CombatWorld.Prettify(_stationType)} station T{_stationTier}  ·  "
+                : "")
+            + $"{craftableCount} of {rows.Count} recipes craftable";
 
         foreach (var (recipe, craftable) in rows)
         {
@@ -136,16 +157,67 @@ public partial class CraftingScreen : CanvasLayer
                 CustomMinimumSize = new Vector2(90, 0),
             };
             var captured = recipe;
-            btn.Pressed += () =>
-            {
-                var result = _combat.CraftRecipe(captured);
-                _status.Text = result?.Message ?? "craft failed";
-                Refresh();
-            };
+            btn.Pressed += () => StartCraft(captured);
             row.AddChild(btn);
 
             _list.AddChild(new HSeparator());
         }
+    }
+
+    /// <summary>Launch the discipline's minigame; performance flows into
+    /// the certified craft. Abandoning consumes the materials with no
+    /// output (Python double-Esc idiom). No minigame registered → rolled
+    /// performance fallback (the pre-minigame seam).</summary>
+    private void StartCraft(Recipe recipe)
+    {
+        var overlay = _combat.Minigames.GetValueOrDefault(recipe.StationType);
+        if (overlay is null)
+        {
+            var result = _combat.CraftRecipe(recipe);
+            _status.Text = result?.Message ?? "craft failed";
+            Refresh();
+            return;
+        }
+
+        var points = DifficultyPoints(recipe);
+        var tier = DifficultyCalculator.GetDifficultyTier(points);
+        // Hide the recipe browser while playing (station stays "open")
+        if (_open) Toggle();
+        overlay.Begin(points, tier,
+            performance =>
+            {
+                var result = _combat.CraftRecipe(recipe, performance);
+                _status.Text = result?.Message ?? "craft failed";
+                if (!_open) Toggle();
+                Refresh();
+            },
+            () =>
+            {
+                RecipeCrafting.ConsumeMaterials(recipe, _combat.Pc!.Inventory);
+                _status.Text = "craft abandoned — materials lost";
+                if (!_open) Toggle();
+                Refresh();
+            });
+    }
+
+    private double DifficultyPoints(Recipe recipe)
+    {
+        var inputs = new List<MaterialInput>();
+        if (recipe.Inputs is JsonArray arr)
+            foreach (var node in arr)
+            {
+                if (node is not JsonObject o) continue;
+                var id = o["materialId"]?.GetValue<string>() ?? "";
+                var qty = 1;
+                if (o["qty"] is JsonValue v)
+                {
+                    if (v.TryGetValue<int>(out var iv)) qty = iv;
+                    else if (v.TryGetValue<double>(out var dv)) qty = (int)dv;
+                }
+                var mTier = (int)(_combat.MaterialDb?.GetMaterial(id)?.Tier ?? 1);
+                inputs.Add(new MaterialInput(id, qty, mTier));
+            }
+        return DifficultyCalculator.MaterialPoints(inputs);
     }
 
     private string DescribeInputs(Recipe recipe, Game1.Core.Progression.PlayerCharacter pc)

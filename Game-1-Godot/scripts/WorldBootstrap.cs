@@ -95,16 +95,20 @@ public partial class WorldBootstrap : Node3D
         combat.Build(root, WorldSeed, biomes, chunkGen, player,
                      enemyChunkRadius: 8, worldMap: _worldMap);
         BuildResources(biomes, chunkGen, resourceDb, combat);
+        BuildStations(combat);
         BuildNpcs(combat);
 
         // The tabbed menu book (each page keeps its own keybind) + the
         // standalone popups (crafting is deliberately not a book page)
         var book = new MenuBook { Name = "MenuBook" };
         book.AddPage(new InventoryPage(combat));
+        book.AddPage(new StatsPage(combat));
         book.AddPage(new SkillsPage(combat));
         book.AddPage(new MapPage(_worldMap, _villages, player));
         AddChild(book);
-        AddChild(new CraftingScreen(combat) { Name = "CraftingScreen" });
+        var crafting = new CraftingScreen(combat) { Name = "CraftingScreen" };
+        AddChild(crafting);
+        combat.CraftingUi = crafting;
         var dialogue = new DialogueScreen { Name = "DialogueScreen" };
         AddChild(dialogue);
         combat.Dialogue = dialogue;
@@ -158,6 +162,57 @@ public partial class WorldBootstrap : Node3D
         }
         if (rendered > 0)
             GD.Print($"Villages in view: {rendered}");
+    }
+
+    /// <summary>The 20 free starter stations near origin (world_system.py:
+    /// 671-692): columns x = -8 smithing, -4 refining, 0 adornments,
+    /// 4 alchemy, 8 engineering; tiers 1-4 at y = -10/-12/-14/-16.
+    /// Python station colors (world.py:303-311).</summary>
+    private void BuildStations(CombatWorld combat)
+    {
+        var parent = new Node3D { Name = "Stations" };
+        AddChild(parent);
+        var colors = new Dictionary<string, Color>
+        {
+            ["smithing"] = new(180 / 255f, 60 / 255f, 60 / 255f),
+            ["alchemy"] = new(60 / 255f, 180 / 255f, 60 / 255f),
+            ["refining"] = new(180 / 255f, 120 / 255f, 60 / 255f),
+            ["engineering"] = new(60 / 255f, 120 / 255f, 180 / 255f),
+            ["adornments"] = new(180 / 255f, 60 / 255f, 180 / 255f),
+        };
+        var columns = new (string Type, int X)[]
+        {
+            ("smithing", -8), ("refining", -4), ("adornments", 0),
+            ("alchemy", 4), ("engineering", 8),
+        };
+        foreach (var (type, x) in columns)
+        {
+            for (var tier = 1; tier <= 4; tier++)
+            {
+                var y = -10 - (tier - 1) * 2;
+                var h = TerrainHeightField.H(x + 0.5, y + 0.5);
+                var node = new Node3D
+                { Position = new Vector3(x + 0.5f, h, y + 0.5f) };
+                node.AddChild(new MeshInstance3D
+                {
+                    Mesh = new BoxMesh
+                    { Size = new Vector3(1.1f, 0.9f + 0.2f * tier, 1.1f) },
+                    MaterialOverride = new StandardMaterial3D
+                    { AlbedoColor = colors[type] },
+                    Position = new Vector3(0, (0.9f + 0.2f * tier) / 2f, 0),
+                });
+                node.AddChild(new Label3D
+                {
+                    Text = $"{CombatWorld.Prettify(type)} T{tier}",
+                    FontSize = 34,
+                    OutlineSize = 10,
+                    Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+                    Position = new Vector3(0, 1.7f + 0.2f * tier, 0),
+                });
+                parent.AddChild(node);
+                combat.RegisterStation(type, tier, node);
+            }
+        }
     }
 
     /// <summary>Clickable villagers at the certified NPC positions of every
