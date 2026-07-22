@@ -76,6 +76,11 @@ public sealed class TagAttackOrchestrator
     private readonly EffectExecutor _executor;
     private readonly PythonRandom _managerRng;   // CombatManager._rng (crit)
 
+    /// <summary>The shared effect executor — skill_manager.py routes skill
+    /// combat effects through the SAME executor + RNG stream as weapon
+    /// attacks; exposing it preserves that stream identity.</summary>
+    public EffectExecutor Executor => _executor;
+
     /// <summary>Ordered active enemies (get_all_active_enemies order).</summary>
     public List<EnemyRuntime> ActiveEnemies = new();
 

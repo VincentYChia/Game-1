@@ -25,6 +25,33 @@ public sealed class PlayerCharacter : ICombatEntity, ICharacterQuery
     public double Health;
     public double MaxHealthValue;
 
+    /// <summary>Mana pool (character.py:114,722-731): base 100 + INT*20
+    /// (stats-calculations.JSON maxManaPerPoint) + class + equipment
+    /// max_mana bonuses. Regen = 1% of max per second (character.py:1454).</summary>
+    public double Mana = 100;
+    public double BaseMaxMana = 100;
+    public const double ManaPerIntPoint = 20.0;
+    public double MaxMana =>
+        BaseMaxMana + Stats.Intelligence * ManaPerIntPoint
+        + ClassBonus("max_mana")
+        + Equipment.GetStatBonuses().GetValueOrDefault("max_mana", 0);
+
+    /// <summary>Per-frame regen + buff ticks: mana 1%/s; buff durations;
+    /// regenerate-buff HoT side effects (health/mana per second).</summary>
+    public void TickManaAndBuffs(double dt)
+    {
+        Mana = Math.Min(MaxMana, Mana + MaxMana * 0.01 * dt);
+        foreach (var b in Buffs.ActiveBuffs)
+        {
+            if (b.EffectType != "regenerate") continue;
+            if (b.Category == "mana")
+                Mana = Math.Min(MaxMana, Mana + b.BonusValue * dt);
+            else if (b.Category is "health" or "defense")
+                Health = Math.Min(MaxHealthValue, Health + b.BonusValue * dt);
+        }
+        Buffs.Update(dt);
+    }
+
     /// <summary>core/config.py:184 Config.INTERACTION_RANGE (verifier fix:
     /// was wrongly 3.0).</summary>
     public double InteractionRange = 3.5;

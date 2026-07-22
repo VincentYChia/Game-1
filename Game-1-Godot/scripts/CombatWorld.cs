@@ -64,6 +64,10 @@ public partial class CombatWorld : Node3D
     public MaterialDatabase? MaterialDb => _matDb;
     public CraftingSystem? Crafting => _crafting;
     public RecipeDatabase? RecipeDb => _recipeDb;
+    public TitleDatabase? TitleDb { get; private set; }
+    public SkillDatabase? SkillDb { get; private set; }
+    public EquipmentDatabase? EquipDb { get; private set; }
+    public SkillManager? SkillMgr { get; private set; }
     public DialogueScreen? Dialogue { get; set; }
 
     public void RegisterNpc(LiveNpc npc) => _npcs.Add(npc);
@@ -132,8 +136,41 @@ public partial class CombatWorld : Node3D
         var recipeDb = new RecipeDatabase();
         recipeDb.LoadFromFiles(contentRoot);
         _recipeDb = recipeDb;
-        UpdateLoader.LoadAll(contentRoot, equipDb, new SkillDatabase(),
+        var skillDb = new SkillDatabase();
+        skillDb.LoadFromFiles(contentRoot);
+        UpdateLoader.LoadAll(contentRoot, equipDb, skillDb,
                              matDb, recipeDb, titleDb);
+        TitleDb = titleDb;
+        SkillDb = skillDb;
+        EquipDb = equipDb;
+
+        // Skills runtime (skill_manager.py port): shares the orchestrator's
+        // effect executor so skill combat effects use the same RNG stream.
+        SkillMgr = new SkillManager(_pc, skillDb, SkillTranslation.Load(contentRoot))
+        {
+            Executor = _orch.Executor,
+            LiveEnemies = () => _runtimes.Where(r => r.IsAlive)
+                                         .Cast<ICombatEntity>().ToList(),
+            OnSkillKill = t => { if (t is EnemyRuntime rt) HandleSkillKill(rt); },
+        };
+        SkillMgr.InstantAoe = radius =>
+        {
+            if (_player is null || _orch is null) return 0;
+            var psim = (X: (double)_player.Position.X, Y: (double)_player.Position.Z);
+            var hits = 0;
+            foreach (var e in _enemies)
+            {
+                if (!e.Runtime.IsAlive) continue;
+                if (e.Runtime.DistanceTo(psim) > radius) continue;
+                _orch.PlayerAttackEnemyWithTags(e.Runtime,
+                    new List<string> { "physical" },
+                    new Dictionary<string, object?> { ["baseDamage"] = 10.0 });
+                e.FlashUntil = _now + 0.13;
+                _fx?.PunchScale(e.Node);
+                hits++;
+            }
+            return hits;
+        };
         _gathering = new GatheringSystem(_pc, titleDb,
                                          new PythonRandom(worldSeed ^ 303));
 
@@ -247,6 +284,52 @@ public partial class CombatWorld : Node3D
             TryClickAction(click.Position);
         if (@event is InputEventKey { PhysicalKeycode: Key.E, Pressed: true, Echo: false })
             TryHarvest();
+        if (@event is InputEventKey { Pressed: true, Echo: false } sk
+            && sk.PhysicalKeycode is >= Key.Key1 and <= Key.Key5)
+            UseSkillSlot((int)sk.PhysicalKeycode - (int)Key.Key1);
+    }
+
+    /// <summary>Keys 1-5: activate hotbar slot, aiming at the mouse's world
+    /// position (game_engine.py:974-1015).</summary>
+    private void UseSkillSlot(int slot)
+    {
+        if (SkillMgr is null || _player is null || _pc is null) return;
+
+        (double X, double Y)? mouseWorld = null;
+        var cam = GetViewport().GetCamera3D();
+        if (cam is not null)
+        {
+            var mp = GetViewport().GetMousePosition();
+            var o = cam.ProjectRayOrigin(mp);
+            var d = cam.ProjectRayNormal(mp);
+            if (Math.Abs(d.Y) > 1e-4)
+            {
+                var t = (_player.Position.Y - o.Y) / d.Y;
+                if (t is > 0 and < 120)
+                {
+                    var p = o + d * (float)t;
+                    mouseWorld = (p.X, p.Z);
+                }
+            }
+        }
+
+        _pc.SetPositionXY(_player.Position.X, _player.Position.Z);
+        var (ok, msg) = SkillMgr.UseSkill(slot, mouseWorld);
+        _lastEvent = msg;
+        _fx?.FloatText(_player.GlobalPosition, msg,
+            ok ? new Color(0.6f, 1f, 0.6f) : new Color(1f, 0.6f, 0.6f), 0.8f);
+    }
+
+    /// <summary>Skill kills: EXP via the certified reward calc + loot to
+    /// inventory (skill_manager.py:1023-1049).</summary>
+    private void HandleSkillKill(EnemyRuntime rt)
+    {
+        if (_orch is null || _pc is null) return;
+        var exp = _orch.CalculateExpReward(rt);
+        _pc.Leveling.AddExp((int)exp);
+        foreach (var (materialId, qty) in rt.GenerateLoot())
+            _pc.Inventory.AddItem(materialId, (int)qty);
+        _lastEvent = $"killed {rt.Definition.Name} by skill! +{exp} exp";
     }
 
     /// <summary>CraftingScreen entry: certified craft with the rolled
@@ -423,6 +506,10 @@ public partial class CombatWorld : Node3D
         var dtMs = delta * 1000.0;
         var playerSim = (X: (double)_player.Position.X, Y: (double)_player.Position.Z);
 
+        // Skills/mana/buff ticks (character.py update loop)
+        SkillMgr?.UpdateCooldowns(delta);
+        _pc?.TickManaAndBuffs(delta);
+
         _hitboxes.UpdateHurtboxPosition("player", playerSim.X, playerSim.Y);
 
         // Player attack phases → hitbox on active start
@@ -577,11 +664,46 @@ public partial class CombatWorld : Node3D
         if (_hud is not null && _pc is not null)
         {
             var alive = _enemies.Count(x => x.Runtime.IsAlive);
+            var buffs = string.Join("  ", _pc.Buffs.ActiveBuffs.Select(
+                b => $"{b.Name} {b.DurationRemaining:F0}s"));
             _hud.Text = $"HP {(int)_pc.Health}/{(int)_pc.MaxHealthValue}   " +
+                        $"MP {(int)_pc.Mana}/{(int)_pc.MaxMana}   " +
                         $"Lv {_pc.Leveling.Level} ({_pc.Leveling.CurrentExp} exp)   " +
-                        $"enemies {alive}/{_enemies.Count}   " +
-                        $"click: attack/gather/talk  [C] craft  [I] inventory  [M] map   " +
-                        $"{_lastEvent}";
+                        $"enemies {alive}/{_enemies.Count}   {_lastEvent}" +
+                        (buffs.Length > 0 ? $"\nbuffs: {buffs}" : "");
+        }
+        UpdateHotbar();
+    }
+
+    private readonly List<Label> _hotbarSlots = new();
+
+    private void UpdateHotbar()
+    {
+        if (SkillMgr is null || _pc is null || _hotbarSlots.Count == 0) return;
+        for (var i = 0; i < SkillManager.HotbarSlots; i++)
+        {
+            var label = _hotbarSlots[i];
+            var id = SkillMgr.Equipped[i];
+            if (id is null || SkillDb?.Skills.GetValueOrDefault(id) is not { } def)
+            {
+                label.Text = $"[{i + 1}]\n—";
+                label.Modulate = new Color(1, 1, 1, 0.45f);
+                continue;
+            }
+            var ps = SkillMgr.Known[id];
+            if (ps.CurrentCooldown > 0)
+            {
+                label.Text = $"[{i + 1}] {def.Name}\n{ps.CurrentCooldown:F1}s";
+                label.Modulate = new Color(1f, 0.45f, 0.4f);
+            }
+            else
+            {
+                var cost = SkillMgr.ManaCostOf(def);
+                label.Text = $"[{i + 1}] {def.Name}\n{(int)cost} MP";
+                label.Modulate = _pc.Mana >= cost
+                    ? new Color(0.55f, 0.85f, 1f)
+                    : new Color(1f, 0.5f, 0.45f);
+            }
         }
     }
 
@@ -652,6 +774,29 @@ public partial class CombatWorld : Node3D
         };
         _hud.AddThemeFontSizeOverride("font_size", 20);
         layer.AddChild(_hud);
+
+        // Skill hotbar: 5 slots bottom-center (renderer.py:3240-3323)
+        var bar = new HBoxContainer();
+        bar.AddThemeConstantOverride("separation", 10);
+        bar.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
+        bar.GrowHorizontal = Control.GrowDirection.Both;
+        bar.Position = new Vector2(0, -12);
+        for (var i = 0; i < SkillManager.HotbarSlots; i++)
+        {
+            var panel = new PanelContainer { CustomMinimumSize = new Vector2(132, 52) };
+            var label = new Label
+            {
+                Text = $"[{i + 1}]\n—",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                ClipText = true,
+            };
+            label.AddThemeFontSizeOverride("font_size", 13);
+            panel.AddChild(label);
+            bar.AddChild(panel);
+            _hotbarSlots.Add(label);
+        }
+        layer.AddChild(bar);
         AddChild(layer);
     }
 }

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>WMS Prompt Coverage Slideshow</title>
+<style>
+ body { background:#14161a; color:#d7dae0; font-family:Consolas,monospace;
+        margin:0; }
+ .slide { display:none; padding:24px 40px; }
+ .slide.active { display:block; }
+ h1 { color:#7fd4a8; font-size:18px; }
+ .chip { display:inline-block; background:#243040; border:1px solid #3d5470;
+         border-radius:10px; padding:2px 10px; margin:2px; font-size:12px; }
+ .chip.missing { background:#402424; border-color:#705050; }
+ .meta { color:#8a93a3; font-size:12px; margin:6px 0; }
+ pre { background:#1b1f26; border:1px solid #2c3340; border-radius:6px;
+       padding:12px; white-space:pre-wrap; font-size:12px; max-height:38vh;
+       overflow:auto; }
+ .nav { position:fixed; bottom:12px; right:20px; color:#8a93a3;
+        font-size:13px; }
+ table { border-collapse:collapse; font-size:13px; }
+ td, th { border:1px solid #2c3340; padding:4px 12px; }
+</style></head><body>
+<div class='slide'><h1>Coverage summary</h1><table><tr><th>Fragments covered</th><td>150 / 150</td></tr><tr><th>Weighted mass uncovered</th><td>0 / 282.0</td></tr><tr><th>Slides</th><td>36</td></tr></table><div class='meta'>Uncovered (raise --max-slides or fix compatibility map): (none)</div><div class='meta'>Each slide = one representative assembled prompt. Chips = requested tags; red = tag had no fragment (silent-drop candidates).</div></div>
+<div class='slide'><h1>#1 &mdash; combat</h1><div><span class='chip'>domain:combat</span><span class='chip'>species:wolf_grey</span><span class='chip'>species:wolf_elder</span><span class='chip'>status_effect:weaken</span><span class='chip'>status_effect:stun</span><span class='chip'>element:shadow</span><span class='chip'>element:poison</span><span class='chip'>attack_type:ranged</span></div><div class='meta'>fragments used: _core, domain:combat, species:wolf_grey, species:wolf_elder, status_effect:weaken, status_effect:stun, element:shadow, element:poison, attack_type:ranged, _output &mdash; ~385 tokens &mdash; weighted coverage 17.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a combat event. Players fight enemies using melee weapons, ranged weapons, and skills. Damage types include physical, fire, ice, lightning, poison, arcane, shadow, holy. Enemies have tiers (T1-T4) indicating difficulty.
+
+Grey Wolf is a tier 1 enemy found in forest biomes. Low individual threat.
+
+Elder Wolf is a tier 3 enemy found in deep forest areas. Dangerous.
+
+Weaken reduces the target&#x27;s damage output.
+
+Stun prevents all actions briefly.
+
+Shadow damage. Associated with debuffs.
+
+Poison damage. Applies damage over time that stacks.
+
+Ranged combat. Bows and thrown weapons, attacking from distance.</pre><b>USER</b><pre>Event: combat (kill)
+Trigger count: 25
+Location: Whispering Woods
+Context: sustained culling.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#2 &mdash; combat</h1><div><span class='chip'>domain:combat</span><span class='chip'>species:wolf_dire</span><span class='chip'>species:void_wraith</span><span class='chip'>status_effect:slow</span><span class='chip'>status_effect:shock</span><span class='chip'>element:physical</span><span class='chip'>element:lightning</span><span class='chip'>attack_type:melee</span></div><div class='meta'>fragments used: _core, domain:combat, species:wolf_dire, species:void_wraith, status_effect:slow, status_effect:shock, element:physical, element:lightning, attack_type:melee, _output &mdash; ~388 tokens &mdash; weighted coverage 14.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a combat event. Players fight enemies using melee weapons, ranged weapons, and skills. Damage types include physical, fire, ice, lightning, poison, arcane, shadow, holy. Enemies have tiers (T1-T4) indicating difficulty.
+
+Dire Wolf is a tier 2 enemy found in forest biomes. Moderate threat.
+
+Void Wraith is a tier 4 enemy found in corrupted end-game areas. Extremely dangerous.
+
+Slow reduces movement speed.
+
+Shock interrupts and deals burst damage.
+
+Physical damage. The default melee and ranged type.
+
+Lightning damage. Can chain to nearby targets.
+
+Melee combat. Close-range weapons like swords, axes, daggers, maces.</pre><b>USER</b><pre>Event: combat (kill)
+Trigger count: 25
+Location: Whispering Woods
+Context: sustained culling.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#3 &mdash; combat</h1><div><span class='chip'>domain:combat</span><span class='chip'>species:slime_green</span><span class='chip'>species:slime_crystal</span><span class='chip'>status_effect:root</span><span class='chip'>status_effect:poison</span><span class='chip'>element:ice</span><span class='chip'>element:holy</span><span class='chip'>attack_type:magic</span></div><div class='meta'>fragments used: _core, domain:combat, species:slime_green, species:slime_crystal, status_effect:root, status_effect:poison, element:ice, element:holy, attack_type:magic, _output &mdash; ~389 tokens &mdash; weighted coverage 14.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a combat event. Players fight enemies using melee weapons, ranged weapons, and skills. Damage types include physical, fire, ice, lightning, poison, arcane, shadow, holy. Enemies have tiers (T1-T4) indicating difficulty.
+
+Green Slime is a tier 1 enemy found in caves and wet areas. Low individual threat.
+
+Crystal Slime is a tier 3 enemy found in cave depths. Dangerous.
+
+Root prevents movement but allows attacks.
+
+Poison deals damage over time, can stack.
+
+Ice damage. Can apply chill or freeze (slows or immobilizes).
+
+Holy damage. Effective against undead and shadow creatures.
+
+Magic combat. Elemental spells using mana.</pre><b>USER</b><pre>Event: combat (kill)
+Trigger count: 25
+Location: Whispering Woods
+Context: sustained culling.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#4 &mdash; combat</h1><div><span class='chip'>domain:combat</span><span class='chip'>species:slime_acid</span><span class='chip'>species:golem_stone</span><span class='chip'>status_effect:knockback</span><span class='chip'>status_effect:haste</span><span class='chip'>element:fire</span><span class='chip'>element:arcane</span><span class='chip'>attack_type:critical</span></div><div class='meta'>fragments used: _core, domain:combat, species:slime_acid, species:golem_stone, status_effect:knockback, status_effect:haste, element:fire, element:arcane, attack_type:critical, _output &mdash; ~383 tokens &mdash; weighted coverage 14.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a combat event. Players fight enemies using melee weapons, ranged weapons, and skills. Damage types include physical, fire, ice, lightning, poison, arcane, shadow, holy. Enemies have tiers (T1-T4) indicating difficulty.
+
+Acid Slime is a tier 2 enemy found in caves and wet areas. Moderate threat.
+
+Stone Golem is a tier 3 enemy found in quarry and cave biomes. Dangerous.
+
+Knockback pushes the target away.
+
+Haste increases movement and attack speed.
+
+Fire damage. Can apply burn (damage over time).
+
+Arcane damage. Pure magical energy, rarely resisted.
+
+Critical hit. Bonus damage based on LCK stat.</pre><b>USER</b><pre>Event: combat (kill)
+Trigger count: 25
+Location: Whispering Woods
+Context: sustained culling.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#5 &mdash; crafting</h1><div><span class='chip'>domain:crafting</span><span class='chip'>discipline:smithing</span><span class='chip'>material_category:wood</span><span class='chip'>material_category:tree</span><span class='chip'>item_category:weapon</span><span class='chip'>item_category:turret</span><span class='chip'>tier:4</span><span class='chip'>source:quest</span></div><div class='meta'>fragments used: _core, domain:crafting, discipline:smithing, material_category:wood, material_category:tree, item_category:weapon, item_category:turret, tier:4, source:quest, _output &mdash; ~412 tokens &mdash; weighted coverage 14.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a crafting event. Six disciplines: smithing (weapons/armor), alchemy (potions), refining (processing raw materials), engineering (devices), enchanting (magical properties), fishing. Quality ranges from normal to legendary.
+
+Smithing produces weapons and armor from metals at anvil stations.
+
+Wood from trees. Chopped with axes. Used for handles, engineering, and construction.
+
+Wood chopped from trees with axes. Used for handles and engineering.
+
+Weapons. Swords, axes, bows, daggers, maces, hammers, staffs.
+
+Turrets. Stationary devices that auto-attack nearby enemies.
+
+Tier 4 is legendary, end-game content. Extremely rare. Any T4 activity is a major event worth highlighting.
+
+Earned from quest completion rewards.</pre><b>USER</b><pre>Event: craft_attempted
+Trigger count: 12
+Location: village forge
+Context: a smithing surge.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#6 &mdash; economy</h1><div><span class='chip'>domain:economy</span><span class='chip'>faction:rank_hero</span><span class='chip'>faction:rank_criminal</span><span class='chip'>npc:tutorial_guide</span><span class='chip'>item_category:trap</span><span class='chip'>item_category:tool</span><span class='chip'>tier:3</span><span class='chip'>source:loot</span></div><div class='meta'>fragments used: _core, domain:economy, faction:rank_hero, faction:rank_criminal, npc:tutorial_guide, item_category:trap, item_category:tool, tier:3, source:loot, _output &mdash; ~388 tokens &mdash; weighted coverage 14.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is an economy event. Gold earned from quests, loot, and trading. Gold spent on skill unlocks, repairs, and purchases.
+
+PLACEHOLDER for rank:hero. When stylized, this will describe heroic social rank and how NPCs treat it.
+
+PLACEHOLDER for rank:criminal. When stylized, this will describe criminal social rank and how NPCs react.
+
+Tutorial Guide. Introduces game mechanics to new players.
+
+Traps. Placed on ground to damage enemies who walk over them.
+
+Tools. Pickaxes, axes, hammers used for gathering resources.
+
+Tier 3 is rare, late-game content. Significant challenge and reward. Noteworthy activity.
+
+Earned from loot drops and chest contents.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#7 &mdash; social</h1><div><span class='chip'>domain:social</span><span class='chip'>faction:rank_commoner</span><span class='chip'>faction:profession_miner</span><span class='chip'>npc:mysterious_trader</span><span class='chip'>interaction:trade</span><span class='chip'>affinity:trusted</span><span class='chip'>tier:2</span><span class='chip'>source:fishing</span></div><div class='meta'>fragments used: _core, domain:social, faction:rank_commoner, faction:profession_miner, npc:mysterious_trader, interaction:trade, affinity:trusted, tier:2, source:fishing, _output &mdash; ~408 tokens &mdash; weighted coverage 14.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a social event. NPCs provide quests and dialogue. Quest types include kill, gather, craft, explore, and talk objectives.
+
+PLACEHOLDER for rank:commoner. When stylized, this will describe common social rank and expectations.
+
+PLACEHOLDER for profession:miner. When stylized, this will describe what a miner&#x27;s professional identity means.
+
+Mysterious Trader. Sells rare items and offers unusual trades.
+
+Trade interaction. NPC and player are negotiating exchange of goods or services.
+
+Trusted reputation (30 to 69). The faction considers the player an ally. Their members are warm and helpful.
+
+Tier 2 is uncommon, mid-game content. Requires some player investment to handle.
+
+Earned from fishing activities.</pre><b>USER</b><pre>Event: npc_dialogue
+Trigger count: 8
+Location: harbor town
+Context: rumors of raiders.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#8 &mdash; dungeon</h1><div><span class='chip'>domain:dungeon</span><span class='chip'>species:golem_crystal</span><span class='chip'>species:entity_primordial</span><span class='chip'>tier:1</span><span class='chip'>source:crafting</span><span class='chip'>rarity:uncommon</span><span class='chip'>rank:unique</span><span class='chip'>action:turret_placed</span></div><div class='meta'>fragments used: _core, domain:dungeon, species:golem_crystal, species:entity_primordial, tier:1, source:crafting, rarity:uncommon, rank:unique, action:turret_placed, _output &mdash; ~411 tokens &mdash; weighted coverage 13.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a dungeon event. Dungeons are structured areas with enemy waves and a completion objective. Different from open-world combat which is unstructured and emergent.
+
+Crystal Golem is a tier 4 enemy found in quarry depths. Extremely dangerous.
+
+Primordial Entity is a tier 4 enemy found in deep end-game areas. Extremely dangerous.
+
+Tier 1 is common, early-game content. Routine for experienced players.
+
+Earned from crafting activities.
+
+Uncommon rarity. Slightly above baseline.
+
+Unique rank. One-of-a-kind encounter. Major world event.
+
+A turret or barrier was placed in the world. Turrets auto-attack nearby enemies. Barriers are static obstacles from stone materials. Placement indicates the player is fortifying an area for defense.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#9 &mdash; fishing</h1><div><span class='chip'>domain:fishing</span><span class='chip'>species:beetle_titan</span><span class='chip'>species:beetle_brown</span><span class='chip'>tool:pickaxe</span><span class='chip'>source:combat</span><span class='chip'>result:success</span><span class='chip'>result:record</span><span class='chip'>rarity:rare</span></div><div class='meta'>fragments used: _core, domain:fishing, species:beetle_titan, species:beetle_brown, tool:pickaxe, source:combat, result:success, result:record, rarity:rare, _output &mdash; ~368 tokens &mdash; weighted coverage 13.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a fishing event. Players catch fish from water nodes using fishing rods. Catch quality varies by location and rod tier. Fish are materials used in alchemy and cooking.
+
+Titan Beetle is a tier 4 enemy found in deep underground. Extremely dangerous.
+
+Brown Beetle is a tier 1 enemy found in underground areas. Low individual threat.
+
+Pickaxe. Used to mine ore and stone from veins and quarry nodes.
+
+Earned from combat activities (killing enemies, dungeon rewards).
+
+This action succeeded.
+
+This set a new personal record.
+
+Rare rarity. Notable find or encounter.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#10 &mdash; gathering</h1><div><span class='chip'>domain:gathering</span><span class='chip'>material_category:stone</span><span class='chip'>material_category:plant</span><span class='chip'>resource:mana</span><span class='chip'>tool:hammer</span><span class='chip'>result:perfect</span><span class='chip'>result:occurrence</span><span class='chip'>rarity:legendary</span></div><div class='meta'>fragments used: _core, domain:gathering, material_category:stone, material_category:plant, resource:mana, tool:hammer, result:perfect, result:occurrence, rarity:legendary, _output &mdash; ~368 tokens &mdash; weighted coverage 12.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a resource gathering event. Players harvest from world nodes using tools (pickaxe for ore, axe for wood, hammer for stone). Nodes can be depleted and regenerate over time.
+
+Stone and gems. Mined from quarry nodes. Used in refining and engineering.
+
+Plants gathered by hand. Used in alchemy for potions.
+
+Mana. Consumed when activating skills.
+
+Hammer. Used to mine stone and break rocks.
+
+This was a perfect execution, highest possible quality.
+
+This is the Nth time this specific action has occurred.
+
+Legendary rarity. Extremely rare, top-tier.</pre><b>USER</b><pre>Event: resource_gathered
+Trigger count: 40
+Location: riverbank
+Context: steady logging.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#11 &mdash; crafting</h1><div><span class='chip'>domain:crafting</span><span class='chip'>discipline:refining</span><span class='chip'>material_category:ore</span><span class='chip'>material_category:monster_drop</span><span class='chip'>item_category:potion</span><span class='chip'>item_category:device</span><span class='chip'>result:no_damage</span><span class='chip'>result:near_death</span></div><div class='meta'>fragments used: _core, domain:crafting, discipline:refining, material_category:ore, material_category:monster_drop, item_category:potion, item_category:device, result:no_damage, result:near_death, _output &mdash; ~418 tokens &mdash; weighted coverage 11.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a crafting event. Six disciplines: smithing (weapons/armor), alchemy (potions), refining (processing raw materials), engineering (devices), enchanting (magical properties), fishing. Quality ranges from normal to legendary.
+
+Refining processes raw materials into usable components. Converts ores to ingots, logs to planks.
+
+Ores mined from veins with pickaxes. Smelted into metals for smithing.
+
+Materials dropped by defeated enemies. Tier scales with enemy tier. Used across multiple crafting disciplines.
+
+Potions. Healing, mana restoration, or buff effects from alchemy.
+
+Engineered devices. Turrets, traps, bombs from engineering discipline.
+
+The player completed this without taking any damage.
+
+The player nearly died during this activity.</pre><b>USER</b><pre>Event: craft_attempted
+Trigger count: 12
+Location: village forge
+Context: a smithing surge.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#12 &mdash; crafting</h1><div><span class='chip'>domain:crafting</span><span class='chip'>discipline:fishing</span><span class='chip'>material_category:metal</span><span class='chip'>material_category:fish</span><span class='chip'>item_category:consumable</span><span class='chip'>item_category:bomb</span><span class='chip'>result:first_try</span><span class='chip'>result:first</span></div><div class='meta'>fragments used: _core, domain:crafting, discipline:fishing, material_category:metal, material_category:fish, item_category:consumable, item_category:bomb, result:first_try, result:first, _output &mdash; ~398 tokens &mdash; weighted coverage 11.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a crafting event. Six disciplines: smithing (weapons/armor), alchemy (potions), refining (processing raw materials), engineering (devices), enchanting (magical properties), fishing. Quality ranges from normal to legendary.
+
+Fishing catches fish from water nodes using rods. Catches vary by location.
+
+Metal ores and ingots. Mined with pickaxes from ore veins. Primary materials for smithing weapons and armor.
+
+Fish caught from water nodes using fishing rods.
+
+Consumable items. Used once for an immediate effect.
+
+Bombs. Throwable explosive devices from engineering.
+
+This succeeded on the first attempt.
+
+This is the first time this specific action has occurred.</pre><b>USER</b><pre>Event: craft_attempted
+Trigger count: 12
+Location: village forge
+Context: a smithing surge.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#13 &mdash; social</h1><div><span class='chip'>domain:social</span><span class='chip'>faction:profession_merchant</span><span class='chip'>faction:profession_guard</span><span class='chip'>npc:combat_trainer</span><span class='chip'>interaction:threaten</span><span class='chip'>affinity:revered</span><span class='chip'>rarity:epic</span><span class='chip'>action:invent</span></div><div class='meta'>fragments used: _core, domain:social, faction:profession_merchant, faction:profession_guard, npc:combat_trainer, interaction:threaten, affinity:revered, rarity:epic, action:invent, _output &mdash; ~442 tokens &mdash; weighted coverage 11.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a social event. NPCs provide quests and dialogue. Quest types include kill, gather, craft, explore, and talk objectives.
+
+PLACEHOLDER for profession:merchant. When stylized, this will describe what a merchant&#x27;s professional identity means.
+
+PLACEHOLDER for profession:guard. When stylized, this will describe what a guard&#x27;s professional identity means.
+
+Combat Trainer. Teaches combat skills and offers fight-related quests.
+
+Hostile interaction. Verbal confrontation that may escalate based on affinity.
+
+Revered reputation (70 to 100). The faction sees the player as a hero or champion. Their members treat the player with deep respect.
+
+Epic rarity. Very rare, high-value.
+
+Invented items are player-created combinations not found in any recipe book. This is a creative achievement, rarer and more noteworthy than standard recipe crafting.</pre><b>USER</b><pre>Event: npc_dialogue
+Trigger count: 8
+Location: harbor town
+Context: rumors of raiders.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#14 &mdash; combat</h1><div><span class='chip'>domain:combat</span><span class='chip'>species:beetle_armored</span><span class='chip'>status_effect:freeze</span><span class='chip'>status_effect:encumbered</span><span class='chip'>attack_type:chain</span><span class='chip'>result:failure</span><span class='chip'>result:critical</span><span class='chip'>rarity:common</span></div><div class='meta'>fragments used: _core, domain:combat, species:beetle_armored, status_effect:freeze, status_effect:encumbered, attack_type:chain, result:failure, result:critical, rarity:common, _output &mdash; ~374 tokens &mdash; weighted coverage 11.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a combat event. Players fight enemies using melee weapons, ranged weapons, and skills. Damage types include physical, fire, ice, lightning, poison, arcane, shadow, holy. Enemies have tiers (T1-T4) indicating difficulty.
+
+Armored Beetle is a tier 2 enemy found in underground areas. Moderate threat.
+
+Freeze completely immobilizes the target.
+
+Encumbered from heavy inventory, reduces speed.
+
+Chain attack. Damage jumps between multiple targets.
+
+This action failed.
+
+This was a critical hit, dealing extra damage.
+
+Common rarity. Standard, frequently encountered.</pre><b>USER</b><pre>Event: combat (kill)
+Trigger count: 25
+Location: Whispering Woods
+Context: sustained culling.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#15 &mdash; social</h1><div><span class='chip'>domain:social</span><span class='chip'>faction:profession_blacksmith</span><span class='chip'>faction:nation_stormguard</span><span class='chip'>interaction:greet</span><span class='chip'>affinity:neutral</span><span class='chip'>action:deplete</span></div><div class='meta'>fragments used: _core, domain:social, faction:profession_blacksmith, faction:nation_stormguard, interaction:greet, affinity:neutral, action:deplete, _output &mdash; ~416 tokens &mdash; weighted coverage 9.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a social event. NPCs provide quests and dialogue. Quest types include kill, gather, craft, explore, and talk objectives.
+
+PLACEHOLDER for profession:blacksmith. When stylized, this will describe what a blacksmith&#x27;s professional identity means.
+
+PLACEHOLDER for nation:stormguard. When stylized, this will describe Stormguard nation&#x27;s identity, military focus, and speech patterns.
+
+Greeting interaction. First contact or casual acknowledgment between NPC and player.
+
+Neutral reputation (-29 to 29). The faction has no strong opinion. Their members are professional and cautious.
+
+Node depletion means the resource source is fully harvested and temporarily unavailable. Different from normal gathering which just collects some resources.</pre><b>USER</b><pre>Event: npc_dialogue
+Trigger count: 8
+Location: harbor town
+Context: rumors of raiders.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#16 &mdash; social</h1><div><span class='chip'>domain:social</span><span class='chip'>faction:nation_blackoak</span><span class='chip'>faction:guild_thieves</span><span class='chip'>interaction:ask</span><span class='chip'>affinity:hated</span><span class='chip'>action:chest_opened</span></div><div class='meta'>fragments used: _core, domain:social, faction:nation_blackoak, faction:guild_thieves, interaction:ask, affinity:hated, action:chest_opened, _output &mdash; ~415 tokens &mdash; weighted coverage 9.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a social event. NPCs provide quests and dialogue. Quest types include kill, gather, craft, explore, and talk objectives.
+
+PLACEHOLDER for nation:blackoak. When stylized, this will describe Blackoak nation&#x27;s identity, trade focus, and speech patterns.
+
+PLACEHOLDER for guild:thieves. When stylized, this will describe the Thieves Guild identity, culture, and how members should speak.
+
+Question interaction. Player is asking NPC about information, quests, or world state.
+
+Hated reputation (-100 to -70). The faction considers the player an enemy. Their members are openly hostile.
+
+A chest was opened and looted. Chests contain items, gold, and materials. Opening many chests in an area indicates thorough exploration and loot-clearing.</pre><b>USER</b><pre>Event: npc_dialogue
+Trigger count: 8
+Location: harbor town
+Context: rumors of raiders.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#17 &mdash; crafting</h1><div><span class='chip'>domain:crafting</span><span class='chip'>discipline:engineering</span><span class='chip'>material_category:elemental</span><span class='chip'>item_category:armor</span><span class='chip'>quality:masterwork</span><span class='chip'>action:barrier_placed</span></div><div class='meta'>fragments used: _core, domain:crafting, discipline:engineering, material_category:elemental, item_category:armor, quality:masterwork, action:barrier_placed, _output &mdash; ~414 tokens &mdash; weighted coverage 8.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a crafting event. Six disciplines: smithing (weapons/armor), alchemy (potions), refining (processing raw materials), engineering (devices), enchanting (magical properties), fishing. Quality ranges from normal to legendary.
+
+Engineering produces mechanical devices, turrets, traps, and bombs from diverse materials.
+
+Elemental materials with magical properties. Found in special nodes or dropped by enemies. Used in enchanting and alchemy.
+
+Armor pieces. Reduce incoming damage.
+
+Masterwork quality. Top 10% crafting performance. Noteworthy achievement.
+
+A barrier was placed in the world. Barriers are player-placed stone obstacles that block enemy movement. Barrier placement indicates the player is controlling chokepoints.</pre><b>USER</b><pre>Event: craft_attempted
+Trigger count: 12
+Location: village forge
+Context: a smithing surge.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#18 &mdash; skills</h1><div><span class='chip'>domain:skills</span><span class='chip'>status_effect:chill</span><span class='chip'>status_effect:burn</span></div><div class='meta'>fragments used: _core, domain:skills, status_effect:chill, status_effect:burn, _output &mdash; ~279 tokens &mdash; weighted coverage 7.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a skill usage event. 30+ skills with mana costs and cooldowns. Skills include combat strikes, elemental spells, and gathering buffs.
+
+Chill slows movement and attack speed.
+
+Burn deals fire damage over time.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#19 &mdash; social</h1><div><span class='chip'>domain:social</span><span class='chip'>faction:guild_smiths</span><span class='chip'>faction:guild_merchants</span><span class='chip'>affinity:disliked</span></div><div class='meta'>fragments used: _core, domain:social, faction:guild_smiths, faction:guild_merchants, affinity:disliked, _output &mdash; ~355 tokens &mdash; weighted coverage 6.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a social event. NPCs provide quests and dialogue. Quest types include kill, gather, craft, explore, and talk objectives.
+
+PLACEHOLDER for guild:smiths. When stylized, this will describe the Smiths Guild identity, culture, and how members should speak.
+
+PLACEHOLDER for guild:merchants. When stylized, this will describe the Merchants Guild identity, culture, and how members should speak.
+
+Disliked reputation (-69 to -30). The faction mistrusts the player. Their members are cold and dismissive.</pre><b>USER</b><pre>Event: npc_dialogue
+Trigger count: 8
+Location: harbor town
+Context: rumors of raiders.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#20 &mdash; economy</h1><div><span class='chip'>domain:economy</span><span class='chip'>faction:guild_fishers</span><span class='chip'>faction:district_iron_hills</span></div><div class='meta'>fragments used: _core, domain:economy, faction:guild_fishers, faction:district_iron_hills, _output &mdash; ~321 tokens &mdash; weighted coverage 5.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is an economy event. Gold earned from quests, loot, and trading. Gold spent on skill unlocks, repairs, and purchases.
+
+PLACEHOLDER for guild:fishers. When stylized, this will describe the Fishers Guild identity, culture, and how members should speak.
+
+PLACEHOLDER for district:iron_hills. When stylized, this will describe Iron Hills district&#x27;s identity and cultural attitudes.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#21 &mdash; combat</h1><div><span class='chip'>domain:combat</span><span class='chip'>status_effect:bleed</span><span class='chip'>attack_type:aoe</span><span class='chip'>rank:normal</span></div><div class='meta'>fragments used: _core, domain:combat, status_effect:bleed, attack_type:aoe, rank:normal, _output &mdash; ~327 tokens &mdash; weighted coverage 4.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a combat event. Players fight enemies using melee weapons, ranged weapons, and skills. Damage types include physical, fire, ice, lightning, poison, arcane, shadow, holy. Enemies have tiers (T1-T4) indicating difficulty.
+
+Bleed deals physical damage over time.
+
+Area of effect attack. Hits multiple targets in a radius.
+
+Normal rank. Standard encounter, common in the world.</pre><b>USER</b><pre>Event: combat (kill)
+Trigger count: 25
+Location: Whispering Woods
+Context: sustained culling.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#22 &mdash; items</h1><div><span class='chip'>domain:items</span><span class='chip'>quality:legendary</span></div><div class='meta'>fragments used: _core, domain:items, quality:legendary, _output &mdash; ~290 tokens &mdash; weighted coverage 4.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is an item event. Equipment includes weapons, armor, tools, and consumables. Items have tier and durability. At 0% durability items work at half effectiveness but never break.
+
+Legendary quality. Near-perfect crafting performance. Extremely rare outcome.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#23 &mdash; progression</h1><div><span class='chip'>domain:progression</span><span class='chip'>rank:boss</span></div><div class='meta'>fragments used: _core, domain:progression, rank:boss, _output &mdash; ~304 tokens &mdash; weighted coverage 4.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a progression event. Max level 30 with slightly exponential EXP curve. Six stats: STR (melee damage), DEF (damage reduction), VIT (health), LCK (crit chance), AGI (speed), INT (magic/mana). 40+ titles earned through gameplay milestones.
+
+Boss rank. Rare and powerful. Defeating one is a notable milestone.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#24 &mdash; barriers</h1><div><span class='chip'>domain:barriers</span></div><div class='meta'>fragments used: _core, domain:barriers, _output &mdash; ~247 tokens &mdash; weighted coverage 3.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+Barrier placement and pickup. Barriers are player-placed obstacles from stone materials.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#25 &mdash; encyclopedia</h1><div><span class='chip'>domain:encyclopedia</span></div><div class='meta'>fragments used: _core, domain:encyclopedia, _output &mdash; ~249 tokens &mdash; weighted coverage 3.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+Encyclopedia discovery. Players unlock entries by encountering new enemies, items, and recipes.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#26 &mdash; exploration</h1><div><span class='chip'>domain:exploration</span></div><div class='meta'>fragments used: _core, domain:exploration, _output &mdash; ~272 tokens &mdash; weighted coverage 3.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is an exploration event. The world is divided into regions of increasing danger. Biomes include forest, cave, quarry, and water. Dungeons are structured encounters with enemy waves.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#27 &mdash; faction</h1><div><span class='chip'>domain:faction</span></div><div class='meta'>fragments used: _core, domain:faction, _output &mdash; ~281 tokens &mdash; weighted coverage 3.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a faction event. The world has factions (guilds, nations, districts, professions). Players build affinity (-100 to +100) with each faction through actions. NPCs belong to factions and react based on player standing.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#28 &mdash; misc</h1><div><span class='chip'>domain:misc</span></div><div class='meta'>fragments used: _core, domain:misc, _output &mdash; ~240 tokens &mdash; weighted coverage 3.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+Miscellaneous activity. Menu usage, saves, debug actions.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#29 &mdash; records</h1><div><span class='chip'>domain:records</span></div><div class='meta'>fragments used: _core, domain:records, _output &mdash; ~244 tokens &mdash; weighted coverage 3.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+Personal record tracking. Fastest times, highest damage, longest streaks.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#30 &mdash; session</h1><div><span class='chip'>domain:session</span></div><div class='meta'>fragments used: _core, domain:session, _output &mdash; ~240 tokens &mdash; weighted coverage 3.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+Session tracking. Login/logout and play session duration.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#31 &mdash; time</h1><div><span class='chip'>domain:time</span></div><div class='meta'>fragments used: _core, domain:time, _output &mdash; ~242 tokens &mdash; weighted coverage 3.0</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+Time tracking. How long the player spends in different activities.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#32 &mdash; crafting</h1><div><span class='chip'>domain:crafting</span><span class='chip'>discipline:enchanting</span></div><div class='meta'>fragments used: _core, domain:crafting, discipline:enchanting, _output &mdash; ~313 tokens &mdash; weighted coverage 2.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a crafting event. Six disciplines: smithing (weapons/armor), alchemy (potions), refining (processing raw materials), engineering (devices), enchanting (magical properties), fishing. Quality ranges from normal to legendary.
+
+Enchanting adds magical properties to equipment such as damage bonuses, protection, and lifesteal.</pre><b>USER</b><pre>Event: craft_attempted
+Trigger count: 12
+Location: village forge
+Context: a smithing surge.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#33 &mdash; crafting</h1><div><span class='chip'>domain:crafting</span><span class='chip'>discipline:alchemy</span></div><div class='meta'>fragments used: _core, domain:crafting, discipline:alchemy, _output &mdash; ~309 tokens &mdash; weighted coverage 2.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a crafting event. Six disciplines: smithing (weapons/armor), alchemy (potions), refining (processing raw materials), engineering (devices), enchanting (magical properties), fishing. Quality ranges from normal to legendary.
+
+Alchemy produces potions and consumables by combining reagents at cauldron stations.</pre><b>USER</b><pre>Event: craft_attempted
+Trigger count: 12
+Location: village forge
+Context: a smithing surge.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#34 &mdash; economy</h1><div><span class='chip'>domain:economy</span><span class='chip'>faction:district_coastal_reach</span></div><div class='meta'>fragments used: _core, domain:economy, faction:district_coastal_reach, _output &mdash; ~289 tokens &mdash; weighted coverage 2.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is an economy event. Gold earned from quests, loot, and trading. Gold spent on skill unlocks, repairs, and purchases.
+
+PLACEHOLDER for district:coastal_reach. When stylized, this will describe Coastal Reach district&#x27;s identity and cultural attitudes.</pre><b>USER</b><pre>Event: activity
+Trigger count: 10
+Context: a notable pattern emerged.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#35 &mdash; gathering</h1><div><span class='chip'>domain:gathering</span><span class='chip'>resource:gold</span><span class='chip'>tool:fishing_rod</span></div><div class='meta'>fragments used: _core, domain:gathering, resource:gold, tool:fishing_rod, _output &mdash; ~296 tokens &mdash; weighted coverage 2.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a resource gathering event. Players harvest from world nodes using tools (pickaxe for ore, axe for wood, hammer for stone). Nodes can be depleted and regenerate over time.
+
+Gold. The primary in-game currency.
+
+Fishing rod. Used to catch fish from water nodes.</pre><b>USER</b><pre>Event: resource_gathered
+Trigger count: 40
+Location: riverbank
+Context: steady logging.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class='slide'><h1>#36 &mdash; gathering</h1><div><span class='chip'>domain:gathering</span><span class='chip'>resource:exp</span><span class='chip'>tool:axe</span></div><div class='meta'>fragments used: _core, domain:gathering, resource:exp, tool:axe, _output &mdash; ~297 tokens &mdash; weighted coverage 2.5</div><b>SYSTEM</b><pre>You narrate events in an open world RPG. The world uses a 4 tier classification system: T1 (common, early-game) through T4 (legendary, end-game). Players fight enemies, gather resources from resource nodes, craft items across 6 crafting disciplines, and explore a procedurally generated world with forests, caves, quarries, and villages.
+
+This is a resource gathering event. Players harvest from world nodes using tools (pickaxe for ore, axe for wood, hammer for stone). Nodes can be depleted and regenerate over time.
+
+Experience points. Accumulated toward level progression.
+
+Axe. Used to chop trees for wood.</pre><b>USER</b><pre>Event: resource_gathered
+Trigger count: 40
+Location: riverbank
+Context: steady logging.
+
+Respond with JSON only. Two fields:
+- &quot;narrative&quot;: ONE factual sentence. Mention count and location if regional. Note patterns like concentrated activity, sustained effort, or milestones. Do not editorialize.
+- &quot;tags&quot;: Assign applicable tags from this list (only include what clearly fits):
+  significance: minor, moderate, significant, major, critical
+
+Example: {&quot;narrative&quot;: &quot;Player has killed 25 wolves in Whispering Woods, a sustained culling effort.&quot;, &quot;tags&quot;: [&quot;significance:significant&quot;]}</pre></div>
+<div class="nav">&#8592;/&#8594; or click to navigate &mdash; slide
+ <span id="cur">1</span>/37</div>
+<script>
+ const slides = document.querySelectorAll('.slide');
+ let i = 0;
+ function show(k) {
+   i = Math.max(0, Math.min(slides.length - 1, k));
+   slides.forEach((s, j) => s.classList.toggle('active', j === i));
+   document.getElementById('cur').textContent = i + 1;
+ }
+ document.addEventListener('keydown', e => {
+   if (e.key === 'ArrowRight' || e.key === ' ') show(i + 1);
+   if (e.key === 'ArrowLeft') show(i - 1);
+ });
+ document.addEventListener('click', () => show(i + 1));
+ show(0);
+</script></body></html>

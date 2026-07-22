@@ -101,6 +101,7 @@ public partial class WorldBootstrap : Node3D
         // standalone popups (crafting is deliberately not a book page)
         var book = new MenuBook { Name = "MenuBook" };
         book.AddPage(new InventoryPage(combat));
+        book.AddPage(new SkillsPage(combat));
         book.AddPage(new MapPage(_worldMap, _villages, player));
         AddChild(book);
         AddChild(new CraftingScreen(combat) { Name = "CraftingScreen" });
