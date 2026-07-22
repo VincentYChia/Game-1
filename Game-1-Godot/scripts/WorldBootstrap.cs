@@ -113,6 +113,8 @@ public partial class WorldBootstrap : Node3D
         var dialogue = new DialogueScreen(combat) { Name = "DialogueScreen" };
         AddChild(dialogue);
         combat.Dialogue = dialogue;
+        AddChild(new PauseScreen(combat, player) { Name = "PauseScreen" });
+        AddChild(new ClassSelectScreen(combat) { Name = "ClassSelect" });
 
         GD.Print($"World built: seed {WorldSeed}, {(ChunkRadius * 2 + 1) * (ChunkRadius * 2 + 1)} chunks");
     }

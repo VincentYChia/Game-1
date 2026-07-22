@@ -76,7 +76,10 @@ public partial class CombatWorld : Node3D
     public EquipmentDatabase? EquipDb { get; private set; }
     public SkillManager? SkillMgr { get; private set; }
     public NpcDatabase? NpcDb { get; private set; }
+    public ClassDatabase? ClassDb { get; private set; }
     public QuestManager? QuestMgr { get; private set; }
+    public IReadOnlyList<(NaturalResourceRuntime Node, Node3D Visual)> Resources
+        => _resources;
     public DialogueScreen? Dialogue { get; set; }
     public IReadOnlyList<LiveNpc> Npcs => _npcs;
 
@@ -176,6 +179,10 @@ public partial class CombatWorld : Node3D
         var npcDb = new NpcDatabase();
         npcDb.LoadFromFiles(contentRoot);
         NpcDb = npcDb;
+        var classDb = new ClassDatabase();
+        classDb.LoadFromFile(System.IO.Path.Combine(
+            contentRoot, "progression", "classes-1.JSON"));
+        ClassDb = classDb;
         QuestMgr = new QuestManager(_pc, titleDb, SkillMgr);
 
         SkillMgr.InstantAoe = radius =>
