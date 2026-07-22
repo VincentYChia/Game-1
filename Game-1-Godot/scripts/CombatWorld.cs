@@ -542,6 +542,27 @@ public partial class CombatWorld : Node3D
             return;
         }
 
+        // Fishing spots run the fishing minigame; performance >= 0.5 lands
+        // the catch (then the certified harvest resolves the loot)
+        if (node.ResourceType.Contains("fishing")
+            && Minigames.GetValueOrDefault("fishing") is { Running: false } fishing)
+        {
+            fishing.Begin(2.0 + node.Tier * 2.0, $"T{node.Tier}",
+                performance =>
+                {
+                    if (performance >= 0.5) DoHarvest(node, visual);
+                    else _lastEvent = "the fish got away...";
+                },
+                () => _lastEvent = "stopped fishing");
+            return;
+        }
+
+        DoHarvest(node, visual);
+    }
+
+    private void DoHarvest(NaturalResourceRuntime node, Node3D visual)
+    {
+        if (_pc is null || _gathering is null || _player is null) return;
         var allNodes = _resources.Select(r => r.Node).ToList();
         var result = _gathering.HarvestResource(node, allNodes);
         _fx?.PunchScale(visual, 1.12f);

@@ -105,6 +105,7 @@ public partial class WorldBootstrap : Node3D
         book.AddPage(new StatsPage(combat));
         book.AddPage(new SkillsPage(combat));
         book.AddPage(new QuestsPage(combat));
+        book.AddPage(new EncyclopediaPage(combat));
         book.AddPage(new MapPage(_worldMap, _villages, player));
         AddChild(book);
         var crafting = new CraftingScreen(combat) { Name = "CraftingScreen" };
@@ -114,6 +115,25 @@ public partial class WorldBootstrap : Node3D
         AddChild(dialogue);
         combat.Dialogue = dialogue;
         AddChild(new PauseScreen(combat, player) { Name = "PauseScreen" });
+
+        // The six minigame overlays (ADR-7): 5 station disciplines +
+        // fishing (triggered at fishing spots, not stations)
+        var minigames = new (string Type, MinigameOverlay Overlay)[]
+        {
+            ("smithing", new SmithingMinigame()),
+            ("alchemy", new AlchemyMinigame()),
+            ("refining", new RefiningMinigame()),
+            ("engineering", new EngineeringMinigame()),
+            ("adornments", new EnchantingMinigame()),
+            ("fishing", new FishingMinigame()),
+        };
+        foreach (var (type, overlay) in minigames)
+        {
+            overlay.Name = $"Minigame_{type}";
+            AddChild(overlay);
+            combat.Minigames[type] = overlay;
+        }
+
         AddChild(new ClassSelectScreen(combat) { Name = "ClassSelect" });
 
         GD.Print($"World built: seed {WorldSeed}, {(ChunkRadius * 2 + 1) * (ChunkRadius * 2 + 1)} chunks");
