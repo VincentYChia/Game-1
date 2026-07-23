@@ -78,7 +78,11 @@ public partial class CraftingScreen : CanvasLayer
         // station in range (game_engine.py:3032); [Esc] closes.
         if (@event is InputEventKey
             { Pressed: true, Echo: false, PhysicalKeycode: Key.Escape } && _open)
+        {
             Toggle();
+            // Consume so this Esc doesn't also open the pause menu
+            GetViewport().SetInputAsHandled();
+        }
     }
 
     /// <summary>Station-click entry (CombatWorld ray-pick).</summary>

@@ -105,6 +105,8 @@ public partial class MenuBook : CanvasLayer
         if (key.PhysicalKeycode is Key.Escape && _open)
         {
             Close();
+            // Consume so this Esc doesn't also open the pause menu
+            GetViewport().SetInputAsHandled();
             return;
         }
 

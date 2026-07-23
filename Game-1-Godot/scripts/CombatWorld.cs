@@ -319,15 +319,18 @@ public partial class CombatWorld : Node3D
         if (@event is InputEventKey { Pressed: true, Echo: false } sk
             && sk.PhysicalKeycode is >= Key.Key1 and <= Key.Key5)
             UseSkillSlot((int)sk.PhysicalKeycode - (int)Key.Key1);
-        if (@event is InputEventKey { PhysicalKeycode: Key.F, Pressed: true, Echo: false })
-            TalkToNearestNpc();
+        if (@event is InputEventKey { PhysicalKeycode: Key.F, Pressed: true, Echo: false }
+            && TalkToNearestNpc())
+            // Consume so the SAME F doesn't reach DialogueScreen and close it
+            GetViewport().SetInputAsHandled();
     }
 
     /// <summary>[F] talks to the nearest NPC within its interaction radius
-    /// (game_engine.py:916-929; Euclidean, default 3.0).</summary>
-    private void TalkToNearestNpc()
+    /// (game_engine.py:916-929; Euclidean, default 3.0). Returns true when a
+    /// conversation was opened.</summary>
+    private bool TalkToNearestNpc()
     {
-        if (_player is null) return;
+        if (_player is null) return false;
         LiveNpc? nearest = null;
         var best = double.PositiveInfinity;
         foreach (var n in _npcs)
@@ -340,7 +343,9 @@ public partial class CombatWorld : Node3D
                 nearest = n;
             }
         }
-        if (nearest is not null) Dialogue?.Open(nearest);
+        if (nearest is null) return false;
+        Dialogue?.Open(nearest);
+        return true;
     }
 
     /// <summary>Keys 1-5: activate hotbar slot, aiming at the mouse's world
@@ -454,13 +459,21 @@ public partial class CombatWorld : Node3D
             // Out-of-range station clicks are SILENT (character.py:1412-1415)
             var d = st.Node.GlobalPosition.DistanceTo(_player.GlobalPosition);
             if (d <= _pc.InteractionRange)
+            {
                 CraftingUi?.OpenAtStation(st.Type, st.Tier);
+                GetViewport().SetInputAsHandled();
+            }
             return;
         }
         if (hitNpc is not null)
         {
             var d = hitNpc.Node.GlobalPosition.DistanceTo(_player.GlobalPosition);
-            if (d <= _pc.InteractionRange + 1.0) Dialogue?.Open(hitNpc);
+            if (d <= _pc.InteractionRange + 1.0)
+            {
+                Dialogue?.Open(hitNpc);
+                // Consume so the opening click doesn't also advance dialogue
+                GetViewport().SetInputAsHandled();
+            }
             else _lastEvent = $"too far to talk to {hitNpc.Name}";
             return;
         }

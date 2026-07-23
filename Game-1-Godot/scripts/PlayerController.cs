@@ -26,11 +26,19 @@ public partial class PlayerController : CharacterBody3D
 
     public override void _PhysicsProcess(double delta)
     {
+        // While any popup/menu is open, freeze movement + jump (Space would
+        // otherwise both advance dialogue AND launch a jump). Gravity still
+        // runs so the body settles rather than floats.
+        var menuOpen = UiHub.ScreenOpen;
+
         var input = Vector2.Zero;
-        if (Input.IsKeyPressed(Key.W)) input.Y -= 1;
-        if (Input.IsKeyPressed(Key.S)) input.Y += 1;
-        if (Input.IsKeyPressed(Key.A)) input.X -= 1;
-        if (Input.IsKeyPressed(Key.D)) input.X += 1;
+        if (!menuOpen)
+        {
+            if (Input.IsKeyPressed(Key.W)) input.Y -= 1;
+            if (Input.IsKeyPressed(Key.S)) input.Y += 1;
+            if (Input.IsKeyPressed(Key.A)) input.X -= 1;
+            if (Input.IsKeyPressed(Key.D)) input.X += 1;
+        }
         input = input.Normalized();
 
         // Camera-relative: forward = camera's flattened -Z
@@ -66,7 +74,8 @@ public partial class PlayerController : CharacterBody3D
                     OnHardLanding?.Invoke(drop - SafeFallTiles);
                 _wasAirborne = false;
             }
-            velocity.Y = Input.IsPhysicalKeyPressed(Key.Space) ? JumpVelocity : 0;
+            velocity.Y = !menuOpen && Input.IsPhysicalKeyPressed(Key.Space)
+                ? JumpVelocity : 0;
         }
         else
         {
