@@ -18,14 +18,21 @@ public partial class OrbitCamera : Node3D
     [Export] public float MaxDistance { get; set; } = 9f;
     [Export] public float OrbitSensitivity { get; set; } = 0.005f;
 
-    [Export] public float Fov { get; set; } = 75f;
+    /// <summary>Wider first-person field of view (more peripheral view).</summary>
+    [Export] public float Fov { get; set; } = 90f;
     /// <summary>Subtle extra FOV at full sprint (speed feel).</summary>
-    [Export] public float SprintFovBonus { get; set; } = 3f;
+    [Export] public float SprintFovBonus { get; set; } = 4f;
 
     [Export] public float BlendOutTime { get; set; } = 1.2f;   // rest → moving
     [Export] public float BlendBackTime { get; set; } = 1.6f;  // moving → rest
     [Export] public float MoveCommitDelay { get; set; } = 0.18f;
     [Export] public float StopCommitDelay { get; set; } = 0.40f;
+
+    /// <summary>Edge-glide: mouse within this fraction of a screen edge
+    /// smoothly turns the camera toward it (on top of right-drag aim).</summary>
+    [Export] public float EdgeMargin { get; set; } = 0.10f;
+    [Export] public float EdgeYawSpeed { get; set; } = 2.2f;    // rad/s at the edge
+    [Export] public float EdgePitchSpeed { get; set; } = 1.4f;
 
     private const float EyeHeight = 1.55f;   // eyes of the 1.7 capsule
     private const float FadeNear = 0.9f;     // body invisible inside this
@@ -90,7 +97,34 @@ public partial class OrbitCamera : Node3D
         var rate = 1f / (_blendTarget > _blend ? BlendOutTime : BlendBackTime);
         _blend = Mathf.MoveToward(_blend, _blendTarget, rate * dt);
 
+        EdgeGlide(dt);
         ApplyRig(hSpeed);
+    }
+
+    /// <summary>When the cursor nears a screen edge (and you're not right-drag
+    /// aiming or in a menu), smoothly turn the camera that way — speed ramps
+    /// with how deep into the edge zone the cursor is. Sign matches right-drag
+    /// so the two feel identical.</summary>
+    private void EdgeGlide(float dt)
+    {
+        if (UiHub.ScreenOpen || Input.IsMouseButtonPressed(MouseButton.Right))
+            return;
+        var vp = GetViewport().GetVisibleRect().Size;
+        if (vp.X < 1 || vp.Y < 1) return;
+        var m = GetViewport().GetMousePosition();
+        if (m.X < 0 || m.Y < 0 || m.X > vp.X || m.Y > vp.Y) return;   // off-window
+
+        var mx = EdgeMargin * vp.X;
+        var my = EdgeMargin * vp.Y;
+        var dx = m.X < mx ? -(mx - m.X) / mx
+               : m.X > vp.X - mx ? (m.X - (vp.X - mx)) / mx : 0f;
+        var dy = m.Y < my ? -(my - m.Y) / my
+               : m.Y > vp.Y - my ? (m.Y - (vp.Y - my)) / my : 0f;
+
+        // Ease the ramp so entering the zone isn't a jolt (dx,dy in [-1,1])
+        _yaw -= Mathf.Sign(dx) * dx * dx * EdgeYawSpeed * dt;
+        _pitch = Mathf.Clamp(
+            _pitch - Mathf.Sign(dy) * dy * dy * EdgePitchSpeed * dt, -1.2f, 1.2f);
     }
 
     public override void _UnhandledInput(InputEvent @event)

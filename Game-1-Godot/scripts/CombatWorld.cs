@@ -773,13 +773,27 @@ public partial class CombatWorld : Node3D
         if (_hud is not null && _pc is not null)
         {
             var alive = _enemies.Count(x => x.Runtime.IsAlive);
+
+            var hpFrac = (float)Math.Clamp(
+                _pc.Health / Math.Max(1, _pc.MaxHealthValue), 0, 1);
+            _hpFill.Size = new Vector2(BarW * hpFrac, _hpFill.Size.Y);
+            _hpLabel.Text = $"HP  {(int)_pc.Health} / {(int)_pc.MaxHealthValue}";
+
+            var mpFrac = (float)Math.Clamp(_pc.Mana / Math.Max(1, _pc.MaxMana), 0, 1);
+            _mpFill.Size = new Vector2(BarW * mpFrac, _mpFill.Size.Y);
+            _mpLabel.Text = $"MP  {(int)_pc.Mana} / {(int)_pc.MaxMana}";
+
+            var need = _pc.Leveling.GetExpForNextLevel();
+            var xpFrac = need > 0
+                ? (float)Math.Clamp((double)_pc.Leveling.CurrentExp / need, 0, 1) : 1f;
+            _xpFill.Size = new Vector2(BarW * xpFrac, _xpFill.Size.Y);
+
             var buffs = string.Join("  ", _pc.Buffs.ActiveBuffs.Select(
                 b => $"{b.Name} {b.DurationRemaining:F0}s"));
-            _hud.Text = $"HP {(int)_pc.Health}/{(int)_pc.MaxHealthValue}   " +
-                        $"MP {(int)_pc.Mana}/{(int)_pc.MaxMana}   " +
-                        $"Lv {_pc.Leveling.Level} ({_pc.Leveling.CurrentExp} exp)   " +
-                        $"enemies {alive}/{_enemies.Count}   {_lastEvent}" +
-                        (buffs.Length > 0 ? $"\nbuffs: {buffs}" : "");
+            _infoLabel.Text = $"Lv {_pc.Leveling.Level}   ·   {_pc.Leveling.CurrentExp} xp"
+                              + $"   ·   enemies {alive}/{_enemies.Count}"
+                              + (buffs.Length > 0 ? $"\nbuffs: {buffs}" : "");
+            _hud.Text = _lastEvent;
         }
         UpdateHotbar();
     }
@@ -792,26 +806,32 @@ public partial class CombatWorld : Node3D
         for (var i = 0; i < SkillManager.HotbarSlots; i++)
         {
             var label = _hotbarSlots[i];
+            var icon = _hotbarIcons[i];
             var id = SkillMgr.Equipped[i];
             if (id is null || SkillDb?.Skills.GetValueOrDefault(id) is not { } def)
             {
                 label.Text = $"[{i + 1}]\n—";
                 label.Modulate = new Color(1, 1, 1, 0.45f);
+                icon.Texture = null;
                 continue;
             }
+            icon.Texture = IconCache.Get(def.IconPath);
             var ps = SkillMgr.Known[id];
             if (ps.CurrentCooldown > 0)
             {
-                label.Text = $"[{i + 1}] {def.Name}\n{ps.CurrentCooldown:F1}s";
+                label.Text = $"[{i + 1}]\n{ps.CurrentCooldown:F1}s";
                 label.Modulate = new Color(1f, 0.45f, 0.4f);
+                icon.Modulate = new Color(0.5f, 0.5f, 0.5f);   // dim on cooldown
             }
             else
             {
                 var cost = SkillMgr.ManaCostOf(def);
-                label.Text = $"[{i + 1}] {def.Name}\n{(int)cost} MP";
+                label.Text = $"[{i + 1}]\n{(int)cost} MP";
                 label.Modulate = _pc.Mana >= cost
-                    ? new Color(0.55f, 0.85f, 1f)
+                    ? new Color(0.7f, 0.9f, 1f)
                     : new Color(1f, 0.5f, 0.45f);
+                icon.Modulate = _pc.Mana >= cost
+                    ? Colors.White : new Color(0.6f, 0.6f, 0.6f);
             }
         }
     }
@@ -883,39 +903,98 @@ public partial class CombatWorld : Node3D
         return prompt;
     }
 
+    private ColorRect _hpFill = null!, _mpFill = null!, _xpFill = null!;
+    private Label _hpLabel = null!, _mpLabel = null!, _infoLabel = null!;
+    private readonly List<TextureRect> _hotbarIcons = new();
+    private const float BarW = 300f;
+
     private void BuildHud()
     {
         var layer = new CanvasLayer();
-        _hud = new Label
-        {
-            Position = new Vector2(16, 12),
-            Text = "…",
-        };
-        _hud.AddThemeFontSizeOverride("font_size", 20);
+
+        // -- HP / MP / XP bars, top-left (renderer.py:3173-3193) --
+        _hpFill = BuildBar(layer, 14, 26, new Color(0.14f, 0.03f, 0.03f),
+            new Color(0.86f, 0.22f, 0.2f), out _hpLabel);
+        _mpFill = BuildBar(layer, 46, 20, new Color(0.03f, 0.05f, 0.14f),
+            new Color(0.3f, 0.5f, 1f), out _mpLabel);
+        _xpFill = BuildBar(layer, 72, 8, new Color(0.05f, 0.05f, 0.05f),
+            new Color(0.95f, 0.82f, 0.3f), out var xpLbl);
+        xpLbl.Visible = false;
+
+        _infoLabel = new Label { Position = new Vector2(16, 84) };
+        _infoLabel.AddThemeFontSizeOverride("font_size", 16);
+        _infoLabel.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0));
+        _infoLabel.AddThemeConstantOverride("outline_size", 4);
+        layer.AddChild(_infoLabel);
+
+        // Event / buffs line (kept as text)
+        _hud = new Label { Position = new Vector2(16, 110) };
+        _hud.AddThemeFontSizeOverride("font_size", 15);
+        _hud.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0));
+        _hud.AddThemeConstantOverride("outline_size", 4);
         layer.AddChild(_hud);
 
-        // Skill hotbar: 5 slots bottom-center (renderer.py:3240-3323)
+        // -- Skill hotbar: 5 icon slots bottom-center --
         var bar = new HBoxContainer();
-        bar.AddThemeConstantOverride("separation", 10);
+        bar.AddThemeConstantOverride("separation", 8);
         bar.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
         bar.GrowHorizontal = Control.GrowDirection.Both;
-        bar.Position = new Vector2(0, -12);
+        bar.Position = new Vector2(0, -10);
         for (var i = 0; i < SkillManager.HotbarSlots; i++)
         {
-            var panel = new PanelContainer { CustomMinimumSize = new Vector2(132, 52) };
+            var slot = new PanelContainer { CustomMinimumSize = new Vector2(104, 64) };
+            var holder = new Control { CustomMinimumSize = new Vector2(104, 64) };
+            var icon = new TextureRect
+            {
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            icon.SetAnchorsPreset(Control.LayoutPreset.FullRect);
             var label = new Label
             {
                 Text = $"[{i + 1}]\n—",
                 HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
                 ClipText = true,
             };
+            label.SetAnchorsPreset(Control.LayoutPreset.FullRect);
             label.AddThemeFontSizeOverride("font_size", 13);
-            panel.AddChild(label);
-            bar.AddChild(panel);
+            label.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0));
+            label.AddThemeConstantOverride("outline_size", 4);
+            holder.AddChild(icon);
+            holder.AddChild(label);
+            slot.AddChild(holder);
+            bar.AddChild(slot);
             _hotbarSlots.Add(label);
+            _hotbarIcons.Add(icon);
         }
         layer.AddChild(bar);
         AddChild(layer);
+    }
+
+    /// <summary>Background + fill + centered label bar; returns the fill
+    /// (whose width is set to fraction*BarW each frame).</summary>
+    private static ColorRect BuildBar(CanvasLayer layer, float y, float h,
+                                      Color bg, Color fg, out Label label)
+    {
+        layer.AddChild(new ColorRect
+        { Position = new Vector2(16, y), Size = new Vector2(BarW, h), Color = bg });
+        var fill = new ColorRect
+        { Position = new Vector2(16, y), Size = new Vector2(BarW, h), Color = fg };
+        layer.AddChild(fill);
+        label = new Label
+        {
+            Position = new Vector2(16, y - 2),
+            Size = new Vector2(BarW, h),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        label.AddThemeFontSizeOverride("font_size", 13);
+        label.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0));
+        label.AddThemeConstantOverride("outline_size", 4);
+        layer.AddChild(label);
+        return fill;
     }
 }

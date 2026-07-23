@@ -56,6 +56,7 @@ public partial class WorldBootstrap : Node3D
             GD.PushError("Game-1-modular content root not found — set GAME1_CONTENT_ROOT");
             return;
         }
+        IconCache.Init(root);   // item/skill/etc PNG loader
 
         var worldGen = new WorldGenerationConfig();
         worldGen.Load(root);

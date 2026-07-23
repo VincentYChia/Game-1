@@ -18,6 +18,7 @@ public partial class InventoryPage : MenuPage
 
     private readonly CombatWorld _combat;
     private readonly List<Button> _slotButtons = new();
+    private readonly List<Label> _slotQty = new();
     private readonly Dictionary<string, Button> _equipButtons = new();
     private Label _dragLabel = null!;
     private Label _status = null!;
@@ -64,8 +65,10 @@ public partial class InventoryPage : MenuPage
                 CustomMinimumSize = new Vector2(112, 56),
                 ClipText = true,
                 Text = "",
+                ExpandIcon = true,
+                IconAlignment = HorizontalAlignment.Center,
             };
-            btn.AddThemeFontSizeOverride("font_size", 13);
+            btn.AddThemeFontSizeOverride("font_size", 12);
             btn.Pressed += () => OnSlotClicked(idx);
             btn.GuiInput += ev =>
             {
@@ -73,8 +76,21 @@ public partial class InventoryPage : MenuPage
                     { ButtonIndex: MouseButton.Right, Pressed: true })
                     OnSlotRightClicked(idx);
             };
+            // Qty / durability overlaid bottom-right (click passes through)
+            var qty = new Label
+            {
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Bottom,
+            };
+            qty.AddThemeFontSizeOverride("font_size", 13);
+            qty.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0));
+            qty.AddThemeConstantOverride("outline_size", 4);
+            qty.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+            btn.AddChild(qty);
             grid.AddChild(btn);
             _slotButtons.Add(btn);
+            _slotQty.Add(qty);
         }
 
         var hint = new Label
@@ -205,18 +221,37 @@ public partial class InventoryPage : MenuPage
         {
             var stack = pc.Inventory.Slots[i];
             var btn = _slotButtons[i];
+            var qty = _slotQty[i];
             if (stack is null)
             {
                 btn.Text = "";
+                btn.Icon = null;
+                qty.Text = "";
                 btn.RemoveThemeColorOverride("font_color");
                 continue;
             }
             var name = DisplayName(stack);
-            btn.Text = stack.EquipmentData is { } eq
-                ? $"{name}\n{eq.DurabilityCurrent / Math.Max(1, eq.DurabilityMax):P0} dur"
-                : $"{name}\n×{stack.Quantity}";
-            btn.AddThemeColorOverride("font_color",
-                RarityColors.GetValueOrDefault(stack.Rarity, RarityColors["common"]));
+            var rarity = RarityColors.GetValueOrDefault(stack.Rarity, RarityColors["common"]);
+            var icon = IconCache.Get(IconFor(stack));
+            btn.Icon = icon;
+            // Icon present → name goes away, corner shows qty/durability;
+            // no icon → fall back to the text layout
+            if (icon is not null)
+            {
+                btn.Text = "";
+                qty.Text = stack.EquipmentData is { } de
+                    ? $"{de.DurabilityCurrent / Math.Max(1, de.DurabilityMax):P0}"
+                    : stack.Quantity > 1 ? $"×{stack.Quantity}" : "";
+            }
+            else
+            {
+                btn.Text = stack.EquipmentData is { } eq
+                    ? $"{name}\n{eq.DurabilityCurrent / Math.Max(1, eq.DurabilityMax):P0} dur"
+                    : $"{name}\n×{stack.Quantity}";
+                qty.Text = "";
+            }
+            qty.Modulate = rarity;
+            btn.AddThemeColorOverride("font_color", rarity);
         }
 
         foreach (var (slot, btn) in _equipButtons)
@@ -232,4 +267,8 @@ public partial class InventoryPage : MenuPage
         stack.EquipmentData?.Name
         ?? _combat.MaterialDb?.GetMaterial(stack.ItemId)?.Name
         ?? stack.ItemId;
+
+    private string? IconFor(ItemStack stack) =>
+        stack.EquipmentData?.IconPath
+        ?? _combat.MaterialDb?.GetMaterial(stack.ItemId)?.IconPath;
 }

@@ -139,6 +139,19 @@ public partial class CraftingScreen : CanvasLayer
             row.AddThemeConstantOverride("separation", 10);
             _list.AddChild(row);
 
+            // Output icon (equipment or material)
+            var iconPath = _combat.EquipDb?.CreateEquipmentFromId(recipe.OutputId)?.IconPath
+                           ?? _combat.MaterialDb?.GetMaterial(recipe.OutputId)?.IconPath;
+            if (IconCache.Get(iconPath) is { } tex)
+                row.AddChild(new TextureRect
+                {
+                    Texture = tex,
+                    CustomMinimumSize = new Vector2(44, 44),
+                    ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                    StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                    Modulate = craftable ? Colors.White : new Color(1, 1, 1, 0.45f),
+                });
+
             var inputs = DescribeInputs(recipe, pc);
             var label = new Label
             {
