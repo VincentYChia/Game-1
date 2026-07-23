@@ -37,12 +37,32 @@ public static class IconCache
             : System.IO.Path.Combine(_assetsRoot, "items", iconPath);
 
         Texture2D? tex = null;
-        if (File.Exists(full))
+        // Validate the PNG signature before loading — some assets are Git-LFS
+        // pointer stubs / corrupt files, and Image.LoadFromFile spams the
+        // console on those. A header check lets us silently fall back to text.
+        if (File.Exists(full) && IsPng(full))
         {
             var img = Image.LoadFromFile(full);
-            if (img is not null) tex = ImageTexture.CreateFromImage(img);
+            if (img is not null && img.GetWidth() > 0)
+                tex = ImageTexture.CreateFromImage(img);
         }
         _cache[iconPath] = tex;   // cache misses too (avoid re-stat every frame)
         return tex;
+    }
+
+    private static readonly byte[] PngSig = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+
+    private static bool IsPng(string path)
+    {
+        try
+        {
+            using var fs = File.OpenRead(path);
+            Span<byte> head = stackalloc byte[8];
+            if (fs.Read(head) < 8) return false;
+            for (var i = 0; i < 8; i++)
+                if (head[i] != PngSig[i]) return false;
+            return true;
+        }
+        catch { return false; }
     }
 }

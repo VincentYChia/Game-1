@@ -45,24 +45,27 @@ public partial class MenuBook : CanvasLayer
         dim.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _root.AddChild(dim);
 
-        var center = new CenterContainer();
-        center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        _root.AddChild(center);
-
+        // Screen-relative frame: ~94% of the viewport so it never overflows
         var frame = new PanelContainer();
-        center.AddChild(frame);
+        frame.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        frame.AnchorLeft = 0.03f;
+        frame.AnchorTop = 0.03f;
+        frame.AnchorRight = 0.97f;
+        frame.AnchorBottom = 0.97f;
+        frame.OffsetLeft = frame.OffsetTop = frame.OffsetRight = frame.OffsetBottom = 0;
+        _root.AddChild(frame);
         var margin = new MarginContainer();
         foreach (var side in new[] { "left", "right", "top", "bottom" })
-            margin.AddThemeConstantOverride($"margin_{side}", 12);
+            margin.AddThemeConstantOverride($"margin_{side}", 18);
         frame.AddChild(margin);
 
         var columns = new HBoxContainer();
-        columns.AddThemeConstantOverride("separation", 12);
+        columns.AddThemeConstantOverride("separation", 18);
         margin.AddChild(columns);
 
         // -- side tabs --
-        var tabBar = new VBoxContainer { CustomMinimumSize = new Vector2(170, 0) };
-        tabBar.AddThemeConstantOverride("separation", 6);
+        var tabBar = new VBoxContainer { CustomMinimumSize = new Vector2(210, 0) };
+        tabBar.AddThemeConstantOverride("separation", 8);
         columns.AddChild(tabBar);
         foreach (var page in _pages)
         {
@@ -72,8 +75,9 @@ public partial class MenuBook : CanvasLayer
                 Text = $"{page.Title}  [{page.Keybind}]",
                 Alignment = HorizontalAlignment.Left,
                 ToggleMode = true,
+                CustomMinimumSize = new Vector2(0, 44),
             };
-            btn.AddThemeFontSizeOverride("font_size", 17);
+            btn.AddThemeFontSizeOverride("font_size", 20);
             btn.Pressed += () => Switch(captured);
             tabBar.AddChild(btn);
             _tabButtons.Add(btn);
@@ -81,13 +85,16 @@ public partial class MenuBook : CanvasLayer
         tabBar.AddChild(new Control
         { SizeFlagsVertical = Control.SizeFlags.ExpandFill });
         var hint = new Label { Text = "[Esc] close" };
-        hint.AddThemeFontSizeOverride("font_size", 13);
+        hint.AddThemeFontSizeOverride("font_size", 15);
         hint.Modulate = new Color(1, 1, 1, 0.5f);
         tabBar.AddChild(hint);
 
-        // -- page area --
+        // -- page area fills the rest --
         _pageHolder = new MarginContainer
-        { CustomMinimumSize = new Vector2(950, 620) };
+        {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
         columns.AddChild(_pageHolder);
         foreach (var page in _pages)
         {

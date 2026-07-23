@@ -204,6 +204,13 @@ public partial class WorldBootstrap : Node3D
             ["engineering"] = new(60 / 255f, 120 / 255f, 180 / 255f),
             ["adornments"] = new(180 / 255f, 60 / 255f, 180 / 255f),
         };
+        // Station discipline → item-name for the icon PNG
+        var iconName = new Dictionary<string, string>
+        {
+            ["smithing"] = "forge", ["refining"] = "refinery",
+            ["adornments"] = "enchanting_table", ["alchemy"] = "alchemy_table",
+            ["engineering"] = "engineering_bench",
+        };
         var columns = new (string Type, int X)[]
         {
             ("smithing", -8), ("refining", -4), ("adornments", 0),
@@ -217,12 +224,21 @@ public partial class WorldBootstrap : Node3D
                 var h = TerrainHeightField.H(x + 0.5, y + 0.5);
                 var node = new Node3D
                 { Position = new Vector3(x + 0.5f, h, y + 0.5f) };
+                // Cube with the station PNG on each face (else colored cube)
+                var stMat = new StandardMaterial3D { AlbedoColor = colors[type] };
+                if (IconCache.Get($"stations/{iconName[type]}_t{tier}.png") is { } stex)
+                {
+                    stMat.AlbedoTexture = stex;
+                    stMat.AlbedoColor = Colors.White;
+                    stMat.Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor;
+                    stMat.AlphaScissorThreshold = 0.5f;
+                    stMat.TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest;
+                }
                 node.AddChild(new MeshInstance3D
                 {
                     Mesh = new BoxMesh
                     { Size = new Vector3(1.1f, 0.9f + 0.2f * tier, 1.1f) },
-                    MaterialOverride = new StandardMaterial3D
-                    { AlbedoColor = colors[type] },
+                    MaterialOverride = stMat,
                     Position = new Vector3(0, (0.9f + 0.2f * tier) / 2f, 0),
                 });
                 node.AddChild(new Label3D
@@ -391,6 +407,16 @@ public partial class WorldBootstrap : Node3D
                             res.Y + 0.5f),
                     };
                     parent.AddChild(mesh);
+
+                    // Rotating icon above the node so it reads from a distance
+                    if (IconCache.Get($"resources/{res.ResourceType}.png") is { } rtex)
+                        mesh.AddChild(new SpinSprite
+                        {
+                            Texture = rtex,
+                            PixelSize = 0.012f,
+                            Position = new Vector3(0,
+                                (isTree ? 1.4f : isFish ? 1.2f : 1.0f) * scale + 0.6f, 0),
+                        });
 
                     combat.RegisterResource(new NaturalResourceRuntime(
                         new Game1.Core.World.Position(res.X + 0.5, res.Y + 0.5, 0),

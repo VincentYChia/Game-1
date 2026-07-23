@@ -33,41 +33,46 @@ public partial class CraftingScreen : CanvasLayer
         dim.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _root.AddChild(dim);
 
-        var center = new CenterContainer();
-        center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        _root.AddChild(center);
-
         var panel = new PanelContainer();
-        center.AddChild(panel);
+        panel.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        panel.AnchorLeft = 0.08f;
+        panel.AnchorTop = 0.05f;
+        panel.AnchorRight = 0.92f;
+        panel.AnchorBottom = 0.95f;
+        panel.OffsetLeft = panel.OffsetTop = panel.OffsetRight = panel.OffsetBottom = 0;
+        _root.AddChild(panel);
         var margin = new MarginContainer();
         foreach (var side in new[] { "left", "right", "top", "bottom" })
-            margin.AddThemeConstantOverride($"margin_{side}", 16);
+            margin.AddThemeConstantOverride($"margin_{side}", 22);
         panel.AddChild(margin);
 
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 8);
+        box.AddThemeConstantOverride("separation", 10);
         margin.AddChild(box);
 
         var title = new Label { Text = "Crafting" };
-        title.AddThemeFontSizeOverride("font_size", 26);
+        title.AddThemeFontSizeOverride("font_size", 32);
         box.AddChild(title);
 
         _status = new Label { Text = "" };
-        _status.AddThemeFontSizeOverride("font_size", 15);
+        _status.AddThemeFontSizeOverride("font_size", 18);
         _status.Modulate = new Color(1, 1, 1, 0.75f);
         box.AddChild(_status);
 
         var scroll = new ScrollContainer
-        { CustomMinimumSize = new Vector2(760, 520) };
+        {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
         box.AddChild(scroll);
         _list = new VBoxContainer
         { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        _list.AddThemeConstantOverride("separation", 4);
+        _list.AddThemeConstantOverride("separation", 6);
         scroll.AddChild(_list);
 
         var hint = new Label
-        { Text = "performance is rolled until the minigames arrive   ·   [C] close" };
-        hint.AddThemeFontSizeOverride("font_size", 13);
+        { Text = "double-Esc during a minigame abandons (materials lost)   ·   [Esc] close" };
+        hint.AddThemeFontSizeOverride("font_size", 15);
         hint.Modulate = new Color(1, 1, 1, 0.55f);
         box.AddChild(hint);
     }
@@ -146,7 +151,7 @@ public partial class CraftingScreen : CanvasLayer
                 row.AddChild(new TextureRect
                 {
                     Texture = tex,
-                    CustomMinimumSize = new Vector2(44, 44),
+                    CustomMinimumSize = new Vector2(56, 56),
                     ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
                     StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
                     Modulate = craftable ? Colors.White : new Color(1, 1, 1, 0.45f),
@@ -161,7 +166,7 @@ public partial class CraftingScreen : CanvasLayer
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
             };
-            label.AddThemeFontSizeOverride("font_size", 15);
+            label.AddThemeFontSizeOverride("font_size", 18);
             label.Modulate = craftable
                 ? new Color(0.75f, 1f, 0.75f)
                 : new Color(1, 1, 1, 0.45f);
@@ -171,8 +176,9 @@ public partial class CraftingScreen : CanvasLayer
             {
                 Text = "Craft",
                 Disabled = !craftable,
-                CustomMinimumSize = new Vector2(90, 0),
+                CustomMinimumSize = new Vector2(130, 48),
             };
+            btn.AddThemeFontSizeOverride("font_size", 18);
             var captured = recipe;
             btn.Pressed += () => StartCraft(captured);
             row.AddChild(btn);

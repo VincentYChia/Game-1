@@ -93,30 +93,48 @@ public partial class StatsPage : MenuPage
         // -- column 2: titles --
         var titlesCol = new VBoxContainer
         {
-            CustomMinimumSize = new Vector2(300, 0),
+            CustomMinimumSize = new Vector2(420, 0),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
         };
         columns.AddChild(titlesCol);
         var titlesTitle = new Label { Text = "TITLES" };
-        titlesTitle.AddThemeFontSizeOverride("font_size", 19);
+        titlesTitle.AddThemeFontSizeOverride("font_size", 22);
         titlesCol.AddChild(titlesTitle);
         var titlesScroll = new ScrollContainer
-        { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+        {
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            // Vertical-only: without this the label collapses to 0 width and
+            // wraps one character per line
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+        };
         titlesCol.AddChild(titlesScroll);
         _titlesLabel = new Label
-        { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        _titlesLabel.AddThemeFontSizeOverride("font_size", 14);
+        {
+            Text = "",
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        _titlesLabel.AddThemeFontSizeOverride("font_size", 16);
         titlesScroll.AddChild(_titlesLabel);
 
         // -- column 3: progress --
-        var progCol = new VBoxContainer { CustomMinimumSize = new Vector2(280, 0) };
+        var progCol = new VBoxContainer
+        {
+            CustomMinimumSize = new Vector2(360, 0),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
         columns.AddChild(progCol);
         var progTitle = new Label { Text = "PROGRESS" };
-        progTitle.AddThemeFontSizeOverride("font_size", 19);
+        progTitle.AddThemeFontSizeOverride("font_size", 22);
         progCol.AddChild(progTitle);
         _progressLabel = new Label
-        { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        _progressLabel.AddThemeFontSizeOverride("font_size", 14);
+        {
+            Text = "",
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        _progressLabel.AddThemeFontSizeOverride("font_size", 16);
         progCol.AddChild(_progressLabel);
     }
 

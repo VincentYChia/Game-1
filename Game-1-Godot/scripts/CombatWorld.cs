@@ -56,6 +56,7 @@ public partial class CombatWorld : Node3D
     private CraftingSystem? _crafting;
     private PythonRandom _craftRng = new(0);
     private FxManager? _fx;
+    private ViewModelHands? _hands;
     private MaterialDatabase? _matDb;
     private RecipeDatabase? _recipeDb;
     private double _now;
@@ -123,6 +124,8 @@ public partial class CombatWorld : Node3D
         _rng = new PythonRandom(worldSeed ^ 0x5DEECE66D);
         _fx = new FxManager { Name = "Fx" };
         AddChild(_fx);
+        _hands = new ViewModelHands { Name = "Hands" };
+        player.AddChild(_hands);   // world-space arms on the body
 
         var enemyDb = new EnemyDatabase();
         enemyDb.LoadFromFiles(contentRoot);
@@ -259,6 +262,19 @@ public partial class CombatWorld : Node3D
             }
         }
 
+        // Guaranteed starter cluster near the player spawn (8,8) so hostiles
+        // are visible immediately regardless of the local danger level
+        var tier1 = enemyDb.EnemiesByTier.GetValueOrDefault(1);
+        if (tier1 is { Count: > 0 })
+            for (var i = 0; i < 6; i++)
+            {
+                var def = _rng.Choice(tier1);
+                var ex = 8 + _rng.RandInt(-9, 9);
+                var ey = 8 + _rng.RandInt(-9, 9);
+                SpawnEnemy(def, ((double)ex, (double)ey), (0, 0));
+                spawned++;
+            }
+
         BuildHud();
         GD.Print($"CombatWorld: {spawned} enemies live");
     }
@@ -273,11 +289,24 @@ public partial class CombatWorld : Node3D
         var color = CategoryColors.GetValueOrDefault(def.Category,
             new Color(0.8f, 0.3f, 0.3f));
         var node = new Node3D { Name = entityId };
+        // Cube with the enemy PNG on every face (falls back to a colored
+        // cube when the sprite is missing)
+        var tex = IconCache.Get(def.IconPath);
+        var mat = new StandardMaterial3D { AlbedoColor = color };
+        if (tex is not null)
+        {
+            mat.AlbedoTexture = tex;
+            mat.AlbedoColor = Colors.White;
+            mat.Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor;
+            mat.AlphaScissorThreshold = 0.5f;
+            mat.TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest;
+        }
+        var s = 1.0f * size;
         node.AddChild(new MeshInstance3D
         {
-            Mesh = new CapsuleMesh { Radius = 0.35f * size, Height = 1.2f * size },
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = color },
-            Position = new Vector3(0, 0.6f * size, 0),
+            Mesh = new BoxMesh { Size = new Vector3(s, s, s) },
+            MaterialOverride = mat,
+            Position = new Vector3(0, 0.5f * s, 0),
         });
         node.Position = new Vector3((float)pos.X, 0, (float)pos.Y);
 
@@ -310,6 +339,15 @@ public partial class CombatWorld : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        // Debug keys work anytime (before the menu guard)
+        if (@event is InputEventKey { Pressed: true, Echo: false } dbg
+            && dbg.PhysicalKeycode is Key.F1 or Key.F2 or Key.F3
+                or Key.F4 or Key.F7)
+        {
+            HandleDebugKey(dbg.PhysicalKeycode);
+            return;
+        }
+
         if (UiHub.ScreenOpen) return;   // popup screens swallow world input
         if (@event is InputEventMouseButton
             { ButtonIndex: MouseButton.Left, Pressed: true } click)
@@ -346,6 +384,68 @@ public partial class CombatWorld : Node3D
         if (nearest is null) return false;
         Dialogue?.Open(nearest);
         return true;
+    }
+
+    /// <summary>Debug cheats (game_engine.py:1016-1229): F1 test materials,
+    /// F2 learn all skills, F3 all titles, F4 max level+stats, F7 toggle
+    /// infinite durability.</summary>
+    private void HandleDebugKey(Key key)
+    {
+        if (_pc is null) return;
+        switch (key)
+        {
+            case Key.F1:
+                foreach (var id in new[]
+                {
+                    "oak_log", "iron_ore", "iron_ingot", "copper_ore",
+                    "copper_ingot", "limestone", "granite", "pine_log",
+                    "steel_ingot", "leather",
+                })
+                    _pc.Inventory.AddItem(id, 50);
+                _lastEvent = "DEBUG: +50 of common materials";
+                break;
+            case Key.F2:
+                if (SkillDb is not null && SkillMgr is not null)
+                {
+                    foreach (var id in SkillDb.Skills.Keys)
+                        SkillMgr.Learn(id, skipChecks: true);
+                    var eq = 0;
+                    foreach (var id in SkillDb.Skills.Keys)
+                    {
+                        if (eq >= SkillManager.HotbarSlots) break;
+                        SkillMgr.Equip(id, eq++);
+                    }
+                    _lastEvent = "DEBUG: learned all skills";
+                }
+                break;
+            case Key.F3:
+                if (TitleDb is not null)
+                {
+                    foreach (var t in TitleDb.Titles.Values)
+                        if (_pc.Titles.EarnedTitles.All(e => e.TitleId != t.TitleId))
+                            _pc.Titles.EarnedTitles.Add(t);
+                    _lastEvent = "DEBUG: granted all titles";
+                }
+                break;
+            case Key.F4:
+                _pc.Leveling.Level = 30;
+                _pc.Leveling.UnallocatedStatPoints += 30;
+                _pc.Stats.Strength = _pc.Stats.Defense = _pc.Stats.Vitality =
+                    _pc.Stats.Luck = _pc.Stats.Agility = _pc.Stats.Intelligence = 30;
+                _pc.MaxHealthValue = 100 + 30 * 15;
+                _pc.Health = _pc.MaxHealthValue;
+                _pc.Mana = _pc.MaxMana;
+                _lastEvent = "DEBUG: max level + stats";
+                break;
+            case Key.F7:
+                if (_orch is not null)
+                {
+                    _orch.DebugInfiniteDurability = !_orch.DebugInfiniteDurability;
+                    _lastEvent = $"DEBUG: infinite durability "
+                                 + (_orch.DebugInfiniteDurability ? "ON" : "OFF");
+                }
+                break;
+        }
     }
 
     /// <summary>Keys 1-5: activate hotbar slot, aiming at the mouse's world
@@ -500,7 +600,11 @@ public partial class CombatWorld : Node3D
             }
         }
         if (_playerAttack.StartAttack(_unarmed, new Dictionary<string, object?>()))
+        {
             _lastEvent = "swing!";
+            _hands?.SetFacing(_playerFacingDeg);
+            _hands?.PlayAttack();
+        }
     }
 
     private static float? RayHit(Vector3 origin, Vector3 dir, Vector3 center,
@@ -576,6 +680,11 @@ public partial class CombatWorld : Node3D
     private void DoHarvest(NaturalResourceRuntime node, Node3D visual)
     {
         if (_pc is null || _gathering is null || _player is null) return;
+        // Face + chop toward the node
+        var toNode = visual.GlobalPosition - _player.GlobalPosition;
+        _hands?.SetFacing(PyMath.Degrees(Math.Atan2(toNode.Z, toNode.X)));
+        _hands?.PlayGather();
+
         var allNodes = _resources.Select(r => r.Node).ToList();
         var result = _gathering.HarvestResource(node, allNodes);
         _fx?.PunchScale(visual, 1.12f);
@@ -739,12 +848,15 @@ public partial class CombatWorld : Node3D
                 TerrainHeightField.H(rt.Position[0], rt.Position[1]),
                 (float)rt.Position[1]);
 
-            // Telegraph: flash red during windup; hit flash overrides in white
+            // Telegraph: flash red during windup; hit flash overrides in white.
+            // Textured cubes tint from white (else the sprite washes out).
             if (e.Node.GetChild(0) is MeshInstance3D mesh
                 && mesh.MaterialOverride is StandardMaterial3D mat)
             {
-                var baseColor = CategoryColors.GetValueOrDefault(
-                    rt.Definition.Category, new Color(0.8f, 0.3f, 0.3f));
+                var baseColor = mat.AlbedoTexture is not null
+                    ? Colors.White
+                    : CategoryColors.GetValueOrDefault(
+                        rt.Definition.Category, new Color(0.8f, 0.3f, 0.3f));
                 if (_now < e.FlashUntil)
                     mat.AlbedoColor = new Color(1f, 1f, 1f);
                 else
@@ -906,44 +1018,44 @@ public partial class CombatWorld : Node3D
     private ColorRect _hpFill = null!, _mpFill = null!, _xpFill = null!;
     private Label _hpLabel = null!, _mpLabel = null!, _infoLabel = null!;
     private readonly List<TextureRect> _hotbarIcons = new();
-    private const float BarW = 300f;
+    private const float BarW = 440f;
 
     private void BuildHud()
     {
         var layer = new CanvasLayer();
 
         // -- HP / MP / XP bars, top-left (renderer.py:3173-3193) --
-        _hpFill = BuildBar(layer, 14, 26, new Color(0.14f, 0.03f, 0.03f),
-            new Color(0.86f, 0.22f, 0.2f), out _hpLabel);
-        _mpFill = BuildBar(layer, 46, 20, new Color(0.03f, 0.05f, 0.14f),
-            new Color(0.3f, 0.5f, 1f), out _mpLabel);
-        _xpFill = BuildBar(layer, 72, 8, new Color(0.05f, 0.05f, 0.05f),
-            new Color(0.95f, 0.82f, 0.3f), out var xpLbl);
+        _hpFill = BuildBar(layer, 16, 36, new Color(0.14f, 0.03f, 0.03f),
+            new Color(0.86f, 0.22f, 0.2f), out _hpLabel, 18);
+        _mpFill = BuildBar(layer, 58, 28, new Color(0.03f, 0.05f, 0.14f),
+            new Color(0.3f, 0.5f, 1f), out _mpLabel, 16);
+        _xpFill = BuildBar(layer, 92, 12, new Color(0.05f, 0.05f, 0.05f),
+            new Color(0.95f, 0.82f, 0.3f), out var xpLbl, 10);
         xpLbl.Visible = false;
 
-        _infoLabel = new Label { Position = new Vector2(16, 84) };
-        _infoLabel.AddThemeFontSizeOverride("font_size", 16);
+        _infoLabel = new Label { Position = new Vector2(18, 110) };
+        _infoLabel.AddThemeFontSizeOverride("font_size", 18);
         _infoLabel.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0));
         _infoLabel.AddThemeConstantOverride("outline_size", 4);
         layer.AddChild(_infoLabel);
 
         // Event / buffs line (kept as text)
-        _hud = new Label { Position = new Vector2(16, 110) };
-        _hud.AddThemeFontSizeOverride("font_size", 15);
+        _hud = new Label { Position = new Vector2(18, 142) };
+        _hud.AddThemeFontSizeOverride("font_size", 16);
         _hud.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0));
         _hud.AddThemeConstantOverride("outline_size", 4);
         layer.AddChild(_hud);
 
-        // -- Skill hotbar: 5 icon slots bottom-center --
+        // -- Skill hotbar: 5 bigger icon slots bottom-center --
         var bar = new HBoxContainer();
-        bar.AddThemeConstantOverride("separation", 8);
+        bar.AddThemeConstantOverride("separation", 10);
         bar.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
         bar.GrowHorizontal = Control.GrowDirection.Both;
-        bar.Position = new Vector2(0, -10);
+        bar.Position = new Vector2(0, -16);
         for (var i = 0; i < SkillManager.HotbarSlots; i++)
         {
-            var slot = new PanelContainer { CustomMinimumSize = new Vector2(104, 64) };
-            var holder = new Control { CustomMinimumSize = new Vector2(104, 64) };
+            var slot = new PanelContainer { CustomMinimumSize = new Vector2(140, 92) };
+            var holder = new Control { CustomMinimumSize = new Vector2(140, 92) };
             var icon = new TextureRect
             {
                 ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
@@ -960,7 +1072,7 @@ public partial class CombatWorld : Node3D
                 ClipText = true,
             };
             label.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-            label.AddThemeFontSizeOverride("font_size", 13);
+            label.AddThemeFontSizeOverride("font_size", 16);
             label.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0));
             label.AddThemeConstantOverride("outline_size", 4);
             holder.AddChild(icon);
@@ -977,7 +1089,8 @@ public partial class CombatWorld : Node3D
     /// <summary>Background + fill + centered label bar; returns the fill
     /// (whose width is set to fraction*BarW each frame).</summary>
     private static ColorRect BuildBar(CanvasLayer layer, float y, float h,
-                                      Color bg, Color fg, out Label label)
+                                      Color bg, Color fg, out Label label,
+                                      int fontSize)
     {
         layer.AddChild(new ColorRect
         { Position = new Vector2(16, y), Size = new Vector2(BarW, h), Color = bg });
@@ -991,7 +1104,7 @@ public partial class CombatWorld : Node3D
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        label.AddThemeFontSizeOverride("font_size", 13);
+        label.AddThemeFontSizeOverride("font_size", fontSize);
         label.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0));
         label.AddThemeConstantOverride("outline_size", 4);
         layer.AddChild(label);

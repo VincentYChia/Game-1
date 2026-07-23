@@ -31,28 +31,35 @@ public partial class ClassSelectScreen : CanvasLayer
         dim.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _root.AddChild(dim);
 
-        var center = new CenterContainer();
-        center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        _root.AddChild(center);
         var panel = new PanelContainer();
-        center.AddChild(panel);
+        panel.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        panel.AnchorLeft = 0.06f;
+        panel.AnchorTop = 0.06f;
+        panel.AnchorRight = 0.94f;
+        panel.AnchorBottom = 0.94f;
+        panel.OffsetLeft = panel.OffsetTop = panel.OffsetRight = panel.OffsetBottom = 0;
+        _root.AddChild(panel);
         var margin = new MarginContainer();
         foreach (var side in new[] { "left", "right", "top", "bottom" })
-            margin.AddThemeConstantOverride($"margin_{side}", 20);
+            margin.AddThemeConstantOverride($"margin_{side}", 28);
         panel.AddChild(margin);
 
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 10);
+        box.AddThemeConstantOverride("separation", 14);
         margin.AddChild(box);
 
         var title = new Label { Text = "Choose Your Class" };
-        title.AddThemeFontSizeOverride("font_size", 28);
+        title.AddThemeFontSizeOverride("font_size", 38);
         title.Modulate = new Color(1f, 0.84f, 0f);
         box.AddChild(title);
 
-        var grid = new GridContainer { Columns = 3 };
-        grid.AddThemeConstantOverride("h_separation", 10);
-        grid.AddThemeConstantOverride("v_separation", 10);
+        var grid = new GridContainer
+        {
+            Columns = 3,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        grid.AddThemeConstantOverride("h_separation", 16);
+        grid.AddThemeConstantOverride("v_separation", 16);
         box.AddChild(grid);
 
         if (_combat.ClassDb is { } db)
@@ -63,14 +70,16 @@ public partial class ClassSelectScreen : CanvasLayer
                     def.Bonuses.Select(kv => $"{kv.Key} {kv.Value}"));
                 var card = new Button
                 {
-                    Text = $"{def.Name}\n{Wrap(def.Description, 38)}\n"
+                    Text = $"{def.Name}\n\n{Wrap(def.Description, 46)}\n"
                            + (def.StartingSkill.Length > 0
-                               ? $"skill: {def.StartingSkill}\n" : "")
-                           + Wrap(bonuses, 38),
-                    CustomMinimumSize = new Vector2(300, 150),
+                               ? $"\nskill: {def.StartingSkill}\n" : "")
+                           + Wrap(bonuses, 46),
+                    CustomMinimumSize = new Vector2(420, 240),
                     ClipText = false,
+                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                    SizeFlagsVertical = Control.SizeFlags.ExpandFill,
                 };
-                card.AddThemeFontSizeOverride("font_size", 13);
+                card.AddThemeFontSizeOverride("font_size", 17);
                 var captured = def;
                 card.Pressed += () => Select(captured);
                 grid.AddChild(card);
