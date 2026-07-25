@@ -38,39 +38,67 @@ public partial class DialogueScreen : CanvasLayer
         _root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(_root);
 
+        // Bottom-anchored dialogue panel with a solid, bordered background.
         var panel = new PanelContainer
         {
-            AnchorLeft = 0.2f, AnchorRight = 0.8f,
-            AnchorTop = 0.66f, AnchorBottom = 0.94f,
+            AnchorLeft = 0.14f, AnchorRight = 0.86f,
+            AnchorTop = 0.60f, AnchorBottom = 0.965f,
         };
+        panel.AddThemeStyleboxOverride("panel", UiTheme.Box(UiTheme.PanelBg, UiTheme.Accent, 3, 14));
         _root.AddChild(panel);
 
         var margin = new MarginContainer();
         foreach (var side in new[] { "left", "right", "top", "bottom" })
-            margin.AddThemeConstantOverride($"margin_{side}", 14);
+            margin.AddThemeConstantOverride($"margin_{side}", 26);
         panel.AddChild(margin);
 
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 6);
+        box.AddThemeConstantOverride("separation", 14);
         margin.AddChild(box);
 
+        // NPC name — big accent header.
         _name = new Label { Text = "" };
-        _name.AddThemeFontSizeOverride("font_size", 22);
-        _name.Modulate = new Color(1f, 0.9f, 0.6f);
+        _name.AddThemeFontSizeOverride("font_size", 32);
+        _name.AddThemeColorOverride("font_color", UiTheme.Accent);
+        _name.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0));
+        _name.AddThemeConstantOverride("outline_size", 4);
         box.AddChild(_name);
 
+        // Accent underline beneath the name.
+        var rule = new PanelContainer { CustomMinimumSize = new Vector2(0, 3) };
+        rule.AddThemeStyleboxOverride("panel", UiTheme.Box(UiTheme.Border, null, 0, 2));
+        box.AddChild(rule);
+
+        // Dialogue body — larger, wrapped, sits in its own inset card so text
+        // never reads as a transparent sliver.
+        var textCard = new PanelContainer
+        { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+        textCard.AddThemeStyleboxOverride("panel", UiTheme.Box(UiTheme.PanelInner, UiTheme.Border, 1, 8));
+        box.AddChild(textCard);
+
+        var textMargin = new MarginContainer();
+        foreach (var side in new[] { "left", "right", "top", "bottom" })
+            textMargin.AddThemeConstantOverride($"margin_{side}", 16);
+        textCard.AddChild(textMargin);
+
         _text = new Label
-        { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        _text.AddThemeFontSizeOverride("font_size", 18);
-        box.AddChild(_text);
+        {
+            Text = "",
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            VerticalAlignment = VerticalAlignment.Top,
+        };
+        _text.AddThemeFontSizeOverride("font_size", 22);
+        _text.AddThemeColorOverride("font_color", UiTheme.Text);
+        textMargin.AddChild(_text);
 
         _questBox = new VBoxContainer();
-        _questBox.AddThemeConstantOverride("separation", 4);
+        _questBox.AddThemeConstantOverride("separation", 10);
         box.AddChild(_questBox);
 
-        var hint = new Label { Text = "click: continue  ·  [F]/[Esc] leave" };
-        hint.AddThemeFontSizeOverride("font_size", 12);
-        hint.Modulate = new Color(1, 1, 1, 0.5f);
+        var hint = new Label { Text = "click / [Space]: continue      ·      [F] / [Esc]: leave" };
+        hint.AddThemeFontSizeOverride("font_size", 15);
+        hint.Modulate = new Color(1, 1, 1, 0.55f);
+        hint.HorizontalAlignment = HorizontalAlignment.Center;
         box.AddChild(hint);
     }
 
@@ -124,9 +152,16 @@ public partial class DialogueScreen : CanvasLayer
             .FirstOrDefault(q => q is not null && quests.CheckCompletion(q));
         if (turnIn is not null)
         {
-            var btn = new Button { Text = $"Turn In Quest: {turnIn.Def.Title}" };
-            btn.AddThemeFontSizeOverride("font_size", 15);
-            btn.Modulate = new Color(0.55f, 1f, 0.55f);
+            var btn = UiTheme.TextButton($"✔  Turn In Quest:  {turnIn.Def.Title}", 20);
+            btn.CustomMinimumSize = new Vector2(0, 52);
+            btn.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            var green = new Color(0.32f, 0.72f, 0.36f);
+            var greenHi = new Color(0.40f, 0.85f, 0.44f);
+            btn.AddThemeColorOverride("font_color", new Color(0.95f, 1f, 0.95f));
+            btn.AddThemeColorOverride("font_hover_color", new Color(1f, 1f, 1f));
+            btn.AddThemeStyleboxOverride("normal", UiTheme.Box(green, greenHi, 2, 8));
+            btn.AddThemeStyleboxOverride("hover", UiTheme.Box(greenHi, UiTheme.Accent, 2, 8));
+            btn.AddThemeStyleboxOverride("pressed", UiTheme.Box(green, UiTheme.Accent, 3, 8));
             btn.Pressed += () => DoTurnIn(turnIn);
             _questBox.AddChild(btn);
         }
@@ -144,10 +179,17 @@ public partial class DialogueScreen : CanvasLayer
                 ? quest.Description[..60] + "..." : quest.Description;
             var btn = new Button
             {
-                Text = $"{quest.Title}\n{desc}",
+                Text = $"◆  {quest.Title}\n     {desc}",
                 Alignment = HorizontalAlignment.Left,
             };
-            btn.AddThemeFontSizeOverride("font_size", 14);
+            btn.CustomMinimumSize = new Vector2(0, 58);
+            btn.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            btn.AddThemeFontSizeOverride("font_size", 18);
+            btn.AddThemeColorOverride("font_color", UiTheme.Text);
+            btn.AddThemeColorOverride("font_hover_color", UiTheme.Accent);
+            btn.AddThemeStyleboxOverride("normal", UiTheme.Box(UiTheme.SlotBg, UiTheme.Border, 1, 8));
+            btn.AddThemeStyleboxOverride("hover", UiTheme.Box(UiTheme.PanelInner, UiTheme.Accent, 2, 8));
+            btn.AddThemeStyleboxOverride("pressed", UiTheme.Box(UiTheme.SlotBg, UiTheme.Accent, 2, 8));
             btn.Pressed += () => DoAccept(quest);
             _questBox.AddChild(btn);
         }
@@ -155,7 +197,7 @@ public partial class DialogueScreen : CanvasLayer
         if (turnIn is null && available.Count == 0)
         {
             var none = new Label { Text = "No quests available at this time." };
-            none.AddThemeFontSizeOverride("font_size", 13);
+            none.AddThemeFontSizeOverride("font_size", 17);
             none.Modulate = new Color(1, 1, 1, 0.55f);
             _questBox.AddChild(none);
         }

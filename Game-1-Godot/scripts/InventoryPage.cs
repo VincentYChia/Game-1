@@ -4,71 +4,66 @@ using Godot;
 namespace Game1.Godot;
 
 /// <summary>
-/// Inventory + equipment book page ([I]/[Tab]). Renders the CERTIFIED
-/// Inventory (30 slots) and EquipmentManager — presentation only.
-/// Left-click a slot to pick up / place / merge / swap (Core StartDrag/
-/// EndDrag semantics). Right-click an equipment item to EQUIP it through
-/// the certified Equip path (requirement checks, hand-type matrix). Click
-/// an equipped row to unequip.
+/// Inventory + equipment book page ([I]/[Tab]) — recreating the 2D game's
+/// inventory: a 6×5 grid of big icon slots on the left, a paper-doll
+/// equipment panel of labeled icon slots on the right. Left-click picks up /
+/// places / merges / swaps (certified Core drag semantics); right-click a
+/// grid item equips it (requirement + hand-type checks); click an equipment
+/// slot to unequip.
 /// </summary>
 public partial class InventoryPage : MenuPage
 {
     public override string Title => "Inventory";
     public override Key Keybind => Key.I;
 
+    private const int SlotPx = 78;
+    private const int EquipPx = 74;
+
+    private static readonly (string Slot, string Label)[] EquipLayout =
+    {
+        ("helmet", "Helmet"), ("mainHand", "Main Hand"), ("offHand", "Off Hand"),
+        ("chestplate", "Chest"), ("gauntlets", "Gauntlets"), ("accessory", "Accessory"),
+        ("leggings", "Legs"), ("boots", "Boots"), ("axe", "Axe"),
+        ("pickaxe", "Pickaxe"),
+    };
+
     private readonly CombatWorld _combat;
-    private readonly List<Button> _slotButtons = new();
-    private readonly List<Label> _slotQty = new();
-    private readonly Dictionary<string, Button> _equipButtons = new();
+    private readonly List<(TextureRect Icon, Label Qty, Button Btn)> _slots = new();
+    private readonly Dictionary<string, (TextureRect Icon, Label Sub)> _equip = new();
     private Label _dragLabel = null!;
     private Label _status = null!;
+    private Label _summary = null!;
     private double _refresh;
-
-    internal static readonly Dictionary<string, Color> RarityColors = new()
-    {
-        ["common"] = new Color(0.92f, 0.92f, 0.92f),
-        ["uncommon"] = new Color(0.45f, 0.9f, 0.45f),
-        ["rare"] = new Color(0.4f, 0.65f, 1f),
-        ["epic"] = new Color(0.75f, 0.45f, 0.95f),
-        ["legendary"] = new Color(1f, 0.65f, 0.25f),
-    };
 
     public InventoryPage(CombatWorld combat) => _combat = combat;
 
     public override void _Ready()
     {
         var outer = new VBoxContainer();
-        outer.AddThemeConstantOverride("separation", 8);
+        outer.AddThemeConstantOverride("separation", 12);
         outer.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(outer);
+        outer.AddChild(UiTheme.Header("Inventory"));
 
-        var columns = new HBoxContainer();
-        columns.AddThemeConstantOverride("separation", 24);
+        var columns = new HBoxContainer
+        { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+        columns.AddThemeConstantOverride("separation", 36);
         outer.AddChild(columns);
 
-        // -- inventory grid --
+        // -- left: item grid --
         var invBox = new VBoxContainer();
+        invBox.AddThemeConstantOverride("separation", 10);
         columns.AddChild(invBox);
-        var title = new Label { Text = "Inventory" };
-        title.AddThemeFontSizeOverride("font_size", 26);
-        invBox.AddChild(title);
+        invBox.AddChild(UiTheme.Section("Backpack"));
 
         var grid = new GridContainer { Columns = 6 };
-        grid.AddThemeConstantOverride("h_separation", 6);
-        grid.AddThemeConstantOverride("v_separation", 6);
+        grid.AddThemeConstantOverride("h_separation", 8);
+        grid.AddThemeConstantOverride("v_separation", 8);
         invBox.AddChild(grid);
         for (var i = 0; i < 30; i++)
         {
             var idx = i;
-            var btn = new Button
-            {
-                CustomMinimumSize = new Vector2(112, 56),
-                ClipText = true,
-                Text = "",
-                ExpandIcon = true,
-                IconAlignment = HorizontalAlignment.Center,
-            };
-            btn.AddThemeFontSizeOverride("font_size", 12);
+            var btn = UiTheme.Slot(SlotPx, out var icon, out var qty);
             btn.Pressed += () => OnSlotClicked(idx);
             btn.GuiInput += ev =>
             {
@@ -76,65 +71,60 @@ public partial class InventoryPage : MenuPage
                     { ButtonIndex: MouseButton.Right, Pressed: true })
                     OnSlotRightClicked(idx);
             };
-            // Qty / durability overlaid bottom-right (click passes through)
-            var qty = new Label
-            {
-                MouseFilter = Control.MouseFilterEnum.Ignore,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Bottom,
-            };
-            qty.AddThemeFontSizeOverride("font_size", 13);
-            qty.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0));
-            qty.AddThemeConstantOverride("outline_size", 4);
-            qty.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-            btn.AddChild(qty);
             grid.AddChild(btn);
-            _slotButtons.Add(btn);
-            _slotQty.Add(qty);
+            _slots.Add((icon, qty, btn));
         }
 
         var hint = new Label
         {
-            Text = "left-click: pick up / place / merge / swap   ·   "
+            Text = "left-click: pick up / place / merge / swap      "
                    + "right-click: equip",
         };
-        hint.AddThemeFontSizeOverride("font_size", 14);
-        hint.Modulate = new Color(1, 1, 1, 0.6f);
+        hint.AddThemeFontSizeOverride("font_size", 15);
+        hint.Modulate = new Color(1, 1, 1, 0.55f);
         invBox.AddChild(hint);
 
-        // -- equipment column: one button per certified slot --
-        var eqBox = new VBoxContainer { CustomMinimumSize = new Vector2(300, 0) };
+        // -- right: paper-doll equipment --
+        var eqBox = new VBoxContainer { CustomMinimumSize = new Vector2(360, 0) };
+        eqBox.AddThemeConstantOverride("separation", 10);
         columns.AddChild(eqBox);
-        var eqTitle = new Label { Text = "Equipment  (click to unequip)" };
-        eqTitle.AddThemeFontSizeOverride("font_size", 22);
-        eqBox.AddChild(eqTitle);
+        eqBox.AddChild(UiTheme.Section("Equipment  (click a slot to unequip)"));
 
-        if (_combat.Pc is { } pc)
+        var eqGrid = new GridContainer { Columns = 3 };
+        eqGrid.AddThemeConstantOverride("h_separation", 14);
+        eqGrid.AddThemeConstantOverride("v_separation", 12);
+        eqBox.AddChild(eqGrid);
+        foreach (var (slot, label) in EquipLayout)
         {
-            foreach (var slot in pc.Equipment.Slots.Keys)
-            {
-                var captured = slot;
-                var btn = new Button
-                {
-                    Text = $"{slot}: —",
-                    Alignment = HorizontalAlignment.Left,
-                    ClipText = true,
-                };
-                btn.AddThemeFontSizeOverride("font_size", 15);
-                btn.Pressed += () => OnUnequip(captured);
-                eqBox.AddChild(btn);
-                _equipButtons[slot] = btn;
-            }
+            var cell = new VBoxContainer();
+            cell.AddThemeConstantOverride("separation", 3);
+            var name = new Label
+            { Text = label, HorizontalAlignment = HorizontalAlignment.Center };
+            name.AddThemeFontSizeOverride("font_size", 14);
+            name.Modulate = new Color(0.75f, 0.8f, 0.95f);
+            cell.AddChild(name);
+            var captured = slot;
+            var btn = UiTheme.Slot(EquipPx, out var icon, out var sub);
+            btn.Pressed += () => OnUnequip(captured);
+            cell.AddChild(btn);
+            eqGrid.AddChild(cell);
+            _equip[slot] = (icon, sub);
         }
 
+        _summary = new Label();
+        _summary.AddThemeFontSizeOverride("font_size", 17);
+        eqBox.AddChild(_summary);
+
         _status = new Label { Text = "" };
-        _status.AddThemeFontSizeOverride("font_size", 15);
-        _status.Modulate = new Color(1f, 0.9f, 0.6f);
-        outer.AddChild(_status);
+        _status.AddThemeFontSizeOverride("font_size", 16);
+        _status.Modulate = UiTheme.Accent;
+        eqBox.AddChild(_status);
 
         // stack-in-hand follows the mouse
         _dragLabel = new Label { Visible = false, ZIndex = 100 };
         _dragLabel.AddThemeFontSizeOverride("font_size", 16);
+        _dragLabel.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0));
+        _dragLabel.AddThemeConstantOverride("outline_size", 5);
         AddChild(_dragLabel);
     }
 
@@ -158,7 +148,7 @@ public partial class InventoryPage : MenuPage
         if (dragging is not null)
         {
             _dragLabel.Text = $"{DisplayName(dragging)} ×{dragging.Quantity}";
-            _dragLabel.Position = GetLocalMousePosition() + new Vector2(14, -8);
+            _dragLabel.Position = GetLocalMousePosition() + new Vector2(16, -10);
         }
     }
 
@@ -181,8 +171,6 @@ public partial class InventoryPage : MenuPage
             if (stack is not null) _status.Text = $"{DisplayName(stack)}: not equippable";
             return;
         }
-
-        // The certified path: requirement checks + hand-type matrix
         var (oldItem, reason) = pc.Equipment.Equip(item, pc);
         if (reason != "OK")
         {
@@ -204,7 +192,7 @@ public partial class InventoryPage : MenuPage
         if (item is null) return;
         if (!pc.Inventory.AddItem(item.ItemId, 1, equipmentInstance: item))
         {
-            pc.Equipment.Equip(item, pc);   // inventory full → revert
+            pc.Equipment.Equip(item, pc);
             _status.Text = "inventory full";
             return;
         }
@@ -217,51 +205,48 @@ public partial class InventoryPage : MenuPage
         var pc = _combat.Pc;
         if (pc is null) return;
 
-        for (var i = 0; i < _slotButtons.Count && i < pc.Inventory.Slots.Count; i++)
+        for (var i = 0; i < _slots.Count && i < pc.Inventory.Slots.Count; i++)
         {
             var stack = pc.Inventory.Slots[i];
-            var btn = _slotButtons[i];
-            var qty = _slotQty[i];
+            var (icon, qty, btn) = _slots[i];
             if (stack is null)
             {
-                btn.Text = "";
-                btn.Icon = null;
+                icon.Texture = null;
                 qty.Text = "";
-                btn.RemoveThemeColorOverride("font_color");
+                btn.AddThemeStyleboxOverride("normal",
+                    UiTheme.Box(UiTheme.SlotEmpty, UiTheme.Border, 1, 6));
                 continue;
             }
-            var name = DisplayName(stack);
-            var rarity = RarityColors.GetValueOrDefault(stack.Rarity, RarityColors["common"]);
-            var icon = IconCache.Get(IconFor(stack));
-            btn.Icon = icon;
-            // Icon present → name goes away, corner shows qty/durability;
-            // no icon → fall back to the text layout
-            if (icon is not null)
-            {
-                btn.Text = "";
-                qty.Text = stack.EquipmentData is { } de
-                    ? $"{de.DurabilityCurrent / Math.Max(1, de.DurabilityMax):P0}"
-                    : stack.Quantity > 1 ? $"×{stack.Quantity}" : "";
-            }
-            else
-            {
-                btn.Text = stack.EquipmentData is { } eq
-                    ? $"{name}\n{eq.DurabilityCurrent / Math.Max(1, eq.DurabilityMax):P0} dur"
-                    : $"{name}\n×{stack.Quantity}";
-                qty.Text = "";
-            }
+            var rarity = UiTheme.Rarity.GetValueOrDefault(stack.Rarity, UiTheme.Rarity["common"]);
+            icon.Texture = IconCache.Get(IconFor(stack));
+            qty.Text = stack.EquipmentData is { } de
+                ? $"{de.DurabilityCurrent / Math.Max(1, de.DurabilityMax):P0}"
+                : stack.Quantity > 1 ? $"{stack.Quantity}" : "";
             qty.Modulate = rarity;
+            // no icon → show a short name so it's not blank
+            btn.Text = icon.Texture is null ? Short(DisplayName(stack)) : "";
+            btn.AddThemeFontSizeOverride("font_size", 12);
             btn.AddThemeColorOverride("font_color", rarity);
+            btn.AddThemeStyleboxOverride("normal",
+                UiTheme.Box(UiTheme.SlotBg, rarity, 2, 6));
         }
 
-        foreach (var (slot, btn) in _equipButtons)
+        foreach (var (slot, (icon, sub)) in _equip)
         {
             var item = pc.Equipment.Slots.GetValueOrDefault(slot);
-            btn.Text = item is null
-                ? $"{slot}: —"
-                : $"{slot}: {item.Name}  ({item.DurabilityCurrent:F0}/{item.DurabilityMax})";
+            icon.Texture = item is null ? null : IconCache.Get(item.IconPath);
+            sub.Text = item is null ? ""
+                : icon.Texture is null ? Short(item.Name)
+                : $"{item.DurabilityCurrent:F0}/{item.DurabilityMax}";
         }
+
+        _summary.Text = $"HP {pc.Health:F0}/{pc.MaxHealthValue:F0}      "
+                        + $"MP {pc.Mana:F0}/{pc.MaxMana:F0}\n"
+                        + $"Level {pc.Leveling.Level}   ·   {pc.Leveling.CurrentExp} exp";
     }
+
+    private static string Short(string name) =>
+        name.Length <= 12 ? name : name[..11] + "…";
 
     private string DisplayName(ItemStack stack) =>
         stack.EquipmentData?.Name

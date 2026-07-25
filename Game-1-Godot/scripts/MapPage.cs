@@ -14,7 +14,7 @@ public partial class MapPage : MenuPage
     public override string Title => "Map";
     public override Key Keybind => Key.M;
 
-    private const int MapPx = 560;
+    private const int MapPx = 680;
 
     private readonly WorldMap? _map;
     private readonly List<VillageRecord> _villages;
@@ -36,23 +36,48 @@ public partial class MapPage : MenuPage
     public override void _Ready()
     {
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 8);
+        box.AddThemeConstantOverride("separation", 14);
         box.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(box);
 
-        var title = new Label { Text = "World Map" };
-        title.AddThemeFontSizeOverride("font_size", 26);
-        box.AddChild(title);
+        box.AddChild(UiTheme.Header("World Map"));
 
+        // -- centered, framed map plate --
         var centerRow = new CenterContainer
         { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         box.AddChild(centerRow);
-        _mapHolder = new Control { CustomMinimumSize = new Vector2(MapPx, MapPx) };
-        centerRow.AddChild(_mapHolder);
 
-        _info = new Label { Text = "" };
-        _info.AddThemeFontSizeOverride("font_size", 15);
-        box.AddChild(_info);
+        var plate = new PanelContainer();
+        plate.AddThemeStyleboxOverride("panel", UiTheme.Box(UiTheme.PanelInner, UiTheme.Border, 3, 12));
+        centerRow.AddChild(plate);
+
+        var plateMargin = new MarginContainer();
+        foreach (var s in new[] { "left", "right", "top", "bottom" })
+            plateMargin.AddThemeConstantOverride($"margin_{s}", 10);
+        plate.AddChild(plateMargin);
+
+        _mapHolder = new Control { CustomMinimumSize = new Vector2(MapPx, MapPx) };
+        plateMargin.AddChild(_mapHolder);
+
+        // -- where-am-I readout on a solid panel --
+        var infoPanel = new PanelContainer
+        { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        infoPanel.AddThemeStyleboxOverride("panel", UiTheme.Box(UiTheme.SlotBg, UiTheme.Border, 2, 8));
+        box.AddChild(infoPanel);
+
+        var infoMargin = new MarginContainer();
+        foreach (var s in new[] { "left", "right", "top", "bottom" })
+            infoMargin.AddThemeConstantOverride($"margin_{s}", 14);
+        infoPanel.AddChild(infoMargin);
+
+        _info = new Label
+        {
+            Text = "",
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        _info.AddThemeFontSizeOverride("font_size", 18);
+        _info.AddThemeColorOverride("font_color", UiTheme.Text);
+        infoMargin.AddChild(_info);
     }
 
     public override void OnOpened()

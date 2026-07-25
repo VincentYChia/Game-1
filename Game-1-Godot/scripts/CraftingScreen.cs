@@ -7,9 +7,10 @@ namespace Game1.Godot;
 
 /// <summary>
 /// Crafting popup ([C]; [Esc] closes). Lists every recipe from the CERTIFIED
-/// RecipeDatabase with its station, inputs, and have/need counts — craftable
-/// recipes first with a Craft button, the rest grayed out. Crafting runs the
-/// certified CraftingSystem path (consume → quality → output → XP → titles);
+/// RecipeDatabase as a vibrant bordered card — big output icon, station/tier,
+/// per-input have/need counts, and a large Craft button. Craftable recipes
+/// surface first; the rest are dimmed. Crafting runs the certified
+/// CraftingSystem path (consume → quality → output → XP → titles);
 /// performance is still the rolled minigame seam (ADR-7 overlays pending).
 /// </summary>
 public partial class CraftingScreen : CanvasLayer
@@ -29,7 +30,7 @@ public partial class CraftingScreen : CanvasLayer
         _root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(_root);
 
-        var dim = new ColorRect { Color = new Color(0, 0, 0, 0.5f) };
+        var dim = new ColorRect { Color = UiTheme.Dim };
         dim.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _root.AddChild(dim);
 
@@ -40,39 +41,35 @@ public partial class CraftingScreen : CanvasLayer
         panel.AnchorRight = 0.92f;
         panel.AnchorBottom = 0.95f;
         panel.OffsetLeft = panel.OffsetTop = panel.OffsetRight = panel.OffsetBottom = 0;
+        panel.AddThemeStyleboxOverride("panel", UiTheme.Box(UiTheme.PanelBg, UiTheme.Border, 3, 12));
         _root.AddChild(panel);
+
         var margin = new MarginContainer();
         foreach (var side in new[] { "left", "right", "top", "bottom" })
-            margin.AddThemeConstantOverride($"margin_{side}", 22);
+            margin.AddThemeConstantOverride($"margin_{side}", 26);
         panel.AddChild(margin);
 
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 10);
+        box.AddThemeConstantOverride("separation", 12);
         margin.AddChild(box);
 
-        var title = new Label { Text = "Crafting" };
-        title.AddThemeFontSizeOverride("font_size", 32);
-        box.AddChild(title);
+        box.AddChild(UiTheme.Header("Crafting", 36));
 
         _status = new Label { Text = "" };
-        _status.AddThemeFontSizeOverride("font_size", 18);
-        _status.Modulate = new Color(1, 1, 1, 0.75f);
+        _status.AddThemeFontSizeOverride("font_size", 20);
+        _status.AddThemeColorOverride("font_color", UiTheme.Accent);
         box.AddChild(_status);
 
-        var scroll = new ScrollContainer
-        {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-        };
+        var scroll = UiTheme.VScroll();
         box.AddChild(scroll);
         _list = new VBoxContainer
         { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        _list.AddThemeConstantOverride("separation", 6);
+        _list.AddThemeConstantOverride("separation", 12);
         scroll.AddChild(_list);
 
         var hint = new Label
         { Text = "double-Esc during a minigame abandons (materials lost)   ·   [Esc] close" };
-        hint.AddThemeFontSizeOverride("font_size", 15);
+        hint.AddThemeFontSizeOverride("font_size", 16);
         hint.Modulate = new Color(1, 1, 1, 0.55f);
         box.AddChild(hint);
     }
@@ -139,52 +136,96 @@ public partial class CraftingScreen : CanvasLayer
             + $"{craftableCount} of {rows.Count} recipes craftable";
 
         foreach (var (recipe, craftable) in rows)
+            _list.AddChild(BuildCard(recipe, craftable, pc));
+    }
+
+    /// <summary>One recipe as a bordered card: big output icon, name +
+    /// station/tier, per-input have/need, and a large Craft button.</summary>
+    private PanelContainer BuildCard(Recipe recipe, bool craftable,
+                                     Game1.Core.Progression.PlayerCharacter pc)
+    {
+        var accent = craftable ? new Color(0.45f, 0.9f, 0.45f) : UiTheme.Border;
+        var card = new PanelContainer
+        { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        card.AddThemeStyleboxOverride("panel",
+            UiTheme.Box(craftable ? UiTheme.PanelInner : UiTheme.SlotEmpty, accent, 2, 10));
+
+        var inner = new MarginContainer();
+        foreach (var side in new[] { "left", "right", "top", "bottom" })
+            inner.AddThemeConstantOverride($"margin_{side}", 12);
+        card.AddChild(inner);
+
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 16);
+        inner.AddChild(row);
+
+        // -- output icon --
+        var iconPath = _combat.EquipDb?.CreateEquipmentFromId(recipe.OutputId)?.IconPath
+                       ?? _combat.MaterialDb?.GetMaterial(recipe.OutputId)?.IconPath;
+        var iconWrap = new PanelContainer
+        { CustomMinimumSize = new Vector2(72, 72) };
+        iconWrap.AddThemeStyleboxOverride("panel",
+            UiTheme.Box(UiTheme.SlotBg, accent, 1, 8));
+        var icon = new TextureRect
         {
-            var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", 10);
-            _list.AddChild(row);
+            Texture = IconCache.Get(iconPath),
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            CustomMinimumSize = new Vector2(64, 64),
+            Modulate = craftable ? Colors.White : new Color(1, 1, 1, 0.45f),
+        };
+        iconWrap.AddChild(icon);
+        row.AddChild(iconWrap);
 
-            // Output icon (equipment or material)
-            var iconPath = _combat.EquipDb?.CreateEquipmentFromId(recipe.OutputId)?.IconPath
-                           ?? _combat.MaterialDb?.GetMaterial(recipe.OutputId)?.IconPath;
-            if (IconCache.Get(iconPath) is { } tex)
-                row.AddChild(new TextureRect
-                {
-                    Texture = tex,
-                    CustomMinimumSize = new Vector2(56, 56),
-                    ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-                    StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-                    Modulate = craftable ? Colors.White : new Color(1, 1, 1, 0.45f),
-                });
+        // -- name + station/tier + inputs --
+        var textCol = new VBoxContainer
+        { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        textCol.AddThemeConstantOverride("separation", 4);
+        row.AddChild(textCol);
 
-            var inputs = DescribeInputs(recipe, pc);
-            var label = new Label
-            {
-                Text = $"{CombatWorld.Prettify(recipe.OutputId)} ×{(int)recipe.OutputQty}"
-                       + $"   [{recipe.StationType} T{(int)recipe.StationTier}]\n"
-                       + inputs,
-                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            };
-            label.AddThemeFontSizeOverride("font_size", 18);
-            label.Modulate = craftable
-                ? new Color(0.75f, 1f, 0.75f)
-                : new Color(1, 1, 1, 0.45f);
-            row.AddChild(label);
+        var title = new Label
+        {
+            Text = $"{CombatWorld.Prettify(recipe.OutputId)} ×{(int)recipe.OutputQty}",
+        };
+        title.AddThemeFontSizeOverride("font_size", 22);
+        title.AddThemeColorOverride("font_color",
+            craftable ? UiTheme.Text : new Color(0.7f, 0.72f, 0.8f, 0.7f));
+        textCol.AddChild(title);
 
-            var btn = new Button
-            {
-                Text = "Craft",
-                Disabled = !craftable,
-                CustomMinimumSize = new Vector2(130, 48),
-            };
-            btn.AddThemeFontSizeOverride("font_size", 18);
-            var captured = recipe;
-            btn.Pressed += () => StartCraft(captured);
-            row.AddChild(btn);
+        var station = new Label
+        { Text = $"{CombatWorld.Prettify(recipe.StationType)} · Tier {(int)recipe.StationTier}" };
+        station.AddThemeFontSizeOverride("font_size", 16);
+        station.AddThemeColorOverride("font_color", new Color(0.7f, 0.78f, 0.95f));
+        textCol.AddChild(station);
 
-            _list.AddChild(new HSeparator());
+        var inputs = new Label
+        {
+            Text = DescribeInputs(recipe, pc),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        inputs.AddThemeFontSizeOverride("font_size", 17);
+        inputs.Modulate = craftable
+            ? new Color(0.82f, 0.95f, 0.82f)
+            : new Color(1, 1, 1, 0.5f);
+        textCol.AddChild(inputs);
+
+        // -- craft button --
+        var btn = UiTheme.TextButton(craftable ? "Craft" : "Missing", 20);
+        btn.Disabled = !craftable;
+        btn.CustomMinimumSize = new Vector2(150, 64);
+        btn.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+        if (craftable)
+        {
+            btn.AddThemeStyleboxOverride("normal", UiTheme.Box(UiTheme.SlotBg, accent, 2, 8));
+            btn.AddThemeStyleboxOverride("hover", UiTheme.Box(UiTheme.PanelInner, UiTheme.Accent, 2, 8));
+            btn.AddThemeStyleboxOverride("pressed", UiTheme.Box(UiTheme.SlotEmpty, UiTheme.Accent, 3, 8));
         }
+        var captured = recipe;
+        btn.Pressed += () => StartCraft(captured);
+        row.AddChild(btn);
+
+        return card;
     }
 
     /// <summary>Launch the discipline's minigame; performance flows into

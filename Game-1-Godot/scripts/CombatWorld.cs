@@ -297,9 +297,7 @@ public partial class CombatWorld : Node3D
         {
             mat.AlbedoTexture = tex;
             mat.AlbedoColor = Colors.White;
-            mat.Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor;
-            mat.AlphaScissorThreshold = 0.5f;
-            mat.TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest;
+            mat.TextureFilter = BaseMaterial3D.TextureFilterEnum.Linear;
         }
         var s = 1.0f * size;
         node.AddChild(new MeshInstance3D
@@ -602,7 +600,6 @@ public partial class CombatWorld : Node3D
         if (_playerAttack.StartAttack(_unarmed, new Dictionary<string, object?>()))
         {
             _lastEvent = "swing!";
-            _hands?.SetFacing(_playerFacingDeg);
             _hands?.PlayAttack();
         }
     }
@@ -680,9 +677,6 @@ public partial class CombatWorld : Node3D
     private void DoHarvest(NaturalResourceRuntime node, Node3D visual)
     {
         if (_pc is null || _gathering is null || _player is null) return;
-        // Face + chop toward the node
-        var toNode = visual.GlobalPosition - _player.GlobalPosition;
-        _hands?.SetFacing(PyMath.Degrees(Math.Atan2(toNode.Z, toNode.X)));
         _hands?.PlayGather();
 
         var allNodes = _resources.Select(r => r.Node).ToList();

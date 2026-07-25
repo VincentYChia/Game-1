@@ -1,13 +1,14 @@
 using System.Text.Json.Nodes;
+using Game1.Core.Progression;
 using Godot;
 
 namespace Game1.Godot;
 
 /// <summary>
 /// CHARACTER stats book page ([C] — Python's stats window, renderer.py:
-/// 7592-7702). Three columns: STATS with +1 allocation buttons while
+/// 7592-7702). Three vibrant panels: STATS with +1 allocation buttons while
 /// unallocated points remain (permanent, no respec); TITLES (last 8
-/// earned, tier-colored, passive — no equip mechanic exists); PROGRESS
+/// earned, tier-colored cards, passive — no equip mechanic exists); PROGRESS
 /// (nearest unearned title per activity, max 5 rows, mining/forestry
 /// always shown). Display bonus percentages use the JSON per-point
 /// values (LCK shows +2%/pt while combat crit uses 0.12 — preserved
@@ -21,9 +22,20 @@ public partial class StatsPage : MenuPage
     private readonly CombatWorld _combat;
     private Label _pointsLabel = null!;
     private readonly List<(Label Row, Button Plus, string Stat, double Scale)> _rows = new();
-    private Label _titlesLabel = null!;
-    private Label _progressLabel = null!;
+    private VBoxContainer _titlesList = null!;
+    private VBoxContainer _progressList = null!;
     private Label _header = null!;
+
+    // per-stat one-line descriptions of what the point buys
+    private static readonly Dictionary<string, string> StatBlurb = new()
+    {
+        ["strength"] = "mining / melee damage",
+        ["defense"] = "damage reduction",
+        ["vitality"] = "max health",
+        ["luck"] = "resource quality",
+        ["agility"] = "forestry / attack speed",
+        ["intelligence"] = "mana / elemental",
+    };
 
     private static readonly Dictionary<string, Color> TierColors = new()
     {
@@ -39,30 +51,27 @@ public partial class StatsPage : MenuPage
     public override void _Ready()
     {
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 8);
+        box.AddThemeConstantOverride("separation", 16);
         box.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(box);
 
-        _header = new Label { Text = "CHARACTER" };
-        _header.AddThemeFontSizeOverride("font_size", 26);
-        _header.Modulate = new Color(1f, 0.84f, 0f);
+        _header = UiTheme.Header("CHARACTER", 36);
         box.AddChild(_header);
 
         var columns = new HBoxContainer
         { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
-        columns.AddThemeConstantOverride("separation", 28);
+        columns.AddThemeConstantOverride("separation", 20);
         box.AddChild(columns);
 
-        // -- column 1: stats + allocation --
-        var statsCol = new VBoxContainer { CustomMinimumSize = new Vector2(280, 0) };
-        statsCol.AddThemeConstantOverride("separation", 6);
+        // -- panel 1: stats + allocation --
+        var statsCol = BuildPanel(320, expand: false, out var statsBody);
         columns.AddChild(statsCol);
-        var statsTitle = new Label { Text = "STATS" };
-        statsTitle.AddThemeFontSizeOverride("font_size", 19);
-        statsCol.AddChild(statsTitle);
-        _pointsLabel = new Label { Text = "", Modulate = new Color(0.4f, 1f, 0.4f) };
-        _pointsLabel.AddThemeFontSizeOverride("font_size", 16);
-        statsCol.AddChild(_pointsLabel);
+        statsBody.AddChild(UiTheme.Section("STATS", 24));
+
+        _pointsLabel = new Label { Text = "" };
+        _pointsLabel.AddThemeFontSizeOverride("font_size", 22);
+        _pointsLabel.AddThemeColorOverride("font_color", UiTheme.Accent);
+        statsBody.AddChild(_pointsLabel);
 
         // display scaling = the stats-screen JSON values (contract)
         foreach (var (stat, label, scale) in new[]
@@ -72,15 +81,45 @@ public partial class StatsPage : MenuPage
                      ("agility", "AGI", 0.05), ("intelligence", "INT", 0.02),
                  })
         {
+            var rowPanel = new PanelContainer();
+            rowPanel.AddThemeStyleboxOverride("panel",
+                UiTheme.Box(UiTheme.SlotBg, UiTheme.Border, 1, 6));
+            statsBody.AddChild(rowPanel);
+
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", 10);
-            statsCol.AddChild(row);
-            var rowLabel = new Label
-            { Text = $"{label}: 0", CustomMinimumSize = new Vector2(170, 0) };
-            rowLabel.AddThemeFontSizeOverride("font_size", 16);
-            row.AddChild(rowLabel);
-            var plus = new Button { Text = "+1", Visible = false };
-            plus.AddThemeFontSizeOverride("font_size", 14);
+            rowPanel.AddChild(row);
+
+            var textCol = new VBoxContainer
+            { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            textCol.AddThemeConstantOverride("separation", 0);
+            row.AddChild(textCol);
+
+            var rowLabel = new Label { Text = $"{label}: 0  (+0%)" };
+            rowLabel.AddThemeFontSizeOverride("font_size", 20);
+            rowLabel.AddThemeColorOverride("font_color", UiTheme.Text);
+            textCol.AddChild(rowLabel);
+
+            var blurb = new Label { Text = StatBlurb[stat] };
+            blurb.AddThemeFontSizeOverride("font_size", 14);
+            blurb.AddThemeColorOverride("font_color", new Color(0.65f, 0.72f, 0.88f));
+            textCol.AddChild(blurb);
+
+            var plus = new Button
+            {
+                Text = "+1",
+                Visible = false,
+                CustomMinimumSize = new Vector2(52, 44),
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            };
+            plus.AddThemeFontSizeOverride("font_size", 20);
+            plus.AddThemeColorOverride("font_color", new Color(0.1f, 0.14f, 0.1f));
+            plus.AddThemeStyleboxOverride("normal",
+                UiTheme.Box(new Color(0.35f, 0.82f, 0.38f), new Color(0.5f, 1f, 0.5f), 2, 6));
+            plus.AddThemeStyleboxOverride("hover",
+                UiTheme.Box(new Color(0.45f, 0.95f, 0.48f), UiTheme.Accent, 2, 6));
+            plus.AddThemeStyleboxOverride("pressed",
+                UiTheme.Box(new Color(0.30f, 0.70f, 0.33f), UiTheme.Accent, 2, 6));
             var captured = stat;
             plus.Pressed += () =>
             {
@@ -90,52 +129,53 @@ public partial class StatsPage : MenuPage
             _rows.Add((rowLabel, plus, stat, scale));
         }
 
-        // -- column 2: titles --
-        var titlesCol = new VBoxContainer
-        {
-            CustomMinimumSize = new Vector2(420, 0),
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-        };
+        // -- panel 2: titles --
+        var titlesCol = BuildPanel(420, expand: true, out var titlesBody);
         columns.AddChild(titlesCol);
-        var titlesTitle = new Label { Text = "TITLES" };
-        titlesTitle.AddThemeFontSizeOverride("font_size", 22);
-        titlesCol.AddChild(titlesTitle);
-        var titlesScroll = new ScrollContainer
-        {
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            // Vertical-only: without this the label collapses to 0 width and
-            // wraps one character per line
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-        };
-        titlesCol.AddChild(titlesScroll);
-        _titlesLabel = new Label
-        {
-            Text = "",
-            AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
-        _titlesLabel.AddThemeFontSizeOverride("font_size", 16);
-        titlesScroll.AddChild(_titlesLabel);
+        titlesBody.AddChild(UiTheme.Section("TITLES", 24));
+        var titlesScroll = UiTheme.VScroll();
+        titlesBody.AddChild(titlesScroll);
+        _titlesList = new VBoxContainer
+        { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _titlesList.AddThemeConstantOverride("separation", 10);
+        titlesScroll.AddChild(_titlesList);
 
-        // -- column 3: progress --
-        var progCol = new VBoxContainer
-        {
-            CustomMinimumSize = new Vector2(360, 0),
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
+        // -- panel 3: progress --
+        var progCol = BuildPanel(380, expand: true, out var progBody);
         columns.AddChild(progCol);
-        var progTitle = new Label { Text = "PROGRESS" };
-        progTitle.AddThemeFontSizeOverride("font_size", 22);
-        progCol.AddChild(progTitle);
-        _progressLabel = new Label
+        progBody.AddChild(UiTheme.Section("PROGRESS", 24));
+        var progScroll = UiTheme.VScroll();
+        progBody.AddChild(progScroll);
+        _progressList = new VBoxContainer
+        { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _progressList.AddThemeConstantOverride("separation", 12);
+        progScroll.AddChild(_progressList);
+    }
+
+    /// <summary>A solid bordered panel with an inner padded VBox body.</summary>
+    private static PanelContainer BuildPanel(int minWidth, bool expand,
+                                             out VBoxContainer body)
+    {
+        var panel = new PanelContainer
         {
-            Text = "",
-            AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            CustomMinimumSize = new Vector2(minWidth, 0),
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            SizeFlagsHorizontal = expand
+                ? Control.SizeFlags.ExpandFill
+                : Control.SizeFlags.Fill,
         };
-        _progressLabel.AddThemeFontSizeOverride("font_size", 16);
-        progCol.AddChild(_progressLabel);
+        panel.AddThemeStyleboxOverride("panel",
+            UiTheme.Box(UiTheme.PanelInner, UiTheme.Border, 2, 10));
+
+        var margin = new MarginContainer();
+        foreach (var s in new[] { "left", "right", "top", "bottom" })
+            margin.AddThemeConstantOverride($"margin_{s}", 16);
+        panel.AddChild(margin);
+
+        body = new VBoxContainer();
+        body.AddThemeConstantOverride("separation", 12);
+        margin.AddChild(body);
+        return panel;
     }
 
     public override void OnOpened() => Refresh();
@@ -149,7 +189,9 @@ public partial class StatsPage : MenuPage
 
         _header.Text = $"CHARACTER — Level {pc.Leveling.Level}";
         var points = pc.Leveling.UnallocatedStatPoints;
-        _pointsLabel.Text = points > 0 ? $"Points: {points}" : "";
+        _pointsLabel.Text = points > 0 ? $"★  {points} Points to Spend" : "All points spent";
+        _pointsLabel.AddThemeColorOverride("font_color",
+            points > 0 ? UiTheme.Accent : new Color(0.6f, 0.66f, 0.8f));
 
         foreach (var (row, plus, stat, scale) in _rows)
         {
@@ -171,31 +213,115 @@ public partial class StatsPage : MenuPage
             plus.Visible = points > 0;
         }
 
-        // titles: LAST 8 earned, tier-colored via BBCode-less plain text
+        RefreshTitles(pc);
+        RefreshProgress(pc);
+    }
+
+    // titles: LAST 8 earned, tier-colored cards (icon + name + bonus)
+    private void RefreshTitles(PlayerCharacter pc)
+    {
+        foreach (var child in _titlesList.GetChildren()) child.QueueFree();
+
         var earned = pc.Titles.EarnedTitles;
         if (earned.Count == 0)
         {
-            _titlesLabel.Text = "Keep playing to earn titles!";
-        }
-        else
-        {
-            var lines = new List<string> { $"Earned: {earned.Count}" };
-            foreach (var t in earned.TakeLast(8))
-                lines.Add($"• {t.Name}  [{t.Tier}]\n   {t.BonusDescription}");
-            _titlesLabel.Text = string.Join("\n", lines);
+            var empty = new Label
+            {
+                Text = "Keep playing to earn titles!",
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            };
+            empty.AddThemeFontSizeOverride("font_size", 18);
+            empty.AddThemeColorOverride("font_color", new Color(0.65f, 0.72f, 0.88f));
+            _titlesList.AddChild(empty);
+            return;
         }
 
-        // progress: nearest unearned title per activity; mining/forestry
-        // always shown, others only when count > 0; max 5 rows
+        var count = new Label { Text = $"Earned: {earned.Count}" };
+        count.AddThemeFontSizeOverride("font_size", 17);
+        count.AddThemeColorOverride("font_color", UiTheme.Accent);
+        _titlesList.AddChild(count);
+
+        foreach (var t in earned.TakeLast(8))
+        {
+            var tier = (t.Tier ?? "novice").ToLowerInvariant();
+            var color = TierColors.GetValueOrDefault(tier, TierColors["novice"]);
+
+            var card = new PanelContainer
+            { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            card.AddThemeStyleboxOverride("panel",
+                UiTheme.Box(UiTheme.SlotBg, color, 2, 8));
+            _titlesList.AddChild(card);
+
+            var rowH = new HBoxContainer();
+            rowH.AddThemeConstantOverride("separation", 12);
+            card.AddChild(rowH);
+
+            // icon on the left (titles/{id}.png) — falls back to a colored dot
+            var tex = IconCache.Get(t.IconPath);
+            if (tex is not null)
+            {
+                var iconRect = new TextureRect
+                {
+                    Texture = tex,
+                    ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                    StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                    CustomMinimumSize = new Vector2(52, 52),
+                    SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                };
+                rowH.AddChild(iconRect);
+            }
+            else
+            {
+                var dot = new Label
+                {
+                    Text = "★",
+                    CustomMinimumSize = new Vector2(52, 52),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                dot.AddThemeFontSizeOverride("font_size", 30);
+                dot.AddThemeColorOverride("font_color", color);
+                rowH.AddChild(dot);
+            }
+
+            var textCol = new VBoxContainer
+            { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            textCol.AddThemeConstantOverride("separation", 2);
+            rowH.AddChild(textCol);
+
+            var nameLbl = new Label { Text = $"{t.Name}  [{tier}]" };
+            nameLbl.AddThemeFontSizeOverride("font_size", 19);
+            nameLbl.AddThemeColorOverride("font_color", color);
+            textCol.AddChild(nameLbl);
+
+            var bonus = new Label
+            {
+                Text = t.BonusDescription,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            };
+            bonus.AddThemeFontSizeOverride("font_size", 16);
+            bonus.AddThemeColorOverride("font_color", UiTheme.Text);
+            textCol.AddChild(bonus);
+        }
+    }
+
+    // progress: nearest unearned title per activity; mining/forestry
+    // always shown, others only when count > 0; max 5 rows
+    private void RefreshProgress(PlayerCharacter pc)
+    {
+        foreach (var child in _progressList.GetChildren()) child.QueueFree();
+
         var titleDb = _combat.TitleDb;
-        var lines2 = new List<string>();
+        var rows = new List<(string Activity, string NextName, int Have, int Need)>();
         if (titleDb is not null)
         {
             var shown = new HashSet<string>();
             foreach (var activity in new[]
                      { "mining", "forestry", "smithing", "refining", "alchemy" })
             {
-                if (lines2.Count >= 5 || shown.Contains(activity)) continue;
+                if (rows.Count >= 5 || shown.Contains(activity)) continue;
                 var count = pc.Activities.GetCount(activity);
                 if (count == 0 && activity is not ("mining" or "forestry")) continue;
                 shown.Add(activity);
@@ -212,18 +338,79 @@ public partial class StatsPage : MenuPage
                         next = new TitleDefBrief(t.Name, threshold);
                 }
                 if (next is { } n)
-                {
-                    var frac = Math.Clamp(count / n.Threshold, 0, 1);
-                    var bar = new string('█', (int)(frac * 14))
-                              .PadRight(14, '░');
-                    lines2.Add($"{activity}: {bar}  {count}/{(int)n.Threshold}"
-                               + $"\n   Next: {n.Name}");
-                }
+                    rows.Add((activity, n.Name, count, (int)n.Threshold));
             }
         }
-        _progressLabel.Text = lines2.Count > 0
-            ? string.Join("\n", lines2)
-            : "Start gathering and crafting!";
+
+        if (rows.Count == 0)
+        {
+            var empty = new Label
+            {
+                Text = "Start gathering and crafting!",
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            };
+            empty.AddThemeFontSizeOverride("font_size", 18);
+            empty.AddThemeColorOverride("font_color", new Color(0.65f, 0.72f, 0.88f));
+            _progressList.AddChild(empty);
+            return;
+        }
+
+        foreach (var (activity, nextName, have, need) in rows)
+        {
+            var frac = need > 0 ? Math.Clamp((float)have / need, 0f, 1f) : 0f;
+
+            var card = new PanelContainer
+            { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            card.AddThemeStyleboxOverride("panel",
+                UiTheme.Box(UiTheme.SlotBg, UiTheme.Border, 1, 8));
+            _progressList.AddChild(card);
+
+            var body = new VBoxContainer
+            { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            body.AddThemeConstantOverride("separation", 6);
+            card.AddChild(body);
+
+            var head = new HBoxContainer();
+            body.AddChild(head);
+            var actLbl = new Label
+            {
+                Text = CombatWorld.Prettify(activity),
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            };
+            actLbl.AddThemeFontSizeOverride("font_size", 19);
+            actLbl.AddThemeColorOverride("font_color", UiTheme.Text);
+            head.AddChild(actLbl);
+            var frac2 = new Label { Text = $"{have}/{need}" };
+            frac2.AddThemeFontSizeOverride("font_size", 18);
+            frac2.AddThemeColorOverride("font_color", UiTheme.Accent);
+            head.AddChild(frac2);
+
+            var bar = new ProgressBar
+            {
+                MinValue = 0,
+                MaxValue = 1,
+                Value = frac,
+                ShowPercentage = false,
+                CustomMinimumSize = new Vector2(0, 20),
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            };
+            bar.AddThemeStyleboxOverride("background",
+                UiTheme.Box(UiTheme.SlotEmpty, UiTheme.Border, 1, 6));
+            bar.AddThemeStyleboxOverride("fill",
+                UiTheme.Box(new Color(0.4f, 0.85f, 0.45f), null, 0, 6));
+            body.AddChild(bar);
+
+            var nextLbl = new Label
+            {
+                Text = $"Next: {nextName}",
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            };
+            nextLbl.AddThemeFontSizeOverride("font_size", 15);
+            nextLbl.AddThemeColorOverride("font_color", new Color(0.7f, 0.78f, 0.95f));
+            body.AddChild(nextLbl);
+        }
     }
 
     private readonly record struct TitleDefBrief(string Name, double Threshold);

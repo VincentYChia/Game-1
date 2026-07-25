@@ -37,32 +37,31 @@ public static class IconCache
             : System.IO.Path.Combine(_assetsRoot, "items", iconPath);
 
         Texture2D? tex = null;
-        // Validate the PNG signature before loading — some assets are Git-LFS
-        // pointer stubs / corrupt files, and Image.LoadFromFile spams the
-        // console on those. A header check lets us silently fall back to text.
-        if (File.Exists(full) && IsPng(full))
+        // The asset files carry a .png extension but are actually a mix of
+        // PNG and JPEG (many are JPEG: header FF D8 FF). Dispatch by the real
+        // magic number so both load; unknown/corrupt → null → text fallback.
+        if (File.Exists(full))
         {
-            var img = Image.LoadFromFile(full);
-            if (img is not null && img.GetWidth() > 0)
-                tex = ImageTexture.CreateFromImage(img);
+            try
+            {
+                var bytes = File.ReadAllBytes(full);
+                var img = new Image();
+                var err = Error.Failed;
+                if (bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8
+                    && bytes[2] == 0xFF)
+                    err = img.LoadJpgFromBuffer(bytes);
+                else if (bytes.Length >= 4 && bytes[0] == 0x89 && bytes[1] == 0x50
+                    && bytes[2] == 0x4E && bytes[3] == 0x47)
+                    err = img.LoadPngFromBuffer(bytes);
+                else if (bytes.Length >= 12 && bytes[0] == 0x52 && bytes[1] == 0x49
+                    && bytes[8] == 0x57 && bytes[9] == 0x45)   // RIFF…WEBP
+                    err = img.LoadWebpFromBuffer(bytes);
+                if (err == Error.Ok && img.GetWidth() > 0)
+                    tex = ImageTexture.CreateFromImage(img);
+            }
+            catch { /* fall back to text */ }
         }
         _cache[iconPath] = tex;   // cache misses too (avoid re-stat every frame)
         return tex;
-    }
-
-    private static readonly byte[] PngSig = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
-
-    private static bool IsPng(string path)
-    {
-        try
-        {
-            using var fs = File.OpenRead(path);
-            Span<byte> head = stackalloc byte[8];
-            if (fs.Read(head) < 8) return false;
-            for (var i = 0; i < 8; i++)
-                if (head[i] != PngSig[i]) return false;
-            return true;
-        }
-        catch { return false; }
     }
 }

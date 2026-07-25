@@ -230,9 +230,7 @@ public partial class WorldBootstrap : Node3D
                 {
                     stMat.AlbedoTexture = stex;
                     stMat.AlbedoColor = Colors.White;
-                    stMat.Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor;
-                    stMat.AlphaScissorThreshold = 0.5f;
-                    stMat.TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest;
+                    stMat.TextureFilter = BaseMaterial3D.TextureFilterEnum.Linear;
                 }
                 node.AddChild(new MeshInstance3D
                 {

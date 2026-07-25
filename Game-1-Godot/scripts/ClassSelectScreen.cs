@@ -27,72 +27,181 @@ public partial class ClassSelectScreen : CanvasLayer
         _root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(_root);
 
-        var dim = new ColorRect { Color = new Color(0, 0, 0, 0.7f) };
+        var dim = new ColorRect { Color = new Color(0, 0, 0, 0.78f) };
         dim.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _root.AddChild(dim);
 
         var panel = new PanelContainer();
         panel.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        panel.AnchorLeft = 0.06f;
-        panel.AnchorTop = 0.06f;
-        panel.AnchorRight = 0.94f;
-        panel.AnchorBottom = 0.94f;
+        panel.AnchorLeft = 0.05f;
+        panel.AnchorTop = 0.05f;
+        panel.AnchorRight = 0.95f;
+        panel.AnchorBottom = 0.95f;
         panel.OffsetLeft = panel.OffsetTop = panel.OffsetRight = panel.OffsetBottom = 0;
+        panel.AddThemeStyleboxOverride("panel", UiTheme.Box(UiTheme.PanelBg, UiTheme.Border, 3, 14));
         _root.AddChild(panel);
         var margin = new MarginContainer();
         foreach (var side in new[] { "left", "right", "top", "bottom" })
-            margin.AddThemeConstantOverride($"margin_{side}", 28);
+            margin.AddThemeConstantOverride($"margin_{side}", 30);
         panel.AddChild(margin);
 
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 14);
+        box.AddThemeConstantOverride("separation", 16);
         margin.AddChild(box);
 
-        var title = new Label { Text = "Choose Your Class" };
-        title.AddThemeFontSizeOverride("font_size", 38);
-        title.Modulate = new Color(1f, 0.84f, 0f);
-        box.AddChild(title);
+        box.AddChild(UiTheme.Header("Choose Your Class", 38));
+        box.AddChild(UiTheme.Section("Your starting path shapes bonuses, affinities, and a signature skill.", 20));
+
+        var scroll = UiTheme.VScroll();
+        box.AddChild(scroll);
 
         var grid = new GridContainer
         {
             Columns = 3,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
         };
-        grid.AddThemeConstantOverride("h_separation", 16);
-        grid.AddThemeConstantOverride("v_separation", 16);
-        box.AddChild(grid);
+        grid.AddThemeConstantOverride("h_separation", 18);
+        grid.AddThemeConstantOverride("v_separation", 18);
+        scroll.AddChild(grid);
 
         if (_combat.ClassDb is { } db)
         {
             foreach (var def in db.Classes.Values)
-            {
-                var bonuses = string.Join(", ",
-                    def.Bonuses.Select(kv => $"{kv.Key} {kv.Value}"));
-                var card = new Button
-                {
-                    Text = $"{def.Name}\n\n{Wrap(def.Description, 46)}\n"
-                           + (def.StartingSkill.Length > 0
-                               ? $"\nskill: {def.StartingSkill}\n" : "")
-                           + Wrap(bonuses, 46),
-                    CustomMinimumSize = new Vector2(420, 240),
-                    ClipText = false,
-                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                    SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-                };
-                card.AddThemeFontSizeOverride("font_size", 17);
-                var captured = def;
-                card.Pressed += () => Select(captured);
-                grid.AddChild(card);
-            }
+                grid.AddChild(BuildCard(def));
         }
 
         _warn = new Label { Text = "" };
-        _warn.AddThemeFontSizeOverride("font_size", 15);
+        _warn.AddThemeFontSizeOverride("font_size", 18);
         _warn.Modulate = new Color(1f, 0.55f, 0.45f);
         box.AddChild(_warn);
 
         _open = true;
         UiHub.OpenScreens++;
+    }
+
+    /// <summary>Big vibrant bordered class card: icon + accent name, wrapped
+    /// description, starting skill, bonuses list, and a Choose button. The
+    /// whole panel highlights on hover; pressing Choose selects the class.</summary>
+    private PanelContainer BuildCard(ClassDefinition def)
+    {
+        var card = new PanelContainer
+        {
+            CustomMinimumSize = new Vector2(420, 300),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        card.AddThemeStyleboxOverride("panel",
+            UiTheme.Box(UiTheme.PanelInner, UiTheme.Border, 2, 12));
+
+        var inner = new MarginContainer();
+        foreach (var side in new[] { "left", "right", "top", "bottom" })
+            inner.AddThemeConstantOverride($"margin_{side}", 14);
+        card.AddChild(inner);
+
+        var col = new VBoxContainer();
+        col.AddThemeConstantOverride("separation", 10);
+        inner.AddChild(col);
+
+        // -- header: icon + name --
+        var head = new HBoxContainer();
+        head.AddThemeConstantOverride("separation", 12);
+        col.AddChild(head);
+
+        var icon = new TextureRect
+        {
+            CustomMinimumSize = new Vector2(64, 64),
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            Texture = IconCache.Get($"classes/{def.ClassId}.png"),
+        };
+        head.AddChild(icon);
+
+        var name = new Label
+        {
+            Text = def.Name,
+            VerticalAlignment = VerticalAlignment.Center,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        name.AddThemeFontSizeOverride("font_size", 28);
+        name.AddThemeColorOverride("font_color", UiTheme.Accent);
+        head.AddChild(name);
+
+        // -- description --
+        var desc = new Label
+        {
+            Text = def.Description,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        desc.AddThemeFontSizeOverride("font_size", 17);
+        desc.AddThemeColorOverride("font_color", UiTheme.Text);
+        col.AddChild(desc);
+
+        // -- starting skill --
+        if (def.StartingSkill.Length > 0)
+        {
+            var skillName = _combat.SkillDb?.Skills.GetValueOrDefault(def.StartingSkill)?.Name
+                            ?? CombatWorld.Prettify(def.StartingSkill);
+            var skillRow = new HBoxContainer();
+            skillRow.AddThemeConstantOverride("separation", 8);
+            col.AddChild(skillRow);
+
+            var sIcon = new TextureRect
+            {
+                CustomMinimumSize = new Vector2(28, 28),
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                Texture = IconCache.Get($"skills/{def.StartingSkill}.png"),
+            };
+            skillRow.AddChild(sIcon);
+
+            var sLabel = new Label
+            {
+                Text = $"Starting Skill: {skillName}",
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            sLabel.AddThemeFontSizeOverride("font_size", 16);
+            sLabel.AddThemeColorOverride("font_color", new Color(0.55f, 0.9f, 0.55f));
+            skillRow.AddChild(sLabel);
+        }
+
+        // -- bonuses list --
+        var bonusText = string.Join("\n",
+            def.Bonuses.Select(kv => $"• {CombatWorld.Prettify(kv.Key)}: {kv.Value}"));
+        if (bonusText.Length > 0)
+        {
+            col.AddChild(UiTheme.Section("Bonuses", 17));
+            var bonus = new Label
+            {
+                Text = bonusText,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            };
+            bonus.AddThemeFontSizeOverride("font_size", 16);
+            bonus.AddThemeColorOverride("font_color", new Color(0.72f, 0.8f, 0.98f));
+            col.AddChild(bonus);
+        }
+
+        // -- choose button --
+        var choose = UiTheme.TextButton($"Choose {def.Name}", 20);
+        choose.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        choose.AddThemeStyleboxOverride("normal", UiTheme.Box(UiTheme.SlotBg, UiTheme.Accent, 2, 8));
+        choose.AddThemeStyleboxOverride("hover", UiTheme.Box(UiTheme.Border, UiTheme.Accent, 3, 8));
+        choose.AddThemeStyleboxOverride("pressed", UiTheme.Box(UiTheme.Accent, UiTheme.Accent, 3, 8));
+        choose.AddThemeColorOverride("font_color", UiTheme.Accent);
+        var captured = def;
+        choose.Pressed += () => Select(captured);
+        col.AddChild(choose);
+
+        // whole-card hover highlight
+        card.MouseEntered += () => card.AddThemeStyleboxOverride("panel",
+            UiTheme.Box(UiTheme.SlotBg, UiTheme.Accent, 3, 12));
+        card.MouseExited += () => card.AddThemeStyleboxOverride("panel",
+            UiTheme.Box(UiTheme.PanelInner, UiTheme.Border, 2, 12));
+
+        return card;
     }
 
     private static string Wrap(string text, int width)

@@ -41,11 +41,11 @@ public partial class MenuBook : CanvasLayer
         _root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(_root);
 
-        var dim = new ColorRect { Color = new Color(0, 0, 0, 0.5f) };
+        var dim = new ColorRect { Color = UiTheme.Dim };
         dim.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _root.AddChild(dim);
 
-        // Screen-relative frame: ~94% of the viewport so it never overflows
+        // Screen-relative frame: ~94% of the viewport, SOLID background
         var frame = new PanelContainer();
         frame.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         frame.AnchorLeft = 0.03f;
@@ -53,10 +53,11 @@ public partial class MenuBook : CanvasLayer
         frame.AnchorRight = 0.97f;
         frame.AnchorBottom = 0.97f;
         frame.OffsetLeft = frame.OffsetTop = frame.OffsetRight = frame.OffsetBottom = 0;
+        frame.AddThemeStyleboxOverride("panel", UiTheme.Box(UiTheme.PanelBg, UiTheme.Border, 3, 12));
         _root.AddChild(frame);
         var margin = new MarginContainer();
         foreach (var side in new[] { "left", "right", "top", "bottom" })
-            margin.AddThemeConstantOverride($"margin_{side}", 18);
+            margin.AddThemeConstantOverride($"margin_{side}", 22);
         frame.AddChild(margin);
 
         var columns = new HBoxContainer();

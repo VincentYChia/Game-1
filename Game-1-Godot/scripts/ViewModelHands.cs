@@ -14,14 +14,16 @@ public partial class ViewModelHands : Node3D
     private Node3D _pivot = null!;
     private Tween? _tween;
 
+    /// <summary>Matches the body capsule color (WorldBootstrap player color).</summary>
+    public Color BodyColor { get; set; } = new(80 / 255f, 180 / 255f, 1f);
+
     public override void _Ready()
     {
         // Shoulder pivot at chest height; arm extends forward (-Z)
         _pivot = new Node3D { Position = new Vector3(0, 1.15f, 0) };
         AddChild(_pivot);
 
-        var skin = new StandardMaterial3D
-        { AlbedoColor = new Color(0.85f, 0.68f, 0.52f) };
+        var skin = new StandardMaterial3D { AlbedoColor = BodyColor };
 
         var arm = new MeshInstance3D
         {
@@ -42,10 +44,21 @@ public partial class ViewModelHands : Node3D
         _pivot.RotationDegrees = new Vector3(-10, 0, 0);   // resting
     }
 
-    /// <summary>Aim the arm at a sim facing (degrees; sim angle a has
-    /// direction (cos a, sin a) in the XZ plane → world yaw -a).</summary>
-    public void SetFacing(double simFacingDeg) =>
-        RotationDegrees = new Vector3(0, -(float)simFacingDeg, 0);
+    /// <summary>Point the arm along the camera's flattened forward every
+    /// frame so it always aims where the player is looking (the capsule
+    /// itself never rotates).</summary>
+    public override void _Process(double delta)
+    {
+        var cam = GetViewport().GetCamera3D();
+        if (cam is null) return;
+        var fwd = -cam.GlobalTransform.Basis.Z;
+        fwd.Y = 0;
+        if (fwd.LengthSquared() < 1e-4f) return;
+        fwd = fwd.Normalized();
+        // Local -Z of a Node with yaw θ is (-sinθ, 0, -cosθ); solve for θ so
+        // it aligns with fwd.
+        Rotation = new Vector3(0, Mathf.Atan2(-fwd.X, -fwd.Z), 0);
+    }
 
     /// <summary>Overhead swing: wind up, snap down, settle.</summary>
     public void PlayAttack()

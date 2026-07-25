@@ -15,7 +15,7 @@ public partial class SpinSprite : Sprite3D
         Shaded = false;
         DoubleSided = true;
         NoDepthTest = false;
-        TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest;
+        TextureFilter = BaseMaterial3D.TextureFilterEnum.Linear;
     }
 
     public override void _Process(double delta) => RotateY((float)delta * SpinSpeed);
