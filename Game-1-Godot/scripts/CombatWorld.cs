@@ -38,6 +38,10 @@ public partial class CombatWorld : Node3D
         public required Label3D Label;
         public bool CorpseShown;
         public double FlashUntil;   // white hit-flash window (FxManager era)
+        /// <summary>The 4 textured side-face materials (empty = untextured,
+        /// tint the body box instead).</summary>
+        public List<StandardMaterial3D> SideMats = new();
+        public StandardMaterial3D? BodyMat;
     }
 
     private readonly HitboxSystem _hitboxes = new();
@@ -289,23 +293,50 @@ public partial class CombatWorld : Node3D
         var color = CategoryColors.GetValueOrDefault(def.Category,
             new Color(0.8f, 0.3f, 0.3f));
         var node = new Node3D { Name = entityId };
-        // Cube with the enemy PNG on every face (falls back to a colored
-        // cube when the sprite is missing)
         var tex = IconCache.Get(def.IconPath);
-        var mat = new StandardMaterial3D { AlbedoColor = color };
-        if (tex is not null)
-        {
-            mat.AlbedoTexture = tex;
-            mat.AlbedoColor = Colors.White;
-            mat.TextureFilter = BaseMaterial3D.TextureFilterEnum.Linear;
-        }
         var s = 1.0f * size;
+
+        // Colored body cube — its top/bottom show (no sprite there, by
+        // request) and it backs the sides when untextured.
+        var bodyMat = new StandardMaterial3D { AlbedoColor = color };
         node.AddChild(new MeshInstance3D
         {
             Mesh = new BoxMesh { Size = new Vector3(s, s, s) },
-            MaterialOverride = mat,
+            MaterialOverride = bodyMat,
             Position = new Vector3(0, 0.5f * s, 0),
         });
+
+        // The enemy PNG on the 4 SIDE faces only (front/back/left/right) —
+        // top and bottom stay the plain colored body.
+        var sideMats = new List<StandardMaterial3D>();
+        if (tex is not null)
+        {
+            var half = s / 2f + 0.01f;
+            var faces = new (Vector3 Pos, float YawDeg)[]
+            {
+                (new Vector3(0, 0.5f * s, half), 0f),
+                (new Vector3(0, 0.5f * s, -half), 180f),
+                (new Vector3(half, 0.5f * s, 0), 90f),
+                (new Vector3(-half, 0.5f * s, 0), -90f),
+            };
+            foreach (var (fpos, yaw) in faces)
+            {
+                var m = new StandardMaterial3D
+                {
+                    AlbedoTexture = tex,
+                    AlbedoColor = Colors.White,
+                    TextureFilter = BaseMaterial3D.TextureFilterEnum.Linear,
+                };
+                node.AddChild(new MeshInstance3D
+                {
+                    Mesh = new QuadMesh { Size = new Vector2(s, s) },
+                    MaterialOverride = m,
+                    Position = fpos,
+                    RotationDegrees = new Vector3(0, yaw, 0),
+                });
+                sideMats.Add(m);
+            }
+        }
         node.Position = new Vector3((float)pos.X, 0, (float)pos.Y);
 
         // Name + HP readout above the head (the game's enemy nameplates)
@@ -324,7 +355,10 @@ public partial class CombatWorld : Node3D
         _hitboxes.RegisterHurtbox(entityId, runtime.HurtboxRadius);
 
         var live = new LiveEnemy
-        { Runtime = runtime, Node = node, EntityId = entityId, Label = label };
+        {
+            Runtime = runtime, Node = node, EntityId = entityId, Label = label,
+            SideMats = sideMats, BodyMat = bodyMat,
+        };
         _enemies.Add(live);
         _runtimes.Add(runtime);
         _byId[entityId] = live;
@@ -802,9 +836,9 @@ public partial class CombatWorld : Node3D
                     // skill, AoE, DoT) — feeds combat-quest baselines
                     _pc?.Activities.RecordActivity("combat", 1);
                     e.Label.Visible = false;
-                    if (e.Node.GetChild(0) is MeshInstance3D m)
-                        m.MaterialOverride = new StandardMaterial3D
-                        { AlbedoColor = new Color(0.3f, 0.3f, 0.3f) };
+                    var grey = new Color(0.3f, 0.3f, 0.3f);
+                    if (e.BodyMat is not null) e.BodyMat.AlbedoColor = grey;
+                    foreach (var sm in e.SideMats) sm.AlbedoColor = grey;
                     e.Node.RotateZ(Mathf.DegToRad(80));
                 }
                 continue;
@@ -843,22 +877,18 @@ public partial class CombatWorld : Node3D
                 (float)rt.Position[1]);
 
             // Telegraph: flash red during windup; hit flash overrides in white.
-            // Textured cubes tint from white (else the sprite washes out).
-            if (e.Node.GetChild(0) is MeshInstance3D mesh
-                && mesh.MaterialOverride is StandardMaterial3D mat)
-            {
-                var baseColor = mat.AlbedoTexture is not null
-                    ? Colors.White
-                    : CategoryColors.GetValueOrDefault(
-                        rt.Definition.Category, new Color(0.8f, 0.3f, 0.3f));
-                if (_now < e.FlashUntil)
-                    mat.AlbedoColor = new Color(1f, 1f, 1f);
-                else
-                    mat.AlbedoColor = rt.IsInWindup
-                        ? baseColor.Lerp(new Color(1, 0.1f, 0.1f),
-                            (float)rt.WindupProgress)
-                        : baseColor;
-            }
+            // Tint the textured SIDE faces (white base) when present, else the
+            // colored body box.
+            Color Tint(Color baseColor) =>
+                _now < e.FlashUntil ? new Color(1f, 1f, 1f)
+                : rt.IsInWindup
+                    ? baseColor.Lerp(new Color(1, 0.1f, 0.1f), (float)rt.WindupProgress)
+                    : baseColor;
+            if (e.SideMats.Count > 0)
+                foreach (var sm in e.SideMats) sm.AlbedoColor = Tint(Colors.White);
+            else if (e.BodyMat is not null)
+                e.BodyMat.AlbedoColor = Tint(CategoryColors.GetValueOrDefault(
+                    rt.Definition.Category, new Color(0.8f, 0.3f, 0.3f)));
         }
 
         // Resource respawn ticking + depleted visuals (certified runtime)

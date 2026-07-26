@@ -16,8 +16,8 @@ public partial class InventoryPage : MenuPage
     public override string Title => "Inventory";
     public override Key Keybind => Key.I;
 
-    private const int SlotPx = 78;
-    private const int EquipPx = 74;
+    private const int SlotPx = 104;
+    private const int EquipPx = 96;
 
     private static readonly (string Slot, string Label)[] EquipLayout =
     {
@@ -45,10 +45,18 @@ public partial class InventoryPage : MenuPage
         AddChild(outer);
         outer.AddChild(UiTheme.Header("Inventory"));
 
-        var columns = new HBoxContainer
-        { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
-        columns.AddThemeConstantOverride("separation", 36);
-        outer.AddChild(columns);
+        // Center the content block in the (large) page so it's balanced
+        // rather than pinned to a corner.
+        var center = new CenterContainer
+        {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        outer.AddChild(center);
+
+        var columns = new HBoxContainer();
+        columns.AddThemeConstantOverride("separation", 48);
+        center.AddChild(columns);
 
         // -- left: item grid --
         var invBox = new VBoxContainer();

@@ -94,7 +94,7 @@ public static class UiTheme
         return (root, body);
     }
 
-    public static Label Header(string text, int size = 34)
+    public static Label Header(string text, int size = 42)
     {
         var l = new Label { Text = text };
         l.AddThemeFontSizeOverride("font_size", size);
@@ -102,7 +102,7 @@ public static class UiTheme
         return l;
     }
 
-    public static Label Section(string text, int size = 22)
+    public static Label Section(string text, int size = 26)
     {
         var l = new Label { Text = text };
         l.AddThemeFontSizeOverride("font_size", size);

@@ -406,15 +406,21 @@ public partial class WorldBootstrap : Node3D
                     };
                     parent.AddChild(mesh);
 
-                    // Rotating icon above the node so it reads from a distance
+                    // Rotating icon above the node so it reads from a distance.
+                    // PixelSize is derived from the texture height so the sprite
+                    // is a fixed ~1.3 world units tall (the raw JPEGs are ~512px,
+                    // which at a fixed PixelSize would be enormous).
                     if (IconCache.Get($"resources/{res.ResourceType}.png") is { } rtex)
+                    {
+                        var texH = Math.Max(1, rtex.GetHeight());
                         mesh.AddChild(new SpinSprite
                         {
                             Texture = rtex,
-                            PixelSize = 0.012f,
+                            PixelSize = 1.3f / texH,
                             Position = new Vector3(0,
-                                (isTree ? 1.4f : isFish ? 1.2f : 1.0f) * scale + 0.6f, 0),
+                                (isTree ? 1.4f : isFish ? 1.2f : 1.0f) * scale + 0.7f, 0),
                         });
+                    }
 
                     combat.RegisterResource(new NaturalResourceRuntime(
                         new Game1.Core.World.Position(res.X + 0.5, res.Y + 0.5, 0),
