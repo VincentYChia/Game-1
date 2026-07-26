@@ -1070,12 +1070,21 @@ public partial class CombatWorld : Node3D
         _hud.AddThemeConstantOverride("outline_size", 4);
         layer.AddChild(_hud);
 
-        // -- Skill hotbar: 5 bigger icon slots bottom-center --
+        // -- Skill hotbar: 5 bigger icon slots, centered along the bottom.
+        // A full-width bottom strip holds the bar so it's always fully on
+        // screen (the old CenterBottom preset grew the row BELOW the edge).
+        var hotbarHolder = new Control();
+        hotbarHolder.SetAnchorsPreset(Control.LayoutPreset.BottomWide);
+        hotbarHolder.OffsetTop = -122;    // strip height
+        hotbarHolder.OffsetBottom = -20;  // margin above the bottom edge
+        hotbarHolder.MouseFilter = Control.MouseFilterEnum.Ignore;
+        layer.AddChild(hotbarHolder);
+
         var bar = new HBoxContainer();
         bar.AddThemeConstantOverride("separation", 10);
-        bar.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
+        bar.SetAnchorsPreset(Control.LayoutPreset.Center);
         bar.GrowHorizontal = Control.GrowDirection.Both;
-        bar.Position = new Vector2(0, -16);
+        bar.GrowVertical = Control.GrowDirection.Both;
         for (var i = 0; i < SkillManager.HotbarSlots; i++)
         {
             var slot = new PanelContainer { CustomMinimumSize = new Vector2(140, 92) };
@@ -1106,7 +1115,7 @@ public partial class CombatWorld : Node3D
             _hotbarSlots.Add(label);
             _hotbarIcons.Add(icon);
         }
-        layer.AddChild(bar);
+        hotbarHolder.AddChild(bar);
         AddChild(layer);
     }
 

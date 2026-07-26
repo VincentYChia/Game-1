@@ -274,9 +274,9 @@ public partial class EncyclopediaPage : MenuPage
         var mgr = _combat.SkillMgr;
         for (var tier = 1; tier <= 4; tier++)
         {
+            // Definition order (JSON order) within each tier, not alphabetical
             var group = db.Skills.Values
                 .Where(s => (int)s.Tier == tier)
-                .OrderBy(s => s.Name, StringComparer.Ordinal)
                 .ToList();
             if (group.Count == 0) continue;
 

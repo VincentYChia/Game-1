@@ -26,11 +26,13 @@ public partial class OrbitCamera : Node3D
     [Export] public float MoveCommitDelay { get; set; } = 0.15f;
     [Export] public float StopCommitDelay { get; set; } = 0.35f;
 
-    /// <summary>Edge-glide: cursor within this fraction of a screen edge
-    /// smoothly turns the camera toward it (on top of right-drag aim).</summary>
-    [Export] public float EdgeMargin { get; set; } = 0.10f;
-    [Export] public float EdgeYawSpeed { get; set; } = 2.2f;
-    [Export] public float EdgePitchSpeed { get; set; } = 1.4f;
+    /// <summary>Camera-glide dead zone: the centered fraction of the screen
+    /// (in each axis) where the cursor does NOT turn the camera. Outside it,
+    /// turn speed ramps with how far past the box edge the cursor is. 0.5 =
+    /// the middle half of the screen is a no-scroll box.</summary>
+    [Export] public float GlideDeadZone { get; set; } = 0.5f;
+    [Export] public float EdgeYawSpeed { get; set; } = 2.4f;
+    [Export] public float EdgePitchSpeed { get; set; } = 1.6f;
 
     private const float ThirdPivot = 1.35f;  // chest framing behind the player
     private const float FirstPivot = 1.55f;  // eye level of the 1.7 capsule
@@ -106,16 +108,23 @@ public partial class OrbitCamera : Node3D
         var m = GetViewport().GetMousePosition();
         if (m.X < 0 || m.Y < 0 || m.X > vp.X || m.Y > vp.Y) return;
 
-        var mx = EdgeMargin * vp.X;
-        var my = EdgeMargin * vp.Y;
-        var dx = m.X < mx ? -(mx - m.X) / mx
-               : m.X > vp.X - mx ? (m.X - (vp.X - mx)) / mx : 0f;
-        var dy = m.Y < my ? -(my - m.Y) / my
-               : m.Y > vp.Y - my ? (m.Y - (vp.Y - my)) / my : 0f;
+        // Offset from screen center, normalized to [-1, 1] per axis.
+        var nx = m.X / vp.X * 2f - 1f;
+        var ny = m.Y / vp.Y * 2f - 1f;
 
-        _yaw -= Mathf.Sign(dx) * dx * dx * EdgeYawSpeed * dt;
+        // Signed ramp: 0 inside the dead box, then eased 0→1 out to the edge.
+        var deadHalf = Mathf.Clamp(GlideDeadZone, 0f, 0.95f);   // as a [0,1] half
+        float Ramp(float n)
+        {
+            var a = Mathf.Abs(n);
+            if (a <= deadHalf) return 0f;
+            var t = (a - deadHalf) / (1f - deadHalf);   // 0 at box edge, 1 at screen edge
+            return Mathf.Sign(n) * t * t;               // gentle near the box
+        }
+
+        _yaw -= Ramp(nx) * EdgeYawSpeed * dt;
         _pitch = Mathf.Clamp(
-            _pitch - Mathf.Sign(dy) * dy * dy * EdgePitchSpeed * dt, -1.35f, 1.2f);
+            _pitch - Ramp(ny) * EdgePitchSpeed * dt, -1.35f, 1.2f);
     }
 
     public override void _UnhandledInput(InputEvent @event)

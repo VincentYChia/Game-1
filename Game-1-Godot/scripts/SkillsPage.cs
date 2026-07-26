@@ -150,10 +150,12 @@ public partial class SkillsPage : MenuPage
         foreach (var child in _learnedList.GetChildren()) child.QueueFree();
         foreach (var child in _availableList.GetChildren()) child.QueueFree();
 
-        foreach (var (id, ps) in mgr.Known.OrderBy(k => k.Key, StringComparer.Ordinal))
+        // Order by tier, then the database's definition order (JSON order),
+        // NOT alphabetically. OrderBy is stable, so equal tiers keep the
+        // dictionary's insertion order.
+        foreach (var (id, def) in db.Skills.OrderBy(k => k.Value.Tier))
         {
-            var def = db.Skills.GetValueOrDefault(id);
-            if (def is null) continue;
+            if (!mgr.Known.TryGetValue(id, out var ps)) continue;
             var cost = mgr.ManaCostOf(def);
             var cd = mgr.CooldownOf(def);
             var sub = $"Lv{ps.Level}  ·  {(int)cost} MP  ·  cd {(int)cd}s"
@@ -172,8 +174,7 @@ public partial class SkillsPage : MenuPage
             _learnedList.AddChild(card);
         }
 
-        foreach (var (id, def) in db.Skills.OrderBy(
-                     k => (k.Value.Tier, k.Key), Comparer<(double, string)>.Default))
+        foreach (var (id, def) in db.Skills.OrderBy(k => k.Value.Tier))
         {
             if (mgr.Known.ContainsKey(id)) continue;
             var (ok, reason) = mgr.CanLearn(id);

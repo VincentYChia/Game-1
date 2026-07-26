@@ -118,14 +118,16 @@ public partial class CraftingScreen : CanvasLayer
         // Station gating (recipe_db.py:149-150): exact type match, recipe
         // tier <= station tier. No station = no recipes (crafting is 100%
         // station-gated in the Python game).
+        // Order by station tier, then the recipe database's definition order
+        // (JSON order) — NOT alphabetically. OrderBy is stable so equal tiers
+        // keep insertion order. Craftable recipes are distinguished by color,
+        // not by reordering.
         var rows = recipeDb.Recipes.Values
             .Where(r => _stationType is null
                         || (r.StationType == _stationType
                             && r.StationTier <= _stationTier))
+            .OrderBy(r => r.StationTier)
             .Select(r => (Recipe: r, Craftable: RecipeCrafting.CanCraft(r, pc.Inventory)))
-            .OrderByDescending(x => x.Craftable)
-            .ThenBy(x => x.Recipe.StationTier)
-            .ThenBy(x => x.Recipe.RecipeId, StringComparer.Ordinal)
             .ToList();
 
         var craftableCount = rows.Count(x => x.Craftable);
