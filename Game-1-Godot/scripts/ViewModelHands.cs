@@ -19,29 +19,30 @@ public partial class ViewModelHands : Node3D
 
     public override void _Ready()
     {
-        // Shoulder pivot at chest height; arm extends forward (-Z)
-        _pivot = new Node3D { Position = new Vector3(0, 1.15f, 0) };
+        // Shoulder pivot low and to the right so the arm stays out of the
+        // first-person view center; it extends forward (-Z).
+        _pivot = new Node3D { Position = new Vector3(0.34f, 0.85f, 0) };
         AddChild(_pivot);
 
         var skin = new StandardMaterial3D { AlbedoColor = BodyColor };
 
         var arm = new MeshInstance3D
         {
-            Mesh = new BoxMesh { Size = new Vector3(0.16f, 0.16f, 0.7f) },
+            Mesh = new BoxMesh { Size = new Vector3(0.14f, 0.14f, 0.6f) },
             MaterialOverride = skin,
-            Position = new Vector3(0.18f, 0, -0.45f),
+            Position = new Vector3(0, 0, -0.4f),
         };
         _pivot.AddChild(arm);
 
         var fist = new MeshInstance3D
         {
-            Mesh = new BoxMesh { Size = new Vector3(0.22f, 0.22f, 0.22f) },
+            Mesh = new BoxMesh { Size = new Vector3(0.2f, 0.2f, 0.2f) },
             MaterialOverride = skin,
-            Position = new Vector3(0.18f, 0, -0.82f),
+            Position = new Vector3(0, 0, -0.72f),
         };
         _pivot.AddChild(fist);
 
-        _pivot.RotationDegrees = new Vector3(-10, 0, 0);   // resting
+        _pivot.RotationDegrees = new Vector3(-28, 0, 0);   // resting, angled down
     }
 
     /// <summary>Point the arm along the camera's flattened forward every
@@ -70,7 +71,7 @@ public partial class ViewModelHands : Node3D
             new Vector3(35, 0, 0), 0.12f)
             .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
         _tween.TweenProperty(_pivot, "rotation_degrees",
-            new Vector3(-10, 0, 0), 0.22f)
+            new Vector3(-28, 0, 0), 0.22f)
             .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
     }
 
@@ -84,7 +85,7 @@ public partial class ViewModelHands : Node3D
             new Vector3(50, 0, 0), 0.16f)
             .SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
         _tween.TweenProperty(_pivot, "rotation_degrees",
-            new Vector3(-10, 0, 0), 0.24f)
+            new Vector3(-28, 0, 0), 0.24f)
             .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
     }
 }

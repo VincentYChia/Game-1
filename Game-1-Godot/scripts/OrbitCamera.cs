@@ -11,11 +11,13 @@ namespace Game1.Godot;
 /// </summary>
 public partial class OrbitCamera : Node3D
 {
-    [Export] public float StartDistance { get; set; } = 8f;
+    /// <summary>First person by default (item 4).</summary>
+    [Export] public float StartDistance { get; set; } = 0f;
     [Export] public float MinDistance { get; set; } = 0f;
     [Export] public float MaxDistance { get; set; } = 16f;
-    [Export] public float ZoomStep { get; set; } = 1.0f;
-    [Export] public float OrbitSensitivity { get; set; } = 0.005f;
+    [Export] public float ZoomStep { get; set; } = 2.0f;    // per wheel notch (faster)
+    [Export] public float ZoomSmooth { get; set; } = 14f;   // higher = snappier glide
+    [Export] public float OrbitSensitivity { get; set; } = 0.004f;  // -20%
 
     [Export] public float ThirdFov { get; set; } = 72f;
     [Export] public float FirstFov { get; set; } = 92f;
@@ -23,7 +25,7 @@ public partial class OrbitCamera : Node3D
     /// <summary>Camera-glide dead zone: the centered fraction of the screen
     /// (each axis) where the cursor does NOT turn the camera. Outside it,
     /// turn speed ramps with how far past the box the cursor is.</summary>
-    [Export] public float GlideDeadZone { get; set; } = 0.5f;
+    [Export] public float GlideDeadZone { get; set; } = 0.42f;
     [Export] public float EdgeYawSpeed { get; set; } = 2.4f;
     [Export] public float EdgePitchSpeed { get; set; } = 1.6f;
 
@@ -36,6 +38,7 @@ public partial class OrbitCamera : Node3D
     private float _yaw;
     private float _pitch = -0.32f;
     private float _distance;
+    private float _targetDistance;   // wheel sets this; _distance eases toward it
 
     private SpringArm3D _arm = null!;
     private Camera3D _cam = null!;
@@ -46,7 +49,7 @@ public partial class OrbitCamera : Node3D
     public override void _Ready()
     {
         _player = GetParent() as PlayerController;
-        _distance = StartDistance;
+        _distance = _targetDistance = StartDistance;
 
         _arm = new SpringArm3D { SpringLength = _distance, Margin = 0.5f };
         AddChild(_arm);
@@ -68,7 +71,11 @@ public partial class OrbitCamera : Node3D
 
     public override void _Process(double delta)
     {
-        EdgeGlide((float)delta);
+        var dt = (float)delta;
+        // Smooth (exponential) zoom toward the wheel target.
+        _distance = Mathf.Lerp(_distance, _targetDistance,
+            1f - Mathf.Exp(-ZoomSmooth * dt));
+        EdgeGlide(dt);
         ApplyRig();
     }
 
@@ -110,9 +117,9 @@ public partial class OrbitCamera : Node3D
                 when Input.IsKeyPressed(Key.Shift):
                 // SHIFT + wheel is the ONLY zoom control (item 4)
                 if (button.ButtonIndex == MouseButton.WheelUp)
-                    _distance = Mathf.Clamp(_distance - ZoomStep, MinDistance, MaxDistance);
+                    _targetDistance = Mathf.Clamp(_targetDistance - ZoomStep, MinDistance, MaxDistance);
                 else if (button.ButtonIndex == MouseButton.WheelDown)
-                    _distance = Mathf.Clamp(_distance + ZoomStep, MinDistance, MaxDistance);
+                    _targetDistance = Mathf.Clamp(_targetDistance + ZoomStep, MinDistance, MaxDistance);
                 break;
         }
     }

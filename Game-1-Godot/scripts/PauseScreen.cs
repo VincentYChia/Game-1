@@ -40,19 +40,22 @@ public partial class PauseScreen : CanvasLayer
         center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _root.AddChild(center);
         var panel = new PanelContainer();
+        panel.AddThemeStyleboxOverride("panel",
+            UiTheme.Box(UiTheme.PanelBg, UiTheme.Border, 3, 14));
         center.AddChild(panel);
         var margin = new MarginContainer();
         foreach (var side in new[] { "left", "right", "top", "bottom" })
-            margin.AddThemeConstantOverride($"margin_{side}", 24);
+            margin.AddThemeConstantOverride($"margin_{side}", 48);
         panel.AddChild(margin);
 
-        var box = new VBoxContainer { CustomMinimumSize = new Vector2(320, 0) };
-        box.AddThemeConstantOverride("separation", 10);
+        var box = new VBoxContainer { CustomMinimumSize = new Vector2(560, 0) };
+        box.AddThemeConstantOverride("separation", 18);
         margin.AddChild(box);
 
         var title = new Label
         { Text = "PAUSED", HorizontalAlignment = HorizontalAlignment.Center };
-        title.AddThemeFontSizeOverride("font_size", 28);
+        title.AddThemeFontSizeOverride("font_size", 52);
+        title.AddThemeColorOverride("font_color", UiTheme.Accent);
         box.AddChild(title);
 
         AddButton(box, "Return to game", Toggle);
@@ -74,14 +77,15 @@ public partial class PauseScreen : CanvasLayer
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate = new Color(1, 1, 1, 0.6f),
         };
-        _status.AddThemeFontSizeOverride("font_size", 13);
+        _status.AddThemeFontSizeOverride("font_size", 16);
         box.AddChild(_status);
     }
 
     private static void AddButton(VBoxContainer box, string text, Action action)
     {
-        var btn = new Button { Text = text };
-        btn.AddThemeFontSizeOverride("font_size", 18);
+        var btn = new Button
+        { Text = text, CustomMinimumSize = new Vector2(0, 58) };
+        btn.AddThemeFontSizeOverride("font_size", 26);
         btn.Pressed += () => action();
         box.AddChild(btn);
     }

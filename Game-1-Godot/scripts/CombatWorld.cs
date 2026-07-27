@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Game1.Core;
 using Game1.Core.Combat;
 using Game1.Core.Data;
@@ -42,6 +43,9 @@ public partial class CombatWorld : Node3D
         /// tint the body box instead).</summary>
         public List<StandardMaterial3D> SideMats = new();
         public StandardMaterial3D? BodyMat;
+        /// <summary>Holds the meshes; lunges independently of the sim-driven
+        /// node position (attack animation).</summary>
+        public Node3D? Visual;
     }
 
     private readonly HitboxSystem _hitboxes = new();
@@ -60,6 +64,7 @@ public partial class CombatWorld : Node3D
     private CraftingSystem? _crafting;
     private PythonRandom _craftRng = new(0);
     private FxManager? _fx;
+    private SkillVfx? _skillVfx;
     private ViewModelHands? _hands;
     private MaterialDatabase? _matDb;
     private RecipeDatabase? _recipeDb;
@@ -132,6 +137,8 @@ public partial class CombatWorld : Node3D
         _rng = new PythonRandom(worldSeed ^ 0x5DEECE66D);
         _fx = new FxManager { Name = "Fx" };
         AddChild(_fx);
+        _skillVfx = new SkillVfx { Name = "SkillVfx" };
+        AddChild(_skillVfx);
         _hands = new ViewModelHands { Name = "Hands" };
         player.AddChild(_hands);   // world-space arms on the body
 
@@ -294,8 +301,10 @@ public partial class CombatWorld : Node3D
         var tex = IconCache.Get(def.IconPath);
         var s = 1.0f * size;
 
-        // Enemy PNG on the 4 side faces (top/bottom stay the colored body).
-        var (bodyMat, sideMats) = BillboardCube.Build(node, s, color, tex);
+        // Meshes live under a visual root that can lunge (attack anim).
+        var visual = new Node3D { Name = "vis" };
+        node.AddChild(visual);
+        var (bodyMat, sideMats) = BillboardCube.Build(visual, s, color, tex);
         node.Position = new Vector3((float)pos.X, 0, (float)pos.Y);
 
         // Name + HP readout above the head (the game's enemy nameplates)
@@ -316,11 +325,31 @@ public partial class CombatWorld : Node3D
         var live = new LiveEnemy
         {
             Runtime = runtime, Node = node, EntityId = entityId, Label = label,
-            SideMats = sideMats, BodyMat = bodyMat,
+            SideMats = sideMats, BodyMat = bodyMat, Visual = visual,
         };
         _enemies.Add(live);
         _runtimes.Add(runtime);
         _byId[entityId] = live;
+    }
+
+    /// <summary>Quick forward lunge toward the player when an enemy strikes
+    /// (2D enemies had a visible attack move). Tweens the visual root, which
+    /// is independent of the sim-driven node position.</summary>
+    private void LungeEnemy(LiveEnemy e, (double X, double Y) playerSim)
+    {
+        if (e.Visual is null) return;
+        var dx = playerSim.X - e.Runtime.Position[0];
+        var dy = playerSim.Y - e.Runtime.Position[1];
+        var len = Math.Sqrt(dx * dx + dy * dy);
+        if (len < 0.01) return;
+        var reach = new Vector3((float)(dx / len) * 0.55f, 0,
+                                (float)(dy / len) * 0.55f);
+        var t = CreateTween();
+        e.Visual.Position = Vector3.Zero;
+        t.TweenProperty(e.Visual, "position", reach, 0.08f)
+            .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
+        t.TweenProperty(e.Visual, "position", Vector3.Zero, 0.18f)
+            .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
     }
 
     /// <summary>WorldBootstrap registers each certified chunk resource with
@@ -493,10 +522,76 @@ public partial class CombatWorld : Node3D
         }
 
         _pc.SetPositionXY(_player.Position.X, _player.Position.Z);
+        var skillId = SkillMgr.Equipped[slot];
+        var def = skillId is not null ? SkillDb?.Skills.GetValueOrDefault(skillId) : null;
         var (ok, msg) = SkillMgr.UseSkill(slot, mouseWorld);
         _lastEvent = msg;
         _fx?.FloatText(_player.GlobalPosition, msg,
             ok ? new Color(0.6f, 1f, 0.6f) : new Color(1f, 0.6f, 0.6f), 0.8f);
+        if (ok)
+        {
+            _hands?.PlayAttack();   // cast gesture
+            SpawnSkillVfx(def, mouseWorld);
+        }
+    }
+
+    /// <summary>Modular 3D skill effect keyed on the skill's geometry tags
+    /// (circle/beam/cone/chain/single) + element color — the 2D
+    /// attack_effects port.</summary>
+    private void SpawnSkillVfx(SkillDefinition? def, (double X, double Y)? mouse)
+    {
+        if (def is null || _player is null || _skillVfx is null) return;
+
+        var origin = _player.GlobalPosition;
+        Vector3 target;
+        if (mouse is { } m)
+            target = new Vector3((float)m.X, TerrainHeightField.H(m.X, m.Y), (float)m.Y);
+        else
+        {
+            var fwd = -(GetViewport().GetCamera3D()?.GlobalTransform.Basis.Z
+                        ?? Vector3.Forward);
+            fwd.Y = 0;
+            target = origin + fwd.Normalized() * 4f;
+        }
+
+        var tags = def.CombatTags is JsonArray ct
+            ? ct.Select(t => t?.GetValue<string>() ?? "").Where(t => t.Length > 0).ToList()
+            : new List<string>();
+
+        // Buff / self skills (no combat tags): a rising self ring
+        if (tags.Count == 0)
+        {
+            _skillVfx.Circle(origin, 1.6f, new Color(0.55f, 0.85f, 1f));
+            return;
+        }
+
+        var color = SkillVfx.ColorFor(tags);
+        var dir = target - origin;
+        var yaw = Mathf.RadToDeg(Mathf.Atan2(-dir.Z, dir.X));
+        var up = new Vector3(0, 1.0f, 0);
+
+        if (tags.Contains("circle"))
+            _skillVfx.Circle(target, ParamF(def, "circle_radius", 3f), color);
+        else if (tags.Contains("beam") || tags.Contains("line"))
+            _skillVfx.Beam(origin + up, target + up, color);
+        else if (tags.Contains("cone"))
+            _skillVfx.Wedge(origin, yaw, Mathf.DegToRad(30f),
+                ParamF(def, "cone_range", 3f), color);
+        else if (tags.Contains("chain"))
+        {
+            _skillVfx.Beam(origin + up, target + up, color);
+            _skillVfx.Burst(target, color);
+        }
+        else   // single / pierce / default → a slash toward the target
+            _skillVfx.Wedge(origin, yaw, 0.45f, 2.2f, color);
+    }
+
+    private static float ParamF(SkillDefinition def, string key, float fallback)
+    {
+        if (def.CombatParams is JsonObject o && o[key] is JsonValue v
+            && v.TryGetValue<double>(out var d))
+            return (float)d;
+        return fallback;
     }
 
     /// <summary>Skill kills: EXP via the certified reward calc + loot to
@@ -623,6 +718,9 @@ public partial class CombatWorld : Node3D
         {
             _lastEvent = "swing!";
             _hands?.PlayAttack();
+            // Melee slash arc toward the facing (sim angle a → world yaw -a)
+            _skillVfx?.Wedge(_player.GlobalPosition, -(float)_playerFacingDeg,
+                0.5f, 2.0f, new Color(0.95f, 0.95f, 1f));
         }
     }
 
@@ -841,18 +939,22 @@ public partial class CombatWorld : Node3D
                 rt.StartPhasedAttack(playerSim);
 
             var transition = rt.UpdateAttackPhase(dtMs);
-            if (transition == "active_start" && rt.DistanceTo(playerSim) <= rt.AttackRadius + 0.6)
+            if (transition == "active_start")
             {
-                // Certified defense pipeline: DEF + armor eff + Protection +
-                // shield + fortify + min-1 + Thorns. P11: height-gated.
-                var enemyH = TerrainHeightField.H(rt.Position[0], rt.Position[1]);
-                if (_pc is not null
-                    && Math.Abs(_player.Position.Y - enemyH) <= CombatHeightGate)
+                LungeEnemy(e, playerSim);   // attack lunge animation
+                if (rt.DistanceTo(playerSim) <= rt.AttackRadius + 0.6)
                 {
-                    var dmg = EnemyAttackResolver.Resolve(rt, _pc);
-                    _lastEvent = $"{rt.Definition.Name} hits you for {dmg:F0}";
-                    _fx?.FloatText(_player.GlobalPosition, $"-{dmg:F0}",
-                        new Color(1f, 0.25f, 0.2f));
+                    // Certified defense pipeline: DEF + armor eff + Protection +
+                    // shield + fortify + min-1 + Thorns. P11: height-gated.
+                    var enemyH = TerrainHeightField.H(rt.Position[0], rt.Position[1]);
+                    if (_pc is not null
+                        && Math.Abs(_player.Position.Y - enemyH) <= CombatHeightGate)
+                    {
+                        var dmg = EnemyAttackResolver.Resolve(rt, _pc);
+                        _lastEvent = $"{rt.Definition.Name} hits you for {dmg:F0}";
+                        _fx?.FloatText(_player.GlobalPosition, $"-{dmg:F0}",
+                            new Color(1f, 0.25f, 0.2f));
+                    }
                 }
             }
 
