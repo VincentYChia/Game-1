@@ -16,6 +16,9 @@ public partial class PauseScreen : CanvasLayer
     private Label _status = null!;
     private bool _open;
 
+    /// <summary>Wired by WorldBootstrap so the Controls button can open it.</summary>
+    public ControlsScreen? Controls { get; set; }
+
     public PauseScreen(CombatWorld combat, PlayerController player)
     {
         _combat = combat;
@@ -53,6 +56,11 @@ public partial class PauseScreen : CanvasLayer
         box.AddChild(title);
 
         AddButton(box, "Return to game", Toggle);
+        AddButton(box, "Controls", () =>
+        {
+            Toggle();
+            Controls?.Open();
+        });
         AddButton(box, "Save & Exit", () =>
         {
             SaveSystem.Save(_combat, _player);

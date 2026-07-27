@@ -115,7 +115,10 @@ public partial class WorldBootstrap : Node3D
         var dialogue = new DialogueScreen(combat) { Name = "DialogueScreen" };
         AddChild(dialogue);
         combat.Dialogue = dialogue;
-        AddChild(new PauseScreen(combat, player) { Name = "PauseScreen" });
+        var controls = new ControlsScreen { Name = "ControlsScreen" };
+        AddChild(controls);
+        AddChild(new PauseScreen(combat, player)
+        { Name = "PauseScreen", Controls = controls });
 
         // The six minigame overlays (ADR-7): 5 station disciplines +
         // fishing (triggered at fishing spots, not stations)
@@ -224,21 +227,9 @@ public partial class WorldBootstrap : Node3D
                 var h = TerrainHeightField.H(x + 0.5, y + 0.5);
                 var node = new Node3D
                 { Position = new Vector3(x + 0.5f, h, y + 0.5f) };
-                // Cube with the station PNG on each face (else colored cube)
-                var stMat = new StandardMaterial3D { AlbedoColor = colors[type] };
-                if (IconCache.Get($"stations/{iconName[type]}_t{tier}.png") is { } stex)
-                {
-                    stMat.AlbedoTexture = stex;
-                    stMat.AlbedoColor = Colors.White;
-                    stMat.TextureFilter = BaseMaterial3D.TextureFilterEnum.Linear;
-                }
-                node.AddChild(new MeshInstance3D
-                {
-                    Mesh = new BoxMesh
-                    { Size = new Vector3(1.1f, 0.9f + 0.2f * tier, 1.1f) },
-                    MaterialOverride = stMat,
-                    Position = new Vector3(0, (0.9f + 0.2f * tier) / 2f, 0),
-                });
+                // Full station PNG on each side face (top/bottom stay colored)
+                var stex = IconCache.Get($"stations/{iconName[type]}_t{tier}.png");
+                BillboardCube.Build(node, 1.1f + 0.12f * tier, colors[type], stex);
                 node.AddChild(new Label3D
                 {
                     Text = $"{CombatWorld.Prettify(type)} T{tier}",

@@ -101,6 +101,10 @@ public partial class CombatWorld : Node3D
 
     /// <summary>P11: combat connects only within this height difference.</summary>
     public const double CombatHeightGate = 2.0;
+
+    /// <summary>Hostile no-spawn radius around the player spawn (item 3),
+    /// a touch beyond the flat safe zone.</summary>
+    public const double SpawnSafeRadius = 26.0;
     private readonly List<EnemyRuntime> _runtimes = new();
     private readonly List<(NaturalResourceRuntime Node, Node3D Visual)> _resources = new();
     private Label? _hud;
@@ -147,8 +151,10 @@ public partial class CombatWorld : Node3D
             if (File.Exists(p)) equipDb.LoadFromFile(p);
         }
         _matDb = matDb;
+        // 96 slots (vs the base 30) so the full material set fits for crafting
+        // + the debug "give all materials" toggle; the grid scrolls.
         _pc = new PlayerCharacter(new CharacterStats(scaling),
-                                  new Inventory(matDb, equipDb, 30), (8.0, 8.0))
+                                  new Inventory(matDb, equipDb, 96), (8.0, 8.0))
         { Health = 100, MaxHealthValue = 100 };
         _pc.Equipment.Slots["axe"] = equipDb.CreateEquipmentFromId("copper_axe");
         _pc.Equipment.Slots["pickaxe"] = equipDb.CreateEquipmentFromId("copper_pickaxe");
@@ -260,24 +266,16 @@ public partial class CombatWorld : Node3D
                     var def = _rng.Choice(pool);
                     var ex = cx * 16 + (double)_rng.RandInt(2, 13);
                     var ey = cy * 16 + (double)_rng.RandInt(2, 13);
+                    // No-spawn safe zone around the player spawn (item 3)
+                    var dx = ex - TerrainHeightField.SpawnX;
+                    var dy = ey - TerrainHeightField.SpawnY;
+                    if (dx * dx + dy * dy < SpawnSafeRadius * SpawnSafeRadius)
+                        continue;
                     SpawnEnemy(def, (ex, ey), (cx, cy));
                     spawned++;
                 }
             }
         }
-
-        // Guaranteed starter cluster near the player spawn (8,8) so hostiles
-        // are visible immediately regardless of the local danger level
-        var tier1 = enemyDb.EnemiesByTier.GetValueOrDefault(1);
-        if (tier1 is { Count: > 0 })
-            for (var i = 0; i < 6; i++)
-            {
-                var def = _rng.Choice(tier1);
-                var ex = 8 + _rng.RandInt(-9, 9);
-                var ey = 8 + _rng.RandInt(-9, 9);
-                SpawnEnemy(def, ((double)ex, (double)ey), (0, 0));
-                spawned++;
-            }
 
         BuildHud();
         GD.Print($"CombatWorld: {spawned} enemies live");
@@ -296,47 +294,8 @@ public partial class CombatWorld : Node3D
         var tex = IconCache.Get(def.IconPath);
         var s = 1.0f * size;
 
-        // Colored body cube — its top/bottom show (no sprite there, by
-        // request) and it backs the sides when untextured.
-        var bodyMat = new StandardMaterial3D { AlbedoColor = color };
-        node.AddChild(new MeshInstance3D
-        {
-            Mesh = new BoxMesh { Size = new Vector3(s, s, s) },
-            MaterialOverride = bodyMat,
-            Position = new Vector3(0, 0.5f * s, 0),
-        });
-
-        // The enemy PNG on the 4 SIDE faces only (front/back/left/right) —
-        // top and bottom stay the plain colored body.
-        var sideMats = new List<StandardMaterial3D>();
-        if (tex is not null)
-        {
-            var half = s / 2f + 0.01f;
-            var faces = new (Vector3 Pos, float YawDeg)[]
-            {
-                (new Vector3(0, 0.5f * s, half), 0f),
-                (new Vector3(0, 0.5f * s, -half), 180f),
-                (new Vector3(half, 0.5f * s, 0), 90f),
-                (new Vector3(-half, 0.5f * s, 0), -90f),
-            };
-            foreach (var (fpos, yaw) in faces)
-            {
-                var m = new StandardMaterial3D
-                {
-                    AlbedoTexture = tex,
-                    AlbedoColor = Colors.White,
-                    TextureFilter = BaseMaterial3D.TextureFilterEnum.Linear,
-                };
-                node.AddChild(new MeshInstance3D
-                {
-                    Mesh = new QuadMesh { Size = new Vector2(s, s) },
-                    MaterialOverride = m,
-                    Position = fpos,
-                    RotationDegrees = new Vector3(0, yaw, 0),
-                });
-                sideMats.Add(m);
-            }
-        }
+        // Enemy PNG on the 4 side faces (top/bottom stay the colored body).
+        var (bodyMat, sideMats) = BillboardCube.Build(node, s, color, tex);
         node.Position = new Vector3((float)pos.X, 0, (float)pos.Y);
 
         // Name + HP readout above the head (the game's enemy nameplates)
@@ -418,23 +377,52 @@ public partial class CombatWorld : Node3D
         return true;
     }
 
-    /// <summary>Debug cheats (game_engine.py:1016-1229): F1 test materials,
-    /// F2 learn all skills, F3 all titles, F4 max level+stats, F7 toggle
-    /// infinite durability.</summary>
+    private bool _debugMats;
+    private readonly Dictionary<string, int> _debugGranted = new();
+
+    /// <summary>F1: toggle "give ALL materials". On enable, add a stack of
+    /// every material in the database (tracking exactly what was granted);
+    /// on disable, remove only what was granted (clamped to what's left).</summary>
+    private void ToggleDebugMaterials()
+    {
+        if (_pc is null || _matDb is null) return;
+        _debugMats = !_debugMats;
+        if (_debugMats)
+        {
+            const int give = 100;
+            var granted = 0;
+            foreach (var id in _matDb.Materials.Keys)
+            {
+                var before = _pc.Inventory.GetItemCount(id);
+                _pc.Inventory.AddItem(id, give);
+                var added = _pc.Inventory.GetItemCount(id) - before;
+                if (added > 0)
+                {
+                    _debugGranted[id] = _debugGranted.GetValueOrDefault(id) + added;
+                    granted++;
+                }
+            }
+            _lastEvent = $"DEBUG: granted {granted} materials (F1 again to remove)";
+        }
+        else
+        {
+            foreach (var (id, amount) in _debugGranted)
+                _pc.Inventory.RemoveItem(id, Math.Min(amount, _pc.Inventory.GetItemCount(id)));
+            _debugGranted.Clear();
+            _lastEvent = "DEBUG: removed granted materials";
+        }
+    }
+
+    /// <summary>Debug cheats (game_engine.py:1016-1229): F1 give-all-materials
+    /// toggle, F2 learn all skills, F3 all titles, F4 max level+stats, F7
+    /// toggle infinite durability.</summary>
     private void HandleDebugKey(Key key)
     {
         if (_pc is null) return;
         switch (key)
         {
             case Key.F1:
-                foreach (var id in new[]
-                {
-                    "oak_log", "iron_ore", "iron_ingot", "copper_ore",
-                    "copper_ingot", "limestone", "granite", "pine_log",
-                    "steel_ingot", "leather",
-                })
-                    _pc.Inventory.AddItem(id, 50);
-                _lastEvent = "DEBUG: +50 of common materials";
+                ToggleDebugMaterials();
                 break;
             case Key.F2:
                 if (SkillDb is not null && SkillMgr is not null)

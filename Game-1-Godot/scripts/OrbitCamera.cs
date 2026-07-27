@@ -3,48 +3,39 @@ using Godot;
 namespace Game1.Godot;
 
 /// <summary>
-/// Blended follow camera (ADR-6): THIRD person when standing still, glides to
-/// FIRST person while moving. Right-drag aims; cursor near a screen edge
-/// glides the view that way. Holding RIGHT-CLICK + mouse wheel applies a
-/// manual zoom bias that persists whether you're moving or not (layered on
-/// top of the auto blend). The body mesh fades by real camera proximity so
-/// first person never stares at the inside of the head.
+/// Follow camera (ADR-6). No automatic movement-based zoom — the distance is
+/// controlled ONLY by SHIFT + mouse wheel (item 4). Right-drag aims; the
+/// cursor leaving the central dead-zone box glides the view to recenter
+/// (speed ramps with distance out of the box). Zooming fully in reaches
+/// first person (eye pivot, wider FOV, body fades out).
 /// </summary>
 public partial class OrbitCamera : Node3D
 {
-    /// <summary>Distance behind the player when standing still (third person).</summary>
-    [Export] public float ThirdDistance { get; set; } = 8f;
+    [Export] public float StartDistance { get; set; } = 8f;
+    [Export] public float MinDistance { get; set; } = 0f;
     [Export] public float MaxDistance { get; set; } = 16f;
+    [Export] public float ZoomStep { get; set; } = 1.0f;
     [Export] public float OrbitSensitivity { get; set; } = 0.005f;
 
     [Export] public float ThirdFov { get; set; } = 72f;
-    /// <summary>Wider field of view in first person (moving).</summary>
     [Export] public float FirstFov { get; set; } = 92f;
 
-    [Export] public float BlendInTime { get; set; } = 0.9f;    // still → moving (FP)
-    [Export] public float BlendOutTime { get; set; } = 1.3f;   // moving → still (TP)
-    [Export] public float MoveCommitDelay { get; set; } = 0.15f;
-    [Export] public float StopCommitDelay { get; set; } = 0.35f;
-
     /// <summary>Camera-glide dead zone: the centered fraction of the screen
-    /// (in each axis) where the cursor does NOT turn the camera. Outside it,
-    /// turn speed ramps with how far past the box edge the cursor is. 0.5 =
-    /// the middle half of the screen is a no-scroll box.</summary>
+    /// (each axis) where the cursor does NOT turn the camera. Outside it,
+    /// turn speed ramps with how far past the box the cursor is.</summary>
     [Export] public float GlideDeadZone { get; set; } = 0.5f;
     [Export] public float EdgeYawSpeed { get; set; } = 2.4f;
     [Export] public float EdgePitchSpeed { get; set; } = 1.6f;
 
-    private const float ThirdPivot = 1.35f;  // chest framing behind the player
-    private const float FirstPivot = 1.55f;  // eye level of the 1.7 capsule
+    private const float ThirdPivot = 1.35f;
+    private const float FirstPivot = 1.55f;
+    private const float FpDistance = 2.0f;   // below this, blend toward FP
     private const float FadeNear = 1.0f;
     private const float FadeFar = 2.4f;
 
     private float _yaw;
-    private float _pitch = -0.32f;   // resting downward tilt (over-the-shoulder)
-    private float _blend;            // 0 = third person, 1 = first person
-    private float _blendTarget;
-    private float _movingFor, _stillFor;
-    private float _distBias;         // right-click + wheel manual zoom
+    private float _pitch = -0.32f;
+    private float _distance;
 
     private SpringArm3D _arm = null!;
     private Camera3D _cam = null!;
@@ -55,8 +46,9 @@ public partial class OrbitCamera : Node3D
     public override void _Ready()
     {
         _player = GetParent() as PlayerController;
+        _distance = StartDistance;
 
-        _arm = new SpringArm3D { SpringLength = ThirdDistance, Margin = 0.5f };
+        _arm = new SpringArm3D { SpringLength = _distance, Margin = 0.5f };
         AddChild(_arm);
         _cam = new Camera3D { Current = true, Fov = ThirdFov, Near = 0.05f };
         _arm.AddChild(_cam);
@@ -71,31 +63,12 @@ public partial class OrbitCamera : Node3D
                 _bodyMat = mat;
             }
         }
-
         ApplyRig();
     }
 
     public override void _Process(double delta)
     {
-        var dt = (float)delta;
-
-        var hSpeed = 0f;
-        if (_player is not null)
-        {
-            var real = _player.GetRealVelocity();
-            hSpeed = new Vector2(real.X, real.Z).Length();
-        }
-
-        var moving = hSpeed > 0.5f;
-        _movingFor = moving ? _movingFor + dt : 0f;
-        _stillFor = moving ? 0f : _stillFor + dt;
-        if (_movingFor >= MoveCommitDelay) _blendTarget = 1f;
-        else if (_stillFor >= StopCommitDelay) _blendTarget = 0f;
-
-        var rate = 1f / (_blendTarget > _blend ? BlendInTime : BlendOutTime);
-        _blend = Mathf.MoveToward(_blend, _blendTarget, rate * dt);
-
-        EdgeGlide(dt);
+        EdgeGlide((float)delta);
         ApplyRig();
     }
 
@@ -108,23 +81,18 @@ public partial class OrbitCamera : Node3D
         var m = GetViewport().GetMousePosition();
         if (m.X < 0 || m.Y < 0 || m.X > vp.X || m.Y > vp.Y) return;
 
-        // Offset from screen center, normalized to [-1, 1] per axis.
         var nx = m.X / vp.X * 2f - 1f;
         var ny = m.Y / vp.Y * 2f - 1f;
-
-        // Signed ramp: 0 inside the dead box, then eased 0→1 out to the edge.
-        var deadHalf = Mathf.Clamp(GlideDeadZone, 0f, 0.95f);   // as a [0,1] half
+        var deadHalf = Mathf.Clamp(GlideDeadZone, 0f, 0.95f);
         float Ramp(float n)
         {
             var a = Mathf.Abs(n);
             if (a <= deadHalf) return 0f;
-            var t = (a - deadHalf) / (1f - deadHalf);   // 0 at box edge, 1 at screen edge
-            return Mathf.Sign(n) * t * t;               // gentle near the box
+            var t = (a - deadHalf) / (1f - deadHalf);
+            return Mathf.Sign(n) * t * t;
         }
-
         _yaw -= Ramp(nx) * EdgeYawSpeed * dt;
-        _pitch = Mathf.Clamp(
-            _pitch - Ramp(ny) * EdgePitchSpeed * dt, -1.35f, 1.2f);
+        _pitch = Mathf.Clamp(_pitch - Ramp(ny) * EdgePitchSpeed * dt, -1.35f, 1.2f);
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -139,25 +107,25 @@ public partial class OrbitCamera : Node3D
                     -1.35f, 1.2f);
                 break;
             case InputEventMouseButton { Pressed: true } button
-                when Input.IsMouseButtonPressed(MouseButton.Right):
-                // Right-click + wheel: manual zoom bias, works moving or still
+                when Input.IsKeyPressed(Key.Shift):
+                // SHIFT + wheel is the ONLY zoom control (item 4)
                 if (button.ButtonIndex == MouseButton.WheelUp)
-                    _distBias = Mathf.Clamp(_distBias - 0.8f, -ThirdDistance, MaxDistance);
+                    _distance = Mathf.Clamp(_distance - ZoomStep, MinDistance, MaxDistance);
                 else if (button.ButtonIndex == MouseButton.WheelDown)
-                    _distBias = Mathf.Clamp(_distBias + 0.8f, -ThirdDistance, MaxDistance);
+                    _distance = Mathf.Clamp(_distance + ZoomStep, MinDistance, MaxDistance);
                 break;
         }
     }
 
     private void ApplyRig()
     {
-        var te = Mathf.SmoothStep(0f, 1f, _blend);
+        // First-person amount: 1 when zoomed all the way in, 0 by FpDistance.
+        var fp = Mathf.Clamp(1f - _distance / FpDistance, 0f, 1f);
+        var te = Mathf.SmoothStep(0f, 1f, fp);
 
         Position = new Vector3(0, Mathf.Lerp(ThirdPivot, FirstPivot, te), 0);
         Rotation = new Vector3(_pitch, _yaw, 0);
-
-        var autoDist = Mathf.Lerp(ThirdDistance, 0f, te);
-        _arm.SpringLength = Mathf.Clamp(autoDist + _distBias, 0f, MaxDistance);
+        _arm.SpringLength = _distance;
         _cam.Fov = Mathf.Lerp(ThirdFov, FirstFov, te);
 
         if (_bodyMat is not null && _body is not null)

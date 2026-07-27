@@ -16,7 +16,7 @@ public partial class InventoryPage : MenuPage
     public override string Title => "Inventory";
     public override Key Keybind => Key.I;
 
-    private const int SlotPx = 104;
+    private const int SlotPx = 88;
     private const int EquipPx = 96;
 
     private static readonly (string Slot, string Label)[] EquipLayout =
@@ -58,17 +58,25 @@ public partial class InventoryPage : MenuPage
         columns.AddThemeConstantOverride("separation", 48);
         center.AddChild(columns);
 
-        // -- left: item grid --
+        // -- left: item grid (scrollable — the inventory is 96 slots) --
+        var slotCount = _combat.Pc?.Inventory.MaxSlots ?? 30;
+        const int cols = 6;
         var invBox = new VBoxContainer();
         invBox.AddThemeConstantOverride("separation", 10);
         columns.AddChild(invBox);
         invBox.AddChild(UiTheme.Section("Backpack"));
 
-        var grid = new GridContainer { Columns = 6 };
+        var scroll = new ScrollContainer
+        {
+            CustomMinimumSize = new Vector2(cols * SlotPx + (cols - 1) * 8 + 24, 620),
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+        };
+        invBox.AddChild(scroll);
+        var grid = new GridContainer { Columns = cols };
         grid.AddThemeConstantOverride("h_separation", 8);
         grid.AddThemeConstantOverride("v_separation", 8);
-        invBox.AddChild(grid);
-        for (var i = 0; i < 30; i++)
+        scroll.AddChild(grid);
+        for (var i = 0; i < slotCount; i++)
         {
             var idx = i;
             var btn = UiTheme.Slot(SlotPx, out var icon, out var qty);
