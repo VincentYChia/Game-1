@@ -79,6 +79,12 @@ public sealed class Inventory
     public int? DraggingSlot { get; private set; }
     public ItemStack? DraggingStack { get; private set; }
 
+    /// <summary>Debug "ghost inventory" (F1): when on, the player is treated
+    /// as holding an unlimited amount of every MATERIAL — GetItemCount reports
+    /// a huge count and RecipeCrafting skips consumption — without using any
+    /// visible slot. Off by default; never set in conformance.</summary>
+    public bool DebugInfiniteMaterials;
+
     /// <summary>Replaces the ITEM_ACQUIRED GameEventBus publish (inventory.py:127-138).</summary>
     public event Action<string, int, string, string>? ItemAcquired;
 
@@ -141,8 +147,13 @@ public sealed class Inventory
         return null;
     }
 
-    public int GetItemCount(string itemId) =>
-        Slots.Where(s => s is not null && s.ItemId == itemId).Sum(s => s!.Quantity);
+    public int GetItemCount(string itemId)
+    {
+        // Ghost inventory (F1 debug): unlimited of every material, no slots
+        if (DebugInfiniteMaterials && _matDb.GetMaterial(itemId) is not null)
+            return 999_999;
+        return Slots.Where(s => s is not null && s.ItemId == itemId).Sum(s => s!.Quantity);
+    }
 
     public bool HasItem(string itemId, int quantity = 1) =>
         GetItemCount(itemId) >= quantity;

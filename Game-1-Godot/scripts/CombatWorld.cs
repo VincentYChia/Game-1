@@ -158,10 +158,10 @@ public partial class CombatWorld : Node3D
             if (File.Exists(p)) equipDb.LoadFromFile(p);
         }
         _matDb = matDb;
-        // 96 slots (vs the base 30) so the full material set fits for crafting
-        // + the debug "give all materials" toggle; the grid scrolls.
+        // Canonical 40-slot bag (F1's unlimited materials is a ghost overlay,
+        // so it no longer needs oversized inventory).
         _pc = new PlayerCharacter(new CharacterStats(scaling),
-                                  new Inventory(matDb, equipDb, 96), (8.0, 8.0))
+                                  new Inventory(matDb, equipDb, 40), (8.0, 8.0))
         { Health = 100, MaxHealthValue = 100 };
         _pc.Equipment.Slots["axe"] = equipDb.CreateEquipmentFromId("copper_axe");
         _pc.Equipment.Slots["pickaxe"] = equipDb.CreateEquipmentFromId("copper_pickaxe");
@@ -406,40 +406,16 @@ public partial class CombatWorld : Node3D
         return true;
     }
 
-    private bool _debugMats;
-    private readonly Dictionary<string, int> _debugGranted = new();
-
-    /// <summary>F1: toggle "give ALL materials". On enable, add a stack of
-    /// every material in the database (tracking exactly what was granted);
-    /// on disable, remove only what was granted (clamped to what's left).</summary>
+    /// <summary>F1: toggle a "ghost inventory" of unlimited materials. No
+    /// visible slots are used — the certified inventory just reports infinite
+    /// materials and crafting skips consumption while it's on.</summary>
     private void ToggleDebugMaterials()
     {
-        if (_pc is null || _matDb is null) return;
-        _debugMats = !_debugMats;
-        if (_debugMats)
-        {
-            const int give = 100;
-            var granted = 0;
-            foreach (var id in _matDb.Materials.Keys)
-            {
-                var before = _pc.Inventory.GetItemCount(id);
-                _pc.Inventory.AddItem(id, give);
-                var added = _pc.Inventory.GetItemCount(id) - before;
-                if (added > 0)
-                {
-                    _debugGranted[id] = _debugGranted.GetValueOrDefault(id) + added;
-                    granted++;
-                }
-            }
-            _lastEvent = $"DEBUG: granted {granted} materials (F1 again to remove)";
-        }
-        else
-        {
-            foreach (var (id, amount) in _debugGranted)
-                _pc.Inventory.RemoveItem(id, Math.Min(amount, _pc.Inventory.GetItemCount(id)));
-            _debugGranted.Clear();
-            _lastEvent = "DEBUG: removed granted materials";
-        }
+        if (_pc is null) return;
+        _pc.Inventory.DebugInfiniteMaterials = !_pc.Inventory.DebugInfiniteMaterials;
+        _lastEvent = _pc.Inventory.DebugInfiniteMaterials
+            ? "DEBUG: unlimited materials ON — every recipe craftable"
+            : "DEBUG: unlimited materials OFF";
     }
 
     /// <summary>Debug cheats (game_engine.py:1016-1229): F1 give-all-materials

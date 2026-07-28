@@ -44,7 +44,7 @@ public static class RecipeCrafting
     {
         fraction = Math.Max(0.0, Math.Min(1.0, fraction));
         var consumed = new Dictionary<string, int>();
-        if (fraction <= 0.0) return consumed;
+        if (fraction <= 0.0 || inventory.DebugInfiniteMaterials) return consumed;
 
         foreach (var (matId, qty) in InputRows(recipe))
         {
@@ -75,6 +75,10 @@ public static class RecipeCrafting
     {
         if (!CanCraft(recipe, inventory))
             return false;
+
+        // Ghost inventory (F1 debug): verified craftable, but don't deplete
+        if (inventory.DebugInfiniteMaterials)
+            return true;
 
         // dict build: duplicate materialIds OVERWRITE (Python quirk)
         var toConsume = new Dictionary<string, int>();

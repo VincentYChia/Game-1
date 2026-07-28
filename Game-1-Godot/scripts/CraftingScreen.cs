@@ -303,7 +303,7 @@ public partial class CraftingScreen : CanvasLayer
             var have = pc.Inventory.GetItemCount(id);
             var name = _combat.MaterialDb?.GetMaterial(id)?.Name
                        ?? CombatWorld.Prettify(id);
-            parts.Add($"{qty}× {name} ({have})");
+            parts.Add($"{qty}× {name} ({(have >= 999_999 ? "∞" : have.ToString())})");
         }
         return string.Join("  ·  ", parts);
     }
