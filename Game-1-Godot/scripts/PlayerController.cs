@@ -23,6 +23,18 @@ public partial class PlayerController : CharacterBody3D
 
     private bool _wasAirborne;
     private float _peakY;
+    private bool _suppressLanding;
+
+    /// <summary>Teleport safely: reposition, kill momentum, and suppress the
+    /// next landing's fall damage. The F5/F6 landscape tour drops the player in
+    /// from height so they always land ON the surface, never inside it.</summary>
+    public void TeleportTo(Vector3 pos)
+    {
+        Position = pos;
+        Velocity = Vector3.Zero;
+        _wasAirborne = false;
+        _suppressLanding = true;
+    }
 
     public override void _PhysicsProcess(double delta)
     {
@@ -70,9 +82,10 @@ public partial class PlayerController : CharacterBody3D
             if (_wasAirborne)
             {
                 var drop = _peakY - Position.Y;
-                if (drop > SafeFallTiles)
+                if (!_suppressLanding && drop > SafeFallTiles)
                     OnHardLanding?.Invoke(drop - SafeFallTiles);
                 _wasAirborne = false;
+                _suppressLanding = false;
             }
             velocity.Y = !menuOpen && Input.IsPhysicalKeyPressed(Key.Space)
                 ? JumpVelocity : 0;
@@ -90,5 +103,18 @@ public partial class PlayerController : CharacterBody3D
 
         Velocity = velocity;
         MoveAndSlide();
+
+        // Catastrophe net ONLY. The solid HeightMapShape3D collider now rests
+        // the player on the terrain via physics (no per-frame Y override → no
+        // vibration). This large threshold only rescues a gross fall-through far
+        // below the surface, so it never fires during normal walking.
+        var groundY = TerrainHeightField.HMesh(Position.X, Position.Z);
+        if (Position.Y < groundY - 4f)
+        {
+            var p = Position;
+            p.Y = groundY + 0.5f;
+            Position = p;
+            Velocity = Vector3.Zero;
+        }
     }
 }

@@ -10,6 +10,9 @@ public abstract partial class MenuPage : Control
 {
     public abstract string Title { get; }
     public abstract Key Keybind { get; }
+    /// <summary>Set by the book — lets a page close the whole book (e.g. the
+    /// map closing itself after a click-to-teleport).</summary>
+    public System.Action? CloseBook;
     /// <summary>Called when the page becomes the visible tab.</summary>
     public virtual void OnOpened() { }
     /// <summary>Called every frame while the page is the visible tab.</summary>
@@ -102,6 +105,7 @@ public partial class MenuBook : CanvasLayer
             page.Visible = false;
             page.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             page.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
+            page.CloseBook = Close;
             _pageHolder.AddChild(page);
         }
     }

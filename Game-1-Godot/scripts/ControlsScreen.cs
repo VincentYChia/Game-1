@@ -42,7 +42,7 @@ public partial class ControlsScreen : CanvasLayer
         }),
         ("Saving", new[]
         {
-            ("F6", "Quick save"),
+            ("F8", "Quick save"),
             ("F9", "Load save"),
         }),
         ("Debug", new[]
@@ -51,6 +51,7 @@ public partial class ControlsScreen : CanvasLayer
             ("F2", "Learn all skills"),
             ("F3", "Grant all titles"),
             ("F4", "Max level + stats"),
+            ("F5 / F6", "Teleport to prev / next biome"),
             ("F7", "Toggle infinite durability"),
         }),
     };

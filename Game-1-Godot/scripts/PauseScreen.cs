@@ -5,7 +5,7 @@ namespace Game1.Godot;
 /// <summary>
 /// Pause menu ([Esc] when nothing else is open — the END of the Python ESC
 /// priority chain, game_engine.py:847-853): Return / Save &amp; Exit / Exit
-/// without saving. Also owns the persistence utility keys: [F6] quick
+/// without saving. Also owns the persistence utility keys: [F8] quick
 /// save, [F9] load (game_engine.py:1186-1203, 1231-1286).
 /// </summary>
 public partial class PauseScreen : CanvasLayer
@@ -73,7 +73,7 @@ public partial class PauseScreen : CanvasLayer
 
         _status = new Label
         {
-            Text = "[F6] quick save   ·   [F9] load",
+            Text = "[F8] quick save   ·   [F9] load",
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate = new Color(1, 1, 1, 0.6f),
         };
@@ -94,7 +94,7 @@ public partial class PauseScreen : CanvasLayer
     {
         if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
 
-        if (key.PhysicalKeycode is Key.F6)
+        if (key.PhysicalKeycode is Key.F8)
         {
             _status.Text = SaveSystem.Save(_combat, _player);
             return;
@@ -115,6 +115,6 @@ public partial class PauseScreen : CanvasLayer
         _open = !_open;
         _root.Visible = _open;
         UiHub.OpenScreens += _open ? 1 : -1;
-        if (_open) _status.Text = "[F6] quick save   ·   [F9] load";
+        if (_open) _status.Text = "[F8] quick save   ·   [F9] load";
     }
 }

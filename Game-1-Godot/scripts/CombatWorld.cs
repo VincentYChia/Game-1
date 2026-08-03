@@ -112,6 +112,19 @@ public partial class CombatWorld : Node3D
     public const double SpawnSafeRadius = 26.0;
     private readonly List<EnemyRuntime> _runtimes = new();
     private readonly List<(NaturalResourceRuntime Node, Node3D Visual)> _resources = new();
+    /// <summary>Integer tiles currently blocked by an undepleted resource —
+    /// rebuilt each frame, read by IsTileWalkable so enemies slide around
+    /// trees/rocks instead of phasing through them.</summary>
+    private readonly HashSet<(long, long)> _blockedTiles = new();
+
+    /// <summary>The F5/F6 landscape tour: one stop per region identity across
+    /// the WHOLE world, as a destination CHUNK.</summary>
+    private readonly List<(string Name, int CX, int CY)> _biomeTargets = new();
+    private int _biomeIndex = -1;
+
+    /// <summary>Set by WorldBootstrap — rebuilds terrain around a far tour
+    /// destination so there's ground to stand on before we teleport there.</summary>
+    public System.Action<int, int>? RecenterWorld;
     private Label? _hud;
     private string _lastEvent = "";
 
@@ -284,14 +297,230 @@ public partial class CombatWorld : Node3D
             }
         }
 
+        BuildBiomeTargets(biomes, worldMap, enemyChunkRadius);
         BuildHud();
-        GD.Print($"CombatWorld: {spawned} enemies live");
+        GD.Print($"CombatWorld: {spawned} enemies live, "
+                 + $"{_biomeTargets.Count} biomes for the F5/F6 tour");
+    }
+
+    /// <summary>Build the F5/F6 tour by sampling the ACTUAL elevation field so
+    /// every stop shows a real feature: a vista beneath a towering range, a
+    /// mountain pass, the largest connected lake's shore, the biggest forest /
+    /// plains / highlands / marsh, a quarry pit, and a cave mouth. Lands at
+    /// vistas/passes, never a needle summit.</summary>
+    private void BuildBiomeTargets(BiomeGenerator biomes,
+        Game1.Core.World.Geography.WorldMap? worldMap, int radius)
+    {
+        _biomeTargets.Clear();
+        _biomeTargets.Add(("Spawn — home", 0, 0));   // start at the populated area
+
+        if (worldMap is null || worldMap.ChunkData.Count == 0)
+        {
+            // Legacy biome world: fall back to distinct chunk types near origin.
+            var seen = new HashSet<string>();
+            for (var cy = -radius; cy <= radius; cy++)
+                for (var cx = -radius; cx <= radius; cx++)
+                {
+                    var t = biomes.GetChunkType(cx, cy);
+                    if (seen.Add(t)) _biomeTargets.Add((Prettify(t), cx, cy));
+                }
+            return;
+        }
+
+        // One elevation sample per generated chunk centre + nearest-to-centre
+        // representative chunk per region (so region stops land INSIDE the region).
+        var hc = new Dictionary<(int, int), float>(worldMap.ChunkData.Count);
+        var rep = new Dictionary<int, (int X, int Y, double D)>();
+        foreach (var (key, geo) in worldMap.ChunkData)
+        {
+            hc[key] = TerrainHeightField.H(key.X * 16 + 8, key.Y * 16 + 8);
+            if (worldMap.Regions.TryGetValue(geo.RegionId, out var r))
+            {
+                var ccx = (r.Bounds.MinX + r.Bounds.MaxX) / 2.0;
+                var ccy = (r.Bounds.MinY + r.Bounds.MaxY) / 2.0;
+                var d = (key.X - ccx) * (key.X - ccx) + (key.Y - ccy) * (key.Y - ccy);
+                if (!rep.TryGetValue(geo.RegionId, out var cur) || d < cur.D)
+                    rep[geo.RegionId] = (key.X, key.Y, d);
+            }
+        }
+        float HC(int cx, int cy) => hc.TryGetValue((cx, cy), out var v) ? v : 0f;
+
+        // Highest peak (fallback), a VISTA shoulder beneath a towering neighbour,
+        // and a PASS saddle between higher shoulders — all from the real field.
+        (int X, int Y) peak = (0, 0);
+        var peakH = float.NegativeInfinity;
+        (int X, int Y)? vista = null;
+        var vScore = 0f;
+        (int X, int Y)? pass = null;
+        var pScore = 0f;
+        foreach (var (k, h) in hc)
+        {
+            if (h > peakH) { peakH = h; peak = k; }
+            if (h is >= 6f and <= 24f)
+            {
+                var near = 0f;
+                for (var dy = -3; dy <= 3; dy++)
+                    for (var dx = -3; dx <= 3; dx++)
+                        near = Math.Max(near, HC(k.Item1 + dx, k.Item2 + dy));
+                if (near > 32f && near - h > vScore) { vScore = near - h; vista = k; }
+            }
+            if (h is >= 8f and <= 30f)
+            {
+                var ax = Math.Min(HC(k.Item1 - 2, k.Item2), HC(k.Item1 + 2, k.Item2)) - h;
+                var ay = Math.Min(HC(k.Item1, k.Item2 - 2), HC(k.Item1, k.Item2 + 2)) - h;
+                var s = Math.Max(ax, ay);
+                if (s > pScore && s > 6f) { pScore = s; pass = k; }
+            }
+        }
+
+        if (vista is { } vv)
+            _biomeTargets.Add(($"Mountain Vista · {RegionName(worldMap, vv)}", vv.X, vv.Y));
+        else
+            _biomeTargets.Add(("The High Peaks", peak.X, peak.Y));
+        if (pass is { } pp) _biomeTargets.Add(("Mountain Pass", pp.X, pp.Y));
+
+        var (shore, lakeSize) = FindLargestWater(hc);
+        if (shore is { } sh && lakeSize >= 3) _biomeTargets.Add(("Great Lake", sh.X, sh.Y));
+
+        void AddRegion(string identity, string label)
+        {
+            Game1.Core.World.Geography.RegionData? best = null;
+            foreach (var r in worldMap.Regions.Values)
+                if (r.Identity == identity
+                    && (best is null || r.ChunkCount > best.ChunkCount))
+                    best = r;
+            if (best is not null && rep.TryGetValue(best.RegionId, out var c))
+                _biomeTargets.Add(($"{best.Name} · {label}", c.X, c.Y));
+        }
+        AddRegion("forest", "Deep Forest");
+        AddRegion("plains", "Open Plains");
+        AddRegion("highlands", "The Highlands");
+        AddRegion("marshlands", "The Marshes");
+
+        // Quarry pit + cave mouth — nearest to origin so they're a modest trek.
+        AddNearestChunk(worldMap, t => t == "quarry", "The Quarry");
+        AddNearestCave(worldMap);
+    }
+
+    private void AddNearestChunk(Game1.Core.World.Geography.WorldMap map,
+        System.Func<string, bool> match, string label)
+    {
+        (int X, int Y)? nearest = null;
+        var bd = double.MaxValue;
+        foreach (var (k, geo) in map.ChunkData)
+        {
+            if (!match(geo.ChunkType)) continue;
+            var d = (double)k.X * k.X + (double)k.Y * k.Y;
+            if (d < bd) { bd = d; nearest = k; }
+        }
+        if (nearest is { } n) _biomeTargets.Add((label, n.X, n.Y));
+    }
+
+    private void AddNearestCave(Game1.Core.World.Geography.WorldMap map)
+    {
+        (int X, int Y)? nearest = null;
+        var bd = double.MaxValue;
+        foreach (var (k, _) in map.ChunkData)
+        {
+            if (!TerrainHeightField.IsCaveChunk(k.X, k.Y)) continue;
+            var d = (double)k.X * k.X + (double)k.Y * k.Y;
+            if (d < bd) { bd = d; nearest = k; }
+        }
+        if (nearest is { } n) _biomeTargets.Add(("Cave Mouth", n.X, n.Y));
+    }
+
+    private static string RegionName(Game1.Core.World.Geography.WorldMap map,
+        (int X, int Y) c)
+    {
+        if (map.ChunkData.TryGetValue(c, out var g)
+            && map.Regions.TryGetValue(g.RegionId, out var r) && r.Name.Length > 0)
+            return r.Name;
+        return "the Range";
+    }
+
+    /// <summary>Largest connected below-water body; returns a dry shore chunk to
+    /// land on (so "Great Lake" drops you at the water's edge, not in it).</summary>
+    private static ((int X, int Y)? Shore, int Size) FindLargestWater(
+        Dictionary<(int, int), float> hc)
+    {
+        var water = new HashSet<(int, int)>();
+        foreach (var (k, h) in hc)
+            if (h < TerrainHeightField.WaterLevel) water.Add(k);
+
+        var visited = new HashSet<(int, int)>();
+        (int, int)? bestShore = null;
+        var bestSize = 0;
+        foreach (var start in water)
+        {
+            if (visited.Contains(start)) continue;
+            var comp = new List<(int, int)>();
+            var stack = new Stack<(int, int)>();
+            stack.Push(start);
+            while (stack.Count > 0)
+            {
+                var c = stack.Pop();
+                if (!water.Contains(c) || !visited.Add(c)) continue;
+                comp.Add(c);
+                stack.Push((c.Item1 - 1, c.Item2));
+                stack.Push((c.Item1 + 1, c.Item2));
+                stack.Push((c.Item1, c.Item2 - 1));
+                stack.Push((c.Item1, c.Item2 + 1));
+            }
+            if (comp.Count <= bestSize) continue;
+            bestSize = comp.Count;
+            bestShore = comp[0];
+            foreach (var w in comp)
+            {
+                var found = false;
+                foreach (var (dx, dy) in new[] { (-1, 0), (1, 0), (0, -1), (0, 1) })
+                {
+                    var nb = (w.Item1 + dx, w.Item2 + dy);
+                    if (hc.TryGetValue(nb, out var nh)
+                        && nh >= TerrainHeightField.WaterLevel)
+                    { bestShore = nb; found = true; break; }
+                }
+                if (found) break;
+            }
+        }
+        return (bestShore, bestSize);
+    }
+
+    /// <summary>F5/F6: teleport the player to the next/previous distinct biome,
+    /// naming the terrain we land in.</summary>
+    private void TeleportBiome(int dir)
+    {
+        if (_biomeTargets.Count == 0) return;
+        _biomeIndex = ((_biomeIndex + dir) % _biomeTargets.Count
+                       + _biomeTargets.Count) % _biomeTargets.Count;
+        var (name, cx, cy) = _biomeTargets[_biomeIndex];
+        TeleportToChunk(cx, cy,
+            $"{name}   [{_biomeIndex + 1}/{_biomeTargets.Count}]");
+    }
+
+    /// <summary>Rebuild ground at (cx, cy) and drop the player in from above so
+    /// they always land ON the surface. Shared by the F5/F6 tour and map clicks.</summary>
+    public void TeleportToChunk(int cx, int cy, string label)
+    {
+        if (_player is null) return;
+        RecenterWorld?.Invoke(cx, cy);   // build ground at the destination FIRST
+        var wx = cx * 16 + 8.0;
+        var wy = cy * 16 + 8.0;
+        _player.TeleportTo(new Vector3((float)wx,
+            TerrainHeightField.H(wx, wy) + 6f, (float)wy));
+        _lastEvent = $"⇒ {label}   (chunk {cx}, {cy})";
+        _fx?.FloatText(_player.GlobalPosition + new Vector3(0, 1.8f, 0),
+            label, new Color(1f, 0.95f, 0.6f), 1.6f);
     }
 
     private void SpawnEnemy(EnemyDefinition def, (double X, double Y) pos,
                             (long X, long Y) chunk)
     {
-        var runtime = new EnemyRuntime(def, pos, chunk, _rng);
+        var runtime = new EnemyRuntime(def, pos, chunk, _rng)
+        {
+            // Reactive collision: the certified MoveTowards slides around
+            // non-walkable tiles once this oracle is supplied.
+            IsWalkable = IsTileWalkable,
+        };
         var entityId = $"enemy_{_enemies.Count}_{def.EnemyId}";
 
         var size = (float)def.VisualSize;
@@ -357,12 +586,36 @@ public partial class CombatWorld : Node3D
     public void RegisterResource(NaturalResourceRuntime node, Node3D visual) =>
         _resources.Add((node, visual));
 
+    /// <summary>Refresh the resource-occupied tile set (once per frame). Cheap
+    /// O(resources); read O(1) by IsTileWalkable across every moving enemy.</summary>
+    private void RebuildBlockedTiles()
+    {
+        _blockedTiles.Clear();
+        foreach (var (node, _) in _resources)
+        {
+            if (node.Depleted) continue;
+            _blockedTiles.Add(((long)Math.Floor(node.Position.X),
+                               (long)Math.Floor(node.Position.Y)));
+        }
+    }
+
+    /// <summary>Enemy walkability oracle (world_system.is_walkable analog):
+    /// deep water and undepleted-resource tiles block movement. Fed to the
+    /// certified EnemyRuntime.MoveTowards, which then slides X-then-Y.</summary>
+    private bool IsTileWalkable(Game1.Core.World.Position p)
+    {
+        if (TerrainHeightField.H(p.X, p.Y) < TerrainHeightField.WaterLevel)
+            return false;
+        return !_blockedTiles.Contains(
+            ((long)Math.Floor(p.X), (long)Math.Floor(p.Y)));
+    }
+
     public override void _UnhandledInput(InputEvent @event)
     {
         // Debug keys work anytime (before the menu guard)
         if (@event is InputEventKey { Pressed: true, Echo: false } dbg
             && dbg.PhysicalKeycode is Key.F1 or Key.F2 or Key.F3
-                or Key.F4 or Key.F7)
+                or Key.F4 or Key.F5 or Key.F6 or Key.F7)
         {
             HandleDebugKey(dbg.PhysicalKeycode);
             return;
@@ -461,6 +714,12 @@ public partial class CombatWorld : Node3D
                 _pc.Health = _pc.MaxHealthValue;
                 _pc.Mana = _pc.MaxMana;
                 _lastEvent = "DEBUG: max level + stats";
+                break;
+            case Key.F5:
+                TeleportBiome(-1);
+                break;
+            case Key.F6:
+                TeleportBiome(1);
                 break;
             case Key.F7:
                 if (_orch is not null)
@@ -884,6 +1143,7 @@ public partial class CombatWorld : Node3D
         }
 
         // Enemy AI + phased attacks (all certified EnemyRuntime logic)
+        RebuildBlockedTiles();   // walkability oracle for MoveTowards this frame
         foreach (var e in _enemies)
         {
             var rt = e.Runtime;

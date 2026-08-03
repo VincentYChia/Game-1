@@ -16,8 +16,8 @@ public partial class InventoryPage : MenuPage
     public override string Title => "Inventory";
     public override Key Keybind => Key.I;
 
-    private const int SlotPx = 88;
-    private const int EquipPx = 96;
+    private const int SlotPx = 100;
+    private const int EquipPx = 112;
 
     private static readonly (string Slot, string Label)[] EquipLayout =
     {
@@ -68,7 +68,7 @@ public partial class InventoryPage : MenuPage
 
         var scroll = new ScrollContainer
         {
-            CustomMinimumSize = new Vector2(cols * SlotPx + (cols - 1) * 8 + 24, 620),
+            CustomMinimumSize = new Vector2(cols * SlotPx + (cols - 1) * 8 + 24, 720),
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
         };
         invBox.AddChild(scroll);
