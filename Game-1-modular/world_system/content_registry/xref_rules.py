@@ -100,6 +100,11 @@ def _get_content_id(content_json: Dict[str, Any], tool_name: str) -> str:
         ])
     elif tool_name == TOOL_NODES:
         candidates.extend([
+            # resourceId is what the nodes tool prompt actually emits AND
+            # what ResourceNodeDatabase reads — it was missing here, so real
+            # generated nodes failed to stage ("no id field found"). The
+            # tool + registry were certified in isolation; neither caught it.
+            "resourceId", "resource_id",
             "nodeId", "resourceNodeId",
             "node_id", "resource_node_id",
         ])

@@ -187,6 +187,28 @@ class ClaudeBackend(ModelBackend):
         self.top_p = top_p
         self._client = None
         self._api_key: Optional[str] = None
+        # One-shot guard: if a PRESENT env key is rejected (401), fall back
+        # to the project .env key and retry once. 2026-08: a stale GLOBAL
+        # ANTHROPIC_API_KEY shadows the project .env (env-first resolution),
+        # so without this every real call dead-ends on the rejected key.
+        self._auth_fallback_tried = False
+
+    def _resolve_env_file_key(self) -> Optional[str]:
+        """Read ANTHROPIC_API_KEY from the project .env file only (never env)."""
+        for candidate in ["Game-1-modular/.env", ".env"]:
+            env_path = os.path.join(os.getcwd(), candidate)
+            if os.path.exists(env_path):
+                try:
+                    with open(env_path) as f:
+                        for line in f:
+                            line = line.strip()
+                            if line.startswith("ANTHROPIC_API_KEY="):
+                                k = line.split("=", 1)[1].strip().strip("\"'")
+                                if k:
+                                    return k
+                except Exception:
+                    pass
+        return None
 
     def _resolve_api_key(self) -> Optional[str]:
         """Resolve API key from environment or .env file."""
@@ -260,6 +282,20 @@ class ClaudeBackend(ModelBackend):
                 # checks presence, so everything upstream reports claude
                 # as available until the first real call 401s — make the
                 # operator-facing error unmissable (2026-07 audit).
+                # 2026-08 hardening: a stale GLOBAL env key shadows the
+                # project .env. On the first 401, fall back to the .env
+                # key (if different) and retry once so the intended project
+                # key wins without needing the env var unset.
+                file_key = self._resolve_env_file_key()
+                if (not self._auth_fallback_tried and file_key
+                        and file_key != self._api_key):
+                    self._auth_fallback_tried = True
+                    print("[Claude] env ANTHROPIC_API_KEY rejected (401); "
+                          "falling back to the .env key and retrying once.")
+                    self._api_key = file_key
+                    self._client = None
+                    return self.generate(system_prompt, user_prompt,
+                                         temperature, max_tokens)
                 return "", ("Claude API error: API KEY REJECTED (401). "
                             "ANTHROPIC_API_KEY is set but invalid — rotate "
                             "the key before the playtest. Raw: " + msg)

@@ -195,8 +195,11 @@ class PlanDispatcher:
         result = DispatchResult()
 
         ordered = topological_sort(plan)
+        # Canonical-id map {step_id: {"tool", "ids": [...]}} — populated as each
+        # step stages; read by dependents to reconcile their cross-refs.
+        canonical_by_step: Dict[str, Dict[str, Any]] = {}
         for step in ordered:
-            self._run_step(step, plan, bundle, result)
+            self._run_step(step, plan, bundle, result, canonical_by_step)
         return result
 
     # ── Request Layer: tool-only fan-out (no hub call) ─────────────────
@@ -418,6 +421,7 @@ class PlanDispatcher:
         plan: WESPlan,
         bundle: "WESContextBundle",
         result: DispatchResult,
+        canonical_by_step: Optional[Dict[str, Any]] = None,
     ) -> None:
         step_errors: List[str] = []
 
@@ -527,14 +531,36 @@ class PlanDispatcher:
 
             content_json: Dict[str, Any] = spec_output
 
+            # Canonical-id coordination (approach A, 2026-08-11): pin this
+            # artifact's id and rewrite its INTENDED cross-refs to co-emitted
+            # parents' canonical ids (deterministic; non-LLM normalizer for
+            # drift). Without this each tool invents its own id and every
+            # multi-step plan orphan-rolls-back despite good content.
+            canonical_id, content_json = self._canonical_reconcile(
+                step, specs, spec, content_json, canonical_by_step, plan.plan_id,
+            )
+
             # Deterministic glue: orphan scan (Pass 1) + balance check.
             orphans = self._orphan_scan(
                 content_json, plan.plan_id, step.tool
             )
             if orphans:
-                spec_errors.append(
-                    f"orphan refs in output: {sorted(set(orphans))}"
-                )
+                # Prune LLM-invented dangling refs (content that doesn't exist
+                # and wasn't co-emitted), then re-scan. Keeps every RESOLVED
+                # ref; enforces "cross-refs must resolve" without rolling back
+                # the whole plan over one invented reference.
+                from world_system.wes.canonical_ids import prune_orphan_refs
+                content_json, pruned = prune_orphan_refs(
+                    content_json, step.tool, set(orphans))
+                if pruned:
+                    print(f"[WES] pruned invented refs from "
+                          f"{step.tool}/{step.step_id}: {sorted(set(pruned))}")
+                orphans = self._orphan_scan(
+                    content_json, plan.plan_id, step.tool)
+                if orphans:
+                    spec_errors.append(
+                        f"orphan refs after prune: {sorted(set(orphans))}"
+                    )
 
             balance_issue = self._balance_check(
                 content_json, spec.hard_constraints
@@ -562,6 +588,12 @@ class PlanDispatcher:
                 result.staged_content_ids.setdefault(step.tool, []).append(
                     staged_id
                 )
+                # Record this step's canonical id so dependents resolve to it.
+                if canonical_by_step is not None and canonical_id:
+                    entry = canonical_by_step.setdefault(
+                        step.step_id, {"tool": step.tool, "ids": []})
+                    if canonical_id not in entry["ids"]:
+                        entry["ids"].append(canonical_id)
 
             tool_tier = fixture_tier_result(
                 tier="executor_tool",
@@ -656,6 +688,88 @@ class PlanDispatcher:
         def _task() -> Any:
             return tool.generate(spec)
         return _task
+
+    def _canonical_reconcile(
+        self,
+        step: WESPlanStep,
+        specs: List[ExecutorSpec],
+        spec: ExecutorSpec,
+        content_json: Dict[str, Any],
+        canonical_by_step: Optional[Dict[str, Any]],
+        plan_id: str,
+    ):
+        """Approach A: decide this artifact's canonical id, enforce it, and
+        rewrite its intended cross-refs to co-emitted parents' canonical ids.
+
+        Returns ``(canonical_id, reconciled_content_json)``.
+        """
+        from world_system.wes.canonical_ids import (
+            get_emitted_id,
+            normalize_id,
+            reconcile_refs,
+            slugify,
+        )
+
+        # 1. Canonical id: planner-pinned (single-spec steps), else the tool's
+        #    own emitted id (keeps id/name coherent), else a slug of intent.
+        canonical_id = ""
+        if getattr(step, "content_id", "") and len(specs) == 1:
+            canonical_id = normalize_id(step.content_id)
+        if not canonical_id:
+            canonical_id = normalize_id(get_emitted_id(content_json, step.tool))
+        if not canonical_id:
+            canonical_id = slugify(step.intent)
+
+        # 2. Parent canonical ids by tool (from depends_on).
+        parent_ids_by_tool: Dict[str, List[str]] = {}
+        if canonical_by_step:
+            for pid in step.depends_on:
+                entry = canonical_by_step.get(pid)
+                if entry and entry.get("ids"):
+                    parent_ids_by_tool.setdefault(
+                        entry["tool"], []).extend(entry["ids"])
+
+        # 3. Known-id pool for the drift fallback + "already resolves" skip:
+        #    this plan's staged rows PLUS what the game currently holds (sacred
+        #    + previously-invented), so refs to real content aren't treated as
+        #    orphans and the normalizer can reconcile drift against them.
+        live_ids_by_tool: Dict[str, set] = {}
+        if self.registry is not None:
+            try:
+                for tname, rows in (
+                    self.registry.list_staged_by_plan(plan_id) or {}
+                ).items():
+                    ids = {r.get("content_id") for r in rows
+                           if r.get("content_id")}
+                    if ids:
+                        live_ids_by_tool[tname] = ids
+            except Exception:
+                pass
+            for tname in ("materials", "nodes", "hostiles", "skills",
+                          "titles", "chunks", "npcs", "quests"):
+                try:
+                    known = self.registry.known_ids(tname)
+                except Exception:
+                    known = set()
+                if known:
+                    live_ids_by_tool.setdefault(tname, set()).update(known)
+
+        # 4. The hub's declared cross-refs = the INTENDED dependencies.
+        intended: set = set()
+        for v in (spec.cross_ref_hints or {}).values():
+            if isinstance(v, str):
+                intended.add(v)
+            elif isinstance(v, (list, tuple)):
+                intended.update(x for x in v if isinstance(x, str))
+
+        rec = reconcile_refs(
+            content_json, step.tool,
+            canonical_id=canonical_id,
+            parent_ids_by_tool=parent_ids_by_tool,
+            live_ids_by_tool=live_ids_by_tool,
+            intended_ref_ids=intended,
+        )
+        return canonical_id, rec["content"]
 
     def _orphan_scan(
         self, content_json: Dict[str, Any], plan_id: str, tool_name: str
