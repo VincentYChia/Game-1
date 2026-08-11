@@ -540,6 +540,11 @@ class PlanDispatcher:
                 step, specs, spec, content_json, canonical_by_step, plan.plan_id,
             )
 
+            # Content-tag governance: keep only tags the game understands, route
+            # NEW:-prefixed proposals for designer review, drop invented tags —
+            # so the load-bearing tag system can't silently drift.
+            content_json = self._govern_tags(step, content_json)
+
             # Deterministic glue: orphan scan (Pass 1) + balance check.
             orphans = self._orphan_scan(
                 content_json, plan.plan_id, step.tool
@@ -770,6 +775,44 @@ class PlanDispatcher:
             intended_ref_ids=intended,
         )
         return canonical_id, rec["content"]
+
+    def _govern_tags(self, step: WESPlanStep,
+                     content_json: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate generated content tags against the game's vocabulary."""
+        if self.registry is None:
+            return content_json
+        try:
+            valid = self.registry.known_tags(step.tool)
+        except Exception:
+            valid = set()
+        if not valid:
+            return content_json  # can't read vocabulary -> don't strip
+        from world_system.wes.tag_governance import govern_content_tags
+        content_json, _kept, dropped, proposed = govern_content_tags(
+            content_json, step.tool, valid)
+        if dropped:
+            print(f"[WES] dropped unknown tags from {step.tool}/{step.step_id}: "
+                  f"{sorted(set(dropped))}")
+        if proposed:
+            print(f"[WES] NEW: tag proposals from {step.tool}/{step.step_id} "
+                  f"(designer review): {sorted(set(proposed))}")
+            self._record_tag_proposals(step.tool, proposed)
+        return content_json
+
+    def _record_tag_proposals(self, tool: str, proposed: List[str]) -> None:
+        """Append NEW: tag proposals to a designer-review sink (best-effort)."""
+        try:
+            save_dir = getattr(self.registry, "_save_dir", None)
+            if not save_dir:
+                return
+            import json as _json
+            import os as _os
+            path = _os.path.join(save_dir, "wes_tag_proposals.jsonl")
+            with open(path, "a", encoding="utf-8") as f:
+                for tag in sorted(set(proposed)):
+                    f.write(_json.dumps({"tool": tool, "tag": tag}) + "\n")
+        except Exception:
+            pass
 
     def _orphan_scan(
         self, content_json: Dict[str, Any], plan_id: str, tool_name: str

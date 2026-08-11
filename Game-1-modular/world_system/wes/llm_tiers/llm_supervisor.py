@@ -90,6 +90,34 @@ def _default_pass_verdict(reason: str = "") -> Dict[str, Any]:
     }
 
 
+def _tier_content_excerpt(r: "TierRunResult", limit: int = 320) -> str:
+    """Serialize a tier's PARSED artifact (what actually commits) for review.
+
+    2026-08-11: the supervisor must review the real generated content, not
+    ``raw_response`` — the dispatcher stamps ``raw_response`` from the fixture
+    registry for observability even on real tiers, so it shows fixture text.
+    ``parsed`` is the real output (WESPlan / List[ExecutorSpec] / tool dict).
+    """
+    parsed = getattr(r, "parsed", None)
+    if parsed is not None and not isinstance(parsed, str):
+        try:
+            content = json.dumps(
+                parsed,
+                default=lambda o: (o.to_dict() if hasattr(o, "to_dict")
+                                   else str(o)),
+                sort_keys=True,
+            )
+        except Exception:
+            content = str(parsed)
+    elif parsed:
+        content = str(parsed)
+    else:
+        # Only fall back to raw_response when there is no parsed artifact
+        # (e.g. a parse failure — then the raw text is the useful signal).
+        content = getattr(r, "raw_response", "") or ""
+    return content[:limit].replace("\n", " ")
+
+
 def _summarize_tier_results(tier_results: List["TierRunResult"]) -> str:
     """Condense tier results into a short log blob for the supervisor."""
     lines: List[str] = []
@@ -100,10 +128,9 @@ def _summarize_tier_results(tier_results: List["TierRunResult"]) -> str:
         spec = getattr(r, "spec_id", None) or ""
         tool = getattr(r, "tool_name", None) or ""
         backend = getattr(r, "backend_used", "")
-        raw = getattr(r, "raw_response", "") or ""
-        excerpt = raw[:160].replace("\n", " ")
+        excerpt = _tier_content_excerpt(r)
         ident = "/".join(x for x in [tier, tool, step, spec] if x)
-        lines.append(f"- [{ok}] {ident} (backend={backend}) resp={excerpt!r}")
+        lines.append(f"- [{ok}] {ident} content={excerpt!r}")
     if not lines:
         return "(no tier results)"
     return "\n".join(lines)

@@ -509,6 +509,15 @@ class ContentRegistry:
         except Exception:
             return set()
 
+    def known_tags(self, tool_name: str) -> set:
+        """Tag vocabulary generated content of ``tool_name`` may use — in sync
+        with what the game already understands (existing content tags + the
+        combat/effect TagRegistry). Used to govern generated content tags."""
+        try:
+            return set(self._get_game_index().tags_for(tool_name))
+        except Exception:
+            return set()
+
     # ── Lineage ──────────────────────────────────────────────────────
 
     def lineage(self, content_id: str) -> Dict[str, Any]:
