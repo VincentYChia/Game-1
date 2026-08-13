@@ -62,6 +62,7 @@ class EventType(Enum):
     QUEST_ACCEPTED = "quest_accepted"
     QUEST_COMPLETED = "quest_completed"
     QUEST_FAILED = "quest_failed"
+    FACTION_AFFINITY_CHANGED = "faction_affinity_changed"
 
     # World / System
     WORLD_EVENT = "world_event"
@@ -102,6 +103,8 @@ BUS_TO_MEMORY_TYPE = {
     "QUEST_ACCEPTED": EventType.QUEST_ACCEPTED,
     "QUEST_COMPLETED": EventType.QUEST_COMPLETED,
     "QUEST_FAILED": EventType.QUEST_FAILED,
+    # Faction/social affinity — feeds the L2 FactionReputationEvaluator.
+    "FACTION_AFFINITY_CHANGED": EventType.FACTION_AFFINITY_CHANGED,
     "WORLD_EVENT": EventType.WORLD_EVENT,
     "POSITION_SAMPLE": EventType.POSITION_SAMPLE,
     # New: fishing, chests, engineering/defense

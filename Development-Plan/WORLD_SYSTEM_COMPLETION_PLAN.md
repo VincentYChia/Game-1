@@ -10,7 +10,37 @@ Every claim carries a `file:line`; code is authoritative. Companion: `GAME_SYSTE
 
 ---
 
-## Execution status (updated 2026-08-11) — Phase 0 & 1 DONE
+## Execution status (updated 2026-08-11) — Phase 0, 1, 2 DONE; Phase 3 mostly done
+
+**Commits (branch `godot-migration`):** `141b8c5f` (Phase 1) · `a658415b` (Phase 2) · Phase 3 pending commit.
+
+- ✅ **Phase 3a — faction→L2 narrative.** The `FactionReputationEvaluator` was an orphan with **SIX**
+  contract drifts (uppercase `is_relevant`, `.data`→`.context`, uppercase `count_filtered`, bad
+  `get_evaluator_config` signature, obsolete `InterpretedEvent` return API, `.timestamp` attr). All
+  fixed; registered in the interpreter; `EventType.FACTION_AFFINITY_CHANGED` + `BUS_TO_MEMORY_TYPE`
+  route affinity events into WMS. Affinity changes now become L2 reputation narrative. 5 tests.
+- ✅ **Phase 3c — EcosystemAgent** marked **DORMANT** (module docstring): not instantiated/ticked at
+  runtime, scarcity events have no subscribers. Honest state; no longer mistakable for wired.
+- ✅ **Phase 3d — WNS orphans** (`ingest_dialogue`/`maybe_weave`) hard-deprecated with ORPHAN markers
+  (kept for tests; prevents a second divergent WNS ingress). *(Markers uncommitted with the earlier
+  C3/M1/M2 `world_narrative_system.py` changes — to commit together.)*
+- ⏳ **Phase 3b — PresenceDriftDetector: DEFERRED.** Needs the event recorder to gain a StatStore
+  handle to write `meta.last_activity_day.locality.<id>` (it has none today) + a category fix so
+  `presence_drift` isn't suppressed. Multi-component change in the load-bearing recorder — deferred
+  from the tail of a long session to avoid a rushed stat-wiring bug. Do next.
+
+
+
+- ✅ **Phase 2** — (a) **#3 tier-result mislabel FIXED**: `llm_supervisor._summarize_tier_results`
+  now reviews the real `parsed` artifacts, not the fixture `raw_response`. Confirmed live — the
+  supervisor's old "all tier-2" misread is gone; it now PASSes directive/coherence/voice quoting real
+  prose. (b) **WES content-tag governance** — `wes/tag_governance.py` + `GameContentIndex.tags_for`:
+  generated tags validated against the game's actual vocabulary (existing content tags harvested from
+  the DBs + TagRegistry effect tags); unknown dropped, `NEW:` routed to a designer‑review sink + a
+  `wes_tag_proposals.jsonl`, vocabulary refreshes on commit. Wired into the dispatcher; 4 new tests;
+  live driver still `status=committed`.
+
+
 
 - ✅ **Phase 0** — key live (`.env` + `backend_manager` 401→.env fallback hardening); smoketest green.
 - ✅ **Phase 1** — **WES now generates real Claude content and COMMITS cleanly end-to-end** (live run:
