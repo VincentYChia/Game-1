@@ -58,6 +58,15 @@ Every claim carries a `file:line`; code is authoritative. Companion: `GAME_SYSTE
   (c) **#3 tier-result mislabel** — `fixture_tier_result()` stamps `raw_response`/`backend_used="fixture"`
   on REAL results, so the supervisor reviews fixture data not real output [OPEN → Phase 2]; (d) game DBs
   print `⚠` and crash-on-print under piped cp1252 [driver worked around; latent].
+- ✅ **Phase 4 (Python side) — Godot World-System sidecar.** `Game-1-Godot/sidecar/world_system_sidecar.py`
+  (modeled on `invention_sidecar.py`): NDJSON stdin/stdout, reuses `tools/world_system_driver`'s
+  real-tier `build_real_orchestrator`/`run_bundle` verbatim. Ops: `ping` (boot + key check), `run_wes`
+  (directive+address+tier in → committed content ids + generated file paths out = the reload signal),
+  `shutdown`. Verified live: `ping` → `ready:true`; `run_wes` → `status:committed` with real
+  `{materials, hostiles}` + generated JSON files. **Remaining (needs Godot/C#, can't build here):** the
+  Godot-side bridge (a `WorldSystemService.cs` that shells out to the sidecar + loads returned content
+  into the C# databases — analogous to `InventionService` for the invention sidecar) + forwarding the
+  Godot game-event stream so the sidecar's WNS BehaviorInterpreter can synthesize bundles.
 - **Remaining decisions:** routing repoint (bulk `ollama→claude` has a per-call cost); flip the 2D
   `game_engine.py:5178` stub wiring (`WES_REAL_TIERS`) — optional, the sidecar is the real target.
 - All changes are in the **working tree** (uncommitted).
