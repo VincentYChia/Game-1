@@ -87,6 +87,13 @@ class EventRecorder:
         """Update current game time (called from game loop)."""
         self._game_time = game_time
 
+    def set_stat_store(self, stat_store) -> None:
+        """Register the WMS StatStore so per-event activity stamps
+        (``meta.last_activity_day.locality.<id>``) can be written — the input
+        PresenceDriftDetector reads. Without this the drift scan is always
+        empty (2026-08-13)."""
+        self._stat_store = stat_store
+
     def _connect_bus(self) -> None:
         """Subscribe to all GameEventBus events."""
         if self._connected:
@@ -458,6 +465,19 @@ class EventRecorder:
 
     def _update_activity_logs(self, event: WorldMemoryEvent) -> None:
         """Append event to relevant entity activity logs."""
+        # Stamp the most-recent game-day the player was active at this locality
+        # (the PresenceDriftDetector input). set_max keeps the latest day.
+        # Independent of the entity registry, so it runs even when that's unset.
+        stat_store = getattr(self, "_stat_store", None)
+        if stat_store is not None and event.locality_id:
+            try:
+                stat_store.set_max(
+                    f"meta.last_activity_day.locality.{event.locality_id}",
+                    float(int(self._game_time)),
+                )
+            except Exception:
+                pass
+
         if not self.entity_registry:
             return
 

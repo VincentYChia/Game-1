@@ -24,10 +24,12 @@ Every claim carries a `file:line`; code is authoritative. Companion: `GAME_SYSTE
 - ✅ **Phase 3d — WNS orphans** (`ingest_dialogue`/`maybe_weave`) hard-deprecated with ORPHAN markers
   (kept for tests; prevents a second divergent WNS ingress). *(Markers uncommitted with the earlier
   C3/M1/M2 `world_narrative_system.py` changes — to commit together.)*
-- ⏳ **Phase 3b — PresenceDriftDetector: DEFERRED.** Needs the event recorder to gain a StatStore
-  handle to write `meta.last_activity_day.locality.<id>` (it has none today) + a category fix so
-  `presence_drift` isn't suppressed. Multi-component change in the load-bearing recorder — deferred
-  from the tail of a long session to avoid a rushed stat-wiring bug. Do next.
+- ✅ **Phase 3b — PresenceDriftDetector.** The recorder now gets the WMS StatStore
+  (`set_stat_store`, injected by the facade) and stamps `meta.last_activity_day.locality.<id>` via
+  `set_max` per locality event — the input the detector reads (it was never written, so scans were
+  always empty). Added `presence_drift → exploration` to `EVENT_CATEGORY_MAP` so BehaviorInterpreter
+  no longer suppresses it as `other`. (Also mapped `faction_affinity_changed → social`.) 4 tests.
+  **Phase 3 COMPLETE.**
 
 
 

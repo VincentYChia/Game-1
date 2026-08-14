@@ -188,6 +188,9 @@ class WorldMemorySystem:
         )
         # Wire interpreter to recorder
         self.event_recorder.set_interpreter_callback(self.interpreter.on_trigger)
+        # Give the recorder the StatStore so it can stamp per-locality
+        # last_activity_day (the PresenceDriftDetector input; 2026-08-13).
+        self.event_recorder.set_stat_store(self.stat_store)
 
         # 7b. Layer 3 Manager (cross-domain consolidation)
         try:

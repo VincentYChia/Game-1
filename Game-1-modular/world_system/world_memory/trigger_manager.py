@@ -66,6 +66,11 @@ EVENT_CATEGORY_MAP: Dict[str, str] = {
     "quest_accepted": "social",
     "quest_completed": "social",
     "quest_failed": "social",
+    "faction_affinity_changed": "social",
+    # Presence drift (player abandoned a locality). Without a category it fell
+    # to "other" and BehaviorInterpreter suppressed it, so drift directives
+    # never dispatched (2026-08-13).
+    "presence_drift": "exploration",
     # System — excluded from regional accumulation
     "world_event": "other",
     "position_sample": "other",
