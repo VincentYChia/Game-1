@@ -1,0 +1,253 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-20",
+    "git_sha": "8b0965dc",
+    "source": "entities/components/inventory.py + buffs.py (scenarios EXECUTED through the real classes with the booted databases)"
+  },
+  "buff_bonuses": {
+    "damage_combat": 0.75,
+    "defense": 20.0,
+    "empower_combat": 0.75,
+    "missing": 0.0,
+    "movement": 0.15
+  },
+  "buff_tick1": {
+    "active": [
+      "short",
+      "long"
+    ],
+    "short_progress": 0.4
+  },
+  "buff_tick2": {
+    "active": [
+      "long"
+    ]
+  },
+  "consume_after_attack": [
+    "c2",
+    "c3",
+    "c4"
+  ],
+  "consume_after_craft_smithing": [
+    "c4"
+  ],
+  "consume_after_gather": [
+    "c3",
+    "c4"
+  ],
+  "equipment_id": "bamboo_fishing_rod",
+  "inventory": {
+    "drag_cancel": {
+      "slots": [
+        {
+          "crafted_stats": null,
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 20,
+          "rarity": "common"
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "drag_merge": {
+      "slots": [
+        null,
+        null,
+        {
+          "crafted_stats": null,
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 50,
+          "rarity": "common"
+        },
+        null,
+        null,
+        null
+      ]
+    },
+    "drag_out_of_range": {
+      "slots": [
+        {
+          "crafted_stats": null,
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 20,
+          "rarity": "common"
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "drag_swap": {
+      "slots": [
+        {
+          "crafted_stats": null,
+          "has_equipment_data": true,
+          "item_id": "bamboo_fishing_rod",
+          "max_stack": 1,
+          "quantity": 1,
+          "rarity": "common"
+        },
+        {
+          "crafted_stats": null,
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 20,
+          "rarity": "common"
+        },
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "equipment_no_stack": {
+      "ok": true,
+      "slots": [
+        {
+          "crafted_stats": null,
+          "has_equipment_data": true,
+          "item_id": "bamboo_fishing_rod",
+          "max_stack": 1,
+          "quantity": 1,
+          "rarity": "common"
+        },
+        {
+          "crafted_stats": null,
+          "has_equipment_data": true,
+          "item_id": "bamboo_fishing_rod",
+          "max_stack": 1,
+          "quantity": 1,
+          "rarity": "common"
+        },
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "full_inventory_fail": {
+      "ok": false,
+      "slots": [
+        {
+          "crafted_stats": null,
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 99,
+          "rarity": "common"
+        },
+        {
+          "crafted_stats": null,
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 99,
+          "rarity": "common"
+        }
+      ]
+    },
+    "rarity_and_stats_split": {
+      "count": 30,
+      "slots": [
+        {
+          "crafted_stats": null,
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 10,
+          "rarity": "common"
+        },
+        {
+          "crafted_stats": null,
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 10,
+          "rarity": "rare"
+        },
+        {
+          "crafted_stats": {
+            "damage_multiplier": 0.1
+          },
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 10,
+          "rarity": "common"
+        },
+        null,
+        null,
+        null
+      ]
+    },
+    "remove_across_stacks": {
+      "count": 7,
+      "has_5": true,
+      "removed_fail": false,
+      "removed_ok": true,
+      "slots": [
+        null,
+        {
+          "crafted_stats": null,
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 7,
+          "rarity": "common"
+        },
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "stack_overflow": {
+      "count": 203,
+      "ok": true,
+      "slots": [
+        {
+          "crafted_stats": null,
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 99,
+          "rarity": "common"
+        },
+        {
+          "crafted_stats": null,
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 99,
+          "rarity": "common"
+        },
+        {
+          "crafted_stats": null,
+          "has_equipment_data": false,
+          "item_id": "oak_log",
+          "max_stack": 99,
+          "quantity": 5,
+          "rarity": "common"
+        },
+        null,
+        null,
+        null
+      ]
+    }
+  },
+  "material_id": "oak_log",
+  "material_max_stack": 99
+}

@@ -1,0 +1,89 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-20",
+    "git_sha": "8b0965dc",
+    "source": "data/databases/translation_db.py"
+  },
+  "cooldown_seconds": {
+    "extreme": 1200,
+    "long": 600,
+    "moderate": 300,
+    "short": 120
+  },
+  "duration_seconds": {
+    "brief": 15,
+    "extended": 120,
+    "instant": 0,
+    "long": 60,
+    "moderate": 30
+  },
+  "magnitude_values": {
+    "devastate": {
+      "extreme": 10,
+      "major": 7,
+      "minor": 3,
+      "moderate": 5
+    },
+    "elevate": {
+      "extreme": 0.6,
+      "major": 0.4,
+      "minor": 0.15,
+      "moderate": 0.25
+    },
+    "empower": {
+      "extreme": 4.0,
+      "major": 2.0,
+      "minor": 0.5,
+      "moderate": 1.0
+    },
+    "enrich": {
+      "extreme": 12,
+      "major": 6,
+      "minor": 1,
+      "moderate": 3
+    },
+    "fortify": {
+      "extreme": 80,
+      "major": 40,
+      "minor": 10,
+      "moderate": 20
+    },
+    "pierce": {
+      "extreme": 0.4,
+      "major": 0.25,
+      "minor": 0.1,
+      "moderate": 0.15
+    },
+    "quicken": {
+      "extreme": 1.0,
+      "major": 0.75,
+      "minor": 0.3,
+      "moderate": 0.5
+    },
+    "regenerate": {
+      "extreme": 20,
+      "major": 10,
+      "minor": 3,
+      "moderate": 5
+    },
+    "restore": {
+      "extreme": 400,
+      "major": 200,
+      "minor": 50,
+      "moderate": 100
+    },
+    "transcend": {
+      "extreme": 4,
+      "major": 3,
+      "minor": 1,
+      "moderate": 2
+    }
+  },
+  "mana_costs": {
+    "extreme": 150,
+    "high": 100,
+    "low": 30,
+    "moderate": 60
+  }
+}

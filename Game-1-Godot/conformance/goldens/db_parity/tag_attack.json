@@ -1,0 +1,1924 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-20",
+    "git_sha": "8b0965dc",
+    "source": "Combat/combat_manager.py player_attack_enemy_with_tags — REAL Character + CombatManager, spec-built loadouts (specs in fixture), skip_visual/skip_los, dual rng"
+  },
+  "cases": [
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 10.0
+        },
+        "tags": [
+          "physical"
+        ],
+        "target": 0
+      },
+      "char": {},
+      "enemies": [
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "unarmed_basic"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 12.0
+        },
+        "tags": [
+          "physical"
+        ],
+        "target": 0
+      },
+      "char": {
+        "stats": {
+          "luck": 5,
+          "strength": 10
+        },
+        "titles": [
+          {
+            "bonuses": {
+              "beast_damage": 0.25,
+              "crit_chance": 0.05,
+              "luck_stat": 3,
+              "melee_damage": 0.1
+            },
+            "title_id": "synthetic_warlord"
+          }
+        ],
+        "weapons": {
+          "mainHand": {
+            "damage": [
+              10,
+              14
+            ],
+            "item_id": "test_sword",
+            "tags": [
+              "melee",
+              "sword",
+              "1H"
+            ]
+          }
+        }
+      },
+      "enemies": [
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "sword_str_titles"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 15.0
+        },
+        "tags": [
+          "physical",
+          "crushing"
+        ],
+        "target": 0
+      },
+      "char": {
+        "stats": {
+          "strength": 6
+        },
+        "weapons": {
+          "mainHand": {
+            "damage": [
+              18,
+              26
+            ],
+            "hand_type": "2H",
+            "item_id": "test_maul",
+            "tags": [
+              "melee",
+              "hammer",
+              "2H",
+              "crushing"
+            ]
+          }
+        }
+      },
+      "enemies": [
+        {
+          "enemy_id": "beetle_armored",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "twohand_crushing_vs_armored"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 20.0
+        },
+        "tags": [
+          "physical"
+        ],
+        "target": 0
+      },
+      "char": {
+        "weapons": {
+          "mainHand": {
+            "damage": [
+              12,
+              16
+            ],
+            "item_id": "test_pick",
+            "tags": [
+              "melee",
+              "armor_breaker"
+            ]
+          }
+        }
+      },
+      "enemies": [
+        {
+          "enemy_id": "golem_stone",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "armor_breaker_pen"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 10.0
+        },
+        "tags": [
+          "physical"
+        ],
+        "target": 0
+      },
+      "char": {
+        "stats": {
+          "luck": 20
+        },
+        "weapons": {
+          "mainHand": {
+            "damage": [
+              8,
+              12
+            ],
+            "item_id": "test_rapier",
+            "tags": [
+              "melee",
+              "sword",
+              "precision"
+            ]
+          }
+        }
+      },
+      "enemies": [
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "precision_crit"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 14.0,
+          "burn_duration": 4.0
+        },
+        "tags": [
+          "fire",
+          "burn"
+        ],
+        "target": 0
+      },
+      "char": {
+        "stats": {
+          "intelligence": 12
+        },
+        "weapons": {
+          "mainHand": {
+            "damage": [
+              6,
+              9
+            ],
+            "item_id": "test_staff",
+            "tags": [
+              "melee",
+              "staff"
+            ]
+          }
+        }
+      },
+      "enemies": [
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "int_elemental_burn"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 10.0
+        },
+        "tags": [
+          "physical"
+        ],
+        "target": 0
+      },
+      "char": {
+        "buffs": [
+          {
+            "bonus_value": 0.5,
+            "buff_id": "power_surge",
+            "category": "damage",
+            "effect_type": "empower"
+          }
+        ]
+      },
+      "enemies": [
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "empower_buff"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 10.0
+        },
+        "tags": [
+          "physical"
+        ],
+        "target": 0
+      },
+      "char": {
+        "buffs": [
+          {
+            "bonus_value": 0.3,
+            "buff_id": "keen_eye",
+            "category": "damage",
+            "effect_type": "pierce"
+          }
+        ]
+      },
+      "enemies": [
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "pierce_buff_crit"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 30.0
+        },
+        "tags": [
+          "physical"
+        ],
+        "target": 0
+      },
+      "char": {
+        "buffs": [
+          {
+            "bonus_value": 4.0,
+            "buff_id": "whirlwind",
+            "category": "combat",
+            "consume_on_use": true,
+            "effect_type": "devastate"
+          }
+        ],
+        "stats": {
+          "strength": 8
+        },
+        "weapons": {
+          "mainHand": {
+            "damage": [
+              400,
+              500
+            ],
+            "hand_type": "2H",
+            "item_id": "test_greataxe",
+            "tags": [
+              "melee",
+              "axe",
+              "2H"
+            ]
+          }
+        }
+      },
+      "enemies": [
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        },
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            4.0,
+            1.0
+          ]
+        },
+        {
+          "enemy_id": "slime_acid",
+          "pos": [
+            3.0,
+            -2.0
+          ]
+        },
+        {
+          "enemy_id": "beetle_titan",
+          "pos": [
+            15.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "devastate_whirlwind"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 25.0
+        },
+        "tags": [
+          "physical"
+        ],
+        "target": 0
+      },
+      "char": {
+        "health": 40.0,
+        "weapons": {
+          "mainHand": {
+            "damage": [
+              10,
+              12
+            ],
+            "enchantments": [
+              {
+                "effect": {
+                  "type": "lifesteal",
+                  "value": 0.2
+                },
+                "name": "Lifesteal I"
+              }
+            ],
+            "item_id": "test_leech",
+            "tags": [
+              "melee",
+              "sword"
+            ]
+          }
+        }
+      },
+      "enemies": [
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "lifesteal_enchant"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 5.0
+        },
+        "tags": [
+          "physical"
+        ],
+        "target": 0
+      },
+      "char": {
+        "weapons": {
+          "mainHand": {
+            "damage": [
+              9,
+              13
+            ],
+            "enchantments": [
+              {
+                "effect": {
+                  "damagePerSecond": 6.0,
+                  "duration": 4.0,
+                  "element": "fire",
+                  "type": "damage_over_time"
+                },
+                "name": "Fire Aspect"
+              },
+              {
+                "effect": {
+                  "type": "knockback",
+                  "value": 2.5
+                },
+                "name": "Knockback I"
+              },
+              {
+                "effect": {
+                  "duration": 2.0,
+                  "type": "slow",
+                  "value": 0.4
+                },
+                "name": "Frost Touch"
+              }
+            ],
+            "item_id": "test_flame",
+            "tags": [
+              "melee",
+              "sword"
+            ]
+          }
+        }
+      },
+      "enemies": [
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "onhit_enchants"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 800.0
+        },
+        "tags": [
+          "physical"
+        ],
+        "target": 0
+      },
+      "char": {
+        "exp": 340,
+        "weapons": {
+          "mainHand": {
+            "damage": [
+              300,
+              340
+            ],
+            "item_id": "test_slayer",
+            "tags": [
+              "melee",
+              "sword"
+            ]
+          }
+        }
+      },
+      "enemies": [
+        {
+          "enemy_id": "inferno_drake",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "kill_loot_exp_cascade"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 8.0
+        },
+        "tags": [
+          "physical"
+        ],
+        "target": 0
+      },
+      "char": {
+        "selected_slot": "axe"
+      },
+      "enemies": [
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "improper_tool_axe"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 20.0,
+          "lifesteal_percent": 0.3
+        },
+        "tags": [
+          "physical",
+          "lifesteal"
+        ],
+        "target": 0
+      },
+      "char": {
+        "health": 50.0
+      },
+      "enemies": [
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        }
+      ],
+      "id": "skill_lifesteal_tag"
+    },
+    {
+      "attack": {
+        "params": {
+          "baseDamage": 30.0,
+          "chain_count": 2,
+          "chain_range": 8.0
+        },
+        "tags": [
+          "lightning",
+          "chain"
+        ],
+        "target": 0
+      },
+      "char": {
+        "stats": {
+          "strength": 5
+        }
+      },
+      "enemies": [
+        {
+          "enemy_id": "beetle_brown",
+          "pos": [
+            2.0,
+            0.0
+          ]
+        },
+        {
+          "enemy_id": "beetle_armored",
+          "pos": [
+            4.0,
+            0.5
+          ]
+        },
+        {
+          "enemy_id": "golem_stone",
+          "pos": [
+            6.0,
+            1.0
+          ]
+        }
+      ],
+      "id": "chain_defense_per_target"
+    }
+  ],
+  "results": [
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": false,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 89.88,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": []
+        }
+      ],
+      "id": "unarmed_basic",
+      "loot": [],
+      "rng_global": 0.8052336600899589,
+      "rng_manager": 0.5954495146866053
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "mainHand": [
+            99,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": true,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 30.304000000000002,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": []
+        }
+      ],
+      "id": "sword_str_titles",
+      "loot": [],
+      "rng_global": 0.4601958556179986,
+      "rng_manager": 0.2530793701724321
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "mainHand": [
+            99,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": false,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 153.12400000000002,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": []
+        }
+      ],
+      "id": "twohand_crushing_vs_armored",
+      "loot": [],
+      "rng_global": 0.1440389497437784,
+      "rng_manager": 0.3464137884160462
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "mainHand": [
+            99,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": false,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 776.2,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": []
+        }
+      ],
+      "id": "armor_breaker_pen",
+      "loot": [],
+      "rng_global": 0.6795102123646071,
+      "rng_manager": 0.9217035605615437
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "mainHand": [
+            99,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": true,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 64.8,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": []
+        }
+      ],
+      "id": "precision_crit",
+      "loot": [],
+      "rng_global": 0.49969216351845225,
+      "rng_manager": 0.47023094039380486
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "mainHand": [
+            99,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": false,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 69.72800000000001,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": [
+            {
+              "id": "burn",
+              "remaining": 5.0,
+              "stacks": 1
+            }
+          ]
+        }
+      ],
+      "id": "int_elemental_burn",
+      "loot": [],
+      "rng_global": 0.18734905726556328,
+      "rng_manager": 0.9466099669079835
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": false,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 84.82,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": []
+        }
+      ],
+      "id": "empower_buff",
+      "loot": [],
+      "rng_global": 0.9975689845175585,
+      "rng_manager": 0.3931369852872896
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": false,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 89.88,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": []
+        }
+      ],
+      "id": "pierce_buff_crit",
+      "loot": [],
+      "rng_global": 0.024321440040737108,
+      "rng_manager": 0.8631100961662926
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "mainHand": [
+            100,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 250,
+        "health": 100,
+        "inventory": [
+          [
+            "beetle_carapace",
+            4
+          ],
+          [
+            "slime_gel",
+            8
+          ],
+          [
+            "living_ichor",
+            2
+          ],
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 2,
+        "max_health": 100,
+        "stat_points": 1
+      },
+      "crit": false,
+      "damage": 2016.0,
+      "enemies": [
+        {
+          "alive": false,
+          "health": 0,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "dead",
+          "statuses": []
+        },
+        {
+          "alive": false,
+          "health": 0,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            4.0,
+            1.0
+          ],
+          "state": "dead",
+          "statuses": []
+        },
+        {
+          "alive": false,
+          "health": 0,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            3.0,
+            -2.0
+          ],
+          "state": "dead",
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "health": 1200,
+          "in_combat": false,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            15.0,
+            0.0
+          ],
+          "state": "patrol",
+          "statuses": []
+        }
+      ],
+      "id": "devastate_whirlwind",
+      "loot": [
+        [
+          "beetle_carapace",
+          2
+        ],
+        [
+          "beetle_carapace",
+          2
+        ],
+        [
+          "slime_gel",
+          8
+        ],
+        [
+          "living_ichor",
+          2
+        ],
+        [
+          "slime_gel",
+          8
+        ],
+        [
+          "living_ichor",
+          2
+        ]
+      ],
+      "rng_global": 0.15660597079071292,
+      "rng_manager": 0.6041636203834003
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "mainHand": [
+            99,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 47.2,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": false,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 68.32,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": []
+        }
+      ],
+      "id": "lifesteal_enchant",
+      "loot": [],
+      "rng_global": 0.7826356537549491,
+      "rng_manager": 0.24855561518250624
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "mainHand": [
+            99,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": false,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 85.92,
+          "in_combat": true,
+          "knockback": [
+            5.0,
+            0.0,
+            0.5
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": [
+            {
+              "id": "burn",
+              "remaining": 4.0,
+              "stacks": 1
+            },
+            {
+              "id": "slow",
+              "remaining": 2.0,
+              "stacks": 1
+            }
+          ]
+        }
+      ],
+      "id": "onhit_enchants",
+      "loot": [],
+      "rng_global": 0.7215799226604335,
+      "rng_manager": 0.24706996008938975
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "mainHand": [
+            99,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 978,
+        "health": 100,
+        "inventory": [
+          [
+            "drake_scale",
+            2
+          ],
+          [
+            "fire_crystal",
+            3
+          ],
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 3,
+        "max_health": 100,
+        "stat_points": 2
+      },
+      "crit": false,
+      "damage": 1120.0,
+      "enemies": [
+        {
+          "alive": false,
+          "health": 0,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "dead",
+          "statuses": []
+        }
+      ],
+      "id": "kill_loot_exp_cascade",
+      "loot": [
+        [
+          "drake_scale",
+          2
+        ],
+        [
+          "fire_crystal",
+          3
+        ]
+      ],
+      "rng_global": 0.8426856367071305,
+      "rng_manager": 0.7185608847010139
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            498,
+            500
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": false,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 84.16,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": []
+        }
+      ],
+      "id": "improper_tool_axe",
+      "loot": [],
+      "rng_global": 0.7920867692077157,
+      "rng_manager": 0.7225018488805388
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 56.45,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": false,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 81.08,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": []
+        }
+      ],
+      "id": "skill_lifesteal_tag",
+      "loot": [],
+      "rng_global": 0.893568710170797,
+      "rng_manager": 0.889239723739221
+    },
+    {
+      "char": {
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "max_health": 100,
+        "stat_points": 0
+      },
+      "crit": false,
+      "damage": 0.0,
+      "enemies": [
+        {
+          "alive": true,
+          "health": 65.35,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            2.0,
+            0.0
+          ],
+          "state": "chase",
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "health": 229.328125,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            4.0,
+            0.5
+          ],
+          "state": "chase",
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "health": 788.42375,
+          "in_combat": true,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pos": [
+            6.0,
+            1.0
+          ],
+          "state": "chase",
+          "statuses": []
+        }
+      ],
+      "id": "chain_defense_per_target",
+      "loot": [],
+      "rng_global": 0.7042073238681517,
+      "rng_manager": 0.48955306150518063
+    }
+  ]
+}

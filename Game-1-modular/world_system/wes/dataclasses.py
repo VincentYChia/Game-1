@@ -43,6 +43,11 @@ class WESPlanStep:
     intent: str
     depends_on: List[str] = field(default_factory=list)
     slots: Dict[str, Any] = field(default_factory=dict)
+    # Canonical id (approach A, 2026-08-11): the snake_case id the planner
+    # pins for this step's artifact. The dispatcher forces the artifact to use
+    # it and rewrites dependents' cross-refs to it so co-emitted content always
+    # resolves. Optional — the dispatcher falls back to the tool's emitted id.
+    content_id: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -51,6 +56,7 @@ class WESPlanStep:
             "intent": self.intent,
             "depends_on": list(self.depends_on),
             "slots": dict(self.slots),
+            "content_id": self.content_id,
         }
 
     @classmethod
@@ -61,6 +67,7 @@ class WESPlanStep:
             intent=d["intent"],
             depends_on=list(d.get("depends_on", [])),
             slots=dict(d.get("slots", {})),
+            content_id=str(d.get("content_id", "") or ""),
         )
 
 

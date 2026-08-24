@@ -140,6 +140,7 @@ class WorldInterpreter:
             # Social evaluators
             ("world_system.world_memory.evaluators.social_npc", "SocialNpcEvaluator"),
             ("world_system.world_memory.evaluators.social_quests", "SocialQuestsEvaluator"),
+            ("world_system.world_memory.evaluators.faction_reputation", "FactionReputationEvaluator"),
             # Economy evaluators
             ("world_system.world_memory.evaluators.economy_flow", "EconomyFlowEvaluator"),
             # Items evaluators

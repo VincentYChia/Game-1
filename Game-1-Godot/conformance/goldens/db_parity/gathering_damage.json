@@ -1,0 +1,1710 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-20",
+    "git_sha": "8b0965dc",
+    "source": "entities/character.py harvest path + systems/natural_resource.py + combat_manager.py _enemy_attack_player — REAL objects, spec-built loadouts (specs in fixture), seeded global rng"
+  },
+  "enemy_hit_cases": [
+    {
+      "attacks": 3,
+      "char": {
+        "stats": {
+          "defense": 5
+        },
+        "weapons": {
+          "chestplate": {
+            "defense": 12,
+            "item_id": "test_chest"
+          },
+          "helmet": {
+            "defense": 6,
+            "item_id": "test_helm"
+          }
+        }
+      },
+      "enemy": "beetle_brown",
+      "id": "basic_def_armor",
+      "shield_blocking": false
+    },
+    {
+      "attacks": 3,
+      "char": {
+        "weapons": {
+          "offHand": {
+            "bonuses": {
+              "defense_multiplier": 0.25
+            },
+            "item_id": "test_shield",
+            "item_type": "shield",
+            "stat_multipliers": {
+              "damage": 0.6
+            }
+          }
+        }
+      },
+      "enemy": "beetle_armored",
+      "id": "shield_block",
+      "shield_blocking": true
+    },
+    {
+      "attacks": 6,
+      "char": {
+        "stats": {
+          "defense": 3
+        },
+        "weapons": {
+          "chestplate": {
+            "defense": 10,
+            "enchantments": [
+              {
+                "effect": {
+                  "type": "damage_reduction",
+                  "value": 0.1
+                },
+                "name": "Protection I"
+              },
+              {
+                "effect": {
+                  "type": "reflect_damage",
+                  "value": 0.5
+                },
+                "name": "Thorns II"
+              }
+            ],
+            "item_id": "test_thorn_chest"
+          },
+          "leggings": {
+            "defense": 8,
+            "enchantments": [
+              {
+                "effect": {
+                  "type": "reflect_damage",
+                  "value": 0.5
+                },
+                "name": "Thorns II"
+              }
+            ],
+            "item_id": "test_thorn_legs"
+          }
+        }
+      },
+      "enemy": "slime_acid",
+      "id": "protection_thorns",
+      "shield_blocking": false
+    },
+    {
+      "attacks": 2,
+      "char": {
+        "buffs": [
+          {
+            "bonus_value": 25.0,
+            "buff_id": "stone_skin",
+            "category": "defense",
+            "effect_type": "fortify"
+          }
+        ],
+        "stats": {
+          "defense": 20
+        },
+        "weapons": {
+          "chestplate": {
+            "defense": 30,
+            "item_id": "test_plate"
+          }
+        }
+      },
+      "enemy": "beetle_brown",
+      "id": "fortify_min_damage",
+      "shield_blocking": false
+    },
+    {
+      "attacks": 1,
+      "char": {
+        "health": 2.0
+      },
+      "enemy": "beetle_titan",
+      "id": "lethal_respawn",
+      "shield_blocking": false
+    }
+  ],
+  "enemy_hit_results": [
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 0,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 0,
+          "mining": 0,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "chestplate": [
+            97.29999999999998,
+            100
+          ],
+          "helmet": [
+            97.29999999999998,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 81.5668106802444,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": []
+      },
+      "hits": [
+        {
+          "enemy_alive": true,
+          "enemy_health": 100,
+          "player_health": 92.86948017795721
+        },
+        {
+          "enemy_alive": true,
+          "enemy_health": 100,
+          "player_health": 87.24627817590203
+        },
+        {
+          "enemy_alive": true,
+          "enemy_health": 100,
+          "player_health": 81.5668106802444
+        }
+      ],
+      "id": "basic_def_armor",
+      "rng_global": 0.7015170870679681
+    },
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 0,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 0,
+          "mining": 0,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "offHand": [
+            100,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 63.87746955864664,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": []
+      },
+      "hits": [
+        {
+          "enemy_alive": true,
+          "enemy_health": 250,
+          "player_health": 88.17294039898063
+        },
+        {
+          "enemy_alive": true,
+          "enemy_health": 250,
+          "player_health": 75.12431894363644
+        },
+        {
+          "enemy_alive": true,
+          "enemy_health": 250,
+          "player_health": 63.87746955864664
+        }
+      ],
+      "id": "shield_block",
+      "rng_global": 0.19863634692523346
+    },
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 0,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 0,
+          "mining": 0,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "chestplate": [
+            94.36000000000001,
+            100
+          ],
+          "leggings": [
+            94.36000000000001,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 31.159177726254626,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": []
+      },
+      "hits": [
+        {
+          "enemy_alive": true,
+          "enemy_health": 110.84260524550467,
+          "player_health": 88.55325655688084
+        },
+        {
+          "enemy_alive": true,
+          "enemy_health": 100.7080018959226,
+          "player_health": 75.88500236990326
+        },
+        {
+          "enemy_alive": true,
+          "enemy_health": 91.96962011483738,
+          "player_health": 64.96202514354674
+        },
+        {
+          "enemy_alive": true,
+          "enemy_health": 83.59716419455617,
+          "player_health": 54.49645524319522
+        },
+        {
+          "enemy_alive": true,
+          "enemy_health": 73.27986180400664,
+          "player_health": 41.59982725500831
+        },
+        {
+          "enemy_alive": true,
+          "enemy_health": 64.9273421810037,
+          "player_health": 31.159177726254626
+        }
+      ],
+      "id": "protection_thorns",
+      "rng_global": 0.8403893908832939
+    },
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 0,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 0,
+          "mining": 0,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "chestplate": [
+            98.80000000000001,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 98,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": []
+      },
+      "hits": [
+        {
+          "enemy_alive": true,
+          "enemy_health": 100,
+          "player_health": 99
+        },
+        {
+          "enemy_alive": true,
+          "enemy_health": 100,
+          "player_health": 98
+        }
+      ],
+      "id": "fortify_min_damage",
+      "rng_global": 0.633216282287853
+    },
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 0,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 0,
+          "mining": 0,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 0,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": []
+      },
+      "hits": [
+        {
+          "enemy_alive": true,
+          "enemy_health": 1200,
+          "player_health": 100
+        }
+      ],
+      "id": "lethal_respawn",
+      "rng_global": 0.9565886415083512
+    }
+  ],
+  "gather_cases": [
+    {
+      "char": {},
+      "id": "axe_oak",
+      "resources": [
+        {
+          "pos": [
+            1.0,
+            0.0
+          ],
+          "tier": 1,
+          "type": "oak_tree"
+        }
+      ],
+      "swings": 30,
+      "target": 0
+    },
+    {
+      "char": {
+        "selected_slot": "pickaxe",
+        "stats": {
+          "luck": 10
+        }
+      },
+      "id": "pickaxe_copper_luck",
+      "resources": [
+        {
+          "pos": [
+            1.0,
+            0.5
+          ],
+          "tier": 1,
+          "type": "copper_vein"
+        }
+      ],
+      "swings": 30,
+      "target": 0
+    },
+    {
+      "char": {
+        "selected_slot": "pickaxe"
+      },
+      "id": "wrong_tool_pickaxe_on_tree",
+      "resources": [
+        {
+          "pos": [
+            0.5,
+            1.0
+          ],
+          "tier": 1,
+          "type": "oak_tree"
+        }
+      ],
+      "swings": 12,
+      "target": 0
+    },
+    {
+      "char": {
+        "selected_slot": "axe",
+        "stats": {
+          "defense": 7
+        }
+      },
+      "id": "def_fractional_durability",
+      "resources": [
+        {
+          "pos": [
+            1.5,
+            0.0
+          ],
+          "tier": 1,
+          "type": "pine_tree"
+        }
+      ],
+      "swings": 10,
+      "target": 0
+    },
+    {
+      "char": {
+        "selected_slot": "axe",
+        "stats": {
+          "agility": 10,
+          "luck": 6
+        },
+        "titles": [
+          {
+            "bonuses": {
+              "forestrySpeed": 0.1,
+              "forestry_damage": 0.15,
+              "luck_stat": 2
+            },
+            "title_id": "synthetic_lumberjack"
+          }
+        ],
+        "weapons": {
+          "axe": {
+            "damage": [
+              8,
+              12
+            ],
+            "enchantments": [
+              {
+                "effect": {
+                  "type": "gathering_speed_multiplier",
+                  "value": 0.2
+                },
+                "name": "Efficiency I"
+              },
+              {
+                "effect": {
+                  "type": "durability_multiplier",
+                  "value": 0.3
+                },
+                "name": "Unbreaking I"
+              },
+              {
+                "effect": {
+                  "type": "bonus_yield_chance",
+                  "value": 0.5
+                },
+                "name": "Fortune I"
+              }
+            ],
+            "item_id": "test_fine_axe",
+            "tier": 2
+          }
+        }
+      },
+      "id": "enchanted_agi_titles",
+      "resources": [
+        {
+          "pos": [
+            1.0,
+            1.0
+          ],
+          "tier": 2,
+          "type": "ash_tree"
+        }
+      ],
+      "swings": 30,
+      "target": 0
+    },
+    {
+      "char": {
+        "selected_slot": "fishing_rod",
+        "weapons": {
+          "fishing_rod": {
+            "damage": [
+              6,
+              10
+            ],
+            "item_id": "test_rod",
+            "tier": 2
+          }
+        }
+      },
+      "id": "fishing_activity_dropped",
+      "resources": [
+        {
+          "pos": [
+            1.0,
+            -1.0
+          ],
+          "tier": 1,
+          "type": "fishing_spot_carp"
+        }
+      ],
+      "swings": 30,
+      "target": 0
+    },
+    {
+      "char": {
+        "buffs": [
+          {
+            "bonus_value": 5.0,
+            "buff_id": "chain_harvest",
+            "category": "forestry",
+            "consume_on_use": true,
+            "effect_type": "devastate"
+          }
+        ],
+        "selected_slot": "axe",
+        "stats": {
+          "agility": 5
+        }
+      },
+      "id": "devastate_chain_harvest",
+      "resources": [
+        {
+          "pos": [
+            1.0,
+            0.0
+          ],
+          "tier": 1,
+          "type": "oak_tree"
+        },
+        {
+          "pos": [
+            2.0,
+            1.0
+          ],
+          "tier": 1,
+          "type": "birch_tree"
+        },
+        {
+          "pos": [
+            -1.0,
+            2.0
+          ],
+          "tier": 1,
+          "type": "pine_tree"
+        },
+        {
+          "pos": [
+            2.0,
+            -1.0
+          ],
+          "tier": 1,
+          "type": "copper_vein"
+        }
+      ],
+      "swings": 1,
+      "target": 0
+    },
+    {
+      "char": {
+        "activities": {
+          "combat": 9999,
+          "forestry": 9999,
+          "mining": 9999
+        },
+        "selected_slot": "pickaxe",
+        "stats": {
+          "strength": 12
+        }
+      },
+      "id": "title_award_churn",
+      "resources": [
+        {
+          "pos": [
+            1.0,
+            0.0
+          ],
+          "tier": 1,
+          "type": "iron_deposit"
+        }
+      ],
+      "swings": 8,
+      "target": 0
+    }
+  ],
+  "gather_results": [
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 0,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 10,
+          "mining": 0,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            490.0,
+            500
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 100,
+        "health": 100,
+        "inventory": [
+          [
+            "oak_log",
+            5
+          ],
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": []
+      },
+      "harvests": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "crit": false,
+          "damage": 10,
+          "loot": [
+            [
+              "oak_log",
+              5
+            ]
+          ]
+        }
+      ],
+      "id": "axe_oak",
+      "resources": [
+        {
+          "depleted": true,
+          "hp": 0,
+          "loot_table": [
+            [
+              "oak_log",
+              3,
+              5,
+              1.0
+            ]
+          ],
+          "max_hp": 100,
+          "required_tool": "axe",
+          "respawn_timer": 30.0,
+          "respawns": true,
+          "time_until_respawn": 20.0
+        }
+      ],
+      "rng_global": 0.405581644290133
+    },
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 0,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 0,
+          "mining": 9,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "pickaxe": [
+            491.0,
+            500
+          ]
+        },
+        "exp": 90,
+        "health": 100,
+        "inventory": [
+          [
+            "copper_ore",
+            3
+          ],
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": []
+      },
+      "harvests": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "crit": true,
+          "damage": 20,
+          "loot": [
+            [
+              "copper_ore",
+              3
+            ]
+          ]
+        }
+      ],
+      "id": "pickaxe_copper_luck",
+      "resources": [
+        {
+          "depleted": true,
+          "hp": 0,
+          "loot_table": [
+            [
+              "copper_ore",
+              3,
+              5,
+              1.0
+            ]
+          ],
+          "max_hp": 100,
+          "required_tool": "pickaxe",
+          "respawn_timer": 30.0,
+          "respawns": true,
+          "time_until_respawn": 20.0
+        }
+      ],
+      "rng_global": 0.8165926557949064
+    },
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 0,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 12,
+          "mining": 0,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "pickaxe": [
+            476.0,
+            500
+          ]
+        },
+        "exp": 120,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": []
+      },
+      "harvests": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "id": "wrong_tool_pickaxe_on_tree",
+      "resources": [
+        {
+          "depleted": false,
+          "hp": 76,
+          "loot_table": [
+            [
+              "oak_log",
+              3,
+              5,
+              1.0
+            ]
+          ],
+          "max_hp": 100,
+          "required_tool": "axe",
+          "respawn_timer": 30.0,
+          "respawns": true,
+          "time_until_respawn": 0.0
+        }
+      ],
+      "rng_global": 0.9517859962412966
+    },
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 0,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 10,
+          "mining": 0,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            491.39999999999986,
+            500
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 100,
+        "health": 100,
+        "inventory": [
+          [
+            "pine_log",
+            3
+          ],
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": []
+      },
+      "harvests": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "crit": false,
+          "damage": 10,
+          "loot": [
+            [
+              "pine_log",
+              3
+            ]
+          ]
+        }
+      ],
+      "id": "def_fractional_durability",
+      "resources": [
+        {
+          "depleted": true,
+          "hp": 0,
+          "loot_table": [
+            [
+              "pine_log",
+              3,
+              5,
+              1.0
+            ]
+          ],
+          "max_hp": 100,
+          "required_tool": "axe",
+          "respawn_timer": 30.0,
+          "respawns": true,
+          "time_until_respawn": 20.0
+        }
+      ],
+      "rng_global": 0.5369093611431849
+    },
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 0,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 4,
+          "mining": 0,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            97.19999999999999,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 160,
+        "health": 100,
+        "inventory": [
+          [
+            "ash_log",
+            5
+          ],
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": [
+          "synthetic_lumberjack"
+        ]
+      },
+      "harvests": [
+        null,
+        null,
+        null,
+        {
+          "crit": false,
+          "damage": 21,
+          "loot": [
+            [
+              "ash_log",
+              5
+            ]
+          ]
+        }
+      ],
+      "id": "enchanted_agi_titles",
+      "resources": [
+        {
+          "depleted": true,
+          "hp": 0,
+          "loot_table": [
+            [
+              "ash_log",
+              2,
+              4,
+              1.0
+            ]
+          ],
+          "max_hp": 100,
+          "required_tool": "axe",
+          "respawn_timer": 30.0,
+          "respawns": true,
+          "time_until_respawn": 20.0
+        }
+      ],
+      "rng_global": 0.8714021160270822
+    },
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 0,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 0,
+          "mining": 0,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "fishing_rod": [
+            93.0,
+            100
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 70,
+        "health": 100,
+        "inventory": [
+          [
+            "common_scales",
+            2
+          ],
+          [
+            "fine_scales",
+            2
+          ],
+          [
+            "water_crystal",
+            2
+          ],
+          [
+            "earth_crystal",
+            2
+          ],
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": []
+      },
+      "harvests": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "crit": false,
+          "damage": 8,
+          "loot": [
+            [
+              "common_scales",
+              2
+            ],
+            [
+              "fine_scales",
+              2
+            ],
+            [
+              "water_crystal",
+              2
+            ],
+            [
+              "earth_crystal",
+              2
+            ]
+          ]
+        }
+      ],
+      "id": "fishing_activity_dropped",
+      "resources": [
+        {
+          "depleted": true,
+          "hp": 0,
+          "loot_table": [
+            [
+              "common_scales",
+              2,
+              4,
+              1.0
+            ],
+            [
+              "fine_scales",
+              1,
+              2,
+              0.5
+            ],
+            [
+              "water_crystal",
+              1,
+              2,
+              0.8
+            ],
+            [
+              "earth_crystal",
+              1,
+              2,
+              0.5
+            ]
+          ],
+          "max_hp": 50,
+          "required_tool": "fishing_rod",
+          "respawn_timer": 30.0,
+          "respawns": true,
+          "time_until_respawn": 20.0
+        }
+      ],
+      "rng_global": 0.5105215143126544
+    },
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 0,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 1,
+          "mining": 0,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            497.0,
+            500
+          ],
+          "pickaxe": [
+            500,
+            500
+          ]
+        },
+        "exp": 10,
+        "health": 100,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": []
+      },
+      "harvests": [
+        null
+      ],
+      "id": "devastate_chain_harvest",
+      "resources": [
+        {
+          "depleted": false,
+          "hp": 88,
+          "loot_table": [
+            [
+              "oak_log",
+              3,
+              5,
+              1.0
+            ]
+          ],
+          "max_hp": 100,
+          "required_tool": "axe",
+          "respawn_timer": 30.0,
+          "respawns": true,
+          "time_until_respawn": 0.0
+        },
+        {
+          "depleted": false,
+          "hp": 188,
+          "loot_table": [
+            [
+              "birch_log",
+              2,
+              4,
+              1.0
+            ]
+          ],
+          "max_hp": 200,
+          "required_tool": "axe",
+          "respawn_timer": 60.0,
+          "respawns": true,
+          "time_until_respawn": 0.0
+        },
+        {
+          "depleted": false,
+          "hp": 88,
+          "loot_table": [
+            [
+              "pine_log",
+              3,
+              5,
+              1.0
+            ]
+          ],
+          "max_hp": 100,
+          "required_tool": "axe",
+          "respawn_timer": 30.0,
+          "respawns": true,
+          "time_until_respawn": 0.0
+        },
+        {
+          "depleted": false,
+          "hp": 100,
+          "loot_table": [
+            [
+              "copper_ore",
+              3,
+              5,
+              1.0
+            ]
+          ],
+          "max_hp": 100,
+          "required_tool": "pickaxe",
+          "respawn_timer": 30.0,
+          "respawns": true,
+          "time_until_respawn": 0.0
+        }
+      ],
+      "rng_global": 0.5008974297848305
+    },
+    {
+      "char": {
+        "activities": {
+          "alchemy": 0,
+          "combat": 9999,
+          "enchanting": 0,
+          "engineering": 0,
+          "forestry": 9999,
+          "mining": 10006,
+          "refining": 0,
+          "smithing": 0
+        },
+        "durability": {
+          "axe": [
+            500,
+            500
+          ],
+          "pickaxe": [
+            493.0,
+            500
+          ]
+        },
+        "exp": 70,
+        "health": 100,
+        "inventory": [
+          [
+            "iron_ore",
+            4
+          ],
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "level": 1,
+        "shield_amount": 0.0,
+        "titles": []
+      },
+      "harvests": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "crit": false,
+          "damage": 16,
+          "loot": [
+            [
+              "iron_ore",
+              4
+            ]
+          ]
+        }
+      ],
+      "id": "title_award_churn",
+      "resources": [
+        {
+          "depleted": true,
+          "hp": 0,
+          "loot_table": [
+            [
+              "iron_ore",
+              3,
+              5,
+              1.0
+            ]
+          ],
+          "max_hp": 100,
+          "required_tool": "pickaxe",
+          "respawn_timer": 30.0,
+          "respawns": true,
+          "time_until_respawn": 20.0
+        }
+      ],
+      "rng_global": 0.00240449982112656
+    }
+  ]
+}

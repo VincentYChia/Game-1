@@ -66,7 +66,7 @@ def _fix_contiguity(regions: List[Set[Tuple[int, int]]]) -> List[Set[Tuple[int, 
         for fragment in components[1:]:
             # Find adjacent sibling
             merged = False
-            for cx, cy in fragment:
+            for cx, cy in sorted(fragment):  # determinism: stable sibling choice
                 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                     neighbor = (cx + dx, cy + dy)
                     for j, other in enumerate(result):
@@ -96,7 +96,7 @@ def _merge_tiny(children: List[Set[Tuple[int, int]]], min_area: int) -> List[Set
             if len(result[i]) < min_area and len(result) > 1:
                 # Find adjacent sibling with most shared border
                 best_idx = -1
-                for cx, cy in result[i]:
+                for cx, cy in sorted(result[i]):  # determinism: stable merge target
                     for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                         neighbor = (cx + dx, cy + dy)
                         for j, other in enumerate(result):

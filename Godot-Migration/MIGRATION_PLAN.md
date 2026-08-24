@@ -65,9 +65,12 @@ Ordering follows the dependency graph; each phase lists its **exit oracle**.
 | **P7 Skills & progression UI** | 35 skills, mana/cooldowns, skill unlocks, encyclopedia, map/waypoints, quest log UI | Skill-effect goldens (executor paths); UI parity checklist |
 | **P8 Save/load** | Full save schema, atomic .bak writes, versioning | **A Python save loads in Godot and round-trips** (ADR-9) |
 | **P9 Living-world bridge** | Sidecar launcher/health/restart, IPC per the doc-09 contract, event forwarding, NPC dialogue, quests + affinity turn-in, F12 overlay data, speechbanks | All doc-09 crossings exercised end-to-end against the real sidecar; degrade paths verified with sidecar killed |
-| **P10 3D-necessitated & polish** | Camera polish, lighting, 3D audio, nav for NPC wander, art upgrade pass (billboard→model where wanted), *optional* gameplay verticality (explicitly re-balanced if adopted) | Feature-parity checklist 100% ticked; playtest sign-off |
+| **P10 3D polish & parity sign-off** | Camera polish, lighting, 3D audio, nav for NPC wander, art upgrade pass (billboard→model where wanted) | Feature-parity checklist 100% ticked; playtest sign-off on the parity build |
+| **P11 True 3D gameplay** — **REQUIRED; the migration is NOT done without it** (user directive 2026-07-18) | Gameplay verticality: jump, cliff/height traversal, fall damage, height-aware hitboxes/AoE/projectiles, vertical camera work, 3D navmesh combat AI; explicit rebalance pass for every number verticality touches | New conformance baseline ratified (deliberate, documented deltas from the parity goldens) + 3D playtest sign-off |
 
 Phases P1–P2 are pure `dotnet` work (no Godot needed). P3 is where the engine enters.
+P11 is deliberately last: it *intentionally* breaks planar-parity balance, so it needs
+the certified baseline to deviate from on purpose rather than by accident.
 
 ## 4. 3D-necessitated additions (the ONLY allowed feature additions)
 
@@ -79,8 +82,10 @@ Tracked explicitly so scope stays honest:
 - Billboarded entity rendering (Sprite3D) and its draw-order/lighting rules
 - 3D-positional audio (was flat 2D)
 - NPC navmesh wander (replaces 2D grid wander, same behavioral envelope)
-- *Deferred decision:* true verticality (jump/cliffs/fall damage) — post-parity only,
-  because it changes balance
+- **True verticality (jump/cliffs/fall damage/height-aware combat) — COMMITTED
+  scope, Phase 11.** Not optional: the user's definition of done includes true 3D
+  (2026-07-18). Sequenced last because it changes balance and needs the certified
+  parity baseline to deviate from deliberately.
 
 ## 5. Risk register
 
@@ -117,6 +122,294 @@ Godot once so it generates its solution glue.
   `DefenseReduction`, `DamageComposition`, reward/difficulty bands) authored with
   xunit conformance tests. Blocked only on the two installs above for the first
   `dotnet test` run.
+
+- **2026-07-18 — ADRs user-confirmed; toolchain live; checkpoint green.** All four
+  headline decisions confirmed by the user, with one amendment: **true 3D
+  verticality is required scope** — added as Phase 11, the migration's final gate.
+  Toolchain installed without winget (broken App Installer): .NET SDK 8.0.423
+  user-scoped + Godot 4.4.1 .NET, both on user PATH, DOTNET_ROOT persisted (Godot
+  mono hard-crashes without it). First real run: **24/24 conformance tests pass**,
+  solution builds clean incl. Game1.Godot, Godot boots the project headless.
+  PR #83 (crux-foundry → main) merged.
+
+- **2026-07-18 (later) — P1 data layer: 8 of 16 databases at byte-level parity.**
+  New oracle `conformance/dump_databases.py` replays the game_engine.py:135-182
+  boot and dumps normalized DB state; `DbParityTests` loads the same content
+  through the C# loaders and requires an empty deep-diff. Ported green:
+  Material (sacred 7-file sequence + generated overlay), Equipment (raw store),
+  Recipe (3 output dialects + station order), Skill, Title, Class, Translation,
+  Placement + UpdateLoader overlay. Suite: **33/33**. The parity gate caught a
+  real divergence on its first run (four alchemy consumables carry
+  `effectParams` as an ARRAY — Python passes raw; a typed helper had coerced
+  to `{}`).
+- **2026-07-18 (later still) — P1 at 10/16 databases, suite 38/38.**
+  ResourceNodeDatabase (category caches order-gated, tier map, qualitative→
+  numeric conversion tables executed from the live model incl. the "quick"
+  respawn synonym, ICON_NAME_MAP as the Godot asset remap) and NpcDatabase
+  (v3 canonical path: NPCs + quests, speechbank flatten, description
+  long→short fallback, rewards normalization incl. statPoints alias,
+  generated-merge as reload-only exactly like boot) both passed parity on
+  their first run. Documented deviation: the npcs-enhanced.JSON v2 legacy
+  adapter is NOT ported (contract doc 03 flags it candidate dead code; the
+  C# loader fail-loud logs if v3 files are missing). Position model is
+  already 3D (x, y, z) in Python — the (x,y)→(x,0,z) mapping concern from
+  the old Unity plan is moot.
+- **2026-07-18 (cont.) — P1 at 13/16 databases, suite 43/43.** ChunkTemplate
+  (geo dispatch bridge shared with the sidecar, geoTypes auto-register with
+  sacred-wins + Python dict insertion-order semantics, str/int/bool()
+  coercions mirrored incl. truthiness), WorldGenerationConfig (10 sections,
+  dilutive normalization, zone lookups executed), QuestArchive (sidecar-
+  boundary substrate — BEHAVIORAL oracle: synthetic records through the
+  real Python class, its query results replayed in C#: tag match_all/any +
+  limit-break order, stable recency sort, round-trip). All green on first
+  parity runs.
+- **2026-07-18 (close) — P1 DATA LAYER COMPLETE: 15/16 databases, suite
+  47/47.** VisualConfig (every accessor executed as oracle — designer visual
+  tuning survives the engine swap) and MapWaypointConfig (waypoint rules
+  incl. `get_max_waypoints_for_level` executed for all 30 levels, biome
+  color table + UI config kept as Godot-theme data) close out the loaders.
+  The 16th database, skill_unlock_db, is **deliberately P2 scope**: it
+  parses the UnlockRequirements condition graph, which types together with
+  title requirements behind ICharacterQuery. world.py models port alongside
+  their consumers in P2/P3. **P1 exit oracle satisfied** — every
+  content-loading database reproduces the Python loaders' normalized state
+  from the same content files. Next: P2 character core (stats/leveling
+  already pinned in P0; inventory, equipment incl. EquipmentItem
+  materialization formulas, buffs, titles+conditions, status effects,
+  durability/weight, save fragments).
+
+- **2026-07-18 (P2 opened) — UnlockConditions + ICharacterQuery ported; P1 now
+  16/16; suite 51/51.** The tag-driven condition system (8 condition types,
+  factory with new + legacy formats incl. milestone mappings and the
+  gather_count half-split) ports with a two-sided oracle: parse parity (specs
+  from the fixture through both factories → identical to_dict/descriptions,
+  incl. Python str.title() semantics) and evaluation parity (stub characters ×
+  requirement matrix through the real Python classes). Character duck-typing
+  is now the explicit ICharacterQuery interface (per contract docs 03/04).
+  This closed the P1 titles-requirements exclusion AND unblocked
+  SkillUnlockDatabase (sacred + Update-N fishing overlay, trigger/cost/
+  requirements gated per unlock). Two dump-harness bugs found by the gate
+  itself: sort_keys reordering order-sensitive spec dicts (fixed by
+  pre-sorted specs), and the dump loading skill-unlocks after the update
+  overlay instead of boot order (fixed to game_engine.py:177 order).
+  Remaining P2: EquipmentItem materialization (+ SmithingTagProcessor),
+  inventory, buffs, status effects, durability/weight, save fragments.
+
+- **2026-07-18 (P2 CHARACTER CORE COMPLETE) — suite 67/67.** Full autonomous
+  run: equipment stack (all 38 items materialize byte-identically; EquipmentItem
+  behaviors incl. the sacred durability curve, repair, enchant family/tier/
+  conflict rules with the coexisting-tiers quirk pinned; full WeaponTagModifiers;
+  Smithing/Enchanting tag processors), Inventory + ItemStack (rarity/crafted-
+  stats stacking splits, drag merge/swap semantics), BuffManager (additive
+  bonuses, consume-on-use matrix), the complete status-effect system (17 classes,
+  factory aliases, stacking rules, mutual exclusions, resistance hook — the
+  chill-over-slow alias duplication bug-compatibly pinned), class skill-affinity
+  (+5%/tag cap 20%), and EquipmentManager (8+2 slots, hand-rule matrix).
+  Everything oracled by executing the REAL Python classes. One .NET pitfall
+  fixed at the helper layer: C#-constructed int JsonValues fail
+  TryGetValue&lt;double&gt; unlike parsed numbers (J.AsNum).
+  **Scope note:** the save-fragment round-trip gate folds into P8 (save_manager
+  ports as a whole there — component serialization lives in save_manager.py, not
+  the components), and Character assembly (character.py composition root) builds
+  in P3/P4 alongside its consumers. Both documented, not dropped.
+
+- **2026-07-18 (P3 CORE LANDED) — suite 72/72; solution + Godot import clean.**
+  PythonRandom: MT19937 bit-exact vs CPython (init_by_array BigInteger seeding,
+  getrandbits/randbelow/choice/randint/shuffle/uniform) — retires the ADR-5 RNG
+  risk and unblocks village gen + P4 crux parity. BiomeGenerator (legacy
+  fallback, oracle for pre-geographic saves): 25×25 chunk grid sha256-matches
+  Python per seed — the P3 "same seed → identical grid hash" exit oracle, green.
+  GeoNoise (the primary geographic system's determinism core): hash/value/
+  fractal noise, contiguity, Voronoi subdivision at full region parity.
+  Engine scaffold: WorldBootstrap procedurally builds the playable world from
+  the certified generation (biome-colored chunk floor, sun/sky, CharacterBody3D
+  + camera-relative WASD, SpringArm orbit camera); Godot 4.4.1 headless import
+  validates project + scene. REMAINING P3 (tranche 2): the geography
+  generators above noise (~3k lines: world/nation/region/political/village/
+  ecosystem/names → 512×512 finite world), chunk.py per-chunk tile+resource
+  placement parity, then first VISUAL run in the editor (user-facing milestone).
+
+- **2026-07-18 (P4 FOUNDATION LANDED) — suite 74/74.** EnemyDatabase: all 16
+  definitions (sacred + Update-1 in true boot order) byte-match incl. computed
+  visual-size/hurtbox tables; the full attack_profile_generator port
+  (category archetypes × tier × behavior tempo × tanky/agile feel ×
+  ability-tag inference; banker's rounding compatible); loot streams
+  bit-exact via PythonRandom against the real generate_loot. CONTENT FINDING
+  for the dev: `Definitions.JSON/hostiles-testing-integration.JSON` duplicates
+  Update-1's file with a mismatched schema (ai/loot keys the parser ignores) —
+  3 enemies carry defaults until the update overlay reloads them; recommend
+  deleting the Definitions.JSON copy. REMAINING P4 (tranche 2): combat
+  orchestration (player_attack_enemy_with_tags full path + effect executor
+  targeting/geometry), attack state machine + hitbox/projectile logic
+  (headless-testable), enemy AI tick, then the phase gate: crux-foundry
+  scenario parity on seeded runs (PythonRandom makes exact traces feasible).
+
+- **2026-07-18 (BIG SWEEP: action combat + effect stack + enemy AI + chunks
+  + playable 3D combat slice) — suite 85/85, five commits (c02dd8de,
+  4c1c7e6a, 1965fdf6, f6b50d32, 063f83ee).** Per user directive, crux
+  scenario-parity gate deferred until these systems run in 3D.
+  - **Action combat core (80/80):** AttackStateMachine (phases/combos/
+    interrupts), HitboxSystem (arc/circle/rect/line incl. edge-ray overlap;
+    Python float-% via `PyMath.Mod`), ProjectileSystem (gravity/homing/
+    piercing/AoE-on-hit), CombatDataLoader (dynamic weapon/enemy attack +
+    projectile generation; CPython `random.choices` cumulative-bisect
+    ported). Oracle: scripted scenarios EXECUTED through the real Python
+    classes (`action_combat.json`: 18-step ASM timeline, 720-cell collision
+    matrix, 5 projectile trajectories, 90 weapon rows, seeded streams).
+  - **Tag/effect stack (83/83):** TagRegistry (95 defs, 68 aliases),
+    TagParser (Python-exact warning strings), TargetFinder (chain/cone/
+    circle/beam + enemy-source context flip), EffectExecutor (crit,
+    context behavior, F5 enemy defense + armor pen, auto-apply, immunity,
+    all special mechanics). `ICombatEntity` turns every Python hasattr
+    branch into a capability flag. Oracle: `effect_stack.json` — 25
+    executor scenarios run through the REAL Python executor on a
+    spec-built stub battlefield; the C# test builds its stubs FROM THE
+    FIXTURE SPECS (no transcription drift).
+  - **Enemy AI runtime (84/84):** EnemyRuntime — full AI state machine,
+    chunk-clamped movement + safe zones + collision-sliding hooks,
+    knockback, phased attacks, flee/death, ability gating, night
+    multipliers. Oracle: `enemy_ai.json` — 50-step scripted encounters on
+    real Python Enemy objects × 8 enemies + 3 night runs.
+  - **P3 chunk parity (85/85):** ChunkGenerator — chunk-type dispatch
+    (geo/biome/legacy), land + lake/river/swamp tile grids (river rng
+    short-circuit preserved), template resourceDensity weighted spawns →
+    substring db fallback, fishing spots. `PythonRandom.Sample` added
+    (CPython pool/set crossover exact). Oracle: `chunks.json` — 34 real
+    Chunk objects across all three modes, every tile + placement equal.
+    P3's remaining tranche is now ONLY the geography generators (~3k
+    lines) + the first visual editor run.
+  - **Playable 3D combat slice (engine glue, build 0 warnings + headless
+    import 0):** `CombatWorld` node — enemies spawn in dangerous/rare
+    chunks, certified AI ticks them (windup telegraphs flash red), player
+    left-click melee flows AttackStateMachine → HitboxSystem → certified
+    damage/loot; HUD line. WorldBootstrap renders ChunkGenerator resource
+    spawns at conformance-pinned positions. Combat damage numbers in the
+    slice are placeholder (flat 20-30) until the Character composition
+    root lands — the pipeline plumbing is the certified one.
+  - REMAINING P4: combat orchestration (`player_attack_enemy_with_tags`
+    bonus composition — needs Character composition root: stats/titles/
+    buffs/equipment wiring), then the crux scenario gate (after 3D, per
+    user directive).
+
+- **2026-07-19 (CHARACTER COMPOSITION ROOT + FULL TAG-ATTACK PIPELINE) —
+  suite 86/86, commits 425165f5 + cc65de33.** The P4 orchestration gap is
+  CLOSED:
+  - **Composition root:** PlayerCharacter (health/equipment/inventory/
+    selected-slot incl. the damage-tuple-truthiness branch), CharacterStats
+    (JSON-driven scaling from stats-calculations.JSON with Python's exact
+    fallbacks), TitleSystem (bonus-key resolution chain: literal → snake →
+    renames → typo tolerance; Python bool-is-int quirk preserved),
+    LevelingSystem (cascade + 350-EXP first level).
+  - **EnemyRuntime status integration:** carries the P2-certified
+    StatusEffectManager (Update in the AI tick, immobilize/silence hooks);
+    implements ICombatEntity + IStatusTarget matching the Python Enemy
+    duck-type — enhanced take_damage kwargs branch, DoT ticks aggro
+    (from_player=True), no heal method, real knockback fields.
+  - **TagAttackOrchestrator:** the complete crux-conformant composition
+    (F3-F9): hand mult on the weapon component, STR 0.05/pt, title melee +
+    enemy-specific titles, INT elemental, crushing-vs-armored, empower,
+    crit LAST via LCK 0.12/pt + pierce buffs + Precision + title crit,
+    executor-side per-target enemy defense + armor penetration, lifesteal
+    enchant (50% cap), on-hit enchants (DoT element map/knockback/slow),
+    devastate AoE (its loot-extend duplication bug preserved), kill → EXP
+    cascade + loot into the real Inventory + weapon durability
+    (improper-tool 2×). Dual rng streams mirror Python exactly: manager-
+    injected rng (crit) vs global random (executor rolls, enemy ctor,
+    loot).
+  - **Oracle `tag_attack.json`:** 15 scenarios EXECUTED through the REAL
+    Python Character + CombatManager with spec-built loadouts (specs live
+    in the fixture; C# builds from them). Covers unarmed, 1H/2H, armored
+    targets, armor_breaker, precision crits, INT+burn, empower/pierce/
+    devastate buffs, lifesteal + on-hit enchants, one-shot kill with the
+    exact level-3 cascade, improper-tool durability, skill lifesteal,
+    chain with per-target defense. FIRST-RUN GREEN.
+  - **3D slice upgraded (cc65de33):** CombatWorld's placeholder damage
+    replaced by the certified orchestrator — real crits/defense/loot/EXP
+    in the Godot build; HUD shows level/EXP; DoTs tick via the status
+    system. Build 0 warnings, headless import 0.
+  - NEXT: P3 geography generators (~3k lines, last P3 item) + first
+    visual editor run; then P5 gathering; crux scenario gate after 3D.
+
+- **2026-07-19 #2 (GEOGRAPHY PORT — P3 COMPLETE) — suite 87/87, commits
+  06c74c3a (Python) + 74803afe (port) + 89d2ef2c (3D wiring) + 2a5b1c16
+  (follow-up).** Ultracode orchestration: 12-agent contract workflow →
+  inline port → 11-agent adversarial verify.
+  - **Product fix first (06c74c3a):** nine CPython set-iteration sites
+    changed the GENERATED WORLD (fragment reassignment order, merge
+    tie-breaks, eco IDs/smoothing order) — patched to sorted()/dict-order.
+    Same seed now yields the same world across interpreters/languages.
+    Pre-playtest, no worlds preserved; caches regenerate.
+  - **Full pipeline ported** (11 files → 10 C#): models/config/nations/
+    regions/provinces/districts/biomes/ecosystems/names/villages/
+    pipeline/setting-resolver. Quirks preserved: banker's rounding in
+    deform, negative floor-div cell bucketing (biome + eco), first-max
+    tie-breaks, stale-read gradient smoothing, IMPERIAL "ium" duplicate,
+    first-inserted-nation locality naming, MT19937 draw-count traps
+    (constant-range randint, second-uniform fallback, dropped-building
+    draws), perimeter-minus-door occupancy.
+  - **Oracle:** TWO full 512×512 worlds from the REAL patched
+    WorldGenerator — sha256 canons over all 262,144 chunks + ecosystems +
+    biomes + villages per seed, full tier metadata + names, 4 windows w/
+    setting resolution, 2,500 villages + wall/building layouts.
+    **FIRST-RUN GREEN.**
+  - **Adversarial verify (11 agents): 0 critical.** 10/11 equivalent;
+    all config-pair findings sit on unreachable override/error paths
+    (several where PYTHON crashes and C# degrades cleanly). Actioned: the
+    voronoi singleton branch (last set-iteration site) sorted on both
+    sides (2a5b1c16; world sha unchanged — branch unreachable).
+  - **3D build runs the geographic world (89d2ef2c):** full world at
+    startup (same seed = same world as Python), terrain by 15 geo chunk
+    types, resources through geo dispatch, village walls/buildings
+    rendered, enemies by danger level. Boot prints nation names.
+  - Designer notes from verify (non-blocking): UTF-8 BOM config files are
+    silently IGNORED by Python but APPLIED by C# (PowerShell writes BOM
+    by default — author configs BOM-less); `get_full_address` still
+    unported (renderer consumer — port with UI layer).
+  - REMAINING: P5 gathering; enemy→player Character.take_damage pipeline;
+    crux scenario gate after 3D; P11 True 3D final.
+
+- **2026-07-20 (P5 GATHERING + ENEMY→PLAYER DAMAGE) — suite 89/89,
+  commits 27b6f94c + 6d5bd660.** NaturalResourceRuntime (fallback loot =
+  Python's EFFECTIVE dict after alias-key collisions), GatheringSystem
+  (full harvest path incl. fractional DEF-scaled durability, LCK/Fortune/
+  enrich loot, Chain Harvest, the fishing-activity drop bug, title-award
+  churn via certified UnlockRequirements + acquisition rolls),
+  ActivityTracker, real Character.take_damage + shield helpers +
+  ICharacterQuery, EnemyAttackResolver (full crux-F7 defense pipeline
+  incl. Thorns 80% cap). Oracle: 8+5 scenarios via REAL Python objects,
+  FIRST-RUN GREEN. **Adversarial verify (5 agents) caught 3 REACHABLE
+  criticals the fixtures missed** — InteractionRange 3.0→3.5, efficiency
+  bonus association, and the durability-exactness map desyncing against
+  Repair/combat writers → root-fixed by making
+  EquipmentItem.DurabilityCurrent a DOUBLE (Python's float field),
+  map deleted. 3D slice: [E] harvests certified nodes with live deplete/
+  respawn; enemy hits through the certified defense pipeline.
+  NEXT: crux scenario gate (all combat systems now bilingual), P6
+  crafting, P11 True 3D.
+
+- **2026-07-20 #2 (P6 CORE + P11 TRUE 3D — PLAYTEST BUILD) — suite 90/90,
+  commit ce716eef.** P6: RecipeCrafting consume semantics exact (oracle
+  first-run green; duplicate-input overwrite quirk, slot sweeps,
+  int-truncated partial failure loss) + CraftingSystem running the
+  _complete_minigame success path on certified calculators/materialization.
+  DECLARED BOUNDARY: per-discipline crafter stat-rolls + the six 2D
+  minigame overlays = next parity tranche ([C] uses a rolled performance
+  0.4-1.0 as the minigame seam). P11 (the required final scope) SHIPPED:
+  deterministic TerrainHeightField over the certified world, quad-based
+  height terrain with real colliders (chunk-border cliffs), SPACE jump,
+  fall damage through the real take_damage, enemies/villages/resources on
+  the terrain, combat height-gated both directions. Sim stays planar per
+  ADR-6; verticality is presentation + 3D-necessitated rules with no
+  Python oracle by design. CONTROLS: WASD+Shift move, SPACE jump,
+  right-drag orbit, wheel zoom, LMB attack, [E] gather, [C] craft.
+  AWAITING USER PLAYTEST NOTES.
+
+## 7a. Parked — DO NOT FORGET
+
+| Item | Why parked | Unblock |
+|---|---|---|
+| Formal adversarial verification of the 11 inventory contracts (0/11 formally verified; 3/3 inline spot-checks exact) | Monthly subagent spend limit hit mid-workflow 2026-07-17 | When budget resets: resume `wf_243bf9af-658` per `inventory/README.md`; until then, re-verify any contract claim firsthand before acting on it |
+| **P11 True 3D** — user will "not consider this fully done until we get there" | Deliberately sequenced after parity certification | Automatic: it is the final phase gate, not an optional item |
 
 ## 8. Load-bearing findings from the inventory pass
 

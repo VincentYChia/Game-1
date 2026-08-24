@@ -1,0 +1,245 @@
+{
+ "screens": [
+  {
+   "name": "Start Menu",
+   "keybind": "auto at boot (skipped with --temp); Up/Down navigate, Enter/Space select, mouse click, ESC=autosave+quit",
+   "purpose": "Boot screen with 4 options: New World / Load World / Load Default Save / Temporary World; shows save-file count",
+   "evidence": "game_engine.py:216,681-705,8582-8590; renderer.py:7248-7333",
+   "priority": "core"
+  },
+  {
+   "name": "Pause Menu",
+   "keybind": "ESC (when no other UI open); Up/Down, Enter/Space select, ESC returns",
+   "purpose": "3 options: Return to game / Save & Exit (disabled in temp world) / Exit without saving; dim backdrop, drawn last over everything",
+   "evidence": "game_engine.py:668-678,847-853,8841-8847; renderer.py:7335-7435",
+   "priority": "core"
+  },
+  {
+   "name": "Loading Screen (world gen)",
+   "keybind": "none (automatic after start-menu selection)",
+   "purpose": "Stage name + progress fraction + flavor line while WorldSystem.initialize_world() runs",
+   "evidence": "game_engine.py:1980; renderer.py:7437-7442",
+   "priority": "core"
+  },
+  {
+   "name": "Class Selection (mandatory modal)",
+   "keybind": "auto on new character; ESC blocked with 'Choose a class to continue' notification; mouse click to pick",
+   "purpose": "Pick 1 of 6 starting classes; includes class hover tooltip; suppresses all other menu rendering while open",
+   "evidence": "game_engine.py:245,501,836-840,8713-8719; renderer.py:7510,7085",
+   "priority": "core"
+  },
+  {
+   "name": "Stats / Character Menu",
+   "keybind": "C toggle; C or ESC close",
+   "purpose": "3 columns: 6 stats with +1 allocation buttons (when unallocated points), TITLES list (last 8, tier-colored, bonus descriptions), PROGRESS bars toward next titles. NOTE: this IS the title UI \u2014 no separate title-selection screen exists",
+   "evidence": "game_engine.py:858-867,821-823,8755-8761; renderer.py:7592-7702",
+   "priority": "core"
+  },
+  {
+   "name": "Equipment Menu",
+   "keybind": "E toggle; ESC close",
+   "purpose": "8-slot equipment panel with click-to-equip/unequip rects + equipment tooltip",
+   "evidence": "game_engine.py:868-877,824-826,8773-8779; renderer.py:6711,6836",
+   "priority": "core"
+  },
+  {
+   "name": "Skills Menu",
+   "keybind": "K toggle; ESC close; wheel=scroll learned, Shift+wheel=scroll available",
+   "purpose": "Hotbar assignment rects + learned-skills list + available/learnable skills list",
+   "evidence": "game_engine.py:878-887,1453-1462,8763-8771; renderer.py:3392",
+   "priority": "core"
+  },
+  {
+   "name": "Encyclopedia",
+   "keybind": "L toggle; ESC close; wheel scroll (20px/notch)",
+   "purpose": "Tabbed reference browser (encyclopedia_tab_rects) for discovered content",
+   "evidence": "game_engine.py:888-897,830-832,1446-1452,8781-8787; renderer.py:3607",
+   "priority": "secondary"
+  },
+  {
+   "name": "World Map",
+   "keybind": "M toggle (centers on player); wheel=zoom, left-drag=pan, P=place waypoint while open; ESC close",
+   "purpose": "Fullscreen chunk map with waypoints, waypoint click rects + action rects; there is NO minimap \u2014 this is the only map",
+   "evidence": "game_engine.py:898-915,833-835,1344-1350,1370-1373,8790-8804; renderer.py:3695",
+   "priority": "core"
+  },
+  {
+   "name": "Waypoint Rename dialog (map sub-mode)",
+   "keybind": "typed text (max len from config), Enter/KP_Enter confirm, ESC cancel, Backspace delete; blocks all other keys",
+   "purpose": "Inline text entry to rename a waypoint slot on the map",
+   "evidence": "game_engine.py:780-803,8791-8793",
+   "priority": "secondary"
+  },
+  {
+   "name": "Waypoint Delete confirmation (map sub-mode)",
+   "keybind": "Enter/KP_Enter confirm delete, ESC cancel; blocks all other keys",
+   "purpose": "Confirm dialog before deleting a waypoint",
+   "evidence": "game_engine.py:769-778,8794",
+   "priority": "secondary"
+  },
+  {
+   "name": "Quest Log overlay",
+   "keybind": "J toggle",
+   "purpose": "Lists active quests + objectives + progress with per-quest Abandon buttons (rects returned for click dispatch)",
+   "evidence": "game_engine.py:1316-1337,8670-8688; systems/quest_log_overlay.py:35-248",
+   "priority": "core"
+  },
+  {
+   "name": "NPC Dialogue",
+   "keybind": "F near NPC (when not in dungeon); F or ESC close",
+   "purpose": "NPC name header, dialogue lines, quest-offer buttons, 'Turn In Quest' button (highest priority when quest complete)",
+   "evidence": "game_engine.py:916-929,841-846,8806-8815; renderer.py:4161-4220",
+   "priority": "core"
+  },
+  {
+   "name": "Crafting Station UI (recipe browser)",
+   "keybind": "left-click station in range to open; ESC close; wheel scrolls grouped recipe list",
+   "purpose": "Grouped recipe list (headers by type), selected-recipe placement grid, INVENT button rect that launches interactive crafting",
+   "evidence": "game_engine.py:3032,818-820,1397-1445,8738-8749; entities/character.py:1412-1419; renderer.py:5420",
+   "priority": "core"
+  },
+  {
+   "name": "Interactive Crafting / INVENT UI",
+   "keybind": "opened via INVENT button; ESC close; wheel scrolls material palette; right-click removes placed materials",
+   "purpose": "Free-form material placement grid + material palette + buttons for classifier-validated invented items; includes narrative text-input sub-mode (typed prose max 200 chars, Enter submit, ESC cancel)",
+   "evidence": "game_engine.py:462,744-767,809-811,1386-1395,4431,8721-8736; renderer.py:5804",
+   "priority": "core"
+  },
+  {
+   "name": "Smithing Minigame",
+   "keybind": "Space = fan bellows; double-ESC (within 1.5s) abandons craft with materials lost",
+   "purpose": "Modal craft minigame rendered on top of everything",
+   "evidence": "game_engine.py:709-728,8828-8830,8857-8858,9113",
+   "priority": "core"
+  },
+  {
+   "name": "Alchemy Minigame",
+   "keybind": "C = chain, S = stabilize; double-ESC abandon",
+   "purpose": "Modal sequence-based craft minigame",
+   "evidence": "game_engine.py:729-733,8859-8860,9645",
+   "priority": "core"
+  },
+  {
+   "name": "Refining Minigame",
+   "keybind": "Space = attempt; double-ESC abandon",
+   "purpose": "Modal timing-based craft minigame",
+   "evidence": "game_engine.py:734-735,8861-8862,10039",
+   "priority": "core"
+  },
+  {
+   "name": "Engineering Minigame",
+   "keybind": "mouse clicks only (buttons + rotation-pipe / sliding-tile / logic-switch puzzles); double-ESC abandon",
+   "purpose": "Modal puzzle craft minigame with 3 puzzle sub-renderers",
+   "evidence": "game_engine.py:736,8863-8864,10483,10786,10881,10924",
+   "priority": "core"
+  },
+  {
+   "name": "Adornments/Enchanting Minigame",
+   "keybind": "mouse: betting-phase slider drag (wheel_slider_rect) + clicks; double-ESC abandon",
+   "purpose": "Betting-wheel enchant minigame (minigame_type 'adornments' routes to _render_enchanting_minigame)",
+   "evidence": "game_engine.py:1353-1359,8865-8866,11161",
+   "priority": "core"
+  },
+  {
+   "name": "Fishing Minigame",
+   "keybind": "per-minigame input; double-ESC abandon",
+   "purpose": "Modal fishing minigame",
+   "evidence": "game_engine.py:8867-8868,11669",
+   "priority": "core"
+  },
+  {
+   "name": "Enchantment Target-Selection UI",
+   "keybind": "ESC cancel; wheel scrolls compatible-item list (~5 visible); mouse click to choose",
+   "purpose": "After enchant craft: pick which compatible item receives the enchantment; rendered on top of other menus",
+   "evidence": "game_engine.py:430,806-808,1375-1384,7144,7258-7266,8817-8826; renderer.py:7170",
+   "priority": "core"
+  },
+  {
+   "name": "Dungeon Chest UI",
+   "keybind": "click chest in dungeon to toggle; ESC close",
+   "purpose": "Loot chest with per-item click rects (only renders while in dungeon)",
+   "evidence": "game_engine.py:812-814,7822-7833,8690-8695; renderer.py:2554",
+   "priority": "secondary"
+  },
+  {
+   "name": "Spawn Storage Chest UI",
+   "keybind": "click spawn chest to toggle; ESC close",
+   "purpose": "Persistent home-base storage with item click rects",
+   "evidence": "game_engine.py:815-817,2943,7836-7858,8697-8703; renderer.py:2665",
+   "priority": "secondary"
+  },
+  {
+   "name": "Death Chest UI",
+   "keybind": "click own death chest in world (range-checked); click item = retrieve, click outside = close",
+   "purpose": "Retrieve items dropped on death (rich_contents preserves full item state); chest auto-removes when emptied. NOTE: there is NO death screen \u2014 death = instant respawn at spawn + notification + chest drop",
+   "evidence": "game_engine.py:2649-2660,2946-2954,7917-7943,8705-8711; renderer.py:2779; entities/character.py:1880-1946",
+   "priority": "core"
+  },
+  {
+   "name": "LLM Generation Blocking Overlay",
+   "keybind": "blocks ALL input except ESC = cancel generation (materials not consumed)",
+   "purpose": "Full-screen animated overlay while Claude generates an invented item; separate small corner spinner for classifier ops",
+   "evidence": "game_engine.py:645-660,8832-8833; renderer.py:7957-8005",
+   "priority": "core"
+  },
+  {
+   "name": "WES Observability Overlay",
+   "keybind": "F12 toggle",
+   "purpose": "Live ring buffer of WMS->WNS->WES->Registry->Reload pipeline events for Living World debugging",
+   "evidence": "game_engine.py:1303-1314,8658-8665",
+   "priority": "debug"
+  },
+  {
+   "name": "Debug toggles F1-F5/F7/F10 + Shift+F8",
+   "keybind": "F1 infinite resources+max level pts, F2 learn all skills, F3 all titles, F4 max level/stats, F5 keep-inventory, F7 infinite durability, F10 automated test suite, Shift+F8 biome debug print",
+   "purpose": "Toggleable debug cheats with save/restore of original state; F1 also enables hitbox debug rendering",
+   "evidence": "game_engine.py:1016-1229,1288-1292,8606",
+   "priority": "debug"
+  },
+  {
+   "name": "Save/Load/Display utility keys",
+   "keybind": "F6 timestamped quick-save; F9 load autosave / Shift+F9 load default save; F11 fullscreen toggle",
+   "purpose": "Player-facing persistence + display controls (no settings menu exists \u2014 F11 is the only display setting)",
+   "evidence": "game_engine.py:1186-1203,1231-1286,1294-1301",
+   "priority": "secondary"
+  },
+  {
+   "name": "Dungeon Enter/Exit",
+   "keybind": "click dungeon entrance in range (normal path); double-tap F within 0.5s = quick exit; F8 = debug enter/exit",
+   "purpose": "Transition into wave-based dungeon world; entrance carries pre-rolled rarity",
+   "evidence": "game_engine.py:916-926,1219-1229,2957-2968,7635,7665",
+   "priority": "core"
+  }
+ ],
+ "hud_elements": [
+  "Right-side CHARACTER INFO panel (always visible, UI_PANEL_WIDTH strip): debug-mode indicator, class name+icon, position, current chunk name colored by danger level (peaceful/dangerous/rare/water), level + unallocated-points alert, XP/next-level, selected tool + durability + effectiveness, last-3 titles with icons, static CONTROLS key list (renderer.py:3014-3171; called game_engine.py:8646)",
+  "HP bar (300x25 scaled) with numeric text + shield-blocking indicator when char.is_blocking (renderer.py:3173-3187)",
+  "Mana bar below HP (renderer.py:3187; drawn at renderer.py:3095)",
+  "Active buffs list under mana bar (renderer.py:3196; called renderer.py:3099)",
+  "Bottom inventory panel (always visible, no toggle key): weight bar with green->red encumbrance coloring + current/max text, equipped tool slots (axe/pickaxe) with hover highlight, 30-slot item grid with drag-and-drop and item tooltips (renderer.py:4965-5024,5148,5229; called game_engine.py:8647)",
+  "Skill hotbar, 5 slots bottom-center of viewport: key numbers 1-5, skill icons (initials fallback), cooldown dark overlay + seconds countdown, mana cost colored by affordability, hover tooltip (renderer.py:3240-3318; called game_engine.py:8650)",
+  "Notifications feed (colored timed messages, also drawn over start menu) (renderer.py:4921; game_engine.py:8587,8652)",
+  "Debug message log (renderer.py:4936; game_engine.py:8653)",
+  "Day/night tint overlay from time phase + progress (renderer.py:2954; game_engine.py:8640-8642)",
+  "Enemy overhead health bars with tier prefix 'T{n}' or 'BOSS' label + boss glow color \u2014 NO separate top-screen boss bar (renderer.py:1411-1415,1642-1653; dungeon variant 2427-2445)",
+  "Dungeon HUD panel: 'Wave X/Y' indicator + progress (renderer.py:2490-2527)",
+  "Damage numbers (classic list + enhanced DamageNumberManager) and enemy death fade/shrink effects (game_engine.py:378-393,8604-8605,8635)",
+  "Screen shake camera offset during action combat, reset before UI draw (game_engine.py:8597-8601,8637-8638)",
+  "Placement preview for placeable items/turrets (renderer.py:2939)",
+  "Deferred tooltip system drawn LAST above all modals: item/equipment/tool/class/generic tooltips funneled through render_pending_tooltip (renderer.py:5229,6836,6978,7054,7085,7704; game_engine.py:8835-8836)",
+  "Corner loading spinner for classifier operations (non-blocking variant of the LLM overlay) (renderer.py:7975-7977)"
+ ],
+ "notes": [
+  "ESC close-priority chain (single ESC handler, port must preserve order): enchant selection > interactive crafting > dungeon chest > spawn chest > crafting UI > stats > equipment > skills > encyclopedia > map > class selection (blocked, shows notification) > NPC dialogue > else open pause menu (game_engine.py:805-853)",
+  "C/E/K/L/M/J overlay panels are mutually exclusive via _close_other_overlay_panels; opening one closes the others through their own toggle methods so scroll-reset and menu-time stats stay correct (game_engine.py:7508-7525,862,872,882,892,906,1323)",
+  "Render order contract: world/dungeon -> day/night -> UI panel -> inventory panel -> hotbar -> notifications -> WES overlay -> quest log -> chests -> class selection (suppresses all other menus when open) -> crafting/stats/skills/equipment/encyclopedia/map/dialogue/enchant-select -> minigame (on top of EVERYTHING) -> LLM loading indicator -> deferred tooltips -> pause menu LAST (game_engine.py:8578-8847)",
+  "Minigame abandon requires double-ESC within 1.5s (materials-lost warning); dungeon quick-exit requires double-F within 0.5s \u2014 both intentional anti-accident idioms (game_engine.py:709-726,918-926)",
+  "No death screen: player death respawns instantly at world spawn (dungeon death: chest spawns at dungeon entrance) with notification only (entities/character.py:1880-1946). No minimap. No settings/options menu. No dedicated boss health bar.",
+  "Combat/movement (non-menu) keys a port needs: WASD move, TAB switch tool, left-click harvest/interact/attack (held = continuous mainhand), right-click hold = shield block, X hold = offhand attack or shield block, Shift+right-click = use consumable, Q drop 1 / Shift+Q drop stack, Space = dodge roll with i-frames (action combat), 1-5 = skills aimed at mouse world position (game_engine.py:854-1015,1464-1476,8448-8479)",
+  "Mouse-wheel is context-routed by hover rect, in priority order: map zoom > enchant-select scroll > interactive-crafting palette > recipe list > encyclopedia > skills menu (Shift+wheel = available skills) (game_engine.py:1364-1462)",
+  "LLM overlay swallows all events except ESC-cancel while generation runs \u2014 port must replicate this input lock (game_engine.py:645-660)",
+  "Text-input modes (narrative INVENT prose max 200 chars, waypoint rename max from MapWaypointConfig) consume printable unicode chars with Backspace/Enter/ESC \u2014 Godot port needs equivalent text capture (game_engine.py:744-767,780-803)",
+  "Start menu ESC performs autosave-then-quit when a character exists and world is not temporary (game_engine.py:688-704)",
+  "Minigame input routing is by minigame_type string: smithing/alchemy/refining/engineering/adornments/fishing; 'adornments' renders via _render_enchanting_minigame (game_engine.py:8857-8868)"
+ ]
+}

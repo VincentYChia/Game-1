@@ -134,7 +134,10 @@ def _deform_nations(
     # For each chunk, compute its "loyalty" to its current nation vs neighbors.
     # Noise modifies this loyalty, causing border shifts.
     result = {}
-    all_positions = set(template.keys())
+    # Determinism (2026-07-19, Godot port): iterate the dict's insertion
+    # order (row-major) instead of a set — per-chunk values are identical;
+    # downstream processing order becomes portable.
+    all_positions = list(template.keys())
 
     for cx, cy in all_positions:
         original_nation = template[(cx, cy)]
@@ -215,7 +218,7 @@ def _validate_and_repair(
         main_component = components[0]
         fragments = []
         for comp in components[1:]:
-            fragments.extend(comp)
+            fragments.extend(sorted(comp))  # determinism: stable fragment order
 
         # Reassign fragment chunks to their nearest neighbor nation
         for fx, fy in fragments:
@@ -231,7 +234,7 @@ def _validate_and_repair(
         if len(territories[nid]) < min_area:
             # Merge into largest neighboring nation
             neighbor_counts: Dict[int, int] = {}
-            for cx, cy in territories[nid]:
+            for cx, cy in sorted(territories[nid]):  # determinism: stable merge tie-breaks
                 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                     neighbor_pos = (cx + dx, cy + dy)
                     if neighbor_pos in result:

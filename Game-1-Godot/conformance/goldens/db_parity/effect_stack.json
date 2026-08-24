@@ -1,0 +1,6772 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-20",
+    "git_sha": "8b0965dc",
+    "source": "core/tag_system.py + tag_parser.py + geometry/ + effect_executor.py — registry dumped, every skill's combat tags parsed, executor scenarios EXECUTED on a spec-built stub battlefield with seeded global rng"
+  },
+  "battlefield": [
+    {
+      "has_knockback": true,
+      "has_status_manager": true,
+      "health": 100.0,
+      "kind": "character",
+      "last_move_direction": [
+        1.0,
+        0.0
+      ],
+      "max_health": 120.0,
+      "name": "hero",
+      "position": [
+        0.0,
+        0.0
+      ],
+      "take_damage": "simple"
+    },
+    {
+      "category": "beast",
+      "current_health": 80.0,
+      "defense": 0.0,
+      "has_knockback": true,
+      "has_status_manager": true,
+      "kind": "enemy",
+      "max_health": 80.0,
+      "name": "e1",
+      "position": [
+        3.0,
+        0.0
+      ],
+      "take_damage": "simple"
+    },
+    {
+      "category": "undead",
+      "current_health": 60.0,
+      "defense": 20.0,
+      "has_knockback": false,
+      "has_status_manager": true,
+      "kind": "enemy",
+      "max_health": 60.0,
+      "name": "e2",
+      "position": [
+        5.5,
+        1.0
+      ],
+      "take_damage": "none"
+    },
+    {
+      "category": "construct",
+      "current_health": 150.0,
+      "defense": 40.0,
+      "has_knockback": true,
+      "has_status_manager": false,
+      "kind": "enemy",
+      "max_health": 150.0,
+      "name": "e3",
+      "position": [
+        7.0,
+        2.5
+      ],
+      "take_damage": "enhanced"
+    },
+    {
+      "category": "elemental",
+      "current_health": 40.0,
+      "defense": 5.0,
+      "has_knockback": false,
+      "has_status_manager": true,
+      "kind": "enemy",
+      "max_health": 40.0,
+      "name": "e4",
+      "position": [
+        4.0,
+        -3.0
+      ],
+      "take_damage": "none"
+    },
+    {
+      "category": "beast",
+      "current_health": 5.0,
+      "defense": 0.0,
+      "has_knockback": false,
+      "has_status_manager": true,
+      "kind": "enemy",
+      "max_health": 30.0,
+      "name": "e5",
+      "position": [
+        12.0,
+        0.0
+      ],
+      "take_damage": "simple"
+    },
+    {
+      "category": "ooze",
+      "current_health": 50.0,
+      "defense": 80.0,
+      "has_knockback": false,
+      "has_status_manager": true,
+      "kind": "enemy",
+      "max_health": 50.0,
+      "name": "e6",
+      "position": [
+        2.0,
+        2.0
+      ],
+      "take_damage": "simple"
+    }
+  ],
+  "cases": [
+    {
+      "id": "single_physical",
+      "params": {
+        "baseDamage": 50.0
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "physical"
+      ]
+    },
+    {
+      "id": "defense_armor_pen",
+      "params": {
+        "_apply_enemy_defense": true,
+        "_armor_penetration": 0.3,
+        "baseDamage": 100.0
+      },
+      "primary": "e3",
+      "source": "hero",
+      "tags": [
+        "physical"
+      ]
+    },
+    {
+      "id": "defense_cap",
+      "params": {
+        "_apply_enemy_defense": true,
+        "baseDamage": 60.0
+      },
+      "primary": "e6",
+      "source": "hero",
+      "tags": [
+        "physical"
+      ]
+    },
+    {
+      "id": "chain_lightning",
+      "params": {
+        "baseDamage": 40.0,
+        "chain_count": 3,
+        "chain_range": 6.0
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "lightning",
+        "chain"
+      ]
+    },
+    {
+      "id": "circle_burn",
+      "params": {
+        "baseDamage": 30.0,
+        "circle_radius": 5.0
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "fire",
+        "circle",
+        "burn"
+      ]
+    },
+    {
+      "id": "circle_origin_source",
+      "params": {
+        "baseDamage": 20.0,
+        "circle_radius": 4.0,
+        "origin": "source"
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "frost",
+        "circle",
+        "chill"
+      ]
+    },
+    {
+      "id": "circle_max_targets",
+      "params": {
+        "baseDamage": 8.0,
+        "circle_radius": 20.0,
+        "max_targets": 3
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "physical",
+        "circle"
+      ]
+    },
+    {
+      "id": "cone_frost",
+      "params": {
+        "baseDamage": 25.0,
+        "cone_angle": 90.0,
+        "cone_range": 8.0
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "frost",
+        "cone"
+      ]
+    },
+    {
+      "id": "beam_arcane",
+      "params": {
+        "baseDamage": 35.0,
+        "beam_range": 12.0,
+        "beam_width": 1.0,
+        "pierce_count": 2
+      },
+      "primary": "e3",
+      "source": "hero",
+      "tags": [
+        "arcane",
+        "beam"
+      ]
+    },
+    {
+      "id": "critical",
+      "params": {
+        "baseDamage": 40.0,
+        "crit_chance": 0.6
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "physical",
+        "critical"
+      ]
+    },
+    {
+      "id": "lifesteal",
+      "params": {
+        "baseDamage": 60.0,
+        "lifesteal_percent": 0.25
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "physical",
+        "lifesteal"
+      ]
+    },
+    {
+      "id": "knockback",
+      "params": {
+        "baseDamage": 10.0,
+        "knockback_distance": 3.0,
+        "knockback_duration": 0.5
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "physical",
+        "knockback"
+      ]
+    },
+    {
+      "id": "knockback_no_fields",
+      "params": {
+        "baseDamage": 10.0
+      },
+      "primary": "e2",
+      "source": "hero",
+      "tags": [
+        "physical",
+        "knockback"
+      ]
+    },
+    {
+      "id": "pull",
+      "params": {
+        "baseDamage": 5.0,
+        "pull_distance": 2.0
+      },
+      "primary": "e3",
+      "source": "hero",
+      "tags": [
+        "physical",
+        "pull"
+      ]
+    },
+    {
+      "id": "execute",
+      "params": {
+        "baseDamage": 10.0,
+        "bonus_damage": 3.0,
+        "threshold_hp": 0.5
+      },
+      "primary": "e5",
+      "source": "hero",
+      "tags": [
+        "physical",
+        "execute"
+      ]
+    },
+    {
+      "id": "heal_ally",
+      "params": {
+        "baseHealing": 30.0
+      },
+      "primary": "hero",
+      "source": "hero",
+      "tags": [
+        "ally"
+      ]
+    },
+    {
+      "id": "enemy_source_flip",
+      "params": {
+        "baseDamage": 25.0
+      },
+      "primary": "hero",
+      "source": "e1",
+      "tags": [
+        "physical"
+      ]
+    },
+    {
+      "id": "teleport",
+      "params": {
+        "teleport_range": 10.0
+      },
+      "primary": "e2",
+      "source": "hero",
+      "tags": [
+        "arcane",
+        "teleport"
+      ]
+    },
+    {
+      "id": "teleport_out_of_range",
+      "params": {
+        "teleport_range": 3.0
+      },
+      "primary": "e5",
+      "source": "hero",
+      "tags": [
+        "arcane",
+        "teleport"
+      ]
+    },
+    {
+      "id": "dash",
+      "params": {
+        "baseDamage": 15.0,
+        "dash_distance": 5.0,
+        "dash_speed": 20.0
+      },
+      "primary": "e3",
+      "source": "hero",
+      "tags": [
+        "physical",
+        "dash"
+      ]
+    },
+    {
+      "id": "phase",
+      "params": {
+        "can_pass_walls": true,
+        "phase_duration": 3.0
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "phase"
+      ]
+    },
+    {
+      "id": "multi_damage_tags",
+      "params": {
+        "baseDamage": 20.0
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "fire",
+        "physical"
+      ]
+    },
+    {
+      "id": "status_override",
+      "params": {
+        "baseDamage": 5.0,
+        "burn_duration": 9.9,
+        "duration": 4.2
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "physical",
+        "burn"
+      ]
+    },
+    {
+      "id": "geometry_conflict",
+      "params": {
+        "baseDamage": 10.0,
+        "chain_count": 1,
+        "chain_range": 9.0,
+        "circle_radius": 3.0
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "fire",
+        "chain",
+        "circle"
+      ]
+    },
+    {
+      "id": "alias_or_unknown_ice",
+      "params": {
+        "baseDamage": 12.0
+      },
+      "primary": "e1",
+      "source": "hero",
+      "tags": [
+        "ice",
+        "single_target"
+      ]
+    }
+  ],
+  "parse_skills": [
+    {
+      "config": {
+        "base_damage": 45,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "frost"
+        ],
+        "geometry": "cone",
+        "params": {
+          "affect_attack_speed": false,
+          "baseDamage": 45,
+          "cone_angle": 90.0,
+          "cone_range": 10.0,
+          "damage_to_break": 0.0,
+          "duration": 4.0,
+          "freeze_duration": 4.0,
+          "slow_amount": 0.5,
+          "slow_duration": 8.0,
+          "slow_percent": 0.5
+        },
+        "raw_tags": [
+          "ice",
+          "cone",
+          "freeze",
+          "slow"
+        ],
+        "special_tags": [],
+        "status_tags": [
+          "freeze",
+          "chill"
+        ],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "id": "arctic_cone",
+      "params": {
+        "baseDamage": 45,
+        "cone_angle": 90.0,
+        "cone_range": 10.0,
+        "freeze_duration": 4.0,
+        "slow_duration": 8.0,
+        "slow_percent": 0.5
+      },
+      "tags": [
+        "ice",
+        "cone",
+        "freeze",
+        "slow"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 100,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "lightning",
+          "lightning"
+        ],
+        "geometry": "chain",
+        "params": {
+          "baseDamage": 100,
+          "chain_count": 5,
+          "chain_falloff": 0.3,
+          "chain_range": 12.096,
+          "shock_damage_per_tick": 4.0,
+          "shock_duration": 6.0,
+          "shock_tick_rate": 1.5
+        },
+        "raw_tags": [
+          "lightning",
+          "chain",
+          "shock"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": [
+          "Synergy: lightning + chain = chain_range +20%",
+          "Synergy: chain + lightning = chain_range +20%",
+          "Synergy: shock + chain = chain_range +20%"
+        ]
+      },
+      "id": "chain_lightning",
+      "params": {
+        "baseDamage": 100,
+        "chain_count": 5,
+        "chain_range": 7.0,
+        "shock_damage_per_tick": 4.0,
+        "shock_duration": 6.0,
+        "shock_tick_rate": 1.5
+      },
+      "tags": [
+        "lightning",
+        "chain",
+        "shock"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 100,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "arcane"
+        ],
+        "geometry": "circle",
+        "params": {
+          "baseDamage": 100,
+          "circle_radius": 7.0,
+          "duration": 2.0,
+          "max_targets": 0,
+          "origin": "target",
+          "pull_distance": 5.0,
+          "pull_duration": 0.5,
+          "radius": 3.0,
+          "stun_duration": 3.0
+        },
+        "raw_tags": [
+          "arcane",
+          "circle",
+          "pull",
+          "stun"
+        ],
+        "special_tags": [
+          "pull"
+        ],
+        "status_tags": [
+          "stun"
+        ],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "id": "gravity_well",
+      "params": {
+        "baseDamage": 100,
+        "circle_radius": 7.0,
+        "origin": "target",
+        "pull_distance": 5.0,
+        "stun_duration": 3.0
+      },
+      "tags": [
+        "arcane",
+        "circle",
+        "pull",
+        "stun"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 150,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "fire"
+        ],
+        "geometry": "circle",
+        "params": {
+          "baseDamage": 150,
+          "burn_damage_per_second": 10.0,
+          "burn_duration": 12.0,
+          "circle_radius": 10.0,
+          "damage_per_tick": 5.0,
+          "duration": 5.0,
+          "knockback_distance": 5.0,
+          "knockback_duration": 0.5,
+          "max_targets": 0,
+          "origin": "source",
+          "radius": 3.0,
+          "tick_rate": 1.0
+        },
+        "raw_tags": [
+          "fire",
+          "circle",
+          "burn",
+          "knockback"
+        ],
+        "special_tags": [
+          "knockback"
+        ],
+        "status_tags": [
+          "burn"
+        ],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "id": "meteor_strike",
+      "params": {
+        "baseDamage": 150,
+        "burn_damage_per_second": 10.0,
+        "burn_duration": 12.0,
+        "circle_radius": 10.0,
+        "knockback_distance": 5.0,
+        "origin": "source"
+      },
+      "tags": [
+        "fire",
+        "circle",
+        "burn",
+        "knockback"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 55,
+        "base_healing": 0.0,
+        "conflicts": [
+          "Geometry conflict: using 'beam', ignoring ['pierce']"
+        ],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "shadow"
+        ],
+        "geometry": "beam",
+        "params": {
+          "affected_stats": [
+            "damage",
+            "defense"
+          ],
+          "baseDamage": 55,
+          "beam_range": 15.0,
+          "beam_width": 2.0,
+          "duration": 5.0,
+          "pierce_count": 10,
+          "pierce_falloff": 0.1,
+          "stat_reduction": 0.25,
+          "weaken_duration": 10.0,
+          "weaken_percent": 0.4
+        },
+        "raw_tags": [
+          "shadow",
+          "beam",
+          "weaken",
+          "pierce"
+        ],
+        "special_tags": [],
+        "status_tags": [
+          "weaken"
+        ],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "id": "shadow_beam",
+      "params": {
+        "baseDamage": 55,
+        "beam_range": 15.0,
+        "beam_width": 2.0,
+        "pierce_count": 10,
+        "weaken_duration": 10.0,
+        "weaken_percent": 0.4
+      },
+      "tags": [
+        "shadow",
+        "beam",
+        "weaken",
+        "pierce"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 40,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "shadow"
+        ],
+        "geometry": "circle",
+        "params": {
+          "baseDamage": 40,
+          "circle_radius": 6.0,
+          "lifesteal_percent": 0.6,
+          "max_targets": 0,
+          "origin": "source",
+          "radius": 3.0
+        },
+        "raw_tags": [
+          "shadow",
+          "circle",
+          "lifesteal"
+        ],
+        "special_tags": [
+          "lifesteal"
+        ],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "id": "vampiric_aura",
+      "params": {
+        "baseDamage": 40,
+        "circle_radius": 6.0,
+        "lifesteal_percent": 0.6,
+        "origin": "source"
+      },
+      "tags": [
+        "shadow",
+        "circle",
+        "lifesteal"
+      ]
+    }
+  ],
+  "registry": {
+    "aliases": {
+      "aoe": "circle",
+      "armor_buff": "fortify",
+      "attract": "pull",
+      "barrier": "shield",
+      "bleeding": "bleed",
+      "blink": "teleport",
+      "blunt": "crushing",
+      "burning": "burn",
+      "charge": "dash",
+      "cold": "frost",
+      "create": "summon",
+      "crit": "critical",
+      "damage_buff": "empower",
+      "damage_shield": "shield",
+      "dark": "shadow",
+      "dazed": "stun",
+      "defense_buff": "fortify",
+      "device": "turret",
+      "displace": "knockback",
+      "drain": "lifesteal",
+      "draw_in": "pull",
+      "electric": "lightning",
+      "enfeeble": "weaken",
+      "ethereal": "phase",
+      "finisher": "execute",
+      "friendly": "ally",
+      "frozen": "freeze",
+      "heal_over_time": "regeneration",
+      "hemorrhage": "bleed",
+      "hidden": "invisible",
+      "hostile": "enemy",
+      "hot": "regeneration",
+      "ice": "frost",
+      "ignite": "burn",
+      "immobilize": "root",
+      "immobilized": "root",
+      "intangible": "phase",
+      "laser": "energy",
+      "life_drain": "lifesteal",
+      "light": "holy",
+      "line": "beam",
+      "magic": "arcane",
+      "magical": "arcane",
+      "necrotic": "shadow",
+      "phase_shift": "phase",
+      "poisoned": "poison_status",
+      "push": "knockback",
+      "quicken": "haste",
+      "radial": "circle",
+      "radiant": "holy",
+      "reflect_damage": "reflect",
+      "regen": "regeneration",
+      "rooted": "root",
+      "rush": "dash",
+      "shock": "lightning",
+      "slow": "chill",
+      "slowed": "chill",
+      "snare": "root",
+      "spawn": "summon",
+      "stealth": "invisible",
+      "strengthen": "empower",
+      "stunned": "stun",
+      "swiftness": "haste",
+      "thorns": "reflect",
+      "toxic": "poison_status",
+      "vampiric": "lifesteal",
+      "void": "chaos",
+      "warp": "teleport",
+      "weakened": "weaken"
+    },
+    "categories": {
+      "armor_type": [
+        "heavy",
+        "medium",
+        "light",
+        "robes"
+      ],
+      "class": [
+        "warrior",
+        "ranger",
+        "scholar",
+        "artisan",
+        "scavenger",
+        "adventurer"
+      ],
+      "context": [
+        "self",
+        "ally",
+        "friendly",
+        "enemy",
+        "hostile",
+        "all",
+        "player",
+        "turret",
+        "device",
+        "construct",
+        "undead",
+        "mechanical"
+      ],
+      "damage_type": [
+        "physical",
+        "slashing",
+        "piercing",
+        "crushing",
+        "fire",
+        "frost",
+        "lightning",
+        "poison",
+        "holy",
+        "shadow",
+        "arcane",
+        "chaos",
+        "energy"
+      ],
+      "equipment": [
+        "1H",
+        "2H",
+        "versatile"
+      ],
+      "geometry": [
+        "single_target",
+        "chain",
+        "cone",
+        "circle",
+        "beam",
+        "projectile",
+        "pierce",
+        "splash"
+      ],
+      "playstyle": [
+        "melee",
+        "ranged",
+        "magic",
+        "crafting",
+        "gathering",
+        "balanced",
+        "tanky",
+        "agile",
+        "caster"
+      ],
+      "special": [
+        "lifesteal",
+        "vampiric",
+        "reflect",
+        "thorns",
+        "knockback",
+        "pull",
+        "teleport",
+        "summon",
+        "dash",
+        "charge",
+        "phase",
+        "execute",
+        "critical"
+      ],
+      "status_buff": [
+        "haste",
+        "quicken",
+        "empower",
+        "fortify",
+        "regeneration",
+        "shield",
+        "barrier",
+        "invisible"
+      ],
+      "status_debuff": [
+        "burn",
+        "freeze",
+        "chill",
+        "slow",
+        "stun",
+        "root",
+        "bleed",
+        "poison_status",
+        "shock",
+        "weaken"
+      ],
+      "trigger": [
+        "on_hit",
+        "on_kill",
+        "on_damage",
+        "on_crit",
+        "on_contact",
+        "on_proximity",
+        "passive",
+        "active",
+        "instant"
+      ]
+    },
+    "context_inference": {
+      "buff": "ally",
+      "damage": "enemy",
+      "debuff": "enemy",
+      "healing": "ally"
+    },
+    "definitions": {
+      "1H": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "equipment",
+        "conflicts_with": [
+          "2H",
+          "versatile"
+        ],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Can be equipped in mainHand OR offHand",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "2H": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "equipment",
+        "conflicts_with": [
+          "1H",
+          "versatile"
+        ],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Requires both hands, blocks offHand",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "active": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "trigger",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Requires manual activation",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "adventurer": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "class",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Jack of all trades class - balanced versatility",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "agile": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "playstyle",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Speed and evasion focus",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "all": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "context",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Affects all entities",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "ally": {
+        "alias_of": null,
+        "aliases": [
+          "friendly"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "context",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Affects allies",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "arcane": {
+        "alias_of": null,
+        "aliases": [
+          "magic",
+          "magical"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "damage_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Arcane magic damage, bypasses armor",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "artisan": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "class",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Master crafter class - crafting speed and quality",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "balanced": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "playstyle",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "No specialization, versatile",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "barrier": {
+        "alias_of": "shield",
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_buff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Absorbs damage (alias for shield)",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "beam": {
+        "alias_of": null,
+        "aliases": [
+          "line"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "geometry",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "beam_range": 10.0,
+          "beam_width": 0.5,
+          "pierce_count": 0
+        },
+        "description": "Hits all targets in straight line",
+        "immunity": [],
+        "parent": null,
+        "priority": 2,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "bleed": {
+        "alias_of": null,
+        "aliases": [
+          "bleeding",
+          "hemorrhage"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_debuff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "damage_per_tick": 3.0,
+          "duration": 6.0,
+          "movement_increases_damage": true,
+          "tick_rate": 1.0
+        },
+        "description": "Physical damage over time",
+        "immunity": [
+          "construct",
+          "mechanical"
+        ],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "additive",
+        "synergies": {}
+      },
+      "burn": {
+        "alias_of": null,
+        "aliases": [
+          "burning",
+          "ignite"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_debuff",
+        "conflicts_with": [
+          "freeze"
+        ],
+        "context_behavior": {},
+        "default_params": {
+          "damage_per_tick": 5.0,
+          "duration": 5.0,
+          "tick_rate": 1.0
+        },
+        "description": "Fire damage over time",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "additive",
+        "synergies": {}
+      },
+      "caster": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "playstyle",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Spell-casting focus",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "chain": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "geometry",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "chain_count": 2,
+          "chain_falloff": 0.3,
+          "chain_range": 5.0
+        },
+        "description": "Arcs to additional nearby targets",
+        "immunity": [],
+        "parent": null,
+        "priority": 5,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {
+          "lightning": {
+            "chain_range_bonus": 0.2
+          }
+        }
+      },
+      "chaos": {
+        "alias_of": null,
+        "aliases": [
+          "void"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "damage_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Chaotic damage, random type each hit",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "charge": {
+        "alias_of": "dash",
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Rapid movement (alias for dash)",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "chill": {
+        "alias_of": null,
+        "aliases": [
+          "slow",
+          "slowed"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_debuff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "affect_attack_speed": false,
+          "duration": 4.0,
+          "slow_amount": 0.5
+        },
+        "description": "Movement speed reduction",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "multiplicative",
+        "synergies": {}
+      },
+      "circle": {
+        "alias_of": null,
+        "aliases": [
+          "aoe",
+          "radial"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "geometry",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "max_targets": 0,
+          "origin": "target",
+          "radius": 3.0
+        },
+        "description": "Hits all targets in radius",
+        "immunity": [],
+        "parent": null,
+        "priority": 3,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "cone": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "geometry",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "cone_angle": 60,
+          "cone_range": 8.0
+        },
+        "description": "Hits all targets in frontal cone",
+        "immunity": [],
+        "parent": null,
+        "priority": 4,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "construct": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "context",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Affects construct enemies",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "crafting": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "playstyle",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Item creation focus",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "critical": {
+        "alias_of": null,
+        "aliases": [
+          "crit"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "crit_chance": 0.15,
+          "crit_multiplier": 2.0
+        },
+        "description": "Critical hit chance and damage",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "crushing": {
+        "alias_of": null,
+        "aliases": [
+          "blunt"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "damage_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Physical impact damage, bonus vs armor",
+        "immunity": [],
+        "parent": "physical",
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "dash": {
+        "alias_of": null,
+        "aliases": [
+          "charge",
+          "rush"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "damage_on_contact": false,
+          "dash_distance": 5.0,
+          "dash_speed": 20.0
+        },
+        "description": "Rapid movement",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "device": {
+        "alias_of": "turret",
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "context",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Affects turrets/devices (alias for turret)",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "empower": {
+        "alias_of": null,
+        "aliases": [
+          "strengthen",
+          "damage_buff"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_buff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "damage_increase": 0.5,
+          "duration": 10.0
+        },
+        "description": "Increased damage",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "multiplicative",
+        "synergies": {}
+      },
+      "enemy": {
+        "alias_of": null,
+        "aliases": [
+          "hostile"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "context",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Affects enemies",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "energy": {
+        "alias_of": null,
+        "aliases": [
+          "laser"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "damage_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Pure energy damage, used by laser turrets and energy weapons",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "execute": {
+        "alias_of": null,
+        "aliases": [
+          "finisher"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "bonus_damage": 2.0,
+          "threshold_hp": 0.2
+        },
+        "description": "Bonus damage below HP threshold",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "fire": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.1,
+        "auto_apply_status": "burn",
+        "category": "damage_type",
+        "conflicts_with": [
+          "freeze"
+        ],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Fire elemental damage",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "fortify": {
+        "alias_of": null,
+        "aliases": [
+          "armor_buff",
+          "defense_buff"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_buff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "damage_reduction": 0.0,
+          "defense_increase": 20,
+          "duration": 10.0
+        },
+        "description": "Increased defense",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "additive",
+        "synergies": {}
+      },
+      "freeze": {
+        "alias_of": null,
+        "aliases": [
+          "frozen"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_debuff",
+        "conflicts_with": [
+          "burn"
+        ],
+        "context_behavior": {},
+        "default_params": {
+          "damage_to_break": 0.0,
+          "duration": 3.0
+        },
+        "description": "Complete immobilization",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "none",
+        "synergies": {}
+      },
+      "friendly": {
+        "alias_of": "ally",
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "context",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Affects allies (alias for ally)",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "frost": {
+        "alias_of": null,
+        "aliases": [
+          "ice",
+          "cold"
+        ],
+        "auto_apply_chance": 0.15,
+        "auto_apply_status": "chill",
+        "category": "damage_type",
+        "conflicts_with": [
+          "burn"
+        ],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Frost elemental damage",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "gathering": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "playstyle",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Resource collection focus",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "haste": {
+        "alias_of": null,
+        "aliases": [
+          "quicken",
+          "swiftness"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_buff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "attack_speed_increase": 0.0,
+          "duration": 10.0,
+          "speed_increase": 0.5
+        },
+        "description": "Increased speed",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "additive",
+        "synergies": {}
+      },
+      "heavy": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "armor_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Heavy armor - high defense, low mobility",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "holy": {
+        "alias_of": null,
+        "aliases": [
+          "light",
+          "radiant"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "damage_type",
+        "conflicts_with": [],
+        "context_behavior": {
+          "ally": {
+            "converts_to_healing": true
+          },
+          "undead": {
+            "damage_multiplier": 1.5
+          }
+        },
+        "default_params": {},
+        "description": "Holy damage, bonus vs undead",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "hostile": {
+        "alias_of": "enemy",
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "context",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Affects enemies (alias for enemy)",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "instant": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "trigger",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "No cast time",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "invisible": {
+        "alias_of": null,
+        "aliases": [
+          "stealth",
+          "hidden"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_buff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "breaks_on_action": true,
+          "duration": 10.0
+        },
+        "description": "Undetectable by enemies",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "none",
+        "synergies": {}
+      },
+      "knockback": {
+        "alias_of": null,
+        "aliases": [
+          "push",
+          "displace"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "knockback_distance": 2.0,
+          "knockback_duration": 0.5
+        },
+        "description": "Push target away",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "lifesteal": {
+        "alias_of": null,
+        "aliases": [
+          "vampiric",
+          "drain",
+          "life_drain"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "lifesteal_percent": 0.15
+        },
+        "description": "Heal percentage of damage dealt",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "light": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "armor_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Light armor - low defense, high mobility",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "lightning": {
+        "alias_of": null,
+        "aliases": [
+          "electric",
+          "shock"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "damage_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Lightning elemental damage",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {
+          "chain": {
+            "chain_range_bonus": 0.2
+          }
+        }
+      },
+      "magic": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "playstyle",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Magical/arcane combat focus",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "mechanical": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "context",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Affects mechanical enemies",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "medium": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "armor_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Medium armor - balanced stats",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "melee": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "playstyle",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Close-range combat focus",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "on_contact": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "trigger",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Triggers when touched",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "on_crit": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "trigger",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Triggers on critical hit",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "on_damage": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "trigger",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Triggers when taking damage",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "on_hit": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "trigger",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Triggers when attack hits",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "on_kill": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "trigger",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Triggers when kills target",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "on_proximity": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "trigger",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Triggers when nearby",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "passive": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "trigger",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Always active",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "phase": {
+        "alias_of": null,
+        "aliases": [
+          "phase_shift",
+          "intangible",
+          "ethereal"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "can_pass_walls": false,
+          "phase_duration": 2.0
+        },
+        "description": "Temporary intangibility",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "physical": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "damage_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Base physical damage",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "pierce": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "geometry",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "pierce_count": -1,
+          "pierce_falloff": 0.1
+        },
+        "description": "Penetrates through targets",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "piercing": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "damage_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Physical piercing damage, ignores some armor",
+        "immunity": [],
+        "parent": "physical",
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "player": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "context",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Affects players only",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "poison": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "damage_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Poison damage",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "poison_status": {
+        "alias_of": null,
+        "aliases": [
+          "poisoned",
+          "toxic"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_debuff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "damage_per_tick": 4.0,
+          "duration": 10.0,
+          "tick_rate": 2.0
+        },
+        "description": "Poison damage over time",
+        "immunity": [
+          "construct",
+          "undead",
+          "mechanical"
+        ],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "additive",
+        "synergies": {}
+      },
+      "projectile": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "geometry",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "projectile_gravity": 0.0,
+          "projectile_homing": 0.0,
+          "projectile_speed": 15.0
+        },
+        "description": "Physical projectile that travels",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "pull": {
+        "alias_of": null,
+        "aliases": [
+          "draw_in",
+          "attract"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "pull_distance": 2.0,
+          "pull_duration": 0.5
+        },
+        "description": "Pull target toward source",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "quicken": {
+        "alias_of": "haste",
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_buff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Increased speed (alias for haste)",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "ranged": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "playstyle",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Long-range combat focus",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "ranger": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "class",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Mobile gatherer class - speed, ranged, nature",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "reflect": {
+        "alias_of": null,
+        "aliases": [
+          "thorns",
+          "reflect_damage"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "reflect_percent": 0.3,
+          "reflect_type": "damage"
+        },
+        "description": "Return damage to attacker",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "regeneration": {
+        "alias_of": null,
+        "aliases": [
+          "regen",
+          "heal_over_time",
+          "hot"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_buff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "duration": 10.0,
+          "heal_per_tick": 5.0,
+          "tick_rate": 1.0
+        },
+        "description": "Healing over time",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "additive",
+        "synergies": {}
+      },
+      "robes": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "armor_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Cloth armor - lowest defense, magic bonuses",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "root": {
+        "alias_of": null,
+        "aliases": [
+          "rooted",
+          "immobilize",
+          "immobilized",
+          "snare"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_debuff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "duration": 3.0
+        },
+        "description": "Cannot move, can still act",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "additive",
+        "synergies": {}
+      },
+      "scavenger": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "class",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Loot hunter class - luck, rare drops, gathering",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "scholar": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "class",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Magical researcher class - mana, alchemy, arcane",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "self": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "context",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Affects only caster",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "shadow": {
+        "alias_of": null,
+        "aliases": [
+          "dark",
+          "necrotic"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "damage_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Shadow damage",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "shield": {
+        "alias_of": null,
+        "aliases": [
+          "barrier",
+          "damage_shield"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_buff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "duration": 15.0,
+          "shield_amount": 50.0,
+          "shield_type": "all"
+        },
+        "description": "Absorbs damage",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "none",
+        "synergies": {}
+      },
+      "shock": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_debuff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "damage_per_tick": 5.0,
+          "duration": 6.0,
+          "tick_rate": 2.0
+        },
+        "description": "Periodic damage and interrupt",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "additive",
+        "synergies": {}
+      },
+      "single_target": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "geometry",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Hits only primary target",
+        "immunity": [],
+        "parent": null,
+        "priority": 1,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "slashing": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "damage_type",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Physical cutting damage",
+        "immunity": [],
+        "parent": "physical",
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "slow": {
+        "alias_of": "chill",
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_debuff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Movement speed reduction (alias for chill)",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "splash": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "geometry",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "splash_falloff": "linear",
+          "splash_radius": 2.0
+        },
+        "description": "Impact creates AOE",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "stun": {
+        "alias_of": null,
+        "aliases": [
+          "stunned",
+          "dazed"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_debuff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "duration": 2.0
+        },
+        "description": "Cannot act or move",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "diminishing",
+        "synergies": {}
+      },
+      "summon": {
+        "alias_of": null,
+        "aliases": [
+          "spawn",
+          "create"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "summon_count": 1,
+          "summon_duration": 30.0
+        },
+        "description": "Spawn entities",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [
+          "summon_id"
+        ],
+        "stacking": null,
+        "synergies": {}
+      },
+      "tanky": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "playstyle",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "High survivability focus",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "teleport": {
+        "alias_of": null,
+        "aliases": [
+          "blink",
+          "warp"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "teleport_range": 10.0,
+          "teleport_type": "targeted"
+        },
+        "description": "Instant movement",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "thorns": {
+        "alias_of": "reflect",
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Return damage to attacker (alias for reflect)",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "turret": {
+        "alias_of": null,
+        "aliases": [
+          "device"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "context",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Affects turrets/devices",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "undead": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "context",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Affects undead enemies",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "vampiric": {
+        "alias_of": "lifesteal",
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "special",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Heal percentage of damage dealt (alias for lifesteal)",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "versatile": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "equipment",
+        "conflicts_with": [
+          "1H",
+          "2H"
+        ],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Optional offHand, different stats when 2H",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "warrior": {
+        "alias_of": null,
+        "aliases": [],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "class",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {},
+        "description": "Frontline fighter class - high HP, melee damage",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": null,
+        "synergies": {}
+      },
+      "weaken": {
+        "alias_of": null,
+        "aliases": [
+          "weakened",
+          "enfeeble"
+        ],
+        "auto_apply_chance": 0.0,
+        "auto_apply_status": null,
+        "category": "status_debuff",
+        "conflicts_with": [],
+        "context_behavior": {},
+        "default_params": {
+          "affected_stats": [
+            "damage",
+            "defense"
+          ],
+          "duration": 5.0,
+          "stat_reduction": 0.25
+        },
+        "description": "Stat reduction",
+        "immunity": [],
+        "parent": null,
+        "priority": 0,
+        "requires_params": [],
+        "stacking": "additive",
+        "synergies": {}
+      }
+    },
+    "geometry_priority": [
+      "chain",
+      "cone",
+      "circle",
+      "beam",
+      "single_target"
+    ],
+    "mutually_exclusive": {
+      "1H": [
+        "2H",
+        "versatile"
+      ],
+      "2H": [
+        "1H",
+        "versatile"
+      ],
+      "burn": [
+        "freeze"
+      ],
+      "freeze": [
+        "burn"
+      ],
+      "versatile": [
+        "1H",
+        "2H"
+      ]
+    }
+  },
+  "results": [
+    {
+      "config": {
+        "base_damage": 50.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "baseDamage": 50.0
+        },
+        "raw_tags": [
+          "physical"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 30.0,
+          "damage_log": [
+            [
+              50.0,
+              "physical"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "single_physical",
+      "rng_check": 0.2330654737797524,
+      "targets": [
+        "e1"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 100.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "_apply_enemy_defense": true,
+          "_armor_penetration": 0.3,
+          "baseDamage": 100.0
+        },
+        "raw_tags": [
+          "physical"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 80.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 78.0,
+          "damage_log": [
+            [
+              72.0,
+              "physical",
+              [
+                "physical"
+              ],
+              "hero"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "defense_armor_pen",
+      "rng_check": 0.5702498130103056,
+      "targets": [
+        "e3"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 60.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "_apply_enemy_defense": true,
+          "baseDamage": 60.0
+        },
+        "raw_tags": [
+          "physical"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 80.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 35.0,
+          "damage_log": [
+            [
+              15.0,
+              "physical"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "defense_cap",
+      "rng_check": 0.6378448753758589,
+      "targets": [
+        "e6"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 40.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "lightning"
+        ],
+        "geometry": "chain",
+        "params": {
+          "baseDamage": 40.0,
+          "chain_count": 3,
+          "chain_falloff": 0.3,
+          "chain_range": 8.639999999999999
+        },
+        "raw_tags": [
+          "lightning",
+          "chain"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": [
+          "Synergy: lightning + chain = chain_range +20%",
+          "Synergy: chain + lightning = chain_range +20%"
+        ]
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [
+            [
+              40.0,
+              "lightning"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.400000000000006,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 136.28,
+          "damage_log": [
+            [
+              13.719999999999997,
+              "lightning",
+              [
+                "lightning",
+                "chain"
+              ],
+              "hero"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 22.0,
+          "damage_log": [
+            [
+              28.0,
+              "lightning"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "chain_lightning",
+      "rng_check": 0.1594811511556431,
+      "targets": [
+        "e1",
+        "e6",
+        "e2",
+        "e3"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 30.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "fire"
+        ],
+        "geometry": "circle",
+        "params": {
+          "baseDamage": 30.0,
+          "circle_radius": 5.0,
+          "damage_per_tick": 5.0,
+          "duration": 5.0,
+          "max_targets": 0,
+          "origin": "target",
+          "radius": 3.0,
+          "tick_rate": 1.0
+        },
+        "raw_tags": [
+          "fire",
+          "circle",
+          "burn"
+        ],
+        "special_tags": [],
+        "status_tags": [
+          "burn"
+        ],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [
+            [
+              30.0,
+              "fire"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": [
+            {
+              "params": {
+                "damage_per_tick": 5.0,
+                "duration": 5.0,
+                "tick_rate": 1.0
+              },
+              "tag": "burn",
+              "with_source": false
+            }
+          ]
+        },
+        {
+          "alive": true,
+          "current_health": 30.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": [
+            {
+              "params": {
+                "damage_per_tick": 5.0,
+                "duration": 5.0,
+                "tick_rate": 1.0
+              },
+              "tag": "burn",
+              "with_source": false
+            }
+          ]
+        },
+        {
+          "alive": true,
+          "current_health": 120.0,
+          "damage_log": [
+            [
+              30.0,
+              "fire",
+              [
+                "fire",
+                "circle",
+                "burn"
+              ],
+              "hero"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 10.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": [
+            {
+              "params": {
+                "damage_per_tick": 5.0,
+                "duration": 5.0,
+                "tick_rate": 1.0
+              },
+              "tag": "burn",
+              "with_source": false
+            }
+          ]
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 20.0,
+          "damage_log": [
+            [
+              30.0,
+              "fire"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": [
+            {
+              "params": {
+                "damage_per_tick": 5.0,
+                "duration": 5.0,
+                "tick_rate": 1.0
+              },
+              "tag": "burn",
+              "with_source": false
+            }
+          ]
+        }
+      ],
+      "id": "circle_burn",
+      "rng_check": 0.20499900467842103,
+      "targets": [
+        "e1",
+        "e6",
+        "e2",
+        "e4",
+        "e3"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 20.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "frost"
+        ],
+        "geometry": "circle",
+        "params": {
+          "affect_attack_speed": false,
+          "baseDamage": 20.0,
+          "circle_radius": 4.0,
+          "duration": 4.0,
+          "max_targets": 0,
+          "origin": "source",
+          "radius": 3.0,
+          "slow_amount": 0.5
+        },
+        "raw_tags": [
+          "frost",
+          "circle",
+          "chill"
+        ],
+        "special_tags": [],
+        "status_tags": [
+          "chill"
+        ],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [
+            [
+              20.0,
+              "frost"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": [
+            {
+              "params": {
+                "affect_attack_speed": false,
+                "duration": 4.0,
+                "slow_amount": 0.5
+              },
+              "tag": "chill",
+              "with_source": false
+            },
+            {
+              "params": {
+                "affect_attack_speed": false,
+                "duration": 4.0,
+                "slow_amount": 0.5
+              },
+              "tag": "chill",
+              "with_source": false
+            }
+          ]
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 30.0,
+          "damage_log": [
+            [
+              20.0,
+              "frost"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": [
+            {
+              "params": {
+                "affect_attack_speed": false,
+                "duration": 4.0,
+                "slow_amount": 0.5
+              },
+              "tag": "chill",
+              "with_source": false
+            }
+          ]
+        }
+      ],
+      "id": "circle_origin_source",
+      "rng_check": 0.44679504994523134,
+      "targets": [
+        "e6",
+        "e1"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 8.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "circle",
+        "params": {
+          "baseDamage": 8.0,
+          "circle_radius": 20.0,
+          "max_targets": 3,
+          "origin": "target",
+          "radius": 3.0
+        },
+        "raw_tags": [
+          "physical",
+          "circle"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 72.0,
+          "damage_log": [
+            [
+              8.0,
+              "physical"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 52.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 42.0,
+          "damage_log": [
+            [
+              8.0,
+              "physical"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "circle_max_targets",
+      "rng_check": 0.16847913712244633,
+      "targets": [
+        "e1",
+        "e6",
+        "e2"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 25.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "frost"
+        ],
+        "geometry": "cone",
+        "params": {
+          "baseDamage": 25.0,
+          "cone_angle": 90.0,
+          "cone_range": 8.0
+        },
+        "raw_tags": [
+          "frost",
+          "cone"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 55.0,
+          "damage_log": [
+            [
+              25.0,
+              "frost"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": [
+            {
+              "params": {
+                "affect_attack_speed": false,
+                "duration": 4.0,
+                "slow_amount": 0.5
+              },
+              "tag": "chill",
+              "with_source": false
+            }
+          ]
+        },
+        {
+          "alive": true,
+          "current_health": 35.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 125.0,
+          "damage_log": [
+            [
+              25.0,
+              "frost",
+              [
+                "frost",
+                "cone"
+              ],
+              "hero"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 15.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "cone_frost",
+      "rng_check": 0.3644643752620783,
+      "targets": [
+        "e1",
+        "e2",
+        "e3",
+        "e4"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 35.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "arcane"
+        ],
+        "geometry": "beam",
+        "params": {
+          "baseDamage": 35.0,
+          "beam_range": 12.0,
+          "beam_width": 1.0,
+          "pierce_count": 2
+        },
+        "raw_tags": [
+          "arcane",
+          "beam"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 80.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 25.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 115.0,
+          "damage_log": [
+            [
+              35.0,
+              "arcane",
+              [
+                "arcane",
+                "beam"
+              ],
+              "hero"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "beam_arcane",
+      "rng_check": 0.012076285340563042,
+      "targets": [
+        "e2",
+        "e3"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 40.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "baseDamage": 40.0,
+          "crit_chance": 0.6,
+          "crit_multiplier": 2.0
+        },
+        "raw_tags": [
+          "physical",
+          "critical"
+        ],
+        "special_tags": [
+          "critical"
+        ],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [
+            [
+              40.0,
+              "physical"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "critical",
+      "rng_check": 0.31472399616793634,
+      "targets": [
+        "e1"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 60.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "baseDamage": 60.0,
+          "lifesteal_percent": 0.25
+        },
+        "raw_tags": [
+          "physical",
+          "lifesteal"
+        ],
+        "special_tags": [
+          "lifesteal"
+        ],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [
+            15.0
+          ],
+          "health": 115.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 20.0,
+          "damage_log": [
+            [
+              60.0,
+              "physical"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "lifesteal",
+      "rng_check": 0.9537436463547434,
+      "targets": [
+        "e1"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 10.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "baseDamage": 10.0,
+          "knockback_distance": 3.0,
+          "knockback_duration": 0.5
+        },
+        "raw_tags": [
+          "physical",
+          "knockback"
+        ],
+        "special_tags": [
+          "knockback"
+        ],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 70.0,
+          "damage_log": [
+            [
+              10.0,
+              "physical"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            6.0,
+            0.0,
+            0.5
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "knockback",
+      "rng_check": 0.67558966727776,
+      "targets": [
+        "e1"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 10.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "baseDamage": 10.0,
+          "knockback_distance": 2.0,
+          "knockback_duration": 0.5
+        },
+        "raw_tags": [
+          "physical",
+          "knockback"
+        ],
+        "special_tags": [
+          "knockback"
+        ],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 80.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "knockback_no_fields",
+      "rng_check": 0.06400868030345863,
+      "targets": [
+        "e2"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 5.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "baseDamage": 5.0,
+          "pull_distance": 2.0,
+          "pull_duration": 0.5
+        },
+        "raw_tags": [
+          "physical",
+          "pull"
+        ],
+        "special_tags": [
+          "pull"
+        ],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 80.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 145.0,
+          "damage_log": [
+            [
+              5.0,
+              "physical",
+              [
+                "physical",
+                "pull"
+              ],
+              "hero"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            5.116516176810325,
+            1.8273272060036876
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "pull",
+      "rng_check": 0.2628191971121946,
+      "targets": [
+        "e3"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 10.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "baseDamage": 10.0,
+          "bonus_damage": 3.0,
+          "threshold_hp": 0.5
+        },
+        "raw_tags": [
+          "physical",
+          "execute"
+        ],
+        "special_tags": [
+          "execute"
+        ],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 80.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": false,
+          "current_health": 0.0,
+          "damage_log": [
+            [
+              10.0,
+              "physical"
+            ],
+            [
+              20.0,
+              "execute"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "execute",
+      "rng_check": 0.15799048719029984,
+      "targets": [
+        "e5"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 0.0,
+        "base_healing": 30.0,
+        "conflicts": [],
+        "context": "ally",
+        "context_tags": [
+          "ally"
+        ],
+        "damage_tags": [],
+        "geometry": "single_target",
+        "params": {
+          "baseHealing": 30.0
+        },
+        "raw_tags": [
+          "ally"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [
+            30.0
+          ],
+          "health": 120.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 80.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "heal_ally",
+      "rng_check": 0.37148221188738495,
+      "targets": [
+        "hero"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 25.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "baseDamage": 25.0
+        },
+        "raw_tags": [
+          "physical"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [
+            [
+              25.0,
+              "physical"
+            ]
+          ],
+          "heal_log": [],
+          "health": 75.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 80.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "enemy_source_flip",
+      "rng_check": 0.8174758821180534,
+      "targets": [
+        "hero"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 0.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "arcane"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "teleport_range": 10.0,
+          "teleport_type": "targeted"
+        },
+        "raw_tags": [
+          "arcane",
+          "teleport"
+        ],
+        "special_tags": [
+          "teleport"
+        ],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 80.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "teleport",
+      "rng_check": 0.6856760799608387,
+      "targets": [
+        "e2"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 0.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "arcane"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "teleport_range": 3.0,
+          "teleport_type": "targeted"
+        },
+        "raw_tags": [
+          "arcane",
+          "teleport"
+        ],
+        "special_tags": [
+          "teleport"
+        ],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 80.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "teleport_out_of_range",
+      "rng_check": 0.12185226902249935,
+      "targets": [
+        "e5"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 15.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "baseDamage": 15.0,
+          "damage_on_contact": false,
+          "dash_distance": 5.0,
+          "dash_speed": 20.0
+        },
+        "raw_tags": [
+          "physical",
+          "dash"
+        ],
+        "special_tags": [
+          "dash"
+        ],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            18.83483823189675,
+            6.726727939963125,
+            0.25
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 80.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 135.0,
+          "damage_log": [
+            [
+              15.0,
+              "physical",
+              [
+                "physical",
+                "dash"
+              ],
+              "hero"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "dash",
+      "rng_check": 0.1956221726669859,
+      "targets": [
+        "e3"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 0.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [],
+        "geometry": "single_target",
+        "params": {
+          "can_pass_walls": true,
+          "phase_duration": 3.0
+        },
+        "raw_tags": [
+          "phase"
+        ],
+        "special_tags": [
+          "phase"
+        ],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": [
+            {
+              "params": {
+                "can_pass_walls": true,
+                "duration": 3.0
+              },
+              "tag": "phase",
+              "with_source": true
+            }
+          ]
+        },
+        {
+          "alive": true,
+          "current_health": 80.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "phase",
+      "rng_check": 0.8577632863120949,
+      "targets": [
+        "e1"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 20.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "fire",
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "baseDamage": 20.0
+        },
+        "raw_tags": [
+          "fire",
+          "physical"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [
+            [
+              20.0,
+              "fire"
+            ],
+            [
+              20.0,
+              "physical"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "multi_damage_tags",
+      "rng_check": 0.964705657272734,
+      "targets": [
+        "e1"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 5.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "physical"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "baseDamage": 5.0,
+          "burn_duration": 9.9,
+          "damage_per_tick": 5.0,
+          "duration": 4.2,
+          "tick_rate": 1.0
+        },
+        "raw_tags": [
+          "physical",
+          "burn"
+        ],
+        "special_tags": [],
+        "status_tags": [
+          "burn"
+        ],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 75.0,
+          "damage_log": [
+            [
+              5.0,
+              "physical"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": [
+            {
+              "params": {
+                "damage_per_tick": 5.0,
+                "duration": 4.2,
+                "tick_rate": 1.0
+              },
+              "tag": "burn",
+              "with_source": false
+            }
+          ]
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "status_override",
+      "rng_check": 0.5579496340254416,
+      "targets": [
+        "e1"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 10.0,
+        "base_healing": 0.0,
+        "conflicts": [
+          "Geometry conflict: using 'chain', ignoring ['circle']"
+        ],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "fire"
+        ],
+        "geometry": "chain",
+        "params": {
+          "baseDamage": 10.0,
+          "chain_count": 1,
+          "chain_falloff": 0.3,
+          "chain_range": 9.0,
+          "circle_radius": 3.0,
+          "max_targets": 0,
+          "origin": "target",
+          "radius": 3.0
+        },
+        "raw_tags": [
+          "fire",
+          "chain",
+          "circle"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 70.0,
+          "damage_log": [
+            [
+              10.0,
+              "fire"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 43.0,
+          "damage_log": [
+            [
+              7.0,
+              "fire"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "geometry_conflict",
+      "rng_check": 0.8419182264462522,
+      "targets": [
+        "e1",
+        "e6"
+      ]
+    },
+    {
+      "config": {
+        "base_damage": 12.0,
+        "base_healing": 0.0,
+        "conflicts": [],
+        "context": "enemy",
+        "context_tags": [],
+        "damage_tags": [
+          "frost"
+        ],
+        "geometry": "single_target",
+        "params": {
+          "baseDamage": 12.0
+        },
+        "raw_tags": [
+          "ice",
+          "single_target"
+        ],
+        "special_tags": [],
+        "status_tags": [],
+        "trigger_tags": [],
+        "warnings": []
+      },
+      "entities": [
+        {
+          "alive": null,
+          "current_health": null,
+          "damage_log": [],
+          "heal_log": [],
+          "health": 100.0,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "hero",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 68.0,
+          "damage_log": [
+            [
+              12.0,
+              "frost"
+            ]
+          ],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e1",
+          "position": [
+            3.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 60.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e2",
+          "position": [
+            5.5,
+            1.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 150.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "e3",
+          "position": [
+            7.0,
+            2.5
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 40.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e4",
+          "position": [
+            4.0,
+            -3.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 5.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e5",
+          "position": [
+            12.0,
+            0.0
+          ],
+          "statuses": []
+        },
+        {
+          "alive": true,
+          "current_health": 50.0,
+          "damage_log": [],
+          "heal_log": [],
+          "health": null,
+          "knockback": null,
+          "name": "e6",
+          "position": [
+            2.0,
+            2.0
+          ],
+          "statuses": []
+        }
+      ],
+      "id": "alias_or_unknown_ice",
+      "rng_check": 0.42370930361417847,
+      "targets": [
+        "e1"
+      ]
+    }
+  ]
+}

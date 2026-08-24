@@ -1,0 +1,2493 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-20",
+    "git_sha": "8b0965dc",
+    "source": "Combat/enemy.py EnemyDatabase + attack_profile_generator (deterministic profiles) + REAL generate_loot on seeded global random"
+  },
+  "by_tier": {
+    "1": [
+      "wolf_grey",
+      "slime_green",
+      "beetle_brown"
+    ],
+    "2": [
+      "wolf_dire",
+      "slime_acid",
+      "beetle_armored"
+    ],
+    "3": [
+      "wolf_elder",
+      "slime_crystal",
+      "golem_stone",
+      "inferno_drake",
+      "inferno_drake"
+    ],
+    "4": [
+      "beetle_titan",
+      "golem_crystal",
+      "void_wraith",
+      "entity_primordial",
+      "void_archon",
+      "storm_titan",
+      "void_archon",
+      "storm_titan"
+    ]
+  },
+  "count": 16,
+  "enemies": {
+    "beetle_armored": {
+      "aggro_range": 7,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 8,
+        "default_state": "patrol",
+        "flee_at_health": 0,
+        "pack_coordination": false,
+        "special_abilities": [
+          "charge_attack"
+        ]
+      },
+      "attack_speed": 0.8,
+      "attacks": [
+        {
+          "active": 161,
+          "arc": 54,
+          "attack_id": "insect_mandible",
+          "damage_multiplier": 1.0,
+          "range": 1.38,
+          "recovery": 250,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 385
+        },
+        {
+          "active": 184,
+          "arc": 36,
+          "attack_id": "insect_sting",
+          "damage_multiplier": 1.0,
+          "range": 1.84,
+          "recovery": 280,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 2,
+          "windup": 440
+        }
+      ],
+      "behavior": "territorial",
+      "category": "insect",
+      "damage_max": 30,
+      "damage_min": 20,
+      "defense": 25,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "beetle_carapace",
+          "quantity_max": 7,
+          "quantity_min": 4
+        },
+        {
+          "chance": 0.75,
+          "material_id": "iron_scales",
+          "quantity_max": 5,
+          "quantity_min": 3
+        },
+        {
+          "chance": 0.5,
+          "material_id": "living_ichor",
+          "quantity_max": 3,
+          "quantity_min": 2
+        }
+      ],
+      "enemy_id": "beetle_armored",
+      "hurtbox_radius": 0.5599999999999999,
+      "icon_path": "enemies/beetle_armored.png",
+      "max_health": 250,
+      "name": "Armored Beetle",
+      "narrative": "Heavily armored beetle with metallic shell. Territorial and aggressive when its area is invaded.",
+      "special_ability_ids": [
+        "charge_attack"
+      ],
+      "speed": 0.7,
+      "tags": [
+        "beetle",
+        "uncommon",
+        "territorial",
+        "mid-game"
+      ],
+      "tier": 2,
+      "visual_size": 1.4
+    },
+    "beetle_brown": {
+      "aggro_range": 4,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 0,
+        "default_state": "wander",
+        "flee_at_health": 0.3,
+        "pack_coordination": false,
+        "special_abilities": []
+      },
+      "attack_speed": 0.9,
+      "attacks": [
+        {
+          "active": 140,
+          "arc": 45,
+          "attack_id": "insect_mandible",
+          "damage_multiplier": 1.0,
+          "range": 1.2,
+          "recovery": 316,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 462
+        }
+      ],
+      "behavior": "docile_wander",
+      "category": "insect",
+      "damage_max": 10,
+      "damage_min": 6,
+      "defense": 12,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "beetle_carapace",
+          "quantity_max": 4,
+          "quantity_min": 2
+        },
+        {
+          "chance": 0.25,
+          "material_id": "earth_crystal",
+          "quantity_max": 1,
+          "quantity_min": 1
+        }
+      ],
+      "enemy_id": "beetle_brown",
+      "hurtbox_radius": 0.4,
+      "icon_path": "enemies/beetle_brown.png",
+      "max_health": 100,
+      "name": "Brown Beetle",
+      "narrative": "Common brown beetle with hard carapace. Docile unless threatened, then surprisingly fierce.",
+      "special_ability_ids": [],
+      "speed": 0.8,
+      "tags": [
+        "beetle",
+        "common",
+        "docile",
+        "starter"
+      ],
+      "tier": 1,
+      "visual_size": 1.0
+    },
+    "beetle_titan": {
+      "aggro_range": 15,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 0,
+        "default_state": "patrol",
+        "flee_at_health": 0,
+        "pack_coordination": false,
+        "special_abilities": [
+          "earthquake_stomp",
+          "shell_shield",
+          "rampage"
+        ]
+      },
+      "attack_speed": 0.7,
+      "attacks": [
+        {
+          "active": 161,
+          "arc": 54,
+          "attack_id": "insect_mandible",
+          "damage_multiplier": 1.0,
+          "range": 1.8,
+          "recovery": 212,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 346
+        },
+        {
+          "active": 184,
+          "arc": 36,
+          "attack_id": "insect_sting",
+          "damage_multiplier": 1.0,
+          "range": 2.4,
+          "recovery": 238,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 2,
+          "windup": 396
+        },
+        {
+          "active": 230,
+          "arc": 62,
+          "attack_id": "insect_charge",
+          "damage_multiplier": 1.4,
+          "range": 3.75,
+          "recovery": 340,
+          "screen_shake": true,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 1,
+          "windup": 544
+        }
+      ],
+      "behavior": "boss_encounter",
+      "category": "insect",
+      "damage_max": 110,
+      "damage_min": 70,
+      "defense": 50,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "beetle_carapace",
+          "quantity_max": 25,
+          "quantity_min": 15
+        },
+        {
+          "chance": 1.0,
+          "material_id": "iron_scales",
+          "quantity_max": 15,
+          "quantity_min": 10
+        },
+        {
+          "chance": 0.75,
+          "material_id": "golem_core",
+          "quantity_max": 5,
+          "quantity_min": 3
+        },
+        {
+          "chance": 0.5,
+          "material_id": "adamantine_ingot",
+          "quantity_max": 3,
+          "quantity_min": 2
+        }
+      ],
+      "enemy_id": "beetle_titan",
+      "hurtbox_radius": 1.2000000000000002,
+      "icon_path": "enemies/beetle_titan.png",
+      "max_health": 1200,
+      "name": "Titan Beetle",
+      "narrative": "Massive beetle with diamond-hard shell. Ancient guardian that has survived eons.",
+      "special_ability_ids": [
+        "earthquake_stomp",
+        "shell_shield",
+        "rampage"
+      ],
+      "speed": 0.6,
+      "tags": [
+        "beetle",
+        "rare",
+        "boss",
+        "end-game"
+      ],
+      "tier": 4,
+      "visual_size": 3.0
+    },
+    "entity_primordial": {
+      "aggro_range": 20,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 0,
+        "default_state": "guard",
+        "flee_at_health": 0,
+        "pack_coordination": false,
+        "special_abilities": [
+          "reality_warp",
+          "void_rift",
+          "temporal_distortion",
+          "chaos_burst"
+        ]
+      },
+      "attack_speed": 1.0,
+      "attacks": [
+        {
+          "active": 280,
+          "arc": 110,
+          "attack_id": "aberration_lash",
+          "damage_multiplier": 1.0,
+          "range": 2.4,
+          "recovery": 323,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "shadow"
+          ],
+          "weight": 3,
+          "windup": 495
+        },
+        {
+          "active": 300,
+          "arc": 360,
+          "attack_id": "aberration_warp_strike",
+          "damage_multiplier": 1.0,
+          "range": 2.1,
+          "recovery": 340,
+          "screen_shake": false,
+          "shape": "circle",
+          "status_tags": [],
+          "tags": [
+            "shadow"
+          ],
+          "weight": 2,
+          "windup": 540
+        },
+        {
+          "active": 350,
+          "arc": 90,
+          "attack_id": "aberration_devour",
+          "damage_multiplier": 1.4,
+          "range": 3.3,
+          "recovery": 425,
+          "screen_shake": true,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "shadow"
+          ],
+          "weight": 1,
+          "windup": 630
+        }
+      ],
+      "behavior": "boss_encounter",
+      "category": "aberration",
+      "damage_max": 180,
+      "damage_min": 120,
+      "defense": 60,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "chaos_matrix",
+          "quantity_max": 5,
+          "quantity_min": 3
+        },
+        {
+          "chance": 1.0,
+          "material_id": "void_essence",
+          "quantity_max": 12,
+          "quantity_min": 8
+        },
+        {
+          "chance": 0.75,
+          "material_id": "etherion_ingot",
+          "quantity_max": 8,
+          "quantity_min": 5
+        },
+        {
+          "chance": 0.5,
+          "material_id": "genesis_lattice",
+          "quantity_max": 3,
+          "quantity_min": 2
+        },
+        {
+          "chance": 0.5,
+          "material_id": "primordial_crystal",
+          "quantity_max": 4,
+          "quantity_min": 2
+        }
+      ],
+      "enemy_id": "entity_primordial",
+      "hurtbox_radius": 1.5600000000000003,
+      "icon_path": "enemies/entity_primordial.png",
+      "max_health": 2000,
+      "name": "Primordial Entity",
+      "narrative": "Reality-warped entity from beyond comprehension. Existence itself bends around it. Only the most prepared dare engage.",
+      "special_ability_ids": [
+        "reality_warp",
+        "void_rift",
+        "temporal_distortion",
+        "chaos_burst"
+      ],
+      "speed": 1.0,
+      "tags": [
+        "entity",
+        "mythical",
+        "boss",
+        "reality-bender"
+      ],
+      "tier": 4,
+      "visual_size": 3.9000000000000004
+    },
+    "golem_crystal": {
+      "aggro_range": 12,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 0,
+        "default_state": "guard",
+        "flee_at_health": 0,
+        "pack_coordination": false,
+        "special_abilities": [
+          "crystal_beam",
+          "refraction_shield",
+          "summon_shards"
+        ]
+      },
+      "attack_speed": 0.8,
+      "attacks": [
+        {
+          "active": 402,
+          "arc": 120,
+          "attack_id": "construct_slam",
+          "damage_multiplier": 1.0,
+          "range": 2.4,
+          "recovery": 468,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 743
+        },
+        {
+          "active": 460,
+          "arc": 168,
+          "attack_id": "construct_sweep",
+          "damage_multiplier": 1.0,
+          "range": 2.7,
+          "recovery": 510,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "arcane"
+          ],
+          "weight": 2,
+          "windup": 842
+        },
+        {
+          "active": 518,
+          "arc": 187,
+          "attack_id": "construct_smash",
+          "damage_multiplier": 1.5,
+          "range": 3.6,
+          "recovery": 595,
+          "screen_shake": true,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "arcane"
+          ],
+          "weight": 1,
+          "windup": 990
+        }
+      ],
+      "behavior": "boss_encounter",
+      "category": "construct",
+      "damage_max": 120,
+      "damage_min": 80,
+      "defense": 45,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "golem_core",
+          "quantity_max": 5,
+          "quantity_min": 3
+        },
+        {
+          "chance": 1.0,
+          "material_id": "crystal_quartz",
+          "quantity_max": 15,
+          "quantity_min": 10
+        },
+        {
+          "chance": 0.75,
+          "material_id": "diamond",
+          "quantity_max": 5,
+          "quantity_min": 3
+        },
+        {
+          "chance": 0.25,
+          "material_id": "primordial_crystal",
+          "quantity_max": 2,
+          "quantity_min": 1
+        }
+      ],
+      "enemy_id": "golem_crystal",
+      "hurtbox_radius": 1.44,
+      "icon_path": "enemies/golem_crystal.png",
+      "max_health": 1000,
+      "name": "Crystal Golem",
+      "narrative": "Crystalline golem pulsing with magical energy. Rare guardian of legendary deposits.",
+      "special_ability_ids": [
+        "crystal_beam",
+        "refraction_shield",
+        "summon_shards"
+      ],
+      "speed": 0.7,
+      "tags": [
+        "golem",
+        "epic",
+        "boss",
+        "construct"
+      ],
+      "tier": 4,
+      "visual_size": 3.5999999999999996
+    },
+    "golem_stone": {
+      "aggro_range": 10,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 0,
+        "default_state": "guard",
+        "flee_at_health": 0,
+        "pack_coordination": false,
+        "special_abilities": [
+          "ground_slam",
+          "stone_armor"
+        ]
+      },
+      "attack_speed": 0.6,
+      "attacks": [
+        {
+          "active": 402,
+          "arc": 120,
+          "attack_id": "construct_slam",
+          "damage_multiplier": 1.0,
+          "range": 2.08,
+          "recovery": 468,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 743
+        },
+        {
+          "active": 460,
+          "arc": 168,
+          "attack_id": "construct_sweep",
+          "damage_multiplier": 1.0,
+          "range": 2.34,
+          "recovery": 510,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 2,
+          "windup": 842
+        },
+        {
+          "active": 518,
+          "arc": 187,
+          "attack_id": "construct_smash",
+          "damage_multiplier": 1.5,
+          "range": 3.12,
+          "recovery": 595,
+          "screen_shake": true,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 1,
+          "windup": 990
+        }
+      ],
+      "behavior": "boss_encounter",
+      "category": "construct",
+      "damage_max": 80,
+      "damage_min": 50,
+      "defense": 40,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "golem_core",
+          "quantity_max": 4,
+          "quantity_min": 2
+        },
+        {
+          "chance": 1.0,
+          "material_id": "granite",
+          "quantity_max": 15,
+          "quantity_min": 10
+        },
+        {
+          "chance": 0.75,
+          "material_id": "earth_crystal",
+          "quantity_max": 8,
+          "quantity_min": 5
+        },
+        {
+          "chance": 0.5,
+          "material_id": "diamond",
+          "quantity_max": 2,
+          "quantity_min": 1
+        }
+      ],
+      "enemy_id": "golem_stone",
+      "hurtbox_radius": 0.96,
+      "icon_path": "enemies/golem_stone.png",
+      "max_health": 800,
+      "name": "Stone Golem",
+      "narrative": "Animated stone construct that guards ancient places. Slow but nearly indestructible.",
+      "special_ability_ids": [
+        "ground_slam",
+        "stone_armor"
+      ],
+      "speed": 0.5,
+      "tags": [
+        "golem",
+        "rare",
+        "boss",
+        "construct"
+      ],
+      "tier": 3,
+      "visual_size": 2.4
+    },
+    "inferno_drake": {
+      "aggro_range": 14,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 0.0,
+        "default_state": "patrol",
+        "flee_at_health": 0.0,
+        "pack_coordination": false,
+        "special_abilities": [
+          "fire_breath",
+          "wing_buffet",
+          "meteor_strike"
+        ]
+      },
+      "attack_speed": 1.4,
+      "attacks": [
+        {
+          "active": 200,
+          "arc": 55,
+          "attack_id": "beast_bite",
+          "damage_multiplier": 1.0,
+          "range": 1.82,
+          "recovery": 315,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 425
+        },
+        {
+          "active": 180,
+          "arc": 90,
+          "attack_id": "beast_claw",
+          "damage_multiplier": 1.0,
+          "range": 1.56,
+          "recovery": 270,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "fire"
+          ],
+          "weight": 2,
+          "windup": 340
+        },
+        {
+          "active": 220,
+          "arc": 35,
+          "attack_id": "beast_lunge",
+          "damage_multiplier": 1.3,
+          "range": 2.86,
+          "recovery": 405,
+          "screen_shake": true,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "fire"
+          ],
+          "weight": 1,
+          "windup": 552
+        }
+      ],
+      "behavior": "aggressive_flying",
+      "category": "beast",
+      "damage_max": 55,
+      "damage_min": 45,
+      "defense": 25,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "drake_scale",
+          "quantity_max": 4,
+          "quantity_min": 2
+        },
+        {
+          "chance": 0.5,
+          "material_id": "fire_crystal",
+          "quantity_max": 3,
+          "quantity_min": 1
+        }
+      ],
+      "enemy_id": "inferno_drake",
+      "hurtbox_radius": 0.8,
+      "icon_path": "enemies/inferno_drake.png",
+      "max_health": 650,
+      "name": "Inferno Drake",
+      "narrative": "A drake infused with elemental flame. It bathes foes in fire breath, knocks them back with wing beats, and calls down meteors when desperate.",
+      "special_ability_ids": [
+        "fire_breath",
+        "wing_buffet",
+        "meteor_strike"
+      ],
+      "speed": 2.0,
+      "tags": [],
+      "tier": 3,
+      "visual_size": 2.0
+    },
+    "slime_acid": {
+      "aggro_range": 6,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 10,
+        "default_state": "patrol",
+        "flee_at_health": 0,
+        "pack_coordination": false,
+        "special_abilities": [
+          "acid_damage_over_time"
+        ]
+      },
+      "attack_speed": 1.0,
+      "attacks": [
+        {
+          "active": 350,
+          "arc": 360,
+          "attack_id": "ooze_engulf",
+          "damage_multiplier": 1.0,
+          "range": 1.38,
+          "recovery": 405,
+          "screen_shake": false,
+          "shape": "circle",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 536
+        },
+        {
+          "active": 400,
+          "arc": 360,
+          "attack_id": "ooze_splash",
+          "damage_multiplier": 0.8,
+          "range": 2.07,
+          "recovery": 486,
+          "screen_shake": false,
+          "shape": "circle",
+          "status_tags": [],
+          "tags": [
+            "poison"
+          ],
+          "weight": 1,
+          "windup": 650
+        },
+        {
+          "active": 450,
+          "arc": 360,
+          "attack_id": "ooze_dissolve",
+          "damage_multiplier": 1.2,
+          "range": 2.3,
+          "recovery": 567,
+          "screen_shake": true,
+          "shape": "circle",
+          "status_tags": [],
+          "tags": [
+            "poison"
+          ],
+          "weight": 1,
+          "windup": 727
+        }
+      ],
+      "behavior": "aggressive_swarm",
+      "category": "ooze",
+      "damage_max": 22,
+      "damage_min": 15,
+      "defense": 8,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "slime_gel",
+          "quantity_max": 10,
+          "quantity_min": 5
+        },
+        {
+          "chance": 0.75,
+          "material_id": "living_ichor",
+          "quantity_max": 3,
+          "quantity_min": 2
+        },
+        {
+          "chance": 0.25,
+          "material_id": "shadow_core",
+          "quantity_max": 1,
+          "quantity_min": 1
+        }
+      ],
+      "enemy_id": "slime_acid",
+      "hurtbox_radius": 0.5599999999999999,
+      "icon_path": "enemies/slime_acid.png",
+      "max_health": 120,
+      "name": "Acid Slime",
+      "narrative": "Corrosive slime that dissolves anything it touches. Highly aggressive and surprisingly fast.",
+      "special_ability_ids": [
+        "acid_damage_over_time"
+      ],
+      "speed": 0.9,
+      "tags": [
+        "slime",
+        "uncommon",
+        "aggressive",
+        "mid-game"
+      ],
+      "tier": 2,
+      "visual_size": 1.4
+    },
+    "slime_crystal": {
+      "aggro_range": 10,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 15,
+        "default_state": "patrol",
+        "flee_at_health": 0,
+        "pack_coordination": false,
+        "special_abilities": [
+          "split_on_damage",
+          "elemental_burst"
+        ]
+      },
+      "attack_speed": 1.2,
+      "attacks": [
+        {
+          "active": 350,
+          "arc": 360,
+          "attack_id": "ooze_engulf",
+          "damage_multiplier": 1.0,
+          "range": 1.56,
+          "recovery": 425,
+          "screen_shake": false,
+          "shape": "circle",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 630
+        },
+        {
+          "active": 400,
+          "arc": 360,
+          "attack_id": "ooze_splash",
+          "damage_multiplier": 0.8,
+          "range": 2.34,
+          "recovery": 510,
+          "screen_shake": false,
+          "shape": "circle",
+          "status_tags": [],
+          "tags": [
+            "arcane"
+          ],
+          "weight": 1,
+          "windup": 765
+        },
+        {
+          "active": 450,
+          "arc": 360,
+          "attack_id": "ooze_dissolve",
+          "damage_multiplier": 1.2,
+          "range": 2.6,
+          "recovery": 595,
+          "screen_shake": true,
+          "shape": "circle",
+          "status_tags": [],
+          "tags": [
+            "arcane"
+          ],
+          "weight": 1,
+          "windup": 855
+        }
+      ],
+      "behavior": "boss_encounter",
+      "category": "ooze",
+      "damage_max": 60,
+      "damage_min": 40,
+      "defense": 30,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "slime_gel",
+          "quantity_max": 20,
+          "quantity_min": 12
+        },
+        {
+          "chance": 1.0,
+          "material_id": "essence_blood",
+          "quantity_max": 6,
+          "quantity_min": 4
+        },
+        {
+          "chance": 0.75,
+          "material_id": "crystal_quartz",
+          "quantity_max": 8,
+          "quantity_min": 5
+        },
+        {
+          "chance": 0.5,
+          "material_id": "light_gem",
+          "quantity_max": 3,
+          "quantity_min": 2
+        }
+      ],
+      "enemy_id": "slime_crystal",
+      "hurtbox_radius": 0.8,
+      "icon_path": "enemies/slime_crystal.png",
+      "max_health": 500,
+      "name": "Crystal Slime",
+      "narrative": "Crystalline slime formed from pure elemental energy. Extremely rare and dangerously powerful.",
+      "special_ability_ids": [
+        "split_on_damage",
+        "elemental_burst"
+      ],
+      "speed": 1.0,
+      "tags": [
+        "slime",
+        "rare",
+        "boss",
+        "end-game"
+      ],
+      "tier": 3,
+      "visual_size": 2.0
+    },
+    "slime_green": {
+      "aggro_range": 3,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 0,
+        "default_state": "idle",
+        "flee_at_health": 0,
+        "pack_coordination": false,
+        "special_abilities": []
+      },
+      "attack_speed": 0.8,
+      "attacks": [
+        {
+          "active": 350,
+          "arc": 360,
+          "attack_id": "ooze_engulf",
+          "damage_multiplier": 1.0,
+          "range": 1.2,
+          "recovery": 660,
+          "screen_shake": false,
+          "shape": "circle",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 1001
+        }
+      ],
+      "behavior": "stationary",
+      "category": "ooze",
+      "damage_max": 8,
+      "damage_min": 5,
+      "defense": 2,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "slime_gel",
+          "quantity_max": 6,
+          "quantity_min": 3
+        },
+        {
+          "chance": 0.1,
+          "material_id": "water_crystal",
+          "quantity_max": 1,
+          "quantity_min": 1
+        }
+      ],
+      "enemy_id": "slime_green",
+      "hurtbox_radius": 0.4,
+      "icon_path": "enemies/slime_green.png",
+      "max_health": 50,
+      "name": "Green Slime",
+      "narrative": "Small green slime that oozes slowly across terrain. Mostly harmless unless you step on it.",
+      "special_ability_ids": [],
+      "speed": 0.5,
+      "tags": [
+        "slime",
+        "common",
+        "passive",
+        "starter"
+      ],
+      "tier": 1,
+      "visual_size": 1.0
+    },
+    "storm_titan": {
+      "aggro_range": 12,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 10.0,
+        "default_state": "patrol",
+        "flee_at_health": 0.0,
+        "pack_coordination": false,
+        "special_abilities": [
+          "chain_lightning",
+          "thunder_slam",
+          "static_field"
+        ]
+      },
+      "attack_speed": 1.0,
+      "attacks": [
+        {
+          "active": 300,
+          "arc": 360,
+          "attack_id": "elemental_pulse",
+          "damage_multiplier": 1.0,
+          "range": 2.25,
+          "recovery": 405,
+          "screen_shake": false,
+          "shape": "circle",
+          "status_tags": [],
+          "tags": [
+            "arcane"
+          ],
+          "weight": 3,
+          "windup": 510
+        },
+        {
+          "active": 320,
+          "arc": 120,
+          "attack_id": "elemental_blast",
+          "damage_multiplier": 1.0,
+          "range": 2.7,
+          "recovery": 432,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "lightning"
+          ],
+          "weight": 2,
+          "windup": 552
+        },
+        {
+          "active": 400,
+          "arc": 360,
+          "attack_id": "elemental_eruption",
+          "damage_multiplier": 1.4,
+          "range": 3.75,
+          "recovery": 540,
+          "screen_shake": true,
+          "shape": "circle",
+          "status_tags": [],
+          "tags": [
+            "lightning"
+          ],
+          "weight": 1,
+          "windup": 680
+        }
+      ],
+      "behavior": "aggressive_melee",
+      "category": "elemental",
+      "damage_max": 65,
+      "damage_min": 55,
+      "defense": 40,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "lightning_essence",
+          "quantity_max": 6,
+          "quantity_min": 3
+        },
+        {
+          "chance": 0.25,
+          "material_id": "storm_core",
+          "quantity_max": 1,
+          "quantity_min": 1
+        }
+      ],
+      "enemy_id": "storm_titan",
+      "hurtbox_radius": 1.3200000000000003,
+      "icon_path": "enemies/storm_titan.png",
+      "max_health": 1000,
+      "name": "Storm Titan",
+      "narrative": "A living storm given form. Lightning arcs from its body, chaining between victims as it slams the ground with thunderous force.",
+      "special_ability_ids": [
+        "chain_lightning",
+        "thunder_slam",
+        "static_field"
+      ],
+      "speed": 1.4,
+      "tags": [],
+      "tier": 4,
+      "visual_size": 3.3000000000000003
+    },
+    "void_archon": {
+      "aggro_range": 15,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 0.0,
+        "default_state": "patrol",
+        "flee_at_health": 0.0,
+        "pack_coordination": false,
+        "special_abilities": [
+          "void_beam",
+          "gravity_pull",
+          "void_explosion"
+        ]
+      },
+      "attack_speed": 1.2,
+      "attacks": [
+        {
+          "active": 260,
+          "arc": 80,
+          "attack_id": "undead_swipe",
+          "damage_multiplier": 1.0,
+          "range": 2.1,
+          "recovery": 378,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 510
+        },
+        {
+          "active": 300,
+          "arc": 50,
+          "attack_id": "undead_grab",
+          "damage_multiplier": 1.0,
+          "range": 2.4,
+          "recovery": 450,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "shadow"
+          ],
+          "weight": 2,
+          "windup": 595
+        },
+        {
+          "active": 350,
+          "arc": 70,
+          "attack_id": "undead_rend",
+          "damage_multiplier": 1.3,
+          "range": 3.0,
+          "recovery": 495,
+          "screen_shake": true,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "shadow"
+          ],
+          "weight": 1,
+          "windup": 680
+        }
+      ],
+      "behavior": "aggressive_ranged",
+      "category": "undead",
+      "damage_max": 60,
+      "damage_min": 50,
+      "defense": 30,
+      "drops": [
+        {
+          "chance": 0.75,
+          "material_id": "void_essence",
+          "quantity_max": 5,
+          "quantity_min": 2
+        },
+        {
+          "chance": 0.5,
+          "material_id": "shadow_crystal",
+          "quantity_max": 2,
+          "quantity_min": 1
+        },
+        {
+          "chance": 0.75,
+          "material_id": "arcane_dust",
+          "quantity_max": 6,
+          "quantity_min": 3
+        }
+      ],
+      "enemy_id": "void_archon",
+      "hurtbox_radius": 1.2000000000000002,
+      "icon_path": "enemies/void_archon.png",
+      "max_health": 800,
+      "name": "Void Archon",
+      "narrative": "An archon corrupted by the void. It bends space and shadow to pull victims close before tearing them apart with beams of pure darkness.",
+      "special_ability_ids": [
+        "void_beam",
+        "gravity_pull",
+        "void_explosion"
+      ],
+      "speed": 1.8,
+      "tags": [],
+      "tier": 4,
+      "visual_size": 3.0
+    },
+    "void_wraith": {
+      "aggro_range": 15,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 0,
+        "default_state": "patrol",
+        "flee_at_health": 0,
+        "pack_coordination": false,
+        "special_abilities": [
+          "phase_shift",
+          "life_drain",
+          "teleport"
+        ]
+      },
+      "attack_speed": 1.3,
+      "attacks": [
+        {
+          "active": 260,
+          "arc": 80,
+          "attack_id": "undead_swipe",
+          "damage_multiplier": 1.0,
+          "range": 2.1,
+          "recovery": 378,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 510
+        },
+        {
+          "active": 300,
+          "arc": 50,
+          "attack_id": "undead_grab",
+          "damage_multiplier": 1.0,
+          "range": 2.4,
+          "recovery": 450,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "shadow"
+          ],
+          "weight": 2,
+          "windup": 595
+        },
+        {
+          "active": 350,
+          "arc": 70,
+          "attack_id": "undead_rend",
+          "damage_multiplier": 1.3,
+          "range": 3.0,
+          "recovery": 495,
+          "screen_shake": true,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "shadow"
+          ],
+          "weight": 1,
+          "windup": 680
+        }
+      ],
+      "behavior": "aggressive_phase",
+      "category": "undead",
+      "damage_max": 90,
+      "damage_min": 60,
+      "defense": 15,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "spectral_thread",
+          "quantity_max": 10,
+          "quantity_min": 5
+        },
+        {
+          "chance": 0.75,
+          "material_id": "void_essence",
+          "quantity_max": 5,
+          "quantity_min": 3
+        },
+        {
+          "chance": 0.75,
+          "material_id": "shadow_core",
+          "quantity_max": 6,
+          "quantity_min": 4
+        },
+        {
+          "chance": 0.5,
+          "material_id": "essence_blood",
+          "quantity_max": 4,
+          "quantity_min": 3
+        }
+      ],
+      "enemy_id": "void_wraith",
+      "hurtbox_radius": 1.2000000000000002,
+      "icon_path": "enemies/void_wraith.png",
+      "max_health": 400,
+      "name": "Void Wraith",
+      "narrative": "Spectral entity that phases between dimensions. Attacks pass through it unpredictably.",
+      "special_ability_ids": [
+        "phase_shift",
+        "life_drain",
+        "teleport"
+      ],
+      "speed": 1.5,
+      "tags": [
+        "wraith",
+        "rare",
+        "phase",
+        "end-game"
+      ],
+      "tier": 4,
+      "visual_size": 3.0
+    },
+    "wolf_dire": {
+      "aggro_range": 8,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 12,
+        "default_state": "patrol",
+        "flee_at_health": 0,
+        "pack_coordination": true,
+        "special_abilities": []
+      },
+      "attack_speed": 1.2,
+      "attacks": [
+        {
+          "active": 200,
+          "arc": 46,
+          "attack_id": "beast_bite",
+          "damage_multiplier": 1.0,
+          "range": 1.77,
+          "recovery": 241,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 325
+        },
+        {
+          "active": 180,
+          "arc": 76,
+          "attack_id": "beast_claw",
+          "damage_multiplier": 1.0,
+          "range": 1.52,
+          "recovery": 207,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 2,
+          "windup": 260
+        },
+        {
+          "active": 220,
+          "arc": 29,
+          "attack_id": "beast_lunge",
+          "damage_multiplier": 1.3,
+          "range": 2.78,
+          "recovery": 310,
+          "screen_shake": true,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 1,
+          "windup": 423
+        }
+      ],
+      "behavior": "aggressive_pack",
+      "category": "beast",
+      "damage_max": 28,
+      "damage_min": 18,
+      "defense": 12,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "wolf_pelt",
+          "quantity_max": 6,
+          "quantity_min": 3
+        },
+        {
+          "chance": 0.75,
+          "material_id": "dire_fang",
+          "quantity_max": 4,
+          "quantity_min": 2
+        },
+        {
+          "chance": 0.5,
+          "material_id": "living_ichor",
+          "quantity_max": 2,
+          "quantity_min": 1
+        }
+      ],
+      "enemy_id": "wolf_dire",
+      "hurtbox_radius": 0.5599999999999999,
+      "icon_path": "enemies/wolf_dire.png",
+      "max_health": 200,
+      "name": "Dire Wolf",
+      "narrative": "Larger, more aggressive wolf. Alpha predator that hunts in coordinated packs.",
+      "special_ability_ids": [],
+      "speed": 1.4,
+      "tags": [
+        "wolf",
+        "uncommon",
+        "aggressive",
+        "mid-game"
+      ],
+      "tier": 2,
+      "visual_size": 1.4
+    },
+    "wolf_elder": {
+      "aggro_range": 12,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 20,
+        "default_state": "patrol",
+        "flee_at_health": 0,
+        "pack_coordination": true,
+        "special_abilities": [
+          "howl_buff",
+          "leap_attack"
+        ]
+      },
+      "attack_speed": 1.5,
+      "attacks": [
+        {
+          "active": 200,
+          "arc": 55,
+          "attack_id": "beast_bite",
+          "damage_multiplier": 1.0,
+          "range": 1.82,
+          "recovery": 298,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 450
+        },
+        {
+          "active": 180,
+          "arc": 90,
+          "attack_id": "beast_claw",
+          "damage_multiplier": 1.0,
+          "range": 1.56,
+          "recovery": 255,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 2,
+          "windup": 360
+        },
+        {
+          "active": 220,
+          "arc": 35,
+          "attack_id": "beast_lunge",
+          "damage_multiplier": 1.3,
+          "range": 2.86,
+          "recovery": 382,
+          "screen_shake": true,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 1,
+          "windup": 585
+        }
+      ],
+      "behavior": "boss_encounter",
+      "category": "beast",
+      "damage_max": 70,
+      "damage_min": 45,
+      "defense": 25,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "wolf_pelt",
+          "quantity_max": 12,
+          "quantity_min": 8
+        },
+        {
+          "chance": 1.0,
+          "material_id": "dire_fang",
+          "quantity_max": 10,
+          "quantity_min": 6
+        },
+        {
+          "chance": 0.75,
+          "material_id": "essence_blood",
+          "quantity_max": 5,
+          "quantity_min": 3
+        },
+        {
+          "chance": 0.5,
+          "material_id": "spectral_thread",
+          "quantity_max": 3,
+          "quantity_min": 2
+        }
+      ],
+      "enemy_id": "wolf_elder",
+      "hurtbox_radius": 0.8,
+      "icon_path": "enemies/wolf_elder.png",
+      "max_health": 600,
+      "name": "Elder Wolf",
+      "narrative": "Ancient wolf wreathed in shadow. Pack leader that has survived countless battles.",
+      "special_ability_ids": [
+        "howl_buff",
+        "leap_attack"
+      ],
+      "speed": 1.6,
+      "tags": [
+        "wolf",
+        "rare",
+        "boss",
+        "end-game"
+      ],
+      "tier": 3,
+      "visual_size": 2.0
+    },
+    "wolf_grey": {
+      "aggro_range": 5,
+      "ai_pattern": {
+        "aggro_on_damage": true,
+        "aggro_on_proximity": true,
+        "call_for_help_radius": 8,
+        "default_state": "wander",
+        "flee_at_health": 0.2,
+        "pack_coordination": false,
+        "special_abilities": []
+      },
+      "attack_speed": 1.0,
+      "attacks": [
+        {
+          "active": 200,
+          "arc": 55,
+          "attack_id": "beast_bite",
+          "damage_multiplier": 1.0,
+          "range": 1.4,
+          "recovery": 424,
+          "screen_shake": false,
+          "shape": "arc",
+          "status_tags": [],
+          "tags": [
+            "physical"
+          ],
+          "weight": 3,
+          "windup": 632
+        }
+      ],
+      "behavior": "passive_patrol",
+      "category": "beast",
+      "damage_max": 12,
+      "damage_min": 8,
+      "defense": 5,
+      "drops": [
+        {
+          "chance": 1.0,
+          "material_id": "wolf_pelt",
+          "quantity_max": 4,
+          "quantity_min": 2
+        },
+        {
+          "chance": 0.25,
+          "material_id": "dire_fang",
+          "quantity_max": 1,
+          "quantity_min": 1
+        }
+      ],
+      "enemy_id": "wolf_grey",
+      "hurtbox_radius": 0.4,
+      "icon_path": "enemies/wolf_grey.png",
+      "max_health": 80,
+      "name": "Grey Wolf",
+      "narrative": "Common grey wolf that roams grasslands and forests. More curious than aggressive, but will defend territory if threatened.",
+      "special_ability_ids": [],
+      "speed": 1.2,
+      "tags": [
+        "wolf",
+        "common",
+        "passive",
+        "starter"
+      ],
+      "tier": 1,
+      "visual_size": 1.0
+    }
+  },
+  "loot_enemies": [
+    "beetle_armored",
+    "beetle_brown",
+    "beetle_titan",
+    "entity_primordial",
+    "golem_crystal",
+    "golem_stone"
+  ],
+  "loot_streams": {
+    "4242": [
+      {
+        "enemy": "beetle_armored",
+        "loot": [
+          [
+            "beetle_carapace",
+            7
+          ],
+          [
+            "iron_scales",
+            5
+          ],
+          [
+            "living_ichor",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_armored",
+        "loot": [
+          [
+            "beetle_carapace",
+            7
+          ],
+          [
+            "iron_scales",
+            4
+          ],
+          [
+            "living_ichor",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_armored",
+        "loot": [
+          [
+            "beetle_carapace",
+            5
+          ],
+          [
+            "iron_scales",
+            3
+          ],
+          [
+            "living_ichor",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_armored",
+        "loot": [
+          [
+            "beetle_carapace",
+            5
+          ],
+          [
+            "living_ichor",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_brown",
+        "loot": [
+          [
+            "beetle_carapace",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_brown",
+        "loot": [
+          [
+            "beetle_carapace",
+            4
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_brown",
+        "loot": [
+          [
+            "beetle_carapace",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_brown",
+        "loot": [
+          [
+            "beetle_carapace",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_titan",
+        "loot": [
+          [
+            "beetle_carapace",
+            22
+          ],
+          [
+            "iron_scales",
+            15
+          ],
+          [
+            "adamantine_ingot",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_titan",
+        "loot": [
+          [
+            "beetle_carapace",
+            22
+          ],
+          [
+            "iron_scales",
+            10
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_titan",
+        "loot": [
+          [
+            "beetle_carapace",
+            25
+          ],
+          [
+            "iron_scales",
+            13
+          ],
+          [
+            "golem_core",
+            3
+          ],
+          [
+            "adamantine_ingot",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_titan",
+        "loot": [
+          [
+            "beetle_carapace",
+            21
+          ],
+          [
+            "iron_scales",
+            11
+          ],
+          [
+            "golem_core",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "entity_primordial",
+        "loot": [
+          [
+            "chaos_matrix",
+            4
+          ],
+          [
+            "void_essence",
+            8
+          ],
+          [
+            "etherion_ingot",
+            5
+          ],
+          [
+            "genesis_lattice",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "entity_primordial",
+        "loot": [
+          [
+            "chaos_matrix",
+            5
+          ],
+          [
+            "void_essence",
+            10
+          ],
+          [
+            "etherion_ingot",
+            8
+          ],
+          [
+            "genesis_lattice",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "entity_primordial",
+        "loot": [
+          [
+            "chaos_matrix",
+            3
+          ],
+          [
+            "void_essence",
+            11
+          ]
+        ]
+      },
+      {
+        "enemy": "entity_primordial",
+        "loot": [
+          [
+            "chaos_matrix",
+            3
+          ],
+          [
+            "void_essence",
+            12
+          ],
+          [
+            "etherion_ingot",
+            7
+          ],
+          [
+            "primordial_crystal",
+            4
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_crystal",
+        "loot": [
+          [
+            "golem_core",
+            3
+          ],
+          [
+            "crystal_quartz",
+            11
+          ],
+          [
+            "diamond",
+            4
+          ],
+          [
+            "primordial_crystal",
+            1
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_crystal",
+        "loot": [
+          [
+            "golem_core",
+            3
+          ],
+          [
+            "crystal_quartz",
+            11
+          ],
+          [
+            "diamond",
+            5
+          ],
+          [
+            "primordial_crystal",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_crystal",
+        "loot": [
+          [
+            "golem_core",
+            3
+          ],
+          [
+            "crystal_quartz",
+            12
+          ],
+          [
+            "diamond",
+            5
+          ],
+          [
+            "primordial_crystal",
+            1
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_crystal",
+        "loot": [
+          [
+            "golem_core",
+            3
+          ],
+          [
+            "crystal_quartz",
+            14
+          ],
+          [
+            "diamond",
+            3
+          ],
+          [
+            "primordial_crystal",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_stone",
+        "loot": [
+          [
+            "golem_core",
+            3
+          ],
+          [
+            "granite",
+            15
+          ],
+          [
+            "earth_crystal",
+            6
+          ],
+          [
+            "diamond",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_stone",
+        "loot": [
+          [
+            "golem_core",
+            3
+          ],
+          [
+            "granite",
+            10
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_stone",
+        "loot": [
+          [
+            "golem_core",
+            3
+          ],
+          [
+            "granite",
+            10
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_stone",
+        "loot": [
+          [
+            "golem_core",
+            3
+          ],
+          [
+            "granite",
+            12
+          ],
+          [
+            "diamond",
+            2
+          ]
+        ]
+      }
+    ],
+    "7": [
+      {
+        "enemy": "beetle_armored",
+        "loot": [
+          [
+            "beetle_carapace",
+            5
+          ],
+          [
+            "iron_scales",
+            3
+          ],
+          [
+            "living_ichor",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_armored",
+        "loot": [
+          [
+            "beetle_carapace",
+            4
+          ],
+          [
+            "living_ichor",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_armored",
+        "loot": [
+          [
+            "beetle_carapace",
+            4
+          ],
+          [
+            "iron_scales",
+            5
+          ],
+          [
+            "living_ichor",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_armored",
+        "loot": [
+          [
+            "beetle_carapace",
+            4
+          ],
+          [
+            "iron_scales",
+            4
+          ],
+          [
+            "living_ichor",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_brown",
+        "loot": [
+          [
+            "beetle_carapace",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_brown",
+        "loot": [
+          [
+            "beetle_carapace",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_brown",
+        "loot": [
+          [
+            "beetle_carapace",
+            4
+          ],
+          [
+            "earth_crystal",
+            1
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_brown",
+        "loot": [
+          [
+            "beetle_carapace",
+            4
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_titan",
+        "loot": [
+          [
+            "beetle_carapace",
+            24
+          ],
+          [
+            "iron_scales",
+            15
+          ],
+          [
+            "golem_core",
+            4
+          ],
+          [
+            "adamantine_ingot",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_titan",
+        "loot": [
+          [
+            "beetle_carapace",
+            18
+          ],
+          [
+            "iron_scales",
+            15
+          ],
+          [
+            "adamantine_ingot",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_titan",
+        "loot": [
+          [
+            "beetle_carapace",
+            20
+          ],
+          [
+            "iron_scales",
+            12
+          ],
+          [
+            "golem_core",
+            3
+          ],
+          [
+            "adamantine_ingot",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "beetle_titan",
+        "loot": [
+          [
+            "beetle_carapace",
+            20
+          ],
+          [
+            "iron_scales",
+            13
+          ],
+          [
+            "golem_core",
+            5
+          ],
+          [
+            "adamantine_ingot",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "entity_primordial",
+        "loot": [
+          [
+            "chaos_matrix",
+            4
+          ],
+          [
+            "void_essence",
+            12
+          ],
+          [
+            "genesis_lattice",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "entity_primordial",
+        "loot": [
+          [
+            "chaos_matrix",
+            5
+          ],
+          [
+            "void_essence",
+            10
+          ],
+          [
+            "etherion_ingot",
+            8
+          ],
+          [
+            "genesis_lattice",
+            3
+          ]
+        ]
+      },
+      {
+        "enemy": "entity_primordial",
+        "loot": [
+          [
+            "chaos_matrix",
+            4
+          ],
+          [
+            "void_essence",
+            12
+          ],
+          [
+            "etherion_ingot",
+            5
+          ],
+          [
+            "genesis_lattice",
+            3
+          ],
+          [
+            "primordial_crystal",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "entity_primordial",
+        "loot": [
+          [
+            "chaos_matrix",
+            4
+          ],
+          [
+            "void_essence",
+            11
+          ],
+          [
+            "etherion_ingot",
+            7
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_crystal",
+        "loot": [
+          [
+            "golem_core",
+            4
+          ],
+          [
+            "crystal_quartz",
+            12
+          ],
+          [
+            "diamond",
+            4
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_crystal",
+        "loot": [
+          [
+            "golem_core",
+            3
+          ],
+          [
+            "crystal_quartz",
+            15
+          ],
+          [
+            "diamond",
+            4
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_crystal",
+        "loot": [
+          [
+            "golem_core",
+            4
+          ],
+          [
+            "crystal_quartz",
+            13
+          ],
+          [
+            "diamond",
+            5
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_crystal",
+        "loot": [
+          [
+            "golem_core",
+            5
+          ],
+          [
+            "crystal_quartz",
+            14
+          ],
+          [
+            "diamond",
+            5
+          ],
+          [
+            "primordial_crystal",
+            2
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_stone",
+        "loot": [
+          [
+            "golem_core",
+            3
+          ],
+          [
+            "granite",
+            15
+          ],
+          [
+            "earth_crystal",
+            6
+          ],
+          [
+            "diamond",
+            1
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_stone",
+        "loot": [
+          [
+            "golem_core",
+            2
+          ],
+          [
+            "granite",
+            10
+          ],
+          [
+            "earth_crystal",
+            6
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_stone",
+        "loot": [
+          [
+            "golem_core",
+            4
+          ],
+          [
+            "granite",
+            11
+          ],
+          [
+            "earth_crystal",
+            6
+          ]
+        ]
+      },
+      {
+        "enemy": "golem_stone",
+        "loot": [
+          [
+            "golem_core",
+            4
+          ],
+          [
+            "granite",
+            10
+          ],
+          [
+            "earth_crystal",
+            8
+          ]
+        ]
+      }
+    ]
+  }
+}

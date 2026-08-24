@@ -1,0 +1,4743 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-20",
+    "git_sha": "8b0965dc",
+    "source": "data/databases/recipe_db.py (5 discipline files, 3 output dialects + Update-N)"
+  },
+  "by_station": {
+    "adornments": [
+      "enchanting_sharpness_basic",
+      "enchanting_sharpness_advanced",
+      "enchanting_sharpness_master",
+      "enchanting_durability_basic",
+      "enchanting_durability_advanced",
+      "enchanting_fire_aspect",
+      "enchanting_frost_touch",
+      "enchanting_lightning_strike",
+      "enchanting_protection_basic",
+      "enchanting_protection_advanced",
+      "enchanting_protection_master",
+      "enchanting_thorns",
+      "enchanting_efficiency_basic",
+      "enchanting_efficiency_advanced",
+      "enchanting_fortune_basic",
+      "enchanting_fortune_advanced",
+      "enchanting_silk_touch",
+      "enchanting_swiftness",
+      "enchanting_regeneration",
+      "enchanting_weightless",
+      "enchanting_self_repair",
+      "enchanting_soulbound",
+      "enchanting_knockback",
+      "enchanting_poison",
+      "enchanting_lifesteal"
+    ],
+    "alchemy": [
+      "alchemy_minor_health_potion",
+      "alchemy_health_potion",
+      "alchemy_greater_health_potion",
+      "alchemy_strength_elixir",
+      "alchemy_iron_skin_potion",
+      "alchemy_swiftness_draught",
+      "alchemy_fire_resistance_potion",
+      "alchemy_frost_resistance_potion",
+      "alchemy_regeneration_tonic",
+      "alchemy_titans_brew",
+      "alchemy_elemental_harmony",
+      "alchemy_efficiency_oil",
+      "alchemy_armor_polish",
+      "alchemy_universal_solvent",
+      "alchemy_transmute_copper_tin",
+      "alchemy_transmute_iron_steel",
+      "alchemy_refine_essence_blood",
+      "alchemy_crystallize_fire"
+    ],
+    "engineering": [
+      "engineering_basic_arrow_turret",
+      "engineering_fire_arrow_turret",
+      "engineering_lightning_cannon",
+      "engineering_flamethrower_turret",
+      "engineering_laser_turret",
+      "engineering_simple_bomb",
+      "engineering_fire_bomb",
+      "engineering_cluster_bomb",
+      "engineering_spike_trap",
+      "engineering_frost_mine",
+      "engineering_bear_trap",
+      "engineering_healing_beacon",
+      "engineering_net_launcher",
+      "engineering_emp_device",
+      "engineering_grappling_hook",
+      "engineering_jetpack"
+    ],
+    "refining": [
+      "refining_copper_ore_to_ingot",
+      "refining_iron_ore_to_ingot",
+      "refining_tin_ore_to_ingot",
+      "refining_steel_ore_to_ingot",
+      "refining_mithril_ore_to_ingot",
+      "refining_adamantine_ore_to_ingot",
+      "refining_orichalcum_ore_to_ingot",
+      "refining_etherion_ore_to_ingot",
+      "refining_oak_log_to_plank",
+      "refining_pine_log_to_plank",
+      "refining_ash_log_to_plank",
+      "refining_birch_log_to_plank",
+      "refining_maple_log_to_plank",
+      "refining_ironwood_log_to_plank",
+      "refining_ebony_log_to_plank",
+      "refining_worldtree_log_to_plank",
+      "refining_bronze_alloy",
+      "refining_fire_steel",
+      "refining_frost_steel",
+      "refining_lightning_copper",
+      "refining_rarity_copper_uncommon",
+      "refining_rarity_copper_rare",
+      "refining_rarity_copper_epic",
+      "refining_rarity_copper_legendary",
+      "refining_rarity_iron_uncommon",
+      "refining_rarity_iron_rare",
+      "refining_rarity_iron_epic",
+      "refining_rarity_iron_legendary",
+      "refining_rarity_steel_rare",
+      "refining_rarity_steel_epic",
+      "refining_rarity_steel_legendary",
+      "refining_rarity_mithril_epic",
+      "refining_rarity_mithril_legendary",
+      "refining_rarity_mithril_mythical",
+      "refining_rarity_adamantine_epic",
+      "refining_rarity_adamantine_legendary",
+      "refining_rarity_orichalcum_legendary",
+      "refining_rarity_orichalcum_mythical",
+      "refining_rarity_etherion_mythical",
+      "refining_rarity_tin_rare",
+      "refining_rarity_tin_epic",
+      "refining_rarity_bronze_rare",
+      "refining_rarity_bronze_epic"
+    ],
+    "smithing": [
+      "smithing_iron_shortsword",
+      "smithing_copper_pickaxe",
+      "smithing_copper_axe",
+      "smithing_copper_spear",
+      "smithing_leather_tunic",
+      "smithing_iron_boots",
+      "smithing_iron_pickaxe",
+      "smithing_iron_axe",
+      "smithing_steel_longsword",
+      "smithing_iron_chestplate",
+      "smithing_steel_helm",
+      "smithing_steel_pickaxe",
+      "smithing_steel_axe",
+      "smithing_mithril_dagger",
+      "smithing_mithril_pickaxe",
+      "smithing_mithril_axe",
+      "smithing_copper_fire_ring",
+      "smithing_iron_water_amulet",
+      "smithing_steel_lightning_bracelet",
+      "smithing_forge_t1",
+      "smithing_forge_t2",
+      "smithing_forge_t3",
+      "smithing_refinery_t1",
+      "smithing_refinery_t2",
+      "smithing_pine_shortbow",
+      "smithing_alchemy_table_t1",
+      "smithing_engineering_bench_t1",
+      "smithing_forge_t4",
+      "smithing_refinery_t3",
+      "smithing_refinery_t4",
+      "smithing_alchemy_table_t2",
+      "smithing_alchemy_table_t3",
+      "smithing_alchemy_table_t4",
+      "smithing_engineering_bench_t2",
+      "smithing_engineering_bench_t3",
+      "smithing_engineering_bench_t4",
+      "smithing_enchanting_table_t1",
+      "smithing_enchanting_table_t2",
+      "smithing_enchanting_table_t3",
+      "smithing_enchanting_table_t4",
+      "smithing_steel_battleaxe",
+      "smithing_iron_warhammer",
+      "smithing_copper_dagger",
+      "smithing_composite_longbow",
+      "smithing_fire_crystal_staff",
+      "smithing_iron_round_shield",
+      "smithing_steel_leggings",
+      "smithing_iron_studded_gauntlets",
+      "smithing_bamboo_fishing_rod",
+      "smithing_reinforced_fishing_rod",
+      "smithing_mithril_fishing_rod",
+      "smithing_worldtree_fishing_rod",
+      "smithing_steel_sickle",
+      "recipe_lightning_chain_whip",
+      "recipe_inferno_blade",
+      "recipe_void_piercer",
+      "recipe_frostbite_hammer",
+      "recipe_blood_reaver"
+    ]
+  },
+  "count": 160,
+  "recipes": {
+    "alchemy_armor_polish": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "limestone",
+          "quantity": 4
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 1
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "armor_polish",
+      "output_qty": 3,
+      "recipe_id": "alchemy_armor_polish",
+      "station_tier": 2,
+      "station_type": "alchemy"
+    },
+    "alchemy_crystallize_fire": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "limestone",
+          "quantity": 5
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "fire_crystal",
+      "output_qty": 1,
+      "recipe_id": "alchemy_crystallize_fire",
+      "station_tier": 1,
+      "station_type": "alchemy"
+    },
+    "alchemy_efficiency_oil": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "slime_gel",
+          "quantity": 3
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 2
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "efficiency_oil",
+      "output_qty": 3,
+      "recipe_id": "alchemy_efficiency_oil",
+      "station_tier": 2,
+      "station_type": "alchemy"
+    },
+    "alchemy_elemental_harmony": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "air_crystal",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "elemental_harmony_potion",
+      "output_qty": 1,
+      "recipe_id": "alchemy_elemental_harmony",
+      "station_tier": 3,
+      "station_type": "alchemy"
+    },
+    "alchemy_fire_resistance_potion": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "water_crystal",
+          "quantity": 3
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 2
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "fire_resistance_potion",
+      "output_qty": 2,
+      "recipe_id": "alchemy_fire_resistance_potion",
+      "station_tier": 2,
+      "station_type": "alchemy"
+    },
+    "alchemy_frost_resistance_potion": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 3
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 1
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "frost_resistance_potion",
+      "output_qty": 2,
+      "recipe_id": "alchemy_frost_resistance_potion",
+      "station_tier": 2,
+      "station_type": "alchemy"
+    },
+    "alchemy_greater_health_potion": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "essence_blood",
+          "quantity": 3
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "greater_health_potion",
+      "output_qty": 3,
+      "recipe_id": "alchemy_greater_health_potion",
+      "station_tier": 3,
+      "station_type": "alchemy"
+    },
+    "alchemy_health_potion": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "living_ichor",
+          "quantity": 2
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "health_potion",
+      "output_qty": 3,
+      "recipe_id": "alchemy_health_potion",
+      "station_tier": 2,
+      "station_type": "alchemy"
+    },
+    "alchemy_iron_skin_potion": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_scales",
+          "quantity": 3
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "golem_core",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_skin_potion",
+      "output_qty": 2,
+      "recipe_id": "alchemy_iron_skin_potion",
+      "station_tier": 2,
+      "station_type": "alchemy"
+    },
+    "alchemy_minor_health_potion": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "minor_health_potion",
+      "output_qty": 3,
+      "recipe_id": "alchemy_minor_health_potion",
+      "station_tier": 1,
+      "station_type": "alchemy"
+    },
+    "alchemy_refine_essence_blood": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "living_ichor",
+          "quantity": 4
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "essence_blood",
+      "output_qty": 1,
+      "recipe_id": "alchemy_refine_essence_blood",
+      "station_tier": 2,
+      "station_type": "alchemy"
+    },
+    "alchemy_regeneration_tonic": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "living_ichor",
+          "quantity": 4
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 3
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "regeneration_tonic",
+      "output_qty": 1,
+      "recipe_id": "alchemy_regeneration_tonic",
+      "station_tier": 3,
+      "station_type": "alchemy"
+    },
+    "alchemy_strength_elixir": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 3
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "strength_elixir",
+      "output_qty": 2,
+      "recipe_id": "alchemy_strength_elixir",
+      "station_tier": 2,
+      "station_type": "alchemy"
+    },
+    "alchemy_swiftness_draught": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 3
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 2
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "swiftness_draught",
+      "output_qty": 2,
+      "recipe_id": "alchemy_swiftness_draught",
+      "station_tier": 2,
+      "station_type": "alchemy"
+    },
+    "alchemy_titans_brew": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "golem_core",
+          "quantity": 3
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 2
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "titans_brew",
+      "output_qty": 1,
+      "recipe_id": "alchemy_titans_brew",
+      "station_tier": 4,
+      "station_type": "alchemy"
+    },
+    "alchemy_transmute_copper_tin": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "tin_ingot",
+      "output_qty": 1,
+      "recipe_id": "alchemy_transmute_copper_tin",
+      "station_tier": 1,
+      "station_type": "alchemy"
+    },
+    "alchemy_transmute_iron_steel": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "coal",
+          "quantity": 3
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_ingot",
+      "output_qty": 1,
+      "recipe_id": "alchemy_transmute_iron_steel",
+      "station_tier": 2,
+      "station_type": "alchemy"
+    },
+    "alchemy_universal_solvent": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "void_essence",
+          "quantity": 2
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 3
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "universal_solvent",
+      "output_qty": 1,
+      "recipe_id": "alchemy_universal_solvent",
+      "station_tier": 3,
+      "station_type": "alchemy"
+    },
+    "enchanting_durability_advanced": {
+      "applicable_to": [
+        "weapon",
+        "tool",
+        "armor"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "unbreaking_1"
+        ],
+        "stackable": false,
+        "type": "durability_multiplier",
+        "value": 0.6
+      },
+      "enchantment_name": "Unbreaking II",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 4
+        },
+        {
+          "materialId": "golem_core",
+          "quantity": 1
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 8
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 8
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "unbreaking_2",
+      "output_qty": 1,
+      "recipe_id": "enchanting_durability_advanced",
+      "station_tier": 3,
+      "station_type": "adornments"
+    },
+    "enchanting_durability_basic": {
+      "applicable_to": [
+        "weapon",
+        "tool",
+        "armor"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "unbreaking_2"
+        ],
+        "stackable": false,
+        "type": "durability_multiplier",
+        "value": 0.3
+      },
+      "enchantment_name": "Unbreaking I",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 4
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "unbreaking_1",
+      "output_qty": 1,
+      "recipe_id": "enchanting_durability_basic",
+      "station_tier": 1,
+      "station_type": "adornments"
+    },
+    "enchanting_efficiency_advanced": {
+      "applicable_to": [
+        "tool"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "efficiency_1"
+        ],
+        "stackable": false,
+        "type": "gathering_speed_multiplier",
+        "value": 0.4
+      },
+      "enchantment_name": "Efficiency II",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 4
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 2
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 7
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "efficiency_2",
+      "output_qty": 1,
+      "recipe_id": "enchanting_efficiency_advanced",
+      "station_tier": 3,
+      "station_type": "adornments"
+    },
+    "enchanting_efficiency_basic": {
+      "applicable_to": [
+        "tool"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "efficiency_2"
+        ],
+        "stackable": false,
+        "type": "gathering_speed_multiplier",
+        "value": 0.2
+      },
+      "enchantment_name": "Efficiency I",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 5
+        },
+        {
+          "materialId": "ash_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "efficiency_1",
+      "output_qty": 1,
+      "recipe_id": "enchanting_efficiency_basic",
+      "station_tier": 1,
+      "station_type": "adornments"
+    },
+    "enchanting_fire_aspect": {
+      "applicable_to": [
+        "weapon"
+      ],
+      "effect": {
+        "conflictsWith": [],
+        "damagePerSecond": 10,
+        "duration": 5,
+        "element": "fire",
+        "stackable": true,
+        "type": "damage_over_time"
+      },
+      "enchantment_name": "Fire Aspect",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 6
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 1
+        },
+        {
+          "materialId": "maple_plank",
+          "quantity": 6
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "fire_aspect",
+      "output_qty": 1,
+      "recipe_id": "enchanting_fire_aspect",
+      "station_tier": 2,
+      "station_type": "adornments"
+    },
+    "enchanting_fortune_advanced": {
+      "applicable_to": [
+        "tool"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "fortune_1",
+          "silk_touch"
+        ],
+        "stackable": false,
+        "type": "bonus_yield_chance",
+        "value": 0.6
+      },
+      "enchantment_name": "Fortune II",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "chaos_matrix",
+          "quantity": 3
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 9
+        },
+        {
+          "materialId": "genesis_lattice",
+          "quantity": 4
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 4
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 6
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 6
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "fortune_2",
+      "output_qty": 1,
+      "recipe_id": "enchanting_fortune_advanced",
+      "station_tier": 4,
+      "station_type": "adornments"
+    },
+    "enchanting_fortune_basic": {
+      "applicable_to": [
+        "tool"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "fortune_2",
+          "silk_touch"
+        ],
+        "stackable": false,
+        "type": "bonus_yield_chance",
+        "value": 0.3
+      },
+      "enchantment_name": "Fortune I",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 8
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 4
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 2
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "fortune_1",
+      "output_qty": 1,
+      "recipe_id": "enchanting_fortune_basic",
+      "station_tier": 2,
+      "station_type": "adornments"
+    },
+    "enchanting_frost_touch": {
+      "applicable_to": [
+        "weapon"
+      ],
+      "effect": {
+        "conflictsWith": [],
+        "duration": 4,
+        "element": "ice",
+        "slowPercent": 0.3,
+        "stackable": true,
+        "type": "slow"
+      },
+      "enchantment_name": "Frost Touch",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "frost_essence",
+          "quantity": 5
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 1
+        },
+        {
+          "materialId": "marble",
+          "quantity": 6
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "frost_touch",
+      "output_qty": 1,
+      "recipe_id": "enchanting_frost_touch",
+      "station_tier": 2,
+      "station_type": "adornments"
+    },
+    "enchanting_knockback": {
+      "applicable_to": [
+        "weapon"
+      ],
+      "effect": {
+        "conflictsWith": [],
+        "stackable": false,
+        "type": "knockback",
+        "value": 3
+      },
+      "enchantment_name": "Knockback",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 6
+        },
+        {
+          "materialId": "maple_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "shale",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "knockback",
+      "output_qty": 1,
+      "recipe_id": "enchanting_knockback",
+      "station_tier": 2,
+      "station_type": "adornments"
+    },
+    "enchanting_lifesteal": {
+      "applicable_to": [
+        "weapon"
+      ],
+      "effect": {
+        "conflictsWith": [],
+        "stackable": false,
+        "type": "lifesteal",
+        "value": 0.12
+      },
+      "enchantment_name": "Lifesteal",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "essence_blood",
+          "quantity": 4
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 4
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 3
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "lifesteal",
+      "output_qty": 1,
+      "recipe_id": "enchanting_lifesteal",
+      "station_tier": 3,
+      "station_type": "adornments"
+    },
+    "enchanting_lightning_strike": {
+      "applicable_to": [
+        "weapon"
+      ],
+      "effect": {
+        "chainCount": 2,
+        "chainRange": 3,
+        "conflictsWith": [],
+        "damagePercent": 0.5,
+        "element": "lightning",
+        "stackable": false,
+        "type": "chain_damage"
+      },
+      "enchantment_name": "Lightning Strike",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "light_gem",
+          "quantity": 4
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 10
+        },
+        {
+          "materialId": "marble",
+          "quantity": 4
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 8
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "lightning_strike",
+      "output_qty": 1,
+      "recipe_id": "enchanting_lightning_strike",
+      "station_tier": 3,
+      "station_type": "adornments"
+    },
+    "enchanting_poison": {
+      "applicable_to": [
+        "weapon"
+      ],
+      "effect": {
+        "conflictsWith": [],
+        "damagePerSecond": 8,
+        "duration": 8,
+        "element": "poison",
+        "stackable": true,
+        "type": "damage_over_time"
+      },
+      "enchantment_name": "Poison",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 4
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 3
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 6
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "poison",
+      "output_qty": 1,
+      "recipe_id": "enchanting_poison",
+      "station_tier": 2,
+      "station_type": "adornments"
+    },
+    "enchanting_protection_advanced": {
+      "applicable_to": [
+        "armor"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "protection_1",
+          "protection_3"
+        ],
+        "stackable": false,
+        "type": "damage_reduction",
+        "value": 0.2
+      },
+      "enchantment_name": "Protection II",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 8
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": 4
+        },
+        {
+          "materialId": "iron_scales",
+          "quantity": 8
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "protection_2",
+      "output_qty": 1,
+      "recipe_id": "enchanting_protection_advanced",
+      "station_tier": 2,
+      "station_type": "adornments"
+    },
+    "enchanting_protection_basic": {
+      "applicable_to": [
+        "armor"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "protection_2",
+          "protection_3"
+        ],
+        "stackable": false,
+        "type": "damage_reduction",
+        "value": 0.1
+      },
+      "enchantment_name": "Protection I",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "earth_crystal",
+          "quantity": 8
+        },
+        {
+          "materialId": "granite",
+          "quantity": 4
+        },
+        {
+          "materialId": "iron_ore",
+          "quantity": 8
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "protection_1",
+      "output_qty": 1,
+      "recipe_id": "enchanting_protection_basic",
+      "station_tier": 1,
+      "station_type": "adornments"
+    },
+    "enchanting_protection_master": {
+      "applicable_to": [
+        "armor"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "protection_1",
+          "protection_2"
+        ],
+        "stackable": false,
+        "type": "damage_reduction",
+        "value": 0.35
+      },
+      "enchantment_name": "Protection III",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 6
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 4
+        },
+        {
+          "materialId": "golem_core",
+          "quantity": 4
+        },
+        {
+          "materialId": "orichalcum_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": 6
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "protection_3",
+      "output_qty": 1,
+      "recipe_id": "enchanting_protection_master",
+      "station_tier": 3,
+      "station_type": "adornments"
+    },
+    "enchanting_regeneration": {
+      "applicable_to": [
+        "armor"
+      ],
+      "effect": {
+        "conflictsWith": [],
+        "maxStacks": 5,
+        "stackable": true,
+        "type": "health_regeneration",
+        "value": 1
+      },
+      "enchantment_name": "Regeneration",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "essence_blood",
+          "quantity": 4
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 12
+        },
+        {
+          "materialId": "marble",
+          "quantity": 6
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "regeneration",
+      "output_qty": 1,
+      "recipe_id": "enchanting_regeneration",
+      "station_tier": 3,
+      "station_type": "adornments"
+    },
+    "enchanting_self_repair": {
+      "applicable_to": [
+        "weapon",
+        "tool",
+        "armor"
+      ],
+      "effect": {
+        "conflictsWith": [],
+        "perMinute": true,
+        "stackable": false,
+        "type": "durability_regeneration",
+        "value": 1
+      },
+      "enchantment_name": "Self-Repair",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ebony_log",
+          "quantity": 1
+        },
+        {
+          "materialId": "ebony_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "golem_core",
+          "quantity": 2
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 6
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "self_repair",
+      "output_qty": 1,
+      "recipe_id": "enchanting_self_repair",
+      "station_tier": 3,
+      "station_type": "adornments"
+    },
+    "enchanting_sharpness_advanced": {
+      "applicable_to": [
+        "weapon"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "sharpness_1",
+          "sharpness_3"
+        ],
+        "stackable": false,
+        "type": "damage_multiplier",
+        "value": 0.2
+      },
+      "enchantment_name": "Sharpness II",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 3
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 2
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 3
+        },
+        {
+          "materialId": "marble",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "sharpness_2",
+      "output_qty": 1,
+      "recipe_id": "enchanting_sharpness_advanced",
+      "station_tier": 2,
+      "station_type": "adornments"
+    },
+    "enchanting_sharpness_basic": {
+      "applicable_to": [
+        "weapon"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "sharpness_2",
+          "sharpness_3"
+        ],
+        "stackable": false,
+        "type": "damage_multiplier",
+        "value": 0.1
+      },
+      "enchantment_name": "Sharpness I",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 4
+        },
+        {
+          "materialId": "granite",
+          "quantity": 2
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "tin_ore",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "sharpness_1",
+      "output_qty": 1,
+      "recipe_id": "enchanting_sharpness_basic",
+      "station_tier": 1,
+      "station_type": "adornments"
+    },
+    "enchanting_sharpness_master": {
+      "applicable_to": [
+        "weapon"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "sharpness_1",
+          "sharpness_2"
+        ],
+        "stackable": false,
+        "type": "damage_multiplier",
+        "value": 0.35
+      },
+      "enchantment_name": "Sharpness III",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 5
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": 2
+        },
+        {
+          "materialId": "marble",
+          "quantity": 1
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "sharpness_3",
+      "output_qty": 1,
+      "recipe_id": "enchanting_sharpness_master",
+      "station_tier": 3,
+      "station_type": "adornments"
+    },
+    "enchanting_silk_touch": {
+      "applicable_to": [
+        "tool"
+      ],
+      "effect": {
+        "conflictsWith": [
+          "fortune_1",
+          "fortune_2"
+        ],
+        "stackable": false,
+        "type": "harvest_original_form",
+        "value": 1.0
+      },
+      "enchantment_name": "Silk Touch",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 5
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "silk_touch",
+      "output_qty": 1,
+      "recipe_id": "enchanting_silk_touch",
+      "station_tier": 3,
+      "station_type": "adornments"
+    },
+    "enchanting_soulbound": {
+      "applicable_to": [
+        "weapon",
+        "tool",
+        "armor",
+        "accessory"
+      ],
+      "effect": {
+        "conflictsWith": [],
+        "stackable": false,
+        "type": "soulbound",
+        "value": 1.0
+      },
+      "enchantment_name": "Soulbound",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "chaos_matrix",
+          "quantity": 4
+        },
+        {
+          "materialId": "eternity_stone",
+          "quantity": 4
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 4
+        },
+        {
+          "materialId": "primordial_crystal",
+          "quantity": 3
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 5
+        },
+        {
+          "materialId": "worldtree_plank",
+          "quantity": 5
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "soulbound",
+      "output_qty": 1,
+      "recipe_id": "enchanting_soulbound",
+      "station_tier": 4,
+      "station_type": "adornments"
+    },
+    "enchanting_swiftness": {
+      "applicable_to": [
+        "armor"
+      ],
+      "effect": {
+        "conflictsWith": [],
+        "maxStacks": 3,
+        "stackable": true,
+        "type": "movement_speed_multiplier",
+        "value": 0.15
+      },
+      "enchantment_name": "Swiftness",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 6
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 3
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 3
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "swiftness",
+      "output_qty": 1,
+      "recipe_id": "enchanting_swiftness",
+      "station_tier": 2,
+      "station_type": "adornments"
+    },
+    "enchanting_thorns": {
+      "applicable_to": [
+        "armor"
+      ],
+      "effect": {
+        "conflictsWith": [],
+        "stackable": false,
+        "type": "reflect_damage",
+        "value": 0.15
+      },
+      "enchantment_name": "Thorns",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 4
+        },
+        {
+          "materialId": "dire_fang",
+          "quantity": 4
+        },
+        {
+          "materialId": "iron_scales",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "thorns",
+      "output_qty": 1,
+      "recipe_id": "enchanting_thorns",
+      "station_tier": 2,
+      "station_type": "adornments"
+    },
+    "enchanting_weightless": {
+      "applicable_to": [
+        "weapon",
+        "tool",
+        "armor"
+      ],
+      "effect": {
+        "conflictsWith": [],
+        "stackable": false,
+        "type": "weight_multiplier",
+        "value": -0.5
+      },
+      "enchantment_name": "Weightless",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 5
+        },
+        {
+          "materialId": "ash_plank",
+          "quantity": 5
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 5
+        }
+      ],
+      "is_enchantment": true,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "weightless",
+      "output_qty": 1,
+      "recipe_id": "enchanting_weightless",
+      "station_tier": 2,
+      "station_type": "adornments"
+    },
+    "engineering_basic_arrow_turret": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "basic_arrow_turret",
+      "output_qty": 1,
+      "recipe_id": "engineering_basic_arrow_turret",
+      "station_tier": 1,
+      "station_type": "engineering"
+    },
+    "engineering_bear_trap": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "dire_fang",
+          "quantity": 6
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "bear_trap",
+      "output_qty": 2,
+      "recipe_id": "engineering_bear_trap",
+      "station_tier": 1,
+      "station_type": "engineering"
+    },
+    "engineering_cluster_bomb": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "blast_powder",
+          "quantity": 12
+        },
+        {
+          "materialId": "air_crystal",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "cluster_bomb",
+      "output_qty": 1,
+      "recipe_id": "engineering_cluster_bomb",
+      "station_tier": 3,
+      "station_type": "engineering"
+    },
+    "engineering_emp_device": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "orichalcum_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 6
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "emp_device",
+      "output_qty": 1,
+      "recipe_id": "engineering_emp_device",
+      "station_tier": 3,
+      "station_type": "engineering"
+    },
+    "engineering_fire_arrow_turret": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "birch_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "fire_arrow_turret",
+      "output_qty": 1,
+      "recipe_id": "engineering_fire_arrow_turret",
+      "station_tier": 2,
+      "station_type": "engineering"
+    },
+    "engineering_fire_bomb": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "blast_powder",
+          "quantity": 4
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "fire_bomb",
+      "output_qty": 2,
+      "recipe_id": "engineering_fire_bomb",
+      "station_tier": 2,
+      "station_type": "engineering"
+    },
+    "engineering_flamethrower_turret": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 8
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 8
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "flamethrower_turret",
+      "output_qty": 1,
+      "recipe_id": "engineering_flamethrower_turret",
+      "station_tier": 3,
+      "station_type": "engineering"
+    },
+    "engineering_frost_mine": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "blast_powder",
+          "quantity": 2
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "frost_mine",
+      "output_qty": 2,
+      "recipe_id": "engineering_frost_mine",
+      "station_tier": 2,
+      "station_type": "engineering"
+    },
+    "engineering_grappling_hook": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 6
+        },
+        {
+          "materialId": "air_crystal",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "grappling_hook",
+      "output_qty": 1,
+      "recipe_id": "engineering_grappling_hook",
+      "station_tier": 2,
+      "station_type": "engineering"
+    },
+    "engineering_healing_beacon": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 5
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 3
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "healing_beacon",
+      "output_qty": 1,
+      "recipe_id": "engineering_healing_beacon",
+      "station_tier": 3,
+      "station_type": "engineering"
+    },
+    "engineering_jetpack": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 8
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 10
+        },
+        {
+          "materialId": "air_crystal",
+          "quantity": 8
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "jetpack",
+      "output_qty": 1,
+      "recipe_id": "engineering_jetpack",
+      "station_tier": 3,
+      "station_type": "engineering"
+    },
+    "engineering_laser_turret": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 8
+        },
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 6
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "laser_turret",
+      "output_qty": 1,
+      "recipe_id": "engineering_laser_turret",
+      "station_tier": 3,
+      "station_type": "engineering"
+    },
+    "engineering_lightning_cannon": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 4
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 6
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "lightning_cannon",
+      "output_qty": 1,
+      "recipe_id": "engineering_lightning_cannon",
+      "station_tier": 3,
+      "station_type": "engineering"
+    },
+    "engineering_net_launcher": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 8
+        },
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "net_launcher",
+      "output_qty": 1,
+      "recipe_id": "engineering_net_launcher",
+      "station_tier": 2,
+      "station_type": "engineering"
+    },
+    "engineering_simple_bomb": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "blast_powder",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "simple_bomb",
+      "output_qty": 3,
+      "recipe_id": "engineering_simple_bomb",
+      "station_tier": 1,
+      "station_type": "engineering"
+    },
+    "engineering_spike_trap": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "spike_trap",
+      "output_qty": 3,
+      "recipe_id": "engineering_spike_trap",
+      "station_tier": 1,
+      "station_type": "engineering"
+    },
+    "recipe_blood_reaver": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "essence_blood",
+          "quantity": 1
+        },
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 12
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 5
+        },
+        {
+          "materialId": "primordial_crystal",
+          "quantity": 1
+        },
+        {
+          "materialId": "worldtree_plank",
+          "quantity": 6
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "blood_reaver",
+      "output_qty": 1,
+      "recipe_id": "recipe_blood_reaver",
+      "station_tier": 4,
+      "station_type": "smithing"
+    },
+    "recipe_frostbite_hammer": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 6
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 1
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "frostbite_hammer",
+      "output_qty": 1,
+      "recipe_id": "recipe_frostbite_hammer",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "recipe_inferno_blade": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 12
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 5
+        },
+        {
+          "materialId": "primordial_crystal",
+          "quantity": 1
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 1
+        },
+        {
+          "materialId": "worldtree_plank",
+          "quantity": 6
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "inferno_blade",
+      "output_qty": 1,
+      "recipe_id": "recipe_inferno_blade",
+      "station_tier": 4,
+      "station_type": "smithing"
+    },
+    "recipe_lightning_chain_whip": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 1
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 1
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 1
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 10
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "lightning_chain_whip",
+      "output_qty": 1,
+      "recipe_id": "recipe_lightning_chain_whip",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "recipe_void_piercer": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "genesis_lattice",
+          "quantity": 3
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": 2
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 10
+        },
+        {
+          "materialId": "worldtree_plank",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "void_piercer",
+      "output_qty": 1,
+      "recipe_id": "recipe_void_piercer",
+      "station_tier": 4,
+      "station_type": "smithing"
+    },
+    "refining_adamantine_ore_to_ingot": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "adamantine_ore",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "adamantine_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_adamantine_ore_to_ingot",
+      "station_tier": 3,
+      "station_type": "refining"
+    },
+    "refining_ash_log_to_plank": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ash_log",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "ash_plank",
+      "output_qty": 4,
+      "recipe_id": "refining_ash_log_to_plank",
+      "station_tier": 1,
+      "station_type": "refining"
+    },
+    "refining_birch_log_to_plank": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "birch_log",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "birch_plank",
+      "output_qty": 4,
+      "recipe_id": "refining_birch_log_to_plank",
+      "station_tier": 2,
+      "station_type": "refining"
+    },
+    "refining_bronze_alloy": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "tin_ingot",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "bronze_ingot",
+      "output_qty": 2,
+      "recipe_id": "refining_bronze_alloy",
+      "station_tier": 1,
+      "station_type": "refining"
+    },
+    "refining_copper_ore_to_ingot": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ore",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "copper_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_copper_ore_to_ingot",
+      "station_tier": 1,
+      "station_type": "refining"
+    },
+    "refining_ebony_log_to_plank": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ebony_log",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "ebony_plank",
+      "output_qty": 3,
+      "recipe_id": "refining_ebony_log_to_plank",
+      "station_tier": 3,
+      "station_type": "refining"
+    },
+    "refining_etherion_ore_to_ingot": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "etherion_ore",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "etherion_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_etherion_ore_to_ingot",
+      "station_tier": 4,
+      "station_type": "refining"
+    },
+    "refining_fire_steel": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 1
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "fire_steel_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_fire_steel",
+      "station_tier": 2,
+      "station_type": "refining"
+    },
+    "refining_frost_steel": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 1
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "frost_steel_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_frost_steel",
+      "station_tier": 2,
+      "station_type": "refining"
+    },
+    "refining_iron_ore_to_ingot": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ore",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_iron_ore_to_ingot",
+      "station_tier": 1,
+      "station_type": "refining"
+    },
+    "refining_ironwood_log_to_plank": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ironwood_log",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "ironwood_plank",
+      "output_qty": 3,
+      "recipe_id": "refining_ironwood_log_to_plank",
+      "station_tier": 3,
+      "station_type": "refining"
+    },
+    "refining_lightning_copper": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "lightning_copper_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_lightning_copper",
+      "station_tier": 2,
+      "station_type": "refining"
+    },
+    "refining_maple_log_to_plank": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "maple_log",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "maple_plank",
+      "output_qty": 4,
+      "recipe_id": "refining_maple_log_to_plank",
+      "station_tier": 2,
+      "station_type": "refining"
+    },
+    "refining_mithril_ore_to_ingot": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "mithril_ore",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "mithril_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_mithril_ore_to_ingot",
+      "station_tier": 2,
+      "station_type": "refining"
+    },
+    "refining_oak_log_to_plank": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "oak_log",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "oak_plank",
+      "output_qty": 4,
+      "recipe_id": "refining_oak_log_to_plank",
+      "station_tier": 1,
+      "station_type": "refining"
+    },
+    "refining_orichalcum_ore_to_ingot": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "orichalcum_ore",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "orichalcum_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_orichalcum_ore_to_ingot",
+      "station_tier": 3,
+      "station_type": "refining"
+    },
+    "refining_pine_log_to_plank": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "pine_log",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "pine_plank",
+      "output_qty": 4,
+      "recipe_id": "refining_pine_log_to_plank",
+      "station_tier": 1,
+      "station_type": "refining"
+    },
+    "refining_rarity_adamantine_epic": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "adamantine_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_adamantine_epic",
+      "station_tier": 3,
+      "station_type": "refining"
+    },
+    "refining_rarity_adamantine_legendary": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 4,
+          "rarity": "epic"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "adamantine_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_adamantine_legendary",
+      "station_tier": 4,
+      "station_type": "refining"
+    },
+    "refining_rarity_bronze_epic": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "bronze_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "bronze_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_bronze_epic",
+      "station_tier": 3,
+      "station_type": "refining"
+    },
+    "refining_rarity_bronze_rare": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "bronze_ingot",
+          "quantity": 4,
+          "rarity": "uncommon"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "bronze_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_bronze_rare",
+      "station_tier": 2,
+      "station_type": "refining"
+    },
+    "refining_rarity_copper_epic": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "copper_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_copper_epic",
+      "station_tier": 3,
+      "station_type": "refining"
+    },
+    "refining_rarity_copper_legendary": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 4,
+          "rarity": "epic"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "copper_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_copper_legendary",
+      "station_tier": 4,
+      "station_type": "refining"
+    },
+    "refining_rarity_copper_rare": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 4,
+          "rarity": "uncommon"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "copper_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_copper_rare",
+      "station_tier": 2,
+      "station_type": "refining"
+    },
+    "refining_rarity_copper_uncommon": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 4,
+          "rarity": "common"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "copper_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_copper_uncommon",
+      "station_tier": 1,
+      "station_type": "refining"
+    },
+    "refining_rarity_etherion_mythical": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 4,
+          "rarity": "legendary"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "etherion_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_etherion_mythical",
+      "station_tier": 4,
+      "station_type": "refining"
+    },
+    "refining_rarity_iron_epic": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_iron_epic",
+      "station_tier": 3,
+      "station_type": "refining"
+    },
+    "refining_rarity_iron_legendary": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4,
+          "rarity": "epic"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_iron_legendary",
+      "station_tier": 4,
+      "station_type": "refining"
+    },
+    "refining_rarity_iron_rare": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4,
+          "rarity": "uncommon"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_iron_rare",
+      "station_tier": 3,
+      "station_type": "refining"
+    },
+    "refining_rarity_iron_uncommon": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4,
+          "rarity": "common"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_iron_uncommon",
+      "station_tier": 2,
+      "station_type": "refining"
+    },
+    "refining_rarity_mithril_epic": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "mithril_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_mithril_epic",
+      "station_tier": 3,
+      "station_type": "refining"
+    },
+    "refining_rarity_mithril_legendary": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 4,
+          "rarity": "epic"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "mithril_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_mithril_legendary",
+      "station_tier": 4,
+      "station_type": "refining"
+    },
+    "refining_rarity_mithril_mythical": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 4,
+          "rarity": "legendary"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "mithril_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_mithril_mythical",
+      "station_tier": 4,
+      "station_type": "refining"
+    },
+    "refining_rarity_orichalcum_legendary": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "orichalcum_ingot",
+          "quantity": 4,
+          "rarity": "epic"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "orichalcum_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_orichalcum_legendary",
+      "station_tier": 4,
+      "station_type": "refining"
+    },
+    "refining_rarity_orichalcum_mythical": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "orichalcum_ingot",
+          "quantity": 4,
+          "rarity": "legendary"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "orichalcum_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_orichalcum_mythical",
+      "station_tier": 4,
+      "station_type": "refining"
+    },
+    "refining_rarity_steel_epic": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_steel_epic",
+      "station_tier": 4,
+      "station_type": "refining"
+    },
+    "refining_rarity_steel_legendary": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4,
+          "rarity": "epic"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_steel_legendary",
+      "station_tier": 4,
+      "station_type": "refining"
+    },
+    "refining_rarity_steel_rare": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4,
+          "rarity": "uncommon"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_steel_rare",
+      "station_tier": 2,
+      "station_type": "refining"
+    },
+    "refining_rarity_tin_epic": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "tin_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "tin_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_tin_epic",
+      "station_tier": 3,
+      "station_type": "refining"
+    },
+    "refining_rarity_tin_rare": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "tin_ingot",
+          "quantity": 4,
+          "rarity": "uncommon"
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "tin_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_rarity_tin_rare",
+      "station_tier": 2,
+      "station_type": "refining"
+    },
+    "refining_steel_ore_to_ingot": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ore",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_steel_ore_to_ingot",
+      "station_tier": 2,
+      "station_type": "refining"
+    },
+    "refining_tin_ore_to_ingot": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "tin_ore",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "tin_ingot",
+      "output_qty": 1,
+      "recipe_id": "refining_tin_ore_to_ingot",
+      "station_tier": 1,
+      "station_type": "refining"
+    },
+    "refining_worldtree_log_to_plank": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "worldtree_log",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "worldtree_plank",
+      "output_qty": 2,
+      "recipe_id": "refining_worldtree_log_to_plank",
+      "station_tier": 4,
+      "station_type": "refining"
+    },
+    "smithing_alchemy_table_t1": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "granite",
+          "quantity": 5
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 2
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "alchemy_table_t1",
+      "output_qty": 1,
+      "recipe_id": "smithing_alchemy_table_t1",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_alchemy_table_t2": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 3
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "alchemy_table_t2",
+      "output_qty": 1,
+      "recipe_id": "smithing_alchemy_table_t2",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_alchemy_table_t3": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 9
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 3
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 5
+        },
+        {
+          "materialId": "golem_core",
+          "quantity": 1
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "alchemy_table_t3",
+      "output_qty": 1,
+      "recipe_id": "smithing_alchemy_table_t3",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_alchemy_table_t4": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "chaos_matrix",
+          "quantity": 1
+        },
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 6
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 5
+        },
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 7
+        },
+        {
+          "materialId": "genesis_lattice",
+          "quantity": 3
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 7
+        },
+        {
+          "materialId": "orichalcum_ore",
+          "quantity": 3
+        },
+        {
+          "materialId": "primordial_crystal",
+          "quantity": 4
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "alchemy_table_t4",
+      "output_qty": 1,
+      "recipe_id": "smithing_alchemy_table_t4",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "smithing_bamboo_fishing_rod": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1
+        },
+        {
+          "materialId": "oak_log",
+          "quantity": 2
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "bamboo_fishing_rod",
+      "output_qty": 1,
+      "recipe_id": "smithing_bamboo_fishing_rod",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_composite_longbow": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ash_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 5
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "composite_longbow",
+      "output_qty": 1,
+      "recipe_id": "smithing_composite_longbow",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_copper_axe": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "pine_log",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "copper_axe",
+      "output_qty": 1,
+      "recipe_id": "smithing_copper_axe",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_copper_dagger": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "copper_dagger",
+      "output_qty": 1,
+      "recipe_id": "smithing_copper_dagger",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_copper_fire_ring": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "copper_fire_ring",
+      "output_qty": 1,
+      "recipe_id": "smithing_copper_fire_ring",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_copper_pickaxe": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "oak_log",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "copper_pickaxe",
+      "output_qty": 1,
+      "recipe_id": "smithing_copper_pickaxe",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_copper_spear": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ash_log",
+          "quantity": 2
+        },
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "copper_spear",
+      "output_qty": 1,
+      "recipe_id": "smithing_copper_spear",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_enchanting_table_t1": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "marble",
+          "quantity": 5
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "enchanting_table_t1",
+      "output_qty": 1,
+      "recipe_id": "smithing_enchanting_table_t1",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_enchanting_table_t2": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 5
+        },
+        {
+          "materialId": "marble",
+          "quantity": 2
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "enchanting_table_t2",
+      "output_qty": 1,
+      "recipe_id": "smithing_enchanting_table_t2",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_enchanting_table_t3": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "light_gem",
+          "quantity": 1
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 9
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "enchanting_table_t3",
+      "output_qty": 1,
+      "recipe_id": "smithing_enchanting_table_t3",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_enchanting_table_t4": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "chaos_matrix",
+          "quantity": 2
+        },
+        {
+          "materialId": "eternity_stone",
+          "quantity": 2
+        },
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "genesis_lattice",
+          "quantity": 1
+        },
+        {
+          "materialId": "primordial_crystal",
+          "quantity": 3
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 7
+        },
+        {
+          "materialId": "worldtree_plank",
+          "quantity": 6
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "enchanting_table_t4",
+      "output_qty": 1,
+      "recipe_id": "smithing_enchanting_table_t4",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "smithing_engineering_bench_t1": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 3
+        },
+        {
+          "materialId": "birch_plank",
+          "quantity": 4
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "engineering_bench_t1",
+      "output_qty": 1,
+      "recipe_id": "smithing_engineering_bench_t1",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_engineering_bench_t2": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ash_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 2
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "engineering_bench_t2",
+      "output_qty": 1,
+      "recipe_id": "smithing_engineering_bench_t2",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_engineering_bench_t3": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 5
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 4
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 7
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "engineering_bench_t3",
+      "output_qty": 1,
+      "recipe_id": "smithing_engineering_bench_t3",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_engineering_bench_t4": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 7
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 2
+        },
+        {
+          "materialId": "ebony_plank",
+          "quantity": 7
+        },
+        {
+          "materialId": "genesis_lattice",
+          "quantity": 1
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 3
+        },
+        {
+          "materialId": "orichalcum_ingot",
+          "quantity": 7
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "engineering_bench_t4",
+      "output_qty": 1,
+      "recipe_id": "smithing_engineering_bench_t4",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "smithing_fire_crystal_staff": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 8
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 4
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "fire_crystal_staff",
+      "output_qty": 1,
+      "recipe_id": "smithing_fire_crystal_staff",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "smithing_forge_t1": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "granite",
+          "quantity": 5
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "forge_t1",
+      "output_qty": 1,
+      "recipe_id": "smithing_forge_t1",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_forge_t2": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "basalt",
+          "quantity": 5
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 1
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "forge_t2",
+      "output_qty": 1,
+      "recipe_id": "smithing_forge_t2",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_forge_t3": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 10
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 4
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "forge_t3",
+      "output_qty": 1,
+      "recipe_id": "smithing_forge_t3",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_forge_t4": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 10
+        },
+        {
+          "materialId": "chaos_matrix",
+          "quantity": 6
+        },
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 16
+        },
+        {
+          "materialId": "genesis_lattice",
+          "quantity": 1
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 8
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "forge_t4",
+      "output_qty": 1,
+      "recipe_id": "smithing_forge_t4",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "smithing_iron_axe": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "birch_plank",
+          "quantity": 2
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_axe",
+      "output_qty": 1,
+      "recipe_id": "smithing_iron_axe",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_iron_boots": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_boots",
+      "output_qty": 1,
+      "recipe_id": "smithing_iron_boots",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_iron_chestplate": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 6
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 7
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 5
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_chestplate",
+      "output_qty": 1,
+      "recipe_id": "smithing_iron_chestplate",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_iron_pickaxe": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ash_plank",
+          "quantity": 2
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_pickaxe",
+      "output_qty": 1,
+      "recipe_id": "smithing_iron_pickaxe",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_iron_round_shield": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 1
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_round_shield",
+      "output_qty": 1,
+      "recipe_id": "smithing_iron_round_shield",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_iron_shortsword": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 1
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_shortsword",
+      "output_qty": 1,
+      "recipe_id": "smithing_iron_shortsword",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_iron_studded_gauntlets": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_studded_gauntlets",
+      "output_qty": 1,
+      "recipe_id": "smithing_iron_studded_gauntlets",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_iron_warhammer": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "granite",
+          "quantity": 2
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_warhammer",
+      "output_qty": 1,
+      "recipe_id": "smithing_iron_warhammer",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_iron_water_amulet": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "iron_water_amulet",
+      "output_qty": 1,
+      "recipe_id": "smithing_iron_water_amulet",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_leather_tunic": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 6
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "leather_tunic",
+      "output_qty": 1,
+      "recipe_id": "smithing_leather_tunic",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_mithril_axe": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ebony_plank",
+          "quantity": 4
+        },
+        {
+          "materialId": "golem_core",
+          "quantity": 1
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 11
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "mithril_axe",
+      "output_qty": 1,
+      "recipe_id": "smithing_mithril_axe",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "smithing_mithril_dagger": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ebony_plank",
+          "quantity": 4
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": 1
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "mithril_dagger",
+      "output_qty": 1,
+      "recipe_id": "smithing_mithril_dagger",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "smithing_mithril_fishing_rod": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ironwood_log",
+          "quantity": 2
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 1
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "mithril_fishing_rod",
+      "output_qty": 1,
+      "recipe_id": "smithing_mithril_fishing_rod",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "smithing_mithril_pickaxe": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ebony_plank",
+          "quantity": 5
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 9
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "mithril_pickaxe",
+      "output_qty": 1,
+      "recipe_id": "smithing_mithril_pickaxe",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "smithing_pine_shortbow": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 1
+        },
+        {
+          "materialId": "pine_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "pine_shortbow",
+      "output_qty": 1,
+      "recipe_id": "smithing_pine_shortbow",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_refinery_t1": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "limestone",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "refinery_t1",
+      "output_qty": 1,
+      "recipe_id": "smithing_refinery_t1",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_refinery_t2": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "earth_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "granite",
+          "quantity": 5
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "refinery_t2",
+      "output_qty": 1,
+      "recipe_id": "smithing_refinery_t2",
+      "station_tier": 1,
+      "station_type": "smithing"
+    },
+    "smithing_refinery_t3": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 12
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "refinery_t3",
+      "output_qty": 1,
+      "recipe_id": "smithing_refinery_t3",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_refinery_t4": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "eternity_stone",
+          "quantity": 10
+        },
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 12
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 6
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": 9
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "refinery_t4",
+      "output_qty": 1,
+      "recipe_id": "smithing_refinery_t4",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "smithing_reinforced_fishing_rod": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "maple_plank",
+          "quantity": 2
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 1
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 4
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "reinforced_fishing_rod",
+      "output_qty": 1,
+      "recipe_id": "smithing_reinforced_fishing_rod",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_steel_axe": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 6
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_axe",
+      "output_qty": 1,
+      "recipe_id": "smithing_steel_axe",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_steel_battleaxe": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 2
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 6
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_battleaxe",
+      "output_qty": 1,
+      "recipe_id": "smithing_steel_battleaxe",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_steel_helm": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 10
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 3
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_helm",
+      "output_qty": 1,
+      "recipe_id": "smithing_steel_helm",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_steel_leggings": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 7
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 5
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_leggings",
+      "output_qty": 1,
+      "recipe_id": "smithing_steel_leggings",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_steel_lightning_bracelet": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "lightning_shard",
+          "quantity": 3
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 2
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_lightning_bracelet",
+      "output_qty": 1,
+      "recipe_id": "smithing_steel_lightning_bracelet",
+      "station_tier": 3,
+      "station_type": "smithing"
+    },
+    "smithing_steel_longsword": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 2
+        },
+        {
+          "materialId": "maple_plank",
+          "quantity": 1
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_longsword",
+      "output_qty": 1,
+      "recipe_id": "smithing_steel_longsword",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_steel_pickaxe": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 10
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_pickaxe",
+      "output_qty": 1,
+      "recipe_id": "smithing_steel_pickaxe",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_steel_sickle": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "birch_plank",
+          "quantity": 2
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 5
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "steel_sickle",
+      "output_qty": 1,
+      "recipe_id": "smithing_steel_sickle",
+      "station_tier": 2,
+      "station_type": "smithing"
+    },
+    "smithing_worldtree_fishing_rod": {
+      "applicable_to": [],
+      "effect": {},
+      "enchantment_name": "",
+      "grid_size": "3x3",
+      "inputs": [
+        {
+          "materialId": "chaos_matrix",
+          "quantity": 2
+        },
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 7
+        },
+        {
+          "materialId": "worldtree_plank",
+          "quantity": 2
+        }
+      ],
+      "is_enchantment": false,
+      "metadata": {},
+      "mini_game_type": "",
+      "output_id": "worldtree_fishing_rod",
+      "output_qty": 1,
+      "recipe_id": "smithing_worldtree_fishing_rod",
+      "station_tier": 4,
+      "station_type": "smithing"
+    }
+  }
+}

@@ -1,0 +1,1346 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-20",
+    "git_sha": "8b0965dc",
+    "source": "data/databases/chunk_template_db.py (sacred + generated overlay + geo dispatch bridge + geoTypes auto-register)"
+  },
+  "count": 21,
+  "density_weights": {
+    "high": 2.0,
+    "low": 0.75,
+    "moderate": 1.0,
+    "very_high": 3.0,
+    "very_low": 0.5
+  },
+  "geo_dispatch": {
+    "barren_waste": "barren_quarry",
+    "cave": "peaceful_cave",
+    "crystal_cavern": "crystal_cave",
+    "cursed_marsh": "water_cursed_swamp",
+    "deep_cave": "deep_cave",
+    "dense_thicket": "dense_forest",
+    "flooded_cave": "flooded_cave",
+    "forest": "peaceful_forest",
+    "lake": "water_lake",
+    "overgrown_ruins": "ruins_quarry",
+    "quarry": "peaceful_quarry",
+    "river": "water_river",
+    "rocky_forest": "rocky_forest",
+    "rocky_highlands": "rocky_quarry",
+    "wetland": "wetland"
+  },
+  "stats": {
+    "generated": 0,
+    "geo_dispatch_entries": 15,
+    "sacred": 21,
+    "total": 21
+  },
+  "templates": {
+    "barren_quarry": {
+      "category": "dangerous",
+      "chunk_type": "barren_quarry",
+      "enemy_spawns": {
+        "beetle_armored": {
+          "density": "moderate",
+          "enemy_id": "beetle_armored",
+          "tier": 2
+        },
+        "beetle_brown": {
+          "density": "moderate",
+          "enemy_id": "beetle_brown",
+          "tier": 1
+        },
+        "void_wraith": {
+          "density": "very_low",
+          "enemy_id": "void_wraith",
+          "tier": 4
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "dangerous_quarry",
+          "barren_quarry"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 2,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Barren Waste",
+      "narrative": "Desolate terrain scoured clean by wind and time. Resources are scarce but what remains is hardy.",
+      "resource_density": {
+        "granite_formation": {
+          "density": "low",
+          "resource_id": "granite_formation",
+          "tier_bias": "low"
+        },
+        "limestone_outcrop": {
+          "density": "low",
+          "resource_id": "limestone_outcrop",
+          "tier_bias": "low"
+        },
+        "shale_bed": {
+          "density": "moderate",
+          "resource_id": "shale_bed",
+          "tier_bias": "low"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "quarry",
+        "barren",
+        "harsh"
+      ],
+      "theme": "quarry",
+      "tile_pattern": null
+    },
+    "crystal_cave": {
+      "category": "rare",
+      "chunk_type": "crystal_cave",
+      "enemy_spawns": {
+        "golem_crystal": {
+          "density": "very_low",
+          "enemy_id": "golem_crystal",
+          "tier": 4
+        },
+        "golem_stone": {
+          "density": "low",
+          "enemy_id": "golem_stone",
+          "tier": 3
+        },
+        "slime_crystal": {
+          "density": "moderate",
+          "enemy_id": "slime_crystal",
+          "tier": 3
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "rare_quarry",
+          "rare_cave"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 2,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Crystal Cavern",
+      "narrative": "Glittering caverns where crystal formations grow alongside rare minerals.",
+      "resource_density": {
+        "diamond_geode": {
+          "density": "moderate",
+          "resource_id": "diamond_geode",
+          "tier_bias": "high"
+        },
+        "mithril_cache": {
+          "density": "moderate",
+          "resource_id": "mithril_cache",
+          "tier_bias": "mid"
+        },
+        "obsidian_flow": {
+          "density": "moderate",
+          "resource_id": "obsidian_flow",
+          "tier_bias": "high"
+        },
+        "quartz_cluster": {
+          "density": "high",
+          "resource_id": "quartz_cluster",
+          "tier_bias": "mid"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "cave",
+        "crystal",
+        "rare"
+      ],
+      "theme": "cave",
+      "tile_pattern": null
+    },
+    "dangerous_cave": {
+      "category": "dangerous",
+      "chunk_type": "dangerous_cave",
+      "enemy_spawns": {
+        "beetle_armored": {
+          "density": "moderate",
+          "enemy_id": "beetle_armored",
+          "tier": 2
+        },
+        "beetle_brown": {
+          "density": "high",
+          "enemy_id": "beetle_brown",
+          "tier": 1
+        },
+        "golem_stone": {
+          "density": "very_low",
+          "enemy_id": "golem_stone",
+          "tier": 3
+        },
+        "slime_acid": {
+          "density": "low",
+          "enemy_id": "slime_acid",
+          "tier": 2
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "dangerous_cave",
+          "dangerous_quarry"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 3,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Dangerous Cave",
+      "narrative": "Deep cave system crawling with hostile creatures. Rich deposits of rare materials, but survival is not guaranteed. Form a party or come prepared.",
+      "resource_density": {
+        "iron_deposit": {
+          "density": "moderate",
+          "resource_id": "iron_deposit",
+          "tier_bias": "low"
+        },
+        "mithril_cache": {
+          "density": "low",
+          "resource_id": "mithril_cache",
+          "tier_bias": "mid"
+        },
+        "quartz_cluster": {
+          "density": "moderate",
+          "resource_id": "quartz_cluster",
+          "tier_bias": "mid"
+        },
+        "voidstone_shard": {
+          "density": "low",
+          "resource_id": "voidstone_shard",
+          "tier_bias": "high"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "cave",
+        "combat",
+        "mixed-quality",
+        "mid-game"
+      ],
+      "theme": "cave",
+      "tile_pattern": null
+    },
+    "dangerous_forest": {
+      "category": "dangerous",
+      "chunk_type": "dangerous_forest",
+      "enemy_spawns": {
+        "wolf_dire": {
+          "density": "moderate",
+          "enemy_id": "wolf_dire",
+          "tier": 2
+        },
+        "wolf_grey": {
+          "density": "high",
+          "enemy_id": "wolf_grey",
+          "tier": 1
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "dangerous_forest",
+          "dangerous_quarry"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 3,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Dangerous Forest",
+      "narrative": "Wild forest where predators hunt and danger lurks behind every tree. Higher tier wood is common, but aggressive wolf packs make harvesting risky. High risk, high reward.",
+      "resource_density": {
+        "birch_tree": {
+          "density": "high",
+          "resource_id": "birch_tree",
+          "tier_bias": "mid"
+        },
+        "ironwood_tree": {
+          "density": "low",
+          "resource_id": "ironwood_tree",
+          "tier_bias": "high"
+        },
+        "maple_tree": {
+          "density": "high",
+          "resource_id": "maple_tree",
+          "tier_bias": "mid"
+        },
+        "oak_tree": {
+          "density": "moderate",
+          "resource_id": "oak_tree",
+          "tier_bias": "low"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "forest",
+        "combat",
+        "wood-quality",
+        "mid-game"
+      ],
+      "theme": "forest",
+      "tile_pattern": null
+    },
+    "dangerous_quarry": {
+      "category": "dangerous",
+      "chunk_type": "dangerous_quarry",
+      "enemy_spawns": {
+        "beetle_armored": {
+          "density": "low",
+          "enemy_id": "beetle_armored",
+          "tier": 2
+        },
+        "beetle_brown": {
+          "density": "moderate",
+          "enemy_id": "beetle_brown",
+          "tier": 1
+        },
+        "slime_acid": {
+          "density": "moderate",
+          "enemy_id": "slime_acid",
+          "tier": 2
+        },
+        "slime_green": {
+          "density": "high",
+          "enemy_id": "slime_green",
+          "tier": 1
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "dangerous_quarry",
+          "dangerous_cave"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 3,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Dangerous Quarry",
+      "narrative": "Active quarry teeming with aggressive slimes and beetles. Better ore deposits and stone, but constant combat. Bring potions.",
+      "resource_density": {
+        "basalt_column": {
+          "density": "high",
+          "resource_id": "basalt_column",
+          "tier_bias": "mid"
+        },
+        "iron_deposit": {
+          "density": "moderate",
+          "resource_id": "iron_deposit",
+          "tier_bias": "low"
+        },
+        "marble_quarry": {
+          "density": "moderate",
+          "resource_id": "marble_quarry",
+          "tier_bias": "mid"
+        },
+        "steel_node": {
+          "density": "high",
+          "resource_id": "steel_node",
+          "tier_bias": "mid"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "quarry",
+        "combat",
+        "ore-quality",
+        "mid-game"
+      ],
+      "theme": "quarry",
+      "tile_pattern": null
+    },
+    "deep_cave": {
+      "category": "rare",
+      "chunk_type": "deep_cave",
+      "enemy_spawns": {
+        "beetle_armored": {
+          "density": "moderate",
+          "enemy_id": "beetle_armored",
+          "tier": 2
+        },
+        "golem_crystal": {
+          "density": "low",
+          "enemy_id": "golem_crystal",
+          "tier": 4
+        },
+        "golem_stone": {
+          "density": "moderate",
+          "enemy_id": "golem_stone",
+          "tier": 3
+        },
+        "void_wraith": {
+          "density": "very_low",
+          "enemy_id": "void_wraith",
+          "tier": 4
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "dangerous_cave",
+          "rare_cave"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 2,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Deep Cave",
+      "narrative": "Deep underground where rare ores glimmer in perpetual darkness.",
+      "resource_density": {
+        "adamantine_lode": {
+          "density": "moderate",
+          "resource_id": "adamantine_lode",
+          "tier_bias": "high"
+        },
+        "etherion_nexus": {
+          "density": "very_low",
+          "resource_id": "etherion_nexus",
+          "tier_bias": "legendary"
+        },
+        "mithril_cache": {
+          "density": "moderate",
+          "resource_id": "mithril_cache",
+          "tier_bias": "mid"
+        },
+        "orichalcum_trove": {
+          "density": "low",
+          "resource_id": "orichalcum_trove",
+          "tier_bias": "high"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "cave",
+        "deep",
+        "rare-ore"
+      ],
+      "theme": "cave",
+      "tile_pattern": null
+    },
+    "dense_forest": {
+      "category": "dangerous",
+      "chunk_type": "dense_forest",
+      "enemy_spawns": {
+        "slime_acid": {
+          "density": "low",
+          "enemy_id": "slime_acid",
+          "tier": 2
+        },
+        "slime_green": {
+          "density": "moderate",
+          "enemy_id": "slime_green",
+          "tier": 1
+        },
+        "wolf_dire": {
+          "density": "low",
+          "enemy_id": "wolf_dire",
+          "tier": 2
+        },
+        "wolf_grey": {
+          "density": "moderate",
+          "enemy_id": "wolf_grey",
+          "tier": 1
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "peaceful_forest",
+          "dangerous_forest"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 4,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Dense Thicket",
+      "narrative": "Overgrown forest so dense the canopy blocks the sky. Trees grow thick and tall, with rich undergrowth.",
+      "resource_density": {
+        "birch_tree": {
+          "density": "high",
+          "resource_id": "birch_tree",
+          "tier_bias": "mid"
+        },
+        "ironwood_tree": {
+          "density": "low",
+          "resource_id": "ironwood_tree",
+          "tier_bias": "high"
+        },
+        "maple_tree": {
+          "density": "moderate",
+          "resource_id": "maple_tree",
+          "tier_bias": "mid"
+        },
+        "oak_tree": {
+          "density": "very_high",
+          "resource_id": "oak_tree",
+          "tier_bias": "low"
+        },
+        "pine_tree": {
+          "density": "high",
+          "resource_id": "pine_tree",
+          "tier_bias": "low"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "forest",
+        "dense",
+        "overgrown"
+      ],
+      "theme": "forest",
+      "tile_pattern": null
+    },
+    "flooded_cave": {
+      "category": "dangerous",
+      "chunk_type": "flooded_cave",
+      "enemy_spawns": {
+        "beetle_brown": {
+          "density": "moderate",
+          "enemy_id": "beetle_brown",
+          "tier": 1
+        },
+        "slime_acid": {
+          "density": "low",
+          "enemy_id": "slime_acid",
+          "tier": 2
+        },
+        "slime_green": {
+          "density": "moderate",
+          "enemy_id": "slime_green",
+          "tier": 1
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "dangerous_cave",
+          "water_lake"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 2,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Flooded Cave",
+      "narrative": "Subterranean caves partially flooded with underground streams.",
+      "resource_density": {
+        "copper_vein": {
+          "density": "moderate",
+          "resource_id": "copper_vein",
+          "tier_bias": "low"
+        },
+        "iron_deposit": {
+          "density": "moderate",
+          "resource_id": "iron_deposit",
+          "tier_bias": "low"
+        },
+        "quartz_cluster": {
+          "density": "low",
+          "resource_id": "quartz_cluster",
+          "tier_bias": "mid"
+        },
+        "steel_node": {
+          "density": "low",
+          "resource_id": "steel_node",
+          "tier_bias": "mid"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "cave",
+        "water",
+        "mixed"
+      ],
+      "theme": "cave",
+      "tile_pattern": null
+    },
+    "peaceful_cave": {
+      "category": "peaceful",
+      "chunk_type": "peaceful_cave",
+      "enemy_spawns": {
+        "beetle_brown": {
+          "density": "very_low",
+          "enemy_id": "beetle_brown",
+          "tier": 1
+        },
+        "slime_green": {
+          "density": "low",
+          "enemy_id": "slime_green",
+          "tier": 1
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "peaceful_cave",
+          "peaceful_quarry"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 3,
+        "spawn_area_allowed": true
+      },
+      "geo_types": [],
+      "name": "Peaceful Cave",
+      "narrative": "Shallow cave entrance with basic resources and minimal danger. Beetles occasionally wander through, but they're docile unless provoked. Good for early exploration.",
+      "resource_density": {
+        "copper_vein": {
+          "density": "moderate",
+          "resource_id": "copper_vein",
+          "tier_bias": "low"
+        },
+        "granite_formation": {
+          "density": "high",
+          "resource_id": "granite_formation",
+          "tier_bias": "low"
+        },
+        "iron_deposit": {
+          "density": "moderate",
+          "resource_id": "iron_deposit",
+          "tier_bias": "low"
+        },
+        "shale_bed": {
+          "density": "moderate",
+          "resource_id": "shale_bed",
+          "tier_bias": "low"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "cave",
+        "safe",
+        "mixed",
+        "starter"
+      ],
+      "theme": "cave",
+      "tile_pattern": null
+    },
+    "peaceful_forest": {
+      "category": "peaceful",
+      "chunk_type": "peaceful_forest",
+      "enemy_spawns": {
+        "wolf_grey": {
+          "density": "very_low",
+          "enemy_id": "wolf_grey",
+          "tier": 1
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "peaceful_forest",
+          "peaceful_quarry"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 5,
+        "spawn_area_allowed": true
+      },
+      "geo_types": [],
+      "name": "Peaceful Forest",
+      "narrative": "Dense woodland where ancient trees stand guard over abundant resources. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft. Occasional wolves patrol, but they're more curious than aggressive.",
+      "resource_density": {
+        "ash_tree": {
+          "density": "low",
+          "resource_id": "ash_tree",
+          "tier_bias": "low"
+        },
+        "birch_tree": {
+          "density": "moderate",
+          "resource_id": "birch_tree",
+          "tier_bias": "mid"
+        },
+        "limestone_outcrop": {
+          "density": "low",
+          "resource_id": "limestone_outcrop",
+          "tier_bias": "low"
+        },
+        "oak_tree": {
+          "density": "very_high",
+          "resource_id": "oak_tree",
+          "tier_bias": "low"
+        },
+        "pine_tree": {
+          "density": "very_high",
+          "resource_id": "pine_tree",
+          "tier_bias": "low"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "forest",
+        "safe",
+        "wood-rich",
+        "starter"
+      ],
+      "theme": "forest",
+      "tile_pattern": null
+    },
+    "peaceful_quarry": {
+      "category": "peaceful",
+      "chunk_type": "peaceful_quarry",
+      "enemy_spawns": {
+        "beetle_brown": {
+          "density": "low",
+          "enemy_id": "beetle_brown",
+          "tier": 1
+        },
+        "slime_green": {
+          "density": "very_low",
+          "enemy_id": "slime_green",
+          "tier": 1
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "peaceful_quarry",
+          "peaceful_forest"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 5,
+        "spawn_area_allowed": true
+      },
+      "geo_types": [],
+      "name": "Peaceful Quarry",
+      "narrative": "Rocky quarry with exposed stone and mineral deposits. Small deposits of copper and iron glint in the sunlight. A few slimes ooze between rocks, but they're slow and easy to avoid.",
+      "resource_density": {
+        "copper_vein": {
+          "density": "high",
+          "resource_id": "copper_vein",
+          "tier_bias": "low"
+        },
+        "granite_formation": {
+          "density": "very_high",
+          "resource_id": "granite_formation",
+          "tier_bias": "low"
+        },
+        "iron_deposit": {
+          "density": "moderate",
+          "resource_id": "iron_deposit",
+          "tier_bias": "low"
+        },
+        "limestone_outcrop": {
+          "density": "very_high",
+          "resource_id": "limestone_outcrop",
+          "tier_bias": "low"
+        },
+        "oak_tree": {
+          "density": "low",
+          "resource_id": "oak_tree",
+          "tier_bias": "low"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "quarry",
+        "safe",
+        "stone-rich",
+        "starter"
+      ],
+      "theme": "quarry",
+      "tile_pattern": null
+    },
+    "rare_cave": {
+      "category": "rare",
+      "chunk_type": "rare_cave",
+      "enemy_spawns": {
+        "beetle_titan": {
+          "density": "very_low",
+          "enemy_id": "beetle_titan",
+          "tier": 4
+        },
+        "entity_primordial": {
+          "density": "very_low",
+          "enemy_id": "entity_primordial",
+          "tier": 4
+        },
+        "golem_stone": {
+          "density": "low",
+          "enemy_id": "golem_stone",
+          "tier": 3
+        },
+        "void_wraith": {
+          "density": "moderate",
+          "enemy_id": "void_wraith",
+          "tier": 4
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "rare_cave",
+          "dangerous_cave"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 1,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Paradox Hollow",
+      "narrative": "Reality-warped depths where the impossible becomes mundane. Etherion deposits exist in superposition, primordial crystals defy physics. Only masters dare enter. Death is common, but the rewards transcend mortal crafting.",
+      "resource_density": {
+        "eternity_monolith": {
+          "density": "very_low",
+          "resource_id": "eternity_monolith",
+          "tier_bias": "legendary"
+        },
+        "etherion_nexus": {
+          "density": "very_low",
+          "resource_id": "etherion_nexus",
+          "tier_bias": "legendary"
+        },
+        "genesis_structure": {
+          "density": "very_low",
+          "resource_id": "genesis_structure",
+          "tier_bias": "legendary"
+        },
+        "obsidian_flow": {
+          "density": "moderate",
+          "resource_id": "obsidian_flow",
+          "tier_bias": "high"
+        },
+        "voidstone_shard": {
+          "density": "low",
+          "resource_id": "voidstone_shard",
+          "tier_bias": "high"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "cave",
+        "end-game",
+        "mythical-materials",
+        "combat"
+      ],
+      "theme": "cave",
+      "tile_pattern": null
+    },
+    "rare_forest": {
+      "category": "rare",
+      "chunk_type": "rare_forest",
+      "enemy_spawns": {
+        "wolf_dire": {
+          "density": "moderate",
+          "enemy_id": "wolf_dire",
+          "tier": 2
+        },
+        "wolf_elder": {
+          "density": "low",
+          "enemy_id": "wolf_elder",
+          "tier": 3
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "rare_forest",
+          "dangerous_forest"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 1,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Ancient Heartwood",
+      "narrative": "Ancient forest where the World Tree's influence lingers. Legendary wood materials grow here, impossibly rare. Only the most dedicated woodcutters will find this place, and even fewer survive long enough to harvest.",
+      "resource_density": {
+        "ebony_tree": {
+          "density": "moderate",
+          "resource_id": "ebony_tree",
+          "tier_bias": "high"
+        },
+        "ironwood_tree": {
+          "density": "moderate",
+          "resource_id": "ironwood_tree",
+          "tier_bias": "high"
+        },
+        "worldtree_sapling": {
+          "density": "very_low",
+          "resource_id": "worldtree_sapling",
+          "tier_bias": "legendary"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "forest",
+        "end-game",
+        "legendary-wood",
+        "combat"
+      ],
+      "theme": "forest",
+      "tile_pattern": null
+    },
+    "rare_quarry": {
+      "category": "rare",
+      "chunk_type": "rare_quarry",
+      "enemy_spawns": {
+        "beetle_armored": {
+          "density": "high",
+          "enemy_id": "beetle_armored",
+          "tier": 2
+        },
+        "golem_crystal": {
+          "density": "very_low",
+          "enemy_id": "golem_crystal",
+          "tier": 4
+        },
+        "slime_acid": {
+          "density": "moderate",
+          "enemy_id": "slime_acid",
+          "tier": 2
+        },
+        "slime_crystal": {
+          "density": "low",
+          "enemy_id": "slime_crystal",
+          "tier": 3
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "rare_quarry",
+          "dangerous_quarry"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 1,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Primordial Vein",
+      "narrative": "Crystalline quarry where reality bends and legendary metals form. Orichalcum and adamantine deposits shimmer in the darkness. Elite enemies guard these treasures jealously.",
+      "resource_density": {
+        "adamantine_lode": {
+          "density": "moderate",
+          "resource_id": "adamantine_lode",
+          "tier_bias": "high"
+        },
+        "diamond_geode": {
+          "density": "low",
+          "resource_id": "diamond_geode",
+          "tier_bias": "high"
+        },
+        "orichalcum_trove": {
+          "density": "moderate",
+          "resource_id": "orichalcum_trove",
+          "tier_bias": "high"
+        },
+        "primordial_formation": {
+          "density": "very_low",
+          "resource_id": "primordial_formation",
+          "tier_bias": "legendary"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "quarry",
+        "end-game",
+        "legendary-ore",
+        "combat"
+      ],
+      "theme": "quarry",
+      "tile_pattern": null
+    },
+    "rocky_forest": {
+      "category": "dangerous",
+      "chunk_type": "rocky_forest",
+      "enemy_spawns": {
+        "beetle_armored": {
+          "density": "low",
+          "enemy_id": "beetle_armored",
+          "tier": 2
+        },
+        "beetle_brown": {
+          "density": "moderate",
+          "enemy_id": "beetle_brown",
+          "tier": 1
+        },
+        "wolf_grey": {
+          "density": "moderate",
+          "enemy_id": "wolf_grey",
+          "tier": 1
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "peaceful_forest",
+          "peaceful_quarry"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 3,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Rocky Forest",
+      "narrative": "Where forest meets stone, trees grow between boulders and rocky outcrops.",
+      "resource_density": {
+        "basalt_column": {
+          "density": "low",
+          "resource_id": "basalt_column",
+          "tier_bias": "mid"
+        },
+        "birch_tree": {
+          "density": "moderate",
+          "resource_id": "birch_tree",
+          "tier_bias": "mid"
+        },
+        "granite_formation": {
+          "density": "moderate",
+          "resource_id": "granite_formation",
+          "tier_bias": "low"
+        },
+        "limestone_outcrop": {
+          "density": "moderate",
+          "resource_id": "limestone_outcrop",
+          "tier_bias": "low"
+        },
+        "oak_tree": {
+          "density": "moderate",
+          "resource_id": "oak_tree",
+          "tier_bias": "low"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "forest",
+        "quarry",
+        "transition"
+      ],
+      "theme": "forest",
+      "tile_pattern": null
+    },
+    "rocky_quarry": {
+      "category": "dangerous",
+      "chunk_type": "rocky_quarry",
+      "enemy_spawns": {
+        "beetle_armored": {
+          "density": "low",
+          "enemy_id": "beetle_armored",
+          "tier": 2
+        },
+        "beetle_brown": {
+          "density": "moderate",
+          "enemy_id": "beetle_brown",
+          "tier": 1
+        },
+        "wolf_dire": {
+          "density": "low",
+          "enemy_id": "wolf_dire",
+          "tier": 2
+        },
+        "wolf_grey": {
+          "density": "moderate",
+          "enemy_id": "wolf_grey",
+          "tier": 1
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "dangerous_quarry",
+          "peaceful_quarry"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 3,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Rocky Highlands",
+      "narrative": "Exposed rocky terrain at elevation, windswept and mineral-rich.",
+      "resource_density": {
+        "basalt_column": {
+          "density": "high",
+          "resource_id": "basalt_column",
+          "tier_bias": "mid"
+        },
+        "granite_formation": {
+          "density": "very_high",
+          "resource_id": "granite_formation",
+          "tier_bias": "low"
+        },
+        "limestone_outcrop": {
+          "density": "moderate",
+          "resource_id": "limestone_outcrop",
+          "tier_bias": "low"
+        },
+        "marble_quarry": {
+          "density": "moderate",
+          "resource_id": "marble_quarry",
+          "tier_bias": "mid"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "quarry",
+        "highlands",
+        "exposed"
+      ],
+      "theme": "quarry",
+      "tile_pattern": null
+    },
+    "ruins_quarry": {
+      "category": "rare",
+      "chunk_type": "ruins_quarry",
+      "enemy_spawns": {
+        "golem_stone": {
+          "density": "moderate",
+          "enemy_id": "golem_stone",
+          "tier": 3
+        },
+        "slime_crystal": {
+          "density": "low",
+          "enemy_id": "slime_crystal",
+          "tier": 3
+        },
+        "slime_green": {
+          "density": "moderate",
+          "enemy_id": "slime_green",
+          "tier": 1
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "dangerous_quarry",
+          "rare_quarry"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 2,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Overgrown Ruins",
+      "narrative": "Ancient structures reclaimed by nature, stonework crumbling beneath vines.",
+      "resource_density": {
+        "granite_formation": {
+          "density": "moderate",
+          "resource_id": "granite_formation",
+          "tier_bias": "low"
+        },
+        "marble_quarry": {
+          "density": "high",
+          "resource_id": "marble_quarry",
+          "tier_bias": "mid"
+        },
+        "obsidian_flow": {
+          "density": "moderate",
+          "resource_id": "obsidian_flow",
+          "tier_bias": "high"
+        },
+        "voidstone_shard": {
+          "density": "low",
+          "resource_id": "voidstone_shard",
+          "tier_bias": "high"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "quarry",
+        "ruins",
+        "ancient"
+      ],
+      "theme": "quarry",
+      "tile_pattern": null
+    },
+    "water_cursed_swamp": {
+      "category": "rare_water",
+      "chunk_type": "water_cursed_swamp",
+      "enemy_spawns": {
+        "slime_acid": {
+          "density": "high",
+          "enemy_id": "slime_acid",
+          "tier": 2
+        },
+        "slime_crystal": {
+          "density": "moderate",
+          "enemy_id": "slime_crystal",
+          "tier": 3
+        },
+        "void_wraith": {
+          "density": "low",
+          "enemy_id": "void_wraith",
+          "tier": 4
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "dangerous_cave",
+          "rare_cave",
+          "dangerous_forest"
+        ],
+        "edge_only": false,
+        "min_distance_between": 5,
+        "roll_weight": 1,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Cursed Swamp",
+      "narrative": "A cursed swamp where foul waters churn with unnatural life. Toxic vapors rise from stagnant pools, and strange creatures lurk beneath the murky surface. Rare fish mutated by dark magic swim here, prized by alchemists. The bravest anglers venture here seeking legendary catches, but many never return.",
+      "resource_density": {
+        "fishing_spot": {
+          "density": "high",
+          "resource_id": "fishing_spot",
+          "tier_bias": "high"
+        },
+        "voidstone_shard": {
+          "density": "very_low",
+          "resource_id": "voidstone_shard",
+          "tier_bias": "high"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "water",
+        "fishing",
+        "dangerous",
+        "rare",
+        "combat"
+      ],
+      "theme": "water",
+      "tile_pattern": {
+        "hasIslands": true,
+        "isToxic": true,
+        "shoreWidth": 1,
+        "waterCoverage": 0.5
+      }
+    },
+    "water_lake": {
+      "category": "water",
+      "chunk_type": "water_lake",
+      "enemy_spawns": {},
+      "generation_rules": {
+        "adjacency_preference": [
+          "peaceful_forest",
+          "peaceful_quarry"
+        ],
+        "edge_only": true,
+        "min_distance_between": 3,
+        "roll_weight": 0,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Tranquil Lake",
+      "narrative": "A serene lake with calm waters teeming with fish. The shoreline is dotted with reeds and the occasional dock. Perfect for fishing, but watch your step - the waters are deep.",
+      "resource_density": {
+        "fishing_spot": {
+          "density": "high",
+          "resource_id": "fishing_spot",
+          "tier_bias": "mid"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "water",
+        "fishing",
+        "peaceful",
+        "edge-only"
+      ],
+      "theme": "water",
+      "tile_pattern": {
+        "hasIslands": true,
+        "shoreWidth": 2,
+        "waterCoverage": 0.65
+      }
+    },
+    "water_river": {
+      "category": "water",
+      "chunk_type": "water_river",
+      "enemy_spawns": {},
+      "generation_rules": {
+        "adjacency_preference": [
+          "peaceful_forest"
+        ],
+        "edge_only": true,
+        "min_distance_between": 3,
+        "roll_weight": 0,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Flowing Stream",
+      "narrative": "A flowing stream cutting through the landscape. The water is swift but shallow in places, allowing careful crossing. Fish gather in the pools between rapids.",
+      "resource_density": {
+        "fishing_spot": {
+          "density": "moderate",
+          "resource_id": "fishing_spot",
+          "tier_bias": "low"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "water",
+        "fishing",
+        "peaceful",
+        "edge-only"
+      ],
+      "theme": "water",
+      "tile_pattern": {
+        "hasBridge": true,
+        "hasIslands": false,
+        "riverWidth": 3,
+        "waterCoverage": 0.35
+      }
+    },
+    "wetland": {
+      "category": "water",
+      "chunk_type": "wetland",
+      "enemy_spawns": {
+        "slime_acid": {
+          "density": "low",
+          "enemy_id": "slime_acid",
+          "tier": 2
+        },
+        "slime_green": {
+          "density": "moderate",
+          "enemy_id": "slime_green",
+          "tier": 1
+        }
+      },
+      "generation_rules": {
+        "adjacency_preference": [
+          "water_lake",
+          "peaceful_forest"
+        ],
+        "edge_only": false,
+        "min_distance_between": 0,
+        "roll_weight": 2,
+        "spawn_area_allowed": false
+      },
+      "geo_types": [],
+      "name": "Wetland",
+      "narrative": "Shallow marshland with patches of standing water and scattered vegetation.",
+      "resource_density": {
+        "fishing_spot": {
+          "density": "moderate",
+          "resource_id": "fishing_spot",
+          "tier_bias": "low"
+        }
+      },
+      "source": "sacred",
+      "tags": [
+        "water",
+        "marsh",
+        "fishing"
+      ],
+      "theme": "water",
+      "tile_pattern": null
+    }
+  },
+  "tier_bias_order": {
+    "high": 3,
+    "legendary": 4,
+    "low": 1,
+    "mid": 2
+  }
+}

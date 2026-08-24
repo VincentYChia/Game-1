@@ -152,8 +152,11 @@ imported game modules.
   values on the XZ plane, so every balance number survives unchanged.
 - Terrain renders via GridMap/mesh generation from tile data, with *visual* relief
   (biome-driven height noise) that does not affect simulation distances in Phase 3.
-  True gameplay verticality (jumping, cliffs, fall damage) is a **post-parity**
-  feature — it changes balance and therefore waits until conformance is locked.
+  True gameplay verticality (jumping, cliffs, fall damage, height-aware combat) is
+  **committed, required scope** — per user direction 2026-07-18 the migration is
+  NOT considered done until true 3D ships. It is sequenced LAST (Phase 11), after
+  parity is certified, because it changes balance and therefore needs the locked
+  conformance baseline as its reference point before deliberately deviating from it.
 - Entities (player, enemies, NPCs, resource nodes) render as **billboarded sprites in
   3D** first (Sprite3D), reusing the existing 3,749-image asset base. This ships full
   gameplay parity without a 3D art pipeline. A model/art upgrade pass is Phase 10 and
@@ -221,7 +224,7 @@ everything), and it lets playtesters carry progress across the migration.
 | 3 | Python sidecar for world_system + ML | Accepted 2026-07-17 |
 | 4 | Content JSON verbatim | Accepted 2026-07-17 |
 | 5 | Golden-vector + crux-foundry oracle | Accepted 2026-07-17 |
-| 6 | Planar sim in 3D presentation, billboards first | Accepted 2026-07-17 |
+| 6 | Planar sim in 3D presentation, billboards first; true 3D verticality REQUIRED as final phase (P11) | Accepted 2026-07-17; amended + user-confirmed 2026-07-18 |
 | 7 | Minigames as 2D Control overlays | Accepted 2026-07-17 |
 | 8 | Event bus 1:1, IPC at the bus seam | Accepted 2026-07-17 |
 | 9 | Save compatibility (Python save loads in Godot) | Accepted 2026-07-17 |

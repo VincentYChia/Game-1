@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game‑1 — Game Systems Technical Brief</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#0b0f17; --bg2:#111725; --panel:#151d2e; --line:#243049;
+    --ink:#e6edf6; --dim:#93a4bf; --mut:#63748f;
+    --cyan:#39d3c7; --amber:#f0b34a; --violet:#a78bfa; --green:#54d18c; --red:#f2647a;
+    --mono:'SFMono-Regular',ui-monospace,'Cascadia Code','Consolas',monospace;
+    --sans:'Segoe UI',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--sans);
+    scroll-snap-type:y mandatory; overflow-y:scroll; scroll-behavior:smooth;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* progress + chrome */
+  #bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--cyan),var(--violet));width:0;z-index:50;transition:width .2s}
+  #hud{position:fixed;bottom:14px;right:18px;z-index:50;font-family:var(--mono);font-size:12px;color:var(--mut);
+       background:rgba(11,15,23,.7);border:1px solid var(--line);border-radius:6px;padding:4px 9px;backdrop-filter:blur(4px)}
+  #dots{position:fixed;top:50%;right:14px;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;gap:7px}
+  #dots a{width:8px;height:8px;border-radius:50%;background:var(--line);transition:.2s;cursor:pointer}
+  #dots a.on{background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+  /* slides */
+  .slide{min-height:100vh;scroll-snap-align:start;display:flex;flex-direction:column;justify-content:center;
+         padding:6vh 8vw 8vh;position:relative;border-bottom:1px solid rgba(36,48,73,.4)}
+  .slide.center{align-items:center;text-align:center}
+  .kicker{font-family:var(--mono);font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);margin-bottom:14px}
+  h1{font-size:clamp(34px,5vw,64px);margin:0 0 12px;line-height:1.05;font-weight:700}
+  h2{font-size:clamp(24px,3.2vw,40px);margin:0 0 20px;line-height:1.1;font-weight:650}
+  .sub{color:var(--dim);font-size:clamp(15px,1.5vw,20px);max-width:60ch;line-height:1.5}
+  p{line-height:1.6;color:var(--ink)}
+  .lead{font-size:18px;color:var(--dim);max-width:78ch;line-height:1.6}
+  ul{line-height:1.7;padding-left:22px;max-width:80ch} li{margin:5px 0}
+  b,strong{color:#fff}
+  code,.mono{font-family:var(--mono);font-size:.9em;color:var(--amber);background:rgba(240,179,74,.09);
+       padding:1px 6px;border-radius:4px;border:1px solid rgba(240,179,74,.16)}
+  .grid{display:grid;gap:16px;width:100%;max-width:1100px}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .card h3{margin:0 0 8px;font-size:16px;color:#fff} .card p{margin:0;font-size:14px;color:var(--dim);line-height:1.5}
+  .card .n{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+  table{border-collapse:collapse;width:100%;max-width:1100px;font-size:14px;background:var(--panel);
+        border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{padding:9px 13px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--bg2);color:var(--cyan);font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  td .mono,td code{font-size:12px}
+  .mm{width:100%;max-width:1150px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:0 auto}
+  .mermaid{display:flex;justify-content:center}
+  .foot{position:absolute;left:8vw;right:8vw;bottom:22px;font-family:var(--mono);font-size:11px;color:var(--mut);
+        display:flex;justify-content:space-between;gap:14px;border-top:1px solid rgba(36,48,73,.5);padding-top:8px}
+  .foot .src{color:var(--dim)}
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:20px;margin:2px 4px 2px 0;border:1px solid}
+  .t-work{color:var(--green);border-color:rgba(84,209,140,.4);background:rgba(84,209,140,.08)}
+  .t-part{color:var(--amber);border-color:rgba(240,179,74,.4);background:rgba(240,179,74,.08)}
+  .t-dead{color:var(--red);border-color:rgba(242,100,122,.4);background:rgba(242,100,122,.08)}
+  .t-drift{color:var(--violet);border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.08)}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;max-width:1000px;margin-top:8px}
+  .lchip{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px}
+  .lchip .sym{font-family:var(--mono);color:var(--cyan);font-size:16px;width:26px;text-align:center}
+  .pill{font-family:var(--mono);font-size:12px;color:var(--violet);border:1px solid rgba(167,139,250,.35);
+        border-radius:20px;padding:3px 11px;background:rgba(167,139,250,.07)}
+  .accent{color:var(--cyan)} .warn{color:var(--amber)}
+  .hero-facts{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;max-width:1150px;margin-top:10px}
+  .fact{background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--cyan);border-radius:10px;padding:16px}
+  .fact .no{font-family:var(--mono);color:var(--cyan);font-size:13px}
+  .fact p{font-size:13px;color:var(--dim);margin:6px 0 0;line-height:1.45}
+  .split{display:grid;grid-template-columns:1.1fr .9fr;gap:26px;width:100%;max-width:1150px;align-items:center}
+  @media(max-width:820px){.g2,.g3,.g4,.hero-facts,.split{grid-template-columns:1fr}}
+  .hint{font-size:12px;color:var(--mut);font-family:var(--mono);margin-top:26px}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div id="hud">1 / 21</div>
+<nav id="dots"></nav>
+
+<!-- 1 · TITLE -->
+<section class="slide center" data-title="Title">
+  <div class="kicker">Executive Technical Brief · verified 2026‑08‑03</div>
+  <h1>Game‑1 — Game Systems</h1>
+  <p class="sub">How the entire game works, end to end — every workflow, information transfer, and
+  communication channel, traced in actual code. Each claim is anchored to a <code>file:line</code>;
+  where code and docs disagree, the code wins.</p>
+  <div style="margin-top:26px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+    <span class="pill">One synchronous loop</span>
+    <span class="pill">One event bus</span>
+    <span class="pill">Three SQLite stores</span>
+    <span class="pill">World = a seed</span>
+    <span class="pill">WMS · WNS · WES</span>
+  </div>
+  <p class="hint">↓ scroll · → / space next · ← back</p>
+</section>
+
+<!-- 2 · LEGEND -->
+<section class="slide" data-title="Legend">
+  <div class="kicker">Reading legend</div>
+  <h2>One vocabulary for <span class="accent">how things communicate</span></h2>
+  <div class="legend">
+    <div class="lchip"><span class="sym">──▶</span><div><b>Direct call</b> · sync, caller blocks</div></div>
+    <div class="lchip"><span class="sym">~~▶</span><div><b>Event</b> · bus fan‑out, fire‑and‑forget</div></div>
+    <div class="lchip"><span class="sym">⇢</span><div><b>Async</b> · daemon thread, polled later</div></div>
+    <div class="lchip"><span class="sym">▤</span><div><b>SQLite</b> · one of three <code>.db</code> files</div></div>
+    <div class="lchip"><span class="sym">▦</span><div><b>JSON file</b> · definitions / saves / generated</div></div>
+    <div class="lchip"><span class="sym">✦</span><div><b>LLM</b> · Claude / Ollama / Mock</div></div>
+  </div>
+  <div style="margin-top:26px">
+    <span class="tag t-work">Working</span>
+    <span class="tag t-part">Partial</span>
+    <span class="tag t-dead">Dead / Stub</span>
+    <span class="tag t-drift">Doc‑drift</span>
+    <span class="sub" style="display:block;margin-top:10px">Build‑status labels used on every section.</span>
+  </div>
+</section>
+
+<!-- 3 · SYSTEM MAP -->
+<section class="slide" data-title="System map">
+  <div class="kicker">1 · System map</div>
+  <h2>The whole game in one picture</h2>
+  <div class="mm"><pre class="mermaid">
+graph TB
+  IN["handle_events"] --> UP["update(dt)"] --> RN["render"]
+  UP -->|"──▶"| CH["World / Chunks"]
+  UP -->|"──▶"| CB["Combat"]
+  UP -->|"──▶"| CHAR["Character + components"]
+  UP -->|"⇢ poll"| INV["Invented items ✦"]
+  UP -->|"──▶"| WM["World Memory"]
+  CB -->|"~~▶"| BUS
+  CHAR -->|"~~▶"| BUS
+  BUS(["GameEventBus · string topics · sync"])
+  BUS -->|"* wildcard"| WM
+  WM -->|"▤ world_memory.db"| DBW[("world_memory.db")]
+  WM -->|"~~▶ trigger / interpretation"| WNS["WNS weaver"]
+  WNS -->|"~~▶ WNS_CALL_WES"| WES["WES orchestrator"]
+  WES -->|"▦ JSON + reload"| DBS[("content DBs")]
+  WES -->|"▤"| DBC[("content_registry.db")]
+  FAC["Factions / NPCs"] -->|"▤"| DBF[("faction.db")]
+  RN -->|"──▶"| REND["Renderer"]
+  </pre></div>
+  <div class="foot"><span class="src">core/game_engine.py · events/event_bus.py · world_system/</span><span>1 · System map</span></div>
+</section>
+
+<!-- 4 · FIVE FACTS -->
+<section class="slide" data-title="Five facts">
+  <div class="kicker">The architecture in five facts</div>
+  <h2>Learn these and the rest follows</h2>
+  <div class="hero-facts">
+    <div class="fact"><div class="no">01</div><b>One sync loop</b><p><code>run → handle_events → update → render</code>, update order hardcoded.</p></div>
+    <div class="fact"><div class="no">02</div><b>One event bus</b><p>String topics, sync fan‑out, exceptions swallowed. One wildcard subscriber: WMS.</p></div>
+    <div class="fact"><div class="no">03</div><b>Bus = narrative spine</b><p>Telemetry <i>and</i> WMS→WNS→WES ride the same bus.</p></div>
+    <div class="fact"><div class="no">04</div><b>Three SQLite stores</b><p>memory · affinity · registry — self‑hydrate on boot, outside the JSON save.</p></div>
+    <div class="fact"><div class="no">05</div><b>World = a seed</b><p>100×100 world regenerated from <code>seed</code>; only modified chunks persist.</p></div>
+  </div>
+  <div class="foot"><span class="src">game_engine.py:11983 · event_bus.py · world_system.py:1455</span><span>Overview</span></div>
+</section>
+
+<!-- 5 · CORE LOOP -->
+<section class="slide" data-title="Core loop">
+  <div class="kicker">2 · Core game loop</div>
+  <h2>The heartbeat — input → update → render</h2>
+  <div class="split">
+    <div class="mm"><pre class="mermaid">
+sequenceDiagram
+  participant RUN as run :11983
+  participant UP as update :8363
+  participant RN as render :8578
+  loop every frame (Config.FPS)
+    RUN->>UP: handle_events → keys/mouse
+    UP->>UP: poll LLM items ⇢ :8371
+    UP->>UP: poll NPC dialogue ⇢ :8374
+    UP->>UP: move · world · combat · WMS
+    RUN->>RN: render_world → display.flip()
+  end
+    </pre></div>
+    <div>
+      <p class="lead">Async work (LLM items, NPC dialogue, WMS L2 upgrades) runs on daemon threads and
+      is <b>polled back on the main thread</b> — no LLM ever stalls the frame.</p>
+      <ul>
+        <li>Crash‑guarded: a bad frame logs & continues; 5 in a row → emergency save + clean exit.</li>
+        <li>Persistence is event‑driven (autosave on quit), not per‑frame.</li>
+      </ul>
+      <span class="tag t-work">Working</span>
+    </div>
+  </div>
+  <div class="foot"><span class="src">game_engine.py:11983, :8363, :8371, :12006</span><span>2 · Core loop</span></div>
+</section>
+
+<!-- 6 · WORLD GEN -->
+<section class="slide" data-title="World & chunks">
+  <div class="kicker">3 · World generation &amp; chunks</div>
+  <h2>A seed becomes a streamed world</h2>
+  <div class="mm"><pre class="mermaid">
+graph LR
+  SEED["seed"] -->|"──▶"| GEN["WorldGenerator<br/>nations→…→districts"]
+  GEN -->|"▦ .gz cache"| GM["geographic_map"]
+  GM --> CK["Chunk :68"]
+  CK --> CTD["ChunkTemplateDatabase<br/>get_for_geo_type"]
+  CTD --> TILES["16×16 tiles"]
+  CTD --> RES["resources (density)"]
+  CK --> LC["loaded_chunks"]
+  LC -->|"get_visible + mark_rendered (locks)"| REND["Renderer"]
+  LC -->|"▦ on unload if modified"| SAVE["chunk_x_y.json"]
+  WES["WES template"] -.->|"▦ + reload"| CTD
+  </pre></div>
+  <p class="lead">Nearest‑first budgeted streaming (immediate ≤1 tile, prefetch 2/frame) with hysteresis
+  unload. Rendering <b>locks</b> a chunk's type so a later reload can't rewrite what the player saw.</p>
+  <div style="margin-top:8px"><span class="tag t-work">Working — geographic path</span><span class="tag t-part">Partial — WES content is placeholder</span></div>
+  <div class="foot"><span class="src">world_system.py:104, :404, :812, :1137 · chunk.py:130, :337</span><span>3 · World &amp; chunks</span></div>
+</section>
+
+<!-- 7 · PLAYER ENTITY -->
+<section class="slide" data-title="Player entity">
+  <div class="kicker">4 · Player entity &amp; components</div>
+  <h2>A facade of components; 6 stats drive everything</h2>
+  <table>
+    <tr><th>Stat</th><th>Effect</th><th>Site</th></tr>
+    <tr><td>STR</td><td>melee dmg ×(1+STR×0.05); carry/slots</td><td class="mono">combat_manager.py:963</td></tr>
+    <tr><td>DEF</td><td>dmg reduction; durability‑loss</td><td class="mono">stats.py:129</td></tr>
+    <tr><td>VIT</td><td>+15 max HP; regen</td><td class="mono">character.py:706</td></tr>
+    <tr><td>LCK</td><td>crit — combat ×0.12 / <span class="warn">gathering ×0.02</span></td><td class="mono">combat_manager.py:866 · character.py:1092</td></tr>
+    <tr><td>AGI</td><td>+1.5% move; forestry</td><td class="mono">character.py:784</td></tr>
+    <tr><td>INT</td><td>+20 mana; elemental dmg</td><td class="mono">character.py:707</td></tr>
+  </table>
+  <p class="lead" style="margin-top:16px">Components are plain attributes (no add/remove registry).
+  <code>recalculate_stats</code> is a pull model: base + stat + class + equipment.</p>
+  <div class="foot"><span class="src">character.py:82, :703 · stats.py</span><span>4 · Player entity</span></div>
+</section>
+
+<!-- 8 · COMBAT -->
+<section class="slide" data-title="Combat">
+  <div class="kicker">5 · Combat</div>
+  <h2>Click → state machine → hitbox → damage formula</h2>
+  <div class="split">
+    <div class="mm"><pre class="mermaid">
+sequenceDiagram
+  participant ASM as AttackStateMachine
+  participant HB as Hitbox
+  participant CM as combat_manager
+  participant EX as effect_executor
+  participant EN as enemy
+  ASM->>HB: WINDUP→ACTIVE spawns hitbox
+  HB->>CM: HitEvent → attack_with_tags
+  Note over CM: base×hand×STR×title×[INT]×skill×crit
+  CM->>EX: _apply_enemy_defense
+  EX->>EN: dmg×(1−min .75, DEF×.01)
+  EN-->>CM: dead → EXP + loot + ENEMY_KILLED
+    </pre></div>
+    <div>
+      <p class="lead">Damage conformance: <b>STR ×0.05 ✓ · crit ×2 ✓ · DEF max‑75% ✓ · hand 1.1–1.2 ✓</b>.
+      Enemy DEF is <b>live on every player path</b> (old "dead stat" resolved).</p>
+      <ul>
+        <li><span class="warn">× class(max 1.2)</span> applies to <b>skills only</b>, not weapon melee.</li>
+        <li>Status DoT ticks per‑frame; enemies attack via a proximity timer, not hitboxes.</li>
+      </ul>
+      <span class="tag t-work">Working</span>
+    </div>
+  </div>
+  <div class="foot"><span class="src">combat_manager.py:1449, :1609‑1692 · effect_executor.py:167</span><span>5 · Combat</span></div>
+</section>
+
+<!-- 9 · CRAFTING -->
+<section class="slide" data-title="Crafting">
+  <div class="kicker">6 · Crafting — the marquee loop</div>
+  <h2>ML validates a novel arrangement; an LLM authors the item</h2>
+  <div class="mm"><pre class="mermaid">
+sequenceDiagram
+  participant P as player: Invent
+  participant CL as classifier (ML, sync)
+  participant GEN as generator ⇢ thread
+  participant CLA as Claude Haiku 4.5 ✦
+  participant GE as game (poll)
+  P->>CL: validate(discipline) — CNN or LightGBM, thr 0.5
+  CL-->>P: valid + confidence
+  P->>GEN: generate_async ⇢
+  GEN->>CLA: messages.create
+  CLA-->>GEN: item JSON → sanitize
+  GE->>GE: poll :8371 → inventory + persist recipe
+  </pre></div>
+  <p class="lead">Six disciplines share one difficulty→reward spine. Degrades gracefully: no key → Mock;
+  error → deterministic fallback. Invented recipes persist across saves (verified round‑trip).</p>
+  <div style="margin-top:6px"><span class="tag t-work">Working</span><span class="tag t-drift">temp 0.7 vs doc 0.4 · timeout unenforced</span></div>
+  <div class="foot"><span class="src">crafting_classifier.py:1144 · llm_item_generator.py:524, :1462 · game_engine.py:5031</span><span>6 · Crafting</span></div>
+</section>
+
+<!-- 10 · PROGRESSION -->
+<section class="slide" data-title="Progression">
+  <div class="kicker">7 · Progression</div>
+  <h2>EXP → level → stat point → title / class</h2>
+  <div class="split">
+    <div class="mm"><pre class="mermaid">
+graph TB
+  EXP["add_exp"] --> L{"cross 200×1.75^lvl?"}
+  L -->|"cascades"| UP["level+1 · +1 stat point"]
+  UP -->|"~~▶"| BUS["LEVEL_UP → WMS"]
+  UP --> TIT["check_for_title"]
+  TIT -->|"get_total_bonus"| DMG["title → damage :967"]
+  CLK["click stat"] --> AL["allocate → recalculate"]
+    </pre></div>
+    <div>
+      <p class="lead">Curve <code>200×1.75^(level‑1)</code>, cap 30; level‑ups cascade in one loop.</p>
+      <ul>
+        <li><span class="warn">Class combat affinity is dead for melee</span> — <code>get_tool_damage_bonus</code> has zero callers.</li>
+        <li><code>add_exp</code> never passes <code>character</code> → level‑ups aren't recorded to SQLite.</li>
+      </ul>
+      <span class="tag t-work">EXP · titles</span><span class="tag t-dead">class affinity (melee)</span>
+    </div>
+  </div>
+  <div class="foot"><span class="src">leveling.py:15 · title_system.py:109 · class_system.py:94</span><span>7 · Progression</span></div>
+</section>
+
+<!-- 11 · EVENTS -->
+<section class="slide" data-title="Events">
+  <div class="kicker">8 · Events — the backbone</div>
+  <h2>One bus carries telemetry <span class="accent">and</span> the narrative pipeline</h2>
+  <div class="grid g3">
+    <div class="card"><div class="n">Gameplay → WMS</div><h3>Telemetry</h3><p>combat · gathering · craft · quest · progression → the wildcard recorder (prio −10).</p></div>
+    <div class="card"><div class="n">WMS → WNS → WES</div><h3>Pipeline</h3><p><code>WMS_TRIGGER_FIRED</code> → <code>INTERPRETATION_CREATED</code> → <code>WNS_CALL_WES</code>.</p></div>
+    <div class="card"><div class="n">Visual</div><h3>Fire‑and‑forget</h3><p>screen‑shake · particles · flash — WMS‑skipped by design.</p></div>
+  </div>
+  <p class="lead" style="margin-top:18px"><b>The one load‑bearing seam:</b> <code>event_schema.py:78
+  BUS_TO_MEMORY_TYPE</code> is the <i>only</i> thing that lets a topic reach memory. Unmapped topics are
+  silently dropped — no warning.</p>
+  <div class="foot"><span class="src">event_bus.py:124 · event_recorder.py:97, :127 · event_schema.py:78</span><span>8 · Events</span></div>
+</section>
+
+<!-- 12 · WMS -->
+<section class="slide" data-title="WMS">
+  <div class="kicker">9 · WMS — World Memory (facts)</div>
+  <h2>7 layers · capture → evaluate → consolidate → tag</h2>
+  <div class="mm"><pre class="mermaid">
+graph TB
+  BUS["GameEventBus *"] -->|":116"| MAP{"BUS_TO_MEMORY_TYPE"}
+  MAP -->|"mapped"| REC["event_store.record ▤"]
+  MAP -->|"unmapped"| DROP["silently skipped"]
+  REC --> TRIG["threshold triggers"]
+  TRIG -->|"~~▶"| INT["interpreter → WNS bridge"]
+  REC --> TICK["update() tick :438<br/>L3‑L7 consolidation ✦ (sync, stalls>250ms logged)"]
+  </pre></div>
+  <p class="lead"><b>Voice: factual chronicler.</b> Tag enforcement is real — <code>validate_tag</code>
+  drops any LLM‑invented tag; the allow‑list is <b>generated from the library</b> and injected as
+  <code>{{TAG_ALLOWLIST}}</code>, so it can't drift from what's enforced.</p>
+  <div><span class="tag t-work">L1–L4 + tags</span><span class="tag t-part">L3–L7 LLM runs sync on the loop</span></div>
+  <div class="foot"><span class="src">event_recorder.py:116 · world_memory_system.py:438, :515 · tag_library.py:578 · wms_ai.py:428</span><span>9 · WMS</span></div>
+</section>
+
+<!-- 13 · WNS (exemplar) -->
+<section class="slide" data-title="WNS threads">
+  <div class="kicker">10 · WNS — Narrative · the depth exemplar</div>
+  <h2>How WNS threads are <span class="accent">coordinated &amp; searched</span></h2>
+  <div class="split">
+    <div>
+      <ul>
+        <li><b>Match or mint:</b> new fragment's tags vs recent clusters at the same address by
+          <b>Jaccard ≥ 0.5</b>, 1‑week window → join or mint. <code>thread_index.py:113</code></li>
+        <li><b>Deterministic id:</b> SHA‑256 of <code>(address + sorted tags + first_seen)</code> — the LLM never invents IDs.</li>
+        <li><b>Vocabulary accumulates:</b> a cluster's tags are the <i>union</i> of its members; divergence splits threads.</li>
+        <li><b>Cross‑layer promotion:</b> <code>parent_thread_id</code> lifts a village arc into district/region/world.</li>
+        <li><b>Search:</b> <code>query_by_address</code> + <code>extract_active_threads</code> (newest per thread, capped).</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:2px solid var(--cyan)">
+      <div class="n">Continuity — up &amp; down</div>
+      <p style="color:var(--ink)"><b>Up (C3):</b> NL3+ pulls lower context from <i>child</i> addresses — a district is caused by its villages.</p>
+      <p style="color:var(--ink);margin-top:10px"><b>Down (M1):</b> NL7 world currents cascade into NL2‑6 as <code>${world_framing}</code>.</p>
+      <p style="color:var(--dim);margin-top:10px">Tags enforced against WNS‑or‑WMS taxonomy (C1).</p>
+    </div>
+  </div>
+  <div class="foot"><span class="src">thread_index.py:113 · cascading_context.py:105 · narrative_store.py:211 · nl_weaver.py:344, :525</span><span>10 · WNS</span></div>
+</section>
+
+<!-- 14 · WES -->
+<section class="slide" data-title="WES">
+  <div class="kicker">11 · WES — content generation</div>
+  <h2>Narrative request → real, hot‑reloaded content</h2>
+  <div class="mm"><pre class="mermaid">
+graph LR
+  REQ["WNS_CALL_WES"] --> ORCH["orchestrator ⇢"]
+  ORCH --> PLAN["planner ✦"]
+  PLAN --> HUB["hub ✦"]
+  HUB --> TOOL["1 of 8 tools ✦"]
+  TOOL --> REG["ContentRegistry.commit ▤"]
+  REG -->|"▦ JSON"| FILES["Definitions / items"]
+  REG --> RELOAD["database_reloader"]
+  RELOAD -->|"all content DBs: generated-aware reload() ✓"| DB[("live DBs")]
+  </pre></div>
+  <p class="lead"><b>WES never live‑queries the world — the bundle is its only input.</b> The planner
+  carries continuity (open threads C2, live registry counts M2) the narrative‑blind tools can't.</p>
+  <div><span class="tag t-work">reload wired for all 8 content types (G07 resolved)</span><span class="tag t-part">content‑tag governance: hardcoded, unenforced</span></div>
+  <div class="foot"><span class="src">wes_orchestrator.py:206, :261 · database_reloader.py:182 · content_registry</span><span>11 · WES</span></div>
+</section>
+
+<!-- 15 · FACTIONS -->
+<section class="slide" data-title="Factions & NPCs">
+  <div class="kicker">12 · Factions &amp; NPCs</div>
+  <h2>Affinity that moves with the story</h2>
+  <div class="grid g3">
+    <div class="card"><div class="n">▤ faction.db</div><h3>Affinity</h3><p>NPC/player affinity + hierarchy, self‑hydrating. Quest turn‑in moves it.</p></div>
+    <div class="card"><div class="n">⇢ async</div><h3>Dialogue</h3><p>Greet → idle barks → quest lines from the speechbank; fetched off‑thread to avoid stalls.</p></div>
+    <div class="card"><div class="n">&lt;AffinityShift&gt;</div><h3>WNS bridge</h3><p>Narrative events commit time‑stamped, event‑caused affinity shifts.</p></div>
+  </div>
+  <p class="lead" style="margin-top:18px">Turn‑in → affinity → persistence → WNS round‑trip is live and
+  test‑covered. Note the bus topics <code>FACTION_AFFINITY_CHANGED/CONSOLIDATED</code> have no runtime
+  subscriber — affinity flows via direct calls and the bridge, not the bus.</p>
+  <div><span class="tag t-work">Phase 2+ working</span><span class="tag t-dead">bus affinity topics unsubscribed</span></div>
+  <div class="foot"><span class="src">faction_system.py:670 · game_engine.py:1786</span><span>12 · Factions &amp; NPCs</span></div>
+</section>
+
+<!-- 16 · SAVE -->
+<section class="slide" data-title="Save / load">
+  <div class="kicker">13 · Save / load</div>
+  <h2>Hardened JSON + three databases + a seed</h2>
+  <div class="mm"><pre class="mermaid">
+graph LR
+  SAVE["save_game :461"] -->|"json.dumps in mem"| TMP[".tmp + fsync :511"]
+  TMP -->|"rotate"| BAK[".bak :516"]
+  TMP -->|"os.replace atomic"| FILE["▦ save JSON"]
+  SAVE -.->|"flush"| DBS[("▤ 3 databases")]
+  SEED["seed"] -->|"regenerates"| WORLD["100×100 terrain"]
+  </pre></div>
+  <p class="lead">Atomic write + <code>fsync</code> + <code>.bak</code> rotation + corrupt‑load recovery.
+  World terrain is regenerated from <code>seed</code> — only modified chunks persist. Memory/affinity/
+  registry live in their own <code>.db</code> files, reopened on boot.</p>
+  <div><span class="tag t-work">Working + hardened</span><span class="tag t-drift">version gate warn‑only</span></div>
+  <div class="foot"><span class="src">save_manager.py:461, :508‑518, :547 · world_system.py:1455</span><span>13 · Save / load</span></div>
+</section>
+
+<!-- 17 · INFRA -->
+<section class="slide" data-title="LLM / ML infra">
+  <div class="kicker">14 · LLM &amp; ML infrastructure</div>
+  <h2>Two independent inference stacks</h2>
+  <div class="grid g2">
+    <div class="card"><div class="n">World System</div><h3>BackendManager</h3><p>Ollama · Claude · Mock behind one ABC; chain resolution; <code>WES_REQUIRE_REAL_LLM</code> strips Mock so templates can't masquerade as real. Haiku temp‑XOR‑top_p 400 fix present.</p></div>
+    <div class="card"><div class="n">Invented items</div><h3>Own Claude client + ML</h3><p><code>llm_item_generator</code> keeps a <b>separate</b> Anthropic client (not routed through BackendManager). CNN + LightGBM classifiers degrade to <code>valid=False</code> if models missing.</p></div>
+  </div>
+  <p class="lead" style="margin-top:16px">Tag libraries (WMS + WNS) are enforced allow‑lists — generation,
+  injection, and drop‑loop enforcement all live.</p>
+  <p class="lead"><span class="warn">Operational caveat (environmental, not code):</span> the user's
+  <code>ANTHROPIC_API_KEY</code> env var is dead and shadows <code>.env</code>.</p>
+  <div class="foot"><span class="src">backend_manager.py:250, :594 · llm_item_generator.py:508 · crafting_classifier.py</span><span>14 · Infra</span></div>
+</section>
+
+<!-- 18 · CONTINUITY (money slide) -->
+<section class="slide" data-title="Continuity">
+  <div class="kicker">15 · Cross‑cutting — the money section</div>
+  <h2>One hierarchy · one connective tissue · one continuity discipline</h2>
+  <div class="split">
+    <div class="mm"><pre class="mermaid">
+graph TB
+  subgraph up["UP — aggregation"]
+    A["locality"] --> B["district"] --> C["region"] --> D["world"]
+  end
+  W["world currents"] -->|"framing cascades DOWN"| LOW["every lower firing"]
+  TAGS["tags = connective tissue"] -.-> up
+  TAGS -.-> W
+    </pre></div>
+    <div>
+      <p class="lead">The address hierarchy — <code>world ⊃ nation ⊃ region ⊃ province ⊃ district ⊃ locality</code>
+      — is shared by WMS (facts) and WNS (stories).</p>
+      <ul>
+        <li><b>Up:</b> events/narratives aggregate into higher layers.</li>
+        <li><b>Down:</b> world condition / framing cascades back.</li>
+        <li><b>Tags</b> cluster threads and link facts to stories.</li>
+      </ul>
+      <p class="lead">The player feels one continuous, escalating world that remembers their footprint.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="src">geographic_registry · cascading_context.py · thread_index.py · event_schema.py:78</span><span>15 · Continuity</span></div>
+</section>
+
+<!-- 19 · HONEST STATE -->
+<section class="slide" data-title="Honest state">
+  <div class="kicker">16 · Areas for improvement — honest state</div>
+  <h2>Code‑verified gaps, with verdicts</h2>
+  <table>
+    <tr><th>Area</th><th>Finding</th><th>Verdict</th></tr>
+    <tr><td>Combat</td><td>× class(max 1.2) absent from weapon melee</td><td><span class="tag t-dead">unimplemented</span></td></tr>
+    <tr><td>Progression</td><td><code>add_exp</code> omits <code>character</code> → level‑ups unrecorded</td><td><span class="tag t-dead">bug</span></td></tr>
+    <tr><td>Stats</td><td>LCK crit ×0.12 combat vs ×0.02 gathering</td><td><span class="tag t-dead">bug</span></td></tr>
+    <tr><td>Combat</td><td><code>DODGE_PERFORMED</code> never published (NameError)</td><td><span class="tag t-dead">bug</span></td></tr>
+    <tr><td>Skills</td><td>Skill evolution data‑modeled but no runtime consumer — no skill evolves</td><td><span class="tag t-dead">unimplemented</span></td></tr>
+    <tr><td>WMS</td><td>L3–L7 LLM runs sync on the game loop</td><td><span class="tag t-part">ambiguous</span></td></tr>
+    <tr><td>Events</td><td>Unmapped topics silently dropped by WMS recorder</td><td><span class="tag t-part">foot‑gun</span></td></tr>
+    <tr><td>Invented</td><td>temp 0.7 vs doc 0.4; timeout unenforced; refining 19≠18</td><td><span class="tag t-drift">doc‑drift</span></td></tr>
+  </table>
+  <p class="lead" style="margin-top:14px"><b>Resolved this cycle (World‑System continuity):</b> C1 · C2 · C3 · M1 · M2 · Mn1 · Mn2 —
+  regression‑guarded by <code>prompt_orchestration_dashboard.py</code>. Full 21‑item register in the Markdown brief §16.</p>
+  <div class="foot"><span class="src">GAME_SYSTEMS_BRIEF.md §16 · ORCHESTRATION_GAP_FIX_LOG.md (archived)</span><span>16 · Honest state</span></div>
+</section>
+
+<!-- 20 · PROVENANCE -->
+<section class="slide" data-title="Provenance">
+  <div class="kicker">17 · Provenance</div>
+  <h2>How this was verified — and stays true</h2>
+  <ul>
+    <li><b>Method:</b> five parallel end‑to‑end code traces + direct World‑System verification, every finding at <code>file:line</code> against the real call path, not docstrings.</li>
+    <li><b>Standard:</b> 1‑code + 1‑doc; code is authoritative on conflict.</li>
+    <li><b>Regenerable:</b> re‑run the traces and diff against the anchors; when a §16 gap is fixed, strike it.</li>
+    <li><b>Live guards:</b> the orchestration dashboard (32 prompts, self‑checks source) + WNS/WES test suites (357 passing).</li>
+  </ul>
+  <p class="lead" style="margin-top:16px">This deck is generated from <code>GAME_SYSTEMS_BRIEF.md</code>,
+  which supersedes the archived audit / trace / ledger docs.</p>
+  <div class="foot"><span class="src">Development-Plan/GAME_SYSTEMS_BRIEF.md · archive/2026-08-doc-consolidation/</span><span>17 · Provenance</span></div>
+</section>
+
+<!-- 21 · CLOSE -->
+<section class="slide center" data-title="Close">
+  <div class="kicker">One brief · one source of truth</div>
+  <h1>Open a section. Ask it anything.</h1>
+  <p class="sub">Every workflow above is traced to code you can click through. The Markdown companion
+  carries the full information‑transfer tables and the complete 21‑item honest‑state register.</p>
+  <div style="margin-top:22px"><span class="pill">GAME_SYSTEMS_BRIEF.md — the deep reference</span></div>
+</section>
+
+<script>
+  mermaid.initialize({
+    startOnLoad:true, securityLevel:'loose',
+    theme:'base',
+    themeVariables:{
+      background:'#151d2e', primaryColor:'#1b2740', primaryBorderColor:'#39d3c7',
+      primaryTextColor:'#e6edf6', lineColor:'#5b6b88', secondaryColor:'#22304d',
+      tertiaryColor:'#1b2740', fontFamily:'ui-monospace, monospace', fontSize:'14px',
+      clusterBkg:'#111725', clusterBorder:'#243049'
+    },
+    flowchart:{htmlLabels:true,curve:'basis'}
+  });
+  // nav chrome
+  const slides=[...document.querySelectorAll('.slide')];
+  const bar=document.getElementById('bar'), hud=document.getElementById('hud'), dots=document.getElementById('dots');
+  slides.forEach((s,i)=>{const a=document.createElement('a');a.title=s.dataset.title||('Slide '+(i+1));
+    a.onclick=()=>s.scrollIntoView({behavior:'smooth'});dots.appendChild(a);});
+  const dotEls=[...dots.children];
+  const io=new IntersectionObserver((ents)=>{ents.forEach(e=>{if(e.isIntersecting){
+    const i=slides.indexOf(e.target);
+    hud.textContent=(i+1)+' / '+slides.length;
+    bar.style.width=((i+1)/slides.length*100)+'%';
+    dotEls.forEach((d,j)=>d.classList.toggle('on',j===i));
+  }});},{threshold:0.55});
+  slides.forEach(s=>io.observe(s));
+  // keyboard
+  let cur=0;
+  window.addEventListener('scroll',()=>{cur=slides.findIndex(s=>{const r=s.getBoundingClientRect();return r.top>=-window.innerHeight*0.45;});if(cur<0)cur=slides.length-1;});
+  document.addEventListener('keydown',(e)=>{
+    if(['ArrowRight',' ','PageDown'].includes(e.key)){e.preventDefault();slides[Math.min(cur+1,slides.length-1)].scrollIntoView({behavior:'smooth'});}
+    if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();slides[Math.max(cur-1,0)].scrollIntoView({behavior:'smooth'});}
+    if(e.key==='Home'){slides[0].scrollIntoView({behavior:'smooth'});}
+    if(e.key==='End'){slides[slides.length-1].scrollIntoView({behavior:'smooth'});}
+  });
+</script>
+</body>
+</html>

@@ -66,6 +66,7 @@ class ContentRegistry:
         self._db_path: Optional[str] = None
         self._game_root: Optional[str] = None
         self._instance_lock = threading.RLock()
+        self._game_index = None  # lazy GameContentIndex; see _get_game_index
 
     # ── Lifecycle ────────────────────────────────────────────────────
 
@@ -302,6 +303,14 @@ class ContentRegistry:
             )
             reload_results = {}
 
+        # Keep the game-content index in sync: content just committed + reloaded
+        # is now referenceable by the next plan (no staleness — the index
+        # mirrors the databases in both directions, sacred and invented).
+        try:
+            self._get_game_index().refresh(tools_with_rows)
+        except Exception:
+            pass
+
         # Best-effort live observability. Surfaces "content X committed,
         # databases reloaded" to the in-game overlay and prompt studio
         # without the caller having to subscribe to an event bus.
@@ -459,16 +468,55 @@ class ContentRegistry:
     def exists(
         self, tool_name: str, content_id: str, include_staged: bool = False
     ) -> bool:
-        if not self._require_store(soft=True):
-            return False
         if tool_name not in VALID_TOOLS:
             return False
-        row = self._store.get_row(  # type: ignore[union-attr]
-            tool_name=tool_name,
-            content_id=content_id,
-            include_staged=include_staged,
-        )
-        return row is not None
+        if self._require_store(soft=True):
+            row = self._store.get_row(  # type: ignore[union-attr]
+                tool_name=tool_name,
+                content_id=content_id,
+                include_staged=include_staged,
+            )
+            if row is not None:
+                return True
+        # Sync with the game databases: sacred + previously-invented content
+        # the game actually holds (this store only tracks generated rows).
+        try:
+            return self._get_game_index().exists(tool_name, content_id)
+        except Exception:
+            return False
+
+    def _get_game_index(self):
+        """Lazily build the live game-content index (mirrors the databases)."""
+        if self._game_index is None:
+            from world_system.content_registry.game_content_index import (
+                GameContentIndex,
+            )
+            self._game_index = GameContentIndex()
+        return self._game_index
+
+    def set_game_index(self, index) -> None:
+        """Inject a GameContentIndex (tests / custom providers)."""
+        self._game_index = index
+
+    def known_ids(self, tool_name: str) -> set:
+        """Ids the game currently holds for ``tool_name`` (sacred + invented).
+
+        Used by the dispatcher to reconcile generated cross-refs against real
+        content, not just this plan's staged rows.
+        """
+        try:
+            return set(self._get_game_index().ids_for(tool_name))
+        except Exception:
+            return set()
+
+    def known_tags(self, tool_name: str) -> set:
+        """Tag vocabulary generated content of ``tool_name`` may use — in sync
+        with what the game already understands (existing content tags + the
+        combat/effect TagRegistry). Used to govern generated content tags."""
+        try:
+            return set(self._get_game_index().tags_for(tool_name))
+        except Exception:
+            return set()
 
     # ── Lineage ──────────────────────────────────────────────────────
 

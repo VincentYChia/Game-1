@@ -29,10 +29,13 @@ from world_system.world_memory.interpreter import PatternEvaluator
 class FactionReputationEvaluator(PatternEvaluator):
     """Consolidates player affinity changes into reputation narratives."""
 
-    RELEVANT_TYPES = {"FACTION_AFFINITY_CHANGED"}
+    # The WMS stamps event_type = EventType.value (lowercase). This evaluator
+    # was written against the uppercase bus name and so never matched — fixed
+    # to the recorded value (2026-08-11) so it actually fires.
+    RELEVANT_TYPES = {"faction_affinity_changed"}
 
     def __init__(self):
-        cfg = get_evaluator_config("faction_reputation", default={})
+        cfg = get_evaluator_config("faction_reputation")
         self.lookback_time = cfg.get("lookback_time", 300.0)  # 5 minutes
         self.min_delta_threshold = cfg.get("min_delta_threshold", 5.0)
         self.delta_templates = cfg.get("delta_templates", {})
@@ -40,7 +43,7 @@ class FactionReputationEvaluator(PatternEvaluator):
 
     def is_relevant(self, event: WorldMemoryEvent) -> bool:
         """Check if event is an affinity change."""
-        return event.event_type == "FACTION_AFFINITY_CHANGED"
+        return event.event_type == "faction_affinity_changed"
 
     def evaluate(
         self,
@@ -55,10 +58,14 @@ class FactionReputationEvaluator(PatternEvaluator):
         Returns a consolidated narrative about the player's reputation with a faction.
         """
         try:
-            player_id = trigger_event.data.get("player_id")
-            tag = trigger_event.data.get("tag")
-            delta = trigger_event.data.get("delta", 0.0)
-            new_value = trigger_event.data.get("new_value", 0.0)
+            # The affinity payload rides in WorldMemoryEvent.context — the WMS
+            # stores all non-standard event fields there (there is no .data
+            # attr). This evaluator originally read .data and got nothing.
+            ctx = getattr(trigger_event, "context", None) or {}
+            player_id = ctx.get("player_id")
+            tag = ctx.get("tag")
+            delta = ctx.get("delta", 0.0)
+            new_value = ctx.get("new_value", 0.0)
 
             if not player_id or not tag:
                 return None
@@ -66,13 +73,10 @@ class FactionReputationEvaluator(PatternEvaluator):
             if abs(delta) < self.min_delta_threshold:
                 return None  # Too small to consolidate
 
-            # Aggregate recent affinity changes for this tag
+            # Aggregate affinity changes (count_filtered has no game-time arg
+            # here; WorldMemoryEvent has no .timestamp — that was another drift).
             recent_changes = event_store.count_filtered(
-                event_type="FACTION_AFFINITY_CHANGED",
-                time_range=(
-                    trigger_event.timestamp - self.lookback_time,
-                    trigger_event.timestamp,
-                ),
+                event_type="faction_affinity_changed",
             )
 
             if recent_changes < 2:
@@ -86,12 +90,26 @@ class FactionReputationEvaluator(PatternEvaluator):
             if not narrative:
                 return None
 
-            return InterpretedEvent(
-                event_type="FACTION_REPUTATION_CHANGE",
-                interpretation=narrative,
-                confidence=0.9,
-                tags=[f"faction:{tag}", "reputation", "social"],
-                source_event_id=trigger_event.id,
+            # Return via the CURRENT InterpretedEvent.create contract (this
+            # evaluator predated it and used an obsolete event_type=/tags=/
+            # interpretation= shape that no longer exists — 2026-08-11).
+            severity = ("major" if abs(delta) > 20
+                        else "significant" if abs(delta) > 10
+                        else "moderate")
+            locality_id = getattr(trigger_event, "locality_id", None)
+            return InterpretedEvent.create(
+                narrative=narrative,
+                category="faction_reputation",
+                severity=severity,
+                trigger_event_id=trigger_event.event_id,
+                trigger_count=getattr(trigger_event, "interpretation_count", 0),
+                game_time=getattr(trigger_event, "game_time", 0.0),
+                affects_tags=["type:player", f"faction:{tag}",
+                              "reputation", "social"],
+                affected_locality_ids=[locality_id] if locality_id else [],
+                epicenter_x=getattr(trigger_event, "position_x", 0.0),
+                epicenter_y=getattr(trigger_event, "position_y", 0.0),
+                is_ongoing=True,
             )
 
         except Exception as e:

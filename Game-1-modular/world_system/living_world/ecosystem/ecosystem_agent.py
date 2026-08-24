@@ -1,5 +1,12 @@
 """EcosystemAgent — tracks resource pressure and scarcity across biomes.
 
+DORMANT (2026-08-11): NOT instantiated or ticked at runtime. No code in the game
+loop constructs EcosystemAgent, and its RESOURCE_SCARCITY / RESOURCE_RECOVERED
+events have no subscribers — they are emitted into the void. This is a
+designed-but-unwired tool interface. Do NOT assume it is live: wiring it requires
+instantiating + ticking it in the game loop AND adding a consumer for its scarcity
+events. See Development-Plan/WORLD_SYSTEM_COMPLETION_PLAN.md §3.3.
+
 Monitors RESOURCE_GATHERED events from the GameEventBus and maintains
 per-biome resource state. When depletion crosses configurable thresholds
 (70% scarce, 90% critical), scarcity flags are set and events published.

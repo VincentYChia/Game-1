@@ -106,7 +106,10 @@ def find_components(territory: Set[Tuple[int, int]]) -> List[Set[Tuple[int, int]
     remaining = set(territory)
     components = []
     while remaining:
-        start = next(iter(remaining))
+        # Determinism (2026-07-19, Godot port): min() instead of set-iteration
+        # order so component discovery order is stable across interpreters
+        # and portable to C#. Component CONTENTS are unchanged.
+        start = min(remaining)
         component = set()
         stack = [start]
         while stack:
@@ -185,7 +188,10 @@ def voronoi_subdivide(
         return [set(territory)] if territory else []
 
     if num_regions >= len(territory):
-        return [{chunk} for chunk in territory]
+        # Determinism (2026-07-19 follow-up): sorted — singleton-region order
+        # feeds child-id assignment; the only set-iteration site the first
+        # patch missed (unreachable with live config; verifier finding).
+        return [{chunk} for chunk in sorted(territory)]
 
     # Place seed points
     seed_points = _place_spread_seeds(territory, num_regions, seed)

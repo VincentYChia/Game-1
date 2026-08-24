@@ -1,0 +1,2161 @@
+{
+  "_meta": {
+    "doctrine": "dumped from the live Python loaders after the boot sequence",
+    "generated": "2026-07-20",
+    "git_sha": "8b0965dc",
+    "source": "equipment_db.create_equipment_from_id + models/equipment.py + weapon_tag_calculator + tag processors (ALL EXECUTED)"
+  },
+  "actual_damage": {
+    "broken_0": [
+      5,
+      10
+    ],
+    "crafted_mult": [
+      12,
+      25
+    ],
+    "ench_mult": [
+      11,
+      23
+    ],
+    "plain": [
+      10,
+      20
+    ],
+    "stacked": [
+      14,
+      29
+    ],
+    "tool_efficiency": [
+      12,
+      24
+    ],
+    "weapon_efficiency_ignored": [
+      10,
+      20
+    ],
+    "worn_30": [
+      9,
+      18
+    ]
+  },
+  "can_equip": {
+    "combined_fail": {
+      "ok": false,
+      "reason": "Requires AGI 4"
+    },
+    "dex_alias": {
+      "ok": false,
+      "reason": "Requires DEX 5"
+    },
+    "empty": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "level_fail": {
+      "ok": false,
+      "reason": "Requires level 5"
+    },
+    "level_ok": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "stat_fail": {
+      "ok": false,
+      "reason": "Requires STR 10"
+    },
+    "stat_ok": {
+      "ok": true,
+      "reason": "OK"
+    }
+  },
+  "count": 38,
+  "defense": {
+    "crafted_and_ench": 55,
+    "plain": 50,
+    "worn_10": 40
+  },
+  "effectiveness": {
+    "0/100": 0.5,
+    "1/100": 0.755,
+    "100/100": 1.0,
+    "20/100": 0.85,
+    "25/100": 0.875,
+    "49/100": 0.995,
+    "50/100": 1.0,
+    "60/100": 1.0,
+    "75/100": 1.0
+  },
+  "enchant_applicability": {
+    "armor|armor": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "armor|tool": {
+      "ok": false,
+      "reason": "Enchantment not applicable to tool items"
+    },
+    "armor|weapon": {
+      "ok": false,
+      "reason": "Enchantment not applicable to weapon items"
+    },
+    "basic|armor": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "basic|tool": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "basic|weapon": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "none|armor": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "none|tool": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "none|weapon": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "tool|armor": {
+      "ok": false,
+      "reason": "Enchantment not applicable to armor items"
+    },
+    "tool|tool": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "tool|weapon": {
+      "ok": false,
+      "reason": "Enchantment not applicable to weapon items"
+    },
+    "universal|armor": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "universal|tool": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "universal|weapon": {
+      "ok": true,
+      "reason": "OK"
+    },
+    "weapon|armor": {
+      "ok": false,
+      "reason": "Enchantment not applicable to armor items"
+    },
+    "weapon|tool": {
+      "ok": false,
+      "reason": "Enchantment not applicable to tool items"
+    },
+    "weapon|weapon": {
+      "ok": true,
+      "reason": "OK"
+    }
+  },
+  "enchant_sequence": [
+    {
+      "apply": "sharpness_2",
+      "now": [
+        "sharpness_2"
+      ],
+      "ok": true,
+      "reason": "OK"
+    },
+    {
+      "apply": "sharpness_2",
+      "now": [
+        "sharpness_2"
+      ],
+      "ok": false,
+      "reason": "This enchantment is already applied"
+    },
+    {
+      "apply": "sharpness_1",
+      "now": [
+        "sharpness_2"
+      ],
+      "ok": false,
+      "reason": "Cannot apply Sharpness I - Sharpness II (higher tier) is already applied"
+    },
+    {
+      "apply": "sharpness_3",
+      "now": [
+        "sharpness_2",
+        "sharpness_3"
+      ],
+      "ok": true,
+      "reason": "OK"
+    },
+    {
+      "apply": "frost_1",
+      "now": [
+        "sharpness_2",
+        "frost_1"
+      ],
+      "ok": true,
+      "reason": "OK"
+    }
+  ],
+  "item_type_grid": [
+    {
+      "damage": [
+        5,
+        9
+      ],
+      "item_type_in": "weapon",
+      "resolved": "weapon",
+      "slot": "mainHand"
+    },
+    {
+      "damage": [
+        5,
+        9
+      ],
+      "item_type_in": "shield",
+      "resolved": "armor",
+      "slot": "mainHand"
+    },
+    {
+      "damage": [
+        0,
+        0
+      ],
+      "item_type_in": "",
+      "resolved": "tool",
+      "slot": "mainHand"
+    },
+    {
+      "damage": [
+        5,
+        9
+      ],
+      "item_type_in": "",
+      "resolved": "weapon",
+      "slot": "mainHand"
+    },
+    {
+      "damage": [
+        0,
+        0
+      ],
+      "item_type_in": "",
+      "resolved": "tool",
+      "slot": "tool"
+    },
+    {
+      "damage": [
+        0,
+        0
+      ],
+      "item_type_in": "",
+      "resolved": "armor",
+      "slot": "helmet"
+    },
+    {
+      "damage": [
+        0,
+        0
+      ],
+      "item_type_in": "",
+      "resolved": "accessory",
+      "slot": "accessory"
+    },
+    {
+      "damage": [
+        0,
+        0
+      ],
+      "item_type_in": "invalid_type",
+      "resolved": "tool",
+      "slot": "offHand"
+    }
+  ],
+  "items": {
+    "bamboo_fishing_rod": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 0,
+      "durability_current": 200,
+      "durability_max": 200,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/bamboo_fishing_rod.png",
+      "item_id": "bamboo_fishing_rod",
+      "item_type": "tool",
+      "name": "Bamboo Fishing Rod",
+      "range": 5,
+      "rarity": "common",
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "damage": 0.5,
+        "durability": 0.8,
+        "gathering": 1.0,
+        "weight": 0.6
+      },
+      "tags": [
+        "tool",
+        "fishing",
+        "starter"
+      ],
+      "tier": 1,
+      "weight": 1.0
+    },
+    "blood_reaver": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        71,
+        96
+      ],
+      "defense": 0,
+      "durability_current": 2000,
+      "durability_max": 2000,
+      "effect_params": {
+        "baseDamage": 42,
+        "bleed_damage_per_second": 6.0,
+        "bleed_duration": 10.0,
+        "lifesteal_percent": 0.25
+      },
+      "effect_tags": [
+        "physical",
+        "single",
+        "bleed",
+        "lifesteal"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "weapons/blood_reaver.png",
+      "item_id": "blood_reaver",
+      "item_type": "weapon",
+      "name": "Blood Reaver",
+      "range": 1,
+      "rarity": "epic",
+      "requirements": {
+        "level": 15,
+        "stats": {
+          "AGI": 14,
+          "STR": 14
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 1.3,
+        "damage": 1.05,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "tags": [
+        "melee",
+        "sword",
+        "cursed",
+        "lifesteal",
+        "bleed"
+      ],
+      "tier": 4,
+      "weight": 1.0
+    },
+    "composite_longbow": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        18,
+        25
+      ],
+      "defense": 0,
+      "durability_current": 450,
+      "durability_max": 450,
+      "effect_params": {
+        "baseDamage": 35
+      },
+      "effect_tags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "2H",
+      "icon_path": "weapons/composite_longbow.png",
+      "item_id": "composite_longbow",
+      "item_type": "weapon",
+      "name": "Composite Longbow",
+      "range": 15,
+      "rarity": "uncommon",
+      "requirements": {
+        "level": 9,
+        "stats": {
+          "AGI": 14
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 0.85,
+        "damage": 1.1,
+        "durability": 0.9,
+        "weight": 0.8
+      },
+      "tags": [
+        "ranged",
+        "bow",
+        "2H",
+        "precision"
+      ],
+      "tier": 2,
+      "weight": 1.0
+    },
+    "copper_axe": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        8,
+        12
+      ],
+      "defense": 0,
+      "durability_current": 500,
+      "durability_max": 500,
+      "effect_params": {
+        "baseDamage": 10
+      },
+      "effect_tags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/copper_axe.png",
+      "item_id": "copper_axe",
+      "item_type": "tool",
+      "name": "Copper Axe",
+      "range": 1,
+      "rarity": "common",
+      "requirements": {
+        "level": 1
+      },
+      "slot": "axe",
+      "soulbound": false,
+      "stat_multipliers": {},
+      "tags": [
+        "tool",
+        "axe",
+        "starter"
+      ],
+      "tier": 1,
+      "weight": 3.5
+    },
+    "copper_dagger": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        6,
+        8
+      ],
+      "defense": 0,
+      "durability_current": 200,
+      "durability_max": 200,
+      "effect_params": {
+        "baseDamage": 18
+      },
+      "effect_tags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "1H",
+      "icon_path": "weapons/copper_dagger.png",
+      "item_id": "copper_dagger",
+      "item_type": "weapon",
+      "name": "Copper Dagger",
+      "range": 0.5,
+      "rarity": "common",
+      "requirements": {
+        "level": 1,
+        "stats": {
+          "AGI": 8
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 1.3,
+        "damage": 0.9,
+        "durability": 0.8,
+        "weight": 0.6
+      },
+      "tags": [
+        "melee",
+        "dagger",
+        "1H",
+        "fast",
+        "precision"
+      ],
+      "tier": 1,
+      "weight": 1.0
+    },
+    "copper_fire_ring": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 0,
+      "durability_current": 250,
+      "durability_max": 250,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "accessories/copper_fire_ring.png",
+      "item_id": "copper_fire_ring",
+      "item_type": "accessory",
+      "name": "Copper Fire Ring",
+      "range": 1.0,
+      "rarity": "common",
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "slot": "accessory",
+      "soulbound": false,
+      "stat_multipliers": {
+        "weight": 0.1
+      },
+      "tags": [
+        "accessory",
+        "ring",
+        "fire",
+        "elemental"
+      ],
+      "tier": 1,
+      "weight": 1.0
+    },
+    "copper_pickaxe": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        8,
+        12
+      ],
+      "defense": 0,
+      "durability_current": 500,
+      "durability_max": 500,
+      "effect_params": {
+        "baseDamage": 10
+      },
+      "effect_tags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/copper_pickaxe.png",
+      "item_id": "copper_pickaxe",
+      "item_type": "tool",
+      "name": "Copper Pickaxe",
+      "range": 1,
+      "rarity": "common",
+      "requirements": {
+        "level": 1
+      },
+      "slot": "pickaxe",
+      "soulbound": false,
+      "stat_multipliers": {},
+      "tags": [
+        "tool",
+        "pickaxe",
+        "starter"
+      ],
+      "tier": 1,
+      "weight": 4.0
+    },
+    "copper_spear": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        8,
+        11
+      ],
+      "defense": 0,
+      "durability_current": 250,
+      "durability_max": 250,
+      "effect_params": {
+        "baseDamage": 25
+      },
+      "effect_tags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "versatile",
+      "icon_path": "weapons/copper_spear.png",
+      "item_id": "copper_spear",
+      "item_type": "weapon",
+      "name": "Copper Spear",
+      "range": 2,
+      "rarity": "common",
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 1.0,
+        "damage": 1.0,
+        "durability": 1.0,
+        "weight": 0.9
+      },
+      "tags": [
+        "melee",
+        "spear",
+        "versatile",
+        "reach"
+      ],
+      "tier": 1,
+      "weight": 1.0
+    },
+    "fire_crystal_staff": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        26,
+        35
+      ],
+      "defense": 0,
+      "durability_current": 1000,
+      "durability_max": 1000,
+      "effect_params": {
+        "baseDamage": 45,
+        "burn_damage_per_second": 5.0,
+        "burn_duration": 3.0
+      },
+      "effect_tags": [
+        "fire",
+        "single",
+        "burn"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "versatile",
+      "icon_path": "weapons/fire_crystal_staff.png",
+      "item_id": "fire_crystal_staff",
+      "item_type": "weapon",
+      "name": "Fire Crystal Staff",
+      "range": 8,
+      "rarity": "rare",
+      "requirements": {
+        "level": 15,
+        "stats": {
+          "INT": 18
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 1.1,
+        "damage": 0.85,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "tags": [
+        "melee",
+        "staff",
+        "versatile",
+        "elemental",
+        "fire"
+      ],
+      "tier": 3,
+      "weight": 1.0
+    },
+    "frostbite_hammer": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        68,
+        92
+      ],
+      "defense": 0,
+      "durability_current": 1500,
+      "durability_max": 1500,
+      "effect_params": {
+        "baseDamage": 60,
+        "circle_radius": 4.0,
+        "freeze_duration": 3.0,
+        "knockback_distance": 3.0,
+        "origin": "target"
+      },
+      "effect_tags": [
+        "ice",
+        "circle",
+        "freeze",
+        "knockback"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "weapons/frostbite_hammer.png",
+      "item_id": "frostbite_hammer",
+      "item_type": "weapon",
+      "name": "Frostbite Hammer",
+      "range": 1.5,
+      "rarity": "rare",
+      "requirements": {
+        "level": 16,
+        "stats": {
+          "INT": 10,
+          "STR": 20
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 0.8,
+        "damage": 1.35,
+        "durability": 1.5,
+        "weight": 1.5
+      },
+      "tags": [
+        "melee",
+        "mace",
+        "ice",
+        "aoe",
+        "control"
+      ],
+      "tier": 3,
+      "weight": 1.0
+    },
+    "inferno_blade": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        123,
+        167
+      ],
+      "defense": 0,
+      "durability_current": 2500,
+      "durability_max": 2500,
+      "effect_params": {
+        "baseDamage": 50,
+        "burn_damage_per_second": 8.0,
+        "burn_duration": 10.0,
+        "cone_angle": 60.0,
+        "cone_range": 8.0
+      },
+      "effect_tags": [
+        "fire",
+        "cone",
+        "burn"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "weapons/inferno_blade.png",
+      "item_id": "inferno_blade",
+      "item_type": "weapon",
+      "name": "Inferno Blade",
+      "range": 1.5,
+      "rarity": "legendary",
+      "requirements": {
+        "level": 20,
+        "stats": {
+          "INT": 16,
+          "STR": 18
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 1.2,
+        "damage": 1.3,
+        "durability": 1.25,
+        "weight": 1.3
+      },
+      "tags": [
+        "melee",
+        "sword",
+        "fire",
+        "aoe",
+        "legendary"
+      ],
+      "tier": 4,
+      "weight": 1.0
+    },
+    "iron_axe": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        15,
+        22
+      ],
+      "defense": 0,
+      "durability_current": 1000,
+      "durability_max": 1000,
+      "effect_params": {
+        "baseDamage": 18
+      },
+      "effect_tags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/iron_axe.png",
+      "item_id": "iron_axe",
+      "item_type": "tool",
+      "name": "Iron Axe",
+      "range": 1,
+      "rarity": "common",
+      "requirements": {
+        "level": 5
+      },
+      "slot": "axe",
+      "soulbound": false,
+      "stat_multipliers": {},
+      "tags": [
+        "tool",
+        "axe",
+        "standard"
+      ],
+      "tier": 2,
+      "weight": 4.5
+    },
+    "iron_boots": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 7,
+      "durability_current": 250,
+      "durability_max": 250,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "armor/iron_boots.png",
+      "item_id": "iron_boots",
+      "item_type": "armor",
+      "name": "Iron Boots",
+      "range": 1.0,
+      "rarity": "common",
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "slot": "boots",
+      "soulbound": false,
+      "stat_multipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "tags": [
+        "armor",
+        "feet",
+        "light",
+        "starter"
+      ],
+      "tier": 1,
+      "weight": 1.0
+    },
+    "iron_chestplate": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 30,
+      "durability_current": 500,
+      "durability_max": 500,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "armor/iron_chestplate.png",
+      "item_id": "iron_chestplate",
+      "item_type": "armor",
+      "name": "Iron Chestplate",
+      "range": 1.0,
+      "rarity": "common",
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "slot": "chestplate",
+      "soulbound": false,
+      "stat_multipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "tags": [
+        "armor",
+        "chest",
+        "heavy",
+        "standard"
+      ],
+      "tier": 2,
+      "weight": 1.0
+    },
+    "iron_pickaxe": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        15,
+        22
+      ],
+      "defense": 0,
+      "durability_current": 1000,
+      "durability_max": 1000,
+      "effect_params": {
+        "baseDamage": 18
+      },
+      "effect_tags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/iron_pickaxe.png",
+      "item_id": "iron_pickaxe",
+      "item_type": "tool",
+      "name": "Iron Pickaxe",
+      "range": 1,
+      "rarity": "common",
+      "requirements": {
+        "level": 5
+      },
+      "slot": "pickaxe",
+      "soulbound": false,
+      "stat_multipliers": {},
+      "tags": [
+        "tool",
+        "pickaxe",
+        "standard"
+      ],
+      "tier": 2,
+      "weight": 5.0
+    },
+    "iron_round_shield": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 0,
+      "durability_current": 450,
+      "durability_max": 450,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "1H",
+      "icon_path": "weapons/iron_round_shield.png",
+      "item_id": "iron_round_shield",
+      "item_type": "shield",
+      "name": "Iron Round Shield",
+      "range": 1,
+      "rarity": "common",
+      "requirements": {
+        "level": 3,
+        "stats": {
+          "STR": 8
+        }
+      },
+      "slot": "offHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 1.1,
+        "damage": 0.6,
+        "durability": 1.8,
+        "weight": 1.3
+      },
+      "tags": [
+        "melee",
+        "shield",
+        "1H",
+        "defensive",
+        "bash"
+      ],
+      "tier": 1,
+      "weight": 1.0
+    },
+    "iron_shortsword": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        7,
+        10
+      ],
+      "defense": 0,
+      "durability_current": 250,
+      "durability_max": 250,
+      "effect_params": {
+        "baseDamage": 30
+      },
+      "effect_tags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "versatile",
+      "icon_path": "weapons/iron_shortsword.png",
+      "item_id": "iron_shortsword",
+      "item_type": "weapon",
+      "name": "Iron Shortsword",
+      "range": 1,
+      "rarity": "common",
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 1.0,
+        "damage": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "tags": [
+        "melee",
+        "sword",
+        "versatile",
+        "starter"
+      ],
+      "tier": 1,
+      "weight": 1.0
+    },
+    "iron_studded_gauntlets": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 6,
+      "durability_current": 250,
+      "durability_max": 250,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "armor/iron_studded_gauntlets.png",
+      "item_id": "iron_studded_gauntlets",
+      "item_type": "armor",
+      "name": "Iron-Studded Gauntlets",
+      "range": 1.0,
+      "rarity": "common",
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "slot": "gauntlets",
+      "soulbound": false,
+      "stat_multipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 0.9
+      },
+      "tags": [
+        "armor",
+        "hands",
+        "light",
+        "flexible"
+      ],
+      "tier": 1,
+      "weight": 1.0
+    },
+    "iron_warhammer": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        33,
+        44
+      ],
+      "defense": 0,
+      "durability_current": 650,
+      "durability_max": 650,
+      "effect_params": {
+        "baseDamage": 45
+      },
+      "effect_tags": [
+        "physical",
+        "crushing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "2H",
+      "icon_path": "weapons/iron_warhammer.png",
+      "item_id": "iron_warhammer",
+      "item_type": "weapon",
+      "name": "Iron Warhammer",
+      "range": 1.5,
+      "rarity": "common",
+      "requirements": {
+        "level": 10,
+        "stats": {
+          "STR": 15
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 0.75,
+        "damage": 1.3,
+        "durability": 1.3,
+        "weight": 1.5
+      },
+      "tags": [
+        "melee",
+        "mace",
+        "2H",
+        "crushing",
+        "armor_breaker"
+      ],
+      "tier": 2,
+      "weight": 1.0
+    },
+    "iron_water_amulet": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 0,
+      "durability_current": 500,
+      "durability_max": 500,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "accessories/iron_water_amulet.png",
+      "item_id": "iron_water_amulet",
+      "item_type": "accessory",
+      "name": "Iron Water Amulet",
+      "range": 1.0,
+      "rarity": "uncommon",
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "slot": "accessory",
+      "soulbound": false,
+      "stat_multipliers": {
+        "weight": 0.2
+      },
+      "tags": [
+        "accessory",
+        "amulet",
+        "water",
+        "elemental"
+      ],
+      "tier": 2,
+      "weight": 1.0
+    },
+    "leather_tunic": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 15,
+      "durability_current": 250,
+      "durability_max": 250,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "armor/leather_tunic.png",
+      "item_id": "leather_tunic",
+      "item_type": "armor",
+      "name": "Leather Tunic",
+      "range": 1.0,
+      "rarity": "common",
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "slot": "chestplate",
+      "soulbound": false,
+      "stat_multipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "tags": [
+        "armor",
+        "chest",
+        "light",
+        "starter"
+      ],
+      "tier": 1,
+      "weight": 1.0
+    },
+    "lightning_chain_whip": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        34,
+        46
+      ],
+      "defense": 0,
+      "durability_current": 1000,
+      "durability_max": 1000,
+      "effect_params": {
+        "baseDamage": 40,
+        "chain_count": 3,
+        "chain_range": 6.0,
+        "shock_damage_per_tick": 5.0,
+        "shock_duration": 4.0,
+        "shock_tick_rate": 1.0
+      },
+      "effect_tags": [
+        "lightning",
+        "chain",
+        "shock"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "weapons/lightning_chain_whip.png",
+      "item_id": "lightning_chain_whip",
+      "item_type": "weapon",
+      "name": "Lightning Chain Whip",
+      "range": 3,
+      "rarity": "epic",
+      "requirements": {
+        "level": 15,
+        "stats": {
+          "AGI": 16,
+          "INT": 12
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 1.5,
+        "damage": 1.0,
+        "durability": 1.0,
+        "weight": 0.8
+      },
+      "tags": [
+        "melee",
+        "whip",
+        "lightning",
+        "chain",
+        "epic"
+      ],
+      "tier": 3,
+      "weight": 1.0
+    },
+    "mithril_axe": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        60,
+        90
+      ],
+      "defense": 0,
+      "durability_current": 4000,
+      "durability_max": 4000,
+      "effect_params": {
+        "baseDamage": 75
+      },
+      "effect_tags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/mithril_axe.png",
+      "item_id": "mithril_axe",
+      "item_type": "tool",
+      "name": "Mithril Axe",
+      "range": 1,
+      "rarity": "rare",
+      "requirements": {
+        "level": 20
+      },
+      "slot": "axe",
+      "soulbound": false,
+      "stat_multipliers": {},
+      "tags": [
+        "tool",
+        "axe",
+        "legendary"
+      ],
+      "tier": 4,
+      "weight": 2.5
+    },
+    "mithril_dagger": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        37,
+        50
+      ],
+      "defense": 0,
+      "durability_current": 1500,
+      "durability_max": 1500,
+      "effect_params": {
+        "baseDamage": 42
+      },
+      "effect_tags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "1H",
+      "icon_path": "weapons/mithril_dagger.png",
+      "item_id": "mithril_dagger",
+      "item_type": "weapon",
+      "name": "Mithril Dagger",
+      "range": 0.5,
+      "rarity": "rare",
+      "requirements": {
+        "level": 16,
+        "stats": {
+          "AGI": 20
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 1.2,
+        "damage": 1.1,
+        "durability": 1.5,
+        "weight": 0.5
+      },
+      "tags": [
+        "melee",
+        "dagger",
+        "1H",
+        "fast",
+        "precision",
+        "legendary"
+      ],
+      "tier": 3,
+      "weight": 1.0
+    },
+    "mithril_fishing_rod": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 0,
+      "durability_current": 1200,
+      "durability_max": 1200,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/mithril_fishing_rod.png",
+      "item_id": "mithril_fishing_rod",
+      "item_type": "tool",
+      "name": "Mithril Fishing Rod",
+      "range": 8,
+      "rarity": "rare",
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "damage": 0.7,
+        "durability": 1.2,
+        "gathering": 1.6,
+        "weight": 0.5
+      },
+      "tags": [
+        "tool",
+        "fishing",
+        "rare",
+        "magical"
+      ],
+      "tier": 3,
+      "weight": 1.0
+    },
+    "mithril_pickaxe": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        60,
+        90
+      ],
+      "defense": 0,
+      "durability_current": 4000,
+      "durability_max": 4000,
+      "effect_params": {
+        "baseDamage": 75
+      },
+      "effect_tags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/mithril_pickaxe.png",
+      "item_id": "mithril_pickaxe",
+      "item_type": "tool",
+      "name": "Mithril Pickaxe",
+      "range": 1,
+      "rarity": "rare",
+      "requirements": {
+        "level": 20
+      },
+      "slot": "pickaxe",
+      "soulbound": false,
+      "stat_multipliers": {},
+      "tags": [
+        "tool",
+        "pickaxe",
+        "legendary"
+      ],
+      "tier": 4,
+      "weight": 3.0
+    },
+    "pine_shortbow": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        8,
+        11
+      ],
+      "defense": 0,
+      "durability_current": 200,
+      "durability_max": 200,
+      "effect_params": {
+        "baseDamage": 20
+      },
+      "effect_tags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "2H",
+      "icon_path": "weapons/pine_shortbow.png",
+      "item_id": "pine_shortbow",
+      "item_type": "weapon",
+      "name": "Pine Shortbow",
+      "range": 10,
+      "rarity": "common",
+      "requirements": {
+        "level": 1,
+        "stats": {
+          "AGI": 6
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 1.0,
+        "damage": 1.0,
+        "durability": 0.8,
+        "weight": 0.7
+      },
+      "tags": [
+        "ranged",
+        "bow",
+        "2H",
+        "starter"
+      ],
+      "tier": 1,
+      "weight": 1.0
+    },
+    "reinforced_fishing_rod": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 0,
+      "durability_current": 500,
+      "durability_max": 500,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/reinforced_fishing_rod.png",
+      "item_id": "reinforced_fishing_rod",
+      "item_type": "tool",
+      "name": "Reinforced Fishing Rod",
+      "range": 6,
+      "rarity": "uncommon",
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "damage": 0.6,
+        "durability": 1.0,
+        "gathering": 1.3,
+        "weight": 0.8
+      },
+      "tags": [
+        "tool",
+        "fishing",
+        "quality"
+      ],
+      "tier": 2,
+      "weight": 1.0
+    },
+    "steel_axe": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        30,
+        45
+      ],
+      "defense": 0,
+      "durability_current": 2000,
+      "durability_max": 2000,
+      "effect_params": {
+        "baseDamage": 37
+      },
+      "effect_tags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/steel_axe.png",
+      "item_id": "steel_axe",
+      "item_type": "tool",
+      "name": "Steel Axe",
+      "range": 1,
+      "rarity": "uncommon",
+      "requirements": {
+        "level": 12
+      },
+      "slot": "axe",
+      "soulbound": false,
+      "stat_multipliers": {},
+      "tags": [
+        "tool",
+        "axe",
+        "quality"
+      ],
+      "tier": 3,
+      "weight": 5.0
+    },
+    "steel_battleaxe": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        20,
+        27
+      ],
+      "defense": 0,
+      "durability_current": 550,
+      "durability_max": 550,
+      "effect_params": {
+        "baseDamage": 50
+      },
+      "effect_tags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "versatile",
+      "icon_path": "weapons/steel_battleaxe.png",
+      "item_id": "steel_battleaxe",
+      "item_type": "weapon",
+      "name": "Steel Battleaxe",
+      "range": 1,
+      "rarity": "uncommon",
+      "requirements": {
+        "level": 8,
+        "stats": {
+          "STR": 12
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 0.95,
+        "damage": 1.1,
+        "durability": 1.1,
+        "weight": 1.2
+      },
+      "tags": [
+        "melee",
+        "axe",
+        "versatile",
+        "cleaving"
+      ],
+      "tier": 2,
+      "weight": 1.0
+    },
+    "steel_helm": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 16,
+      "durability_current": 500,
+      "durability_max": 500,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "armor/steel_helm.png",
+      "item_id": "steel_helm",
+      "item_type": "armor",
+      "name": "Steel Helm",
+      "range": 1.0,
+      "rarity": "uncommon",
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "slot": "helmet",
+      "soulbound": false,
+      "stat_multipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "tags": [
+        "armor",
+        "head",
+        "heavy",
+        "quality"
+      ],
+      "tier": 2,
+      "weight": 1.0
+    },
+    "steel_leggings": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 24,
+      "durability_current": 500,
+      "durability_max": 500,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "armor/steel_leggings.png",
+      "item_id": "steel_leggings",
+      "item_type": "armor",
+      "name": "Steel Leggings",
+      "range": 1.0,
+      "rarity": "common",
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "slot": "leggings",
+      "soulbound": false,
+      "stat_multipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "tags": [
+        "armor",
+        "legs",
+        "metal",
+        "heavy"
+      ],
+      "tier": 2,
+      "weight": 1.0
+    },
+    "steel_lightning_bracelet": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 0,
+      "durability_current": 1000,
+      "durability_max": 1000,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "accessories/steel_lightning_bracelet.png",
+      "item_id": "steel_lightning_bracelet",
+      "item_type": "accessory",
+      "name": "Steel Lightning Bracelet",
+      "range": 1.0,
+      "rarity": "rare",
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "slot": "accessory",
+      "soulbound": false,
+      "stat_multipliers": {
+        "weight": 0.3
+      },
+      "tags": [
+        "accessory",
+        "bracelet",
+        "lightning",
+        "elemental"
+      ],
+      "tier": 3,
+      "weight": 1.0
+    },
+    "steel_longsword": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        18,
+        25
+      ],
+      "defense": 0,
+      "durability_current": 550,
+      "durability_max": 550,
+      "effect_params": {
+        "baseDamage": 40
+      },
+      "effect_tags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "versatile",
+      "icon_path": "weapons/steel_longsword.png",
+      "item_id": "steel_longsword",
+      "item_type": "weapon",
+      "name": "Steel Longsword",
+      "range": 1,
+      "rarity": "uncommon",
+      "requirements": {
+        "level": 8,
+        "stats": {
+          "STR": 10
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 1.0,
+        "damage": 1.1,
+        "durability": 1.1,
+        "weight": 1.0
+      },
+      "tags": [
+        "melee",
+        "sword",
+        "versatile",
+        "quality"
+      ],
+      "tier": 2,
+      "weight": 1.0
+    },
+    "steel_pickaxe": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        30,
+        45
+      ],
+      "defense": 0,
+      "durability_current": 2000,
+      "durability_max": 2000,
+      "effect_params": {
+        "baseDamage": 37
+      },
+      "effect_tags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/steel_pickaxe.png",
+      "item_id": "steel_pickaxe",
+      "item_type": "tool",
+      "name": "Steel Pickaxe",
+      "range": 1,
+      "rarity": "uncommon",
+      "requirements": {
+        "level": 12
+      },
+      "slot": "pickaxe",
+      "soulbound": false,
+      "stat_multipliers": {},
+      "tags": [
+        "tool",
+        "pickaxe",
+        "quality"
+      ],
+      "tier": 3,
+      "weight": 5.5
+    },
+    "steel_sickle": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 0,
+      "durability_current": 500,
+      "durability_max": 500,
+      "effect_params": {
+        "baseDamage": 22
+      },
+      "effect_tags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/steel_sickle.png",
+      "item_id": "steel_sickle",
+      "item_type": "tool",
+      "name": "Steel Sickle",
+      "range": 0.5,
+      "rarity": "common",
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "damage": 0.7,
+        "durability": 1.0,
+        "gathering": 1.0,
+        "weight": 0.7
+      },
+      "tags": [
+        "tool",
+        "harvesting",
+        "gathering",
+        "herbs"
+      ],
+      "tier": 2,
+      "weight": 1.0
+    },
+    "void_piercer": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        78,
+        105
+      ],
+      "defense": 0,
+      "durability_current": 2250,
+      "durability_max": 2250,
+      "effect_params": {
+        "baseDamage": 45,
+        "beam_range": 12.0,
+        "beam_width": 1.5,
+        "pierce_count": 5,
+        "weaken_duration": 8.0,
+        "weaken_percent": 0.3
+      },
+      "effect_tags": [
+        "shadow",
+        "beam",
+        "weaken",
+        "pierce"
+      ],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "weapons/void_piercer.png",
+      "item_id": "void_piercer",
+      "item_type": "weapon",
+      "name": "Void Piercer",
+      "range": 10,
+      "rarity": "legendary",
+      "requirements": {
+        "level": 20,
+        "stats": {
+          "AGI": 20,
+          "INT": 18
+        }
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "attackSpeed": 1.4,
+        "damage": 1.15,
+        "durability": 1.125,
+        "weight": 0.9
+      },
+      "tags": [
+        "melee",
+        "spear",
+        "shadow",
+        "pierce",
+        "legendary"
+      ],
+      "tier": 4,
+      "weight": 1.0
+    },
+    "worldtree_fishing_rod": {
+      "attack_speed": 1.0,
+      "bonuses": {},
+      "damage": [
+        0,
+        0
+      ],
+      "defense": 0,
+      "durability_current": 3000,
+      "durability_max": 3000,
+      "effect_params": {},
+      "effect_tags": [],
+      "efficiency": 1.0,
+      "enchantments": [],
+      "hand_type": "default",
+      "icon_path": "tools/worldtree_fishing_rod.png",
+      "item_id": "worldtree_fishing_rod",
+      "item_type": "tool",
+      "name": "Worldtree Fishing Rod",
+      "range": 10,
+      "rarity": "epic",
+      "requirements": {
+        "level": 20,
+        "stats": {}
+      },
+      "slot": "mainHand",
+      "soulbound": false,
+      "stat_multipliers": {
+        "damage": 0.8,
+        "durability": 1.5,
+        "gathering": 2.0,
+        "weight": 0.4
+      },
+      "tags": [
+        "tool",
+        "fishing",
+        "legendary",
+        "mythical"
+      ],
+      "tier": 4,
+      "weight": 1.0
+    }
+  },
+  "repair": {
+    "amount_25": {
+      "now": 35,
+      "restored": 25
+    },
+    "full": {
+      "now": 100,
+      "restored": 90
+    },
+    "percent_50": {
+      "now": 60,
+      "restored": 50
+    }
+  },
+  "repair_urgency": {
+    "0/100": "critical",
+    "1/100": "high",
+    "100/100": "none",
+    "20/100": "medium",
+    "25/100": "medium",
+    "49/100": "medium",
+    "50/100": "low",
+    "60/100": "low",
+    "75/100": "low"
+  },
+  "slot_inference": {
+    "accessory": "accessory",
+    "armor": null,
+    "axe": "axe",
+    "basic-starter": null,
+    "chestplate-armor": "chestplate",
+    "helmet": "helmet",
+    "none": null,
+    "pickaxe-tool": "pickaxe",
+    "shield": "offHand",
+    "shovel": "tool",
+    "tool": null,
+    "weapon": "mainHand"
+  },
+  "weapon_tag_modifiers": {
+    "1H": {
+      "cleaving": false,
+      "crit": 0.0,
+      "dmg_no_off": 1.0,
+      "dmg_off": 1.0,
+      "pen": 0.0,
+      "range": 0.0,
+      "speed": 0.0,
+      "vs_armored": 0.0
+    },
+    "2H": {
+      "cleaving": false,
+      "crit": 0.0,
+      "dmg_no_off": 1.2,
+      "dmg_off": 1.2,
+      "pen": 0.0,
+      "range": 0.0,
+      "speed": 0.0,
+      "vs_armored": 0.0
+    },
+    "2H-fast-precision": {
+      "cleaving": false,
+      "crit": 0.1,
+      "dmg_no_off": 1.2,
+      "dmg_off": 1.2,
+      "pen": 0.0,
+      "range": 0.0,
+      "speed": 0.15,
+      "vs_armored": 0.0
+    },
+    "armor_breaker": {
+      "cleaving": false,
+      "crit": 0.0,
+      "dmg_no_off": 1.0,
+      "dmg_off": 1.0,
+      "pen": 0.25,
+      "range": 0.0,
+      "speed": 0.0,
+      "vs_armored": 0.0
+    },
+    "cleaving": {
+      "cleaving": true,
+      "crit": 0.0,
+      "dmg_no_off": 1.0,
+      "dmg_off": 1.0,
+      "pen": 0.0,
+      "range": 0.0,
+      "speed": 0.0,
+      "vs_armored": 0.0
+    },
+    "crushing": {
+      "cleaving": false,
+      "crit": 0.0,
+      "dmg_no_off": 1.0,
+      "dmg_off": 1.0,
+      "pen": 0.0,
+      "range": 0.0,
+      "speed": 0.0,
+      "vs_armored": 0.2
+    },
+    "fast-reach-crushing": {
+      "cleaving": false,
+      "crit": 0.0,
+      "dmg_no_off": 1.0,
+      "dmg_off": 1.0,
+      "pen": 0.0,
+      "range": 1.0,
+      "speed": 0.15,
+      "vs_armored": 0.2
+    },
+    "none": {
+      "cleaving": false,
+      "crit": 0.0,
+      "dmg_no_off": 1.0,
+      "dmg_off": 1.0,
+      "pen": 0.0,
+      "range": 0.0,
+      "speed": 0.0,
+      "vs_armored": 0.0
+    },
+    "reach": {
+      "cleaving": false,
+      "crit": 0.0,
+      "dmg_no_off": 1.0,
+      "dmg_off": 1.0,
+      "pen": 0.0,
+      "range": 1.0,
+      "speed": 0.0,
+      "vs_armored": 0.0
+    },
+    "versatile": {
+      "cleaving": false,
+      "crit": 0.0,
+      "dmg_no_off": 1.1,
+      "dmg_off": 1.0,
+      "pen": 0.0,
+      "range": 0.0,
+      "speed": 0.0,
+      "vs_armored": 0.0
+    }
+  }
+}
