@@ -1,3 +1,6 @@
+# Godot world-gen debug harness output (regenerable via G1_DEBUG=1)
+worldgen_debug_report.txt
+
 # Python
 __pycache__/
 *.py[cod]
