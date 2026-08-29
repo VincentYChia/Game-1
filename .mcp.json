@@ -1,11 +1,12 @@
 {
   "mcpServers": {
     "concern-registry": {
-      "command": "python",
-      "args": ["-m", "tools.concern_mcp.server"],
-      "env": {
-        "PYTHONPATH": "${CLAUDE_PROJECT_DIR}/Game-1-modular"
-      },
+      "command": "py",
+      "args": [
+        "-3",
+        "-c",
+        "import sys,os;root=os.environ.get('CLAUDE_PROJECT_DIR') or os.getcwd();sys.path.insert(0,os.path.join(root,'Game-1-modular'));from tools.concern_mcp.server import main;main()"
+      ],
       "timeout": 30000
     }
   }

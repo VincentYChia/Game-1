@@ -42,18 +42,30 @@ A portable, committed `.mcp.json` lives at the **repo root** (`Game-1/.mcp.json`
 {
   "mcpServers": {
     "concern-registry": {
-      "command": "python",
-      "args": ["-m", "tools.concern_mcp.server"],
-      "env": { "PYTHONPATH": "${CLAUDE_PROJECT_DIR}/Game-1-modular" },
+      "command": "py",
+      "args": [
+        "-3",
+        "-c",
+        "import sys,os;root=os.environ.get('CLAUDE_PROJECT_DIR') or os.getcwd();sys.path.insert(0,os.path.join(root,'Game-1-modular'));from tools.concern_mcp.server import main;main()"
+      ],
       "timeout": 30000
     }
   }
 }
 ```
 
-It's portable by design: `${CLAUDE_PROJECT_DIR}` expands to the project root on any machine
-(Claude Code expands it in `env` — note `cwd` and `command`-field expansion are NOT
-supported). The server is **stdlib-only**, so any `python` (3.8+) on PATH works.
+Portable by design, and hardened against two real Windows failure modes discovered in
+testing:
+- **`py -3`** (the Windows Python launcher) instead of bare `python` — avoids the Microsoft
+  Store `python.exe` stub, which starts and immediately exits (→ `-32000 Connection closed`).
+- **Self-locates via the `CLAUDE_PROJECT_DIR` *environment variable* at runtime**, not JSON
+  `${...}` substitution. Claude Code does NOT expand `${CLAUDE_PROJECT_DIR}` inside a
+  `PYTHONPATH` value (that leaves the literal string → `ModuleNotFoundError: tools` → the
+  process exits → connection closed). Reading the env var inside a tiny `-c` bootstrap
+  sidesteps that entirely and needs no `env` block, no absolute paths, no username.
+
+The server is **stdlib-only**, so any Python 3.8+ works. (Non-Windows: swap `command` to
+`python3` and drop the `-3` arg.)
 
 **Activate (a `.mcp.json` is read only at session start):**
 1. **Restart** the Claude Code session (close/reopen the panel, or reload the VS Code window).
