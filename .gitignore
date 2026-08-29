@@ -1,6 +1,9 @@
 # Godot world-gen debug harness output (regenerable via G1_DEBUG=1)
 worldgen_debug_report.txt
 
+# Concern-registry MCP index (regenerable via `python -m tools.concern_mcp.cli build`)
+Game-1-modular/tools/concern_mcp/.index/
+
 # Python
 __pycache__/
 *.py[cod]
