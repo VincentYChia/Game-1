@@ -36,7 +36,7 @@ are separate vocabularies.
 
 ## Register in Claude Code (MCP)
 
-Create/merge `.mcp.json` at the repo root (or add to user settings):
+A portable, committed `.mcp.json` lives at the **repo root** (`Game-1/.mcp.json`):
 
 ```json
 {
@@ -44,11 +44,28 @@ Create/merge `.mcp.json` at the repo root (or add to user settings):
     "concern-registry": {
       "command": "python",
       "args": ["-m", "tools.concern_mcp.server"],
-      "cwd": "Game-1-modular"
+      "env": { "PYTHONPATH": "${CLAUDE_PROJECT_DIR}/Game-1-modular" },
+      "timeout": 30000
     }
   }
 }
 ```
+
+It's portable by design: `${CLAUDE_PROJECT_DIR}` expands to the project root on any machine
+(Claude Code expands it in `env` — note `cwd` and `command`-field expansion are NOT
+supported). The server is **stdlib-only**, so any `python` (3.8+) on PATH works.
+
+**Activate (a `.mcp.json` is read only at session start):**
+1. **Restart** the Claude Code session (close/reopen the panel, or reload the VS Code window).
+   In the VS Code extension your conversation is preserved — resume it from the session-history panel.
+2. **Approve** the project-server trust dialog when it appears.
+3. **Verify** with `/mcp` — `concern-registry` should show ✔ Connected with 9 tools.
+
+**New device:** clone the repo → ensure `python --version` (3.8+) resolves in the VS Code
+integrated terminal → open the project in Claude Code → approve on first `/mcp`. No build
+step needed (the index builds itself on first tool call). If `/mcp` shows a launch error,
+`python` isn't on PATH for the subprocess — set `command` to an absolute interpreter path
+(e.g. `.venv/Scripts/python.exe`; `${CLAUDE_PROJECT_DIR}` does NOT expand in `command`).
 
 The server builds the index lazily on first call. Tools exposed:
 

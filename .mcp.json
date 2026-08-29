@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "concern-registry": {
+      "command": "python",
+      "args": ["-m", "tools.concern_mcp.server"],
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PROJECT_DIR}/Game-1-modular"
+      },
+      "timeout": 30000
+    }
+  }
+}
