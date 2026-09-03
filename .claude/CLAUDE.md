@@ -825,6 +825,7 @@ Paused indefinitely. Kept under archive as backup; not used during active develo
 ### Living World (WNS/WES) Documentation (in `Development-Plan/`)
 | Document | Purpose |
 |----------|---------|
+| **GAME_SYSTEMS_BRIEF.md** + **.html** | **Whole-game technical brief (2026-08, code-verified end-to-end) — the single "how does X work / how does data flow" reference; .html is the executive deck. Supersedes the archived feature-traces / audit / gap-log docs.** |
 | **WORLD_SYSTEM_WORKING_DOC.md** | v4 canonical spec for WNS + WES + tools |
 | **PLACEHOLDER_LEDGER.md** | Furnishing list — every placeholder the designer should review |
 | **OVERVIEW.md** | Roadmap index |

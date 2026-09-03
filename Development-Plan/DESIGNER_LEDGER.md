@@ -141,4 +141,4 @@ The code or sacred content depends on these. A JSON change here breaks the pipel
 
 - Architecture spec: [`WORLD_SYSTEM_WORKING_DOC.md`](WORLD_SYSTEM_WORKING_DOC.md)
 - Scaffold-time placeholder snapshot: [`PLACEHOLDER_LEDGER.md`](PLACEHOLDER_LEDGER.md)
-- Tool contract audit: [`TOOL_CONTRACT_AUDIT.md`](TOOL_CONTRACT_AUDIT.md)
+- Tool contract audit (archived 2026-08): [`TOOL_CONTRACT_AUDIT.md`](../archive/2026-08-doc-consolidation/TOOL_CONTRACT_AUDIT.md) — superseded by [`GAME_SYSTEMS_BRIEF.md`](GAME_SYSTEMS_BRIEF.md) §11 (WES)

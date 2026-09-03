@@ -101,7 +101,8 @@
 | **DESIGNER_LEDGER.md** | Designer walkthrough doc (active with owner) |
 | OVERVIEW / PART_1 / PART_2 / PART_3 | Roadmap (P1.7 visual overhaul + P3 are the open fronts) |
 | SHARED_INFRASTRUCTURE.md | BalanceValidator spec — **spec only, no code** |
-| feature-traces/ (11 docs) | 2026-04 trace pass — stale-flagged where superseded |
+| **GAME_SYSTEMS_BRIEF.md** + .html | **Whole-game technical brief (2026-08, code-verified) — start here for "how does X work end-to-end"** |
+| feature-traces/ (12 docs) | 2026-04 trace pass — **archived 2026-08** → `archive/2026-08-doc-consolidation/feature-traces/`; harvested into GAME_SYSTEMS_BRIEF.md |
 | repo-audit-2026-06-10/ | This audit's evidence ledger |
 
 ---

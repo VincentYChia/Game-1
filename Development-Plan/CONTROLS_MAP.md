@@ -1,7 +1,7 @@
 # Controls Map — Everything You Can Tune
 
 *Authored 2026-06-03; v2 expanded 2026-06-04 with parallel-agent canvass of 5 game domains.*
-*Companion to `feature-traces/00-consolidation.md`.*
+*Companion to `../archive/2026-08-doc-consolidation/feature-traces/00-consolidation.md`.*
 
 This document indexes every tunable control across the v4 system: prompts, configs, thresholds, allow-lists, runtime constants, balance numbers, content fields. Each entry names what it controls, where it lives, its current value/state, and whether it's a designer call.
 
@@ -680,7 +680,7 @@ All configurable via `memory-config.json > evaluators.<name>`. Key parameters pe
 
 ## §9 — Rendering, animation, UI, audio, input
 
-**~542 individual tunables** cataloged across 35 categories. Full unabridged tables at [Development-Plan/controls-agent-render-ui.md](Development-Plan/controls-agent-render-ui.md). Highlights below.
+**~542 individual tunables** cataloged across 35 categories. Full unabridged tables at [../archive/2026-08-doc-consolidation/controls-agent-render-ui.md](../archive/2026-08-doc-consolidation/controls-agent-render-ui.md). Highlights below.
 
 ### §9.1 — Files most-tuned-by-designer
 
@@ -889,13 +889,13 @@ The order with most player-perceived impact per tuning hour:
 
 ## §14 — Companion docs
 
-- `Development-Plan/feature-traces/00-consolidation.md` — the build plan + architectural conclusions
-- `Development-Plan/feature-traces/11-trigger-taxonomy.md` — unification thesis
-- `Development-Plan/feature-traces/01-quests.md` through `10-orchestration.md` — per-feature design depth
+- `../archive/2026-08-doc-consolidation/feature-traces/00-consolidation.md` — the build plan + architectural conclusions
+- `../archive/2026-08-doc-consolidation/feature-traces/11-trigger-taxonomy.md` — unification thesis
+- `../archive/2026-08-doc-consolidation/feature-traces/01-quests.md` through `10-orchestration.md` — per-feature design depth
 - Memory `phase0_complete_state.md` — file changes + integration points
 - CLAUDE.md — project conventions; immutable game constants
 - `Scaled JSON Development/LLM Training Data/Fewshot_llm/MANUAL_TUNING_GUIDE.md` — crafting LLM tuning manual
-- Agent reports (all 6 returned successfully): for the unabridged tables, see the saved persisted-output JSONs at `C:\Users\vipVi\.claude\projects\c--Users-vipVi-PycharmProjects-Game-1\ec30dec9-d678-4643-82c8-b26148fd7ab7\tool-results\`. The rendering/UI/audio report is also reformatted as standalone markdown at `Development-Plan/controls-agent-render-ui.md` (~810 lines).
+- Agent reports (all 6 returned successfully): for the unabridged tables, see the saved persisted-output JSONs at `C:\Users\vipVi\.claude\projects\c--Users-vipVi-PycharmProjects-Game-1\ec30dec9-d678-4643-82c8-b26148fd7ab7\tool-results\`. The rendering/UI/audio report is also reformatted as standalone markdown at `../archive/2026-08-doc-consolidation/controls-agent-render-ui.md` (~810 lines).
 
 ---
 
