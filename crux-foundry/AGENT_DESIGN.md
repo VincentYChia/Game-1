@@ -120,10 +120,12 @@ toward *smart*, not just *winning*.
 
 **L0 — this doc.** Contract locked. ✅
 
-**L1 — enemy control surface.** A `PolicyEnemy` that overrides `update_ai` (same move as
-`TrainingDummy`) and actuates via `_move_towards` / `start_phased_attack`. Ship with a **hand-written
-heuristic** policy (no learning). Harness verb to spawn a policy-driven pack. *Local test:* a pack
-chases, spaces, and attacks coherently. **Proves the surface — the blocker for everything.**
+**L1 — enemy control surface. ✅ DONE (proven).** `PolicyEnemy` overrides `update_ai`, actuates via
+`_move_towards`/`start_phased_attack`, hand-written pincer policy. `l1_pack_demo.py` passes 4 gates
+(close-in / navigate obstacles / engage-damage / pincer) across seeds·sizes·tiers; flank gaps hit
+the ideal 360/n. Found+fixed: origin safe-zone block, spacing-vs-melee-trigger, arena/chunk noise.
+Open: enemy-damage RNG drift (~0.5%, likely PYTHONHASHSEED). **See GODOT_PORT_PLAN.md** — the Godot
+foundation reshapes L2+ (freeze a portable feature schema; decide the forward-model fork).
 
 **L2 — observation/action structs + a deliberately "smart" scripted policy.** Implement the obs
 vector + action head; write a policy that demonstrates 1a (approach to optimal reach instead of

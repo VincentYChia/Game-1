@@ -45,7 +45,7 @@ for p in (PROJECT_ROOT, HERE):
 os.chdir(PROJECT_ROOT)
 
 from runner import boot_engine                       # reuse the hermetic boot
-from agents.enemy_control import spawn_policy_pack, disable_safe_zone
+from agents.enemy_control import spawn_policy_pack, disable_safe_zone, prepare_arena
 
 
 def place_obstacles(world, center=(0.0, 0.0)):
@@ -110,9 +110,10 @@ def run(seed=7, n=6, tier=2, frames=500):
         c.max_health = 100000.0          # passive, survives the encounter (test rig)
         c.health = 100000.0
         disable_safe_zone(eng)           # arena: let the pack actually reach the player
+        prepare_arena(eng, (0.0, 0.0), radius=12)   # clean walkable plane (+ auto-load chunks)
 
         blocked = place_obstacles(eng.world, (0.0, 0.0))
-        pack = spawn_policy_pack(eng, n=n, tier=tier, center=(0.0, 0.0), radius=8.0,
+        pack = spawn_policy_pack(eng, n=n, tier=tier, center=(0.0, 0.0), radius=7.0,
                                  compose_seed=20260706)
 
         px, py = c.position.x, c.position.y

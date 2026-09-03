@@ -216,6 +216,27 @@ class PolicyEnemy(Enemy):
 
 # ── arena setup helpers ──────────────────────────────────────────────────────
 
+def prepare_arena(engine, center: Tuple[float, float] = (0.0, 0.0), radius: int = 12) -> int:
+    """Force a clean, walkable ground plane of GRASS in a square of `radius` tiles
+    around `center`, overwriting whatever biome the world generated (random water /
+    stone that would otherwise block or strand a pack and make the test measure map
+    luck instead of pack behaviour). Touching each tile via get_tile also AUTO-LOADS
+    the underlying chunks, so members spawned off-centre aren't stranded in unloaded
+    chunks (where is_walkable is False). Deliberate obstacles are stamped AFTER this.
+    Returns the number of tiles cleared. Reused by the L3 fitness harness."""
+    from data.models.world import Position, TileType
+    cx, cy = int(center[0]), int(center[1])
+    n = 0
+    for x in range(cx - radius, cx + radius + 1):
+        for y in range(cy - radius, cy + radius + 1):
+            t = engine.world.get_tile(Position(x, y, 0))
+            if t is not None:
+                t.tile_type = TileType.GRASS
+                t.walkable = True
+                n += 1
+    return n
+
+
 def disable_safe_zone(engine) -> None:
     """Neutralise the origin spawn safe-zone (combat_manager.config.safe_zone_radius,
     default 15 tiles at (0,0)). `_move_towards` refuses any step that would enter it,
