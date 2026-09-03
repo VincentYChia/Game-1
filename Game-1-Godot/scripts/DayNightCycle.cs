@@ -33,6 +33,10 @@ public partial class DayNightCycle : Node
     /// Read by AmbientLife to gate fireflies to the night.</summary>
     public float Fraction => _frac;
 
+    /// <summary>Force the time of day (used by the screenshot harness for clear
+    /// daylight). It resumes advancing from here on the next frame.</summary>
+    public void SetFraction(float f) { _frac = Mathf.Clamp(f, 0f, 1f); Apply(_frac); }
+
     public DayNightCycle(DirectionalLight3D sun, ProceduralSkyMaterial sky,
                          global::Godot.Environment env)
     {

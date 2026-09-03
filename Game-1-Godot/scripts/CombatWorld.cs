@@ -53,6 +53,15 @@ public partial class CombatWorld : Node3D
     private readonly List<LiveEnemy> _enemies = new();
     private readonly Dictionary<string, LiveEnemy> _byId = new();
     private PythonRandom _rng = new(0);
+    // Enemy AI draws from _rng every frame; spawn PLACEMENT gets its own isolated
+    // stream so re-spawning on each window recenter can't perturb live AI behaviour.
+    private PythonRandom _spawnRng = new(0);
+
+    // Streamed-enemy refs — the certified origin spawn, replayed per window.
+    private EnemyDatabase? _enemyDb;
+    private BiomeGenerator? _enemyBiomes;
+    private Game1.Core.World.Geography.WorldMap? _enemyWorldMap;
+    private int _enemyChunkRadius;
 
     private PlayerController? _player;
     private AttackStateMachine _playerAttack = new("player");
@@ -68,12 +77,18 @@ public partial class CombatWorld : Node3D
     private ViewModelHands? _hands;
     private MaterialDatabase? _matDb;
     private RecipeDatabase? _recipeDb;
+    private PlacementDatabase? _placementDb;
+    private InventionService? _invention;
+    private InventedRecipeStore? _inventedStore;
     private double _now;
     private readonly List<LiveNpc> _npcs = new();
     /// <summary>(type, tier, node) — the 20 starter stations (world_system
     /// .py:671-692). Native stations are indestructible fixtures.</summary>
     private readonly List<(string Type, int Tier, Node3D Node)> _stations = new();
     private Label3D? _prompt;   // single shared "what would I interact with" label
+    private Sprite3D? _resIcon;   // proximity resource nameplate — icon + name, near only
+    private Label3D? _resName;
+    private Node3D? _resTarget;
     private const double MeleeReach = 1.8;   // matches the unarmed weaponRange
 
     /// <summary>UI screens read the certified character (inventory/equipment).</summary>
@@ -81,6 +96,9 @@ public partial class CombatWorld : Node3D
     public MaterialDatabase? MaterialDb => _matDb;
     public CraftingSystem? Crafting => _crafting;
     public RecipeDatabase? RecipeDb => _recipeDb;
+    public PlacementDatabase? PlacementDb => _placementDb;   // per-recipe tier placement templates
+    public InventionService? Invention => _invention;        // recipe discovery via the Python sidecar
+    public InventedRecipeStore? InventedRecipes => _inventedStore;
     public TitleDatabase? TitleDb { get; private set; }
     public SkillDatabase? SkillDb { get; private set; }
     public EquipmentDatabase? EquipDb { get; private set; }
@@ -96,6 +114,22 @@ public partial class CombatWorld : Node3D
     public void RegisterNpc(LiveNpc npc) => _npcs.Add(npc);
     public void RegisterStation(string type, int tier, Node3D node) =>
         _stations.Add((type, tier, node));
+
+    /// <summary>Append a landmark to the F5/F6 tour — WorldBootstrap adds the road
+    /// landmarks (longest bridge / longest tunnel) since it owns the road network.</summary>
+    public void AddTourStop(string name, int cx, int cy) => _biomeTargets.Add((name, cx, cy));
+
+    // --- lifetime -------------------------------------------------------------
+    // The invention sidecar (Python + TensorFlow/LightGBM/LLM) is a heavyweight
+    // child process. ProcessJob already guarantees the OS kills it if the game is
+    // force-terminated; on a graceful quit (window close / GetTree().Quit()) kill it
+    // immediately instead of waiting for teardown — and this also covers non-Windows.
+    public override void _ExitTree() => _invention?.Shutdown();
+
+    public override void _Notification(int what)
+    {
+        if (what == NotificationWMCloseRequest) _invention?.Shutdown();
+    }
 
     /// <summary>Station-click gate → CraftingScreen (the ONLY way to open
     /// crafting, character.py:1412-1419).</summary>
@@ -148,6 +182,7 @@ public partial class CombatWorld : Node3D
     {
         _player = player;
         _rng = new PythonRandom(worldSeed ^ 0x5DEECE66D);
+        _spawnRng = new PythonRandom(worldSeed ^ 0x5DEECE66D ^ 0x9E3779B9);
         _fx = new FxManager { Name = "Fx" };
         AddChild(_fx);
         _skillVfx = new SkillVfx { Name = "SkillVfx" };
@@ -191,6 +226,9 @@ public partial class CombatWorld : Node3D
         var recipeDb = new RecipeDatabase();
         recipeDb.LoadFromFiles(contentRoot);
         _recipeDb = recipeDb;
+        var placementDb = new PlacementDatabase();   // real per-tier placement templates
+        placementDb.LoadFromFiles(contentRoot);
+        _placementDb = placementDb;
         var skillDb = new SkillDatabase();
         skillDb.LoadFromFiles(contentRoot);
         UpdateLoader.LoadAll(contentRoot, equipDb, skillDb,
@@ -243,10 +281,16 @@ public partial class CombatWorld : Node3D
         _crafting = new CraftingSystem(_pc, recipeDb, equipDb, _gathering);
         _craftRng = new PythonRandom(worldSeed ^ 404);
 
+        // Recipe DISCOVERY: the Python invention sidecar (classifier + LLM) + persisted
+        // discoveries re-injected as first-class recipes.
+        _invention = new InventionService(contentRoot);
+        _inventedStore = new InventedRecipeStore();
+        _inventedStore.InjectAll(this);
+
         // P11 fall damage through the real take_damage
         player.OnHardLanding = excess =>
         {
-            var dmg = excess * 8.0;
+            var dmg = excess * (8.0 / 3.0);   // ~1/3 the damage per tile fallen
             _pc.TakeDamageFull(dmg, fromAttack: false);
             _lastEvent = $"hard landing! -{dmg:F0} hp";
             _fx?.FloatText(player.GlobalPosition, $"-{dmg:F0}",
@@ -256,51 +300,33 @@ public partial class CombatWorld : Node3D
         _unarmed = _combatData.GetWeaponAttack("unarmed", weaponRange: 1.8);
         _hitboxes.RegisterHurtbox("player", 0.4);
 
-        var spawned = 0;
-        for (var cy = -enemyChunkRadius; cy <= enemyChunkRadius; cy++)
-        {
-            for (var cx = -enemyChunkRadius; cx <= enemyChunkRadius; cx++)
-            {
-                int tier;
-                if (worldMap?.GetChunkData(cx, cy) is { } geo)
-                {
-                    // Geographic danger drives spawns (Tranquil/Peaceful skip)
-                    var danger = (int)geo.DangerLevel;
-                    if (danger <= 2) continue;
-                    tier = danger <= 4 ? 1 : 2;
-                }
-                else
-                {
-                    var chunkType = biomes.GetChunkType(cx, cy);
-                    if (!chunkType.Contains("dangerous") && !chunkType.Contains("rare"))
-                        continue;
-                    tier = chunkType.Contains("rare") ? 2 : 1;
-                }
-                var pool = enemyDb.EnemiesByTier.GetValueOrDefault(tier)
-                           ?? enemyDb.EnemiesByTier.GetValueOrDefault(1);
-                if (pool is null || pool.Count == 0) continue;
-
-                var count = _rng.RandInt(1, 3);
-                for (var i = 0; i < count && spawned < 150; i++)
-                {
-                    var def = _rng.Choice(pool);
-                    var ex = cx * 16 + (double)_rng.RandInt(2, 13);
-                    var ey = cy * 16 + (double)_rng.RandInt(2, 13);
-                    // No-spawn safe zone around the player spawn (item 3)
-                    var dx = ex - TerrainHeightField.SpawnX;
-                    var dy = ey - TerrainHeightField.SpawnY;
-                    if (dx * dx + dy * dy < SpawnSafeRadius * SpawnSafeRadius)
-                        continue;
-                    SpawnEnemy(def, (ex, ey), (cx, cy));
-                    spawned++;
-                }
-            }
-        }
+        // Enemies STREAM with the window (see StreamEnemies) so the frontier has
+        // hostiles too, not just an origin cluster — WorldBootstrap calls it once
+        // per window. Retain the refs the certified spawn needs.
+        _enemyDb = enemyDb;
+        _enemyBiomes = biomes;
+        _enemyWorldMap = worldMap;
+        _enemyChunkRadius = enemyChunkRadius;
 
         BuildBiomeTargets(biomes, worldMap, enemyChunkRadius);
         BuildHud();
-        GD.Print($"CombatWorld: {spawned} enemies live, "
-                 + $"{_biomeTargets.Count} biomes for the F5/F6 tour");
+
+        // proximity resource nameplate (icon + name), shown only near a resource
+        _resIcon = new Sprite3D
+        {
+            Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+            NoDepthTest = true, Shaded = false, Visible = false,
+        };
+        AddChild(_resIcon);
+        _resName = new Label3D
+        {
+            FontSize = 30, OutlineSize = 8,
+            Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+            NoDepthTest = true, Visible = false,
+        };
+        AddChild(_resName);
+
+        GD.Print($"CombatWorld ready — {_biomeTargets.Count} biomes for the F5/F6 tour");
     }
 
     /// <summary>Build the F5/F6 tour by sampling the ACTUAL elevation field so
@@ -349,6 +375,10 @@ public partial class CombatWorld : Node3D
         // and a PASS saddle between higher shoulders — all from the real field.
         (int X, int Y) peak = (0, 0);
         var peakH = float.NegativeInfinity;
+        (int X, int Y) valley = (0, 0);
+        var valleyH = float.PositiveInfinity;
+        (int X, int Y)? hill = null;
+        var hillH = float.NegativeInfinity;
         (int X, int Y)? vista = null;
         var vScore = 0f;
         (int X, int Y)? pass = null;
@@ -356,31 +386,43 @@ public partial class CombatWorld : Node3D
         foreach (var (k, h) in hc)
         {
             if (h > peakH) { peakH = h; peak = k; }
-            if (h is >= 6f and <= 24f)
+            if (h < valleyH && h >= TerrainHeightField.WaterLevel) { valleyH = h; valley = k; }
+            // the tallest HILL in NON-mountain country (a real hill, not a peak)
+            if (h > hillH && h is >= 12f and < 140f
+                && worldMap.ChunkData.TryGetValue(k, out var gk)
+                && worldMap.Regions.TryGetValue(gk.RegionId, out var rk)
+                && rk.Identity is not ("mountains" or "highlands" or "caverns"))
+            { hillH = h; hill = k; }
+            // vista/pass windows rescaled for the megascale peaks (~600-680u)
+            if (h is >= 40f and <= 180f)
             {
                 var near = 0f;
                 for (var dy = -3; dy <= 3; dy++)
                     for (var dx = -3; dx <= 3; dx++)
                         near = Math.Max(near, HC(k.Item1 + dx, k.Item2 + dy));
-                if (near > 32f && near - h > vScore) { vScore = near - h; vista = k; }
+                if (near > 240f && near - h > vScore) { vScore = near - h; vista = k; }
             }
-            if (h is >= 8f and <= 30f)
+            if (h is >= 56f and <= 220f)
             {
                 var ax = Math.Min(HC(k.Item1 - 2, k.Item2), HC(k.Item1 + 2, k.Item2)) - h;
                 var ay = Math.Min(HC(k.Item1, k.Item2 - 2), HC(k.Item1, k.Item2 + 2)) - h;
                 var s = Math.Max(ax, ay);
-                if (s > pScore && s > 6f) { pScore = s; pass = k; }
+                if (s > pScore && s > 36f) { pScore = s; pass = k; }
             }
         }
 
+        // SUPERLATIVE LANDMARKS — the extremes of the real elevation field.
+        _biomeTargets.Add(($"The Tallest Peak · {peakH:F0}u", peak.X, peak.Y));
         if (vista is { } vv)
             _biomeTargets.Add(($"Mountain Vista · {RegionName(worldMap, vv)}", vv.X, vv.Y));
-        else
-            _biomeTargets.Add(("The High Peaks", peak.X, peak.Y));
-        if (pass is { } pp) _biomeTargets.Add(("Mountain Pass", pp.X, pp.Y));
+        if (pass is { } pp) _biomeTargets.Add(("The Mountain Pass", pp.X, pp.Y));
+        if (valleyH < float.PositiveInfinity)
+            _biomeTargets.Add(($"The Deepest Valley · {valleyH:F0}u", valley.X, valley.Y));
+        if (hill is { } hh)
+            _biomeTargets.Add(($"The Highest Hill · {hillH:F0}u", hh.X, hh.Y));
 
         var (shore, lakeSize) = FindLargestWater(hc);
-        if (shore is { } sh && lakeSize >= 3) _biomeTargets.Add(("Great Lake", sh.X, sh.Y));
+        if (shore is { } sh && lakeSize >= 3) _biomeTargets.Add(("The Great Lake", sh.X, sh.Y));
 
         void AddRegion(string identity, string label)
         {
@@ -540,10 +582,13 @@ public partial class CombatWorld : Node3D
         var label = new Label3D
         {
             Text = def.Name,
-            FontSize = 40,
-            OutlineSize = 12,
+            FontSize = 30,
+            OutlineSize = 10,
             Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-            NoDepthTest = true,
+            // depth-tested (walls/terrain occlude it) + shown only when near — a
+            // quiet resource-style nameplate, not an always-on gamertag through walls.
+            NoDepthTest = false,
+            Visible = false,
             Position = new Vector3(0, 1.2f * size + 0.55f, 0),
         };
         node.AddChild(label);
@@ -581,10 +626,150 @@ public partial class CombatWorld : Node3D
             .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
     }
 
-    /// <summary>WorldBootstrap registers each certified chunk resource with
-    /// its visual so gathering can deplete/respawn it live.</summary>
-    public void RegisterResource(NaturalResourceRuntime node, Node3D visual) =>
+    /// <summary>WorldBootstrap registers each certified chunk resource with its
+    /// visual so gathering can deplete/respawn it live. The pick radius/centre
+    /// (stored as node meta) lets the click ray-pick match the real visual size
+    /// — so clicking a big tree's canopy registers, not just its base.</summary>
+    public void RegisterResource(NaturalResourceRuntime node, Node3D visual,
+                                 float pickRadius = 1.0f, float pickCenterY = 0.6f)
+    {
+        visual.SetMeta("pr", pickRadius);
+        visual.SetMeta("pcy", pickCenterY);
         _resources.Add((node, visual));
+    }
+
+    /// <summary>Drop every resource handle — called before the streamed window's
+    /// resource visuals are freed and re-placed, so no stale/freed node is touched.</summary>
+    public void ClearResources()
+    {
+        _resources.Clear();
+        _blockedTiles.Clear();
+        _resTarget = null;
+        if (_resIcon is not null) _resIcon.Visible = false;
+        if (_resName is not null) _resName.Visible = false;
+    }
+
+    /// <summary>Drop every streamed NPC handle before the window's "Npcs" node is
+    /// freed and re-placed — recenters happen far from any conversation, so no
+    /// active dialogue target is lost.</summary>
+    public void ClearNpcs() => _npcs.Clear();
+
+    /// <summary>Despawn every streamed enemy (before the window recenters): free the
+    /// visual nodes, unregister their hurtboxes, and clear the runtime lists IN
+    /// PLACE so the orchestrator's ActiveEnemies and the skill manager's live-enemy
+    /// view (both alias _runtimes) stay valid.</summary>
+    public void ClearStreamedEnemies()
+    {
+        foreach (var e in _enemies)
+        {
+            _hitboxes.UnregisterHurtbox(e.EntityId);
+            e.Node.QueueFree();
+        }
+        _enemies.Clear();
+        _runtimes.Clear();
+        _byId.Clear();
+    }
+
+    /// <summary>Spawn hostiles for the window centred on (cCX,cCY) — the SAME
+    /// certified spawn the origin used, now streamed so the frontier has enemies
+    /// too. Geographic danger drives tier/count; a safe zone rings the world spawn.
+    /// (Glue placement only — every combat rule the enemies then run is certified.)</summary>
+    public void StreamEnemies(int cCX, int cCY)
+    {
+        ClearStreamedEnemies();
+        if (_enemyDb is null || _enemyBiomes is null) return;
+
+        var spawned = 0;
+        for (var cy = cCY - _enemyChunkRadius; cy <= cCY + _enemyChunkRadius; cy++)
+            for (var cx = cCX - _enemyChunkRadius; cx <= cCX + _enemyChunkRadius; cx++)
+            {
+                int tier;
+                if (_enemyWorldMap?.GetChunkData(cx, cy) is { } geo)
+                {
+                    var danger = (int)geo.DangerLevel;   // Tranquil/Peaceful skip
+                    if (danger <= 2) continue;
+                    tier = danger <= 4 ? 1 : 2;
+                }
+                else
+                {
+                    var chunkType = _enemyBiomes.GetChunkType(cx, cy);
+                    if (!chunkType.Contains("dangerous") && !chunkType.Contains("rare"))
+                        continue;
+                    tier = chunkType.Contains("rare") ? 2 : 1;
+                }
+                var pool = _enemyDb.EnemiesByTier.GetValueOrDefault(tier)
+                           ?? _enemyDb.EnemiesByTier.GetValueOrDefault(1);
+                if (pool is null || pool.Count == 0) continue;
+
+                var count = _spawnRng.RandInt(1, 3);
+                for (var i = 0; i < count && spawned < 150; i++)
+                {
+                    var def = _spawnRng.Choice(pool);
+                    var ex = cx * 16 + (double)_spawnRng.RandInt(2, 13);
+                    var ey = cy * 16 + (double)_spawnRng.RandInt(2, 13);
+                    // no-spawn safe zone around the player's world spawn (item 3)
+                    var dx = ex - TerrainHeightField.SpawnX;
+                    var dy = ey - TerrainHeightField.SpawnY;
+                    if (dx * dx + dy * dy < SpawnSafeRadius * SpawnSafeRadius)
+                        continue;
+                    SpawnEnemy(def, (ex, ey), (cx, cy));
+                    spawned++;
+                }
+            }
+    }
+
+    /// <summary>Enable/disable a resource's colliders (its "rbody" StaticBody
+    /// children) — off while depleted so a chopped tree/rock leaves no wall.</summary>
+    private static void SetResourceSolid(Node3D visual, bool solid)
+    {
+        foreach (var child in visual.GetChildren())
+            if (child is StaticBody3D sb)
+                sb.CollisionLayer = solid ? 1u : 0u;
+    }
+
+    /// <summary>Show a resource's icon + name ONLY when the player is near it: the
+    /// nearest undepleted resource within range gets a floating nameplate that
+    /// fades with distance. Replaces the always-on per-resource "cards" that
+    /// cluttered the world.</summary>
+    private void UpdateResourceNameplate((double X, double Y) playerSim)
+    {
+        if (_resIcon is null || _resName is null) return;
+        const double showRange = 9.0;
+        NaturalResourceRuntime? best = null;
+        Node3D? bestVis = null;
+        var bestD = showRange;
+        foreach (var (node, vis) in _resources)
+        {
+            if (node.Depleted) continue;
+            var dx = node.Position.X - playerSim.X;
+            var dy = node.Position.Y - playerSim.Y;
+            var d = Math.Sqrt(dx * dx + dy * dy);
+            if (d < bestD) { bestD = d; best = node; bestVis = vis; }
+        }
+        if (best is null || bestVis is null)
+        {
+            _resIcon.Visible = false; _resName.Visible = false; _resTarget = null;
+            return;
+        }
+        if (bestVis != _resTarget)
+        {
+            _resTarget = bestVis;
+            var tex = IconCache.Get($"resources/{best.ResourceType}.png")
+                      ?? IconCache.Get($"resources/{best.ResourceType}_node.png");
+            _resIcon.Texture = tex;
+            if (tex is not null) _resIcon.PixelSize = 1.3f / Math.Max(1, tex.GetHeight());
+            _resName.Text = $"{Prettify(best.ResourceType)}  ·  T{best.Tier}";
+        }
+        var pr = bestVis.GetMeta("pr", 1.0f).AsSingle();
+        var basePos = bestVis.GlobalPosition + Vector3.Up * (pr * 1.7f + 1.1f);
+        _resName.Position = basePos;
+        _resIcon.Position = basePos + Vector3.Up * 1.0f;
+        var fade = (float)Math.Clamp(1.0 - (bestD - 5.0) / 4.0, 0.4, 1.0);
+        _resIcon.Visible = _resIcon.Texture is not null;
+        _resName.Visible = true;
+        _resIcon.Modulate = new Color(1, 1, 1, fade);
+        _resName.Modulate = new Color(0.85f, 1f, 0.85f, fade);
+    }
 
     /// <summary>Refresh the resource-occupied tile set (once per frame). Cheap
     /// O(resources); read O(1) by IsTileWalkable across every moving enemy.</summary>
@@ -615,7 +800,7 @@ public partial class CombatWorld : Node3D
         // Debug keys work anytime (before the menu guard)
         if (@event is InputEventKey { Pressed: true, Echo: false } dbg
             && dbg.PhysicalKeycode is Key.F1 or Key.F2 or Key.F3
-                or Key.F4 or Key.F5 or Key.F6 or Key.F7)
+                or Key.F4 or Key.F5 or Key.F6 or Key.F7 or Key.F8)
         {
             HandleDebugKey(dbg.PhysicalKeycode);
             return;
@@ -722,6 +907,15 @@ public partial class CombatWorld : Node3D
                 TeleportBiome(1);
                 break;
             case Key.F7:
+                if (_player is not null)
+                {
+                    _player.ToggleFly();
+                    _lastEvent = _player.Flying
+                        ? "DEBUG: fly ON — WASD + Space/Ctrl (hold Shift = faster); double-tap Space to toggle"
+                        : "DEBUG: fly OFF";
+                }
+                break;
+            case Key.F8:
                 if (_orch is not null)
                 {
                     _orch.DebugInfiniteDurability = !_orch.DebugInfiniteDurability;
@@ -887,7 +1081,10 @@ public partial class CombatWorld : Node3D
         foreach (var r in _resources)
         {
             if (r.Node.Depleted) continue;
-            if (RayHit(origin, dir, r.Visual.GlobalPosition, 1.0f) is { } t && t < bestT)
+            var pr = r.Visual.GetMeta("pr", 1.0f).AsSingle();
+            var pcy = r.Visual.GetMeta("pcy", 0.6f).AsSingle();
+            var rc = r.Visual.GlobalPosition + new Vector3(0, pcy, 0);
+            if (RayHit(origin, dir, rc, pr) is { } t && t < bestT)
             { bestT = t; hitRes = r; hitEnemy = null; hitNpc = null; }
         }
         foreach (var n in _npcs)
@@ -1073,6 +1270,7 @@ public partial class CombatWorld : Node3D
         // Skills/mana/buff ticks (character.py update loop)
         SkillMgr?.UpdateCooldowns(delta);
         _pc?.TickManaAndBuffs(delta);
+        UpdateResourceNameplate(playerSim);
 
         _hitboxes.UpdateHurtboxPosition("player", playerSim.X, playerSim.Y);
 
@@ -1166,10 +1364,21 @@ public partial class CombatWorld : Node3D
                 continue;
             }
 
-            // Nameplate: name + HP, whitening → red as health drops
-            var hpFrac = (float)Math.Clamp(rt.CurrentHealth / rt.MaxHealth, 0, 1);
-            e.Label.Text = $"{rt.Definition.Name}\n{rt.CurrentHealth:F0}/{rt.MaxHealth:F0}";
-            e.Label.Modulate = new Color(1f, 0.35f + 0.65f * hpFrac, 0.3f + 0.7f * hpFrac);
+            // Nameplate: name + HP, shown only when the player is near (fades with
+            // distance) and occluded by walls — no more all-map gamertags.
+            const double NameRange = 16.0;
+            var nameDist = rt.DistanceTo(playerSim);
+            if (nameDist < NameRange)
+            {
+                var hpFrac = (float)Math.Clamp(rt.CurrentHealth / rt.MaxHealth, 0, 1);
+                var fade = (float)Math.Clamp(1.0 - (nameDist - 9.0) / 7.0, 0.25, 1.0);
+                e.Label.Text = $"{rt.Definition.Name}\n{rt.CurrentHealth:F0}/{rt.MaxHealth:F0}";
+                e.Label.Modulate = new Color(1f, 0.35f + 0.65f * hpFrac,
+                                             0.3f + 0.7f * hpFrac, fade);
+                e.Label.Visible = true;
+            }
+            else if (e.Label.Visible)
+                e.Label.Visible = false;
 
             if (rt.CanAttack() && rt.DistanceTo(playerSim) <= 1.5)
                 rt.StartPhasedAttack(playerSim);
@@ -1217,17 +1426,20 @@ public partial class CombatWorld : Node3D
                     rt.Definition.Category, new Color(0.8f, 0.3f, 0.3f)));
         }
 
-        // Resource respawn ticking + depleted visuals (certified runtime)
+        // Resource respawn ticking + depleted visuals/collision (certified runtime)
         foreach (var (node, visual) in _resources)
         {
-            var wasDepleted = node.Depleted;
             node.Update(delta);
             if (node.Depleted && visual.Visible)
+            {
                 visual.Visible = false;
-            else if (!node.Depleted && wasDepleted && !visual.Visible)
-                visual.Visible = true;
+                SetResourceSolid(visual, false);   // no invisible wall once chopped
+            }
             else if (!node.Depleted && !visual.Visible)
-                visual.Visible = true;   // respawned this frame
+            {
+                visual.Visible = true;
+                SetResourceSolid(visual, true);
+            }
         }
 
         UpdateInteractionPrompt();

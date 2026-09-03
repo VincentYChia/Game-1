@@ -1,19 +1,24 @@
+using Godot;
 using Game1.Core.World;
 using Game1.Core.World.Geography;
-using Godot;
 
 namespace Game1.Godot;
 
 /// <summary>
-/// Explorable cave interiors. TerrainHeightField carves a WALKABLE grotto bowl
-/// into the (fully collidable) heightfield at every cave/cavern chunk; this
-/// builder roofs each one with a collidable stone dome that has a MOUTH you walk
-/// in through, then fills the chamber with stalagmites/stalactites, crystals,
-/// and a soft interior glow (bright + colored in crystal caverns). Deterministic
-/// from (chunk, seed). Local interiors, not a single connected underworld.
+/// Ground features — cave grottoes and quarry pits, rebuilt from scratch to sit
+/// ON the ground (never floating) and to be impossible to get stuck in.
 ///
-/// Because the floor IS the carved heightfield, the player never goes below H —
-/// so the existing collision + catastrophe floor-net keep working unchanged.
+/// The earlier dome floated because it was a roof placed ABOVE a carved bowl at a
+/// single height. This design has no roof: TerrainHeightField carves a walkable
+/// bowl (the divot / pit — the solid floor and climbable walls), and everything
+/// this builder adds is SEATED on the real terrain height at its own position, so
+/// it follows the ground exactly:
+///   • a RING OF BOULDERS around the rim (each a convex, collidable rock seated on
+///     the terrain, with an ENTRANCE GAP) frames the hollow and gives it walls you
+///     can't walk through — but it is open to the sky, so you can never be trapped.
+///   • caves add a stone ENTRANCE ARCH + glowing crystals / stalagmites; crystal
+///     caverns glow purple. Quarries add scattered ore boulders + a timber support.
+/// Deterministic from (chunk, seed). Local features, not one connected underworld.
 /// </summary>
 public static class CaveSystem
 {
@@ -30,151 +35,154 @@ public static class CaveSystem
         for (var cy = cCY - radius; cy <= cCY + radius; cy++)
             for (var cx = cCX - radius; cx <= cCX + radius; cx++)
             {
-                if (!TerrainHeightField.IsCaveChunk(cx, cy)) continue;
-                BuildGrotto(parent, map, seed, cx, cy);
-                built++;
+                if (TerrainHeightField.GrottoAt(cx, cy)) { BuildGrotto(parent, map, seed, cx, cy); built++; }
+                // Quarries: the terrain carves the pit and the resource field seeds
+                // harvestable stone/ore — no more elevated boulder stacks. (Merging
+                // them into a few large terraced pits is a terrain-redo item.)
             }
-        if (built > 0) GD.Print($"Caves in view: {built}");
+        if (built > 0) GD.Print($"Ground features in view: {built}");
     }
 
-    private static void BuildGrotto(Node3D parent, WorldMap map, long seed,
-                                    int cx, int cy)
+    // ------------------------------------------------------------- CAVES ------
+    private static void BuildGrotto(Node3D parent, WorldMap map, long seed, int cx, int cy)
     {
-        var type = map.GetChunkData(cx, cy)?.ChunkType ?? "cave";
-        var crystal = type == "crystal_cavern";
-
-        var gx = cx * ChunkSize + 8.0;   // grotto centre (tile x → world x)
-        var gz = cy * ChunkSize + 8.0;   // (tile y → world z)
-        var floorY = TerrainHeightField.H(gx, gz);   // carved chamber floor
-        var baseY = TerrainHeightField.H(
-            gx + TerrainHeightField.CaveRadius + 2, gz);   // surrounding surface
-
-        var domeR = (float)TerrainHeightField.CaveRadius + 1.5f;
-        const float apex = 4.2f;          // ceiling rises this far above the rim
+        var crystal = (map.GetChunkData(cx, cy)?.ChunkType ?? "cave") == "crystal_cavern";
+        var gx = cx * ChunkSize + 8.0;
+        var gz = cy * ChunkSize + 8.0;
+        var floorY = TerrainHeightField.H(gx, gz);
+        var R = (float)TerrainHeightField.CaveRadius;
         var mouthAng = (float)(GeoNoise.Hash2D(cx, cy, seed + 7001) * Mathf.Tau);
 
-        BuildDome(parent, new Vector3((float)gx, (float)baseY, (float)gz),
-                  domeR, apex, mouthAng, crystal);
+        var rockMat = new StandardMaterial3D
+        { AlbedoColor = crystal ? new Color(0.36f, 0.31f, 0.44f) : new Color(0.37f, 0.36f, 0.39f),
+          Roughness = 0.96f };
 
-        // interior glow so the chamber reads (bright + colored in crystal caverns)
+        // rim ring of boulders (an entrance gap faces mouthAng) — boulders -33%
+        RimRing(parent, seed, cx, cy, gx, gz, R * 1.02f, 16, mouthAng, 0.55f, rockMat, 1.3f, 2.1f);
+        // a stone entrance arch straddling the gap
+        BuildArch(parent, gx, gz, R * 1.02f, mouthAng, rockMat);
+
+        // interior glow
         parent.AddChild(new OmniLight3D
         {
             Position = new Vector3((float)gx, (float)floorY + 2.6f, (float)gz),
-            OmniRange = domeR * 2.4f,
-            LightEnergy = crystal ? 2.2f : 0.9f,
-            LightColor = crystal ? new Color(0.60f, 0.50f, 1f)
-                                 : new Color(1f, 0.82f, 0.55f),
+            OmniRange = R * 3.0f,
+            LightEnergy = crystal ? 2.2f : 1.0f,
+            LightColor = crystal ? new Color(0.60f, 0.50f, 1f) : new Color(1f, 0.82f, 0.55f),
             ShadowEnabled = false,
         });
 
-        // stalagmites / stalactites / crystals
+        // seated floor formations
         var stoneMat = new StandardMaterial3D
         { AlbedoColor = new Color(0.34f, 0.33f, 0.36f), Roughness = 0.95f };
-        float Hsh(int k) =>
-            (float)GeoNoise.Hash2D(cx * 71 + k, cy * 71 + k * 3, seed + 2200 + k);
-
-        for (var k = 0; k < 10; k++)
+        float Hsh(int k) => (float)GeoNoise.Hash2D(cx * 71 + k, cy * 71 + k * 3, seed + 2200 + k);
+        for (var k = 0; k < 11; k++)
         {
             var ang = Hsh(k) * Mathf.Tau;
-            var rr = (0.2f + Hsh(k + 40) * 0.7f) * (float)TerrainHeightField.CaveRadius;
+            var rr = (0.12f + Hsh(k + 40) * 0.55f) * R;
             var px = gx + Mathf.Cos(ang) * rr;
             var pz = gz + Mathf.Sin(ang) * rr;
-            var py = TerrainHeightField.H(px, pz);
-
-            if (crystal && k % 3 == 0)
-            {
-                AddCrystal(parent, new Vector3((float)px, (float)py, (float)pz),
-                           0.8f + Hsh(k + 80) * 1.4f);
-                continue;
-            }
-            // stalagmite up from the floor
-            AddCone(parent, stoneMat, new Vector3((float)px, (float)py, (float)pz),
-                    0.45f + Hsh(k + 160) * 0.4f, 0.8f + Hsh(k + 120) * 1.8f, false);
-            // stalactite down from the dome ceiling above the same spot
-            var a = Mathf.Acos(Mathf.Clamp(rr / domeR, 0f, 1f));
-            var ceilY = baseY + apex * Mathf.Sin(a);
-            AddCone(parent, stoneMat, new Vector3((float)px, (float)ceilY, (float)pz),
-                    0.30f + Hsh(k + 200) * 0.3f, 0.6f + Hsh(k + 240) * 1.2f, true);
+            var at = new Vector3((float)px, TerrainHeightField.H(px, pz), (float)pz);
+            if (crystal && k % 2 == 0) AddCrystal(parent, at, 0.9f + Hsh(k + 80) * 1.5f);
+            else AddStalagmite(parent, stoneMat, at, 0.4f + Hsh(k + 160) * 0.45f, 0.9f + Hsh(k + 120) * 1.9f);
         }
     }
 
-    /// <summary>A squashed stone dome (ceiling) over the grotto with a doorway
-    /// gap around the mouth direction. Two-sided (seen inside &amp; out) with a
-    /// trimesh collider so it genuinely encloses the chamber.</summary>
-    private static void BuildDome(Node3D parent, Vector3 center, float domeR,
-                                  float apex, float mouthAng, bool crystal)
+    // ------------------------------------------------------------ helpers -----
+    /// <summary>A ring of seated boulders around a rim, leaving an entrance gap.</summary>
+    private static void RimRing(Node3D parent, long seed, int cx, int cy,
+                                double gx, double gz, float R, int count, float mouthAng,
+                                float mouthHalf, StandardMaterial3D mat, float scaleMin,
+                                float scaleMax)
     {
-        const int rings = 6;
-        const int seg = 22;
-        var st = new SurfaceTool();
-        st.Begin(Mesh.PrimitiveType.Triangles);
-
-        Vector3 V(int j, int k)
+        for (var k = 0; k < count; k++)
         {
-            var a = j / (float)rings * (Mathf.Pi / 2f);
-            var radius = domeR * Mathf.Cos(a);
-            var hy = apex * Mathf.Sin(a);
-            var th = k / (float)seg * Mathf.Tau;
-            return center + new Vector3(Mathf.Cos(th) * radius, hy, Mathf.Sin(th) * radius);
+            var th = k / (float)count * Mathf.Tau;
+            if (Mathf.Abs(Mathf.AngleDifference(th, mouthAng)) < mouthHalf) continue;
+            var px = gx + Mathf.Cos(th) * R;
+            var pz = gz + Mathf.Sin(th) * R;
+            var at = new Vector3((float)px, TerrainHeightField.H(px, pz), (float)pz);
+            var t = (float)GeoNoise.Hash2D(cx * 97 + k, cy * 97 + k * 7, seed + 900 + k);
+            Boulder(parent, at, Mathf.Lerp(scaleMin, scaleMax, t), seed + 500 + k, cx + k * 3, cy + k, mat);
         }
+    }
 
-        for (var j = 0; j < rings; j++)
-            for (var k = 0; k < seg; k++)
-            {
-                var th = k / (float)seg * Mathf.Tau;
-                // leave a doorway in the lower wall around the mouth direction
-                if (j < 3 && Mathf.Abs(Mathf.AngleDifference(th, mouthAng)) < 0.5f)
-                    continue;
-                var v00 = V(j, k);
-                var v01 = V(j, k + 1);
-                var v10 = V(j + 1, k);
-                var v11 = V(j + 1, k + 1);
-                st.AddVertex(v00); st.AddVertex(v10); st.AddVertex(v11);
-                st.AddVertex(v00); st.AddVertex(v11); st.AddVertex(v01);
-            }
-
-        st.GenerateNormals();
-        var mesh = st.Commit();
-
-        var mi = new MeshInstance3D
-        {
-            Mesh = mesh,
-            MaterialOverride = new StandardMaterial3D
-            {
-                AlbedoColor = crystal ? new Color(0.30f, 0.26f, 0.36f)
-                                      : new Color(0.30f, 0.29f, 0.31f),
-                Roughness = 0.97f,
-                CullMode = BaseMaterial3D.CullModeEnum.Disabled,
-            },
-        };
-        parent.AddChild(mi);
-
+    /// <summary>A convex, collidable boulder seated so it half-rests in the ground.</summary>
+    private static void Boulder(Node3D parent, Vector3 at, float scale, long seed,
+                                int hx, int hy, StandardMaterial3D mat)
+    {
+        var node = new Node3D { Position = at };
         var body = new StaticBody3D();
-        body.AddChild(new CollisionShape3D { Shape = mesh.CreateTrimeshShape() });
-        mi.AddChild(body);
+        var lumps = 2 + (int)(GeoNoise.Hash2D(hx, hy, seed) * 2.99);
+        for (var i = 0; i < lumps; i++)
+        {
+            var a = (float)GeoNoise.Hash2D(hx + i * 7, hy, seed + 11 + i);
+            var b = (float)GeoNoise.Hash2D(hx, hy + i * 7, seed + 13 + i);
+            var rr = (0.75f + (float)GeoNoise.Hash2D(hx + i, hy + i, seed + 17 + i) * 0.7f) * scale;
+            var off = new Vector3((a - 0.5f) * 1.1f * scale, rr * 0.35f, (b - 0.5f) * 1.1f * scale);
+            node.AddChild(new MeshInstance3D
+            {
+                Mesh = new SphereMesh { Radius = rr, Height = rr * 1.5f, RadialSegments = 6, Rings = 4 },
+                MaterialOverride = mat,
+                Position = off,
+                Scale = new Vector3(1.2f, 0.82f, 1.1f),
+                RotationDegrees = new Vector3((a - 0.5f) * 26f, b * 180f, (b - 0.5f) * 26f),
+            });
+            body.AddChild(new CollisionShape3D
+            { Shape = new SphereShape3D { Radius = rr * 0.85f }, Position = off });
+        }
+        node.AddChild(body);
+        parent.AddChild(node);
     }
 
-    /// <summary>A stone spike — stalagmite (up from floor) or, inverted,
-    /// a stalactite (down from ceiling).</summary>
-    private static void AddCone(Node3D parent, Material mat, Vector3 anchor,
-                                float radius, float height, bool inverted)
+    /// <summary>A stone entrance arch (two collidable pillars + a lintel overhead)
+    /// straddling the rim gap, each piece seated on the terrain.</summary>
+    private static void BuildArch(Node3D parent, double gx, double gz, float R,
+                                  float ang, StandardMaterial3D mat)
     {
+        var dir = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang));
+        var perp = new Vector2(-dir.Y, dir.X);
+        const float halfSpan = 2.4f, pillarH = 4.2f;
+
+        Vector3 Pillar(float s)
+        {
+            var px = gx + dir.X * R + perp.X * s;
+            var pz = gz + dir.Y * R + perp.Y * s;
+            var gy = TerrainHeightField.H(px, pz);
+            var pos = new Vector3((float)px, gy + pillarH * 0.5f - 0.4f, (float)pz);
+            var size = new Vector3(0.9f, pillarH, 0.9f);
+            parent.AddChild(new MeshInstance3D { Mesh = new BoxMesh { Size = size }, MaterialOverride = mat, Position = pos });
+            var body = new StaticBody3D { Position = pos };
+            body.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = size } });
+            parent.AddChild(body);
+            return new Vector3((float)px, gy, (float)pz);
+        }
+        var a = Pillar(halfSpan);
+        var b = Pillar(-halfSpan);
+        // lintel across the top (visual — overhead, so no collider to clip into)
+        var mid = (a + b) * 0.5f;
+        var topY = Mathf.Max(a.Y, b.Y) + pillarH - 0.4f;
         parent.AddChild(new MeshInstance3D
         {
-            Mesh = new CylinderMesh
-            {
-                TopRadius = inverted ? radius : 0.02f,
-                BottomRadius = inverted ? 0.02f : radius,
-                Height = height,
-                RadialSegments = 6,
-            },
+            Mesh = new BoxMesh { Size = new Vector3(halfSpan * 2f + 1.2f, 1.0f, 1.1f) },
             MaterialOverride = mat,
-            Position = anchor + new Vector3(0,
-                inverted ? -height * 0.5f : height * 0.5f, 0),
+            Position = new Vector3(mid.X, topY, mid.Z),
+            RotationDegrees = new Vector3(0, Mathf.RadToDeg(Mathf.Atan2(-(b.Z - a.Z), b.X - a.X)), 0),
         });
     }
 
-    /// <summary>A small glowing crystal cluster (emissive), for crystal caverns.</summary>
+    private static void AddStalagmite(Node3D parent, Material mat, Vector3 at,
+                                      float radius, float height)
+    {
+        parent.AddChild(new MeshInstance3D
+        {
+            Mesh = new CylinderMesh { TopRadius = 0.02f, BottomRadius = radius, Height = height, RadialSegments = 6 },
+            MaterialOverride = mat,
+            Position = at + new Vector3(0, height * 0.5f, 0),
+        });
+    }
+
+    /// <summary>A glowing crystal cluster with a convex collider on the tall spire.</summary>
     private static void AddCrystal(Node3D parent, Vector3 ground, float sc)
     {
         var mat = new StandardMaterial3D
@@ -188,21 +196,21 @@ public static class CaveSystem
         };
         for (var i = 0; i < 3; i++)
         {
-            var h = (1.2f + i * 0.4f) * sc;
+            var h = (1.3f + i * 0.5f) * sc;
+            var off = new Vector3((i - 1) * 0.35f * sc, h * 0.5f, (i % 2) * 0.3f * sc);
             parent.AddChild(new MeshInstance3D
             {
-                Mesh = new CylinderMesh
-                {
-                    TopRadius = 0.001f,
-                    BottomRadius = 0.18f * sc,
-                    Height = h,
-                    RadialSegments = 5,
-                },
+                Mesh = new CylinderMesh { TopRadius = 0.001f, BottomRadius = 0.19f * sc, Height = h, RadialSegments = 5 },
                 MaterialOverride = mat,
-                Position = ground + new Vector3((i - 1) * 0.35f * sc, h * 0.5f,
-                                                (i % 2) * 0.3f * sc),
+                Position = ground + off,
                 RotationDegrees = new Vector3((i - 1) * 8f, 0, (i - 1) * 6f),
             });
+            if (i == 1)
+            {
+                var body = new StaticBody3D { Position = ground + new Vector3(0, h * 0.5f, 0) };
+                body.AddChild(new CollisionShape3D { Shape = new CylinderShape3D { Radius = 0.22f * sc, Height = h } });
+                parent.AddChild(body);
+            }
         }
     }
 }

@@ -16,10 +16,20 @@ public partial class PlayerController : CharacterBody3D
     /// <summary>P11: jump velocity (~2.2-tile apex under gravity 24).</summary>
     [Export] public float JumpVelocity { get; set; } = 10.0f;
 
+    /// <summary>Dev fly (F7 or double-tap Space): noclip free-flight to survey the
+    /// megastructures. WASD flies along the look direction, Space/Ctrl = up/down,
+    /// Shift = much faster; no gravity, no collision.</summary>
+    [Export] public float FlySpeed { get; set; } = 28f;
+    private bool _flying;
+    private bool _spaceWasDown;
+    private float _doubleTapTimer;   // >0 → inside the double-tap-Space window
+    public bool Flying => _flying;
+    public void ToggleFly() { _flying = !_flying; Velocity = Vector3.Zero; }
+
     /// <summary>P11 fall damage: called with the fall distance in tiles when
     /// landing from higher than the safe threshold.</summary>
     public Action<float>? OnHardLanding;
-    public const float SafeFallTiles = 3.0f;
+    public const float SafeFallTiles = 9.0f;   // 3x more forgiving before any damage
 
     private bool _wasAirborne;
     private float _peakY;
@@ -42,6 +52,41 @@ public partial class PlayerController : CharacterBody3D
         // otherwise both advance dialogue AND launch a jump). Gravity still
         // runs so the body settles rather than floats.
         var menuOpen = UiHub.ScreenOpen;
+        var camera = GetViewport().GetCamera3D();
+
+        // double-tap Space toggles fly (creative-style), on the ground or in the air.
+        var spaceDown = !menuOpen && Input.IsPhysicalKeyPressed(Key.Space);
+        if (spaceDown && !_spaceWasDown)
+        {
+            if (_doubleTapTimer > 0f) { ToggleFly(); _doubleTapTimer = 0f; }
+            else _doubleTapTimer = 0.28f;
+        }
+        _spaceWasDown = spaceDown;
+        if (_doubleTapTimer > 0f) _doubleTapTimer -= (float)delta;
+
+        // --- DEV FLY: noclip free-flight (no gravity, passes through terrain) ---
+        if (_flying)
+        {
+            var fdir = Vector3.Zero;
+            if (!menuOpen && camera is not null)
+            {
+                var f = -camera.GlobalTransform.Basis.Z;   // full 3-D look direction
+                var r = camera.GlobalTransform.Basis.X;
+                if (Input.IsKeyPressed(Key.W)) fdir += f;
+                if (Input.IsKeyPressed(Key.S)) fdir -= f;
+                if (Input.IsKeyPressed(Key.D)) fdir += r;
+                if (Input.IsKeyPressed(Key.A)) fdir -= r;
+                if (spaceDown) fdir += Vector3.Up;
+                if (Input.IsKeyPressed(Key.Ctrl)) fdir -= Vector3.Up;
+            }
+            if (fdir.LengthSquared() > 1e-4f) fdir = fdir.Normalized();
+            var fspeed = FlySpeed * (Input.IsKeyPressed(Key.Shift) ? SprintMultiplier * 2f : 1f);
+            Position += fdir * fspeed * (float)delta;
+            Velocity = Vector3.Zero;
+            _wasAirborne = false;       // exiting fly never triggers fall damage
+            _suppressLanding = true;
+            return;
+        }
 
         var input = Vector2.Zero;
         if (!menuOpen)
@@ -54,7 +99,6 @@ public partial class PlayerController : CharacterBody3D
         input = input.Normalized();
 
         // Camera-relative: forward = camera's flattened -Z
-        var camera = GetViewport().GetCamera3D();
         Vector3 direction;
         if (camera is not null)
         {

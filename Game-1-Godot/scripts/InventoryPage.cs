@@ -29,10 +29,11 @@ public partial class InventoryPage : MenuPage
 
     private readonly CombatWorld _combat;
     private readonly List<(TextureRect Icon, Label Qty, Button Btn)> _slots = new();
-    private readonly Dictionary<string, (TextureRect Icon, Label Sub)> _equip = new();
+    private readonly Dictionary<string, (TextureRect Icon, Label Sub, Button Btn)> _equip = new();
     private Label _dragLabel = null!;
     private Label _status = null!;
     private Label _summary = null!;
+    private Button _tipToggle = null!;
     private double _refresh;
 
     public InventoryPage(CombatWorld combat) => _combat = combat;
@@ -100,6 +101,11 @@ public partial class InventoryPage : MenuPage
         hint.Modulate = new Color(1, 1, 1, 0.55f);
         invBox.AddChild(hint);
 
+        _tipToggle = UiTheme.TextButton(TipToggleText(), 14);
+        _tipToggle.FocusMode = Control.FocusModeEnum.None;
+        _tipToggle.Pressed += () => { UiPrefs.AdvancedTooltips = !UiPrefs.AdvancedTooltips; _tipToggle.Text = TipToggleText(); Refresh(); };
+        invBox.AddChild(_tipToggle);
+
         // -- right: paper-doll equipment --
         var eqBox = new VBoxContainer { CustomMinimumSize = new Vector2(360, 0) };
         eqBox.AddThemeConstantOverride("separation", 10);
@@ -124,7 +130,7 @@ public partial class InventoryPage : MenuPage
             btn.Pressed += () => OnUnequip(captured);
             cell.AddChild(btn);
             eqGrid.AddChild(cell);
-            _equip[slot] = (icon, sub);
+            _equip[slot] = (icon, sub, btn);
         }
 
         _summary = new Label();
@@ -229,11 +235,15 @@ public partial class InventoryPage : MenuPage
             {
                 icon.Texture = null;
                 qty.Text = "";
+                btn.TooltipText = "";
                 btn.AddThemeStyleboxOverride("normal",
                     UiTheme.Box(UiTheme.SlotEmpty, UiTheme.Border, 1, 6));
                 continue;
             }
             var rarity = UiTheme.Rarity.GetValueOrDefault(stack.Rarity, UiTheme.Rarity["common"]);
+            // a crafted item's border reads its QUALITY (Masterwork/Legendary…), else its rarity
+            var quality = stack.EquipmentData is { } eqi ? ItemTooltip.Quality(eqi) : null;
+            var border = quality is not null ? CraftFx.QualityColorByName(quality) : rarity;
             icon.Texture = IconCache.Get(IconFor(stack));
             qty.Text = stack.EquipmentData is { } de
                 ? $"{de.DurabilityCurrent / Math.Max(1, de.DurabilityMax):P0}"
@@ -242,24 +252,29 @@ public partial class InventoryPage : MenuPage
             // no icon → show a short name so it's not blank
             btn.Text = icon.Texture is null ? Short(DisplayName(stack)) : "";
             btn.AddThemeFontSizeOverride("font_size", 12);
-            btn.AddThemeColorOverride("font_color", rarity);
+            btn.AddThemeColorOverride("font_color", border);
+            btn.TooltipText = ItemTooltip.ForStack(stack, _combat.MaterialDb);
             btn.AddThemeStyleboxOverride("normal",
-                UiTheme.Box(UiTheme.SlotBg, rarity, 2, 6));
+                UiTheme.Box(UiTheme.SlotBg, border, quality is not null ? 3 : 2, 6));
         }
 
-        foreach (var (slot, (icon, sub)) in _equip)
+        foreach (var (slot, (icon, sub, btn)) in _equip)
         {
             var item = pc.Equipment.Slots.GetValueOrDefault(slot);
             icon.Texture = item is null ? null : IconCache.Get(item.IconPath);
             sub.Text = item is null ? ""
                 : icon.Texture is null ? Short(item.Name)
                 : $"{item.DurabilityCurrent:F0}/{item.DurabilityMax}";
+            btn.TooltipText = item is null ? "" : ItemTooltip.ForEquipment(item);
         }
 
         _summary.Text = $"HP {pc.Health:F0}/{pc.MaxHealthValue:F0}      "
                         + $"MP {pc.Mana:F0}/{pc.MaxMana:F0}\n"
                         + $"Level {pc.Leveling.Level}   ·   {pc.Leveling.CurrentExp} exp";
     }
+
+    private static string TipToggleText() =>
+        $"Detailed tooltips: {(UiPrefs.AdvancedTooltips ? "ON" : "OFF")}   (hover any item)";
 
     private static string Short(string name) =>
         name.Length <= 12 ? name : name[..11] + "…";
