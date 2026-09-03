@@ -309,12 +309,12 @@ class LLMExecutionHub:
 def _render_parent_summaries(parent: Dict[str, str]) -> str:
     """Format ``parent_summaries`` dict as a short readable block.
 
-    Empty dict renders as empty string (the prompt template handles
-    the conditional). Each entry on its own line keyed
-    ``[layer:address] summary``.
+    Empty dict renders as ``(none)`` so the model reads a genuinely-empty
+    section rather than a blank line (audit Mn1; matches WNS convention).
+    Each entry on its own line keyed ``[layer:address] summary``.
     """
     if not parent:
-        return ""
+        return "(none)"
     lines = [f"[{key}] {summary}" for key, summary in parent.items()]
     return "\n".join(lines)
 
@@ -322,12 +322,11 @@ def _render_parent_summaries(parent: Dict[str, str]) -> str:
 def _render_wms_brief(rows: List[Any]) -> str:
     """Format a small block of recent WMS L2 events for the hub prompt.
 
-    Empty rows → empty string so the template renders cleanly when no
-    delta data is available (Phase 0 G02 caller; Phase 1 bridge wires
-    actual data).
+    Empty rows → ``(no recent WMS events)`` so the model reads a
+    genuinely-empty section rather than a blank line (audit Mn1).
     """
     if not rows:
-        return ""
+        return "(no recent WMS events)"
     lines: List[str] = []
     for r in rows[:6]:  # cap at 6 to keep prompt budget bounded
         narrative = getattr(r, "narrative", "") or ""
@@ -340,11 +339,12 @@ def _render_wms_brief(rows: List[Any]) -> str:
 def _render_dialogue_brief(rows: List[Any]) -> str:
     """Format a small block of recent NPC dialogue for the hub prompt.
 
-    Empty rows → empty string. Each row renders as
-    ``- <npc_id>: <text>``.
+    Empty rows → ``(no recent dialogue)`` so the model reads a
+    genuinely-empty section rather than a blank line (audit Mn1). Each row
+    renders as ``- <npc_id>: <text>``.
     """
     if not rows:
-        return ""
+        return "(no recent dialogue)"
     lines: List[str] = []
     for r in rows[:6]:  # cap at 6
         npc_id = getattr(r, "npc_id", "?") or "?"

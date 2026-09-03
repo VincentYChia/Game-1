@@ -85,6 +85,23 @@ def _parse_json_blob(text: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def _registry_counts_summary() -> str:
+    """Compact per-tool live-row counts from the content registry, for the
+    planner's saturation/diversity reasoning (audit M2). Best-effort: the
+    registry is a singleton already used by the orchestrator, and ``counts()``
+    is documented as this exact signal. Degrades to a clear marker if the
+    registry isn't initialized — never raises into plan assembly."""
+    try:
+        from world_system.content_registry.content_registry import ContentRegistry
+        counts = ContentRegistry.get_instance().counts()
+    except Exception:
+        return "(unavailable)"
+    if not counts:
+        return "(unavailable)"
+    parts = [f"{k}={v}" for k, v in sorted(counts.items()) if v]
+    return ", ".join(parts) if parts else "(registry empty)"
+
+
 class LLMExecutionPlanner:
     """Tier 1 planner. See :mod:`world_system.wes.protocols`."""
 
@@ -240,11 +257,29 @@ class LLMExecutionPlanner:
             "bundle_narrative_context": (
                 bundle.narrative_context.firing_layer_summary
             ),
+            # C2 (audit): the planner template reads ${thread_headlines};
+            # supply it from the bundle's open threads (was unset → the literal
+            # "${thread_headlines}" reached the model on every plan).
+            "thread_headlines": (
+                "\n".join(
+                    f"- {t.headline}"
+                    for t in (bundle.narrative_context.open_threads or [])
+                    if getattr(t, "headline", "")
+                ) or "(none)"
+            ),
             "bundle_delta": (
                 f"npc_dialogue={len(bundle.delta.npc_dialogue_since_last)}, "
                 f"wms_events={len(bundle.delta.wms_events_since_last)}"
             ),
-            "registry_counts": "n/a",  # filled in by WNS in later phases
+            # M2 (audit): the planner reasons about content saturation to
+            # avoid over-generating types that already exist densely. Pull live
+            # per-tool counts from the content registry — the counts() API is
+            # documented as exactly this diversity/saturation signal. This
+            # counts WES's OWN output registry (not a canonical narrative
+            # store), so it doesn't break the "bundle is the only input"
+            # contract; design-ideal follow-up is to pre-compute it into the
+            # bundle at build time (WNS lacks a registry handle today).
+            "registry_counts": _registry_counts_summary(),
             "firing_address": bundle.delta.address,
             "prior_rerun_feedback": prior_rerun_feedback,
             # ── Phase 1 narrative propagation ────────────────────────

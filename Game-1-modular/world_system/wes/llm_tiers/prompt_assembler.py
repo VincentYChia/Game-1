@@ -197,7 +197,13 @@ class PromptAssembler:
             else:
                 system += _TASK_AWARENESS_DEFAULT
         if include_output_format:
-            schema = str(out.get("schema", "")).strip()
+            # Audit Mn2: hubs define _output.schema; the 8 executor-tool
+            # files define _output.schema_description (that key is also what
+            # Prompt Studio displays). Accept EITHER so a tool would inject a
+            # correct output-format block if this path is ever enabled for
+            # tools — without renaming the key and breaking Prompt Studio.
+            schema = str(out.get("schema") or out.get("schema_description")
+                         or "").strip()
             example = str(out.get("example", "")).strip()
             if schema or example:
                 block = "\n\n[OUTPUT FORMAT]\n"

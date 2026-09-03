@@ -5,8 +5,8 @@ Replaces the earlier per-layer-N model (5/5/8/12/15/20 placeholders in
 
     NL2 fires at locality X       when N WMS interpretations land at X.
     NL3 fires at district Y       when N NL2 fires occur within Y.
-    NL4 fires at region Z         when N NL3 fires occur within Z.
-    NL5 fires at province P       when N NL4 fires occur within P.
+    NL4 fires at province P       when N NL3 fires occur within P.
+    NL5 fires at region Z         when N NL4 fires occur within Z.
     NL6 fires at nation R         when N NL5 fires occur within R.
     NL7 fires at world W          when N NL6 fires occur within W.
 

@@ -4,7 +4,7 @@
     "tier": "wes_tool_quests",
     "purpose": "Tier 3 quests executor_tool — one ExecutorSpec to one v3 quest JSON matching quests-3.JSON shape (data/models/quests.py QuestDefinition). NEW tool domain for v4+ (not in original v4 P0-P9).",
     "ledger_refs": ["§1 wes_tool_quests fixture (new)", "§6 prompt_fragments_tool_quests"],
-    "audit_refs": ["Development-Plan/TOOL_CONTRACT_AUDIT.md §2.x (Quest v3 schema)"],
+    "audit_refs": ["archive/2026-08-doc-consolidation/TOOL_CONTRACT_AUDIT.md §2.x (Quest v3 schema)"],
     "lifecycle_note": "Quest lifecycle has TWO states. STATIC JSON (this output) is the immutable design template with PROSE reward estimates only — never concrete numbers. ARCHIVED at turn-in is a separate WMS-side record carrying duration, actual rewards, NPCs involved, tags. A future reward materializer resolves rewards_prose to concrete values at quest-accept time. Hand-authored tutorial quests bypass this and carry concrete rewards directly; this tool does NOT emit those.",
     "plumbing_note": "TOOL_QUESTS now in content_registry VALID_TOOLS with reg_quests table + xref extractor. No archive-side schema yet (lives in future WMS work)."
   },

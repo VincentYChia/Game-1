@@ -3,8 +3,8 @@
     "version": "1.0",
     "purpose": "Designer-tunable rules for the WNS BehaviorInterpreter (Phase 2, 2026-06-03). Decides which WMS threshold crossings warrant a WES dispatch and which are journal-only or suppressed.",
     "audit_refs": [
-      "Development-Plan/feature-traces/11-trigger-taxonomy.md §5.4",
-      "Development-Plan/feature-traces/00-consolidation.md §2.7"
+      "archive/2026-08-doc-consolidation/feature-traces/11-trigger-taxonomy.md §5.4",
+      "archive/2026-08-doc-consolidation/feature-traces/00-consolidation.md §2.7"
     ]
   },
   "global": {

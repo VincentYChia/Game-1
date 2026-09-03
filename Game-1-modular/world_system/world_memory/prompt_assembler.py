@@ -19,6 +19,8 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from world_system.world_memory.tag_library import render_assignable_tag_allowlist
+
 
 # ── Paths ───────────────────────────────────────────────────────────
 
@@ -378,6 +380,25 @@ class PromptAssembler:
 
         return {"missing": missing, "covered": covered}
 
+    # ── Tag allow-list injection ────────────────────────────────────
+
+    def _inject_tag_allowlist(self, output_text: str, layer: int) -> str:
+        """Replace the ``{{TAG_ALLOWLIST}}`` token in a summarizer _output
+        fragment with the layer's interpretive-tag allow-list, generated
+        live from the tag library.
+
+        This is the fix for injected-vs-enforced tag drift: the list the
+        LLM is told it may assign is now GENERATED from the same
+        ``tag_library`` that ``wms_ai.validate_tag`` checks returned tags
+        against, so the two can never disagree. Fragments that predate the
+        token (or intentionally omit it) pass through unchanged.
+        """
+        token = "{{TAG_ALLOWLIST}}"
+        if token not in output_text:
+            return output_text
+        return output_text.replace(token,
+                                   render_assignable_tag_allowlist(layer))
+
     # ── Layer 3 Assembly ───────────────────────────────────────────
 
     def get_l3_fragment(self, key: str) -> str:
@@ -426,8 +447,9 @@ class PromptAssembler:
         if example_frag:
             selected.append((example_key, example_frag))
 
-        # L3 output instruction
-        output_text = self.get_l3_fragment("_l3_output")
+        # L3 output instruction (tag allow-list injected from tag_library)
+        output_text = self._inject_tag_allowlist(
+            self.get_l3_fragment("_l3_output"), 3)
 
         # Build system prompt
         system_parts = [text for _, text in selected]
@@ -549,8 +571,9 @@ class PromptAssembler:
         if example_frag:
             selected.append((example_key, example_frag))
 
-        # L4 output instruction
-        output_text = self.get_l4_fragment("_l4_output")
+        # L4 output instruction (tag allow-list injected from tag_library)
+        output_text = self._inject_tag_allowlist(
+            self.get_l4_fragment("_l4_output"), 4)
 
         # Build system prompt
         system_parts = [text for _, text in selected]
@@ -615,8 +638,9 @@ class PromptAssembler:
         if example_frag:
             selected.append((example_key, example_frag))
 
-        # L5 output instruction
-        output_text = self.get_l5_fragment("_l5_output")
+        # L5 output instruction (tag allow-list injected from tag_library)
+        output_text = self._inject_tag_allowlist(
+            self.get_l5_fragment("_l5_output"), 5)
 
         # Build system prompt
         system_parts = [text for _, text in selected]
@@ -683,8 +707,9 @@ class PromptAssembler:
         if example_frag:
             selected.append((example_key, example_frag))
 
-        # L6 output instruction
-        output_text = self.get_l6_fragment("_l6_output")
+        # L6 output instruction (tag allow-list injected from tag_library)
+        output_text = self._inject_tag_allowlist(
+            self.get_l6_fragment("_l6_output"), 6)
 
         # Build system prompt
         system_parts = [text for _, text in selected]
@@ -750,8 +775,9 @@ class PromptAssembler:
         if example_frag:
             selected.append((example_key, example_frag))
 
-        # L7 output instruction
-        output_text = self.get_l7_fragment("_l7_output")
+        # L7 output instruction (tag allow-list injected from tag_library)
+        output_text = self._inject_tag_allowlist(
+            self.get_l7_fragment("_l7_output"), 7)
 
         # Build system prompt
         system_parts = [text for _, text in selected]

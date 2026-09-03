@@ -34,9 +34,11 @@ DESCRIPTION_CHAR_CAP: int = 220
 MAX_TAGS_PER_TIER: int = 5
 
 # Order tiers should appear in the rendered descriptor (innermost-first).
-# Mirrors WMS RegionLevel hierarchy.
+# Mirrors the WMS RegionLevel hierarchy / geographic_registry: a region
+# CONTAINS provinces (province is the finer tier), so province precedes
+# region in the innermost-first order.
 TIER_ORDER: Tuple[str, ...] = (
-    "locality", "district", "region", "province", "nation", "world",
+    "locality", "district", "province", "region", "nation", "world",
 )
 
 

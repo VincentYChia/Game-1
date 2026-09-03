@@ -29,9 +29,11 @@ from world_system.wns.affinity_shift_parser import AffinityShift
 TARGET_PREFIX_FACTION = "faction:"
 TARGET_PREFIX_NPC = "npc:"
 
-# Recognized scope tier prefixes (mirrors WMS RegionLevel).
+# Recognized scope tier prefixes (mirrors WMS RegionLevel: region contains
+# provinces, so the fine→coarse order is province before region). Used for
+# membership only; order is cosmetic here but kept consistent with the map.
 KNOWN_SCOPE_TIERS = (
-    "locality", "district", "region", "province", "nation", "world",
+    "locality", "district", "province", "region", "nation", "world",
 )
 
 # Per-shift magnitude cap. FactionSystem clamps the resulting VALUE to

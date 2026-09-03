@@ -331,12 +331,55 @@ class NLWeaver:
             if isinstance(affinity_tool, str) and affinity_tool:
                 parts.append(affinity_tool)
 
-        # 7. Output schema.
+        # 7. Output schema. The {{TAG_ALLOWLIST}} token (if present) is
+        # replaced with the FULL narrative content-tag vocabulary generated
+        # live from the tag library — so the model always sees the complete
+        # allow-list, not just the tags that happened to fire this run.
         output = self._prompt_fragments.get("_output")
         if isinstance(output, str) and output:
-            parts.append(output)
+            parts.append(self._inject_tag_allowlist(output))
 
         return "\n\n".join(p for p in parts if p)
+
+    def _validate_content_tags(self, content_tags: List[str]) -> List[str]:
+        """Drop LLM-invented content tags — the WNS enforcement that mirrors
+        the WMS ``validate_tag`` drop-loop (audit finding C1).
+
+        Address tags are already partitioned out before this runs. A tag is
+        KEPT if it is valid in the WNS narrative taxonomy at this layer OR is
+        any known WMS tag — WNS legitimately reuses WMS tags (``tier:``,
+        ``domain:``, ``species:`` …) by reference, so those must survive. Only
+        ``category:value`` pairs in NEITHER taxonomy (genuinely invented) are
+        dropped, so they never pollute the narrative store or the thread
+        match/search index (``match_or_mint``).
+        """
+        from world_system.world_memory.tag_library import (
+            validate_tag as _wms_validate,
+        )
+        kept: List[str] = []
+        for tag in content_tags:
+            # WMS check uses a high layer = "is this a known WMS tag at all",
+            # independent of WMS per-layer unlock (WNS reuse has no WMS-layer
+            # semantics).
+            if (self._tag_library.validate_tag(tag, self._layer)
+                    or _wms_validate(tag, 7)):
+                kept.append(tag)
+            else:
+                print(f"[NLWeaver] L{self._layer} dropping invented content "
+                      f"tag {tag!r} (in neither WNS nor WMS taxonomy)")
+        return kept
+
+    def _inject_tag_allowlist(self, text: str) -> str:
+        """Replace the ``{{TAG_ALLOWLIST}}`` token with this layer's full
+        narrative content-tag allow-list, generated from the tag library.
+        Mirrors the WMS prompt_assembler fix so the injected vocabulary can
+        never drift from the taxonomy. Fragments without the token pass
+        through unchanged."""
+        token = "{{TAG_ALLOWLIST}}"
+        if token not in text:
+            return text
+        return text.replace(
+            token, self._tag_library.render_content_tag_allowlist(self._layer))
 
     @staticmethod
     def _render_threads(threads: List[ThreadFragment]) -> str:
@@ -469,6 +512,8 @@ class NLWeaver:
                 "${wms_context}",
                 wms_brief if wms_brief else "(no recent WMS events)",
             )
+            # M1 cascade-down: world's current dominant currents (from NL7).
+            .replace("${world_framing}", weaver_ctx.world_dominant or "(none)")
             # Legacy variables (still supported for unrevised prompts)
             .replace("${lower_narrative}", lower_narrative)
             .replace("${parent_narrative}", parent_narrative_legacy)
@@ -525,6 +570,7 @@ class NLWeaver:
             address=address,
             parent_address=parent_address or None,
             grandparent_address=grandparent_address or None,
+            geo_registry=self._geographic_registry,  # C3: child-address lower context
         )
 
         # Override self_active_threads with explicit legacy threads_in_scope
@@ -651,6 +697,26 @@ class NLWeaver:
         _, content_tags = self._tag_library.partition_address_and_content(
             [str(t) for t in raw_tags]
         )
+        content_tags = self._validate_content_tags(content_tags)  # C1
+
+        # M1: NL7 (world) emits the world's current shape — dominant_arcs /
+        # dominant_regions / dominant_factions + a world severity. These were
+        # parsed then DISCARDED. Persist them on the world row so the state is
+        # retained + queryable (WorldNarrativeSystem.get_world_state()). The
+        # ongoing world continuity itself already flows through the NL7
+        # narrative prose (read back as self-context on the next firing); this
+        # closes the structured-data loss.
+        world_state = None
+        if self._layer == 7:
+            def _slist(key: str) -> List[str]:
+                return [str(x) for x in (parsed.get(key) or []) if str(x).strip()][:6]
+            world_state = {
+                "dominant_arcs": _slist("dominant_arcs"),
+                "dominant_regions": _slist("dominant_regions"),
+                "dominant_factions": _slist("dominant_factions"),
+                "severity": (str(parsed.get("severity", "")).strip().lower()
+                             or "minor"),
+            }
 
         row = NarrativeRow(
             id=str(uuid.uuid4()),
@@ -668,6 +734,7 @@ class NLWeaver:
                     {"purpose": c.purpose, "body": c.body} for c in wes_calls
                 ],
                 "raw_response": text,
+                **({"world_state": world_state} if world_state else {}),
             },
         )
         self._store.insert_row(row)
@@ -862,6 +929,7 @@ class NLWeaver:
             _, content_tags = self._tag_library.partition_address_and_content(
                 [str(x) for x in (t.get("content_tags") or [])]
             )
+            content_tags = self._validate_content_tags(content_tags)  # C1
             tid = match_or_mint(
                 new_address=address,
                 new_content_tags=content_tags,

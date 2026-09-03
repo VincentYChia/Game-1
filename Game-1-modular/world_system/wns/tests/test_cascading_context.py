@@ -57,6 +57,28 @@ def _make_store() -> NarrativeStore:
     return NarrativeStore(":memory:")
 
 
+# ── Fake geographic registry for C3 child-aggregation tests ──────────
+
+class _FakeLevel:
+    def __init__(self, value: str):
+        self.value = value
+
+
+class _FakeRegion:
+    def __init__(self, region_id: str, level_value: str):
+        self.region_id = region_id
+        self.level = _FakeLevel(level_value)
+
+
+class _FakeRegistry:
+    """Minimal geographic registry: region_id -> [child Region-likes]."""
+    def __init__(self, children):
+        self._children = children
+
+    def get_children(self, region_id):
+        return self._children.get(region_id, [])
+
+
 class TestExtractActiveThreads(unittest.TestCase):
     def test_empty_input(self) -> None:
         self.assertEqual(extract_active_threads([]), [])
@@ -206,6 +228,79 @@ class TestBuildWeaverContext(unittest.TestCase):
         # layer 4's lower_fading = layer 2 at same address. But lower_fading
         # path is layer-2 narrative truncated.
         self.assertLess(len(ctx.lower_fading_narrative), len(long_narrative))
+
+
+class TestC3ChildAggregation(unittest.TestCase):
+    """Audit C3: NL3+ must gather lower-layer context from CHILD addresses."""
+
+    def _seed_two_localities(self, store):
+        ta = _frag("f1", 2, "locality:loc_a", "Watch short", thread_id="t_a", created_at=10.0)
+        tb = _frag("f2", 2, "locality:loc_b", "Apprentices leaving", thread_id="t_b", created_at=11.0)
+        store.insert_row(_row(2, "locality:loc_a", "The watch is short at loc_a.", [ta], 10.0))
+        store.insert_row(_row(2, "locality:loc_b", "Apprentices leaving loc_b.", [tb], 11.0))
+
+    def test_without_registry_lower_is_empty(self):
+        # Reproduces the C3 break: exact-address read at the parent misses.
+        store = _make_store()
+        self._seed_two_localities(store)
+        ctx = build_weaver_context(store, layer=3, address="district:district_1")
+        self.assertEqual(ctx.lower_primary_narrative, "")
+        self.assertEqual(ctx.lower_primary_threads, [])
+
+    def test_with_registry_lower_aggregates_from_children(self):
+        store = _make_store()
+        self._seed_two_localities(store)
+        reg = _FakeRegistry({"district_1": [
+            _FakeRegion("loc_a", "locality"), _FakeRegion("loc_b", "locality")]})
+        ctx = build_weaver_context(
+            store, layer=3, address="district:district_1", geo_registry=reg)
+        # Both child localities' stories are present.
+        self.assertIn("loc_a", ctx.lower_primary_narrative)
+        self.assertIn("loc_b", ctx.lower_primary_narrative)
+        # Real child thread_ids reach the parent → parent_thread_id promotion works.
+        self.assertEqual({t.thread_id for t in ctx.lower_primary_threads},
+                         {"t_a", "t_b"})
+
+    def test_nl2_unchanged_reads_same_address(self):
+        # NL2's lower (NL1) sits at the SAME locality — must stay a direct read.
+        store = _make_store()
+        store.insert_row(_row(1, "locality:loc_a", "An NL1 mention.", [], 5.0))
+        reg = _FakeRegistry({})  # localities have no children
+        ctx = build_weaver_context(
+            store, layer=2, address="locality:loc_a", geo_registry=reg)
+        self.assertEqual(ctx.lower_primary_narrative, "An NL1 mention.")
+
+
+class TestM1WorldCascadeDown(unittest.TestCase):
+    """Audit M1: NL7 world currents cascade DOWN to frame lower firings."""
+
+    def _seed_world(self, store):
+        row = _row(7, "world:world_0", "The age turns.", [], 20.0)
+        row.payload["world_state"] = {
+            "dominant_arcs": ["age_of_copper"],
+            "dominant_regions": ["region_iron"],
+            "dominant_factions": ["guild_smiths"],
+            "severity": "significant",
+        }
+        store.insert_row(row)
+
+    def test_world_dominant_frames_lower_layer(self):
+        store = _make_store()
+        self._seed_world(store)
+        ctx = build_weaver_context(store, layer=3, address="district:district_1")
+        self.assertIn("age_of_copper", ctx.world_dominant)
+        self.assertIn("significant", ctx.world_dominant)
+
+    def test_nl7_does_not_reread_own_currents(self):
+        store = _make_store()
+        self._seed_world(store)
+        ctx = build_weaver_context(store, layer=7, address="world:world_0")
+        self.assertEqual(ctx.world_dominant, "")
+
+    def test_empty_before_world_fires(self):
+        store = _make_store()
+        ctx = build_weaver_context(store, layer=3, address="district:district_1")
+        self.assertEqual(ctx.world_dominant, "")
 
 
 if __name__ == "__main__":

@@ -4,9 +4,9 @@
     "purpose": "Phase 3 designer prose drafts (2026-06-03). Starting points for the user (the designer) to refine. Per consolidation §8.3 user correction: author 14 modular blocks (6 layer-voice + 8 purpose-shape) composed at weaver runtime via tag-indexed assembly — same pattern as WMS/WNS prompt fragments. The 48-cell matrix originally proposed was flat enumeration; modularity is the right architectural move.",
     "status": "drafts only — designer must review and refine before going live",
     "ledger_refs": [
-      "Development-Plan/feature-traces/00-consolidation.md §5 D2/D5/D6",
-      "Development-Plan/feature-traces/00-consolidation.md §2.6 prose ambiguity",
-      "Development-Plan/feature-traces/00-consolidation.md §2.7 NPC manifestation"
+      "archive/2026-08-doc-consolidation/feature-traces/00-consolidation.md §5 D2/D5/D6",
+      "archive/2026-08-doc-consolidation/feature-traces/00-consolidation.md §2.6 prose ambiguity",
+      "archive/2026-08-doc-consolidation/feature-traces/00-consolidation.md §2.7 NPC manifestation"
     ]
   },
   "_authoring_notes": {

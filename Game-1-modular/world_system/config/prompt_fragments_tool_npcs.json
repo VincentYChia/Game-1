@@ -4,7 +4,7 @@
     "tier": "wes_tool_npcs",
     "purpose": "Tier 3 NPCs executor_tool — one ExecutorSpec to one NPC v3 JSON matching npcs-3.JSON shape (data/models/npcs.py NPCDefinition)",
     "ledger_refs": ["§1 wes_tool_npcs fixture (new)", "§6 prompt_fragments_tool_npcs"],
-    "audit_refs": ["Development-Plan/TOOL_CONTRACT_AUDIT.md §2.x (NPC v3 schema overhaul)"],
+    "audit_refs": ["archive/2026-08-doc-consolidation/TOOL_CONTRACT_AUDIT.md §2.x (NPC v3 schema overhaul)"],
     "schema_overhaul_note": "NPC v3 splits static JSON (this tool's output) from dynamic SQLite state (faction tables: npc_dynamic_state, npc_dialogue_log, npc_affinity). Tool output goes into static-only fields; dynamic state is initialized at NPC birth from affinity_seeds.",
     "plumbing_note": "Faction-tag namespaces (guild:, region:, etc.) are emergent — first NPC with tag X creates the faction. No faction registry to validate against. cross_ref discipline applies to home_chunk, teachableSkills, quests."
   },

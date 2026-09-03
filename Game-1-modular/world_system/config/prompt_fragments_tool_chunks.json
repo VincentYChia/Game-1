@@ -4,7 +4,7 @@
     "tier": "wes_tool_chunks",
     "purpose": "Tier 3 chunks executor_tool — one ExecutorSpec to one chunk-template JSON matching Chunk-templates-2.JSON shape. NEW tool domain for v4+ (not in original v4 shipped P0-P9).",
     "ledger_refs": ["§1 wes_tool_chunks fixture (new)", "§17 chunks generated file routing (not yet wired)"],
-    "audit_refs": ["Development-Plan/TOOL_CONTRACT_AUDIT.md §2.7"],
+    "audit_refs": ["archive/2026-08-doc-consolidation/TOOL_CONTRACT_AUDIT.md §2.7"],
     "plumbing_note": "Fixture-only registration for now. Full content_registry plumbing (xref_rules TOOL_CHUNKS, reg_chunks table, tool_registry entry) is follow-up work. Chunks tool generates new biome TEMPLATES, not specific chunk instances. Per memory chunk_evolution_future_idea.md, leave schema room for future evolution_parent_id / evolution_child_ids fields."
   },
   "_core": {

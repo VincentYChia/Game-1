@@ -529,6 +529,83 @@ def get_recreated_tags() -> Dict[str, TagCategory]:
     return {k: v for k, v in ALL_CATEGORIES.items() if v.is_recreated}
 
 
+# ── LLM-assignable classification ───────────────────────────────────
+# The summarizing LLM at Layers 3-7 does two things with tags:
+#   1. CARRIES UP content/entity tags from the input events (domain,
+#      species, element, tier, ...) — keeping and reordering them. These
+#      are facts about what happened; the LLM never invents them.
+#   2. ADDS interpretive judgment tags fresh (sentiment, trend, urgency,
+#      diplomacy, ...) — this is where its reasoning lives.
+# Only category set (2) belongs in the "you may add these tags" allow-list
+# that gets injected into the prompt. This function is the single place
+# that decides which categories are in set (2); the prompt assembler
+# generates the injected allow-list from it, and wms_ai.validate_tag
+# enforces the same tag library, so the injected list and the enforced
+# list can never drift apart again.
+
+def is_llm_assignable_category(cat: TagCategory) -> bool:
+    """True if the summarizing LLM freshly ASSIGNS this category (rather
+    than carrying it up from events or having layer code manage it).
+
+    Rule (encodes the layer design invariant):
+    - `significance` is RECREATED with fresh judgment at every layer (L2+).
+    - Every category that first unlocks at Layer 3 or above is an
+      interpretive judgment the summarizer makes. Layer 1-2 categories are
+      either content/entity facts carried from events, or address / scope /
+      biome facts managed by layer code — never freshly assigned by the LLM.
+    """
+    if cat.category_id == "significance":
+        return True
+    return cat.layer_unlocked >= 3
+
+
+def get_llm_assignable_categories_for_layer(layer: int) -> Dict[str, TagCategory]:
+    """Interpretive categories the LLM may freshly assign AT or BELOW a
+    layer. This is the exact set the summarizer prompt should enumerate as
+    its "you may add these tags" allow-list — and the exact set that
+    wms_ai.validate_tag will accept back."""
+    return {k: v for k, v in ALL_CATEGORIES.items()
+            if v.layer_unlocked <= layer and is_llm_assignable_category(v)}
+
+
+def get_new_llm_assignable_at_layer(layer: int) -> Dict[str, TagCategory]:
+    """Assignable categories that first UNLOCK exactly at a layer (the new
+    judgment tools this scope introduces, vs. those carried from below)."""
+    return {k: v for k, v in ALL_CATEGORIES.items()
+            if v.layer_unlocked == layer and is_llm_assignable_category(v)}
+
+
+def render_assignable_tag_allowlist(layer: int, indent: str = "  ") -> str:
+    """Render the interpretive-tag allow-list block for a summarizer layer,
+    generated from this library (the single source of truth the parser
+    enforces). Split into "new at this scope" and "carried from finer
+    scopes" so the model understands the hierarchy.
+
+    Values are sorted for DETERMINISTIC output — `TagCategory.values` is a
+    frozenset whose iteration order is not stable across runs, and the
+    prompt slideshow / snapshot tests require reproducible prompt text.
+    """
+    new = get_new_llm_assignable_at_layer(layer)
+    all_assignable = get_llm_assignable_categories_for_layer(layer)
+    inherited = {k: v for k, v in all_assignable.items() if k not in new}
+
+    def _fmt(cats: Dict[str, TagCategory]) -> str:
+        lines = []
+        for cid in sorted(cats):
+            cat = cats[cid]
+            vals = ", ".join(sorted(cat.values)) if cat.values else "(any value)"
+            lines.append(f"{indent}{cid}: {vals}")
+        return "\n".join(lines)
+
+    blocks = []
+    if new:
+        blocks.append("New judgment tags this scope introduces:\n" + _fmt(new))
+    if inherited:
+        blocks.append("Interpretive tags carried from finer scopes (keep "
+                      "when still relevant):\n" + _fmt(inherited))
+    return "\n".join(blocks)
+
+
 def validate_tag(tag: str, layer: int) -> bool:
     """Check if a tag string is valid at a given layer.
 

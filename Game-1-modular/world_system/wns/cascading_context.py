@@ -76,6 +76,12 @@ class WeaverContext:
     above_fading_narrative: str = ""
     above_fading_address: str = ""
 
+    # World-level currents cascading DOWN from the latest NL7 world summary
+    # (M1): the dominant arcs / regions / factions currently shaping the world,
+    # so every lower firing stays aligned with the top of the pyramid. Empty
+    # until the world layer has fired.
+    world_dominant: str = ""
+
 
 # ── Active-thread extraction ──────────────────────────────────────────
 
@@ -165,6 +171,33 @@ def get_layer_snapshot(
     return latest_narrative, active
 
 
+def render_world_dominant(store: NarrativeStore) -> str:
+    """Render the world's current dominant currents from the latest NL7 row's
+    persisted ``world_state`` (M1 cascade-down framing). Returns "" until the
+    world layer has fired or if no currents were recorded."""
+    try:
+        rows = store.query_by_layer(7, limit=1)
+    except Exception:
+        return ""
+    if not rows:
+        return ""
+    ws = (rows[0].payload or {}).get("world_state")
+    if not isinstance(ws, dict):
+        return ""
+    parts: List[str] = []
+    for label, key in (("arcs", "dominant_arcs"),
+                       ("regions", "dominant_regions"),
+                       ("factions", "dominant_factions")):
+        vals = ws.get(key) or []
+        if vals:
+            parts.append(f"{label}: " + ", ".join(str(v) for v in vals))
+    if not parts:
+        return ""
+    sev = ws.get("severity") or "minor"
+    return (f"The world is currently shaped by — {'; '.join(parts)} "
+            f"(world state: {sev}).")
+
+
 def _truncate_fading(text: str, cap: int = FADING_NARRATIVE_CHAR_CAP) -> str:
     """Truncate to a fading-context cap (~one short sentence)."""
     text = (text or "").strip()
@@ -177,6 +210,84 @@ def _truncate_fading(text: str, cap: int = FADING_NARRATIVE_CHAR_CAP) -> str:
     return cut.rstrip(",.;:") + "…"
 
 
+# ── Descendant aggregation (cross-layer continuity, audit C3) ─────────
+# The heart of the continuity fix: a summarizing layer NL_N fires at a PARENT
+# address (NL3 at district:X), but the child layer NL(N-1) wrote its rows at
+# the DESCENDANT addresses (NL2 at the localities inside that district). The
+# lower-layer context must therefore be gathered from the children — otherwise
+# each layer summarizes nothing (the C3 break) and thread promotion has no
+# lower thread_ids to promote. This mirrors how WMS gathers child-address
+# events up the hierarchy. Bounded by recency so the prompt stays small.
+
+_MAX_LOWER_SOURCES = 10  # cap child-narrative lines per weaver prompt
+
+
+def _descendant_addresses(geo_registry: Any, address: str, depth: int) -> List[str]:
+    """Addresses ``depth`` geographic tiers below ``address`` (depth=1 = direct
+    children). Duck-typed on ``geo_registry.get_children(region_id) -> [Region]``
+    where each Region has ``.level.value`` and ``.region_id``. Returns [] if the
+    registry is absent or can't resolve the tree."""
+    if geo_registry is None or depth < 1 or ":" not in address:
+        return []
+    frontier = [address]
+    for _ in range(depth):
+        nxt: List[str] = []
+        for addr in frontier:
+            _, _, rid = addr.partition(":")
+            if not rid:
+                continue
+            try:
+                children = geo_registry.get_children(rid)
+            except Exception:
+                children = []
+            for c in children:
+                try:
+                    nxt.append(f"{c.level.value}:{c.region_id}")
+                except Exception:
+                    continue
+        frontier = nxt
+        if not frontier:
+            break
+    return frontier
+
+
+def get_lower_snapshot_aggregated(
+    store: NarrativeStore,
+    addresses: List[str],
+    *,
+    lower_layer: int,
+    scan_limit: int = DEFAULT_THREAD_SCAN_LIMIT,
+    retain_threads: int = DEFAULT_ACTIVE_THREADS_RETAIN,
+    max_sources: int = _MAX_LOWER_SOURCES,
+) -> Tuple[str, List[ThreadFragment]]:
+    """Aggregate NL(lower_layer) narrative + active threads across multiple
+    child/descendant addresses. Narrative = latest line per source address
+    (most-recent first, capped at ``max_sources``); threads are deduped across
+    ALL sources (so parent_thread_id promotion gets real lower thread_ids).
+    Returns ``("", [])`` when nothing is found."""
+    if lower_layer < 1 or lower_layer > 7 or not addresses:
+        return "", []
+    all_rows: List[NarrativeRow] = []
+    for addr in addresses:
+        all_rows.extend(store.query_by_address(lower_layer, addr, limit=scan_limit))
+    if not all_rows:
+        return "", []
+    all_rows.sort(key=lambda r: r.created_at, reverse=True)
+    seen_addr: set = set()
+    lines: List[str] = []
+    for r in all_rows:
+        if r.address in seen_addr:
+            continue
+        seen_addr.add(r.address)
+        if r.narrative:
+            lines.append(f"- {r.narrative}")
+        if len(lines) >= max_sources:
+            break
+    narrative = "\n".join(lines)
+    threads = extract_active_threads(all_rows, retain=retain_threads)
+    return narrative, threads
+
+
 # ── Composite builder ─────────────────────────────────────────────────
 
 
@@ -187,6 +298,7 @@ def build_weaver_context(
     address: str,
     parent_address: Optional[str] = None,
     grandparent_address: Optional[str] = None,
+    geo_registry: Any = None,
     scan_limit: int = DEFAULT_THREAD_SCAN_LIMIT,
     retain_threads: int = DEFAULT_ACTIVE_THREADS_RETAIN,
 ) -> WeaverContext:
@@ -218,21 +330,40 @@ def build_weaver_context(
     ctx.self_latest_narrative = self_n
     ctx.self_active_threads = self_t
 
-    # Primary lower (N-1) at this address.
+    # Primary lower (N-1). For NL3+ the child layer wrote at DESCENDANT
+    # addresses, so aggregate the child-scope rows — the continuity link that
+    # was silently empty before (audit C3). NL2's lower (NL1) sits at the SAME
+    # locality, so the direct read is correct there. No registry -> old
+    # behavior (keeps existing callers/tests working).
     if layer - 1 >= 1:
-        n, t = get_layer_snapshot(
-            store, layer=layer - 1, address=address,
-            scan_limit=scan_limit, retain_threads=retain_threads,
-        )
+        if layer >= 3 and geo_registry is not None:
+            n, t = get_lower_snapshot_aggregated(
+                store, _descendant_addresses(geo_registry, address, 1),
+                lower_layer=layer - 1, scan_limit=scan_limit,
+                retain_threads=retain_threads,
+            )
+        else:
+            n, t = get_layer_snapshot(
+                store, layer=layer - 1, address=address,
+                scan_limit=scan_limit, retain_threads=retain_threads,
+            )
         ctx.lower_primary_narrative = n
         ctx.lower_primary_threads = t
 
-    # Fading lower (N-2) at this address — narrative only, truncated.
+    # Fading lower (N-2) — narrative only, truncated. NL1 sits at the locality
+    # tier (same as NL2), so NL3's N-2 is one tier down; NL4+ is two tiers.
     if layer - 2 >= 1:
-        n2, _ = get_layer_snapshot(
-            store, layer=layer - 2, address=address,
-            scan_limit=scan_limit, retain_threads=0,
-        )
+        if layer >= 3 and geo_registry is not None:
+            fading_depth = 1 if layer == 3 else 2
+            n2, _ = get_lower_snapshot_aggregated(
+                store, _descendant_addresses(geo_registry, address, fading_depth),
+                lower_layer=layer - 2, scan_limit=scan_limit, retain_threads=0,
+            )
+        else:
+            n2, _ = get_layer_snapshot(
+                store, layer=layer - 2, address=address,
+                scan_limit=scan_limit, retain_threads=0,
+            )
         ctx.lower_fading_narrative = _truncate_fading(n2)
 
     # Above primary (N+1) at parent address.
@@ -253,6 +384,12 @@ def build_weaver_context(
             scan_limit=scan_limit, retain_threads=0,
         )
         ctx.above_fading_narrative = _truncate_fading(an2)
+
+    # World currents cascade DOWN to every layer below the world (M1). NL7 is
+    # the world itself — its self-continuity is its own prior narrative — so it
+    # doesn't re-read its own dominant currents here.
+    if layer <= 6:
+        ctx.world_dominant = render_world_dominant(store)
 
     return ctx
 

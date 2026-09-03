@@ -4,6 +4,7 @@
     "total_fragments": 10,
     "layer": 3,
     "description": "Layer 3 prompt fragments for cross-domain consolidation. LLM assigns interpretive tags alongside narrative synthesis.",
+    "tag_allowlist_note": "The {{TAG_ALLOWLIST}} token in _l3_output is replaced at assembly time by prompt_assembler with this layer's LLM-assignable tags, generated from world_memory/tag_library.py — the same source wms_ai.validate_tag enforces on the way back. Do NOT hardcode tag lists here; they drift from the enforced library (that drift is the bug this token fixes).",
     "design_principles": [
       "P1: Simple language. A tiny LLM needs CLARITY over PRECISION.",
       "P2: No internal mechanics (formulas, multipliers, balance constants).",
@@ -14,7 +15,7 @@
     ]
   },
   "_l3_core": "You consolidate individual event reports into district-level summaries. Synthesize, do not list. Connect events across activity types. Write 2-3 sentences. State what happened. Do not speculate about causes or motives. Use the geographic names provided.",
-  "_l3_output": "Respond with JSON only. Two fields:\n- \"narrative\": 2-3 sentence synthesis of the events below.\n- \"tags\": Assign only the tags that clearly apply from these categories (omit any that are uncertain):\n  sentiment: positive, negative, neutral, dangerous, prosperous, declining, hopeful, grim\n  trend: increasing, decreasing, stable, volatile, emerging, accelerating\n  intensity: light, moderate, heavy, extreme\n  population_status: thriving, declining, extinct, stable, recovering\n  resource_status: abundant, steady, scarce, critical, depleted, recovering\n  setting: village, wilderness, dungeon, underground, ruins\n  terrain: forest, hills, cave, clearing, rocky, water, plains, swamp\n\nExample: {\"narrative\": \"The Western Frontier shows heavy combat and gathering. Iron Hills is being stripped of resources while wolves are culled in the woods.\", \"tags\": [\"sentiment:dangerous\", \"intensity:heavy\", \"resource_status:scarce\"]}",
+  "_l3_output": "Respond with JSON only. Two fields:\n- \"narrative\": 2-3 sentence synthesis of the events below.\n- \"tags\": Assign only the tags that clearly apply from these categories (omit any that are uncertain):\n{{TAG_ALLOWLIST}}\n\nExample: {\"narrative\": \"The Western Frontier shows heavy combat and gathering. Iron Hills is being stripped of resources while wolves are culled in the woods.\", \"tags\": [\"sentiment:dangerous\", \"intensity:heavy\", \"resource_status:scarce\"]}",
   "l3_consolidator:regional_synthesis": "Summarize all activity in this district. Which localities are most active and what types of activity dominate. Note if activity is concentrated or spread out.",
   "l3_consolidator:cross_domain": "Identify connections between different activity types in the same area. Combat and resource depletion together means intensive exploitation. Crafting after gathering means supply chains.",
   "l3_consolidator:player_identity": "Describe the player's behavioral pattern from their recent activities. Primary focus: combatant, crafter, explorer, or mix. Note geographic preferences and which enemy tiers they engage.",

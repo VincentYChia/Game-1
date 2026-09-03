@@ -173,6 +173,33 @@ class NarrativeTagLibrary:
             if v.layer_unlocked <= layer
         }
 
+    def render_content_tag_allowlist(self, layer: int, indent: str = "  ") -> str:
+        """Render the full narrative content-tag allow-list available at a
+        layer, generated from this taxonomy (the source of truth).
+
+        This is what the NL weaver injects into its ``_output`` prompt so
+        the model always sees the COMPLETE tag vocabulary — not just the
+        subset that happened to fire this run. Address tags (thread:/arc:/
+        witness:/geographic) are excluded: they are server-written facts,
+        never LLM-emitted. Dynamic categories (emergent_entity) are shown
+        with a free-form note. Values are sorted for deterministic output
+        (``values`` is a frozenset with no stable iteration order).
+        """
+        cats = self.get_categories_for_layer(layer)
+        fixed_lines: List[str] = []
+        dynamic_lines: List[str] = []
+        for cid in sorted(cats):
+            cat = cats[cid]
+            if cat.is_dynamic:
+                dynamic_lines.append(
+                    f"{indent}{cid}: free-form value — coin sparingly; this "
+                    f"is a designer-review surface and is spam-capped at "
+                    f"runtime")
+            else:
+                vals = ", ".join(sorted(cat.values)) if cat.values else "(any)"
+                fixed_lines.append(f"{indent}{cid}: {vals}")
+        return "\n".join(fixed_lines + dynamic_lines)
+
     def validate_tag(self, tag: str, layer: int) -> bool:
         """Check if a tag string is valid at a given layer.
 

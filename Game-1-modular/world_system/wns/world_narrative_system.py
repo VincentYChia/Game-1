@@ -416,6 +416,11 @@ class WorldNarrativeSystem:
     ) -> List[NarrativeRow]:
         """Capture an NPC speech-bank into NL1 rows.
 
+        ORPHAN (2026-08-11): no runtime caller. Live narrative is driven by the
+        WMS-interpretation cascade (WMSToWNSBridge -> run_weaver), NOT by this
+        NL1 dialogue-capture ingress. Retained for tests + potential future NL1
+        use; do NOT wire a second, divergent WNS ingress through here.
+
         See :meth:`NL1Ingestor.ingest_speech_bank`. After capture, the
         NL2 trigger bucket for ``address`` is advanced once per mention
         (so lots of mentions at a locality fire NL2 faster) — this is the
@@ -502,6 +507,11 @@ class WorldNarrativeSystem:
     ) -> Optional[WeaverRunResult]:
         """Check the trigger, and if it fires, run the layer's weaver.
 
+        ORPHAN (2026-08-11): no runtime caller — the live weave path is the
+        bridge/cascade calling ``run_weaver``. Retained for tests; do NOT wire a
+        second NLTriggerManager-gated ingress through here.
+
+
         Returns the :class:`WeaverRunResult` on fire, ``None`` otherwise.
         """
         if not self._initialized or not self.trigger_manager:
@@ -517,6 +527,25 @@ class WorldNarrativeSystem:
             threads_in_scope=threads_in_scope,
             game_time=game_time,
         )
+
+    def get_world_state(self) -> Optional[Dict[str, Any]]:
+        """Latest world-level currents emitted by the NL7 (world) weaver:
+        ``{dominant_arcs, dominant_regions, dominant_factions, severity}``, or
+        None if the world layer has not fired yet.
+
+        M1: the NL7 summary emits these structured world-currents; they used to
+        be parsed then discarded. They are now persisted on the world row and
+        surfaced here so observability, WES scope-hints, or a future
+        cascade-down framing can consume the world's current shape. (The
+        world's ongoing narrative continuity already flows through the NL7
+        prose, read back as self-context on each NL7 firing.)
+        """
+        rows = self.store.query_by_layer(7, limit=1)
+        if not rows:
+            return None
+        payload = rows[0].payload or {}
+        state = payload.get("world_state")
+        return state if isinstance(state, dict) else None
 
     def run_weaver(
         self,
